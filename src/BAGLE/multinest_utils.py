@@ -1,7 +1,7 @@
 import numpy as np
 import pylab as plt
 from matplotlib.colors import LinearSegmentedColormap, colorConverter
-from src.micromodel import model, model_fitter, munge
+from src.BAGLE import model, model_fitter, munge
 import dynesty
 from dynesty import utils as dyutil
 from dynesty import plotting as dyplot

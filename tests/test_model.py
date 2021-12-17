@@ -8,9 +8,9 @@ from astropy.coordinates import SkyCoord, GCRS
 from astropy.time import Time
 from astropy.table import Table
 import os
-from src.micromodel import model
-from src.micromodel import model_fitter
-from src.micromodel.fake_data import *
+from src.BAGLE import model
+from src.BAGLE import model_fitter
+from src.BAGLE.fake_data import *
 import time
 import pdb
 import pytest
@@ -38,7 +38,7 @@ def test_PSPL_other():
     mag_src = 19.0
 
     run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
-                  outdir='./test_pspl_other/')
+                  outdir='tests/test_pspl_other/')
 
     return
 
@@ -58,7 +58,7 @@ def test_PSPL_belokurov():
     mag_src = 19.0
 
     run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
-                  outdir='./test_pspl_belokurov/')
+                  outdir='tests/test_pspl_belokurov/')
 
     return
 
@@ -243,7 +243,7 @@ def test_pspl_parallax_belokurov():
     b_sff = 1.0
 
     run_test_pspl_parallax(raL, decL, mL, t0, xS0, beta, muS, muL, dL, dS,
-                           b_sff, imag, outdir='test_pspl_parallax_belokurov/')
+                           b_sff, imag, outdir='tests/test_pspl_parallax_belokurov/')
 
     # Modify some axis limits to match the published figure.
     plt.figure(2)
@@ -264,7 +264,7 @@ def test_pspl_parallax_belokurov():
     plt.xlabel(r'$\Delta \alpha^*$ (mas)')
     plt.ylabel(r'$\Delta \delta$ (mas)')
     plt.legend(loc='lower right', fontsize=12)
-    plt.savefig('pspl_parallax_belokurov.png')
+    plt.savefig(outdir + 'pspl_parallax_belokurov.png')
 
     return
 
@@ -297,7 +297,7 @@ def test_pspl_parallax_han2000():
     imag = 19.0
 
     run_test_pspl_parallax(raL, decL, mL, t0, xS0, beta, muS, muL, dL, dS,
-                           b_sff, imag, outdir='test_pspl_parallax_han2000/')
+                           b_sff, imag, outdir='tests/test_pspl_parallax_han2000/')
 
     return
 
@@ -318,7 +318,7 @@ def test_pspl_parallax_bulge1():
     imag = 19.0
 
     run_test_pspl_parallax(raL, decL, mL, t0, xS0, beta, muS, muL, dL, dS,
-                           b_sff, imag, outdir='test_pspl_par_bulge1/')
+                           b_sff, imag, outdir='tests/test_pspl_par_bulge1/')
 
     return
 
@@ -471,7 +471,7 @@ def test_pspl_parallax_paczynski1998(t0=57000):
     i.e. just removed proper motions. 
     """
 
-    outdir = './test_pspl_parallax_paczynski1998/'
+    outdir = 'tests/test_pspl_parallax_paczynski1998/'
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
 
@@ -948,7 +948,7 @@ def test_PSPL_phot_Lu2016():
 
 
 def test_pspl_parallax2_bulge():
-    outdir = './test_pspl_par2_bulge1/'
+    outdir = 'tests/test_pspl_par2_bulge1/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)

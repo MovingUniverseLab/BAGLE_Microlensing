@@ -1,4 +1,4 @@
-from src.micromodel import model 
+from src.BAGLE import model 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib

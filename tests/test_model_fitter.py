@@ -1,7 +1,7 @@
-from src.micromodel import model
-from src.micromodel import model_fitter
-from src.micromodel import multinest_utils, munge
-from src.micromodel.model_fitter import PSPL_Solver
+from src.BAGLE import model
+from src.BAGLE import model_fitter
+from src.BAGLE import multinest_utils, munge
+from src.BAGLE.model_fitter import PSPL_Solver
 import test_model
 import numpy as np
 import pylab as plt

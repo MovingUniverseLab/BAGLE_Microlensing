@@ -1,7 +1,6 @@
 import numpy as np
 import pylab as plt
-from src.micromodel import model
-from src.micromodel import model_fitter
+from src.BAGLE import model, model_fitter
 import dynesty
 from dynesty import utils as dyutil
 from dynesty import plotting as dyplot
