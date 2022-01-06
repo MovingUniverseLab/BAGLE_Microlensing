@@ -6,8 +6,8 @@ import numpy as np
 import pylab as plt
 from astropy.table import Table
 import os
-from microlens.jlu import model
-from microlens.jlu import model_fitter
+import model
+import model_fitter
 import time
 import pdb
 import pytest
