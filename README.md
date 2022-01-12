@@ -1,10 +1,12 @@
-# Micromodel
+# BAGLE: Bayesian Analysis of Gravitational Lensing Events
 
-# BAGLE_MICROLENSING
+BAGLE allows modeling of gravitational microlensing events both photometrically and astrometrically. Supported microlensing models include:
+     - PSPL: point-source, point-lens with parallax
+     - PSBL: point-source, binary-lens
+     - FSPL: finite-source, point-lens (minimal support... not well tested yet)
+All models support fitting data with single or multi-band photometry only, astrometry only, or joint fitting of photometry and astrometry (recommended). 
 
-Package to store bagel microlensing code. More info available in Model.java class.
-
-## Execution Instructions
+## Installation Instructions
 ### Clone the repo: 
      git clone https://github.com/ninjab3381/BAGLE_Microlensing.git
 
