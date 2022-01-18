@@ -6,8 +6,8 @@ import numpy as np
 import pylab as plt
 from astropy.table import Table
 import os
-import model
-import model_fitter
+from src.BAGLE import model
+from src.BAGLE import model_fitter
 import time
 import pdb
 import pytest

@@ -167,6 +167,7 @@ def run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
 
 
 def test_pspl_parallax_belokurov():
+    outdir = 'tests/test_pspl_parallax_belokurov/'
     dim_ang = u.dimensionless_angles()
 
     # Scenario from Belokurov and Evans 2002 (Figure 1)
