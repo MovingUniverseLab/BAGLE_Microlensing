@@ -1,0 +1,53 @@
+BAGLE.tests package
+===================
+
+Submodules
+----------
+
+BAGLE.tests module
+------------------
+
+.. automodule:: BAGLE.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+BAGLE.tests module
+------------------
+
+.. automodule:: BAGLE.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+BAGLE.tests.test\_model module
+------------------------------
+
+.. automodule:: BAGLE.tests.test_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+BAGLE.tests.test\_model\_fitter module
+--------------------------------------
+
+.. automodule:: BAGLE.tests.test_model_fitter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+BAGLE.tests.testingmodels module
+--------------------------------
+
+.. automodule:: BAGLE.tests.testingmodels
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: BAGLE.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:

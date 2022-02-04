@@ -1,0 +1,18 @@
+BAGLE.src package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   BAGLE.src.BAGLE
+
+Module contents
+---------------
+
+.. automodule:: BAGLE.src
+   :members:
+   :undoc-members:
+   :show-inheritance:

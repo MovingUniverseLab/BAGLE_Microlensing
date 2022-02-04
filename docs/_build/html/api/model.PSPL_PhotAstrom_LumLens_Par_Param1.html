@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PSPL_PhotAstrom_LumLens_Par_Param1 &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/katex-math.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/contrib/auto-render.min.js"></script>
+        <script src="../_static/katex_autorenderer.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> BAGLE
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">BAGLE</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>PSPL_PhotAstrom_LumLens_Par_Param1</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/model.PSPL_PhotAstrom_LumLens_Par_Param1.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="pspl-photastrom-lumlens-par-param1">
+<h1>PSPL_PhotAstrom_LumLens_Par_Param1<a class="headerlink" href="#pspl-photastrom-lumlens-par-param1" title="Permalink to this headline"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotAstrom_LumLens_Par_Param1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotAstrom_LumLens_Par_Param1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstrom_LumLens_Par_Param1" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="model.PSPL_PhotAstrom.html#model.PSPL_PhotAstrom" title="model.PSPL_PhotAstrom"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstrom</span></code></a>, <a class="reference internal" href="model.PSPL_Parallax_LumLens.html#model.PSPL_Parallax_LumLens" title="model.PSPL_Parallax_LumLens"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Parallax_LumLens</span></code></a>, <a class="reference internal" href="model.PSPL_PhotAstromParam1.html#model.PSPL_PhotAstromParam1" title="model.PSPL_PhotAstromParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam1</span></code></a></p>
+<p>An abstract class that all Param classes should sub-class.
+This serves as a reminder for the class variables that
+MUST be set.</p>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code>(tE, time_steps, frame_time, name, ...)</p></td>
+<td><p>Produces animation of microlensing event.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_piE_ecliptic</span></code>()</p></td>
+<td><p>Parallax: Get piE_ecliptic</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code>(t)</p></td>
+<td><p>Parallax: Get the photometric amplification term at a set of times, t.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry</span></code>(t_obs[, ast_filt_idx])</p></td>
+<td><p>Parallax: Get astrometry</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry_unlensed</span></code>(t_obs)</p></td>
+<td><p>Get the astrometry of the source if the lens didn't exist.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_centroid_shift</span></code>(t[, ast_filt_idx])</p></td>
+<td><p>Parallax: Get the centroid shift (in mas) for a list of observation times (in MJD).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lens_astrometry</span></code>(t_obs)</p></td>
+<td><p>Parallax: Get lens astrometry</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_amplification</span></code>(t)</p></td>
+<td><p>Parallax: Get the photometric amplification term at a set of times, t for both the plus and minus images.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code>(t_obs)</p></td>
+<td><p>Parallax: Get the x, y astrometry for each of the two source images, which we label plus and minus.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_shift</span></code>(t_obs)</p></td>
+<td><p>Parallax: Get resolved shift</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 75%" />
+<col style="width: 25%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>get_chi2_astrometry</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>get_chi2_photometry</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>get_lnL_constant</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>get_photometry</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>log_likely_astrometry</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>log_likely_astrometry_each</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>log_likely_photometry</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>log_likely_photometry_each</strong></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>start</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Niranjan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

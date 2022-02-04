@@ -1,0 +1,12 @@
+=========
+Model
+=========
+.. automodule:: model
+    :show-inheritance:
+    :inherited-members:
+
+
+PSPL
+=====
+.. automodule:: model.PSPL_Param
+    :inherited-members:

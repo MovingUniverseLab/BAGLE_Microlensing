@@ -1,0 +1,12 @@
+==============
+Model.py
+==============
+.. automodapi:: model
+
+PSPL
+==========
+
+.. autoclass:: model.PSPL_Param
+    :show-inheritance:
+     :members:
+     :inherited-members:

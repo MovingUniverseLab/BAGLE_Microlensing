@@ -1,15 +1,15 @@
+#.. module:: model
+#    :platform: Unix, Mac, Windows
+#    :synopsis: Microlensing model objects.
+#
+#.. moduleauthor:: Jessica Lu <jlu.astro@berkeley.edu>
+#.. moduleauthor:: Michael Medford <MichaelMedford@berkeley.edu>
+#.. moduleauthor:: Casey Lam <casey_lam@berkeley.edu>
+#.. moduleauthor:: Edward Broadberry
 """
-.. module:: model
-    :platform: Unix, Mac, Windows
-    :synopsis: Microlensing model objects.
-
-.. moduleauthor:: Jessica Lu <jlu.astro@berkeley.edu>
-.. moduleauthor:: Michael Medford <MichaelMedford@berkeley.edu>
-.. moduleauthor:: Casey Lam <casey_lam@berkeley.edu>
-.. moduleauthor:: Edward Broadberry
-
-
-======== Overview ========
+=========================
+Overview
+=========================
 
 This set of classes and functions allows the user to construct microlensing
 models built up from a menu of different features. Each model is built using
@@ -17,51 +17,65 @@ the inheritance of multiple classes, each from a different 'family' of
 related classes.
 
 Each microlensing model must contain:
-    1) A class from the Data Class Family
-        `PSPL` -- base class for all Data classes
-        `PSPL_Phot`
-        `PSPL_PhotAstrom`
-        `PSPL_GP_Phot`
-        `PSPL_GP_PhotAstrom`
+    1) A class from the Data Class Family:
+    
+        * `PSPL` -- base class for all Data classes:
+        
+          -  `PSPL_Phot`
+          -  `PSPL_PhotAstrom`
+          -  `PSPL_GP_Phot`
+          -  `PSPL_GP_PhotAstrom`
+          
     2) A class from the Parallax Class Family:
-        `PSPL_noParallax`
-        `PSPL_Parallax`
+    
+        * `PSPL_noParallax`
+        * `PSPL_Parallax`
+        
     3) A class from the GP Class Family: (optional)
-        `PSPL_GP`
-    3) A class from the Parametrization Class Family:
-        `PSPL_Param` -- abstract base class for all Param classes
-        `PSPL_PhotParam1`
-        `PSPL_PhotParam2`
-        `PSPL_PhotAstromParam1`
-        `PSPL_PhotAstromParam2`
-        `PSPL_PhotAstromParam3
-        `PSPL_GP_PhotParam1`
-        `PSPL_GP_PhotParam2`
-        `PSPL_GP_PhotAstromParam1`
-        `PSPL_GP_PhotAstromParam2`
-        `PSPL_GP_PhotAstromParam3`
+    
+        * `PSPL_GP`
+        
+    4) A class from the Parametrization Class Family:
+    
+        * `PSPL_Param` -- abstract base class for all Param classes
+        
+          - `PSPL_PhotParam1`
+          - `PSPL_PhotParam2`
+          - `PSPL_PhotAstromParam1`
+          - `PSPL_PhotAstromParam2`
+          - `PSPL_PhotAstromParam3`
+          - `PSPL_GP_PhotParam1`
+          - `PSPL_GP_PhotParam2`
+          - `PSPL_GP_PhotAstromParam1`
+          - `PSPL_GP_PhotAstromParam2`
+          - `PSPL_GP_PhotAstromParam3`
 
 There is a parallax hierarchy for PSBL:
-    1) A class from the Data Class Family
-        `PSBL` -- base class for all Data classes
-        `PSBL_Phot`
-        `PSBL_PhotAstrom`
+    1) A class from the Data Class Family:
+    
+        * `PSBL` -- base class for all Data classes:
+        
+          - `PSBL_Phot`
+          - `PSBL_PhotAstrom`
+          
     2) A class from the Parallax Class Family:
-        `PSBL_noParallax`
-        `PSBL_Parallax`
+    
+        * `PSBL_noParallax`
+        * `PSBL_Parallax`
+        
     3) A class from the Parametrization Class Family:
-        `PSBL_PhotParam1`
-        `PSBL_PhotAstromParam1`
-        `PSBL_PhotAstromParam2`
-        `PSBL_PhotAstromParam3`
+    
+        * `PSBL_PhotParam1`
+        * `PSBL_PhotAstromParam1`
+        * `PSBL_PhotAstromParam2`
+        * `PSBL_PhotAstromParam3`
+
 
 Several pre-built models are included in this file.
 
 For example, the `PSPL_PhotAstrom_noPar_Param1` model is declared as:
 
-    class PSPL_PhotAstrom_noPar_Param1(PSPL_PhotAstrom,
-                                       PSPL_noParallax,
-                                       PSPL_PhotAstromParam1)
+    ``class PSPL_PhotAstrom_noPar_Param1(PSPL_PhotAstrom, PSPL_noParallax, PSPL_PhotAstromParam1)``
 
 The words in the models name, and the classes used to declare it, tell us
 what features the model contains. In this example, we can see that the model's
@@ -70,9 +84,11 @@ we know that this model (1) uses both photometry and astrometry data, (2) does
 not include parallax in the model, and (3) uses the first
 photometry / astrometry parameterization for declaring the model.
 
-======== Class Families ========
+Class Families
+=================
 
-== Data Class Family ==
+Data Class Family
+-----------------
 
 These classes inform the model of what type of data will be used by the model.
 If the model will be for photometry only, then a model with the `PSPL_Phot`
@@ -86,7 +102,8 @@ not be used in the model when run through a model using `PSPL_Phot`. Data that
 does not contain astrometry run through a model using `PSPL_PhotAstrom` will
 generate a RuntimeError.
 
-== Parallax Class Family ==
+Parallax Class Family
+----------------------
 
 These classes set whether the model uses parallax when calculating
 photometry, calculating astrometry, and fitting data. There are only two
@@ -94,7 +111,8 @@ options for this class family, `PSPL_noParallax` and `PSPL_Parallax`. Models
 that do not have parallax have the words `noPar` in their names, while models
 that do contain parallax have the words `Par` in their names.
 
-== Parameterization Class Family ==
+Parameterization Class Family
+------------------------------
 
 These classes determine which physical parameters define the model. Currently
 this file supports one parameterization when using only photometry (`Phot`)
@@ -107,33 +125,36 @@ The parameters for each parameterization are:
         This model includes the relative proper motion between the lens
         and the source. Parameters are reduced with the use of piRel
 
-
-        Parameters: t0, u0_amp, tE,
-                    piE_E, piE_N,
-                    b_sff, mag_src,
-                    (ra, dec)
+        `Parameters`: 
+            | t0, u0_amp, tE, 
+            | piE_E, piE_N, 
+            | b_sff, mag_src,
+            | (ra, dec)
 
     PhotAstromParam1 :
         Point Source Point Lens model for microlensing. This model includes
         proper motions of both the lens and source.
 
-        Parameters: mL, t0, beta, dL, dL_dS,
-                    xS0_E, xS0_N,
-                    muL_E, muL_N,
-                    muS_E, muS_N,
-                    b_sff, mag_src,
-                    (ra, dec)
+        `Parameters`:
+            | mL, t0, beta, 
+            | dL, dL_dS, 
+            | xS0_E, xS0_N,
+            | muL_E, muL_N, 
+            | muS_E, muS_N,
+            | b_sff, mag_src,
+            | (ra, dec)
 
     PhotAstromParam2 :
         Point Source Point Lens model for microlensing. This model includes
         proper motions of the source and the source position on the sky.
 
-        Parameters: t0, u0_amp, tE, thetaE, piS,
-                    piE_E, piE_N,
-                    xS0_E, xS0_N,
-                    muS_E, muS_N,
-                    b_sff, mag_src,
-                    (ra, dec)
+        `Parameters`: 
+            | t0, u0_amp, tE, thetaE, piS,
+            | piE_E, piE_N,
+            | xS0_E, xS0_N,
+            | muS_E, muS_N,
+            | b_sff, mag_src,
+            | (ra, dec)
 
     PhotAstromParam3 :
         Point Source Point Lens model for microlensing. This model includes
@@ -141,18 +162,20 @@ The parameters for each parameterization are:
         Note it fits the baseline magnitude rather than the unmagnified source 
         brightness.
 
-        Parameters: t0, u0_amp, tE, log10_thetaE, piS,
-                    piE_E, piE_N,
-                    xS0_E, xS0_N,
-                    muS_E, muS_N,
-                    b_sff, mag_base,
-                    (ra, dec)
+        `Parameters`: 
+            | t0, u0_amp, tE, log10_thetaE, piS,
+            | piE_E, piE_N,
+            | xS0_E, xS0_N,
+            | muS_E, muS_N,
+            | b_sff, mag_base,
+            | (ra, dec)
 
-(ra, dec) are only required if the model is created with a parallax class.
+`(ra, dec)` are only required if the model is created with a parallax class.
 More details about each parameterization can be found in the Parameterization
 Class docstring.
 
-======== Making a New Model ========
+Making a New Model
+--------------------
 
 Each model is, as described above, constructed by combining inheriting from
 different parent classes that contain the desired features for the model. Each
@@ -169,28 +192,30 @@ are several rules that must be followed when creating a new class.
         the order in which the parent classes are listed in the model class'
         definition matters. Parent classes to models should always be listed
         in the order:
+        
             a) Data Class
             b) Parallax Class
             c) Parameterization Class
+            
         If using the optional GP class, then the order is
+        
             a) GP Class
             b) Data Class
             c) Parallax Class
             d) Parameterization Class
 
     3)  Each class must be given the `@inheritdocstring` decorator, and include
-        the following commands in the model's `__init__`:
-            super().__init__(*args, **kwargs)
-            startbases(self)
-            checkconflicts(self)
+        the following commands in the model's ``__init__``:
+        
+            * ``a.super().__init__(*args, **kwargs)``
+            * ``startbases(self)``
+            * ``checkconflicts(self)``
+            
         Each of these performs the following function:
-            `super().__init__(*args, **kwargs)` : Inherits the __init__ form
-                                                  the Parameterization Class.
-            `startbases(self)` :  Runs a `start` command on each parent class,
-                                  giving each parent class a chance to run a
-                                  set of functions upon instantiation.
-            `checkconflicts(self)` : Checks to confirm that the combination of
-                                     parent classes in the model are valid.
+        
+            * ``super().__init__(*args, **kwargs)``: Inherits the ``__init__`` from the Parameterization Class.
+            * ``startbases(self)``: Runs a `start` command on each parent class, giving each parent class a chance to run a set of functions upon instantiation.
+            * ``checkconflicts(self)``: Checks to confirm that the combination of parent classes in the model are valid.
 
     4)  Models should be named to reflect the parents classes used to construct
         it, as outlined in the above sections.
@@ -344,32 +369,52 @@ class PSPL_Param(object):
 
 class PSPL_AstromParam4(PSPL_Param):
     """
-    DESCRIPTION:
     Point Source Point Lens model for microlensing. This model includes
     proper motions of the source and the source position on the sky.
     It is the same as PSPL_PhotAstromParam2 except it fits for baseline instead
     of source magnitude.
 
-    INPUTS:
-    ###############################################################################
-    t0: Time of photometric peak, as seen from Earth (MJD.DDD)
-    u0_amp: Angular distance between the lens and source on the plane of the
-        sky at closest approach in units of thetaE. Can be
-          positive (u0_amp > 0 when u0_hat[0] > 0) or 
-          negative (u0_amp < 0 when u0_hat[0] < 0).
-    tE: Einstein crossing time (days).
-    thetaE: The size of the Einstein radius in (mas).
-    piS: Amplitude of the parallax (1AU/dS) of the source. (mas)
-    piE_E: The microlensing parallax in the East direction in units of thetaE
-    piE_N: The microlensing parallax in the North direction in units of thetaE
-    xS0_E: RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    muS_E: RA Source proper motion (mas/yr)
-    muS_N: Dec Source proper motion (mas/yr)
-    == Required if calculating with parallax ==
-    raL: Right ascension of the lens in decimal degrees.
-    decL: Declination of the lens in decimal degrees.
-    ###############################################################################
+    Attributes
+    ----------
+    
+    t0: float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp: float
+        Angular distance between the lens and source on the 
+        plane of the sky at closest approach in units of thetaE. Can be
+    
+            * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+            * negative (u0_amp < 0 when u0_hat[0] < 0).
+        
+    tE: float 
+        Einstein crossing time (days).
+    thetaE: float
+        The size of the Einstein radius in (mas).
+    piS: float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E: float
+        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    xS0_N: float
+        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    muS_E: float
+        RA Source proper motion (mas/yr)
+    muS_N: float
+        Dec Source proper motion (mas/yr)
+    
+    
+    
+    Notes
+    ---------
+    
+    .. note:: Required parameters if calculating with parallax
+    
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
@@ -475,26 +520,48 @@ class PSPL_AstromParam3(PSPL_Param):
     It is the same as PSPL_PhotAstromParam3 except it fits only astrometry, no
     photometry.
 
-    INPUTS:
-    ###############################################################################
-    t0: Time of photometric peak, as seen from Earth (MJD.DDD)
-    u0_amp: Angular distance between the lens and source on the plane of the
-        sky at closest approach in units of thetaE. Can be
-          positive (u0_amp > 0 when u0_hat[0] > 0) or 
-          negative (u0_amp < 0 when u0_hat[0] < 0).
-    tE: Einstein crossing time (days).
-    log10_thetaE: The log of the Einstein radius log10(thetaE/mas).
-    piS: Amplitude of the parallax (1AU/dS) of the source. (mas)
-    piE_E: The microlensing parallax in the East direction in units of thetaE
-    piE_N: The microlensing parallax in the North direction in units of thetaE
-    xS0_E: RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    muS_E: RA Source proper motion (mas/yr)
-    muS_N: Dec Source proper motion (mas/yr)
-    == Required if calculating with parallax ==
-    raL: Right ascension of the lens in decimal degrees.
-    decL: Declination of the lens in decimal degrees.
-    ###############################################################################
+
+    Attributes
+    ----------
+    
+    t0: float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp: float
+        Angular distance between the lens and source on the 
+        plane of the sky at closest approach in units of thetaE. Can be
+    
+            * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+            * negative (u0_amp < 0 when u0_hat[0] < 0).
+        
+    tE: float
+        Einstein crossing time (days).
+    log10_thetaE: float
+        The log of the Einstein radius log10(thetaE/mas).
+    piS: float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E: float
+        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    xS0_N: float
+        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    muS_E: float
+        RA Source proper motion (mas/yr)
+    muS_N: float
+        Dec Source proper motion (mas/yr)
+    
+    
+ 
+    Notes
+    ---------
+    
+    .. note:: Required parameters if calculating with parallax
+    
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
@@ -600,7 +667,7 @@ class PSPL_PhotParam1(PSPL_Param):
     Note the attributes, RA (raL) and Dec (decL) are required 
     if you are calculating a model with parallax. 
 
-    Parameters
+    Attributes
     ----------
     t0: float
         Time of photometric peak, as seen from Earth (MJD.DDD)
@@ -615,11 +682,11 @@ class PSPL_PhotParam1(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE.
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    b_sff: float
+    b_sff: numpy array or list
         The ratio of the source flux to the total (source + neighbors + lens)
-        b_sff = f_S / (f_S + f_L + f_N). This must be passed in as a list or
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
         array, with one entry for each photometric filter.
-    mag_src: float
+    mag_src: numpy array or list
         Photometric magnitude of the source. This must be passed in as a
         list or array, with one entry for each photometric filter.
     raL: float, optional
@@ -692,26 +759,38 @@ class PSPL_PhotParam2(PSPL_Param):
     (rather than dL and dS) and muRel (rather than muL and muS).
     Same as PSPL_PhotParam1, except fits for mag_base instead of 
     mag_src.
-
-    INPUTS:
-    ############################################################
-    t0: Time of photometric peak, as seen from Earth (MJD.DDD)
-    u0_amp: Angular distance between the lens and source on the plane of the
-          sky at closest approach in units of thetaE. It can be
-          positive (u0_amp > 0 when u0_hat[0] > 0) or 
-          negative (u0_amp < 0 when u0_hat[0] < 0).
-    tE: Einstein crossing time.
-    piE_E: The microlensing parallax in the East direction in units of thetaE
-    piE_N: The microlensing parallax in the North direction in units of thetaE
-    b_sff: The ratio of the source flux to the total (source + neighbors + lens)
-         b_sff = f_S / (f_S + f_L + f_N). This must be passed in as a list or
-         array, with one entry for each photometric filter.
-    mag_base: Photometric magnitude of the base. This must be passed in as a
-             list or array, with one entry for each photometric filter.
-    == Required if calculating with parallax ==
-    raL: Right ascension of the lens in decimal degrees.
-    decL: Declination of the lens in decimal degrees.
-    ############################################################
+    
+    Attributes
+    ----------
+    t0: float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp: float
+         Angular distance between the lens and source on the plane of the
+         sky at closest approach in units of thetaE. It can be
+         positive (u0_amp > 0 when u0_hat[0] > 0) or 
+         negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time in days.
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE.
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    b_sff: numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base: numpy array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+        
+        
+    Notes
+    ---------
+    
+    .. note:: Required parameters if calculating with parallax
+    
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE',
@@ -780,7 +859,7 @@ class PSPL_PhotAstromParam1(PSPL_Param):
     Note the attributes, RA (raL) and Dec (decL) are required 
     if you are calculating a model with parallax. 
 
-    Parameters
+    Attributes
     ----------
     mL: float
         Mass of the lens (Msun)
@@ -788,8 +867,10 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         Time of photometric peak, as seen from Earth (MJD.DDD)
     beta: float
         Angular distance between the lens and source on the plane of the sky (mas). Can be
-        positive (u0_amp > 0 when u0_hat[0] < 0) or 
-        negative (u0_amp < 0 when u0_hat[0] > 0).
+
+          * positive (u0_amp > 0 when u0_hat[0] < 0) or 
+          * negative (u0_amp < 0 when u0_hat[0] > 0).
+
     dL: float
         Distance from the observer to the lens (pc)
     dL_dS: float
@@ -807,11 +888,11 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         RA Source proper motion (mas/yr)
     muS_N: float
         Dec Source proper motion (mas/yr)
-    b_sff: float
+    b_sff: numpy array or list
         The ratio of the source flux to the total (source + neighbors + lens)
-        b_sff = f_S / (f_S + f_L + f_N). This must be passed in as a list or
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
         array, with one entry for each photometric filter.
-    mag_src: float
+    mag_src: numpy array or list
         Photometric magnitude of the source. This must be passed in as a
         list or array, with one entry for each photometric filter.
     raL: float, optional
@@ -933,32 +1014,46 @@ class PSPL_PhotAstromParam2(PSPL_Param):
     Point Source Point Lens model for microlensing. This model includes
     proper motions of the source and the source position on the sky.
 
-    Parameters
+    Attributes
     ----------
-    t0: Time of photometric peak, as seen from Earth (MJD.DDD)
-    u0_amp: Angular distance between the lens and source on the plane of the
+    t0: float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp: float 
+        Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. Can be
-          positive (u0_amp > 0 when u0_hat[0] > 0) or 
-          negative (u0_amp < 0 when u0_hat[0] < 0).
-    tE: Einstein crossing time (days).
-    thetaE: The size of the Einstein radius in (mas).
-    piS: Amplitude of the parallax (1AU/dS) of the source. (mas)
-    piE_E: The microlensing parallax in the East direction in units of thetaE
-    piE_N: The microlensing parallax in the North direction in units of thetaE
-    xS0_E: RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    muS_E: RA Source proper motion (mas/yr)
-    muS_N: Dec Source proper motion (mas/yr)
-    b_sff: The ratio of the source flux to the total (source + neighbors + lens)
-         b_sff = f_S / (f_S + f_L + f_N). This must be passed in as a list or
-         array, with one entry for each photometric filter.
-    mag_src: Photometric magnitude of the source. This must be passed in as a
-             list or array, with one entry for each photometric filter.
+        
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+          
+    tE: float 
+        Einstein crossing time (days).
+    thetaE: float
+        The size of the Einstein radius in (mas).
+    piS: float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E: float
+        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    xS0_N: float
+        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    muS_E: float
+        RA Source proper motion (mas/yr)
+    muS_N: float
+        Source proper motion (mas/yr)
+    b_sff: numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_src: numpy array or list
+        Photometric magnitude of the source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
-
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
@@ -1062,21 +1157,24 @@ class PSPL_PhotAstromParam2(PSPL_Param):
 
 class PSPL_PhotAstromParam3(PSPL_Param):
     """
-    DESCRIPTION:
     Point Source Point Lens model for microlensing. This model includes
     proper motions of the source and the source position on the sky.
     It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
     instead of thetaE.
 
-    INPUTS:
-    ###############################################################################
+
+    Attributes	
+    -------------
+
     t0 : float
         Time of photometric peak, as seen from Earth (MJD.DDD)
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
-        on the plane of the sky at closest approach in units of thetaE. Can
-          positive (u0_amp > 0 when u0_hat[0] > 0) or 
-          negative (u0_amp < 0 when u0_hat[0] < 0).
+        on the plane of the sky at closest approach in units of thetaE. Can be
+
+           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+           * negative (u0_amp < 0 when u0_hat[0] < 0).
+
     tE : float
         Einstein crossing time (days).
     log10_thetaE : float
@@ -1100,16 +1198,20 @@ class PSPL_PhotAstromParam3(PSPL_Param):
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
         for each filter.
-           b_sff = f_S / (f_S + f_L + f_N). 
+           :math:`b_sff = f_S / (f_S + f_L + f_N)`. 
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     mag_base : numpy array or list
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
-    == Required if calculating with parallax ==
-    raL: Right ascension of the lens in decimal degrees.
-    decL: Declination of the lens in decimal degrees.
-    ###############################################################################
+
+    Notes
+    ---------
+    
+    .. note:: Required parameters if calculating with parallax
+    
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
@@ -1220,32 +1322,57 @@ class PSPL_PhotAstromParam4(PSPL_Param):
     It is the same as PSPL_PhotAstromParam2 except it fits for baseline instead
     of source magnitude.
 
-    INPUTS:
-    ###############################################################################
-    t0: Time of photometric peak, as seen from Earth (MJD.DDD)
-    u0_amp: Angular distance between the lens and source on the plane of the
-        sky at closest approach in units of thetaE. Can be
-          positive (u0_amp > 0 when u0_hat[0] > 0) or 
-          negative (u0_amp < 0 when u0_hat[0] < 0).
-    tE: Einstein crossing time (days).
-    thetaE: The size of the Einstein radius in (mas).
-    piS: Amplitude of the parallax (1AU/dS) of the source. (mas)
-    piE_E: The microlensing parallax in the East direction in units of thetaE
-    piE_N: The microlensing parallax in the North direction in units of thetaE
-    xS0_E: RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    muS_E: RA Source proper motion (mas/yr)
-    muS_N: Dec Source proper motion (mas/yr)
-    b_sff: The ratio of the source flux to the total (source + neighbors + lens)
-         b_sff = f_S / (f_S + f_L + f_N). This must be passed in as a list or
-         array, with one entry for each photometric filter.
-    mag_base: Photometric magnitude of the base. This must be passed in as a
-             list or array, with one entry for each photometric filter.
-    == Required if calculating with parallax ==
-    raL: Right ascension of the lens in decimal degrees.
-    decL: Declination of the lens in decimal degrees.
-    ###############################################################################
+    Parameters
+    ------------
+
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can be
+
+           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+           * negative (u0_amp < 0 when u0_hat[0] < 0).
+
+    tE : float
+        Einstein crossing time (days).
+    thetaE: 
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+           :math:`b_sff = f_S / (f_S + f_L + f_N)`. 
+        This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base : numpy array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+
+    Notes
+    ---------
+    
+    .. note:: Required parameters if calculating with parallax
+    
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
     """
+
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'xS0_E', 'xS0_N',
@@ -1559,15 +1686,16 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
     It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
     instead of thetaE.
 
-    Inputs
-    ------
+    Attributes
+    -------------
+
     t0: float
         Time of photometric peak, as seen from Earth (MJD.DDD)
     u0_amp: float
         Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. Can be
-          positive (u0_amp > 0 when u0_hat[0] > 0) or 
-          negative (u0_amp < 0 when u0_hat[0] < 0).
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
     tE: float
         Einstein crossing time (days).
     log10_thetaE: float
@@ -1588,28 +1716,28 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
         Dec Source proper motion (mas/yr)
     b_sff: numpy array or list of floats
         The ratio of the source flux to the total (source + neighbors + lens)
-         b_sff = f_S / (f_S + f_L + f_N). This must be passed in as a list or
-         array, with one entry for each photometric filter.
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
     mag_base: numpy array or list of floats
         Photometric magnitude of the base. This must be passed in as a
-             list or array, with one entry for each photometric filter.
+        list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process log(\sigma) for the Matern 3/2 kernel. 
+        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel. 
     gp_rho: float
-        Guassian process \rho for the Matern 3/2 kernel.
+        Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process log(\omega_0^4 * S_0) from the SHO kernel.
+        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process log(\omega_0) from the SHO kernle.
-
-    Optional Inputs
-    ---------------
-    Note: Required if calculating with parallax
-    raL: float
+        Guassian process :math:`log(\omega_0)` from the SHO kernle. 
+    raL: float, optional
         Right ascension of the lens in decimal degrees.
-    decL: float
+    decL: float, optional
         Declination of the lens in decimal degrees.
 
+    Notes
+    ---------
+    .. note::
+       `raL` and `decL` are required parameters if calculating with parallax
     """
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
@@ -1655,16 +1783,16 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
     It is the same as PSPL_PhotAstromParam2 except it fits for baseline instead
     of source magnitude.
 
-    INPUTS:
-    ----------
+    Attributes
+    -----------
     t0: float
         Time of photometric peak, as seen from Earth (MJD.DDD)
 
     u0_amp: float
         Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. Can be
-          positive (u0_amp > 0 when u0_hat[0] > 0) or 
-          negative (u0_amp < 0 when u0_hat[0] < 0).
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
     tE: float
         Einstein crossing time (days).
     thetaE: float
@@ -1685,30 +1813,32 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
         Dec Source proper motion (mas/yr)
     b_sff: float
         The ratio of the source flux to the total (source + neighbors + lens)
-         b_sff = f_S / (f_S + f_L + f_N). This must be passed in as a list or
-         array, with one entry for each photometric filter.
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
     mag_base: float
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process log(\sigma) for the Matern 3/2 kernel. 
+        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel. 
     gp_rho: float
-        Guassian process \rho for the Matern 3/2 kernel.
+        Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process log(\omega_0^4 * S_0) from the SHO kernel.
+        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process log(\omega_0) from the SHO kernle.
+        Guassian process :math:`log(\omega_0)` from the SHO kernle.
 
-    Optional Inputs
-    ---------------
-    NOTE: Required if calculating with parallax
-    raL: float
+    raL: float, optional
         Right ascension of the lens in decimal degrees.
-    decL: float
+    decL: float, optional
         Declination of the lens in decimal degrees.
 
-    For an explanation of the Guassian process parameters, see Golovich et al. 2019
-    ()
+
+    Notes
+    ---------
+    .. note::
+       | `raL` and `decL` are required parameters if calculating with parallax
+       | For an explanation of the Guassian process parameters, see Golovich et al. 2019()
+
     """
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
@@ -1756,16 +1886,27 @@ class PSPL(object):
 
     def animate(self, tE, time_steps, frame_time, name, size, zoom,
                 astrometry):
-        """
+        """ Produces animation of microlensing event.
+
         This function takes the PSPL and makes an animation, the input variables are as follows
-        tE = number of einstein crossings times before/after the peak you want the animation to plot
-             e.g tE = 2 => graph will go from -2 tE to 2 tE
-        time_steps = number of time steps before/after peak, so total number of time steps will 
+	
+	Parameters
+	--------------
+
+        tE: 
+	    number of einstein crossings times before/after the peak you want the animation to plot
+            e.g tE = 2 => graph will go from -2 tE to 2 tE
+        time_steps:
+	    number of time steps before/after peak, so total number of time steps will 
             be 2 times this value
-        frame_time = times in ms of each frame in the animation
-        name = string, the animation will be saved as name.html
-        size = [horizontal, vertical] cm's
-        zoom = # of einstein radii plotted in vertical direction
+        frame_time:
+	    times in ms of each frame in the animation
+        name: string
+	    the animation will be saved as name.html
+        size: list
+	    [horizontal, vertical] cm's
+        zoom:
+            # of einstein radii plotted in vertical direction
         """
         times = np.array(range(-time_steps, time_steps + 1, 1))
         tau = tE * times / (-times[0])
@@ -2251,8 +2392,9 @@ class PSPL_GP(object):
 
     def get_photometry_with_gp(self, t_obs, mag_obs, mag_err_obs, filt_index=0, t_pred=None):
         """Returns photometry with GP noise added in. 
-
-        Note: This will throw an error if this is a filter with use_gp_phot[filt_index] = False.
+           
+        .. note:: 
+            This will throw an error if this is a filter with use_gp_phot[filt_index] = False.
         """
         if self.use_gp_phot[filt_index]:
             if t_pred is None:
@@ -2286,7 +2428,8 @@ class PSPL_GP(object):
     def get_log_det_covariance(self, t_obs, mag_obs, mag_err_obs, filt_index=0, t_pred=None):
         """Returns photometry with GP noise added in. 
 
-        Note: This will throw an error if this is a filter with use_gp_phot[filt_index] = False.
+        .. note::
+            This will throw an error if this is a filter with use_gp_phot[filt_index] = False.
         """
         if self.use_gp_phot[filt_index]:
             if t_pred is None:
@@ -2321,7 +2464,8 @@ class PSPL_GP(object):
         """
         Calculate the log-likelihood for the PSPL + GP model and photometric data.
 
-        Note: The GP will only be used for filters where use_gp_phot[filt_index] = True.
+        .. note:: 
+            The GP will only be used for filters where use_gp_phot[filt_index] = True.
         """
         if self.use_gp_phot[filt_index]:
             # Fix logQ following Golovich+20
@@ -2484,8 +2628,8 @@ class PSPL_noParallax(object):
         Returns
         --------
         [xS_plus, xS_minus] : list of numpy arrays
-            xS_plus is the vector position of the plus image in arcsec
-            xS_minus is the vector position of the plus image in arcsec
+            * xS_plus is the vector position of the plus image in arcsec
+            * xS_minus is the vector position of the plus image in arcsec
 
         """
         # Things we will need.
@@ -2682,8 +2826,8 @@ class PSPL_Parallax_old(object):
         Returns
         --------
         [xS_plus, xS_minus] : list of numpy arrays
-            xS_plus is the vector position of the plus image.
-            xS_minus is the vector position of the plus image.
+            * xS_plus is the vector position of the plus image.
+            * xS_minus is the vector position of the plus image.
 
         """
         # Things we will need.
@@ -2898,8 +3042,8 @@ class PSPL_Parallax(object):
         Returns
         --------
         [xS_plus, xS_minus] : list of numpy arrays
-            xS_plus is the vector position of the plus image.
-            xS_minus is the vector position of the plus image.
+            * xS_plus is the vector position of the plus image.
+            * xS_minus is the vector position of the plus image.
 
         """
         # Things we will need.
@@ -3061,20 +3205,21 @@ class PSBL(PSPL):
     be instantiated.
     """
     def get_amp_arr(self, z_arr, z1, z2):
-        """
-        Calculates the amplification A from the Jacobian J, A = 1/|J|
+        """Calculations amplification array
+
+        Calculates the amplification A from the Jacobian J, :math:`A = 1/|J|`
 
         Parameters
         ----------
         z_arr : array_like
-            Complex position of images. Shape = [N_times, N_solutions, 1]
-            -- note this could be jagged.
+            | Complex position of images. ``Shape = [N_times, N_solutions, 1]``
+            | -- note this could be jagged.
 
         z1 : array_like
-            Complex position(s) of lens 1 (primary). Shape = [N_times, 1]
+            Complex position(s) of lens 1 (primary). ``Shape = [N_times, 1]``
 
         z2 : array_like
-            Complex position(s) of lens 2 (secondary). Shape = [N_times, 1]
+            Complex position(s) of lens 2 (secondary). ``Shape = [N_times, 1]``
 
         Returns
         -------
@@ -3095,10 +3240,11 @@ class PSBL(PSPL):
 
 
     def get_image_pos_arr(self, w, z1, z2, check_sols=True):
-        """
-        Solve the fifth-order polynomial and get the image positions.
-        See PSBL writeup for full equations.
-        All angular distances are in arcsec.
+        """Gets image positions.
+
+        | Solve the fifth-order polynomial and get the image positions.
+        | See PSBL writeup for full equations.
+        | All angular distances are in arcsec.
 
         Parameters
         ----------
@@ -3222,8 +3368,7 @@ class PSBL(PSPL):
         return z_arr
 
     def get_all_arrays(self, t_obs):
-        '''
-        Obtain the image and amplitude arrays for each t_obs.
+        '''Obtain the image and amplitude arrays for each t_obs.
 
         Parameters
         ----------
@@ -3244,8 +3389,8 @@ class PSBL(PSPL):
         return images, amps
 
     def get_resolved_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
-        '''
-        Get the photometry for each of the lensed source images.
+        '''Get the photometry for each of the lensed source images.
+
         Implement with no blending (since we don't support different
         blendings for the different images).
 
@@ -3304,8 +3449,7 @@ class PSBL(PSPL):
         return mag_model
 
     def get_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
-        '''
-        Get the photometry for each of the lensed source images.
+        '''Get the photometry for each of the lensed source images.
 
         Parameters
         ----------
@@ -3316,7 +3460,7 @@ class PSBL(PSPL):
         ----------
         amp_arr : array_like
             Amplifications of each individual image at each time,
-            i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
+            i.e. ``amp_arr.shape = (len(t_obs)``, number of images at each t_obs).
 
             This will over-ride t_obs; but is more efficient when calculating
             both photometry and astrometry. If None, then just use t_obs.
@@ -3371,11 +3515,11 @@ class PSBL_Phot(PSBL, PSPL_Phot):
     astrometryFlag = False
 
     def get_complex_pos(self, t_obs):
-        """
-        Get the positions of the lenses and source as
-        complex numbers. This is needed for further calculations.
+        """Get the positions of the lenses and source as complex numbers. 
+
+        This is needed for further calculations.
         Note that all units are still the same as before, this
-        is just rewriting vectors z = (x,y) as z = x + iy.
+        is just rewriting vectors :math:`z = (x,y)` as :math:`z = x + iy`.
 
         Returns
         ----------
@@ -3425,12 +3569,16 @@ class PSBL_Phot(PSBL, PSPL_Phot):
 
     def get_resolved_lens_astrometry(self, t_obs):
         """Equation of motion for just the foreground lenses, individually.
-        Note, this is a photometry only model, so units are in Einstein radii.
-
-        Input
+        
+        Parameters
         ----------
         t_obs : array_like
             Time (in MJD).
+
+        Notes
+        -----
+        .. note::
+           Note, this is a photometry only model, so units are in Einstein radii.
         """
         # In phot only fits, lens is at rest. So just duplicate to get
         # the right shape.
@@ -3443,10 +3591,16 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         """Get the astrometry of the source if the lens didn't exist.
         Note, this is a photometry only model, so units are in Einstein radii.
 
-        Return
+        Returns
         -------
-        xS_unlensed : numpy array, dtype=float, shape = len(t_obs) x 2
+        xS_unlensed : numpy array, dtype=float, ``shape = len(t_obs) x 2``
             The unlensed positions of the source in Einstein radii.
+
+
+        Notes
+        -------
+        .. note::
+           Note, this is a photometry only model, so units are in Einstein radii.
         """
         # Calculate the position of the source w.r.t. lens (in Einstein radii)
         # Distance along muRel direction
@@ -4776,21 +4930,22 @@ class PSBL_GP_PhotAstromParam2(PSBL_PhotAstromParam2):
 # ==================================================
 class FSPL(PSPL):
     def get_source_outline_astrometry(self, r, n, center):
-        """
-        Return astrometric points that outline the outer circumference of the
-        source star. The outline is described as a circle of radius
-        self.radius and is evaluated at self.n_outline number of points. 
+        """Return astrometric points that outline the outer circumference of the
+        source star. 
+
+        | The outline is described as a circle of radius
+          self.radius and is evaluated at self.n_outline number of points. 
         
-        Return
-        ------
+        | takes in the radius of the circle, centre position and number of points we are 
+          approximating the circle by and returns a numpy array of positions
+            
+        | e.g: ``( ((1,0), (0,1), (-1,0), (0,-1)) )`` if n = 4 and radius = 1
+        
+        Returns
+        -------
         source_points : numpy array
-            Returns an array of shape = [2, self.n_outline, len(time)]
-        takes in the radius of the circle, centre position and number of points we are 
-        approximating the circle by
-        and returns a numpy array of positions
-            e.g:
-                ( ((1,0), (0,1), (-1,0), (0,-1)) )
-                if n = 4 and radius = 1
+            Returns an array of ``shape = [2, self.n_outline, len(time)]``
+
         """
         sourcepos = []
         for i in range(n):
@@ -4801,8 +4956,7 @@ class FSPL(PSPL):
 
     
 class FSPL_PhotAstrom(FSPL):
-    """
-    DO NOT USE... in progress
+    """DO NOT USE... in progress
     """
     def get_lens_astrometry(self, t):
         # returns the position of the lens in the sky at a list of times, t in units of einstein time
@@ -4816,13 +4970,13 @@ class FSPL_PhotAstrom(FSPL):
     # Analogous to get_all_arrays for PSBL
     # Do we want to rename/reorder to be consistent with PSBL or nah?
     def get_centroids(self, t, r):
-
-        """
-        Calculates the magnification at a list of times, t in units of einstein time.
-
-        Implements an algorithm where we can use green's theorem to change an area integral of the images/source
+        """Calculates the magnification at a list of times.
+        
+        | List of times t, are in units of einstein time.
+        | Implements an algorithm where we can use green's theorem to change an area integral of the images/source
         into a path integral around the outside.
-        We then do a contour plot and approximate this integral.
+        | We then do a contour plot and approximate this integral.
+
         """
         images = self.get_resolved_astrometry(t)
         plus = images[0]
@@ -4980,8 +5134,7 @@ class FSPL_PhotAstrom(FSPL):
 #         return mag_model
 
     def get_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
-        '''
-        Get the photometry for each of the lensed source images.
+        '''Get the photometry for each of the lensed source images.
 
         Parameters
         ----------
@@ -5157,8 +5310,10 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         Time of photometric peak, as seen from Earth (MJD.DDD)
     beta: float
         Angular distance between the lens and source on the plane of the sky (mas). Can be
-        positive (u0_amp > 0 when u0_hat[0] (East component) < 0) or 
-        negative (u0_amp < 0 when u0_hat[0] (East component) > 0).
+        
+        * positive (u0_amp > 0 when u0_hat[0] (East component) < 0) or 
+        * negative (u0_amp < 0 when u0_hat[0] (East component) > 0).
+        
     dL: float
         Distance from the observer to the lens (pc)
     dL_dS: float
@@ -5180,7 +5335,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         Projected radius of the star in arcsec on the sky plane.
     b_sff: float
         The ratio of the source flux to the total (source + neighbors + lens)
-        b_sff = f_S / (f_S + f_L + f_N). This must be passed in as a list or
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
         array, with one entry for each photometric filter.
     mag_src: float
         Photometric magnitude of the source. This must be passed in as a
@@ -5304,7 +5459,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     This is a Data-type class in our hierarchy. It is abstract and should not
     be instantiated. 
 
-    Class Variables
+    Attributes
     --------------------
     Available class variables that should be defined.
 
@@ -5314,8 +5469,10 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     u0_E
     u0_N
     beta
-    piE_E - valid only if parallax model
-    piE_N - valid only if parallax model
+    piE_E:
+        valid only if parallax model
+    piE_N:
+        valid only if parallax model
     piE_amp
     mL
     thetaE_amp
@@ -5342,8 +5499,10 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     b_sff[#]
     mag_src[#] -- add in
     mag_base[#] -- add in 
-    raL - if parallax model
-    decL - if parallax model
+    raL:
+        if parallax model
+    decL:
+        if parallax model
 
     """
     photometryFlag = True
@@ -5384,16 +5543,17 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
 #    def get_astrometry_unlensed(self, t, r): 
     def get_astrometry_unlensed(self, t): # r is not actually used anywhere I think
-        """
+        """ Outputs position of source unlensed.
+        
         Input a list of times and it will output the position of the source had it not been lensed at each of the
         times in the list
 
-        e.g if n = 4, and say v = [1,0] & the times are [0,1,2] in years.
-        This will return
-        ((( (1,0),(0,1),(-1,0),(0,-1) ), ( (2,0),(1,1),(0,0),(1,-1) ), ( (3,0),(2,1),(1,0),(2,-1) ))...
-        =       positions at t=0              positions at t=1                positions at t=2
+        | e.g if ``n = 4``, and say ``v = [1,0]`` & the times are ``[0,1,2]`` in years.
+        | This will return
+        | ``((( (1,0),(0,1),(-1,0),(0,-1) ), ( (2,0),(1,1),(0,0),(1,-1) ), ( (3,0),(2,1),(1,0),(2,-1) ))...``
+        | =  (positions at t=0), (positions at t=1), (positions at t=2)
 
-        so np.array(positions) is an array which contains an array for each time step with the positions of all the
+        so ``np.array(positions)`` is an array which contains an array for each time step with the positions of all the
         points on the boundary of the source.
         """
         t_yrs = (t - self.t0) / 365.5
@@ -5421,8 +5581,7 @@ class FSPL_Limb(FSPL):
                                 3 / 2) + self.utilde / 3)
 
     def get_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
-        '''
-        Get the photometry for each of the lensed source images.
+        '''Get the photometry for each of the lensed source images.
 
         Parameters
         ----------
@@ -6238,18 +6397,27 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
     """
     Calculate the closest approach vector direction. Define the beta sign convention
     as Andy Gould does with 
-        beta > 0 means u0_E > 0
-        u0_amp > 0 mean u0_E > 0 
+    
+        * beta > 0 means u0_E > 0
+        * u0_amp > 0 mean u0_E > 0 
 
-    See Gould 2004, pg 320, bottom right
-    u0 > 0 == lens passes to the right side of the source as seen from Earth
+    See `Gould 2004, pg 320, bottom right`
+    
+    u0 > 0 --> lens passes to the right side of the source as seen from Earth
+      
+    \vec thetaX0
+    
+    \vec{thetazX0}
+    
 
-    \vec{thetaX0} = \vec{xS0} - \vec{xL0} = \vec{u0} * thetaE
+    :math:`\vec{thetaX0} = \vec xS0 - \vec xL0 = \vec u0 * thetaE`
 
+    
+    
     which implies that:
 
-    u0_E > 0 for u0 > 0
-    u0_E < 0 for u0 < 0
+        * u0_E > 0 for u0 > 0
+        * u0_E < 0 for u0 < 0
 
     which is what we use.
 
@@ -6275,9 +6443,9 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
 @cache_memory.cache()
 def parallax_in_direction(RA, Dec, mjd):
     """
-    R.A. in degrees. (J2000)
-    Dec. in degrees. (J2000)
-    MJD
+    | R.A. in degrees. (J2000)
+    | Dec. in degrees. (J2000)
+    | MJD
     
     Equations following MulensModel.
     """
@@ -6401,69 +6569,72 @@ def parallax_in_direction_old(RA, Dec, mjd, Res_fix=True, use_ephem=False):
 
 def sun_position(mjd, radians=False):
     """
-    ;+
-    ; NAME:
-    ;       SUNPOS
-    ; PURPOSE:
-    ;       To compute the RA and Dec of the Sun at a given date.
-    ;
-    ; INPUTS:
-    ;       mjd    - The modified Julian date of the day (and time), scalar or vector
-    ;
-    ; OUTPUTS:
-    ;       ra    - The right ascension of the sun at that date in DEGREES
-    ;               double precision, same number of elements as jd
-    ;       dec   - The declination of the sun at that date in DEGREES
-    ;       elong - Ecliptic longitude of the sun at that date in DEGREES.
-    ;       obliquity - the obliquity of the ecliptic, in DEGREES
-    ;
-    ; OPTIONAL INPUT KEYWORD:
-    ;       RADIAN [def=False] - If this keyword is set to True, then all output variables
-    ;               are given in Radians rather than Degrees
-    ;
-    ; NOTES:
-    ;       Patrick Wallace (Rutherford Appleton Laboratory, UK) has tested the
-    ;       accuracy of a C adaptation of the sunpos.pro code and found the
-    ;       following results.   From 1900-2100 SUNPOS  gave 7.3 arcsec maximum
-    ;       error, 2.6 arcsec RMS.  Over the shorter interval 1950-2050 the figures
-    ;       were 6.4 arcsec max, 2.2 arcsec RMS.
-    ;
-    ;       The returned RA and Dec are in the given date's equinox.
-    ;
-    ;       Procedure was extensively revised in May 1996, and the new calling
-    ;       sequence is incompatible with the old one.
-    ; METHOD:
-    ;       Uses a truncated version of Newcomb's Sun.    Adapted from the IDL
-    ;       routine SUN_POS by CD Pike, which was adapted from a FORTRAN routine
-    ;       by B. Emerson (RGO).
-    ; EXAMPLE:
-    ;       (1) Find the apparent RA and Dec of the Sun on May 1, 1982
-    ;
-    ;       IDL> jdcnv, 1982, 5, 1,0 ,jd      ;Find Julian date jd = 2445090.5
-    ;       IDL> sunpos, jd, ra, dec
-    ;       IDL> print,adstring(ra,dec,2)
-    ;                02 31 32.61  +14 54 34.9
-    ;
-    ;       The Astronomical Almanac gives 02 31 32.58 +14 54 34.9 so the error
-    ;               in SUNPOS for this case is < 0.5".
-    ;
-    ;       (2) Find the apparent RA and Dec of the Sun for every day in 1997
-    ;
-    ;       IDL> jdcnv, 1997,1,1,0, jd                ;Julian date on Jan 1, 1997
-    ;       IDL> sunpos, jd+ dindgen(365), ra, dec    ;RA and Dec for each day
-    ;
-    ; MODIFICATION HISTORY:
-    ;       Written by Michael R. Greason, STX, 28 October 1988.
-    ;       Accept vector arguments, W. Landsman     April,1989
-    ;       Eliminated negative right ascensions.  MRG, Hughes STX, 6 May 1992.
-    ;       Rewritten using the 1993 Almanac.  Keywords added.  MRG, HSTX,
-    ;               10 February 1994.
-    ;       Major rewrite, improved accuracy, always return values in degrees
-    ;       W. Landsman  May, 1996
-    ;       Added /RADIAN keyword,    W. Landsman       August, 1997
-    ;       Converted to IDL V5.0   W. Landsman   September 1997
-    ;       Converted to python     J. R. Lu    August 2016
-    ;-
+
+    NAME:
+          SUNPOS
+          
+    PURPOSE:
+          To compute the RA and Dec of the Sun at a given date.
+          
+    INPUTS:
+          mjd    - The modified Julian date of the day (and time), scalar or vector
+
+    OUTPUTS:
+          ra:
+              | The right ascension of the sun at that date in DEGREES
+              | double precision, same number of elements as jd
+          dec:
+              The declination of the sun at that date in DEGREES
+          elong:
+              Ecliptic longitude of the sun at that date in DEGREES.
+          obliquity:
+              the obliquity of the ecliptic, in DEGREES
+
+    OPTIONAL INPUT KEYWORD:
+          RADIAN [def=False] - If this keyword is set to True, then all output variables
+          are given in Radians rather than Degrees
+
+    NOTES:
+          Patrick Wallace (Rutherford Appleton Laboratory, UK) has tested the
+          accuracy of a C adaptation of the sunpos.pro code and found the
+          following results.   From 1900-2100 SUNPOS  gave 7.3 arcsec maximum
+          error, 2.6 arcsec RMS.  Over the shorter interval 1950-2050 the figures
+          were 6.4 arcsec max, 2.2 arcsec RMS.
+
+          The returned RA and Dec are in the given date's equinox.
+
+          Procedure was extensively revised in May 1996, and the new calling
+          sequence is incompatible with the old one.
+    METHOD:
+          Uses a truncated version of Newcomb's Sun.    Adapted from the IDL
+          routine SUN_POS by CD Pike, which was adapted from a FORTRAN routine
+          by B. Emerson (RGO).
+    EXAMPLE:
+          (1) Find the apparent RA and Dec of the Sun on May 1, 1982
+
+          | IDL> jdcnv, 1982, 5, 1,0 ,jd      ;Find Julian date jd = 2445090.5
+          | IDL> sunpos, jd, ra, dec
+          | IDL> print,adstring(ra,dec,2) 
+          | 02 31 32.61  +14 54 34.9
+
+          The Astronomical Almanac gives 02 31 32.58 +14 54 34.9 so the error
+          in SUNPOS for this case is < 0.5".
+
+          (2) Find the apparent RA and Dec of the Sun for every day in 1997
+
+          | IDL> jdcnv, 1997,1,1,0, jd                ;Julian date on Jan 1, 1997
+          | IDL> sunpos, jd+ dindgen(365), ra, dec    ;RA and Dec for each day
+
+    MODIFICATION HISTORY:
+    
+          * Written by Michael R. Greason, STX, 28 October 1988.
+          * Accept vector arguments, W. Landsman -     April,1989
+          * Eliminated negative right ascensions - MRG, Hughes STX, 6 May 1992.
+          * Rewritten using the 1993 Almanac.  Keywords added.  MRG, HSTX, 10 February 1994.
+          * Major rewrite, improved accuracy, always return values in degrees - W. Landsman May, 1996
+          * Added /RADIAN keyword; W. Landsman; August, 1997
+          * Converted to IDL V5.0; W. Landsman; September 1997
+          * Converted to python; J. R. Lu; August 2016
     """
     #  form time in Julian centuries from 1900.0
     t_obj = Time(mjd, format='mjd')
@@ -6755,11 +6926,18 @@ def oned_y_int(centre, function1, function2, ymax, ymin, n, x, middle,
 
 
 def get_image(y0, m1, d, R):
-    """ Function to find the images of the star given the input parameters:
-            y0 = position of the cente of the source star, in units of anguler Einstein radius
-            m1 = Mass of rightmost lens divided by the total mass
-            d = separation of the lenses in angular Einstein radii
-            R = angular radius of the source in angular Einstein radii
+    """ Function to find the images of the star
+    
+    Parameters
+    -----------
+    y0:
+        position of the cente of the source star, in units of anguler Einstein radius
+    m1:
+        Mass of rightmost lens divided by the total mass
+    d:
+        separation of the lenses in angular Einstein radii
+    R:
+        angular radius of the source in angular Einstein radii
     """
     # print("y0 = (%f, %f), m1 = %f, d = %f\n" %(y0[0],y0[1],m1,d))
     """ These 2 arrays give make up of the contour grid at each step of the iteration

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model.py &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" type="text/css" />
+      <link rel="stylesheet" href="_static/katex-math.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/contrib/auto-render.min.js"></script>
+        <script src="_static/katex_autorenderer.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="POINT SOURCE POINT LENS (PSPL) CLASSES" href="PSPL.html" />
+    <link rel="prev" title="BAGLE TUTORIAL" href="intro.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> BAGLE
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Model.py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#class-families">Class Families</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-class-family">Data Class Family</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallax-class-family">Parallax Class Family</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameterization-class-family">Parameterization Class Family</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#making-a-new-model">Making a New Model</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BAGLE</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Model.py</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/model3.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="module-model">
+<span id="model-py"></span><h1>Model.py<a class="headerlink" href="#module-model" title="Permalink to this headline"></a></h1>
+<p>This set of classes and functions allows the user to construct microlensing
+models built up from a menu of different features. Each model is built using
+the inheritance of multiple classes, each from a different ‘family’ of
+related classes.</p>
+<dl>
+<dt>Each microlensing model must contain:</dt><dd><ol class="arabic">
+<li><p>A class from the Data Class Family:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>PSPL</cite> – base class for all Data classes:</p>
+<ul>
+<li><p><cite>PSPL_Phot</cite></p></li>
+<li><p><cite>PSPL_PhotAstrom</cite></p></li>
+<li><p><cite>PSPL_GP_Phot</cite></p></li>
+<li><p><cite>PSPL_GP_PhotAstrom</cite></p></li>
+</ul>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>A class from the Parallax Class Family:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>PSPL_noParallax</cite></p></li>
+<li><p><cite>PSPL_Parallax</cite></p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>A class from the GP Class Family: (optional)</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>PSPL_GP</cite></p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>A class from the Parametrization Class Family:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>PSPL_Param</cite> – abstract base class for all Param classes</p>
+<ul>
+<li><p><cite>PSPL_PhotParam1</cite></p></li>
+<li><p><cite>PSPL_PhotParam2</cite></p></li>
+<li><p><cite>PSPL_PhotAstromParam1</cite></p></li>
+<li><p><cite>PSPL_PhotAstromParam2</cite></p></li>
+<li><p><cite>PSPL_PhotAstromParam3</cite></p></li>
+<li><p><cite>PSPL_GP_PhotParam1</cite></p></li>
+<li><p><cite>PSPL_GP_PhotParam2</cite></p></li>
+<li><p><cite>PSPL_GP_PhotAstromParam1</cite></p></li>
+<li><p><cite>PSPL_GP_PhotAstromParam2</cite></p></li>
+<li><p><cite>PSPL_GP_PhotAstromParam3</cite></p></li>
+</ul>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ol>
+</dd>
+<dt>There is a parallax hierarchy for PSBL:</dt><dd><ol class="arabic">
+<li><p>A class from the Data Class Family:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>PSBL</cite> – base class for all Data classes:</p>
+<ul>
+<li><p><cite>PSBL_Phot</cite></p></li>
+<li><p><cite>PSBL_PhotAstrom</cite></p></li>
+</ul>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>A class from the Parallax Class Family:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>PSBL_noParallax</cite></p></li>
+<li><p><cite>PSBL_Parallax</cite></p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>A class from the Parametrization Class Family:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>PSBL_PhotParam1</cite></p></li>
+<li><p><cite>PSBL_PhotAstromParam1</cite></p></li>
+<li><p><cite>PSBL_PhotAstromParam2</cite></p></li>
+<li><p><cite>PSBL_PhotAstromParam3</cite></p></li>
+</ul>
+</div></blockquote>
+</li>
+</ol>
+</dd>
+</dl>
+<p>Several pre-built models are included in this file.</p>
+<p>For example, the <cite>PSPL_PhotAstrom_noPar_Param1</cite> model is declared as:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">class</span> <span class="pre">PSPL_PhotAstrom_noPar_Param1(PSPL_PhotAstrom,</span> <span class="pre">PSPL_noParallax,</span> <span class="pre">PSPL_PhotAstromParam1)</span></code></p>
+</div></blockquote>
+<p>The words in the models name, and the classes used to declare it, tell us
+what features the model contains. In this example, we can see that the model’s
+name contains the words <cite>PhotAstrom</cite>, <cite>noPar</cite>, and <cite>Param1</cite>. From these words,
+we know that this model (1) uses both photometry and astrometry data, (2) does
+not include parallax in the model, and (3) uses the first
+photometry / astrometry parameterization for declaring the model.</p>
+<div class="section" id="class-families">
+<h2>Class Families<a class="headerlink" href="#class-families" title="Permalink to this headline"></a></h2>
+<div class="section" id="data-class-family">
+<h3>Data Class Family<a class="headerlink" href="#data-class-family" title="Permalink to this headline"></a></h3>
+<p>These classes inform the model of what type of data will be used by the model.
+If the model will be for photometry only, then a model with the <cite>PSPL_Phot</cite>
+class must be selected. These models have the words <cite>Phot</cite> in their names.
+If the model will be using photometry and astrometry data, then a model with
+the <cite>PSPL_PhotAstrom</cite> must be selected. These models have the words
+<cite>PhotAstrom</cite> in their names.</p>
+<p>Data containing astrometry will generate a warning that astrometry data will
+not be used in the model when run through a model using <cite>PSPL_Phot</cite>. Data that
+does not contain astrometry run through a model using <cite>PSPL_PhotAstrom</cite> will
+generate a RuntimeError.</p>
+</div>
+<div class="section" id="parallax-class-family">
+<h3>Parallax Class Family<a class="headerlink" href="#parallax-class-family" title="Permalink to this headline"></a></h3>
+<p>These classes set whether the model uses parallax when calculating
+photometry, calculating astrometry, and fitting data. There are only two
+options for this class family, <cite>PSPL_noParallax</cite> and <cite>PSPL_Parallax</cite>. Models
+that do not have parallax have the words <cite>noPar</cite> in their names, while models
+that do contain parallax have the words <cite>Par</cite> in their names.</p>
+</div>
+<div class="section" id="parameterization-class-family">
+<h3>Parameterization Class Family<a class="headerlink" href="#parameterization-class-family" title="Permalink to this headline"></a></h3>
+<p>These classes determine which physical parameters define the model. Currently
+this file supports one parameterization when using only photometry (<cite>Phot</cite>)
+and three parametrizations when using photometry and astrometery
+(<cite>PhotAstrom</cite>).</p>
+<dl>
+<dt>The parameters for each parameterization are:</dt><dd><dl>
+<dt>PhotParam1 :</dt><dd><p>Point source point lens model for microlensing photometry only.
+This model includes the relative proper motion between the lens
+and the source. Parameters are reduced with the use of piRel</p>
+<dl>
+<dt><cite>Parameters</cite>: </dt><dd><div class="line-block">
+<div class="line">t0, u0_amp, tE, </div>
+<div class="line">piE_E, piE_N, </div>
+<div class="line">b_sff, mag_src,</div>
+<div class="line">(ra, dec)</div>
+</div>
+</dd>
+</dl>
+</dd>
+<dt>PhotAstromParam1 :</dt><dd><p>Point Source Point Lens model for microlensing. This model includes
+proper motions of both the lens and source.</p>
+<dl>
+<dt><cite>Parameters</cite>:</dt><dd><div class="line-block">
+<div class="line">mL, t0, beta, </div>
+<div class="line">dL, dL_dS, </div>
+<div class="line">xS0_E, xS0_N,</div>
+<div class="line">muL_E, muL_N, </div>
+<div class="line">muS_E, muS_N,</div>
+<div class="line">b_sff, mag_src,</div>
+<div class="line">(ra, dec)</div>
+</div>
+</dd>
+</dl>
+</dd>
+<dt>PhotAstromParam2 :</dt><dd><p>Point Source Point Lens model for microlensing. This model includes
+proper motions of the source and the source position on the sky.</p>
+<dl>
+<dt><cite>Parameters</cite>: </dt><dd><div class="line-block">
+<div class="line">t0, u0_amp, tE, thetaE, piS,</div>
+<div class="line">piE_E, piE_N,</div>
+<div class="line">xS0_E, xS0_N,</div>
+<div class="line">muS_E, muS_N,</div>
+<div class="line">b_sff, mag_src,</div>
+<div class="line">(ra, dec)</div>
+</div>
+</dd>
+</dl>
+</dd>
+<dt>PhotAstromParam3 :</dt><dd><p>Point Source Point Lens model for microlensing. This model includes
+proper motions of the source and the source position on the sky.
+Note it fits the baseline magnitude rather than the unmagnified source 
+brightness.</p>
+<dl>
+<dt><cite>Parameters</cite>: </dt><dd><div class="line-block">
+<div class="line">t0, u0_amp, tE, log10_thetaE, piS,</div>
+<div class="line">piE_E, piE_N,</div>
+<div class="line">xS0_E, xS0_N,</div>
+<div class="line">muS_E, muS_N,</div>
+<div class="line">b_sff, mag_base,</div>
+<div class="line">(ra, dec)</div>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+<p><cite>(ra, dec)</cite> are only required if the model is created with a parallax class.
+More details about each parameterization can be found in the Parameterization
+Class docstring.</p>
+</div>
+<div class="section" id="making-a-new-model">
+<h3>Making a New Model<a class="headerlink" href="#making-a-new-model" title="Permalink to this headline"></a></h3>
+<p>Each model is, as described above, constructed by combining inheriting from
+different parent classes that contain the desired features for the model. Each
+model must have one class from each class family. In addition to this, there
+are several rules that must be followed when creating a new class.</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p>The data class must match the parameterization class. For example,
+if the chosen data class is <cite>PSPL_Phot</cite>, then the parameter class
+must be <cite>PSPL_PhotParam1</cite> (or a different PhotParam in a future
+version). If the data class is <cite>PSPL_PhotAstrom</cite>, then the parameter
+class must be one of the classes with a PhotAstromParam.</p></li>
+<li><p>Models are built using python’s multiple inheritance feature. Therefore
+the order in which the parent classes are listed in the model class’
+definition matters. Parent classes to models should always be listed
+in the order:</p>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>Data Class</p></li>
+<li><p>Parallax Class</p></li>
+<li><p>Parameterization Class</p></li>
+</ol>
+</div></blockquote>
+<p>If using the optional GP class, then the order is</p>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>GP Class</p></li>
+<li><p>Data Class</p></li>
+<li><p>Parallax Class</p></li>
+<li><p>Parameterization Class</p></li>
+</ol>
+</div></blockquote>
+</li>
+<li><p>Each class must be given the <cite>&#64;inheritdocstring</cite> decorator, and include
+the following commands in the model’s <code class="docutils literal notranslate"><span class="pre">__init__</span></code>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">a.super().__init__(*args,</span> <span class="pre">**kwargs)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">startbases(self)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">checkconflicts(self)</span></code></p></li>
+</ul>
+</div></blockquote>
+<p>Each of these performs the following function:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">super().__init__(*args,</span> <span class="pre">**kwargs)</span></code>: Inherits the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> from the Parameterization Class.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">startbases(self)</span></code>: Runs a <cite>start</cite> command on each parent class, giving each parent class a chance to run a set of functions upon instantiation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">checkconflicts(self)</span></code>: Checks to confirm that the combination of parent classes in the model are valid.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>Models should be named to reflect the parents classes used to construct
+it, as outlined in the above sections.</p></li>
+</ol>
+</div></blockquote>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="intro.html" class="btn btn-neutral float-left" title="BAGLE TUTORIAL" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="PSPL.html" class="btn btn-neutral float-right" title="POINT SOURCE POINT LENS (PSPL) CLASSES" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Niranjan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

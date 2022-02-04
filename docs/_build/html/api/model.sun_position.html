@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sun_position &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/katex-math.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/contrib/auto-render.min.js"></script>
+        <script src="../_static/katex_autorenderer.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> BAGLE
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">BAGLE</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>sun_position</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/model.sun_position.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="sun-position">
+<h1>sun_position<a class="headerlink" href="#sun-position" title="Permalink to this headline"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="model.sun_position">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">sun_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mjd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radians</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.sun_position" title="Permalink to this definition"></a></dt>
+<dd><dl>
+<dt>NAME:</dt><dd><p>SUNPOS</p>
+</dd>
+<dt>PURPOSE:</dt><dd><p>To compute the RA and Dec of the Sun at a given date.</p>
+</dd>
+<dt>INPUTS:</dt><dd><p>mjd    - The modified Julian date of the day (and time), scalar or vector</p>
+</dd>
+<dt>OUTPUTS:</dt><dd><dl>
+<dt>ra:</dt><dd><div class="line-block">
+<div class="line">The right ascension of the sun at that date in DEGREES</div>
+<div class="line">double precision, same number of elements as jd</div>
+</div>
+</dd>
+<dt>dec:</dt><dd><p>The declination of the sun at that date in DEGREES</p>
+</dd>
+<dt>elong:</dt><dd><p>Ecliptic longitude of the sun at that date in DEGREES.</p>
+</dd>
+<dt>obliquity:</dt><dd><p>the obliquity of the ecliptic, in DEGREES</p>
+</dd>
+</dl>
+</dd>
+<dt>OPTIONAL INPUT KEYWORD:</dt><dd><p>RADIAN [def=False] - If this keyword is set to True, then all output variables
+are given in Radians rather than Degrees</p>
+</dd>
+<dt>NOTES:</dt><dd><p>Patrick Wallace (Rutherford Appleton Laboratory, UK) has tested the
+accuracy of a C adaptation of the sunpos.pro code and found the
+following results.   From 1900-2100 SUNPOS  gave 7.3 arcsec maximum
+error, 2.6 arcsec RMS.  Over the shorter interval 1950-2050 the figures
+were 6.4 arcsec max, 2.2 arcsec RMS.</p>
+<p>The returned RA and Dec are in the given date’s equinox.</p>
+<p>Procedure was extensively revised in May 1996, and the new calling
+sequence is incompatible with the old one.</p>
+</dd>
+<dt>METHOD:</dt><dd><p>Uses a truncated version of Newcomb’s Sun.    Adapted from the IDL
+routine SUN_POS by CD Pike, which was adapted from a FORTRAN routine
+by B. Emerson (RGO).</p>
+</dd>
+<dt>EXAMPLE:</dt><dd><ol class="arabic simple">
+<li><p>Find the apparent RA and Dec of the Sun on May 1, 1982</p></li>
+</ol>
+<div class="line-block">
+<div class="line">IDL&gt; jdcnv, 1982, 5, 1,0 ,jd      ;Find Julian date jd = 2445090.5</div>
+<div class="line">IDL&gt; sunpos, jd, ra, dec</div>
+<div class="line">IDL&gt; print,adstring(ra,dec,2) </div>
+<div class="line">02 31 32.61  +14 54 34.9</div>
+</div>
+<p>The Astronomical Almanac gives 02 31 32.58 +14 54 34.9 so the error
+in SUNPOS for this case is &lt; 0.5”.</p>
+<ol class="arabic simple" start="2">
+<li><p>Find the apparent RA and Dec of the Sun for every day in 1997</p></li>
+</ol>
+<div class="line-block">
+<div class="line">IDL&gt; jdcnv, 1997,1,1,0, jd                ;Julian date on Jan 1, 1997</div>
+<div class="line">IDL&gt; sunpos, jd+ dindgen(365), ra, dec    ;RA and Dec for each day</div>
+</div>
+</dd>
+</dl>
+<p>MODIFICATION HISTORY:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Written by Michael R. Greason, STX, 28 October 1988.</p></li>
+<li><p>Accept vector arguments, W. Landsman -     April,1989</p></li>
+<li><p>Eliminated negative right ascensions - MRG, Hughes STX, 6 May 1992.</p></li>
+<li><p>Rewritten using the 1993 Almanac.  Keywords added.  MRG, HSTX, 10 February 1994.</p></li>
+<li><p>Major rewrite, improved accuracy, always return values in degrees - W. Landsman May, 1996</p></li>
+<li><p>Added /RADIAN keyword; W. Landsman; August, 1997</p></li>
+<li><p>Converted to IDL V5.0; W. Landsman; September 1997</p></li>
+<li><p>Converted to python; J. R. Lu; August 2016</p></li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Niranjan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

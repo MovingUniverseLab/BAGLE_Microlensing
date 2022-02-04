@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parameterization Class Family &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" type="text/css" />
+      <link rel="stylesheet" href="_static/katex-math.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/contrib/auto-render.min.js"></script>
+        <script src="_static/katex_autorenderer.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Data Class Family" href="PSPL_Data.html" />
+    <link rel="prev" title="POINT SOURCE POINT LENS (PSPL) CLASSES" href="PSPL.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> BAGLE
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model3.html">Model.py</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Parameterization Class Family</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pspl-models">PSPL Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gp-models">GP Models</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="PSPL_Data.html">Data Class Family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PSPL_GP.html">GP Class Family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PSPL_Parallax.html">Parallax Class Family</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BAGLE</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a> &raquo;</li>
+      <li>Parameterization Class Family</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/PSPL_Param.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="parameterization-class-family">
+<h1>Parameterization Class Family<a class="headerlink" href="#parameterization-class-family" title="Permalink to this headline"></a></h1>
+digraph inheritanceb6ac981e05 {
+bgcolor=transparent;
+rankdir=TB;
+size=&quot;&quot;;
+  &quot;model.PSPL_GP_PhotAstromParam4&quot; [URL=&quot;api/model.PSPL_GP_PhotAstromParam4.html#model.PSPL_GP_PhotAstromParam4&quot;,fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,target=&quot;_top&quot;,tooltip=&quot;Point Source Point Lens with GP model for microlensing. This model includes&quot;];
+  &quot;model.PSPL_PhotAstromParam4&quot; -&gt; &quot;model.PSPL_GP_PhotAstromParam4&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;model.PSPL_Param&quot; [URL=&quot;api/model.PSPL_Param.html#model.PSPL_Param&quot;,fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,target=&quot;_top&quot;,tooltip=&quot;An abstract class that all Param classes should sub-class.&quot;];
+  &quot;model.PSPL_PhotAstromParam4&quot; [URL=&quot;api/model.PSPL_PhotAstromParam4.html#model.PSPL_PhotAstromParam4&quot;,fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,target=&quot;_top&quot;,tooltip=&quot;DESCRIPTION:&quot;];
+  &quot;model.PSPL_Param&quot; -&gt; &quot;model.PSPL_PhotAstromParam4&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+}
+<div class="section" id="pspl-models">
+<h2>PSPL Models<a class="headerlink" href="#pspl-models" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_Param">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_Param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Param" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An abstract class that all Param classes should sub-class.
+This serves as a reminder for the class variables that
+MUST be set.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_AstromParam4">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_AstromParam4</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_AstromParam4" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>Point Source Point Lens model for microlensing. This model includes
+proper motions of the source and the source position on the sky.
+It is the same as PSPL_PhotAstromParam2 except it fits for baseline instead
+of source magnitude.</p>
+<p class="rubric">Notes</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Required parameters if calculating with parallax</p>
+<ul class="simple">
+<li><p>raL: Right ascension of the lens in decimal degrees.</p></li>
+<li><p>decL: Declination of the lens in decimal degrees.</p></li>
+</ul>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl>
+<dt><strong>t0: float</strong></dt><dd><p>Time of photometric peak, as seen from Earth (MJD.DDD)</p>
+</dd>
+<dt><strong>u0_amp: float</strong></dt><dd><p>Angular distance between the lens and source on the 
+plane of the sky at closest approach in units of thetaE. Can be</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>positive (u0_amp &gt; 0 when u0_hat[0] &gt; 0) or</p></li>
+<li><p>negative (u0_amp &lt; 0 when u0_hat[0] &lt; 0).</p></li>
+</ul>
+</div></blockquote>
+</dd>
+<dt><strong>tE: float</strong></dt><dd><p>Einstein crossing time (days).</p>
+</dd>
+<dt><strong>thetaE: float</strong></dt><dd><p>The size of the Einstein radius in (mas).</p>
+</dd>
+<dt><strong>piS: float</strong></dt><dd><p>Amplitude of the parallax (1AU/dS) of the source. (mas)</p>
+</dd>
+<dt><strong>piE_E: float</strong></dt><dd><p>The microlensing parallax in the East direction in units of thetaE</p>
+</dd>
+<dt><strong>piE_N: float</strong></dt><dd><p>The microlensing parallax in the North direction in units of thetaE</p>
+</dd>
+<dt><strong>xS0_E: float</strong></dt><dd><p>RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>xS0_N: float</strong></dt><dd><p>Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>muS_E: float</strong></dt><dd><p>RA Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>muS_N: float</strong></dt><dd><p>Dec Source proper motion (mas/yr)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_AstromParam3">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_AstromParam3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log10_thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_AstromParam3" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>DESCRIPTION:
+Point Source Point Lens model for microlensing. This model includes
+proper motions of the source and the source position on the sky.
+It is the same as PSPL_PhotAstromParam3 except it fits only astrometry, no
+photometry.</p>
+<p class="rubric">Notes</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Required parameters if calculating with parallax</p>
+<ul class="simple">
+<li><p>raL: Right ascension of the lens in decimal degrees.</p></li>
+<li><p>decL: Declination of the lens in decimal degrees.</p></li>
+</ul>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl>
+<dt><strong>t0: float</strong></dt><dd><p>Time of photometric peak, as seen from Earth (MJD.DDD)</p>
+</dd>
+<dt><strong>u0_amp: float</strong></dt><dd><p>Angular distance between the lens and source on the 
+plane of the sky at closest approach in units of thetaE. Can be</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>positive (u0_amp &gt; 0 when u0_hat[0] &gt; 0) or</p></li>
+<li><p>negative (u0_amp &lt; 0 when u0_hat[0] &lt; 0).</p></li>
+</ul>
+</div></blockquote>
+</dd>
+<dt><strong>tE: float</strong></dt><dd><p>Einstein crossing time (days).</p>
+</dd>
+<dt><strong>log10_thetaE: float</strong></dt><dd><p>The log of the Einstein radius log10(thetaE/mas).</p>
+</dd>
+<dt><strong>piS: float</strong></dt><dd><p>Amplitude of the parallax (1AU/dS) of the source. (mas)</p>
+</dd>
+<dt><strong>piE_E: float</strong></dt><dd><p>The microlensing parallax in the East direction in units of thetaE</p>
+</dd>
+<dt><strong>piE_N: float</strong></dt><dd><p>The microlensing parallax in the North direction in units of thetaE</p>
+</dd>
+<dt><strong>xS0_E: float</strong></dt><dd><p>RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>xS0_N: float</strong></dt><dd><p>Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>muS_E: float</strong></dt><dd><p>RA Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>muS_N: float</strong></dt><dd><p>Dec Source proper motion (mas/yr)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotParam1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotParam1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotParam1" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>PSPL model for photometry only.</p>
+<p>Point source point lens model for microlensing photometry only.
+This model includes the relative proper motion between the lens
+and the source. Parameters are reduced with the use of piRel
+(rather than dL and dS) and muRel (rather than muL and muS).</p>
+<p>Note the attributes, RA (raL) and Dec (decL) are required 
+if you are calculating a model with parallax.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>t0: float</strong></dt><dd><p>Time of photometric peak, as seen from Earth (MJD.DDD)</p>
+</dd>
+<dt><strong>u0_amp: float</strong></dt><dd><p>Angular distance between the lens and source on the plane of the
+sky at closest approach in units of thetaE. It can be
+positive (u0_amp &gt; 0 when u0_hat[0] &gt; 0) or 
+negative (u0_amp &lt; 0 when u0_hat[0] &lt; 0).</p>
+</dd>
+<dt><strong>tE: float</strong></dt><dd><p>Einstein crossing time in days.</p>
+</dd>
+<dt><strong>piE_E: float</strong></dt><dd><p>The microlensing parallax in the East direction in units of thetaE.</p>
+</dd>
+<dt><strong>piE_N: float</strong></dt><dd><p>The microlensing parallax in the North direction in units of thetaE</p>
+</dd>
+<dt><strong>b_sff: numpy array or list</strong></dt><dd><p>The ratio of the source flux to the total (source + neighbors + lens)
+<span class="math">\(b_sff = f_S / (f_S + f_L + f_N)\)</span>. This must be passed in as a list or
+array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>mag_src: numpy array or list</strong></dt><dd><p>Photometric magnitude of the source. This must be passed in as a
+list or array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>raL: float, optional</strong></dt><dd><p>Right ascension of the lens in decimal degrees.</p>
+</dd>
+<dt><strong>decL: float, optional</strong></dt><dd><p>Declination of the lens in decimal degrees.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotParam2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotParam2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotParam2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>DESCRIPTION:
+Point source point lens model for microlensing photometry only.
+This model includes the relative proper motion between the lens
+and the source. Parameters are reduced with the use of piRel
+(rather than dL and dS) and muRel (rather than muL and muS).
+Same as PSPL_PhotParam1, except fits for mag_base instead of 
+mag_src.</p>
+<p class="rubric">Notes</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Required parameters if calculating with parallax</p>
+<ul class="simple">
+<li><p>raL: Right ascension of the lens in decimal degrees.</p></li>
+<li><p>decL: Declination of the lens in decimal degrees.</p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>t0: float</strong></dt><dd><p>Time of photometric peak, as seen from Earth (MJD.DDD)</p>
+</dd>
+<dt><strong>u0_amp: float</strong></dt><dd><p>Angular distance between the lens and source on the plane of the
+sky at closest approach in units of thetaE. It can be
+positive (u0_amp &gt; 0 when u0_hat[0] &gt; 0) or 
+negative (u0_amp &lt; 0 when u0_hat[0] &lt; 0).</p>
+</dd>
+<dt><strong>tE: float</strong></dt><dd><p>Einstein crossing time in days.</p>
+</dd>
+<dt><strong>piE_E: float</strong></dt><dd><p>The microlensing parallax in the East direction in units of thetaE.</p>
+</dd>
+<dt><strong>piE_N: float</strong></dt><dd><p>The microlensing parallax in the North direction in units of thetaE</p>
+</dd>
+<dt><strong>b_sff: numpy array or list</strong></dt><dd><p>The ratio of the source flux to the total (source + neighbors + lens)
+<span class="math">\(b_sff = f_S / (f_S + f_L + f_N)\)</span>. This must be passed in as a list or
+array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>mag_base: numpy array or list</strong></dt><dd><p>Photometric magnitude of the base. This must be passed in as a
+list or array, with one entry for each photometric filter.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotAstromParam1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotAstromParam1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL_dS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam1" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>PSPL model for astrometry and photometry - physical parameterization.</p>
+<p>A Point Source Point Lens model for microlensing. This model uses a 
+parameterization that depends on only physical quantities such as the 
+lens mass and positions and proper motions of both the lens and source.</p>
+<p>Note the attributes, RA (raL) and Dec (decL) are required 
+if you are calculating a model with parallax.</p>
+<dl class="field-list">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl>
+<dt><strong>mL: float</strong></dt><dd><p>Mass of the lens (Msun)</p>
+</dd>
+<dt><strong>t0: float</strong></dt><dd><p>Time of photometric peak, as seen from Earth (MJD.DDD)</p>
+</dd>
+<dt><strong>beta: float</strong></dt><dd><p>Angular distance between the lens and source on the plane of the sky (mas). Can be</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>positive (u0_amp &gt; 0 when u0_hat[0] &lt; 0) or</p></li>
+<li><p>negative (u0_amp &lt; 0 when u0_hat[0] &gt; 0).</p></li>
+</ul>
+</div></blockquote>
+</dd>
+<dt><strong>dL: float</strong></dt><dd><p>Distance from the observer to the lens (pc)</p>
+</dd>
+<dt><strong>dL_dS: float</strong></dt><dd><p>Ratio of Distance from the obersver to the lens to
+Distance from the observer to the source</p>
+</dd>
+<dt><strong>xS0_E: float</strong></dt><dd><p>RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>xS0_N: float</strong></dt><dd><p>Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>muL_E: float</strong></dt><dd><p>RA Lens proper motion (mas/yr)</p>
+</dd>
+<dt><strong>muL_N: float</strong></dt><dd><p>Dec Lens proper motion (mas/yr)</p>
+</dd>
+<dt><strong>muS_E: float</strong></dt><dd><p>RA Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>muS_N: float</strong></dt><dd><p>Dec Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>b_sff: numpy array or list</strong></dt><dd><p>The ratio of the source flux to the total (source + neighbors + lens)
+<span class="math">\(b_sff = f_S / (f_S + f_L + f_N)\)</span>. This must be passed in as a list or
+array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>mag_src: numpy array or list</strong></dt><dd><p>Photometric magnitude of the source. This must be passed in as a
+list or array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>raL: float, optional</strong></dt><dd><p>Right ascension of the lens in decimal degrees.</p>
+</dd>
+<dt><strong>decL: float, optional</strong></dt><dd><p>Declination of the lens in decimal degrees.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotAstromParam2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotAstromParam2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>PSPL model for photometry and astrometry – photom-like parameterization</p>
+<p>Point Source Point Lens model for microlensing. This model includes
+proper motions of the source and the source position on the sky.</p>
+<dl class="field-list">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl>
+<dt><strong>t0: float</strong></dt><dd><p>Time of photometric peak, as seen from Earth (MJD.DDD)</p>
+</dd>
+<dt><strong>u0_amp: float</strong></dt><dd><p>Angular distance between the lens and source on the plane of the
+sky at closest approach in units of thetaE. Can be</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>positive (u0_amp &gt; 0 when u0_hat[0] &gt; 0) or</p></li>
+<li><p>negative (u0_amp &lt; 0 when u0_hat[0] &lt; 0).</p></li>
+</ul>
+</div></blockquote>
+</dd>
+<dt><strong>tE: float</strong></dt><dd><p>Einstein crossing time (days).</p>
+</dd>
+<dt><strong>thetaE: float</strong></dt><dd><p>The size of the Einstein radius in (mas).</p>
+</dd>
+<dt><strong>piS: float</strong></dt><dd><p>Amplitude of the parallax (1AU/dS) of the source. (mas)</p>
+</dd>
+<dt><strong>piE_E: float</strong></dt><dd><p>The microlensing parallax in the East direction in units of thetaE</p>
+</dd>
+<dt><strong>piE_N: float</strong></dt><dd><p>The microlensing parallax in the North direction in units of thetaE</p>
+</dd>
+<dt><strong>xS0_E: float</strong></dt><dd><p>RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>xS0_N: float</strong></dt><dd><p>Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>muS_E: float</strong></dt><dd><p>RA Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>muS_N: float</strong></dt><dd><p>Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>b_sff: numpy array or list</strong></dt><dd><p>The ratio of the source flux to the total (source + neighbors + lens)
+<span class="math">\(b_sff = f_S / (f_S + f_L + f_N)\)</span>. This must be passed in as a list or
+array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>mag_src: numpy array or list</strong></dt><dd><p>Photometric magnitude of the source. This must be passed in as a
+list or array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>raL: float, optional</strong></dt><dd><p>Right ascension of the lens in decimal degrees.</p>
+</dd>
+<dt><strong>decL: float, optional</strong></dt><dd><p>Declination of the lens in decimal degrees.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotAstromParam3">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotAstromParam3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log10_thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam3" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>Point Source Point Lens model for microlensing. This model includes
+proper motions of the source and the source position on the sky.
+It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
+instead of thetaE.</p>
+<p class="rubric">Notes</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Required parameters if calculating with parallax</p>
+<ul class="simple">
+<li><p>raL: Right ascension of the lens in decimal degrees.</p></li>
+<li><p>decL: Declination of the lens in decimal degrees.</p></li>
+</ul>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl>
+<dt><strong>t0</strong><span class="classifier">float</span></dt><dd><p>Time of photometric peak, as seen from Earth (MJD.DDD)</p>
+</dd>
+<dt><strong>u0_amp</strong><span class="classifier">float</span></dt><dd><p>Angular distance between the source and the GEOMETRIC center of the lenses
+on the plane of the sky at closest approach in units of thetaE. Can be</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>positive (u0_amp &gt; 0 when u0_hat[0] &gt; 0) or</p></li>
+<li><p>negative (u0_amp &lt; 0 when u0_hat[0] &lt; 0).</p></li>
+</ul>
+</div></blockquote>
+</dd>
+<dt><strong>tE</strong><span class="classifier">float</span></dt><dd><p>Einstein crossing time (days).</p>
+</dd>
+<dt><strong>log10_thetaE</strong><span class="classifier">float</span></dt><dd><p>The size of the Einstein radius in (mas).</p>
+</dd>
+<dt><strong>piS</strong><span class="classifier">float</span></dt><dd><p>Amplitude of the parallax (1AU/dS) of the source. (mas)</p>
+</dd>
+<dt><strong>piE_E</strong><span class="classifier">float</span></dt><dd><p>The microlensing parallax in the East direction in units of thetaE</p>
+</dd>
+<dt><strong>piE_N</strong><span class="classifier">float</span></dt><dd><p>The microlensing parallax in the North direction in units of thetaE</p>
+</dd>
+<dt><strong>xS0_E</strong><span class="classifier">float</span></dt><dd><p>R.A. of source position on sky at t = t0 (arcsec) in an
+arbitrary ref. frame.</p>
+</dd>
+<dt><strong>xS0_N</strong><span class="classifier">float</span></dt><dd><p>Dec. of source position on sky at t = t0 (arcsec) in an
+arbitrary ref. frame.</p>
+</dd>
+<dt><strong>muS_E</strong><span class="classifier">float</span></dt><dd><p>RA Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>muS_N</strong><span class="classifier">float</span></dt><dd><p>Dec Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>b_sff</strong><span class="classifier">numpy array or list</span></dt><dd><p>The ratio of the source flux to the total (source + neighbors + lenses). One
+for each filter.</p>
+<blockquote>
+<div><p><span class="math">\(b_sff = f_S / (f_S + f_L + f_N)\)</span>.</p>
+</div></blockquote>
+<p>This must be passed in as a list or
+array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>mag_base</strong><span class="classifier">numpy array or list</span></dt><dd><p>Photometric magnitude of the base. This must be passed in as a
+list or array, with one entry for each photometric filter.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotAstromParam4">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotAstromParam4</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam4" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>DESCRIPTION:
+Point Source Point Lens model for microlensing. This model includes
+proper motions of the source and the source position on the sky.
+It is the same as PSPL_PhotAstromParam2 except it fits for baseline instead
+of source magnitude.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>t0</strong><span class="classifier">float</span></dt><dd><p>Time of photometric peak, as seen from Earth (MJD.DDD)</p>
+</dd>
+<dt><strong>u0_amp</strong><span class="classifier">float</span></dt><dd><p>Angular distance between the source and the GEOMETRIC center of the lenses
+on the plane of the sky at closest approach in units of thetaE. Can be</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>positive (u0_amp &gt; 0 when u0_hat[0] &gt; 0) or</p></li>
+<li><p>negative (u0_amp &lt; 0 when u0_hat[0] &lt; 0).</p></li>
+</ul>
+</div></blockquote>
+</dd>
+<dt><strong>tE</strong><span class="classifier">float</span></dt><dd><p>Einstein crossing time (days).</p>
+</dd>
+<dt><strong>thetaE:</strong></dt><dd><p>The size of the Einstein radius in (mas).</p>
+</dd>
+<dt><strong>piS</strong><span class="classifier">float</span></dt><dd><p>Amplitude of the parallax (1AU/dS) of the source. (mas)</p>
+</dd>
+<dt><strong>piE_E</strong><span class="classifier">float</span></dt><dd><p>The microlensing parallax in the East direction in units of thetaE</p>
+</dd>
+<dt><strong>piE_N</strong><span class="classifier">float</span></dt><dd><p>The microlensing parallax in the North direction in units of thetaE</p>
+</dd>
+<dt><strong>xS0_E</strong><span class="classifier">float</span></dt><dd><p>R.A. of source position on sky at t = t0 (arcsec) in an
+arbitrary ref. frame.</p>
+</dd>
+<dt><strong>xS0_N</strong><span class="classifier">float</span></dt><dd><p>Dec. of source position on sky at t = t0 (arcsec) in an
+arbitrary ref. frame.</p>
+</dd>
+<dt><strong>muS_E</strong><span class="classifier">float</span></dt><dd><p>RA Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>muS_N</strong><span class="classifier">float</span></dt><dd><p>Dec Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>b_sff</strong><span class="classifier">numpy array or list</span></dt><dd><p>The ratio of the source flux to the total (source + neighbors + lenses). One
+for each filter.</p>
+<blockquote>
+<div><p><span class="math">\(b_sff = f_S / (f_S + f_L + f_N)\)</span>.</p>
+</div></blockquote>
+<p>This must be passed in as a list or
+array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>mag_base</strong><span class="classifier">numpy array or list</span></dt><dd><p>Photometric magnitude of the base. This must be passed in as a
+list or array, with one entry for each photometric filter.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Required parameters if calculating with parallax</p>
+<ul class="simple">
+<li><p>raL: Right ascension of the lens in decimal degrees.</p></li>
+<li><p>decL: Declination of the lens in decimal degrees.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="gp-models">
+<h2>GP Models<a class="headerlink" href="#gp-models" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotParam1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotParam1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam1" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam1.html#model.PSPL_PhotParam1" title="model.PSPL_PhotParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotParam1</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotParam1_2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotParam1_2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam1_2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam1.html#model.PSPL_PhotParam1" title="model.PSPL_PhotParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotParam1</span></code></a></p>
+<p>Figuring out the new prior parametrization.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotParam2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotParam2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam2.html#model.PSPL_PhotParam2" title="model.PSPL_PhotParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotParam2</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotParam2_2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotParam2_2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam2_2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam2.html#model.PSPL_PhotParam2" title="model.PSPL_PhotParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotParam2</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotAstromParam1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotAstromParam1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL_dS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam1" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam1.html#model.PSPL_PhotAstromParam1" title="model.PSPL_PhotAstromParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam1</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotAstromParam2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotAstromParam2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam2.html#model.PSPL_PhotAstromParam2" title="model.PSPL_PhotAstromParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam2</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotAstromParam2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id0" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam2.html#model.PSPL_PhotAstromParam2" title="model.PSPL_PhotAstromParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam2</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotAstromParam3">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotAstromParam3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log10_thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam3" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam3.html#model.PSPL_PhotAstromParam3" title="model.PSPL_PhotAstromParam3"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam3</span></code></a></p>
+<p>Point Source Point Lens with GP model for microlensing. This model includes
+proper motions of the source and the source position on the sky.
+It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
+instead of thetaE.</p>
+<p class="rubric">Notes</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>raL</cite> and <cite>decL</cite> are required parameters if calculating with parallax</p>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl>
+<dt><strong>t0: float</strong></dt><dd><p>Time of photometric peak, as seen from Earth (MJD.DDD)</p>
+</dd>
+<dt><strong>u0_amp: float</strong></dt><dd><p>Angular distance between the lens and source on the plane of the
+sky at closest approach in units of thetaE. Can be</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>positive (u0_amp &gt; 0 when u0_hat[0] &gt; 0) or</p></li>
+<li><p>negative (u0_amp &lt; 0 when u0_hat[0] &lt; 0).</p></li>
+</ul>
+</div></blockquote>
+</dd>
+<dt><strong>tE: float</strong></dt><dd><p>Einstein crossing time (days).</p>
+</dd>
+<dt><strong>log10_thetaE: float</strong></dt><dd><p>log10 of the size of the Einstein radius in (mas).</p>
+</dd>
+<dt><strong>piS: float</strong></dt><dd><p>Amplitude of the parallax (1AU/dS) of the source. (mas)</p>
+</dd>
+<dt><strong>piE_E: float</strong></dt><dd><p>The microlensing parallax in the East direction in units of thetaE</p>
+</dd>
+<dt><strong>piE_N: float</strong></dt><dd><p>The microlensing parallax in the North direction in units of thetaE</p>
+</dd>
+<dt><strong>xS0_E: float</strong></dt><dd><p>RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>xS0_N: float</strong></dt><dd><p>Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>muS_E: float</strong></dt><dd><p>RA Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>muS_N: float</strong></dt><dd><p>Dec Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>b_sff: numpy array or list of floats</strong></dt><dd><p>The ratio of the source flux to the total (source + neighbors + lens)
+<span class="math">\(b_sff = f_S / (f_S + f_L + f_N)\)</span>. This must be passed in as a list or
+array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>mag_base: numpy array or list of floats</strong></dt><dd><p>Photometric magnitude of the base. This must be passed in as a
+list or array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>gp_log_sigma: float</strong></dt><dd><p>Guassian process <span class="math">\(log(\sigma)\)</span> for the Matern 3/2 kernel.</p>
+</dd>
+<dt><strong>gp_rho: float</strong></dt><dd><p>Guassian process <span class="math">\({\rho}\)</span> for the Matern 3/2 kernel.</p>
+</dd>
+<dt><strong>gp_log_omega04_S0: float</strong></dt><dd><p>Guassian process <span class="math">\(log(\omega_0^4 * S_0)\)</span> from the SHO kernel.</p>
+</dd>
+<dt><strong>gp_log_omega0: float</strong></dt><dd><p>Guassian process <span class="math">\(log(\omega_0)\)</span> from the SHO kernle.</p>
+</dd>
+<dt><strong>raL: float, optional</strong></dt><dd><p>Right ascension of the lens in decimal degrees.</p>
+</dd>
+<dt><strong>decL: float, optional</strong></dt><dd><p>Declination of the lens in decimal degrees.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotAstromParam4">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotAstromParam4</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam4" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam4.html#model.PSPL_PhotAstromParam4" title="model.PSPL_PhotAstromParam4"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam4</span></code></a></p>
+<p>Point Source Point Lens with GP model for microlensing. This model includes
+proper motions of the source and the source position on the sky.
+It is the same as PSPL_PhotAstromParam2 except it fits for baseline instead
+of source magnitude.</p>
+<p class="rubric">Notes</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<div class="line-block">
+<div class="line"><cite>raL</cite> and <cite>decL</cite> are required parameters if calculating with parallax</div>
+<div class="line">For an explanation of the Guassian process parameters, see Golovich et al. 2019()</div>
+</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl>
+<dt><strong>t0: float</strong></dt><dd><p>Time of photometric peak, as seen from Earth (MJD.DDD)</p>
+</dd>
+<dt><strong>u0_amp: float</strong></dt><dd><p>Angular distance between the lens and source on the plane of the
+sky at closest approach in units of thetaE. Can be</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>positive (u0_amp &gt; 0 when u0_hat[0] &gt; 0) or</p></li>
+<li><p>negative (u0_amp &lt; 0 when u0_hat[0] &lt; 0).</p></li>
+</ul>
+</div></blockquote>
+</dd>
+<dt><strong>tE: float</strong></dt><dd><p>Einstein crossing time (days).</p>
+</dd>
+<dt><strong>thetaE: float</strong></dt><dd><p>The size of the Einstein radius in (mas).</p>
+</dd>
+<dt><strong>piS: float</strong></dt><dd><p>Amplitude of the parallax (1AU/dS) of the source. (mas)</p>
+</dd>
+<dt><strong>piE_E: float</strong></dt><dd><p>The microlensing parallax in the East direction in units of thetaE</p>
+</dd>
+<dt><strong>piE_N: float</strong></dt><dd><p>The microlensing parallax in the North direction in units of thetaE</p>
+</dd>
+<dt><strong>xS0_E: float</strong></dt><dd><p>RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>xS0_N: float</strong></dt><dd><p>Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+</dd>
+<dt><strong>muS_E: float</strong></dt><dd><p>RA Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>muS_N: float</strong></dt><dd><p>Dec Source proper motion (mas/yr)</p>
+</dd>
+<dt><strong>b_sff: float</strong></dt><dd><p>The ratio of the source flux to the total (source + neighbors + lens)
+<span class="math">\(b_sff = f_S / (f_S + f_L + f_N)\)</span>. This must be passed in as a list or
+array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>mag_base: float</strong></dt><dd><p>Photometric magnitude of the base. This must be passed in as a
+list or array, with one entry for each photometric filter.</p>
+</dd>
+<dt><strong>gp_log_sigma: float</strong></dt><dd><p>Guassian process <span class="math">\(log(\sigma)\)</span> for the Matern 3/2 kernel.</p>
+</dd>
+<dt><strong>gp_rho: float</strong></dt><dd><p>Guassian process <span class="math">\({\rho}\)</span> for the Matern 3/2 kernel.</p>
+</dd>
+<dt><strong>gp_log_omega04_S0: float</strong></dt><dd><p>Guassian process <span class="math">\(log(\omega_0^4 * S_0)\)</span> from the SHO kernel.</p>
+</dd>
+<dt><strong>gp_log_omega0: float</strong></dt><dd><p>Guassian process <span class="math">\(log(\omega_0)\)</span> from the SHO kernle.</p>
+</dd>
+<dt><strong>raL: float, optional</strong></dt><dd><p>Right ascension of the lens in decimal degrees.</p>
+</dd>
+<dt><strong>decL: float, optional</strong></dt><dd><p>Declination of the lens in decimal degrees.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="PSPL.html" class="btn btn-neutral float-left" title="POINT SOURCE POINT LENS (PSPL) CLASSES" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="PSPL_Data.html" class="btn btn-neutral float-right" title="Data Class Family" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Niranjan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
