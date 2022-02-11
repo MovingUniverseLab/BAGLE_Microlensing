@@ -7,7 +7,7 @@ Parallax Class Family
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSPL_Parallax_Old
+.. autoclass:: model.PSPL_Parallax_old
     :members:
     :inherited-members:
     :show-inheritance:
