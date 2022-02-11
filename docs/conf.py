@@ -69,41 +69,6 @@ html_static_path = ['_static']
 autodoc_member_order = 'bysource'
 inheritance_graph_attrs = dict(rankdir="TB", size='""')
 
-katex_css_path = \
-    'https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css'
-katex_js_path = \
-    'https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js'
-katex_autorender_path = \
-    'https://cdn.jsdelivr.net/npm/katex@0.15.2/contrib/auto-render.min.js'
-katex_inline = [r'\(', r'\)']
-katex_display = [r'\[', r'\]']
-katex_prerender = False
-
-katex_options = r'''macros: {
-        "\\i": "\\mathrm{i}",
-        "\\e": "\\mathrm{e}^{#1}",
-        "\\vec": "\\mathbf{#1}",
-        "\\x": "\\vec{x}",
-        "\\d": "\\operatorname{d}\\!{}",
-        "\\dirac": "\\operatorname{\\delta}\\left(#1\\right)",
-        "\\scalarprod": "\\left\\langle#1,#2\\right\\rangle",
-    }'''
-
-import sphinxcontrib.katex as katex
-
-latex_macros = r"""
-    \def \i                {\mathrm{i}}
-    \def \e              #1{\mathrm{e}^{#1}}
-    \def \vec            #1{\mathbf{#1}}
-    \def \x                {\vec{x}}
-    \def \d                {\operatorname{d}\!}
-    \def \dirac          #1{\operatorname{\delta}\left(#1\right)}
-    \def \scalarprod   #1#2{\left\langle#1,#2\right\rangle}
-"""
-
-# Translate LaTeX macros to KaTeX and add to options for HTML builder
-katex_macros = katex.latex_defs_to_katex_macros(latex_macros)
-katex_options = 'macros: {' + katex_macros + '}'
 
 # Add LaTeX macros for LATEX builder
 latex_elements = {'preamble': latex_macros}
