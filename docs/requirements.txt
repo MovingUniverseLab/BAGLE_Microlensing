@@ -3,9 +3,6 @@ numpy
 numpydoc
 sphinxcontrib.video
 astropy
-inspect
-math
-pdb
 celerite
 ephem
 joblib 
