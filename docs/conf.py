@@ -70,6 +70,4 @@ autodoc_member_order = 'bysource'
 inheritance_graph_attrs = dict(rankdir="TB", size='""')
 
 
-# Add LaTeX macros for LATEX builder
-latex_elements = {'preamble': latex_macros}
 
