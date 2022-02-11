@@ -2,8 +2,6 @@
 BAGLE - Bayesian Analysis of Gravitational Lensing Events
 ==========================================================================
 
-.. video:: images/psplparallax.mp4
-
 .. raw:: html 
 	
 	<video controls src="static/pspl.mp4"></video>

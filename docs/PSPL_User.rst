@@ -15,17 +15,17 @@ PSPL Parallax
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSPL_PhotAstrom_Lumens_Par_Param1
+.. autoclass:: model.PSPL_PhotAstrom_LumLens_Par_Param1
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSPL_PhotAstrom_Lumens_Par_Param2
+.. autoclass:: model.PSPL_PhotAstrom_LumLens_Par_Param2
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSPL_PhotAstrom_Lumens_Par_Param4
+.. autoclass:: model.PSPL_PhotAstrom_LumLens_Par_Param4
     :members:
     :inherited-members:
     :show-inheritance:
