@@ -37,7 +37,6 @@ extensions = [
     'sphinx.ext.graphviz','sphinx.ext.inheritance_diagram',
     'sphinx.ext.autodoc', 'sphinx.ext.mathjax',
     'numpydoc', 'sphinxcontrib.video',
-    'sphinxcontrib.katex'
 ]
 
 #'sphinx_automodapi.automodapi',
