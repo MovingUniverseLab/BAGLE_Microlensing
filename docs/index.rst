@@ -4,7 +4,7 @@ BAGLE - Bayesian Analysis of Gravitational Lensing Events
 
 .. raw:: html 
 	
-	<video controls src="static/pspl.mp4"></video>
+	<video controls src="_static/pspl.mp4"></video>
 
 BAGLE allows modeling of gravitational microlensing events both photometrically and astrometrically. Supported microlensing models include:
 
