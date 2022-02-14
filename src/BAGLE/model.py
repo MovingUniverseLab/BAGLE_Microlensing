@@ -6403,17 +6403,10 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
 
     See `Gould 2004, pg 320, bottom right`
     
-    u0 > 0 --> lens passes to the right side of the source as seen from Earth
-      
-    \vec thetaX0
-    
-    \vec{thetazX0}
-    
+    u0 > 0 --> lens passes to the right side of the source as seen from Earth   
 
-    :math:`\vec{thetaX0} = \vec xS0 - \vec xL0 = \vec u0 * thetaE`
+    :math:`thetaX0 = xS0 - xL0 =  u0 * thetaE`
 
-    
-    
     which implies that:
 
         * u0_E > 0 for u0 > 0
