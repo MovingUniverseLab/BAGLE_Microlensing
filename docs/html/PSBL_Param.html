@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parameterization Class Family - PSBL &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders" href="FSPL.html" />
+    <link rel="prev" title="Parallax Class Family - PSBL" href="PSBL_Parallax.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> BAGLE
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="PSBL_Data.html">Data Class Family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PSBL_Parallax.html">Parallax Class Family - PSBL</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Parameterization Class Family - PSBL</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pspl-models">PSPL Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gp-models">GP Models</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BAGLE</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a> &raquo;</li>
+      <li>Parameterization Class Family - PSBL</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/PSBL_Param.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="parameterization-class-family-psbl">
+<h1>Parameterization Class Family - PSBL<a class="headerlink" href="#parameterization-class-family-psbl" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="pspl-models">
+<h2>PSPL Models<a class="headerlink" href="#pspl-models" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="model.PSBL_PhotAstromParam1">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL_PhotAstromParam1</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mL1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mL2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstromParam1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>Point source binary lens.
+It has 3 more parameters than PSPL (additional mass term, separation,
+and angle of approach). Note that this is a STATIC binary lens, i.e.
+there is no orbital motion.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="model.PSBL_PhotAstromParam2">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL_PhotAstromParam2</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstromParam2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>Point source binary lens.
+It has 3 more parameters than PSPL (additional mass term, separation,
+and angle of approach). Note that this is a STATIC binary lens, i.e.
+there is no orbital motion.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="model.PSBL_PhotAstromParam3">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL_PhotAstromParam3</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0_prim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp_prim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstromParam3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>Point source binary lens.
+It has 3 more parameters than PSPL (additional mass term, separation,
+and angle of approach). Note that this is a STATIC binary lens, i.e.
+there is no orbital motion.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="model.PSBL_PhotAstromParam4">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL_PhotAstromParam4</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0_com</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp_com</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstromParam4" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<p>Point source binary lens.
+It has 3 more parameters than PSPL (additional mass term, separation,
+and angle of approach). Note that this is a STATIC binary lens, i.e.
+there is no orbital motion.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="gp-models">
+<h2>GP Models<a class="headerlink" href="#gp-models" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="model.PSBL_GP_PhotParam1">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL_GP_PhotParam1</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_GP_PhotParam1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSBL_PhotParam1.html#model.PSBL_PhotParam1" title="model.PSBL_PhotParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSBL_PhotParam1</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="model.PSBL_GP_PhotAstromParam1">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL_GP_PhotAstromParam1</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mL1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mL2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_GP_PhotAstromParam1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSBL_PhotAstromParam1.html#model.PSBL_PhotAstromParam1" title="model.PSBL_PhotAstromParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSBL_PhotAstromParam1</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="model.PSBL_GP_PhotAstromParam2">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL_GP_PhotAstromParam2</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_GP_PhotAstromParam2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSBL_PhotAstromParam2.html#model.PSBL_PhotAstromParam2" title="model.PSBL_PhotAstromParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSBL_PhotAstromParam2</span></code></a></p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="PSBL_Parallax.html" class="btn btn-neutral float-left" title="Parallax Class Family - PSBL" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="FSPL.html" class="btn btn-neutral float-right" title="FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Niranjan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
