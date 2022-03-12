@@ -3,13 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PSPL_Astrom &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <title>PSPL_Astrom &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
@@ -34,13 +36,7 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
 
         </div>
@@ -68,10 +64,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="pspl-astrom">
-<h1>PSPL_Astrom<a class="headerlink" href="#pspl-astrom" title="Permalink to this headline">¶</a></h1>
+<h1>PSPL_Astrom<a class="headerlink" href="#pspl-astrom" title="Permalink to this headline"></a></h1>
 <dl class="py class">
-<dt id="model.PSPL_Astrom">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSPL_Astrom</span></code><a class="headerlink" href="#model.PSPL_Astrom" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Astrom">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_Astrom</span></span><a class="headerlink" href="#model.PSPL_Astrom" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="model.PSPL.html#model.PSPL" title="model.PSPL"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL</span></code></a></p>
 <p>Contains methods for model a PSPL photometry + astrometry.
 This is a Data-type class in our hierarchy. It is abstract and should not
@@ -83,7 +79,7 @@ be instantiated.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Astrom.animate" title="model.PSPL_Astrom.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Astrom.animate" title="model.PSPL_Astrom.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
 </tbody>
@@ -142,10 +138,10 @@ be instantiated.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Astrom.animate" title="model.PSPL_Astrom.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Astrom.animate" title="model.PSPL_Astrom.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Astrom.get_chi2_astrometry" title="model.PSPL_Astrom.get_chi2_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_chi2_astrometry</span></code></a>(t_obs, x_obs, y_obs, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Astrom.get_chi2_astrometry" title="model.PSPL_Astrom.get_chi2_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_chi2_astrometry</span></code></a>(t_obs, x_obs, y_obs, ...)</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Astrom.get_lnL_constant" title="model.PSPL_Astrom.get_lnL_constant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lnL_constant</span></code></a>(err_obs)</p></td>
@@ -154,39 +150,41 @@ be instantiated.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Astrom.get_photometry" title="model.PSPL_Astrom.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, print_warning])</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Astrom.log_likely_astrometry" title="model.PSPL_Astrom.log_likely_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_astrometry</span></code></a>(t_obs, x_obs, y_obs, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Astrom.log_likely_astrometry" title="model.PSPL_Astrom.log_likely_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_astrometry</span></code></a>(t_obs, x_obs, y_obs, ...)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Astrom.log_likely_astrometry_each" title="model.PSPL_Astrom.log_likely_astrometry_each"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_astrometry_each</span></code></a>(t_obs, x_obs, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Astrom.log_likely_astrometry_each" title="model.PSPL_Astrom.log_likely_astrometry_each"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_astrometry_each</span></code></a>(t_obs, x_obs, ...)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Astrom.log_likely_photometry" title="model.PSPL_Astrom.log_likely_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry</span></code></a>(t_obs, mag_obs, …[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Astrom.log_likely_photometry" title="model.PSPL_Astrom.log_likely_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry</span></code></a>(t_obs, mag_obs, ...[, ...])</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Attributes Documentation</p>
 <dl class="py attribute">
-<dt id="model.PSPL_Astrom.astrometryFlag">
-<code class="sig-name descname"><span class="pre">astrometryFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#model.PSPL_Astrom.astrometryFlag" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Astrom.astrometryFlag">
+<span class="sig-name descname"><span class="pre">astrometryFlag</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#model.PSPL_Astrom.astrometryFlag" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt id="model.PSPL_Astrom.photometryFlag">
-<code class="sig-name descname"><span class="pre">photometryFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#model.PSPL_Astrom.photometryFlag" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Astrom.photometryFlag">
+<span class="sig-name descname"><span class="pre">photometryFlag</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#model.PSPL_Astrom.photometryFlag" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <p class="rubric">Methods Documentation</p>
 <dl class="py method">
-<dt id="model.PSPL_Astrom.animate">
-<code class="sig-name descname"><span class="pre">animate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.animate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Produces animation of microlensing event.</p>
-<p>This function takes the PSPL and makes an animation, the input variables are as follows</p>
+<dt class="sig sig-object py" id="model.PSPL_Astrom.animate">
+<span class="sig-name descname"><span class="pre">animate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.animate" title="Permalink to this definition"></a></dt>
+<dd><p>Produces animation of microlensing event. 
+This function takes the PSPL and makes an animation, the input variables are as follows</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>tE:</strong></dt><dd><p>number of einstein crossings times before/after the peak you want the animation to plot
-e.g tE = 2 =&gt; graph will go from -2 tE to 2 tE</p>
+<dt><strong>tE:</strong></dt><dd><dl class="simple">
+<dt>number of einstein crossings times before/after the peak you want the animation to plot</dt><dd><p>e.g tE = 2 =&gt; graph will go from -2 tE to 2 tE</p>
+</dd>
+</dl>
 </dd>
 <dt><strong>time_steps:</strong></dt><dd><p>number of time steps before/after peak, so total number of time steps will 
 be 2 times this value</p>
@@ -205,33 +203,33 @@ be 2 times this value</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Astrom.get_chi2_astrometry">
-<code class="sig-name descname"><span class="pre">get_chi2_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.get_chi2_astrometry" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Astrom.get_chi2_astrometry">
+<span class="sig-name descname"><span class="pre">get_chi2_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.get_chi2_astrometry" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Astrom.get_lnL_constant">
-<code class="sig-name descname"><span class="pre">get_lnL_constant</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">err_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.get_lnL_constant" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Astrom.get_lnL_constant">
+<span class="sig-name descname"><span class="pre">get_lnL_constant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">err_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.get_lnL_constant" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Astrom.get_photometry">
-<code class="sig-name descname"><span class="pre">get_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.get_photometry" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Astrom.get_photometry">
+<span class="sig-name descname"><span class="pre">get_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.get_photometry" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Astrom.log_likely_astrometry">
-<code class="sig-name descname"><span class="pre">log_likely_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.log_likely_astrometry" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Astrom.log_likely_astrometry">
+<span class="sig-name descname"><span class="pre">log_likely_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.log_likely_astrometry" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Astrom.log_likely_astrometry_each">
-<code class="sig-name descname"><span class="pre">log_likely_astrometry_each</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.log_likely_astrometry_each" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Astrom.log_likely_astrometry_each">
+<span class="sig-name descname"><span class="pre">log_likely_astrometry_each</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.log_likely_astrometry_each" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Astrom.log_likely_photometry">
-<code class="sig-name descname"><span class="pre">log_likely_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.log_likely_photometry" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Astrom.log_likely_photometry">
+<span class="sig-name descname"><span class="pre">log_likely_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Astrom.log_likely_photometry" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>

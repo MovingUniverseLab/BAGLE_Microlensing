@@ -3,13 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Model.py Overview &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <title>Model.py Overview &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
@@ -47,6 +49,7 @@
 <li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
@@ -76,7 +79,7 @@
            <div itemprop="articleBody">
              
   <div class="section" id="model-py-overview">
-<h1>Model.py Overview<a class="headerlink" href="#model-py-overview" title="Permalink to this headline">¶</a></h1>
+<h1>Model.py Overview<a class="headerlink" href="#model-py-overview" title="Permalink to this headline"></a></h1>
 <p>This set of classes and functions allows the user to construct microlensing
 models built up from a menu of different features. Each model is built using
 the inheritance of multiple classes, each from a different ‘family’ of
@@ -182,9 +185,9 @@ we know that this model (1) uses both photometry and astrometry data, (2) does
 not include parallax in the model, and (3) uses the first
 photometry / astrometry parameterization for declaring the model.</p>
 <div class="section" id="class-families">
-<h2>Class Families<a class="headerlink" href="#class-families" title="Permalink to this headline">¶</a></h2>
+<h2>Class Families<a class="headerlink" href="#class-families" title="Permalink to this headline"></a></h2>
 <div class="section" id="data-class-family">
-<h3>Data Class Family<a class="headerlink" href="#data-class-family" title="Permalink to this headline">¶</a></h3>
+<h3>Data Class Family<a class="headerlink" href="#data-class-family" title="Permalink to this headline"></a></h3>
 <p>These classes inform the model of what type of data will be used by the model.
 If the model will be for photometry only, then a model with the <cite>PSPL_Phot</cite>
 class must be selected. These models have the words <cite>Phot</cite> in their names.

@@ -3,13 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FSPL_Limb &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <title>FSPL_Limb &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
@@ -34,13 +36,7 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
 
         </div>
@@ -68,10 +64,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="fspl-limb">
-<h1>FSPL_Limb<a class="headerlink" href="#fspl-limb" title="Permalink to this headline">¶</a></h1>
+<h1>FSPL_Limb<a class="headerlink" href="#fspl-limb" title="Permalink to this headline"></a></h1>
 <dl class="py class">
-<dt id="model.FSPL_Limb">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">FSPL_Limb</span></code><a class="headerlink" href="#model.FSPL_Limb" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.FSPL_Limb">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">FSPL_Limb</span></span><a class="headerlink" href="#model.FSPL_Limb" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="model.FSPL.html#model.FSPL" title="model.FSPL"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.FSPL</span></code></a></p>
 <p class="rubric">Methods</p>
 <table class="longtable docutils align-default">
@@ -80,10 +76,10 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.FSPL_Limb.animate" title="model.FSPL_Limb.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(crossings, time_steps, frame_time, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.FSPL_Limb.animate" title="model.FSPL_Limb.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(crossings, time_steps, frame_time, ...)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.FSPL_Limb.get_photometry" title="model.FSPL_Limb.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#model.FSPL_Limb.get_photometry" title="model.FSPL_Limb.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, ...])</p></td>
 <td><p>Get the photometry for each of the lensed source images.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../FSPL.html#model.FSPL_Limb.get_source_outline_astrometry" title="model.FSPL_Limb.get_source_outline_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_source_outline_astrometry</span></code></a>(r, n, center)</p></td>
@@ -127,33 +123,35 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#model.FSPL_Limb.F" title="model.FSPL_Limb.F"><code class="xref py py-obj docutils literal notranslate"><span class="pre">F</span></code></a>(r)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.FSPL_Limb.animate" title="model.FSPL_Limb.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(crossings, time_steps, frame_time, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#model.FSPL_Limb.animate" title="model.FSPL_Limb.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(crossings, time_steps, frame_time, ...)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#model.FSPL_Limb.get_amplification" title="model.FSPL_Limb.get_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code></a>(t)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.FSPL_Limb.get_photometry" title="model.FSPL_Limb.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#model.FSPL_Limb.get_photometry" title="model.FSPL_Limb.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, ...])</p></td>
 <td><p>Get the photometry for each of the lensed source images.</p></td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Methods Documentation</p>
 <dl class="py method">
-<dt id="model.FSPL_Limb.F">
-<code class="sig-name descname"><span class="pre">F</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_Limb.F" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.FSPL_Limb.F">
+<span class="sig-name descname"><span class="pre">F</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_Limb.F" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.FSPL_Limb.animate">
-<code class="sig-name descname"><span class="pre">animate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crossings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_Limb.animate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Produces animation of microlensing event.</p>
-<p>This function takes the PSPL and makes an animation, the input variables are as follows</p>
+<dt class="sig sig-object py" id="model.FSPL_Limb.animate">
+<span class="sig-name descname"><span class="pre">animate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crossings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_Limb.animate" title="Permalink to this definition"></a></dt>
+<dd><p>Produces animation of microlensing event. 
+This function takes the PSPL and makes an animation, the input variables are as follows</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>tE:</strong></dt><dd><p>number of einstein crossings times before/after the peak you want the animation to plot
-e.g tE = 2 =&gt; graph will go from -2 tE to 2 tE</p>
+<dt><strong>tE:</strong></dt><dd><dl class="simple">
+<dt>number of einstein crossings times before/after the peak you want the animation to plot</dt><dd><p>e.g tE = 2 =&gt; graph will go from -2 tE to 2 tE</p>
+</dd>
+</dl>
 </dd>
 <dt><strong>time_steps:</strong></dt><dd><p>number of time steps before/after peak, so total number of time steps will 
 be 2 times this value</p>
@@ -172,13 +170,13 @@ be 2 times this value</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="model.FSPL_Limb.get_amplification">
-<code class="sig-name descname"><span class="pre">get_amplification</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_Limb.get_amplification" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.FSPL_Limb.get_amplification">
+<span class="sig-name descname"><span class="pre">get_amplification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_Limb.get_amplification" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.FSPL_Limb.get_photometry">
-<code class="sig-name descname"><span class="pre">get_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_Limb.get_photometry" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.FSPL_Limb.get_photometry">
+<span class="sig-name descname"><span class="pre">get_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_Limb.get_photometry" title="Permalink to this definition"></a></dt>
 <dd><p>Get the photometry for each of the lensed source images.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

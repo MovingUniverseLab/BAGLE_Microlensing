@@ -3,13 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FSPL_PhotAstrom &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <title>FSPL_PhotAstrom &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
@@ -34,13 +36,7 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
 
         </div>
@@ -68,10 +64,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="fspl-photastrom">
-<h1>FSPL_PhotAstrom<a class="headerlink" href="#fspl-photastrom" title="Permalink to this headline">¶</a></h1>
+<h1>FSPL_PhotAstrom<a class="headerlink" href="#fspl-photastrom" title="Permalink to this headline"></a></h1>
 <dl class="py class">
-<dt id="model.FSPL_PhotAstrom">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">FSPL_PhotAstrom</span></code><a class="headerlink" href="#model.FSPL_PhotAstrom" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.FSPL_PhotAstrom">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">FSPL_PhotAstrom</span></span><a class="headerlink" href="#model.FSPL_PhotAstrom" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="model.FSPL.html#model.FSPL" title="model.FSPL"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.FSPL</span></code></a>, <a class="reference internal" href="model.PSPL_PhotAstrom.html#model.PSPL_PhotAstrom" title="model.PSPL_PhotAstrom"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstrom</span></code></a></p>
 <p>Contains methods for model a PSPL photometry + astrometry.
 This is a Data-type class in our hierarchy. It is abstract and should not
@@ -130,7 +126,7 @@ be instantiated.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../FSPL.html#id1" title="model.FSPL_PhotAstrom.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../FSPL.html#id1" title="model.FSPL_PhotAstrom.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.FSPL_PhotAstrom.get_astrometry_unlensed" title="model.FSPL_PhotAstrom.get_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry_unlensed</span></code></a>(t)</p></td>
@@ -214,19 +210,19 @@ be instantiated.</p>
 </table>
 <p class="rubric">Attributes Documentation</p>
 <dl class="py attribute">
-<dt id="model.FSPL_PhotAstrom.astrometryFlag">
-<code class="sig-name descname"><span class="pre">astrometryFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#model.FSPL_PhotAstrom.astrometryFlag" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.FSPL_PhotAstrom.astrometryFlag">
+<span class="sig-name descname"><span class="pre">astrometryFlag</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#model.FSPL_PhotAstrom.astrometryFlag" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt id="model.FSPL_PhotAstrom.photometryFlag">
-<code class="sig-name descname"><span class="pre">photometryFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#model.FSPL_PhotAstrom.photometryFlag" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.FSPL_PhotAstrom.photometryFlag">
+<span class="sig-name descname"><span class="pre">photometryFlag</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#model.FSPL_PhotAstrom.photometryFlag" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <p class="rubric">Methods Documentation</p>
 <dl class="py method">
-<dt id="model.FSPL_PhotAstrom.get_astrometry_unlensed">
-<code class="sig-name descname"><span class="pre">get_astrometry_unlensed</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_PhotAstrom.get_astrometry_unlensed" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.FSPL_PhotAstrom.get_astrometry_unlensed">
+<span class="sig-name descname"><span class="pre">get_astrometry_unlensed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_PhotAstrom.get_astrometry_unlensed" title="Permalink to this definition"></a></dt>
 <dd><p>Outputs position of source unlensed.</p>
 <p>Input a list of times and it will output the position of the source had it not been lensed at each of the
 times in the list</p>
@@ -241,13 +237,13 @@ points on the boundary of the source.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="model.FSPL_PhotAstrom.get_lens_astrometry">
-<code class="sig-name descname"><span class="pre">get_lens_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_PhotAstrom.get_lens_astrometry" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.FSPL_PhotAstrom.get_lens_astrometry">
+<span class="sig-name descname"><span class="pre">get_lens_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_PhotAstrom.get_lens_astrometry" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.FSPL_PhotAstrom.get_resolved_astrometry">
-<code class="sig-name descname"><span class="pre">get_resolved_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_PhotAstrom.get_resolved_astrometry" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.FSPL_PhotAstrom.get_resolved_astrometry">
+<span class="sig-name descname"><span class="pre">get_resolved_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.FSPL_PhotAstrom.get_resolved_astrometry" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>

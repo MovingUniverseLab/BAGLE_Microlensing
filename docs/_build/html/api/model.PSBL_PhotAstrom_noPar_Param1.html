@@ -3,23 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PSBL_PhotAstrom_noPar_Param1 &mdash; BAGLE 0.1 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <title>PSBL_PhotAstrom_noPar_Param1 &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/katex-math.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/contrib/auto-render.min.js"></script>
-        <script src="../_static/katex_autorenderer.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -42,7 +35,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
@@ -75,10 +68,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="psbl-photastrom-nopar-param1">
-<h1>PSBL_PhotAstrom_noPar_Param1<a class="headerlink" href="#psbl-photastrom-nopar-param1" title="Permalink to this headline"></a></h1>
+<h1>PSBL_PhotAstrom_noPar_Param1<a class="headerlink" href="#psbl-photastrom-nopar-param1" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom_noPar_Param1">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSBL_PhotAstrom_noPar_Param1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom_noPar_Param1" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom_noPar_Param1">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL_PhotAstrom_noPar_Param1</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom_noPar_Param1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom" title="model.PSBL_PhotAstrom"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSBL_PhotAstrom</span></code></a>, <a class="reference internal" href="model.PSBL_noParallax.html#model.PSBL_noParallax" title="model.PSBL_noParallax"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSBL_noParallax</span></code></a>, <a class="reference internal" href="model.PSBL_PhotAstromParam1.html#model.PSBL_PhotAstromParam1" title="model.PSBL_PhotAstromParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSBL_PhotAstromParam1</span></code></a></p>
 <p>An abstract class that all Param classes should sub-class.
 This serves as a reminder for the class variables that
@@ -90,7 +83,7 @@ MUST be set.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.animate" title="model.PSBL_PhotAstrom_noPar_Param1.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.animate" title="model.PSBL_PhotAstrom_noPar_Param1.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_all_arrays" title="model.PSBL_PhotAstrom_noPar_Param1.get_all_arrays"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_all_arrays</span></code></a>(t_obs)</p></td>
@@ -102,11 +95,11 @@ MUST be set.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_amplification" title="model.PSBL_PhotAstrom_noPar_Param1.get_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code></a>(t)</p></td>
 <td><p>noParallax: Get the photometric amplification term at a set of times, t.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_astrometry" title="model.PSBL_PhotAstrom_noPar_Param1.get_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry</span></code></a>(t_obs[, image_arr, amp_arr, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_astrometry" title="model.PSBL_PhotAstrom_noPar_Param1.get_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry</span></code></a>(t_obs[, image_arr, amp_arr, …])</p></td>
 <td><p>Position of the observed (unresolved) source position in arcsec.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_astrometry_unlensed" title="model.PSBL_PhotAstrom_noPar_Param1.get_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry_unlensed</span></code></a>(t_obs)</p></td>
-<td><p>Get the astrometry of the source if the lens didn't exist.</p></td>
+<td><p>Get the astrometry of the source if the lens didn’t exist.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_centroid_shift" title="model.PSBL_PhotAstrom_noPar_Param1.get_centroid_shift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_centroid_shift</span></code></a>(t)</p></td>
 <td><p>noParallax: Get the centroid shift (in mas) for a list of observation times (in MJD).</p></td>
@@ -120,19 +113,19 @@ MUST be set.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_lens_astrometry" title="model.PSBL_PhotAstrom_noPar_Param1.get_lens_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lens_astrometry</span></code></a>(t_obs)</p></td>
 <td><p>Equation of motion for just the foreground lens system.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_photometry" title="model.PSBL_PhotAstrom_noPar_Param1.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_photometry" title="model.PSBL_PhotAstrom_noPar_Param1.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, …])</p></td>
 <td><p>Get the photometry for each of the lensed source images.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_amplification" title="model.PSBL_PhotAstrom_noPar_Param1.get_resolved_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_amplification</span></code></a>(t)</p></td>
 <td><p>Get the photometric amplification term at a set of times, t for both the plus and minus images.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_astrometry" title="model.PSBL_PhotAstrom_noPar_Param1.get_resolved_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code></a>(t_obs[, image_arr, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_astrometry" title="model.PSBL_PhotAstrom_noPar_Param1.get_resolved_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code></a>(t_obs[, image_arr, …])</p></td>
 <td><p>Position of the observed source position in arcsec.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_lens_astrometry" title="model.PSBL_PhotAstrom_noPar_Param1.get_resolved_lens_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_lens_astrometry</span></code></a>(t_obs)</p></td>
 <td><p>Equation of motion for just the foreground lenses, individually.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_photometry" title="model.PSBL_PhotAstrom_noPar_Param1.get_resolved_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_photometry</span></code></a>(t_obs[, filt_idx, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_photometry" title="model.PSBL_PhotAstrom_noPar_Param1.get_resolved_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_photometry</span></code></a>(t_obs[, filt_idx, …])</p></td>
 <td><p>Get the photometry for each of the lensed source images.</p></td>
 </tr>
 </tbody>

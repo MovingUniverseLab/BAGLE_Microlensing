@@ -3,23 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Data Class Family &mdash; BAGLE 0.1 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <title>Data Class Family &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" type="text/css" />
-      <link rel="stylesheet" href="_static/katex-math.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/contrib/auto-render.min.js"></script>
-        <script src="_static/katex_autorenderer.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -44,7 +38,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Model.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model3.html">Model.py Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Data Class Family</a></li>
@@ -83,10 +77,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="data-class-family">
-<h1>Data Class Family<a class="headerlink" href="#data-class-family" title="Permalink to this headline"></a></h1>
+<h1>Data Class Family<a class="headerlink" href="#data-class-family" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="model.PSBL">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSBL</span></span><a class="headerlink" href="#model.PSBL" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL</span></code><a class="headerlink" href="#model.PSBL" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="api/model.PSPL.html#model.PSPL" title="model.PSPL"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL</span></code></a></p>
 <p>Contains methods for model a PSBL photometry + astrometry.
 This is a Data-type class in our hierarchy. It is abstract and should not
@@ -98,7 +92,7 @@ be instantiated.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL.animate" title="model.PSBL.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL.animate" title="model.PSBL.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL.html#model.PSBL.get_all_arrays" title="model.PSBL.get_all_arrays"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_all_arrays</span></code></a>(t_obs)</p></td>
@@ -110,10 +104,10 @@ be instantiated.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL.html#model.PSBL.get_image_pos_arr" title="model.PSBL.get_image_pos_arr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_image_pos_arr</span></code></a>(w, z1, z2[, check_sols])</p></td>
 <td><p>Gets image positions.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSBL.html#model.PSBL.get_photometry" title="model.PSBL.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSBL.html#model.PSBL.get_photometry" title="model.PSBL.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, …])</p></td>
 <td><p>Get the photometry for each of the lensed source images.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL.html#model.PSBL.get_resolved_photometry" title="model.PSBL.get_resolved_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_photometry</span></code></a>(t_obs[, filt_idx, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL.html#model.PSBL.get_resolved_photometry" title="model.PSBL.get_resolved_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_photometry</span></code></a>(t_obs[, filt_idx, …])</p></td>
 <td><p>Get the photometry for each of the lensed source images.</p></td>
 </tr>
 </tbody>
@@ -139,10 +133,10 @@ be instantiated.</p>
 </tbody>
 </table>
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL.get_amp_arr">
-<span class="sig-name descname"><span class="pre">get_amp_arr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.get_amp_arr" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL.get_amp_arr">
+<code class="sig-name descname"><span class="pre">get_amp_arr</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.get_amp_arr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculations amplification array</p>
-<p>Calculates the amplification A from the Jacobian J, <span class="math">\(A = 1/|J|\)</span></p>
+<p>Calculates the amplification A from the Jacobian J, <span class="math notranslate nohighlight">\(A = 1/|J|\)</span></p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl>
@@ -167,8 +161,8 @@ be instantiated.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL.get_image_pos_arr">
-<span class="sig-name descname"><span class="pre">get_image_pos_arr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_sols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.get_image_pos_arr" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL.get_image_pos_arr">
+<code class="sig-name descname"><span class="pre">get_image_pos_arr</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_sols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.get_image_pos_arr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets image positions.</p>
 <div class="line-block">
 <div class="line">Solve the fifth-order polynomial and get the image positions.</div>
@@ -202,8 +196,8 @@ equation are returned.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL.get_all_arrays">
-<span class="sig-name descname"><span class="pre">get_all_arrays</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.get_all_arrays" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL.get_all_arrays">
+<code class="sig-name descname"><span class="pre">get_all_arrays</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.get_all_arrays" title="Permalink to this definition">¶</a></dt>
 <dd><p>Obtain the image and amplitude arrays for each t_obs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -224,8 +218,8 @@ equation are returned.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL.get_resolved_photometry">
-<span class="sig-name descname"><span class="pre">get_resolved_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.get_resolved_photometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL.get_resolved_photometry">
+<code class="sig-name descname"><span class="pre">get_resolved_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.get_resolved_photometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the photometry for each of the lensed source images.</p>
 <p>Implement with no blending (since we don’t support different
 blendings for the different images).</p>
@@ -247,8 +241,8 @@ Shape = [5, len(t_obs)]</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL.get_photometry">
-<span class="sig-name descname"><span class="pre">get_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.get_photometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL.get_photometry">
+<code class="sig-name descname"><span class="pre">get_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.get_photometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the photometry for each of the lensed source images.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -267,8 +261,8 @@ Shape = [5, len(t_obs)]</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL.animate">
-<span class="sig-name descname"><span class="pre">animate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.animate" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL.animate">
+<code class="sig-name descname"><span class="pre">animate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL.animate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Produces animation of microlensing event.</p>
 <p>This function takes the PSPL and makes an animation, the input variables are as follows</p>
 <dl class="field-list simple">
@@ -296,8 +290,8 @@ be 2 times this value</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="model.PSBL_Phot">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSBL_Phot</span></span><a class="headerlink" href="#model.PSBL_Phot" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL_Phot</span></code><a class="headerlink" href="#model.PSBL_Phot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="api/model.PSBL.html#model.PSBL" title="model.PSBL"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSBL</span></code></a>, <a class="reference internal" href="api/model.PSPL_Phot.html#model.PSPL_Phot" title="model.PSPL_Phot"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Phot</span></code></a></p>
 <p class="rubric">Methods</p>
 <table class="longtable docutils align-default">
@@ -306,7 +300,7 @@ be 2 times this value</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_Phot.animate" title="model.PSBL_Phot.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_Phot.animate" title="model.PSBL_Phot.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.PSBL_Phot.get_all_arrays" title="model.PSBL_Phot.get_all_arrays"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_all_arrays</span></code></a>(t_obs)</p></td>
@@ -315,11 +309,11 @@ be 2 times this value</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_Phot.get_amp_arr" title="model.PSBL_Phot.get_amp_arr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amp_arr</span></code></a>(z_arr, z1, z2)</p></td>
 <td><p>Calculations amplification array</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_astrometry" title="model.PSBL_Phot.get_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry</span></code></a>(t_obs[, image_arr, amp_arr, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_astrometry" title="model.PSBL_Phot.get_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry</span></code></a>(t_obs[, image_arr, amp_arr, …])</p></td>
 <td><p>Position of the observed (unresolved) source position in Einstein radii.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_astrometry_unlensed" title="model.PSBL_Phot.get_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry_unlensed</span></code></a>(t_obs)</p></td>
-<td><p>Get the astrometry of the source if the lens didn't exist.</p></td>
+<td><p>Get the astrometry of the source if the lens didn’t exist.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_complex_pos" title="model.PSBL_Phot.get_complex_pos"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_complex_pos</span></code></a>(t_obs)</p></td>
 <td><p>Get the positions of the lenses and source as complex numbers.</p></td>
@@ -327,16 +321,16 @@ be 2 times this value</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_Phot.get_image_pos_arr" title="model.PSBL_Phot.get_image_pos_arr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_image_pos_arr</span></code></a>(w, z1, z2[, check_sols])</p></td>
 <td><p>Gets image positions.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSBL_Phot.get_photometry" title="model.PSBL_Phot.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#model.PSBL_Phot.get_photometry" title="model.PSBL_Phot.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, …])</p></td>
 <td><p>Get the photometry for each of the lensed source images.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_resolved_astrometry" title="model.PSBL_Phot.get_resolved_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code></a>(t_obs[, image_arr, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_resolved_astrometry" title="model.PSBL_Phot.get_resolved_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code></a>(t_obs[, image_arr, …])</p></td>
 <td><p>Position of the observed source position in Einstein radii.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_resolved_lens_astrometry" title="model.PSBL_Phot.get_resolved_lens_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_lens_astrometry</span></code></a>(t_obs)</p></td>
 <td><p>Equation of motion for just the foreground lenses, individually.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_Phot.get_resolved_photometry" title="model.PSBL_Phot.get_resolved_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_photometry</span></code></a>(t_obs[, filt_idx, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_Phot.get_resolved_photometry" title="model.PSBL_Phot.get_resolved_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_photometry</span></code></a>(t_obs[, filt_idx, …])</p></td>
 <td><p>Get the photometry for each of the lensed source images.</p></td>
 </tr>
 </tbody>
@@ -377,12 +371,12 @@ be 2 times this value</p>
 </tbody>
 </table>
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_Phot.get_complex_pos">
-<span class="sig-name descname"><span class="pre">get_complex_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_complex_pos" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot.get_complex_pos">
+<code class="sig-name descname"><span class="pre">get_complex_pos</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_complex_pos" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the positions of the lenses and source as complex numbers.</p>
 <p>This is needed for further calculations.
 Note that all units are still the same as before, this
-is just rewriting vectors <span class="math">\(z = (x,y)\)</span> as <span class="math">\(z = x + iy\)</span>.</p>
+is just rewriting vectors <span class="math notranslate nohighlight">\(z = (x,y)\)</span> as <span class="math notranslate nohighlight">\(z = x + iy\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><dl class="simple">
@@ -401,8 +395,8 @@ real = east component, imaginary = north component</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_Phot.get_resolved_lens_astrometry">
-<span class="sig-name descname"><span class="pre">get_resolved_lens_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_resolved_lens_astrometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot.get_resolved_lens_astrometry">
+<code class="sig-name descname"><span class="pre">get_resolved_lens_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_resolved_lens_astrometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Equation of motion for just the foreground lenses, individually.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -420,8 +414,8 @@ real = east component, imaginary = north component</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_Phot.get_astrometry_unlensed">
-<span class="sig-name descname"><span class="pre">get_astrometry_unlensed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_astrometry_unlensed" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot.get_astrometry_unlensed">
+<code class="sig-name descname"><span class="pre">get_astrometry_unlensed</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_astrometry_unlensed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the astrometry of the source if the lens didn’t exist.
 Note, this is a photometry only model, so units are in Einstein radii.</p>
 <dl class="field-list">
@@ -440,8 +434,8 @@ Note, this is a photometry only model, so units are in Einstein radii.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_Phot.get_resolved_astrometry">
-<span class="sig-name descname"><span class="pre">get_resolved_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_resolved_astrometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot.get_resolved_astrometry">
+<code class="sig-name descname"><span class="pre">get_resolved_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_resolved_astrometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Position of the observed source position in Einstein radii.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -460,8 +454,8 @@ Note, this is a photometry only model, so units are in Einstein radii.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_Phot.get_astrometry">
-<span class="sig-name descname"><span class="pre">get_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_astrometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot.get_astrometry">
+<code class="sig-name descname"><span class="pre">get_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_astrometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Position of the observed (unresolved) source position in Einstein radii.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -480,8 +474,8 @@ Note, this is a photometry only model, so units are in Einstein radii.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_Phot.animate">
-<span class="sig-name descname"><span class="pre">animate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.animate" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot.animate">
+<code class="sig-name descname"><span class="pre">animate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.animate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Produces animation of microlensing event.</p>
 <p>This function takes the PSPL and makes an animation, the input variables are as follows</p>
 <dl class="field-list simple">
@@ -507,8 +501,8 @@ be 2 times this value</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_Phot.get_all_arrays">
-<span class="sig-name descname"><span class="pre">get_all_arrays</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_all_arrays" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot.get_all_arrays">
+<code class="sig-name descname"><span class="pre">get_all_arrays</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_all_arrays" title="Permalink to this definition">¶</a></dt>
 <dd><p>Obtain the image and amplitude arrays for each t_obs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -529,10 +523,10 @@ be 2 times this value</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_Phot.get_amp_arr">
-<span class="sig-name descname"><span class="pre">get_amp_arr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_amp_arr" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot.get_amp_arr">
+<code class="sig-name descname"><span class="pre">get_amp_arr</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_amp_arr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculations amplification array</p>
-<p>Calculates the amplification A from the Jacobian J, <span class="math">\(A = 1/|J|\)</span></p>
+<p>Calculates the amplification A from the Jacobian J, <span class="math notranslate nohighlight">\(A = 1/|J|\)</span></p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl>
@@ -557,8 +551,8 @@ be 2 times this value</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_Phot.get_image_pos_arr">
-<span class="sig-name descname"><span class="pre">get_image_pos_arr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_sols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_image_pos_arr" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot.get_image_pos_arr">
+<code class="sig-name descname"><span class="pre">get_image_pos_arr</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_sols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_image_pos_arr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets image positions.</p>
 <div class="line-block">
 <div class="line">Solve the fifth-order polynomial and get the image positions.</div>
@@ -592,8 +586,8 @@ equation are returned.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_Phot.get_photometry">
-<span class="sig-name descname"><span class="pre">get_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_photometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot.get_photometry">
+<code class="sig-name descname"><span class="pre">get_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_photometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the photometry for each of the lensed source images.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -612,8 +606,8 @@ equation are returned.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_Phot.get_resolved_photometry">
-<span class="sig-name descname"><span class="pre">get_resolved_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_resolved_photometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_Phot.get_resolved_photometry">
+<code class="sig-name descname"><span class="pre">get_resolved_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_Phot.get_resolved_photometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the photometry for each of the lensed source images.</p>
 <p>Implement with no blending (since we don’t support different
 blendings for the different images).</p>
@@ -637,8 +631,8 @@ Shape = [5, len(t_obs)]</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSBL_PhotAstrom</span></span><a class="headerlink" href="#model.PSBL_PhotAstrom" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL_PhotAstrom</span></code><a class="headerlink" href="#model.PSBL_PhotAstrom" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="api/model.PSBL.html#model.PSBL" title="model.PSBL"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSBL</span></code></a>, <a class="reference internal" href="api/model.PSPL_PhotAstrom.html#model.PSPL_PhotAstrom" title="model.PSPL_PhotAstrom"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstrom</span></code></a></p>
 <p>Contains methods for model a PSPL photometry + astrometry.
 This is a Data-type class in our hierarchy. It is abstract and should not
@@ -650,7 +644,7 @@ be instantiated.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_PhotAstrom.animate" title="model.PSBL_PhotAstrom.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_PhotAstrom.animate" title="model.PSBL_PhotAstrom.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.PSBL_PhotAstrom.get_all_arrays" title="model.PSBL_PhotAstrom.get_all_arrays"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_all_arrays</span></code></a>(t_obs)</p></td>
@@ -659,11 +653,11 @@ be instantiated.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_PhotAstrom.get_amp_arr" title="model.PSBL_PhotAstrom.get_amp_arr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amp_arr</span></code></a>(z_arr, z1, z2)</p></td>
 <td><p>Calculations amplification array</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_astrometry" title="model.PSBL_PhotAstrom.get_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry</span></code></a>(t_obs[, image_arr, amp_arr, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_astrometry" title="model.PSBL_PhotAstrom.get_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry</span></code></a>(t_obs[, image_arr, amp_arr, …])</p></td>
 <td><p>Position of the observed (unresolved) source position in arcsec.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_astrometry_unlensed" title="model.PSBL_PhotAstrom.get_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry_unlensed</span></code></a>(t_obs)</p></td>
-<td><p>Get the astrometry of the source if the lens didn't exist.</p></td>
+<td><p>Get the astrometry of the source if the lens didn’t exist.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_complex_pos" title="model.PSBL_PhotAstrom.get_complex_pos"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_complex_pos</span></code></a>(t_obs)</p></td>
 <td><p>Get the positions of the lenses and source as complex numbers.</p></td>
@@ -674,16 +668,16 @@ be instantiated.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_lens_astrometry" title="model.PSBL_PhotAstrom.get_lens_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lens_astrometry</span></code></a>(t_obs)</p></td>
 <td><p>Equation of motion for just the foreground lens system.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_PhotAstrom.get_photometry" title="model.PSBL_PhotAstrom.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_PhotAstrom.get_photometry" title="model.PSBL_PhotAstrom.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, amp_arr, …])</p></td>
 <td><p>Get the photometry for each of the lensed source images.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_resolved_astrometry" title="model.PSBL_PhotAstrom.get_resolved_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code></a>(t_obs[, image_arr, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_resolved_astrometry" title="model.PSBL_PhotAstrom.get_resolved_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code></a>(t_obs[, image_arr, …])</p></td>
 <td><p>Position of the observed source position in arcsec.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_resolved_lens_astrometry" title="model.PSBL_PhotAstrom.get_resolved_lens_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_lens_astrometry</span></code></a>(t_obs)</p></td>
 <td><p>Equation of motion for just the foreground lenses, individually.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSBL_PhotAstrom.get_resolved_photometry" title="model.PSBL_PhotAstrom.get_resolved_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_photometry</span></code></a>(t_obs[, filt_idx, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#model.PSBL_PhotAstrom.get_resolved_photometry" title="model.PSBL_PhotAstrom.get_resolved_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_photometry</span></code></a>(t_obs[, filt_idx, …])</p></td>
 <td><p>Get the photometry for each of the lensed source images.</p></td>
 </tr>
 </tbody>
@@ -718,8 +712,8 @@ be instantiated.</p>
 </tbody>
 </table>
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.get_complex_pos">
-<span class="sig-name descname"><span class="pre">get_complex_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_complex_pos" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.get_complex_pos">
+<code class="sig-name descname"><span class="pre">get_complex_pos</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_complex_pos" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the positions of the lenses and source as
 complex numbers. This is needed for further calculations.
 Note that all units are still the same as before, this
@@ -742,8 +736,8 @@ real = east component, imaginary = north component</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.get_resolved_astrometry">
-<span class="sig-name descname"><span class="pre">get_resolved_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_resolved_astrometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.get_resolved_astrometry">
+<code class="sig-name descname"><span class="pre">get_resolved_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_resolved_astrometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Position of the observed source position in arcsec.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -762,8 +756,8 @@ real = east component, imaginary = north component</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.get_astrometry">
-<span class="sig-name descname"><span class="pre">get_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_astrometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.get_astrometry">
+<code class="sig-name descname"><span class="pre">get_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_astrometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Position of the observed (unresolved) source position in arcsec.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -782,26 +776,26 @@ real = east component, imaginary = north component</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.get_astrometry_unlensed">
-<span class="sig-name descname"><span class="pre">get_astrometry_unlensed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_astrometry_unlensed" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.get_astrometry_unlensed">
+<code class="sig-name descname"><span class="pre">get_astrometry_unlensed</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_astrometry_unlensed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the astrometry of the source if the lens didn’t exist.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.get_lens_astrometry">
-<span class="sig-name descname"><span class="pre">get_lens_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_lens_astrometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.get_lens_astrometry">
+<code class="sig-name descname"><span class="pre">get_lens_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_lens_astrometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Equation of motion for just the foreground lens system.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.get_resolved_lens_astrometry">
-<span class="sig-name descname"><span class="pre">get_resolved_lens_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_resolved_lens_astrometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.get_resolved_lens_astrometry">
+<code class="sig-name descname"><span class="pre">get_resolved_lens_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_resolved_lens_astrometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Equation of motion for just the foreground lenses, individually.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.animate">
-<span class="sig-name descname"><span class="pre">animate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.animate" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.animate">
+<code class="sig-name descname"><span class="pre">animate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.animate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Produces animation of microlensing event.</p>
 <p>This function takes the PSPL and makes an animation, the input variables are as follows</p>
 <dl class="field-list simple">
@@ -827,8 +821,8 @@ be 2 times this value</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.get_all_arrays">
-<span class="sig-name descname"><span class="pre">get_all_arrays</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_all_arrays" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.get_all_arrays">
+<code class="sig-name descname"><span class="pre">get_all_arrays</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_all_arrays" title="Permalink to this definition">¶</a></dt>
 <dd><p>Obtain the image and amplitude arrays for each t_obs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -849,10 +843,10 @@ be 2 times this value</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.get_amp_arr">
-<span class="sig-name descname"><span class="pre">get_amp_arr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_amp_arr" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.get_amp_arr">
+<code class="sig-name descname"><span class="pre">get_amp_arr</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_amp_arr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculations amplification array</p>
-<p>Calculates the amplification A from the Jacobian J, <span class="math">\(A = 1/|J|\)</span></p>
+<p>Calculates the amplification A from the Jacobian J, <span class="math notranslate nohighlight">\(A = 1/|J|\)</span></p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl>
@@ -877,8 +871,8 @@ be 2 times this value</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.get_image_pos_arr">
-<span class="sig-name descname"><span class="pre">get_image_pos_arr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_sols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_image_pos_arr" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.get_image_pos_arr">
+<code class="sig-name descname"><span class="pre">get_image_pos_arr</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_sols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_image_pos_arr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets image positions.</p>
 <div class="line-block">
 <div class="line">Solve the fifth-order polynomial and get the image positions.</div>
@@ -912,8 +906,8 @@ equation are returned.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.get_photometry">
-<span class="sig-name descname"><span class="pre">get_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_photometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.get_photometry">
+<code class="sig-name descname"><span class="pre">get_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_photometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the photometry for each of the lensed source images.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -932,8 +926,8 @@ equation are returned.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="model.PSBL_PhotAstrom.get_resolved_photometry">
-<span class="sig-name descname"><span class="pre">get_resolved_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_resolved_photometry" title="Permalink to this definition"></a></dt>
+<dt id="model.PSBL_PhotAstrom.get_resolved_photometry">
+<code class="sig-name descname"><span class="pre">get_resolved_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_arr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_PhotAstrom.get_resolved_photometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the photometry for each of the lensed source images.</p>
 <p>Implement with no blending (since we don’t support different
 blendings for the different images).</p>

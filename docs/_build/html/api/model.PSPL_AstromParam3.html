@@ -3,23 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PSPL_AstromParam3 &mdash; BAGLE 0.1 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <title>PSPL_AstromParam3 &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/katex-math.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/contrib/auto-render.min.js"></script>
-        <script src="../_static/katex_autorenderer.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -42,7 +35,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
@@ -75,10 +68,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="pspl-astromparam3">
-<h1>PSPL_AstromParam3<a class="headerlink" href="#pspl-astromparam3" title="Permalink to this headline"></a></h1>
+<h1>PSPL_AstromParam3<a class="headerlink" href="#pspl-astromparam3" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="model.PSPL_AstromParam3">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_AstromParam3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log10_thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_AstromParam3" title="Permalink to this definition"></a></dt>
+<dt id="model.PSPL_AstromParam3">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSPL_AstromParam3</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log10_thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_AstromParam3" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
 <p>DESCRIPTION:
 Point Source Point Lens model for microlensing. This model includes
@@ -152,23 +145,23 @@ plane of the sky at closest approach in units of thetaE. Can be</p>
 </table>
 <p class="rubric">Attributes Documentation</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="model.PSPL_AstromParam3.additional_param_names">
-<span class="sig-name descname"><span class="pre">additional_param_names</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['mL',</span> <span class="pre">'piL',</span> <span class="pre">'piRel',</span> <span class="pre">'muL_E',</span> <span class="pre">'muL_N',</span> <span class="pre">'muRel_E',</span> <span class="pre">'muRel_N']</span></em><a class="headerlink" href="#model.PSPL_AstromParam3.additional_param_names" title="Permalink to this definition"></a></dt>
+<dt id="model.PSPL_AstromParam3.additional_param_names">
+<code class="sig-name descname"><span class="pre">additional_param_names</span></code><em class="property"> <span class="pre">=</span> <span class="pre">['mL',</span> <span class="pre">'piL',</span> <span class="pre">'piRel',</span> <span class="pre">'muL_E',</span> <span class="pre">'muL_N',</span> <span class="pre">'muRel_E',</span> <span class="pre">'muRel_N']</span></em><a class="headerlink" href="#model.PSPL_AstromParam3.additional_param_names" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="model.PSPL_AstromParam3.fitter_param_names">
-<span class="sig-name descname"><span class="pre">fitter_param_names</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['t0',</span> <span class="pre">'u0_amp',</span> <span class="pre">'tE',</span> <span class="pre">'log10_thetaE',</span> <span class="pre">'piS',</span> <span class="pre">'piE_E',</span> <span class="pre">'piE_N',</span> <span class="pre">'xS0_E',</span> <span class="pre">'xS0_N',</span> <span class="pre">'muS_E',</span> <span class="pre">'muS_N']</span></em><a class="headerlink" href="#model.PSPL_AstromParam3.fitter_param_names" title="Permalink to this definition"></a></dt>
+<dt id="model.PSPL_AstromParam3.fitter_param_names">
+<code class="sig-name descname"><span class="pre">fitter_param_names</span></code><em class="property"> <span class="pre">=</span> <span class="pre">['t0',</span> <span class="pre">'u0_amp',</span> <span class="pre">'tE',</span> <span class="pre">'log10_thetaE',</span> <span class="pre">'piS',</span> <span class="pre">'piE_E',</span> <span class="pre">'piE_N',</span> <span class="pre">'xS0_E',</span> <span class="pre">'xS0_N',</span> <span class="pre">'muS_E',</span> <span class="pre">'muS_N']</span></em><a class="headerlink" href="#model.PSPL_AstromParam3.fitter_param_names" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="model.PSPL_AstromParam3.paramAstromFlag">
-<span class="sig-name descname"><span class="pre">paramAstromFlag</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#model.PSPL_AstromParam3.paramAstromFlag" title="Permalink to this definition"></a></dt>
+<dt id="model.PSPL_AstromParam3.paramAstromFlag">
+<code class="sig-name descname"><span class="pre">paramAstromFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#model.PSPL_AstromParam3.paramAstromFlag" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="model.PSPL_AstromParam3.paramPhotFlag">
-<span class="sig-name descname"><span class="pre">paramPhotFlag</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#model.PSPL_AstromParam3.paramPhotFlag" title="Permalink to this definition"></a></dt>
+<dt id="model.PSPL_AstromParam3.paramPhotFlag">
+<code class="sig-name descname"><span class="pre">paramPhotFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#model.PSPL_AstromParam3.paramPhotFlag" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

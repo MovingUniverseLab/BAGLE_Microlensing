@@ -58,6 +58,12 @@ PSPL Models
     :inherited-members:
     :show-inheritance:
 
+.. autoclass:: model.PSPL_PhotAstromParam5 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
 GP Models
 --------------
 

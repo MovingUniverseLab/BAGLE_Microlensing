@@ -2,7 +2,7 @@
 Parameterization Class Family - PSBL
 =====================================
 
-PSPL Models
+PSBL Models
 ---------------
 
 .. autoclass:: model.PSBL_PhotAstromParam1 
@@ -21,6 +21,16 @@ PSPL Models
     :show-inheritance:
 
 .. autoclass:: model.PSBL_PhotAstromParam4 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+.. autoclass:: model.PSBL_PhotAstromParam5 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+.. autoclass:: model.PSBL_PhotAstromParam6 
     :members:
     :inherited-members:
     :show-inheritance:

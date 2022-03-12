@@ -3,17 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GENERAL USE AND SHARED FUNCTIONS &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <title>GENERAL USE AND SHARED FUNCTIONS &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -41,6 +43,7 @@
 <li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">GENERAL USE AND SHARED FUNCTIONS</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#shared-functions">Shared Functions</a></li>
@@ -73,12 +76,12 @@
            <div itemprop="articleBody">
              
   <div class="section" id="general-use-and-shared-functions">
-<h1>GENERAL USE AND SHARED FUNCTIONS<a class="headerlink" href="#general-use-and-shared-functions" title="Permalink to this headline">¶</a></h1>
+<h1>GENERAL USE AND SHARED FUNCTIONS<a class="headerlink" href="#general-use-and-shared-functions" title="Permalink to this headline"></a></h1>
 <div class="section" id="shared-functions">
-<h2>Shared Functions<a class="headerlink" href="#shared-functions" title="Permalink to this headline">¶</a></h2>
+<h2>Shared Functions<a class="headerlink" href="#shared-functions" title="Permalink to this headline"></a></h2>
 <dl class="py function">
-<dt id="model.u0_hat_from_thetaE_hat">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">u0_hat_from_thetaE_hat</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thetaE_hat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.u0_hat_from_thetaE_hat" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.u0_hat_from_thetaE_hat">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">u0_hat_from_thetaE_hat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thetaE_hat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.u0_hat_from_thetaE_hat" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate the closest approach vector direction. Define the beta sign convention
 as Andy Gould does with</p>
 <blockquote>
@@ -101,8 +104,8 @@ as Andy Gould does with</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="model.parallax_in_direction">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">parallax_in_direction</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">RA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mjd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.parallax_in_direction" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.parallax_in_direction">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">parallax_in_direction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">RA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mjd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.parallax_in_direction" title="Permalink to this definition"></a></dt>
 <dd><p>Memoized version of parallax_in_direction(RA, Dec, mjd)</p>
 <div class="line-block">
 <div class="line">R.A. in degrees. (J2000)</div>
@@ -113,8 +116,8 @@ as Andy Gould does with</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="model.dparallax_dt_in_direction">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">dparallax_dt_in_direction</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">RA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mjd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.dparallax_dt_in_direction" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.dparallax_dt_in_direction">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">dparallax_dt_in_direction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">RA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mjd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.dparallax_dt_in_direction" title="Permalink to this definition"></a></dt>
 <dd><p>R.A. in degrees. (J2000)
 Dec. in degrees. (J2000)
 MJD</p>
@@ -123,18 +126,8 @@ Time derivative –&gt; units are yr^-1</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="model.parallax_in_direction_old">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">parallax_in_direction_old</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">RA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Dec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mjd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Res_fix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_ephem</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.parallax_in_direction_old" title="Permalink to this definition">¶</a></dt>
-<dd><p>R.A. in degrees. (J2000)
-Dec. in degrees. (J2000)
-MJDOA</p>
-<p>Equations implemented from Hog+ 1995.</p>
-<p>Sun - Earth</p>
-</dd></dl>
-
-<dl class="py function">
-<dt id="model.sun_position">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">sun_position</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mjd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radians</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.sun_position" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.sun_position">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">sun_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mjd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radians</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.sun_position" title="Permalink to this definition"></a></dt>
 <dd><dl>
 <dt>NAME:</dt><dd><p>SUNPOS</p>
 </dd>
@@ -208,88 +201,88 @@ in SUNPOS for this case is &lt; 0.5”.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="model.get_angular_einstein_radius">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">get_angular_einstein_radius</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_angular_einstein_radius" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.get_angular_einstein_radius">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_angular_einstein_radius</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_angular_einstein_radius" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.get_unit_vector">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">get_unit_vector</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_unit_vector" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.get_unit_vector">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_unit_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_unit_vector" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.get_u0">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">get_u0</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thetaE_hat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE_amp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_u0" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.get_u0">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_u0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thetaE_hat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE_amp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_u0" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.get_uhat">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">get_uhat</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thetaE_hat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_uhat" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.get_uhat">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_uhat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thetaE_hat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_uhat" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.get_einstein_time">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">get_einstein_time</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_einstein_time" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.get_einstein_time">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_einstein_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_einstein_time" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.get_thetas">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">get_thetas</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lens</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_thetas" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.get_thetas">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_thetas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lens</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_thetas" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.get_amplitudes">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">get_amplitudes</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vectors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_amplitudes" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.get_amplitudes">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_amplitudes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vectors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_amplitudes" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.get_unit_vectors">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">get_unit_vectors</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vectors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_unit_vectors" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.get_unit_vectors">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_unit_vectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vectors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_unit_vectors" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.get_plus">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">get_plus</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_plus" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.get_plus">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_plus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_plus" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.get_minus">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">get_minus</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_minus" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.get_minus">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_minus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_minus" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.oned_int">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">oned_int</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.oned_int" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.oned_int">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">oned_int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.oned_int" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.twod_int">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">twod_int</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ny</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.twod_int" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.twod_int">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">twod_int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ny</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.twod_int" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.twod_cent_x_int">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">twod_cent_x_int</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ny</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.twod_cent_x_int" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.twod_cent_x_int">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">twod_cent_x_int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ny</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.twod_cent_x_int" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.oned_x_int">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">oned_x_int</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.oned_x_int" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.oned_x_int">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">oned_x_int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.oned_x_int" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.twod_cent_y_int">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">twod_cent_y_int</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ny</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.twod_cent_y_int" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.twod_cent_y_int">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">twod_cent_y_int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ny</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.twod_cent_y_int" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.oned_y_int">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">oned_y_int</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.oned_y_int" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.oned_y_int">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">oned_y_int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centre</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ymin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centres</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.oned_y_int" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="model.get_image">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">get_image</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_image" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.get_image">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.get_image" title="Permalink to this definition"></a></dt>
 <dd><p>Function to find the images of the star</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

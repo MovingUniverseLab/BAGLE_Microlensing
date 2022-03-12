@@ -3,13 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PSPL_Phot &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <title>PSPL_Phot &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
@@ -39,6 +41,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
@@ -68,10 +71,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="pspl-phot">
-<h1>PSPL_Phot<a class="headerlink" href="#pspl-phot" title="Permalink to this headline">¶</a></h1>
+<h1>PSPL_Phot<a class="headerlink" href="#pspl-phot" title="Permalink to this headline"></a></h1>
 <dl class="py class">
-<dt id="model.PSPL_Phot">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSPL_Phot</span></code><a class="headerlink" href="#model.PSPL_Phot" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Phot">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_Phot</span></span><a class="headerlink" href="#model.PSPL_Phot" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="model.PSPL.html#model.PSPL" title="model.PSPL"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL</span></code></a></p>
 <p>Contains methods for model a PSPL photometry only.
 This is a Data-type class in our hierarchy. It is abstract and should not
@@ -83,7 +86,7 @@ be instantiated.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_Data.html#model.PSPL_Phot.animate" title="model.PSPL_Phot.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_Data.html#model.PSPL_Phot.animate" title="model.PSPL_Phot.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
 </tbody>
@@ -121,16 +124,13 @@ be instantiated.</p>
 <tr class="row-odd"><td><p><strong>get_resolved_astrometry</strong></p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p><strong>get_resolved_shift</strong></p></td>
+<tr class="row-even"><td><p><strong>log_likely_astrometry</strong></p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><p><strong>log_likely_astrometry</strong></p></td>
+<tr class="row-odd"><td><p><strong>log_likely_photometry</strong></p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p><strong>log_likely_photometry</strong></p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p><strong>log_likely_photometry_each</strong></p></td>
+<tr class="row-even"><td><p><strong>log_likely_photometry_each</strong></p></td>
 <td></td>
 </tr>
 </tbody>
@@ -175,64 +175,56 @@ be instantiated.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Phot.get_resolved_astrometry" title="model.PSPL_Phot.get_resolved_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code></a>(t)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Phot.get_resolved_shift" title="model.PSPL_Phot.get_resolved_shift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_shift</span></code></a>(t)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Phot.log_likely_astrometry" title="model.PSPL_Phot.log_likely_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_astrometry</span></code></a>(t, x, y, xerr, yerr[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Phot.log_likely_astrometry" title="model.PSPL_Phot.log_likely_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_astrometry</span></code></a>(t, x, y, xerr, yerr[, ...])</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Attributes Documentation</p>
 <dl class="py attribute">
-<dt id="model.PSPL_Phot.astrometryFlag">
-<code class="sig-name descname"><span class="pre">astrometryFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#model.PSPL_Phot.astrometryFlag" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Phot.astrometryFlag">
+<span class="sig-name descname"><span class="pre">astrometryFlag</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#model.PSPL_Phot.astrometryFlag" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt id="model.PSPL_Phot.photometryFlag">
-<code class="sig-name descname"><span class="pre">photometryFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#model.PSPL_Phot.photometryFlag" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Phot.photometryFlag">
+<span class="sig-name descname"><span class="pre">photometryFlag</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#model.PSPL_Phot.photometryFlag" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <p class="rubric">Methods Documentation</p>
 <dl class="py method">
-<dt id="model.PSPL_Phot.get_astrometry">
-<code class="sig-name descname"><span class="pre">get_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_astrometry" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Phot.get_astrometry">
+<span class="sig-name descname"><span class="pre">get_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_astrometry" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Phot.get_astrometry_unlensed">
-<code class="sig-name descname"><span class="pre">get_astrometry_unlensed</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_astrometry_unlensed" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Phot.get_astrometry_unlensed">
+<span class="sig-name descname"><span class="pre">get_astrometry_unlensed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_astrometry_unlensed" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Phot.get_centroid_shift">
-<code class="sig-name descname"><span class="pre">get_centroid_shift</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_centroid_shift" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Phot.get_centroid_shift">
+<span class="sig-name descname"><span class="pre">get_centroid_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_centroid_shift" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Phot.get_lens_astrometry">
-<code class="sig-name descname"><span class="pre">get_lens_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_lens_astrometry" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Phot.get_lens_astrometry">
+<span class="sig-name descname"><span class="pre">get_lens_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_lens_astrometry" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Phot.get_resolved_amplification">
-<code class="sig-name descname"><span class="pre">get_resolved_amplification</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_resolved_amplification" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Phot.get_resolved_amplification">
+<span class="sig-name descname"><span class="pre">get_resolved_amplification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_resolved_amplification" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Phot.get_resolved_astrometry">
-<code class="sig-name descname"><span class="pre">get_resolved_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_resolved_astrometry" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Phot.get_resolved_astrometry">
+<span class="sig-name descname"><span class="pre">get_resolved_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_resolved_astrometry" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="model.PSPL_Phot.get_resolved_shift">
-<code class="sig-name descname"><span class="pre">get_resolved_shift</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.get_resolved_shift" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="model.PSPL_Phot.log_likely_astrometry">
-<code class="sig-name descname"><span class="pre">log_likely_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xerr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yerr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.log_likely_astrometry" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model.PSPL_Phot.log_likely_astrometry">
+<span class="sig-name descname"><span class="pre">log_likely_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xerr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yerr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot.log_likely_astrometry" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>

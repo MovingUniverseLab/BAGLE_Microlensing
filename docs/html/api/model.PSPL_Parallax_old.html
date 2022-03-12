@@ -3,13 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PSPL_Parallax_old &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <title>PSPL_Parallax_old &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
@@ -39,6 +41,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
@@ -68,191 +71,7 @@
            <div itemprop="articleBody">
              
   <div class="section" id="pspl-parallax-old">
-<h1>PSPL_Parallax_old<a class="headerlink" href="#pspl-parallax-old" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
-<dt id="model.PSPL_Parallax_old">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSPL_Parallax_old</span></code><a class="headerlink" href="#model.PSPL_Parallax_old" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.calc_piE_ecliptic" title="model.PSPL_Parallax_old.calc_piE_ecliptic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_piE_ecliptic</span></code></a>()</p></td>
-<td><p>Parallax: Get piE_ecliptic</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_amplification" title="model.PSPL_Parallax_old.get_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code></a>(t)</p></td>
-<td><p>Parallax: Get the photometric amplification term at a set of times, t.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_astrometry" title="model.PSPL_Parallax_old.get_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry</span></code></a>(t_obs[, ast_filt_idx])</p></td>
-<td><p>Parallax: Get astrometry</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_astrometry_unlensed" title="model.PSPL_Parallax_old.get_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry_unlensed</span></code></a>(t_obs)</p></td>
-<td><p>Get the astrometry of the source if the lens didn’t exist.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_centroid_shift" title="model.PSPL_Parallax_old.get_centroid_shift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_centroid_shift</span></code></a>(t[, ast_filt_idx])</p></td>
-<td><p>Parallax: Get the centroid shift (in mas) for a list of observation times (in MJD).</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_lens_astrometry" title="model.PSPL_Parallax_old.get_lens_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lens_astrometry</span></code></a>(t_obs)</p></td>
-<td><p>Parallax: Get lens astrometry</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_resolved_amplification" title="model.PSPL_Parallax_old.get_resolved_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_amplification</span></code></a>(t)</p></td>
-<td><p>Parallax: Get the photometric amplification term at a set of times, t for both the plus and minus images.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_resolved_astrometry" title="model.PSPL_Parallax_old.get_resolved_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code></a>(t_obs)</p></td>
-<td><p>Parallax: Get the x, y astrometry for each of the two source images, which we label plus and minus.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_resolved_shift" title="model.PSPL_Parallax_old.get_resolved_shift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_shift</span></code></a>(t_obs)</p></td>
-<td><p>Parallax: Get resolved shift</p></td>
-</tr>
-</tbody>
-</table>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 47%" />
-<col style="width: 53%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><strong>start</strong></p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Attributes Summary</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.parallaxFlag" title="model.PSPL_Parallax_old.parallaxFlag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parallaxFlag</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Methods Summary</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.calc_piE_ecliptic" title="model.PSPL_Parallax_old.calc_piE_ecliptic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_piE_ecliptic</span></code></a>()</p></td>
-<td><p>Parallax: Get piE_ecliptic</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_amplification" title="model.PSPL_Parallax_old.get_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code></a>(t)</p></td>
-<td><p>Parallax: Get the photometric amplification term at a set of times, t.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_astrometry" title="model.PSPL_Parallax_old.get_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry</span></code></a>(t_obs[, ast_filt_idx])</p></td>
-<td><p>Parallax: Get astrometry</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_astrometry_unlensed" title="model.PSPL_Parallax_old.get_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry_unlensed</span></code></a>(t_obs)</p></td>
-<td><p>Get the astrometry of the source if the lens didn’t exist.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_centroid_shift" title="model.PSPL_Parallax_old.get_centroid_shift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_centroid_shift</span></code></a>(t[, ast_filt_idx])</p></td>
-<td><p>Parallax: Get the centroid shift (in mas) for a list of observation times (in MJD).</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_lens_astrometry" title="model.PSPL_Parallax_old.get_lens_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lens_astrometry</span></code></a>(t_obs)</p></td>
-<td><p>Parallax: Get lens astrometry</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_resolved_amplification" title="model.PSPL_Parallax_old.get_resolved_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_amplification</span></code></a>(t)</p></td>
-<td><p>Parallax: Get the photometric amplification term at a set of times, t for both the plus and minus images.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_resolved_astrometry" title="model.PSPL_Parallax_old.get_resolved_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code></a>(t_obs)</p></td>
-<td><p>Parallax: Get the x, y astrometry for each of the two source images, which we label plus and minus.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.get_resolved_shift" title="model.PSPL_Parallax_old.get_resolved_shift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_shift</span></code></a>(t_obs)</p></td>
-<td><p>Parallax: Get resolved shift</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Parallax_old.start" title="model.PSPL_Parallax_old.start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">start</span></code></a>()</p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Attributes Documentation</p>
-<dl class="py attribute">
-<dt id="model.PSPL_Parallax_old.parallaxFlag">
-<code class="sig-name descname"><span class="pre">parallaxFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#model.PSPL_Parallax_old.parallaxFlag" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<p class="rubric">Methods Documentation</p>
-<dl class="py method">
-<dt id="model.PSPL_Parallax_old.calc_piE_ecliptic">
-<code class="sig-name descname"><span class="pre">calc_piE_ecliptic</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Parallax_old.calc_piE_ecliptic" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parallax: Get piE_ecliptic</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="model.PSPL_Parallax_old.get_amplification">
-<code class="sig-name descname"><span class="pre">get_amplification</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Parallax_old.get_amplification" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parallax: Get the photometric amplification term at a set of times, t.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="model.PSPL_Parallax_old.get_astrometry">
-<code class="sig-name descname"><span class="pre">get_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Parallax_old.get_astrometry" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parallax: Get astrometry</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="model.PSPL_Parallax_old.get_astrometry_unlensed">
-<code class="sig-name descname"><span class="pre">get_astrometry_unlensed</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Parallax_old.get_astrometry_unlensed" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the astrometry of the source if the lens didn’t exist.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="model.PSPL_Parallax_old.get_centroid_shift">
-<code class="sig-name descname"><span class="pre">get_centroid_shift</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Parallax_old.get_centroid_shift" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parallax: Get the centroid shift (in mas) for a list of
-observation times (in MJD).</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="model.PSPL_Parallax_old.get_lens_astrometry">
-<code class="sig-name descname"><span class="pre">get_lens_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Parallax_old.get_lens_astrometry" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parallax: Get lens astrometry</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="model.PSPL_Parallax_old.get_resolved_amplification">
-<code class="sig-name descname"><span class="pre">get_resolved_amplification</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Parallax_old.get_resolved_amplification" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parallax: Get the photometric amplification term at a set of times, t for both the
-plus and minus images.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="model.PSPL_Parallax_old.get_resolved_astrometry">
-<code class="sig-name descname"><span class="pre">get_resolved_astrometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Parallax_old.get_resolved_astrometry" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parallax: Get the x, y astrometry for each of the two source images,
-which we label plus and minus.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>[xS_plus, xS_minus]</strong><span class="classifier">list of numpy arrays</span></dt><dd><ul class="simple">
-<li><p>xS_plus is the vector position of the plus image.</p></li>
-<li><p>xS_minus is the vector position of the plus image.</p></li>
-</ul>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt id="model.PSPL_Parallax_old.get_resolved_shift">
-<code class="sig-name descname"><span class="pre">get_resolved_shift</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Parallax_old.get_resolved_shift" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parallax: Get resolved shift</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="model.PSPL_Parallax_old.start">
-<code class="sig-name descname"><span class="pre">start</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Parallax_old.start" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<h1>PSPL_Parallax_old<a class="headerlink" href="#pspl-parallax-old" title="Permalink to this headline"></a></h1>
 </div>
 
 

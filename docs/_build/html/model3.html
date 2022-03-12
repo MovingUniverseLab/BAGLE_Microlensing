@@ -3,23 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Model.py &mdash; BAGLE 0.1 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <title>Model.py Overview &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" type="text/css" />
-      <link rel="stylesheet" href="_static/katex-math.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/contrib/auto-render.min.js"></script>
-        <script src="_static/katex_autorenderer.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -44,12 +37,9 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Model.py</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Model.py Overview</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#class-families">Class Families</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#data-class-family">Data Class Family</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#parallax-class-family">Parallax Class Family</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#parameterization-class-family">Parameterization Class Family</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#making-a-new-model">Making a New Model</a></li>
 </ul>
 </li>
 </ul>
@@ -75,7 +65,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Model.py</li>
+      <li>Model.py Overview</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/model3.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -85,14 +75,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="module-model">
-<span id="model-py"></span><h1>Model.py<a class="headerlink" href="#module-model" title="Permalink to this headline"></a></h1>
+  <div class="section" id="model-py-overview">
+<h1>Model.py Overview<a class="headerlink" href="#model-py-overview" title="Permalink to this headline">¶</a></h1>
 <p>This set of classes and functions allows the user to construct microlensing
 models built up from a menu of different features. Each model is built using
 the inheritance of multiple classes, each from a different ‘family’ of
-related classes.</p>
-<dl>
-<dt>Each microlensing model must contain:</dt><dd><ol class="arabic">
+related classes.
+Each microlensing model must contain:</p>
+<blockquote>
+<div><ol class="arabic">
 <li><p>A class from the Data Class Family:</p>
 <blockquote>
 <div><ul class="simple">
@@ -143,7 +134,8 @@ related classes.</p>
 </div></blockquote>
 </li>
 </ol>
-</dd>
+</div></blockquote>
+<dl>
 <dt>There is a parallax hierarchy for PSBL:</dt><dd><ol class="arabic">
 <li><p>A class from the Data Class Family:</p>
 <blockquote>
@@ -178,8 +170,8 @@ related classes.</p>
 </ol>
 </dd>
 </dl>
-<p>Several pre-built models are included in this file.</p>
-<p>For example, the <cite>PSPL_PhotAstrom_noPar_Param1</cite> model is declared as:</p>
+<p>Several pre-built models are included in this file.
+For example, the <cite>PSPL_PhotAstrom_noPar_Param1</cite> model is declared as:</p>
 <blockquote>
 <div><p><code class="docutils literal notranslate"><span class="pre">class</span> <span class="pre">PSPL_PhotAstrom_noPar_Param1(PSPL_PhotAstrom,</span> <span class="pre">PSPL_noParallax,</span> <span class="pre">PSPL_PhotAstromParam1)</span></code></p>
 </div></blockquote>
@@ -190,68 +182,68 @@ we know that this model (1) uses both photometry and astrometry data, (2) does
 not include parallax in the model, and (3) uses the first
 photometry / astrometry parameterization for declaring the model.</p>
 <div class="section" id="class-families">
-<h2>Class Families<a class="headerlink" href="#class-families" title="Permalink to this headline"></a></h2>
+<h2>Class Families<a class="headerlink" href="#class-families" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="data-class-family">
-<h3>Data Class Family<a class="headerlink" href="#data-class-family" title="Permalink to this headline"></a></h3>
+<h3>Data Class Family<a class="headerlink" href="#data-class-family" title="Permalink to this headline">¶</a></h3>
 <p>These classes inform the model of what type of data will be used by the model.
 If the model will be for photometry only, then a model with the <cite>PSPL_Phot</cite>
 class must be selected. These models have the words <cite>Phot</cite> in their names.
 If the model will be using photometry and astrometry data, then a model with
 the <cite>PSPL_PhotAstrom</cite> must be selected. These models have the words
-<cite>PhotAstrom</cite> in their names.</p>
-<p>Data containing astrometry will generate a warning that astrometry data will
+<cite>PhotAstrom</cite> in their names.
+Data containing astrometry will generate a warning that astrometry data will
 not be used in the model when run through a model using <cite>PSPL_Phot</cite>. Data that
 does not contain astrometry run through a model using <cite>PSPL_PhotAstrom</cite> will
-generate a RuntimeError.</p>
-</div>
-<div class="section" id="parallax-class-family">
-<h3>Parallax Class Family<a class="headerlink" href="#parallax-class-family" title="Permalink to this headline"></a></h3>
-<p>These classes set whether the model uses parallax when calculating
+generate a RuntimeError.
+Parallax Class Family
+———————-
+These classes set whether the model uses parallax when calculating
 photometry, calculating astrometry, and fitting data. There are only two
 options for this class family, <cite>PSPL_noParallax</cite> and <cite>PSPL_Parallax</cite>. Models
 that do not have parallax have the words <cite>noPar</cite> in their names, while models
-that do contain parallax have the words <cite>Par</cite> in their names.</p>
-</div>
-<div class="section" id="parameterization-class-family">
-<h3>Parameterization Class Family<a class="headerlink" href="#parameterization-class-family" title="Permalink to this headline"></a></h3>
-<p>These classes determine which physical parameters define the model. Currently
+that do contain parallax have the words <cite>Par</cite> in their names.
+Parameterization Class Family
+——————————
+These classes determine which physical parameters define the model. Currently
 this file supports one parameterization when using only photometry (<cite>Phot</cite>)
 and three parametrizations when using photometry and astrometery
-(<cite>PhotAstrom</cite>).</p>
-<dl>
-<dt>The parameters for each parameterization are:</dt><dd><dl>
+(<cite>PhotAstrom</cite>).
+The parameters for each parameterization are:</p>
+<blockquote>
+<div><dl>
 <dt>PhotParam1 :</dt><dd><p>Point source point lens model for microlensing photometry only.
 This model includes the relative proper motion between the lens
-and the source. Parameters are reduced with the use of piRel</p>
-<dl>
-<dt><cite>Parameters</cite>: </dt><dd><div class="line-block">
-<div class="line">t0, u0_amp, tE, </div>
-<div class="line">piE_E, piE_N, </div>
+and the source. Parameters are reduced with the use of piRel
+<cite>Parameters</cite>:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">t0, u0_amp, tE,</div>
+<div class="line">piE_E, piE_N,</div>
 <div class="line">b_sff, mag_src,</div>
 <div class="line">(ra, dec)</div>
 </div>
-</dd>
-</dl>
+</div></blockquote>
 </dd>
 <dt>PhotAstromParam1 :</dt><dd><p>Point Source Point Lens model for microlensing. This model includes
-proper motions of both the lens and source.</p>
-<dl>
-<dt><cite>Parameters</cite>:</dt><dd><div class="line-block">
-<div class="line">mL, t0, beta, </div>
-<div class="line">dL, dL_dS, </div>
+proper motions of both the lens and source.
+<cite>Parameters</cite>:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">mL, t0, beta,</div>
+<div class="line">dL, dL_dS,</div>
 <div class="line">xS0_E, xS0_N,</div>
-<div class="line">muL_E, muL_N, </div>
+<div class="line">muL_E, muL_N,</div>
 <div class="line">muS_E, muS_N,</div>
 <div class="line">b_sff, mag_src,</div>
 <div class="line">(ra, dec)</div>
 </div>
-</dd>
-</dl>
+</div></blockquote>
 </dd>
 <dt>PhotAstromParam2 :</dt><dd><p>Point Source Point Lens model for microlensing. This model includes
-proper motions of the source and the source position on the sky.</p>
-<dl>
-<dt><cite>Parameters</cite>: </dt><dd><div class="line-block">
+proper motions of the source and the source position on the sky.
+<cite>Parameters</cite>:</p>
+<blockquote>
+<div><div class="line-block">
 <div class="line">t0, u0_amp, tE, thetaE, piS,</div>
 <div class="line">piE_E, piE_N,</div>
 <div class="line">xS0_E, xS0_N,</div>
@@ -259,15 +251,15 @@ proper motions of the source and the source position on the sky.</p>
 <div class="line">b_sff, mag_src,</div>
 <div class="line">(ra, dec)</div>
 </div>
-</dd>
-</dl>
+</div></blockquote>
 </dd>
 <dt>PhotAstromParam3 :</dt><dd><p>Point Source Point Lens model for microlensing. This model includes
 proper motions of the source and the source position on the sky.
-Note it fits the baseline magnitude rather than the unmagnified source 
-brightness.</p>
-<dl>
-<dt><cite>Parameters</cite>: </dt><dd><div class="line-block">
+Note it fits the baseline magnitude rather than the unmagnified source
+brightness.
+<cite>Parameters</cite>:</p>
+<blockquote>
+<div><div class="line-block">
 <div class="line">t0, u0_amp, tE, log10_thetaE, piS,</div>
 <div class="line">piE_E, piE_N,</div>
 <div class="line">xS0_E, xS0_N,</div>
@@ -275,19 +267,16 @@ brightness.</p>
 <div class="line">b_sff, mag_base,</div>
 <div class="line">(ra, dec)</div>
 </div>
+</div></blockquote>
 </dd>
 </dl>
-</dd>
-</dl>
-</dd>
-</dl>
+</div></blockquote>
 <p><cite>(ra, dec)</cite> are only required if the model is created with a parallax class.
 More details about each parameterization can be found in the Parameterization
-Class docstring.</p>
-</div>
-<div class="section" id="making-a-new-model">
-<h3>Making a New Model<a class="headerlink" href="#making-a-new-model" title="Permalink to this headline"></a></h3>
-<p>Each model is, as described above, constructed by combining inheriting from
+Class docstring.
+Making a New Model
+——————–
+Each model is, as described above, constructed by combining inheriting from
 different parent classes that contain the desired features for the model. Each
 model must have one class from each class family. In addition to this, there
 are several rules that must be followed when creating a new class.</p>

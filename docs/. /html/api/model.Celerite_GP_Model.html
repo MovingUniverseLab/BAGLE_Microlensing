@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Celerite_GP_Model &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> BAGLE
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">BAGLE</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Celerite_GP_Model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/model.Celerite_GP_Model.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="celerite-gp-model">
+<h1>Celerite_GP_Model<a class="headerlink" href="#celerite-gp-model" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="model.Celerite_GP_Model">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">Celerite_GP_Model</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pspl_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">celerite.modeling.Model</span></code></p>
+<p>This is nedeed for the GP.
+Just a wrapper over our model so it is a 
+celerite model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.full_size" title="model.Celerite_GP_Model.full_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">full_size</span></code></a></dt><dd><p>The total number of parameters (including frozen parameters)</p>
+</dd>
+<dt><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.parameter_vector" title="model.Celerite_GP_Model.parameter_vector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameter_vector</span></code></a></dt><dd><p>An array of all parameters (including frozen parameters)</p>
+</dd>
+<dt><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.vector_size" title="model.Celerite_GP_Model.vector_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vector_size</span></code></a></dt><dd><p>The number of active (or unfrozen) parameters</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.compute_gradient" title="model.Celerite_GP_Model.compute_gradient"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_gradient</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Compute the “gradient” of the model for the current parameters</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.freeze_all_parameters" title="model.Celerite_GP_Model.freeze_all_parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">freeze_all_parameters</span></code></a>()</p></td>
+<td><p>Freeze all parameters of the model</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.freeze_parameter" title="model.Celerite_GP_Model.freeze_parameter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">freeze_parameter</span></code></a>(name)</p></td>
+<td><p>Freeze a parameter by name</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.get_parameter" title="model.Celerite_GP_Model.get_parameter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parameter</span></code></a>(name)</p></td>
+<td><p>Get a parameter value by name</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.get_parameter_bounds" title="model.Celerite_GP_Model.get_parameter_bounds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parameter_bounds</span></code></a>([include_frozen])</p></td>
+<td><p>Get a list of the parameter bounds</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.get_parameter_dict" title="model.Celerite_GP_Model.get_parameter_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parameter_dict</span></code></a>([include_frozen])</p></td>
+<td><p>Get an ordered dictionary of the parameters</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.get_parameter_names" title="model.Celerite_GP_Model.get_parameter_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parameter_names</span></code></a>([include_frozen])</p></td>
+<td><p>Get a list of the parameter names</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.get_parameter_vector" title="model.Celerite_GP_Model.get_parameter_vector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parameter_vector</span></code></a>([include_frozen])</p></td>
+<td><p>Get an array of the parameter values in the correct order</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.Celerite_GP_Model.get_value" title="model.Celerite_GP_Model.get_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_value</span></code></a>(t_obs)</p></td>
+<td><p>Compute the “value” of the model for the current parameters</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.log_prior" title="model.Celerite_GP_Model.log_prior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_prior</span></code></a>()</p></td>
+<td><p>Compute the log prior probability of the current parameters</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.set_parameter" title="model.Celerite_GP_Model.set_parameter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_parameter</span></code></a>(name, value)</p></td>
+<td><p>Set a parameter value by name</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.set_parameter_vector" title="model.Celerite_GP_Model.set_parameter_vector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_parameter_vector</span></code></a>(vector[, include_frozen])</p></td>
+<td><p>Set the parameter values to the given vector</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.thaw_all_parameters" title="model.Celerite_GP_Model.thaw_all_parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">thaw_all_parameters</span></code></a>()</p></td>
+<td><p>Thaw all parameters of the model</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_GP.html#model.Celerite_GP_Model.thaw_parameter" title="model.Celerite_GP_Model.thaw_parameter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">thaw_parameter</span></code></a>(name)</p></td>
+<td><p>Thaw a parameter by name</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 62%" />
+<col style="width: 38%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>get_gradient</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Summary</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.Celerite_GP_Model.get_value" title="model.Celerite_GP_Model.get_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_value</span></code></a>(t_obs)</p></td>
+<td><p>Compute the “value” of the model for the current parameters</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Documentation</p>
+<dl class="py method">
+<dt id="model.Celerite_GP_Model.get_value">
+<code class="sig-name descname"><span class="pre">get_value</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the “value” of the model for the current parameters</p>
+<p>This method should be overloaded by subclasses to implement the actual
+functionality of the model.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Niranjan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
