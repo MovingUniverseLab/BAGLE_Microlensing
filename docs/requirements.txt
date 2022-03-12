@@ -6,4 +6,5 @@ astropy
 celerite
 ephem
 joblib
-jplephem 
+jplephem
+graphviz 
