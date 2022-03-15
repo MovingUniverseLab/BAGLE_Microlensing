@@ -25,3 +25,4 @@ All models support fitting data with single or multi-band photometry only, astro
    BSPL.rst
    FSPL.rst
    Gen_Use.rst
+   model_fitter.rst

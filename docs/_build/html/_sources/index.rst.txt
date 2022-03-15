@@ -15,12 +15,13 @@ BAGLE allows modeling of gravitational microlensing events both photometrically 
 All models support fitting data with single or multi-band photometry only, astrometry only, or joint fitting of photometry and astrometry (recommended).
 
 .. toctree::
-   :maxdepth: 8 
+   :maxdepth: 10 
 
    intro.rst
    model3.rst
    UserClass.rst
    PSPL.rst
    PSBL.rst
+   BSPL.rst
    FSPL.rst
    Gen_Use.rst

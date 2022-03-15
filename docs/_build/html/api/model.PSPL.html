@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,9 +10,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -36,10 +38,11 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
 
@@ -69,123 +72,136 @@
              
   <div class="section" id="pspl">
 <h1>PSPL<a class="headerlink" href="#pspl" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
+<dl class="class">
 <dt id="model.PSPL">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSPL</span></code><a class="headerlink" href="#model.PSPL" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL</code><a class="headerlink" href="#model.PSPL" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
+<table border="1" class="longtable docutils">
 <colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
+<col width="10%" />
+<col width="90%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL.animate" title="model.PSPL.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
-<td><p>Produces animation of microlensing event.</p></td>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSPL.animate" title="model.PSPL.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE,&nbsp;time_steps,&nbsp;frame_time,&nbsp;name,&nbsp;…)</td>
+<td>Produces animation of microlensing event.</td>
 </tr>
 </tbody>
 </table>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 75%" />
-<col style="width: 25%" />
+<col width="75%" />
+<col width="25%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p><strong>get_chi2_photometry</strong></p></td>
-<td></td>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>get_chi2_photometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>get_lnL_constant</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>get_lnL_constant</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p><strong>get_photometry</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><strong>get_photometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>log_likely_photometry</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>log_likely_photometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p><strong>log_likely_photometry_each</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><strong>log_likely_photometry_each</strong></td>
+<td>&#160;</td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Methods Summary</p>
-<table class="longtable docutils align-default">
+<table border="1" class="longtable docutils">
 <colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
+<col width="10%" />
+<col width="90%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL.animate" title="model.PSPL.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
-<td><p>Produces animation of microlensing event.</p></td>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSPL.animate" title="model.PSPL.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE,&nbsp;time_steps,&nbsp;frame_time,&nbsp;name,&nbsp;…)</td>
+<td>Produces animation of microlensing event.</td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL.get_chi2_photometry" title="model.PSPL.get_chi2_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_chi2_photometry</span></code></a>(t_obs, mag_obs, mag_err_obs)</p></td>
-<td><p></p></td>
+<tr class="row-even"><td><a class="reference internal" href="#model.PSPL.get_chi2_photometry" title="model.PSPL.get_chi2_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_chi2_photometry</span></code></a>(t_obs,&nbsp;mag_obs,&nbsp;mag_err_obs)</td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL.get_lnL_constant" title="model.PSPL.get_lnL_constant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lnL_constant</span></code></a>(err_obs)</p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSPL.get_lnL_constant" title="model.PSPL.get_lnL_constant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lnL_constant</span></code></a>(err_obs)</td>
+<td></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL.get_photometry" title="model.PSPL.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[, filt_idx, print_warning])</p></td>
-<td><p></p></td>
+<tr class="row-even"><td><a class="reference internal" href="#model.PSPL.get_photometry" title="model.PSPL.get_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry</span></code></a>(t_obs[,&nbsp;filt_idx,&nbsp;print_warning])</td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL.log_likely_photometry" title="model.PSPL.log_likely_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry</span></code></a>(t_obs, mag_obs, …[, …])</p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSPL.log_likely_photometry" title="model.PSPL.log_likely_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry</span></code></a>(t_obs,&nbsp;mag_obs,&nbsp;…[,&nbsp;…])</td>
+<td></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL.log_likely_photometry_each" title="model.PSPL.log_likely_photometry_each"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry_each</span></code></a>(t_obs, mag_obs, …)</p></td>
-<td><p></p></td>
+<tr class="row-even"><td><a class="reference internal" href="#model.PSPL.log_likely_photometry_each" title="model.PSPL.log_likely_photometry_each"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry_each</span></code></a>(t_obs,&nbsp;mag_obs,&nbsp;…)</td>
+<td></td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Methods Documentation</p>
-<dl class="py method">
+<dl class="method">
 <dt id="model.PSPL.animate">
-<code class="sig-name descname"><span class="pre">animate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.animate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Produces animation of microlensing event.</p>
-<p>This function takes the PSPL and makes an animation, the input variables are as follows</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>tE:</strong></dt><dd><p>number of einstein crossings times before/after the peak you want the animation to plot
-e.g tE = 2 =&gt; graph will go from -2 tE to 2 tE</p>
+<code class="descname">animate</code><span class="sig-paren">(</span><em>tE</em>, <em>time_steps</em>, <em>frame_time</em>, <em>name</em>, <em>size</em>, <em>zoom</em>, <em>astrometry</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.animate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produces animation of microlensing event. 
+This function takes the PSPL and makes an animation, the input variables are as follows</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>tE:</strong></dt>
+<dd><dl class="first last docutils">
+<dt>number of einstein crossings times before/after the peak you want the animation to plot</dt>
+<dd><p class="first last">e.g tE = 2 =&gt; graph will go from -2 tE to 2 tE</p>
 </dd>
-<dt><strong>time_steps:</strong></dt><dd><p>number of time steps before/after peak, so total number of time steps will 
+</dl>
+</dd>
+<dt><strong>time_steps:</strong></dt>
+<dd><p class="first last">number of time steps before/after peak, so total number of time steps will 
 be 2 times this value</p>
 </dd>
-<dt><strong>frame_time:</strong></dt><dd><p>times in ms of each frame in the animation</p>
+<dt><strong>frame_time:</strong></dt>
+<dd><p class="first last">times in ms of each frame in the animation</p>
 </dd>
-<dt><strong>name: string</strong></dt><dd><p>the animation will be saved as name.html</p>
+<dt><strong>name: string</strong></dt>
+<dd><p class="first last">the animation will be saved as name.html</p>
 </dd>
-<dt><strong>size: list</strong></dt><dd><p>[horizontal, vertical] cm’s</p>
+<dt><strong>size: list</strong></dt>
+<dd><p class="first last">[horizontal, vertical] cm’s</p>
 </dd>
-<dt><strong>zoom:</strong></dt><dd><p># of einstein radii plotted in vertical direction</p>
+<dt><strong>zoom:</strong></dt>
+<dd><p class="first last"># of einstein radii plotted in vertical direction</p>
 </dd>
 </dl>
-</dd>
-</dl>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="model.PSPL.get_chi2_photometry">
-<code class="sig-name descname"><span class="pre">get_chi2_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.get_chi2_photometry" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_chi2_photometry</code><span class="sig-paren">(</span><em>t_obs</em>, <em>mag_obs</em>, <em>mag_err_obs</em>, <em>filt_index=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.get_chi2_photometry" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="model.PSPL.get_lnL_constant">
-<code class="sig-name descname"><span class="pre">get_lnL_constant</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">err_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.get_lnL_constant" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_lnL_constant</code><span class="sig-paren">(</span><em>err_obs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.get_lnL_constant" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="model.PSPL.get_photometry">
-<code class="sig-name descname"><span class="pre">get_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.get_photometry" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_photometry</code><span class="sig-paren">(</span><em>t_obs</em>, <em>filt_idx=0</em>, <em>print_warning=True</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.get_photometry" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="model.PSPL.log_likely_photometry">
-<code class="sig-name descname"><span class="pre">log_likely_photometry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.log_likely_photometry" title="Permalink to this definition">¶</a></dt>
+<code class="descname">log_likely_photometry</code><span class="sig-paren">(</span><em>t_obs</em>, <em>mag_obs</em>, <em>mag_err_obs</em>, <em>filt_index=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.log_likely_photometry" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="model.PSPL.log_likely_photometry_each">
-<code class="sig-name descname"><span class="pre">log_likely_photometry_each</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.log_likely_photometry_each" title="Permalink to this definition">¶</a></dt>
+<code class="descname">log_likely_photometry_each</code><span class="sig-paren">(</span><em>t_obs</em>, <em>mag_obs</em>, <em>mag_err_obs</em>, <em>filt_index=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL.log_likely_photometry_each" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

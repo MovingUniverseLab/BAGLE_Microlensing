@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,10 +10,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -37,10 +38,11 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
 
@@ -70,9 +72,9 @@
              
   <div class="section" id="pspl-photastromparam1">
 <h1>PSPL_PhotAstromParam1<a class="headerlink" href="#pspl-photastromparam1" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
+<dl class="class">
 <dt id="model.PSPL_PhotAstromParam1">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSPL_PhotAstromParam1</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL_dS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam1" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_PhotAstromParam1</code><span class="sig-paren">(</span><em>mL</em>, <em>t0</em>, <em>beta</em>, <em>dL</em>, <em>dL_dS</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muL_E</em>, <em>muL_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>b_sff</em>, <em>mag_src</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
 <p>PSPL model for astrometry and photometry - physical parameterization.</p>
 <p>A Point Source Point Lens model for microlensing. This model uses a 
@@ -80,100 +82,119 @@ parameterization that depends on only physical quantities such as the
 lens mass and positions and proper motions of both the lens and source.</p>
 <p>Note the attributes, RA (raL) and Dec (decL) are required 
 if you are calculating a model with parallax.</p>
-<dl class="field-list">
-<dt class="field-odd">Attributes</dt>
-<dd class="field-odd"><dl>
-<dt><strong>mL: float</strong></dt><dd><p>Mass of the lens (Msun)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>mL: float</strong></dt>
+<dd><p class="first last">Mass of the lens (Msun)</p>
 </dd>
-<dt><strong>t0: float</strong></dt><dd><p>Time of photometric peak, as seen from Earth (MJD.DDD)</p>
+<dt><strong>t0: float</strong></dt>
+<dd><p class="first last">Time of photometric peak, as seen from Earth (MJD.DDD)</p>
 </dd>
-<dt><strong>beta: float</strong></dt><dd><p>Angular distance between the lens and source on the plane of the sky (mas). Can be</p>
-<blockquote>
+<dt><strong>beta: float</strong></dt>
+<dd><p class="first">Angular distance between the lens and source on the plane of the sky (mas). Can be</p>
+<blockquote class="last">
 <div><ul class="simple">
-<li><p>positive (u0_amp &gt; 0 when u0_hat[0] &lt; 0) or</p></li>
-<li><p>negative (u0_amp &lt; 0 when u0_hat[0] &gt; 0).</p></li>
+<li>positive (u0_amp &gt; 0 when u0_hat[0] &lt; 0) or</li>
+<li>negative (u0_amp &lt; 0 when u0_hat[0] &gt; 0).</li>
 </ul>
 </div></blockquote>
 </dd>
-<dt><strong>dL: float</strong></dt><dd><p>Distance from the observer to the lens (pc)</p>
+<dt><strong>dL: float</strong></dt>
+<dd><p class="first last">Distance from the observer to the lens (pc)</p>
 </dd>
-<dt><strong>dL_dS: float</strong></dt><dd><p>Ratio of Distance from the obersver to the lens to
+<dt><strong>dL_dS: float</strong></dt>
+<dd><p class="first last">Ratio of Distance from the obersver to the lens to
 Distance from the observer to the source</p>
 </dd>
-<dt><strong>xS0_E: float</strong></dt><dd><p>RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+<dt><strong>xS0_E: float</strong></dt>
+<dd><p class="first last">RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
 </dd>
-<dt><strong>xS0_N: float</strong></dt><dd><p>Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
+<dt><strong>xS0_N: float</strong></dt>
+<dd><p class="first last">Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.</p>
 </dd>
-<dt><strong>muL_E: float</strong></dt><dd><p>RA Lens proper motion (mas/yr)</p>
+<dt><strong>muL_E: float</strong></dt>
+<dd><p class="first last">RA Lens proper motion (mas/yr)</p>
 </dd>
-<dt><strong>muL_N: float</strong></dt><dd><p>Dec Lens proper motion (mas/yr)</p>
+<dt><strong>muL_N: float</strong></dt>
+<dd><p class="first last">Dec Lens proper motion (mas/yr)</p>
 </dd>
-<dt><strong>muS_E: float</strong></dt><dd><p>RA Source proper motion (mas/yr)</p>
+<dt><strong>muS_E: float</strong></dt>
+<dd><p class="first last">RA Source proper motion (mas/yr)</p>
 </dd>
-<dt><strong>muS_N: float</strong></dt><dd><p>Dec Source proper motion (mas/yr)</p>
+<dt><strong>muS_N: float</strong></dt>
+<dd><p class="first last">Dec Source proper motion (mas/yr)</p>
 </dd>
-<dt><strong>b_sff: numpy array or list</strong></dt><dd><p>The ratio of the source flux to the total (source + neighbors + lens)
+<dt><strong>b_sff: numpy array or list</strong></dt>
+<dd><p class="first last">The ratio of the source flux to the total (source + neighbors + lens)
 <span class="math notranslate nohighlight">\(b_sff = f_S / (f_S + f_L + f_N)\)</span>. This must be passed in as a list or
 array, with one entry for each photometric filter.</p>
 </dd>
-<dt><strong>mag_src: numpy array or list</strong></dt><dd><p>Photometric magnitude of the source. This must be passed in as a
+<dt><strong>mag_src: numpy array or list</strong></dt>
+<dd><p class="first last">Photometric magnitude of the source. This must be passed in as a
 list or array, with one entry for each photometric filter.</p>
 </dd>
-<dt><strong>raL: float, optional</strong></dt><dd><p>Right ascension of the lens in decimal degrees.</p>
+<dt><strong>raL: float, optional</strong></dt>
+<dd><p class="first last">Right ascension of the lens in decimal degrees.</p>
 </dd>
-<dt><strong>decL: float, optional</strong></dt><dd><p>Declination of the lens in decimal degrees.</p>
+<dt><strong>decL: float, optional</strong></dt>
+<dd><p class="first last">Declination of the lens in decimal degrees.</p>
 </dd>
 </dl>
-</dd>
-</dl>
+</td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Attributes Summary</p>
-<table class="longtable docutils align-default">
+<table border="1" class="longtable docutils">
 <colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
+<col width="10%" />
+<col width="90%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_PhotAstromParam1.additional_param_names" title="model.PSPL_PhotAstromParam1.additional_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">additional_param_names</span></code></a></p></td>
-<td><p></p></td>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSPL_PhotAstromParam1.additional_param_names" title="model.PSPL_PhotAstromParam1.additional_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">additional_param_names</span></code></a></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_PhotAstromParam1.fitter_param_names" title="model.PSPL_PhotAstromParam1.fitter_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fitter_param_names</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><a class="reference internal" href="#model.PSPL_PhotAstromParam1.fitter_param_names" title="model.PSPL_PhotAstromParam1.fitter_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fitter_param_names</span></code></a></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_PhotAstromParam1.paramAstromFlag" title="model.PSPL_PhotAstromParam1.paramAstromFlag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">paramAstromFlag</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSPL_PhotAstromParam1.paramAstromFlag" title="model.PSPL_PhotAstromParam1.paramAstromFlag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">paramAstromFlag</span></code></a></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_PhotAstromParam1.paramPhotFlag" title="model.PSPL_PhotAstromParam1.paramPhotFlag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">paramPhotFlag</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><a class="reference internal" href="#model.PSPL_PhotAstromParam1.paramPhotFlag" title="model.PSPL_PhotAstromParam1.paramPhotFlag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">paramPhotFlag</span></code></a></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_PhotAstromParam1.phot_param_names" title="model.PSPL_PhotAstromParam1.phot_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">phot_param_names</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSPL_PhotAstromParam1.phot_param_names" title="model.PSPL_PhotAstromParam1.phot_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">phot_param_names</span></code></a></td>
+<td></td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Attributes Documentation</p>
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_PhotAstromParam1.additional_param_names">
-<code class="sig-name descname"><span class="pre">additional_param_names</span></code><em class="property"> <span class="pre">=</span> <span class="pre">['dS',</span> <span class="pre">'tE',</span> <span class="pre">'u0_amp',</span> <span class="pre">'thetaE_E',</span> <span class="pre">'thetaE_N',</span> <span class="pre">'piE_E',</span> <span class="pre">'piE_N',</span> <span class="pre">'muRel_E',</span> <span class="pre">'muRel_N']</span></em><a class="headerlink" href="#model.PSPL_PhotAstromParam1.additional_param_names" title="Permalink to this definition">¶</a></dt>
+<code class="descname">additional_param_names</code><em class="property"> = ['dS', 'tE', 'u0_amp', 'thetaE_E', 'thetaE_N', 'piE_E', 'piE_N', 'muRel_E', 'muRel_N']</em><a class="headerlink" href="#model.PSPL_PhotAstromParam1.additional_param_names" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_PhotAstromParam1.fitter_param_names">
-<code class="sig-name descname"><span class="pre">fitter_param_names</span></code><em class="property"> <span class="pre">=</span> <span class="pre">['mL',</span> <span class="pre">'t0',</span> <span class="pre">'beta',</span> <span class="pre">'dL',</span> <span class="pre">'dL_dS',</span> <span class="pre">'xS0_E',</span> <span class="pre">'xS0_N',</span> <span class="pre">'muL_E',</span> <span class="pre">'muL_N',</span> <span class="pre">'muS_E',</span> <span class="pre">'muS_N']</span></em><a class="headerlink" href="#model.PSPL_PhotAstromParam1.fitter_param_names" title="Permalink to this definition">¶</a></dt>
+<code class="descname">fitter_param_names</code><em class="property"> = ['mL', 't0', 'beta', 'dL', 'dL_dS', 'xS0_E', 'xS0_N', 'muL_E', 'muL_N', 'muS_E', 'muS_N']</em><a class="headerlink" href="#model.PSPL_PhotAstromParam1.fitter_param_names" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_PhotAstromParam1.paramAstromFlag">
-<code class="sig-name descname"><span class="pre">paramAstromFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#model.PSPL_PhotAstromParam1.paramAstromFlag" title="Permalink to this definition">¶</a></dt>
+<code class="descname">paramAstromFlag</code><em class="property"> = True</em><a class="headerlink" href="#model.PSPL_PhotAstromParam1.paramAstromFlag" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_PhotAstromParam1.paramPhotFlag">
-<code class="sig-name descname"><span class="pre">paramPhotFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#model.PSPL_PhotAstromParam1.paramPhotFlag" title="Permalink to this definition">¶</a></dt>
+<code class="descname">paramPhotFlag</code><em class="property"> = True</em><a class="headerlink" href="#model.PSPL_PhotAstromParam1.paramPhotFlag" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_PhotAstromParam1.phot_param_names">
-<code class="sig-name descname"><span class="pre">phot_param_names</span></code><em class="property"> <span class="pre">=</span> <span class="pre">['b_sff',</span> <span class="pre">'mag_src']</span></em><a class="headerlink" href="#model.PSPL_PhotAstromParam1.phot_param_names" title="Permalink to this definition">¶</a></dt>
+<code class="descname">phot_param_names</code><em class="property"> = ['b_sff', 'mag_src']</em><a class="headerlink" href="#model.PSPL_PhotAstromParam1.phot_param_names" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

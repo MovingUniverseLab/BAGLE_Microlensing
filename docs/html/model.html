@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>&lt;no title&gt; &mdash; BAGLE 0.1 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <title>&lt;no title&gt; &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -44,6 +44,7 @@
 <li class="toctree-l1"><a class="reference internal" href="BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_fitter.html">Model Fitter</a></li>
 </ul>
 
         </div>
@@ -87,30 +88,66 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="PSPL_User.html">PSPL User Classes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl">PSPL</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-parallax">PSPL Parallax</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-parallax2-pspl-multiphot-parallax">PSPL_parallax2 / PSPL_multiphot_parallax</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot">PSPL_phot</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot-parallax-pspl-phot-multiphot-parallax">PSPL_phot_parallax / PSPL_phot_multiphot_parallax</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot-parallax-with-gp">PSPL Phot parallax with GP</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot-no-parallax-with-gp">PSPL Phot, no parallax with GP</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-photastrom-parallax-with-gp">PSPL PhotAstrom, parallax with GP</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-photastrom-no-parallax-with-gp">PSPL PhotAstrom, no parallax with GP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl">PSPL</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-parallax">PSPL Parallax</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-parallax2-pspl-multiphot-parallax">PSPL_parallax2 / PSPL_multiphot_parallax</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot">PSPL_phot</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot-parallax-pspl-phot-multiphot-parallax">PSPL_phot_parallax / PSPL_phot_multiphot_parallax</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot-parallax-with-gp">PSPL Phot parallax with GP</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot-no-parallax-with-gp">PSPL Phot, no parallax with GP</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-photastrom-parallax-with-gp">PSPL PhotAstrom, parallax with GP</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-photastrom-no-parallax-with-gp">PSPL PhotAstrom, no parallax with GP</a><ul class="simple">
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="PSBL_User.html">PSBL User Classes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl">PSBL</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-parallax">PSBL Parallax</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot">PSBL_Phot</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot-parallax">PSBL_phot_parallax</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-photastrom-no-parallax-with-gp">PSBL PhotAstrom, no parallax with GP</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-photastrom-parallax-with-gp">PSBL PhotAstrom, parallax with GP</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot-no-parallax-with-gp">PSBL Phot, no parallax with GP</a></li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot-parallax-with-gp">PSBL Phot, parallax with GP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl">PSBL</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-parallax">PSBL Parallax</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot">PSBL_Phot</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot-parallax">PSBL_phot_parallax</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-photastrom-no-parallax-with-gp">PSBL PhotAstrom, no parallax with GP</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-photastrom-parallax-with-gp">PSBL PhotAstrom, parallax with GP</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot-no-parallax-with-gp">PSBL Phot, no parallax with GP</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot-parallax-with-gp">PSBL Phot, parallax with GP</a><ul class="simple">
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="FSPL_User.html">FSPL User Class</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="FSPL_User.html#fspl-parallax">FSPL_parallax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FSPL_User.html#fspl-parallax">FSPL_parallax</a><ul class="simple">
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -121,14 +158,24 @@
 <li class="toctree-l3"><a class="reference internal" href="PSPL_Param.html#gp-models">GP Models</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="PSPL_Data.html">Data Class Family</a></li>
-<li class="toctree-l2"><a class="reference internal" href="PSPL_GP.html">GP Class Family</a></li>
-<li class="toctree-l2"><a class="reference internal" href="PSPL_Parallax.html">Parallax Class Family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PSPL_Data.html">Data Class Family</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="PSPL_GP.html">GP Class Family</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="PSPL_Parallax.html">Parallax Class Family</a><ul class="simple">
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="PSBL_Data.html">Data Class Family</a></li>
-<li class="toctree-l2"><a class="reference internal" href="PSBL_Parallax.html">Parallax Class Family - PSBL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PSBL_Data.html">Data Class Family</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="PSBL_Parallax.html">Parallax Class Family - PSBL</a><ul class="simple">
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="PSBL_Param.html">Parameterization Class Family - PSBL</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="PSBL_Param.html#psbl-models">PSBL Models</a></li>
 <li class="toctree-l3"><a class="reference internal" href="PSBL_Param.html#gp-models">GP Models</a></li>
@@ -137,8 +184,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="FSPL.html#fspl-classes">FSPL Classes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="FSPL.html#fspl-limb-classes">FSPL Limb Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FSPL.html#fspl-classes">FSPL Classes</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="FSPL.html#fspl-limb-classes">FSPL Limb Classes</a><ul class="simple">
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a><ul>

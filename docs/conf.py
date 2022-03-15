@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.abspath('../src/BAGLE/tests'))
 project = 'BAGLE'
 copyright = '2022, Niranjan'
 author = 'Niranjan'
+master_doc = 'index'
 
 # The full version, including alpha/beta/rc tags
 release = '0.1'

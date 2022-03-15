@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,9 +10,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -36,10 +38,11 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
 
@@ -69,26 +72,26 @@
              
   <div class="section" id="psbl-gp-photparam1">
 <h1>PSBL_GP_PhotParam1<a class="headerlink" href="#psbl-gp-photparam1" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
+<dl class="class">
 <dt id="model.PSBL_GP_PhotParam1">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSBL_GP_PhotParam1</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_GP_PhotParam1" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSBL_GP_PhotParam1</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>piE_E</em>, <em>piE_N</em>, <em>q</em>, <em>sep</em>, <em>phi</em>, <em>b_sff</em>, <em>mag_src</em>, <em>gp_log_sigma</em>, <em>gp_log_rho</em>, <em>gp_log_S0</em>, <em>gp_log_omega0</em>, <em>raL=None</em>, <em>decL=None</em>, <em>root_tol=1e-08</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSBL_GP_PhotParam1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="model.PSBL_PhotParam1.html#model.PSBL_PhotParam1" title="model.PSBL_PhotParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSBL_PhotParam1</span></code></a></p>
 <p class="rubric">Attributes Summary</p>
-<table class="longtable docutils align-default">
+<table border="1" class="longtable docutils">
 <colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
+<col width="10%" />
+<col width="90%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSBL_GP_PhotParam1.phot_optional_param_names" title="model.PSBL_GP_PhotParam1.phot_optional_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">phot_optional_param_names</span></code></a></p></td>
-<td><p></p></td>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSBL_GP_PhotParam1.phot_optional_param_names" title="model.PSBL_GP_PhotParam1.phot_optional_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">phot_optional_param_names</span></code></a></td>
+<td></td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Attributes Documentation</p>
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSBL_GP_PhotParam1.phot_optional_param_names">
-<code class="sig-name descname"><span class="pre">phot_optional_param_names</span></code><em class="property"> <span class="pre">=</span> <span class="pre">['gp_log_sigma',</span> <span class="pre">'gp_log_rho',</span> <span class="pre">'gp_log_S0',</span> <span class="pre">'gp_log_omega0']</span></em><a class="headerlink" href="#model.PSBL_GP_PhotParam1.phot_optional_param_names" title="Permalink to this definition">¶</a></dt>
+<code class="descname">phot_optional_param_names</code><em class="property"> = ['gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0']</em><a class="headerlink" href="#model.PSBL_GP_PhotParam1.phot_optional_param_names" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

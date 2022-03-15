@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PSPL_Phot_Par_GP_Param1 &mdash; BAGLE 0.1 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <title>PSPL_Phot_Par_GP_Param1 &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -36,7 +36,15 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model_fitter.html">Model Fitter</a></li>
 </ul>
 
         </div>
@@ -64,82 +72,82 @@
            <div itemprop="articleBody">
              
   <div class="section" id="pspl-phot-par-gp-param1">
-<h1>PSPL_Phot_Par_GP_Param1<a class="headerlink" href="#pspl-phot-par-gp-param1" title="Permalink to this headline"></a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="model.PSPL_Phot_Par_GP_Param1">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_Phot_Par_GP_Param1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot_Par_GP_Param1" title="Permalink to this definition"></a></dt>
+<h1>PSPL_Phot_Par_GP_Param1<a class="headerlink" href="#pspl-phot-par-gp-param1" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="model.PSPL_Phot_Par_GP_Param1">
+<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_Phot_Par_GP_Param1</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Phot_Par_GP_Param1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="model.PSPL_GP.html#model.PSPL_GP" title="model.PSPL_GP"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_GP</span></code></a>, <a class="reference internal" href="model.PSPL_Phot.html#model.PSPL_Phot" title="model.PSPL_Phot"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Phot</span></code></a>, <a class="reference internal" href="model.PSPL_Parallax.html#model.PSPL_Parallax" title="model.PSPL_Parallax"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Parallax</span></code></a>, <a class="reference internal" href="model.PSPL_GP_PhotParam1.html#model.PSPL_GP_PhotParam1" title="model.PSPL_GP_PhotParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_GP_PhotParam1</span></code></a></p>
 <p>An abstract class that all Param classes should sub-class.
 This serves as a reminder for the class variables that
 MUST be set.</p>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
+<table border="1" class="longtable docutils">
 <colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
+<col width="10%" />
+<col width="90%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.animate" title="model.PSPL_Phot_Par_GP_Param1.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
-<td><p>Produces animation of microlensing event.</p></td>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.animate" title="model.PSPL_Phot_Par_GP_Param1.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE,&nbsp;time_steps,&nbsp;frame_time,&nbsp;name,&nbsp;…)</td>
+<td>Produces animation of microlensing event.</td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.calc_piE_ecliptic" title="model.PSPL_Phot_Par_GP_Param1.calc_piE_ecliptic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_piE_ecliptic</span></code></a>()</p></td>
-<td><p>Parallax: Get piE_ecliptic</p></td>
+<tr class="row-even"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.calc_piE_ecliptic" title="model.PSPL_Phot_Par_GP_Param1.calc_piE_ecliptic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_piE_ecliptic</span></code></a>()</td>
+<td>Parallax: Get piE_ecliptic</td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_amplification" title="model.PSPL_Phot_Par_GP_Param1.get_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code></a>(t)</p></td>
-<td><p>Parallax: Get the photometric amplification term at a set of times, t.</p></td>
+<tr class="row-odd"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_amplification" title="model.PSPL_Phot_Par_GP_Param1.get_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code></a>(t)</td>
+<td>Parallax: Get the photometric amplification term at a set of times, t.</td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_log_det_covariance" title="model.PSPL_Phot_Par_GP_Param1.get_log_det_covariance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_log_det_covariance</span></code></a>(t_obs, mag_obs, ...)</p></td>
-<td><p>Returns photometry with GP noise added in.</p></td>
+<tr class="row-even"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_log_det_covariance" title="model.PSPL_Phot_Par_GP_Param1.get_log_det_covariance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_log_det_covariance</span></code></a>(t_obs,&nbsp;mag_obs,&nbsp;…)</td>
+<td>Returns photometry with GP noise added in.</td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_photometry_with_gp" title="model.PSPL_Phot_Par_GP_Param1.get_photometry_with_gp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry_with_gp</span></code></a>(t_obs, mag_obs, ...)</p></td>
-<td><p>Returns photometry with GP noise added in.</p></td>
+<tr class="row-odd"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_photometry_with_gp" title="model.PSPL_Phot_Par_GP_Param1.get_photometry_with_gp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry_with_gp</span></code></a>(t_obs,&nbsp;mag_obs,&nbsp;…)</td>
+<td>Returns photometry with GP noise added in.</td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.log_likely_photometry" title="model.PSPL_Phot_Par_GP_Param1.log_likely_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry</span></code></a>(t_obs, mag_obs, ...[, ...])</p></td>
-<td><p>Calculate the log-likelihood for the PSPL + GP model and photometric data.</p></td>
+<tr class="row-even"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.log_likely_photometry" title="model.PSPL_Phot_Par_GP_Param1.log_likely_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry</span></code></a>(t_obs,&nbsp;mag_obs,&nbsp;…[,&nbsp;…])</td>
+<td>Calculate the log-likelihood for the PSPL + GP model and photometric data.</td>
 </tr>
 </tbody>
 </table>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 75%" />
-<col style="width: 25%" />
+<col width="75%" />
+<col width="25%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p><strong>get_astrometry</strong></p></td>
-<td></td>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>get_astrometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>get_astrometry_unlensed</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>get_astrometry_unlensed</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p><strong>get_centroid_shift</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><strong>get_centroid_shift</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>get_chi2_photometry</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>get_chi2_photometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p><strong>get_lens_astrometry</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><strong>get_lens_astrometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>get_lnL_constant</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>get_lnL_constant</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p><strong>get_photometry</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><strong>get_photometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>get_resolved_amplification</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>get_resolved_amplification</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p><strong>get_resolved_astrometry</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><strong>get_resolved_astrometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>log_likely_astrometry</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>log_likely_astrometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p><strong>log_likely_photometry_each</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><strong>log_likely_photometry_each</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>start</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>start</strong></td>
+<td>&#160;</td>
 </tr>
 </tbody>
 </table>

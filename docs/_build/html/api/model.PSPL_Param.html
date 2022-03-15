@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,9 +10,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -36,10 +38,11 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
 
@@ -69,77 +72,77 @@
              
   <div class="section" id="pspl-param">
 <h1>PSPL_Param<a class="headerlink" href="#pspl-param" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
+<dl class="class">
 <dt id="model.PSPL_Param">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSPL_Param</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Param" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_Param</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Param" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>An abstract class that all Param classes should sub-class.
 This serves as a reminder for the class variables that
 MUST be set.</p>
 <p class="rubric">Attributes Summary</p>
-<table class="longtable docutils align-default">
+<table border="1" class="longtable docutils">
 <colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
+<col width="10%" />
+<col width="90%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Param.additional_param_names" title="model.PSPL_Param.additional_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">additional_param_names</span></code></a></p></td>
-<td><p></p></td>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSPL_Param.additional_param_names" title="model.PSPL_Param.additional_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">additional_param_names</span></code></a></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Param.ast_optional_param_names" title="model.PSPL_Param.ast_optional_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ast_optional_param_names</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><a class="reference internal" href="#model.PSPL_Param.ast_optional_param_names" title="model.PSPL_Param.ast_optional_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ast_optional_param_names</span></code></a></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Param.fitter_param_names" title="model.PSPL_Param.fitter_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fitter_param_names</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSPL_Param.fitter_param_names" title="model.PSPL_Param.fitter_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fitter_param_names</span></code></a></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Param.paramAstromFlag" title="model.PSPL_Param.paramAstromFlag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">paramAstromFlag</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><a class="reference internal" href="#model.PSPL_Param.paramAstromFlag" title="model.PSPL_Param.paramAstromFlag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">paramAstromFlag</span></code></a></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Param.paramPhotFlag" title="model.PSPL_Param.paramPhotFlag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">paramPhotFlag</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSPL_Param.paramPhotFlag" title="model.PSPL_Param.paramPhotFlag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">paramPhotFlag</span></code></a></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#model.PSPL_Param.phot_optional_param_names" title="model.PSPL_Param.phot_optional_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">phot_optional_param_names</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><a class="reference internal" href="#model.PSPL_Param.phot_optional_param_names" title="model.PSPL_Param.phot_optional_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">phot_optional_param_names</span></code></a></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.PSPL_Param.phot_param_names" title="model.PSPL_Param.phot_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">phot_param_names</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><a class="reference internal" href="#model.PSPL_Param.phot_param_names" title="model.PSPL_Param.phot_param_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">phot_param_names</span></code></a></td>
+<td></td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Attributes Documentation</p>
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_Param.additional_param_names">
-<code class="sig-name descname"><span class="pre">additional_param_names</span></code><em class="property"> <span class="pre">=</span> <span class="pre">[]</span></em><a class="headerlink" href="#model.PSPL_Param.additional_param_names" title="Permalink to this definition">¶</a></dt>
+<code class="descname">additional_param_names</code><em class="property"> = []</em><a class="headerlink" href="#model.PSPL_Param.additional_param_names" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_Param.ast_optional_param_names">
-<code class="sig-name descname"><span class="pre">ast_optional_param_names</span></code><em class="property"> <span class="pre">=</span> <span class="pre">[]</span></em><a class="headerlink" href="#model.PSPL_Param.ast_optional_param_names" title="Permalink to this definition">¶</a></dt>
+<code class="descname">ast_optional_param_names</code><em class="property"> = []</em><a class="headerlink" href="#model.PSPL_Param.ast_optional_param_names" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_Param.fitter_param_names">
-<code class="sig-name descname"><span class="pre">fitter_param_names</span></code><em class="property"> <span class="pre">=</span> <span class="pre">[]</span></em><a class="headerlink" href="#model.PSPL_Param.fitter_param_names" title="Permalink to this definition">¶</a></dt>
+<code class="descname">fitter_param_names</code><em class="property"> = []</em><a class="headerlink" href="#model.PSPL_Param.fitter_param_names" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_Param.paramAstromFlag">
-<code class="sig-name descname"><span class="pre">paramAstromFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#model.PSPL_Param.paramAstromFlag" title="Permalink to this definition">¶</a></dt>
+<code class="descname">paramAstromFlag</code><em class="property"> = False</em><a class="headerlink" href="#model.PSPL_Param.paramAstromFlag" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_Param.paramPhotFlag">
-<code class="sig-name descname"><span class="pre">paramPhotFlag</span></code><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#model.PSPL_Param.paramPhotFlag" title="Permalink to this definition">¶</a></dt>
+<code class="descname">paramPhotFlag</code><em class="property"> = False</em><a class="headerlink" href="#model.PSPL_Param.paramPhotFlag" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_Param.phot_optional_param_names">
-<code class="sig-name descname"><span class="pre">phot_optional_param_names</span></code><em class="property"> <span class="pre">=</span> <span class="pre">[]</span></em><a class="headerlink" href="#model.PSPL_Param.phot_optional_param_names" title="Permalink to this definition">¶</a></dt>
+<code class="descname">phot_optional_param_names</code><em class="property"> = []</em><a class="headerlink" href="#model.PSPL_Param.phot_optional_param_names" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="model.PSPL_Param.phot_param_names">
-<code class="sig-name descname"><span class="pre">phot_param_names</span></code><em class="property"> <span class="pre">=</span> <span class="pre">[]</span></em><a class="headerlink" href="#model.PSPL_Param.phot_param_names" title="Permalink to this definition">¶</a></dt>
+<code class="descname">phot_param_names</code><em class="property"> = []</em><a class="headerlink" href="#model.PSPL_Param.phot_param_names" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

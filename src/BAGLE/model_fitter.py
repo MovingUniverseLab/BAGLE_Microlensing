@@ -19,7 +19,7 @@ import numpy as np
 import pylab as plt
 import scipy.stats
 import pymultinest
-import src.BAGLE.model as mmodel 
+from microlens.jlu import model as mmodel
 from astropy.table import Table
 from astropy.table import Row
 from astropy import units
@@ -59,14 +59,20 @@ except:
 
 muS_scale_factor = 100.0
 
+# Global variable to define all array-style parameters (i.e. multiple filters).
+multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
+                     'mag_src_pri', 'mag_src_sec', 'fratio_bin',
+                     'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
+                     'gp_log_omega04_S0', 'gp_log_omega0', 'add_err', 'mult_err']
+
 class PSPL_Solver(Solver):
     """
     A PyMultiNest solver to find the optimal PSPL parameters, given data and
     a microlensing model from model.py.
     DESPITE THE NAME YOU CAN ALSO USE IT TO FIT PSBL! 
 
-    Inputs
-    ------
+    Attributes
+    -----------
     data : dictionary
         Observational data used to fit a microlensing model. What the data must
         contain depends on what type of microlensing model you are solving for.
@@ -74,72 +80,75 @@ class PSPL_Solver(Solver):
         The data dictionary must always photometry information of at least one
         filter. This data must contain the times, magnitudes, and magnitude
         errors of the observations. The keys to these arrays are:
-            `t_phot1` (MJD)
-            `mag1` (magnitudes)
-            `mag_err1` (magnitudes)
+
+            * `t_phot1` (MJD)
+            * `mag1` (magnitudes)
+            * `mag_err1` (magnitudes)
 
         PSPL_Solver supports multiple photometric filters. For each
         additional filter, increments the extension of the above keys by one.
         For example, a second filter would be:
-            `t_phot2` (MJD)
-            `mag2` (magnitudes)
-            `mag_err2` (magnitudes)
+
+            * `t_phot2` (MJD)
+            * `mag2` (magnitudes)
+            * `mag_err2` (magnitudes)
 
         PSPL_Solver supports solving microlensing models that calculate with
         parallax. These models must be accompanied with data that contains the
         right ascenscion and declination of the target. These keys are:
-            `raL` (decimal degrees)
-            `decL` (decimal degrees)
+
+            * `raL` (decimal degrees)
+            * `decL` (decimal degrees)
 
         PSPL_Solver supports solving microlensing models that fit astrometry.
         These models must be accompanied with data that contains astrometric
         observations in the following keys:
-            `t_ast` (MJD)
-            `xpos` (arcsec along East-West increasing to the East)
-            `ypos` (arcsec along the North-South increasing to the North)
-            `xpos_err` (arcsec)
-            `ypos_err` (arcsec)
+
+            * `t_ast` (MJD)
+            * `xpos` (arcsec along East-West increasing to the East)
+            * `ypos` (arcsec along the North-South increasing to the North)
+            * `xpos_err` (arcsec)
+            * `ypos_err` (arcsec)
 
     model_class :
         PSPL_Solver must be provided with the microlensing model that you are
         trying to fit to your data. These models are written out in model.py,
         along with extensive documentation as to their content and
         construction in the file's docstring. The model can support either
-        (1) photometric data or photometric and astrometric data,
-        (2) parallax or no parallax, and
-        (3) different parameterizations of the model.
+
+        1.  photometric data or photometric and astrometric data,
+        2.  parallax or no parallax, and
+        3. different parameterizations of the model.
 
         For example, a model with accepts both astrometric and photometric
         data, uses parallax, and uses a parameterization that includes the
         distance to the source and the lens is: `PSPL_PhotAstrom_Par_Param1`.
 
-    Optional Inputs
-    ---------------
-    custom_additional_param_names : list
+    custom_additional_param_names : list, optional 
         If provided, the fitter will override the default
         `additional_param_names` of the model_class. These are the parameters,
         besides those that are being fitted for, that are written out to disk
         for posterior plotting after the fit has completed. To see the default
         additional_param_names run:
             `print(model_class.additional _param_names)`
-    add_error_on_photometry : boolean
+    add_error_on_photometry : boolean, optional
         If set to True, the fitter will fit for an additive error to the
         photometric magnitudes in the fitting process. This error will have
         the name `add_errN`, with an `N` equal to the filter number.
-    multiply_error_on_photometry : boolean
+    multiply_error_on_photometry : boolean, optional
         If set to True, the fitter will fit for a multiplicative error to the
         photometric magnitudes in the fitting process. This error will have
         the name `mult_errN`, with an `N` equal to the filter number.
-
     All other parameters :
-        See pymultinest.run() for a description of all other parameters.
+            See pymultinest.run() for a description of all other parameters.
 
-    Example Declaration
+    Examples
     -------------------
 
     Assuming that a data dictionary has been instantiated with the above keys,
     and that a model has been loaded in from model.py, PSPL_Solver can be run
     with the following commands:
+    .. code::
 
         fitter = PSPL_Solver(data,
                              PSPL_PhotAstrom_Par_Param1,
@@ -147,17 +156,16 @@ class PSPL_Solver(Solver):
                              custom_additional_param_names=['dS', 'tE'],
                              outputfiles_basename='./model_output/test_')
         fitter.solve()
-
-
-    
     """
 
     default_priors = {
         'mL': ('make_gen', 0, 100),
         't0': ('make_t0_gen', None, None),
+        't0_prim': ('make_t0_gen', None, None),
         'xS0_E': ('make_xS0_gen', None, None),
         'xS0_N': ('make_xS0_gen', None, None),
         'u0_amp': ('make_gen', -1, 1),
+        'u0_amp_prim': ('make_gen', -1, 1),
         'beta': ('make_gen', -2, 2),
         'muL_E': ('make_gen', -20, 20),
         'muL_N': ('make_gen', -20, 20),
@@ -168,10 +176,13 @@ class PSPL_Solver(Solver):
         'dL_dS': ('make_gen', 0.01, 0.99),
         'b_sff': ('make_gen', 0.0, 1.5),
         'mag_src': ('make_mag_src_gen', None, None),
+        'mag_src_pri': ('make_mag_src_gen', None, None),
+        'mag_src_sec': ('make_mag_src_gen', None, None),
         'mag_base': ('make_mag_base_gen', None, None),
         'tE': ('make_gen', 1, 400),
         'piE_E': ('make_gen', -1, 1),
         'piE_N': ('make_gen', -1, 1),
+        'piEN_piEE' : ('make_gen', -10, 10),
         'thetaE': ('make_lognorm_gen', 0, 1),
         'log10_thetaE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
         'q': ('make_gen', 0.001, 1),
@@ -182,6 +193,7 @@ class PSPL_Solver(Solver):
         'add_err': ('make_gen', 0, 0.3),
         'mult_err': ('make_gen', 1.0, 3.0),
         'radius': ('make_gen', 1E-4, 1E-2),
+        'fratio_bin': ('make_gen', 0, 1),
         # We really need to make some normal distributions. All these are junk right now.
         'gp_log_rho': ('make_norm_gen', 0, 5),
         'gp_log_S0': ('make_norm_gen', 0, 5),
@@ -213,10 +225,11 @@ class PSPL_Solver(Solver):
         Note that prior distributions are defined upon initiatlization and
         can be modified on the object before running solve().
 
-        Optional Inputs
+	Parameters
         ---------------
 
-        use_phot_optional_params : bool, or list of bools
+        use_phot_optional_params : bool, or list of bools, optional
+	    optional photometry parameters
         
         
         """
@@ -234,9 +247,7 @@ class PSPL_Solver(Solver):
 
         # list of all possible multi-filt, multi-phot, multi-ast parameters that anyone
         # could ever possibly use.
-        self.multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
-                                  'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
-                                  'gp_log_omega04_S0', 'gp_log_omega0', 'add_err', 'mult_err']
+        self.multi_filt_params = multi_filt_params
 
         self.gp_params = ['gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
                           'gp_log_omega04_S0', 'gp_log_omega0']
@@ -275,10 +286,15 @@ class PSPL_Solver(Solver):
         self.log_zero = log_zero
         self.max_iter = max_iter
         self.init_MPI = init_MPI
-        self.dump_callback = dump_callback
+
+        if dump_callback is None:
+            self.dump_callback = self.callback_plotter
+        else:
+            self.dump_callback = dump_callback
 
         # Setup the default priors
         self.priors = None
+#        self.priors = {}
         self.make_default_priors()
 
         # Stuff needed for using multinest posteriors as priors.
@@ -467,7 +483,7 @@ class PSPL_Solver(Solver):
 #
 #        if os.path.exists("piEN.txt"):
 #            os.remove("piEN.txt")
-
+        
         self.priors = {}
         for param_name in self.fitter_param_names:
             if any(x in param_name for x in self.multi_filt_params):
@@ -552,14 +568,14 @@ class PSPL_Solver(Solver):
             raL, decL = None, None
         params_dict = generate_params_dict(params,
                                            self.fitter_param_names)
-        
         mod = self.model_class(*params_dict.values(),
                                  raL=raL,
                                  decL=decL)
 
         # FIXME: Why are we updating params here???
         if not isinstance(params, (dict, Row)):
-            # FIXME: is there abetter way to do this.
+
+            # FIXME: is there better way to do this.
             for i, param_name in enumerate(self.additional_param_names):
                 filt_name, filt_idx = split_param_filter_index1(param_name)
 
@@ -593,7 +609,8 @@ class PSPL_Solver(Solver):
     
     # FIXME: I pass in ndim and nparams since that's what's done in Prior, but I don't think they're necessary?
     def Prior_from_post(self, cube, ndim=None, nparams=None):
-        # Get the bin midpoints
+        """Get the bin midpoints
+	"""
         binmids = []
         for bb in np.arange(len(self.post_param_bins)):
             binmids.append((self.post_param_bins[bb][:-1] + self.post_param_bins[bb][1:])/2)
@@ -612,15 +629,16 @@ class PSPL_Solver(Solver):
         return cube
 
     def sample_post(self, binmids, cdf, bininds):  
-        """
-        Randomly sample from a multinest posterior distribution.
+        """Randomly sample from a multinest posterior distribution.
 
         Parameters
         ----------
-        Nparams = number of parameters
-        Nbins = number of histogram bins per dimension
-        Nnzero = number of histogram bins with non-zero probability
-
+        Nparams:
+            number of parameters
+        Nbins:
+            number of histogram bins per dimension
+        Nnzero:
+            number of histogram bins with non-zero probability
         binmids : list of length N, each list entry is an array of shape (M, )
             The centers of the bins for each parameter
         cdf : (Nnzero, ) array
@@ -646,8 +664,7 @@ class PSPL_Solver(Solver):
         return pars 
 
     def LogLikelihood(self, cube, ndim=None, n_params=None):
-        """
-        This is just a wrapper because PyMultinest requires passing in
+        """This is just a wrapper because PyMultinest requires passing in
         the ndim and nparams.
         """
         lnL = self.log_likely(cube, verbose=self.verbose)
@@ -706,7 +723,7 @@ class PSPL_Solver(Solver):
                 
                 # additive or multiplicative error
                 mag_err = self.get_modified_mag_err(cube, i)
-                
+
                 lnL_phot += model.log_likely_photometry(t_phot, mag, mag_err, i)
         else:
             lnL_phot = 0
@@ -716,20 +733,36 @@ class PSPL_Solver(Solver):
 
     def log_likely(self, cube, verbose=False):
         """
+        Parameters
+        --------------
         cube : list or dict
             The dictionary or cube of the model parameters.
         """
         model = self.get_model(cube)
-            
+
+#        # Useful for debugging the parallax cache.
+#        def get_cache_size():
+#            """Print out the cache size"""
+#            cache_file = mmodel.cache_dir + '/joblib/microlens/jlu/model/parallax_in_direction/'
+#            
+#            size = 0
+#            for path, dirs, files in os.walk(cache_file):
+#                for f in files:
+#                    fp = os.path.join(path, f)
+#                    size += os.path.getsize(fp)
+#
+#            return size
+#        
+#        print(f'Cache size = {get_cache_size()}')
+
         lnL_phot = self.log_likely_photometry(model, cube)
         lnL_ast = self.log_likely_astrometry(model)
 
         lnL = lnL_phot + lnL_ast
             
         if verbose:
-            # self.plot_model_and_data(model)
-            # pdb.set_trace()
-            
+            self.plot_model_and_data(model)
+
             fmt = '{0:13s} = {1:f} '
             for ff in range(self.n_params):
                 if isinstance(cube, dict) or isinstance(cube, Row):
@@ -745,11 +778,38 @@ class PSPL_Solver(Solver):
             print(fmt.format('lnL_ast', lnL_ast)),
             print(fmt.format('lnL', lnL))
 
+            # pdb.set_trace()
+
         return lnL
 
-# Code for randomly sampling prior
+    def callback_plotter(self, nSamples, nlive, nPar,
+                 physLive, posterior, stats, maxLogLike, logZ, logZerr, foo):
+        # ideally this should work; but it looks like
+        # it has been mangled by multinest.
+        # p_mean = stats[0]
+        # p_std = stats[1]
+        # p_best = stats[2]
+        # p_map = stats[3]
+
+        # p_best = posterior.mean(axis=0)[0:-2]
+
+        bdx = np.argmax(physLive[:, -1])
+        p_best = physLive[bdx, 0:-1]
+        print('')
+        print('UPDATE: Current MaxLogLike = ', physLive[bdx, -1])
+        print('')
+
+        model = self.get_model(p_best)
+
+        self.plot_model_and_data(model)
+
+        return
+
+    # Code for randomly sampling prior
 #    def log_likely0(self, cube, verbose=False):
 #        """
+#	 Parameters
+#        _____________
 #        cube : list or dict
 #            The dictionary or cube of the model parameters.
 #        """
@@ -910,19 +970,18 @@ class PSPL_Solver(Solver):
         return
 
     def calc_best_fit(self, tab, smy, s_idx=0, def_best='maxl'):
-        """
-        Returns best-fit parameters, where best-fit can be
+        """Returns best-fit parameters, where best-fit can be
         median, maxl, or MAP. Default is maxl.
 
         If best-fit is median, then also return +/- 1 sigma
         uncertainties.
 
         If best-fit is MAP, then also need to indicate which row of
-        summary table to use. Default is s_idx = 0 (global solution).
-        s_idx = 1, 2, ... , n for the n different modes.
+        summary table to use. Default is `s_idx = 0` (global solution).
+        `s_idx = 1, 2, ... , n` for the n different modes.
 
-        tab = self.load_mnest_results()
-        smy = self.load_mnest_summary()
+        `tab = self.load_mnest_results()`
+        `smy = self.load_mnest_summary()`
         """
 
         params = self.all_param_names
@@ -991,15 +1050,14 @@ class PSPL_Solver(Solver):
             return tab_best, med_errors
 
     def get_best_fit(self, def_best='maxl'):
-        """
-        Returns best-fit parameters, where best-fit can be
+        """Returns best-fit parameters, where best-fit can be
         median, maxl, or MAP. Default is maxl.
 
         If best-fit is median, then also return +/- 1 sigma
         uncertainties.
 
-        tab = self.load_mnest_results()
-        smy = self.load_mnest_summary()
+        `tab = self.load_mnest_results()`
+        `smy = self.load_mnest_summary()`
         """
         tab = self.load_mnest_results()
         smy = self.load_mnest_summary()
@@ -1021,14 +1079,16 @@ class PSPL_Solver(Solver):
         for ii, tab in enumerate(tab_list, 1):
             best_fit = self.calc_best_fit(tab=tab, smy=smy, s_idx=ii,
                                           def_best=def_best)
-            best_fit_list.append(best_fit[0])
+#            best_fit_list.append(best_fit[0])
+            best_fit_list.append(best_fit)
 
         return best_fit_list
 
     def get_best_fit_model(self, def_best='maxl'):
-        """
-        Identify best-fit model
+        """Identify best-fit model
 
+        Parameters
+        -----------
         def_best : str
             Choices are 'map' (maximum a posteriori), 'median', or
             'maxl' (maximum likelihood)
@@ -1080,8 +1140,7 @@ class PSPL_Solver(Solver):
         return tab
 
     def load_mnest_summary(self, remake_fits=False):
-        """
-        Load up the MultiNest results into an astropy table.
+        """Load up the MultiNest results into an astropy table.
         """
         sum_root = self.outputfiles_basename + 'summary'
 
@@ -1158,8 +1217,7 @@ class PSPL_Solver(Solver):
         return tab_list
 
     def load_mnest_results_for_dynesty(self, remake_fits=False):
-        """
-        Make a Dynesty-style results object that can
+        """Make a Dynesty-style results object that can
         be used in the nicer plotting codes.
         """
         # Fetch the summary stats for the global solution
@@ -1190,8 +1248,7 @@ class PSPL_Solver(Solver):
 
 
     def load_mnest_modes_results_for_dynesty(self, remake_fits=False):
-        """
-        Make a Dynesty-style results object that can 
+        """Make a Dynesty-style results object that can 
         be used in the nicer plotting codes. 
         """
         results_list = []
@@ -1228,6 +1285,8 @@ class PSPL_Solver(Solver):
     def plot_dynesty_style(self, sim_vals=None, fit_vals=None, remake_fits=False, dims=None,
                            traceplot=True, cornerplot=True, kde=True):
         """
+        Parameters
+        ------------
         sim_vals : dict
             Dictionary of simulated input or comparison values to 
             overplot on posteriors.
@@ -1296,9 +1355,16 @@ class PSPL_Solver(Solver):
         """
         Make and save the model and data plots.
 
-        zoomx, xoomy, zoomy_res : list the same length as self.n_phot_sets
-        Each entry of the list is a list [a, b] cooresponding to the plot limits
+        zoomx, xoomy, zoomy_res : list the same length as `self.n_phot_sets`
+        Each entry of the list is a list `[a, b]` cooresponding to the plot limits
         """
+
+        # Plot out parameters (just record values)
+        fig = plot_params(model)
+        fig.savefig(self.outputfiles_basename + 'parameters.png')
+        plt.close()
+
+        # Plot photometry
         if model.photometryFlag:
             for i in range(self.n_phot_sets):
                 if hasattr(model, 'use_gp_phot'):
@@ -1321,7 +1387,7 @@ class PSPL_Solver(Solver):
                                 + 'phot_and_residuals_'
                                 + str(i + 1) + suffix + '.png')
                 plt.close()
-                
+
                 if (zoomx is not None) or (zoomy is not None) or (zoomy_res is not None):
                     if zoomx is not None:
                         zoomxi=zoomx[i]
@@ -1445,8 +1511,7 @@ class PSPL_Solver(Solver):
         return
 
     def plot_model_and_data_modes(self, def_best='maxl'):
-        """
-        Plots photometry data, along with n random draws from the posterior.
+        """Plots photometry data, along with n random draws from the posterior.
         """
         pspl_mod_list = self.get_best_fit_modes_model(def_best=def_best)
         for num, pspl_mod in enumerate(pspl_mod_list, start=0):
@@ -1556,9 +1621,9 @@ class PSPL_Solver(Solver):
 
     def print_likelihood(self, params='best', verbose=True):
         """
-        Optional Inputs
-        ------
-        model_params : str or dict
+        Parameters
+        -----------
+        model_params : str or dict, optional
             model_params = 'best' will load up the best solution and calculate
                 the chi^2 based on those values. Alternatively, pass in a dictionary
                 with the model parameters to use.
@@ -1576,9 +1641,9 @@ class PSPL_Solver(Solver):
 
     def calc_chi2(self, params='best', verbose=False):
         """
-        Optional Inputs
-        ------
-        params : str or dict
+        Parameters
+        -----------
+        params : str or dict, optional
             model_params = 'best' will load up the best solution and calculate
             the chi^2 based on those values. Alternatively, pass in a dictionary
             with the model parameters to use.
@@ -1692,9 +1757,9 @@ class PSPL_Solver(Solver):
 
     def calc_chi2_manual(self, params='best', verbose=False):
         """
-        Optional Inputs
-        ------
-        params : str or dict
+        Parameters
+        -----------
+        params : str or dict, optional
             model_params = 'best' will load up the best solution and calculate
             the chi^2 based on those values. Alternatively, pass in a dictionary
             with the model parameters to use.
@@ -1718,7 +1783,7 @@ class PSPL_Solver(Solver):
                 xerr = self.data['xpos_err' + str(nn + 1)]
                 yerr = self.data['ypos_err' + str(nn + 1)]
 
-                # NOTE: WILL BREAK FOR LUMINOUS LENS
+                # NOTE: WILL BREAK FOR LUMINOUS LENS. BREAKS FOR ASTROM AND PHOTOM??? ADD map_phot_
                 pos_out = pspl.get_astrometry(t_ast, ast_filt_idx=nn)
 
                 chi2_ast_nn = (x - pos_out[:,0])**2/xerr**2
@@ -1835,42 +1900,18 @@ class PSPL_Solver(Solver):
 
 
 class PSPL_Solver_weighted(PSPL_Solver):
-    # Init should be inherited, right?
-    # Does the prior dictionary get inherited?
-    # Do we want to generalize to multiple astrometries?
-
-    default_priors = {
-        'mL': ('make_gen', 0, 100),
-        't0': ('make_t0_gen', None, None),
-        'xS0_E': ('make_xS0_gen', None, None),
-        'xS0_N': ('make_xS0_gen', None, None),
-        'u0_amp': ('make_gen', -1, 1),
-        'beta': ('make_gen', -2, 2),
-        'muL_E': ('make_gen', -20, 20),
-        'muL_N': ('make_gen', -20, 20),
-        'muS_E': ('make_muS_EN_gen', None, None),
-        'muS_N': ('make_muS_EN_gen', None, None),
-        'dL': ('make_gen', 1000, 8000),
-        'dL_dS': ('make_gen', 0.01, 0.99),
-        'b_sff': ('make_gen', 0.0, 1.5),
-        'mag_src': ('make_gen', 17.0, 22.0),
-        'tE': ('make_gen', 1, 400),
-        'piE_E': ('make_gen', -1, 1),
-        'piE_N': ('make_gen', -1, 1),
-        'thetaE': ('make_gen', 0, 8),
-        'q': ('make_gen', 0.001, 1),
-        'alpha': ('make_gen', 0, 360),
-        'phi': ('make_gen', 0, 360),
-        'sep': ('make_gen', 1e-4, 2e-2),
-        'piS': ('make_piS', None, None),
-        'fdfdt': ('make_fdfdt', None, None),
-        'log_thetaE': ('make_gen', -3, 1),
-        'add_err': ('make_gen', 0, 0.3),
-        'mult_err': ('make_gen', 1.0, 3.0)
-    }
-
+    """
+    Soliver where the likelihood function has each data
+    set weigthed equally (i.e. not the natural weighting by
+    the number of points; but rather each contributes
+    1/n_k where n is the number of data points and k is the data set. 
+    """
     def __init__(self, data, model_class,
                  custom_additional_param_names=None,
+                 add_error_on_photometry=False,
+                 multiply_error_on_photometry=False,
+                 use_phot_optional_params=True,
+                 use_ast_optional_params=True,
                  wrapped_params=None,
                  importance_nested_sampling=False,
                  multimodal=True, const_efficiency_mode=False,
@@ -1881,129 +1922,130 @@ class PSPL_Solver_weighted(PSPL_Solver):
                  outputfiles_basename="chains/1-", seed=-1, verbose=False,
                  resume=False, context=0, write_output=True, log_zero=-1e100,
                  max_iter=0, init_MPI=False, dump_callback=None,
-                 weight=None):
+                 weights='phot_ast_equal'):
+        """
+        See documentation for PSPL_Solver. The only additional input parameter
+        is weights which can be
+        
+            * 'phot_ast_equal'
+            * 'all_equal'
+            * list - length of number of photom + astrom data sets
+            * array - length of number of photom + astrom data sets
 
-        # Set the data, model, and error modes
-        self.data = data
-        self.model_class = model_class
-        self.weight = weight
+        """
+        
+        super().__init__(data, model_class,
+                 custom_additional_param_names=custom_additional_param_names,
+                 add_error_on_photometry=add_error_on_photometry,
+                 multiply_error_on_photometry=multiply_error_on_photometry,
+                 use_phot_optional_params=use_phot_optional_params,
+                 use_ast_optional_params=use_ast_optional_params,
+                 wrapped_params=wrapped_params,
+                 importance_nested_sampling=importance_nested_sampling,
+                 multimodal=multimodal,
+                 const_efficiency_mode=const_efficiency_mode,
+                 n_live_points=n_live_points,
+                 evidence_tolerance=evidence_tolerance,
+                 sampling_efficiency=sampling_efficiency,
+                 n_iter_before_update=n_iter_before_update,
+                 null_log_evidence=null_log_evidence,
+                 max_modes=max_modes,
+                 mode_tolerance=mode_tolerance,
+                 outputfiles_basename=outputfiles_basename,
+                 seed=seed,
+                 verbose=verbose,
+                 resume=resume,
+                 context=context,
+                 write_output=write_output,
+                 log_zero=log_zero,
+                 max_iter=max_iter,
+                 init_MPI=init_MPI,
+                 dump_callback=dump_callback)
 
-        # Check the data
-        self.check_data()
+        self.weights = self.calc_weights(weights)
 
-        # Set up parameterization of the model
-        self.photometry_params = ['b_sff', 'mag_src', 'add_err', 'mult_err']
-        self.remove_digits = str.maketrans('', '',
-                                           digits)  # removes nums from strings
-        self.custom_additional_param_names = custom_additional_param_names
-        self.n_phot_sets = None
-        self.fitter_param_names = None
-        self.additional_param_names = None
-        self.all_param_names = None
-        self.n_dims = None
-        self.n_params = None
-        self.n_clustering_params = None
-        self.setup_params()
-
-        # Set multinest stuff
-        self.multimodal = multimodal
-        self.wrapped_params = wrapped_params
-        self.importance_nested_sampling = importance_nested_sampling
-        self.const_efficiency_mode = const_efficiency_mode
-        self.n_live_points = n_live_points
-        self.evidence_tolerance = evidence_tolerance
-        self.sampling_efficiency = sampling_efficiency
-        self.n_iter_before_update = n_iter_before_update
-        self.null_log_evidence = null_log_evidence
-        self.max_modes = max_modes
-        self.mode_tolerance = mode_tolerance
-        self.outputfiles_basename = outputfiles_basename
-        self.seed = seed
-        self.verbose = verbose
-        self.resume = resume
-        self.context = context
-        self.write_output = write_output
-        self.log_zero = log_zero
-        self.max_iter = max_iter
-        self.init_MPI = init_MPI
-        self.dump_callback = dump_callback
-
-        # Setup the default priors
-        self.priors = None
-        self.make_default_priors()
-
-        # Make the output directory if doesn't exist
-        if os.path.dirname(outputfiles_basename) != '':
-            os.makedirs(os.path.dirname(outputfiles_basename), exist_ok=True)
-
+        print(self.weights)
+        
         return
-
-    def calc_weight(self, weight):
+    
+    def calc_weights(self, weights):
         """
         order of weight_arr is 
-        [phot_1, phot_2, ... phot_n, ast]
+        `[phot_1, phot_2, ... phot_n, ast_1, ast_2, ... ast_n]`
         """
-        weight_arr = np.ones(len(self.data['phot_data']) + len(self.data['ast_data']))
-
-        # Calculate the number of photometry and astrometry data points
-        n_ast = 0
-        if n_ast_sets > 0:
-            for nn in range(self.n_ast_sets):
-                n_ast += 2 * len(self.data['t_ast' + str(nn + 1)])
-        n_phot = 0
-        for i in range(self.n_phot_sets):
-            n_phot += len(self.data['t_phot' + str(i + 1)])
+        weights_arr = np.ones(self.n_phot_sets + self.n_ast_sets)
 
         #####
         # No weights
         #####
-        if weight is None:
-            return weight_arr
+        if weights is None:
+            return weights_arr
+        
+        # Calculate the number of photometry and astrometry data points
+        n_ast_data = 0
+        for nn in range(self.n_ast_sets):
+                n_ast_data += 2 * len(self.data['t_ast' + str(nn + 1)])
+        n_phot_data = 0
+        for i in range(self.n_phot_sets):
+            n_phot_data += len(self.data['t_phot' + str(i + 1)])
+
+        n_data = n_ast_data + n_phot_data
+        n_sets = self.n_phot_sets + self.n_ast_sets
+        
 
         #####
         # All the photometry is weighted equally to the astrometry.
         # The relative weights between the photometric data sets don't change.
         #####
-        if weight == 'phot_ast_equal':
+        if weights == 'phot_ast_equal':
+            denom = n_ast_data * self.n_phot_sets + n_phot_data * self.n_ast_sets
+            
             # Photometry weights
             for i in range(self.n_phot_sets):
                 n_i = len(self.data['t_phot' + str(i + 1)])
-                weight_arr[i] = n_ast/n_i
-            # Astrometry weight
-            weight_arr[-1] = n_phot/n_ast
+                weights_arr[i] = (n_data / n_sets) * n_ast_data / denom
 
-            return weight_arr
+            # Astrometry weights
+            for i in range(self.n_ast_sets):
+                n_i = len(self.data['t_ast' + str(i + 1)])
+                weights_arr[self.n_phot_sets + i] = (n_data / n_sets) * n_phot_data / denom
+            
+            return weights_arr
         
         #####
         # Each data set is given equal weights, regardless of photometry
         # or astrometry.
         #####
-        if weight == 'all_equal':
+        if weights == 'all_equal':
+            
             # Photometry weights
             for i in range(self.n_phot_sets):
                 n_i = len(self.data['t_phot' + str(i + 1)])
-                weight_arr[i] = 1/n_i
+                weights_arr[i] = (1e-3 * n_data / n_sets) * (1.0 / n_i)
+                
             # Astrometry weight
-            weight_arr[-1] = 1/n_ast
+            for i in range(self.n_ast_sets):
+                n_i = len(self.data['t_ast' + str(i + 1)])
+                weights_arr[self.n_phot_sets + i] = (1e-3 * n_data / n_sets) * (1.0 / n_i)
 
-            return weight_arr
+            return weights_arr
 
         #####
         # Custom weights.
         #####
         else:
             # Check weight array is right length, all positive numbers.
-            if not isinstance(weight, np.ndarray):
+            if not isinstance(weights, np.ndarray):
                 raise Exception('weight needs to be a numpy array.')
-            if len(weight_arr) != weight:
+            if len(weights_arr) != len(weights):
                 raise Exception('weight array needs to be the same length as the number of data sets.')
-            if len(np.where(weight < 0)[0]) > 0:
+            if len(np.where(weights < 0)[0]) > 0:
                 raise Exception('weights must be positive.')
 
-            return weight
+            return weights
 
             
-    def log_likely_astrometry(self, model, weight):
+    def log_likely_astrometry(self, model):
         if model.astrometryFlag:
             lnL_ast = 0.0
 
@@ -2014,18 +2056,21 @@ class PSPL_Solver_weighted(PSPL_Solver):
                 xpos_err = self.data['xpos_err' + str(i + 1)]
                 ypos_err = self.data['ypos_err' + str(i + 1)]
 
-                lnL_ast_i = model.log_likely_astrometry(t_ast, xpos, ypos, xpos_err, ypos_err) * weight
-                lnL_ast += lnL_ast_i
-                print('i : ', i)
-                print('lnL_ast :', lnL_ast)
+                weight = self.weights[self.n_phot_sets + i]
 
+                lnL_ast_unwgt = model.log_likely_astrometry(t_ast, xpos, ypos, xpos_err, ypos_err)
+                lnL_ast_i = lnL_ast_unwgt * weight
+                lnL_ast += lnL_ast_i
+
+                if self.verbose:
+                    print(f'lnL_ast: i = {i} L_unwgt = {lnL_ast_unwgt:15.1f}, L_wgt = {lnL_ast_i:15.1f}, weights = {weight:.1e}')
         else:
             lnL_ast = 0
 
         return lnL_ast
 
 
-    def log_likely_photometry(self, model, cube, weights):
+    def log_likely_photometry(self, model, cube):
         if model.photometryFlag:
             lnL_phot = 0.0
 
@@ -2034,34 +2079,111 @@ class PSPL_Solver_weighted(PSPL_Solver):
                 mag = self.data['mag' + str(i + 1)]
                 
                 # additive or multiplicative error
-                mag_err = self.get_modified_mag_err(cube, i)  
+                mag_err = self.get_modified_mag_err(cube, i)
                 
-                lnL_phot_i = model.log_likely_photometry(t_phot, mag, mag_err, i) * weights[i]
+                weight = self.weights[i]
+                lnL_phot_unwgt = model.log_likely_photometry(t_phot, mag, mag_err, i)
+                lnL_phot_i = lnL_phot_unwgt * weight
                 lnL_phot += lnL_phot_i
+
+                if self.verbose:
+                    print(f'lnL_phot: i = {i} L_unwgt = {lnL_phot_unwgt:15.1f}, L_wgt = {lnL_phot_i:15.1f}, weight = {weight:.1e}')
+                
 
         else:
             lnL_phot = 0
 
         return lnL_phot
 
+
+class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
     def log_likely(self, cube, verbose=False):
         """
+        Compute a log-likelihood where there is a hyperparameter,
+        alpha_k, that controls the weighting between each data k set. 
+        This algorithm is described in Hobson et al. 2002.
+       
+        Specifically, we are implementing Eq. 35.
+
+        Parameters
+        -----------
         cube : list or dict
             The dictionary or cube of the model parameters.
         """
-
-        weights_arr = self.calc_weight(self.weight)
-
+        # Fetch the model for these parameters.
         model = self.get_model(cube)
 
-        lnL_phot = self.log_likely_photometry(model, cube, weights_arr[:-1])
-        lnL_ast = self.log_likely_astrometry(model, weights_arr[-1])
+        # We are implementing the Hobson weighting scheme such that we
+        # explore and then marginalize over the hyperparameter, alpha_k (ak),
+        # where we have the kth data set, Dk.
+        # see Hobson et al. 2002 for details.
 
-        lnL = lnL_phot + lnL_ast
+        lnL = 0.0
+        
+        ##########
+        # Photometry
+        ##########
+        if model.photometryFlag:
+            for i in range(self.n_phot_sets):
+                t_phot = self.data['t_phot' + str(i + 1)]
+                mag = self.data['mag' + str(i + 1)]
+                
+                # additive or multiplicative error
+                mag_err = self.get_modified_mag_err(cube, i)
 
-            
+                nk = len(mag)
+                nk21 = (nk / 2.0) + 1.0
+
+                chi2_m = model.get_chi2_photometry(t_phot, mag, mag_err, filt_index=i)
+
+                lnL_const_standard = model.get_lnL_constant(mag_err)
+                lnL_const_hobson = scipy.special.gammaln( nk21 ) + (nk21 * np.log(2))
+
+                # Equation 35 from Hobson
+                lnL_phot = lnL_const_standard.sum()
+                lnL_phot += -1.0 * nk21 * np.log(chi2_m.sum() + 2)
+                lnL_phot += lnL_const_hobson
+
+                lnL += lnL_phot
+
+
+        ##########
+        # Astrometry
+        ##########
+        if model.astrometryFlag:
+            for i in range(self.n_ast_sets):
+                # If no photometry
+                if len(self.map_phot_idx_to_ast_idx) == 0:
+                    ast_filt_idx = i
+                else:
+                    ast_filt_idx = self.map_phot_idx_to_ast_idx[i]
+
+                t_ast = self.data['t_ast' + str(i+1)]
+                x_obs = self.data['xpos' + str(i+1)]
+                y_obs = self.data['ypos' + str(i+1)]
+                x_err_obs = self.data['xpos_err' + str(i+1)]
+                y_err_obs = self.data['ypos_err' + str(i+1)]
+
+                nk = len(x_obs) + len(y_obs)
+                nk21 = (nk / 2.0) + 1.0
+                    
+                chi2_xy = model.get_chi2_astrometry(t_ast, x_obs, y_obs, x_err_obs, y_err_obs, ast_filt_idx=ast_filt_idx)
+
+                lnL_const_standard = model.get_lnL_constant(x_err_obs) + model.get_lnL_constant(y_err_obs)
+                lnL_const_hobson = scipy.special.gammaln( nk21 ) + (nk21 * np.log(2))
+                
+                # Equation 35 from Hobson
+                lnL_ast = lnL_const_standard.sum()
+                lnL_ast += -1.0 * nk21 * np.log(chi2_xy.sum() + 2)
+                lnL_ast += lnL_const_hobson
+                
+                lnL += lnL_ast
+
+
+        # Reporting
         if verbose:
             # self.plot_model_and_data(model)
+            # pdb.set_trace()
             
             fmt = '{0:13s} = {1:f} '
             for ff in range(self.n_params):
@@ -2080,8 +2202,118 @@ class PSPL_Solver_weighted(PSPL_Solver):
 
         return lnL
 
-# Does calc_chi2 need to be fixed? 
+    def hobson_weight_log_likely(self, ln_prob_dk_giv_ak_1):
+        """
+        Implement a data-set-specific weighting scheme by using
+        a hyperparameter, alpha_k, for the kth data set as 
+        described in Hobson et al. 2002.
 
+        Specifically, we are implementing Eq. 16 and 23-27, with the
+        prior described in Eq. 21.
+ 
+        We are not using the simplifications in Section 5 for now.
+        """
+        # Get back to prob not ln(prob):
+        prob_dk_giv_ak_1 = np.exp(ln_prob_dk_giv_ak_1)
+        
+        # Sample alpha_k hyperparameter
+        alpha_k_prior = scipy.stats.expon()
+
+        # print('Hobson: ', ln_prob_dk_giv_ak_1)
+
+        def integrand(ak, prob_dk_giv_ak_1, ln_prob_dk_giv_ak_1, ii):
+            # Prior probability for this ak
+            prob_ak = alpha_k_prior.pdf(ak)
+            ln_prob_ak = np.log(prob_ak)
+
+            # Normalization (over all data) for this ak
+            z_k_ak = np.sum(np.exp(ak * ln_prob_dk_giv_ak_1))
+            ln_z_k_ak = np.log(z_k_ak)
+
+            # Pull out just this single data point.
+            ln_prob_di_ak_1 = ln_prob_dk_giv_ak_1[ii]
+
+            ln_prob_d_ak = (ak * ln_prob_di_ak_1) + ln_prob_ak - ln_z_k_ak
+            # print(f'ak = {ak:.4f}  ln_z_k_ak = {ln_z_k_ak} z_k_ak = {z_k_ak}  ln_prob_d_ak={ln_prob_d_ak}')
+
+            prob_d_ak = np.exp(ln_prob_d_ak)
+
+            return prob_d_ak
+
+        prob_dk = np.zeros(len(prob_dk_giv_ak_1), dtype=float)
+        # for ii in range(len(prob_d_each)):
+        for ii in range(2):
+            # pdb.set_trace()
+            prob_dk[ii] = scipy.integrate.quad(integrand, 0, np.inf,
+                                                   args=(prob_dk_giv_ak_1, ln_prob_dk_giv_ak_1, ii))[0]
+
+        # print(f'  prob_dk = {prob_dk}')
+        lnL_dk = np.log(prob_dk)
+
+        return lnL_dk
+
+    def get_hobson_effective_weights(self, cube):
+        """
+        Return the effective weights, alpha_k, for each
+        data set. Photometry first, then astrometry.
+        """
+        eff_weights = np.empty(0, dtype=float)
+        
+        # Fetch the model for these parameters.
+        model = self.get_model(cube)
+
+        # We are implementing the Hobson weighting scheme such that we
+        # explore and then marginalize over the hyperparameter, alpha_k (ak),
+        # where we have the kth data set, Dk.
+        # see Hobson et al. 2002 for details.
+
+        ##########
+        # Photometry
+        ##########
+        if model.photometryFlag:
+            for i in range(self.n_phot_sets):
+                t_phot = self.data['t_phot' + str(i + 1)]
+                mag = self.data['mag' + str(i + 1)]
+                
+                # additive or multiplicative error
+                mag_err = self.get_modified_mag_err(cube, i)
+
+                nk = len(mag)
+
+                chi2_m = model.get_chi2_photometry(t_phot, mag, mag_err, filt_index=i)
+
+                ak_eff = nk / chi2_m.sum()
+
+                eff_weights = np.append(eff_weights, ak_eff)
+
+        ##########
+        # Astrometry
+        ##########
+        if model.astrometryFlag:
+            for i in range(self.n_ast_sets):
+                # If no photometry
+                if len(self.map_phot_idx_to_ast_idx) == 0:
+                    ast_filt_idx = i
+                else:
+                    ast_filt_idx = self.map_phot_idx_to_ast_idx[i]
+
+                t_ast = self.data['t_ast' + str(i+1)]
+                x_obs = self.data['xpos' + str(i+1)]
+                y_obs = self.data['ypos' + str(i+1)]
+                x_err_obs = self.data['xpos_err' + str(i+1)]
+                y_err_obs = self.data['ypos_err' + str(i+1)]
+
+                nk = len(x_obs) + len(y_obs)
+                    
+                chi2_xy = model.get_chi2_astrometry(t_ast, x_obs, y_obs, x_err_obs, y_err_obs, ast_filt_idx=ast_filt_idx)
+
+                ak_eff = nk / chi2_xy.sum()
+
+                eff_weights = np.append(eff_weights, ak_eff)
+
+        return eff_weights
+        
+    
 
 #########################
 ### PRIOR GENERATORS  ###
@@ -2105,15 +2337,18 @@ def make_log10norm_gen(mean_in_log10, std_in_log10):
     """Scale scipy lognorm from natural log to base 10.
     Note the mean and std should be in the log10() space already.
 
-    mean : mean of the underlying log10 gaussian (i.e. a log10 quantity)
-    std  : variance of underlying log10 gaussian
+    Parameters
+    -------------
+    mean:
+        mean of the underlying log10 gaussian (i.e. a log10 quantity)
+    std: 
+        variance of underlying log10 gaussian
     """
     # Convert mean and std from log10 to ln.
     return scipy.stats.lognorm(s=std_in_log10 * np.log(10), scale=np.exp(mean_in_log10 * np.log(10)))
 
 def make_truncnorm_gen(mean, std, lo_cut, hi_cut):
-    """
-    lo_cut and hi_cut are in the units of sigma
+    """lo_cut and hi_cut are in the units of sigma
     """
     return scipy.stats.truncnorm(lo_cut, hi_cut,
                                  loc=mean, scale=std)
@@ -2202,12 +2437,15 @@ def make_muS_EN_gen(t, pos, scale_factor=100.0):
 
     Inputs
     ------
-    t: array of times in days
-    pos: array of positions in arcsec
+    t: 
+        array of times in days
+    pos: 
+        array of positions in arcsec
 
-    Return
-    ------
-    uniform generator for velocity in mas/yr
+    Returns
+    -------
+    gen:
+        uniform generator for velocity in mas/yr
     """
     # Convert t to years temporarily.
     t_yr = t / mmodel.days_per_year
@@ -2233,14 +2471,17 @@ def make_muS_EN_norm_gen(t, pos):
     """Get an approximate muS search range by looking at the best fit
     straight line to the astrometry. Then allows lots of free space.
 
-    Inputs
-    ------
-    t: array of times in days
-    pos: array of positions in arcsec
+    Parameters
+    ------------
+    t: 
+        array of times in days
+    pos: 
+        array of positions in arcsec
 
-    Return
-    ------
-    uniform generator for velocity in mas/yr
+    Returns
+    --------
+    gen:
+        uniform generator for velocity in mas/yr
     """
     # Convert t to years temporarily.
     t_yr = t / mmodel.days_per_year
@@ -2258,9 +2499,12 @@ def make_muS_EN_norm_gen(t, pos):
 
 
 def make_invgamma_gen(t_arr):
-    """
-    ADD DESCRIPTION
-    t_arr = time array
+    """ADD DESCRIPTION
+
+    Parameters
+    ------------   
+    t_arr: 
+        time array
     """
     a,b = compute_invgamma_params(t_arr)
 
@@ -2273,13 +2517,14 @@ def make_invgamma_gen(t_arr):
 
 def compute_invgamma_params(t_arr):
     """
-    Based on function of same name from 
+    | Based on function of same name from 
     Fran Bartolic's ``caustic`` package:
     https://github.com/fbartolic/caustic
-    Returns parameters of an inverse gamma distribution s.t.
-    1% of total prob. mass is assigned to values of t < t_{min} and
-    1% of total prob. masss  to values greater than t_{tmax}. 
-    t_{min} is defined to be the median spacing between consecutive
+    | Returns parameters of an inverse gamma distribution s.t.
+     * 1% of total prob. mass is assigned to values of :math:`t < t_{min}` and
+     * 1% of total prob. masss  to values greater than t_{tmax}.
+ 
+    `t_{min}` is defined to be the median spacing between consecutive
     data points in the time series and t_{max} is the total duration
     of the time series.
     
@@ -2287,6 +2532,7 @@ def compute_invgamma_params(t_arr):
     ----------
     t_arr : array
         Array of times
+
     Returns
     -------
     invgamma_a, invgamma_b : float (?)
@@ -2338,13 +2584,30 @@ def random_prob(generator, x):
 def weighted_quantile(values, quantiles, sample_weight=None,
                       values_sorted=False, old_style=False):
     """ Very close to numplt.percentile, but supports weights.
-    NOTE: quantiles should be in [0, 1]!
-    :param values: numplt.array with data
-    :param quantiles: array-like with many quantiles needed
-    :param sample_weight: array-like of the same length as `array`
-    :param values_sorted: bool, if True, then will avoid sorting of initial array
-    :param old_style: if True, will correct output to be consistent with numplt.percentile.
-    :return: numplt.array with computed quantiles.
+    
+    Parameters
+    _____________
+
+    values: 
+        numplt.array with data
+    quantiles: 
+        array-like with many quantiles needed
+    sample_weight: 
+        array-like of the same length as `array`
+    values_sorted: bool, 
+        if True, then will avoid sorting of initial array
+    old_style: 
+        if True, will correct output to be consistent with numplt.percentile.
+   
+    Returns
+    --------	
+    arr:
+        numplt.array with computed quantiles.
+
+    Notes 
+    -------
+
+    .. note:: quantiles should be in [0, 1]!
     """
     values = np.array(values)
     quantiles = np.array(quantiles)
@@ -2403,7 +2666,7 @@ def generate_params_dict(params, fitter_param_names):
     parameters are treated specially and grouped together into an
     array such as ['mag_src'] = [mag_src1, mag_src2].
 
-    Input
+    Parameters
     ----------
     params : list, dict, Row
         Contains values of parameters. Note that if the
@@ -2415,14 +2678,14 @@ def generate_params_dict(params, fitter_param_names):
         The names of the parameters that will be
         delivered, in order, in the output. 
 
-    Ouptut
+    Returns
     ----------
     params_dict : dict
         Dictionary of the parameter names and values.
 
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
-    multi_list = ['mag_src', 'mag_base', 'b_sff']
+    multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin']
     multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
     
     params_dict = {}
@@ -2472,8 +2735,7 @@ def generate_params_dict(params, fitter_param_names):
 ########################################
 
 def pointwise_likelihood(data, model, filt_index=0):
-    """
-    Makes some plots to diagnose weirdness in GP fits.
+    """Makes some plots to diagnose weirdness in GP fits.
     """
     # Get the data out.
     dat_t = data['t_phot' + str(filt_index + 1)]
@@ -2491,8 +2753,7 @@ def pointwise_likelihood(data, model, filt_index=0):
     return pw_logL
 
 def debug_gp_nan(data, model, filt_index=0):
-    """
-    Makes some plots to diagnose weirdness in GP fits.
+    """Makes some plots to diagnose weirdness in GP fits.
     """
     # Get the data out.
     dat_t = data['t_phot' + str(filt_index + 1)]
@@ -2540,10 +2801,94 @@ def debug_gp_nan(data, model, filt_index=0):
     plt.legend()
     plt.savefig('nans_deltat_hist.png')
 
+
+def plot_params(model):
+    """Print parameters
+    """
+    x0 = 0.05
+    y0 = 0.95
+    dy = 0.03
+
+    fig = plt.figure(1, figsize=(10, 10))
+    plt.subplots_adjust(left=0.1, top=0.95, bottom=0.05, right=0.95)
+    ax_lab = fig.add_subplot(111)
+    ax_lab.xaxis.set_visible(False)
+    ax_lab.yaxis.set_visible(False)
+    ax_lab.set_axis_off()
+
+    ax_lab.text(x0, y0 - 0 * dy, 'Model Parameters:', fontsize=10)
+
+    def get_param_value(pname):
+        if pname.endswith('_E') or pname.endswith('_N'):
+            pname_act = pname[:-2]
+        elif pname == 'log10_thetaE':
+            pname_act = 'thetaE_amp'
+        else:
+            pname_act = pname
+
+        pvalue = getattr(model, pname_act)
+
+        if pname.endswith('_E'):
+            pvalue = pvalue[0]
+        if pname.endswith('_N'):
+            pvalue = pvalue[1]
+        if pname == 'log10_thetaE':
+            pvalue = np.log10(pvalue)
+
+        return pvalue
+
+    for ff in range(len(model.fitter_param_names)):
+        pname = model.fitter_param_names[ff]
+        pvalu = get_param_value(pname)
+
+        fmt_str = '{0:s} = {1:.2f}'
+        if pname.startswith('x'):
+            fmt_str = '{0:s} = {1:.4f}'
+
+        ax_lab.text(x0, y0 - (ff + 1) * dy,
+                    fmt_str.format(pname, pvalu),
+                    fontsize=10)
+
+    nrow = len(model.fitter_param_names)
+    for ff in range(len(model.phot_param_names)):
+        pname = model.phot_param_names[ff]
+        pvalu = get_param_value(pname)
+
+        fmt_str = '{0:s} = {1:.2f}'
+
+        for rr in range(len(pvalu)):
+            ax_lab.text(x0, y0 - (nrow + 1) * dy,
+                        fmt_str.format(pname + str(rr + 1), pvalu[rr]),
+                        fontsize=10)
+            nrow += 1
+
+    nrow = 0
+
+    for ff in range(len(model.additional_param_names)):
+        pname = model.additional_param_names[ff]
+        pvalu = get_param_value(pname)
+
+        fmt_str = '{0:s} = {1:.2f}'
+
+        if pname in multi_filt_params:
+            for rr in range(len(pvalu)):
+                ax_lab.text(x0, y0 - (nrow + 1) * dy,
+                            fmt_str.format(pname + str(rr + 1), pvalu[rr]),
+                            fontsize=10)
+                nrow += 1
+        else:
+            ax_lab.text(x0 + 0.5, y0 - (ff + 1) * dy,
+                    fmt_str.format(pname, pvalu),
+                    fontsize=10)
+            nrow += 1
+
+    return fig
+
 def plot_photometry(data, model, input_model=None, dense_time=True, residuals=True,
                     filt_index=0, zoomx=None, zoomy=None, zoomy_res=None, mnest_results=None,
                     N_traces=50, gp=False, fitter=None):
-    # Get the data out.
+    """Get the data out.
+    """
     dat_t = data['t_phot' + str(filt_index + 1)]
     dat_m = data['mag' + str(filt_index + 1)]
     dat_me = data['mag_err' + str(filt_index + 1)]
@@ -2748,9 +3093,8 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
 def plot_astrometry(data, model, input_model=None, dense_time=True,
                     residuals=True, n_phot_sets=0, filt_index=0, ast_filt_index=0,
                     mnest_results=None, N_traces=50, fitter=None):
-    #####
-    # Astrometry on the sky
-    #####
+    """Astrometry on the sky
+    """
     fig_list = []
     plt.close(n_phot_sets + 1)
     fig = plt.figure(n_phot_sets + 1, figsize=(10, 10))  # PLOT 1
@@ -2930,9 +3274,11 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     y_mod_no_pm = dp_tmod_unlens[:, 1]
 
     # Long time    
-    baseline = np.max((2*(dat_t.max() - dat_t.min()),
-                       5*model.tE))
-    longtime = np.arange(model.t0-baseline, model.t0+baseline, 1)
+    # baseline = np.max((2*(dat_t.max() - dat_t.min()), 5*model.tE))
+    # longtime = np.arange(model.t0 - baseline, model.t0 + baseline, 1)
+
+    baseline = 3*(dat_t.max() - dat_t.min())
+    longtime = np.arange(t_mod.min()-baseline, t_mod.max()+baseline, 1)
     dp_tmod_unlens_longtime = model.get_astrometry(longtime) - model.get_astrometry_unlensed(longtime)
     x_mod_no_pm_longtime = dp_tmod_unlens_longtime[:, 0]
     y_mod_no_pm_longtime = dp_tmod_unlens_longtime[:, 1]
@@ -3047,9 +3393,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
         t_mod = data['t_ast']
     # Model - usually from fitter
     pos_out = model.get_astrometry(t_mod)
-    baseline = np.max((2*(dat_t.max() - dat_t.min()),
-                      5*model.tE))
-    pos_out_unlens = model.get_astrometry_unlensed(np.arange(model.t0-baseline, model.t0+baseline, 1))
+    pos_out_unlens = model.get_astrometry_unlensed(longtime)
     plt.plot(pos_out[:, 0] * 1e3, pos_out[:, 1] * 1e3, 'r-', label='Model')
     plt.plot(pos_out_unlens[:, 0] * 1e3, pos_out_unlens[:, 1] * 1e3, 'b:', label='Model unlensed')
 
@@ -3145,19 +3489,169 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
     return fig_list
 
+def plot_astrometry_on_sky(data, model):
+    t_mod = np.arange(data['t_ast1'].min() - 300.0, data['t_ast1'].max() + 300.0, 5.0)
+
+    pos_out = model.get_astrometry(t_mod)
+    pos_in = model.get_astrometry_unlensed(t_mod)
+    lens_in = model.get_lens_astrometry(t_mod)
+
+    plt.close(1)
+    fig = plt.figure(1, figsize=(16, 4))
+    plt.subplots_adjust(wspace=0.5, top=0.90)
+    ast_colors = ['maroon', 'navy', 'purple', 'steelblue']
+
+    # Plot the data: RA vs. time
+    plt.subplot(131)
+    for ii in range(len(data['ast_data'])):
+        suff = str(ii+1)
+        plt.errorbar(data['t_ast'+suff], data['xpos'+suff]*1e3,
+                     yerr=data['xpos_err'+suff]*1e3,
+                     marker='.', color=ast_colors[ii], ls='none', 
+                     label=data['ast_data'][ii])
+
+    plt.plot(t_mod, pos_out[:, 0]*1e3, 'r-', label='Src-Lensed')
+    plt.plot(t_mod, pos_in[:, 0]*1e3, 'r--', label='Src-Unlensed')
+    plt.plot(t_mod, lens_in[:, 0]*1e3, 'k-.', label='Lens')
+
+    plt.xlabel('Time (MJD)')
+    plt.ylabel(r'$\Delta \alpha$ (mas)')
+    # plt.ylim(228, 233)
+
+    fig.legend(loc='lower center', ncol=5, bbox_to_anchor=(0.55, 0.95))
+
+
+    # Plot the data: Dec vs. time
+    plt.subplot(132)
+    for ii in range(len(data['ast_data'])):
+        suff = str(ii+1)
+        plt.errorbar(data['t_ast'+suff], data['ypos'+suff]*1e3,
+                     yerr=data['ypos_err'+suff]*1e3,
+                     marker='.', color=ast_colors[ii], ls='none')
+
+    plt.plot(t_mod, pos_out[:, 1]*1e3, 'r-')
+    plt.plot(t_mod, pos_in[:, 1]*1e3, 'r--')
+    plt.plot(t_mod, lens_in[:, 1]*1e3, 'k-.')
+
+    plt.ylabel(r'$\Delta \delta$ (mas)')
+    plt.xlabel('Time (MJD)')
+
+
+    # Plot the data: Dec vs. time
+    plt.subplot(133)
+    for ii in range(len(data['ast_data'])):
+        suff = str(ii+1)
+        plt.errorbar(data['xpos'+suff]*1e3, data['ypos'+suff]*1e3,
+                     xerr=data['xpos_err'+suff]*1e3, yerr=data['ypos_err'+suff]*1e3,
+                     marker='.', color=ast_colors[ii], ls='none')
+
+
+    plt.plot(pos_out[:, 0]*1e3, pos_out[:, 1]*1e3, 'r-')
+    plt.plot(pos_in[:, 0]*1e3, pos_in[:, 1]*1e3, 'r--')
+    plt.plot(lens_in[:, 0]*1e3, lens_in[:, 1]*1e3, 'k-.')
+
+    plt.xlabel(r'$\Delta \alpha$ (mas)')
+    plt.ylabel(r'$\Delta \delta$ (mas)')
+    plt.gca().invert_xaxis()
+    plt.axis('equal')
+
+    return fig
+
+def plot_astrometry_proper_motion_removed(data, model):
+    """Proper Motion Subtracted
+    """
+    t_mod = np.arange(data['t_ast1'].min() - 300.0, data['t_ast1'].max() + 300.0, 5.0)
+
+    pos_out = model.get_astrometry(t_mod)
+    pos_in = model.get_astrometry_unlensed(t_mod)
+    lens_in = model.get_lens_astrometry(t_mod)
+
+    pos_out -= model.muS[np.newaxis, :] * 1e-3 * (t_mod[:, np.newaxis] - model.t0) / 365.25
+    pos_in  -= model.muS[np.newaxis, :] * 1e-3 * (t_mod[:, np.newaxis] - model.t0) / 365.25
+    lens_in -= model.muS[np.newaxis, :] * 1e-3 * (t_mod[:, np.newaxis] - model.t0) / 365.25
+
+
+    plt.close('all')
+
+    fig = plt.figure(figsize=(16, 4))
+    plt.subplots_adjust(wspace=0.5, top=0.90)
+    ast_colors = ['maroon', 'navy', 'purple']
+
+    # Plot the data: RA vs. time
+    plt.subplot(131)
+    for ii in range(len(data['ast_data'])):
+        suff = str(ii+1)
+        x = data['xpos'+suff] - (model.muS[0] * 1e-3 * (data['t_ast'+suff] - model.t0) / 365.25)
+        plt.errorbar(data['t_ast'+suff], x*1e3,
+                     yerr=data['xpos_err'+suff]*1e3,
+                     marker='.', color=ast_colors[ii], 
+                     ls='none', label=data['ast_data'][ii])
+
+    plt.plot(t_mod, pos_out[:, 0]*1e3, 'r-', label='Src-Lensed')
+    plt.plot(t_mod, pos_in[:, 0]*1e3, ls='--', color='orange', label='Src-Unlensed')
+    plt.plot(t_mod, lens_in[:, 0]*1e3, 'k-.', label='Lens')
+
+    plt.xlabel('Time (MJD)')
+    plt.ylabel(r'$\Delta \alpha$ - PM (mas)')
+    plt.ylim(x.min()*1e3-2, x.max()*1e3+2)
+
+    fig.legend(loc='lower center', ncol=5, bbox_to_anchor=(0.55, 0.95))
+
+
+
+    # Plot the data: Dec vs. time
+    plt.subplot(132)
+    for ii in range(len(data['ast_data'])):
+        suff = str(ii+1)
+        y = data['ypos'+suff] - (model.muS[1] * 1e-3 * (data['t_ast'+suff] - model.t0) / 365.25)
+        plt.errorbar(data['t_ast'+suff], y*1e3,
+                     yerr=data['ypos_err'+suff]*1e3,
+                     marker='.', color=ast_colors[ii], ls='none')
+
+    plt.plot(t_mod, pos_out[:, 1]*1e3, 'r-')
+    plt.plot(t_mod, pos_in[:, 1]*1e3, ls='--', color='orange')
+    plt.plot(t_mod, lens_in[:, 1]*1e3, 'k-.')
+
+    plt.ylabel(r'$\Delta \delta$ - PM (mas)')
+    plt.xlabel('Time (MJD)')
+    plt.ylim(y.min()*1e3-2, y.max()*1e3+2)
+
+
+    # Plot the data: Dec vs. time
+    plt.subplot(133)
+    for ii in range(len(data['ast_data'])):
+        suff = str(ii+1)
+        x = data['xpos'+suff] - (model.muS[0] * 1e-3 * (data['t_ast'+suff] - model.t0) / 365.25)
+        y = data['ypos'+suff] - (model.muS[1] * 1e-3 * (data['t_ast'+suff] - model.t0) / 365.25)
+
+        plt.errorbar(x*1e3, y*1e3,
+                     xerr=data['xpos_err'+suff]*1e3, yerr=data['ypos_err'+suff]*1e3,
+                     marker='.', color=ast_colors[ii], ls='none')
+
+    plt.plot(pos_out[:, 0]*1e3, pos_out[:, 1]*1e3, 'r-')
+    plt.plot(pos_in[:, 0]*1e3, pos_in[:, 1]*1e3, ls='--', color='orange')
+    plt.plot(lens_in[:, 0]*1e3, lens_in[:, 1]*1e3, 'k-.')
+
+    plt.xlabel(r'$\Delta \alpha$ - PM (mas)')
+    plt.ylabel(r'$\Delta \delta$ - PM (mas)')
+    plt.axis('equal')
+    plt.xlim(x.min()*1e3-1, x.max()*1e3+1)
+    plt.ylim(y.min()*1e3-1, y.max()*1e3+1)
+    plt.gca().invert_xaxis()
+
+    return fig
+
+
 
 def quantiles(mnest_results, sigma=1):
     """
     Calculate the median and N sigma credicble interval.
 
-    Inputs
+    Parameters
     ----------
     mnest_results : astropy table
         The table that comes out of load_mnest_results.
-
-    Optional Inputs
-    ----------
-    sigma : int
+    sigma : int, optional
         1, 2, or 3 sigma to determine which credible interval
         to return.
     """
@@ -3192,7 +3686,7 @@ def quantiles(mnest_results, sigma=1):
 
 def get_mnest_results(root_name, parameters):
     """
-    Inputs
+    Parameters
     ----------
     root_name : str
         The directory and base name of the MultiNest output.
@@ -3244,9 +3738,9 @@ def get_mnest_results(root_name, parameters):
 
 def calc_AIC(k, maxlogL):
     """
-    Calculate Akaike Information Criterion.
-    k = number of parameters
-    maxlogL = maximum log likelihood
+    | Calculate Akaike Information Criterion.
+    | k = number of parameters
+    | maxlogL = maximum log likelihood
     """
     aic = 2 * (k - maxlogL)
 
@@ -3255,9 +3749,9 @@ def calc_AIC(k, maxlogL):
 
 def calc_BIC(n, k, maxlogL):
     """
-    Calculate Bayesian Information Criterion.
-    n = sample size
-    k = number of parameters
+    | Calculate Bayesian Information Criterion.
+    | n = sample size
+    | k = number of parameters
     maxlogL = maximum log likelihood
     """
     bic = np.log(n) * k - 2 * maxlogL
@@ -3288,9 +3782,12 @@ def postplot(results, span=None, quantiles=[0.025, 0.5, 0.975], q_color = 'gray'
         A list where each element is either a length-2 tuple containing
         lower and upper bounds or a float from `(0., 1.]` giving the
         fraction of (weighted) samples to include. If a fraction is provided,
-        the bounds are chosen to be equal-tailed. An example would be::
+        the bounds are chosen to be equal-tailed. An example would be:
+        
+        .. code::
 
             span = [(0., 10.), 0.95, (5., 6.)]
+            
 
         Default is `0.999999426697` (5-sigma credible interval) for each
         parameter.
@@ -3593,8 +4090,11 @@ def cornerplot_2truth(results, dims=None, span=None, quantiles=[0.025, 0.5, 0.97
         lower and upper bounds or a float from `(0., 1.]` giving the
         fraction of (weighted) samples to include. If a fraction is provided,
         the bounds are chosen to be equal-tailed. An example would be::
+        
+        .. code::
 
             span = [(0., 10.), 0.95, (5., 6.)]
+            
 
         Default is `0.999999426697` (5-sigma credible interval).
 
@@ -3994,9 +4494,12 @@ def contour2d_alpha(x, y, smooth=0.02, span=None, weights=None, sigma_levels=[1,
         A list where each element is either a length-2 tuple containing
         lower and upper bounds or a float from `(0., 1.]` giving the
         fraction of (weighted) samples to include. If a fraction is provided,
-        the bounds are chosen to be equal-tailed. An example would be::
+        the bounds are chosen to be equal-tailed. An example would be:
+        
+        .. code::
 
-            span = [(0., 10.), 0.95, (5., 6.)]
+            `span = [(0., 10.), 0.95, (5., 6.)]`
+            
 
         Default is `0.999999426697` (5-sigma credible interval).
 

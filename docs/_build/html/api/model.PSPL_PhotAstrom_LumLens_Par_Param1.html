@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,9 +10,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -36,10 +38,11 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
 
@@ -69,84 +72,81 @@
              
   <div class="section" id="pspl-photastrom-lumlens-par-param1">
 <h1>PSPL_PhotAstrom_LumLens_Par_Param1<a class="headerlink" href="#pspl-photastrom-lumlens-par-param1" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
+<dl class="class">
 <dt id="model.PSPL_PhotAstrom_LumLens_Par_Param1">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">PSPL_PhotAstrom_LumLens_Par_Param1</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstrom_LumLens_Par_Param1" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_PhotAstrom_LumLens_Par_Param1</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstrom_LumLens_Par_Param1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="model.PSPL_PhotAstrom.html#model.PSPL_PhotAstrom" title="model.PSPL_PhotAstrom"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstrom</span></code></a>, <a class="reference internal" href="model.PSPL_Parallax_LumLens.html#model.PSPL_Parallax_LumLens" title="model.PSPL_Parallax_LumLens"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Parallax_LumLens</span></code></a>, <a class="reference internal" href="model.PSPL_PhotAstromParam1.html#model.PSPL_PhotAstromParam1" title="model.PSPL_PhotAstromParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam1</span></code></a></p>
 <p>An abstract class that all Param classes should sub-class.
 This serves as a reminder for the class variables that
 MUST be set.</p>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
+<table border="1" class="longtable docutils">
 <colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
+<col width="10%" />
+<col width="90%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.animate" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
-<td><p>Produces animation of microlensing event.</p></td>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.animate" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE,&nbsp;time_steps,&nbsp;frame_time,&nbsp;name,&nbsp;…)</td>
+<td>Produces animation of microlensing event.</td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.calc_piE_ecliptic" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.calc_piE_ecliptic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_piE_ecliptic</span></code></a>()</p></td>
-<td><p>Parallax: Get piE_ecliptic</p></td>
+<tr class="row-even"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.calc_piE_ecliptic" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.calc_piE_ecliptic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_piE_ecliptic</span></code></a>()</td>
+<td>Parallax: Get piE_ecliptic</td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_amplification" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code></a>(t)</p></td>
-<td><p>Parallax: Get the photometric amplification term at a set of times, t.</p></td>
+<tr class="row-odd"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_amplification" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code></a>(t)</td>
+<td>Parallax: Get the photometric amplification term at a set of times, t.</td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_astrometry" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry</span></code></a>(t_obs[, ast_filt_idx])</p></td>
-<td><p>Parallax: Get astrometry</p></td>
+<tr class="row-even"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_astrometry" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry</span></code></a>(t_obs[,&nbsp;ast_filt_idx])</td>
+<td>Parallax: Get astrometry</td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_astrometry_unlensed" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry_unlensed</span></code></a>(t_obs)</p></td>
-<td><p>Get the astrometry of the source if the lens didn’t exist.</p></td>
+<tr class="row-odd"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_astrometry_unlensed" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry_unlensed</span></code></a>(t_obs)</td>
+<td>Get the astrometry of the source if the lens didn’t exist.</td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_centroid_shift" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_centroid_shift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_centroid_shift</span></code></a>(t[, ast_filt_idx])</p></td>
-<td><p>Parallax: Get the centroid shift (in mas) for a list of observation times (in MJD).</p></td>
+<tr class="row-even"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_centroid_shift" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_centroid_shift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_centroid_shift</span></code></a>(t[,&nbsp;ast_filt_idx])</td>
+<td>Parallax: Get the centroid shift (in mas) for a list of observation times (in MJD).</td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_lens_astrometry" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_lens_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lens_astrometry</span></code></a>(t_obs)</p></td>
-<td><p>Parallax: Get lens astrometry</p></td>
+<tr class="row-odd"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_lens_astrometry" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_lens_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lens_astrometry</span></code></a>(t_obs)</td>
+<td>Parallax: Get lens astrometry</td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_resolved_amplification" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_resolved_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_amplification</span></code></a>(t)</p></td>
-<td><p>Parallax: Get the photometric amplification term at a set of times, t for both the plus and minus images.</p></td>
+<tr class="row-even"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_resolved_amplification" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_resolved_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_amplification</span></code></a>(t)</td>
+<td>Parallax: Get the photometric amplification term at a set of times, t for both the plus and minus images.</td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_resolved_astrometry" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_resolved_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code></a>(t_obs)</p></td>
-<td><p>Parallax: Get the x, y astrometry for each of the two source images, which we label plus and minus.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_resolved_shift" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_resolved_shift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_shift</span></code></a>(t_obs)</p></td>
-<td><p>Parallax: Get resolved shift</p></td>
+<tr class="row-odd"><td><a class="reference internal" href="../PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_resolved_astrometry" title="model.PSPL_PhotAstrom_LumLens_Par_Param1.get_resolved_astrometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry</span></code></a>(t_obs)</td>
+<td>Parallax: Get the x, y astrometry for each of the two source images, which we label plus and minus.</td>
 </tr>
 </tbody>
 </table>
-<table class="docutils align-default">
+<table border="1" class="docutils">
 <colgroup>
-<col style="width: 75%" />
-<col style="width: 25%" />
+<col width="75%" />
+<col width="25%" />
 </colgroup>
-<tbody>
-<tr class="row-odd"><td><p><strong>get_chi2_astrometry</strong></p></td>
-<td></td>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>get_chi2_astrometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>get_chi2_photometry</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>get_chi2_photometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p><strong>get_lnL_constant</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><strong>get_lnL_constant</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>get_photometry</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>get_photometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p><strong>log_likely_astrometry</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><strong>log_likely_astrometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>log_likely_astrometry_each</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>log_likely_astrometry_each</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p><strong>log_likely_photometry</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><strong>log_likely_photometry</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-even"><td><p><strong>log_likely_photometry_each</strong></p></td>
-<td></td>
+<tr class="row-even"><td><strong>log_likely_photometry_each</strong></td>
+<td>&#160;</td>
 </tr>
-<tr class="row-odd"><td><p><strong>start</strong></p></td>
-<td></td>
+<tr class="row-odd"><td><strong>start</strong></td>
+<td>&#160;</td>
 </tr>
 </tbody>
 </table>

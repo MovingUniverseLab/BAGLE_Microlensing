@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,9 +10,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -36,10 +38,11 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">BAGLE TUTORIAL</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
 
@@ -69,12 +72,50 @@
              
   <div class="section" id="cluster">
 <h1>cluster<a class="headerlink" href="#cluster" title="Permalink to this headline">¶</a></h1>
-<dl class="py function">
+<dl class="function">
 <dt id="model.cluster">
-<code class="sig-prename descclassname"><span class="pre">model.</span></code><code class="sig-name descname"><span class="pre">cluster</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.cluster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Split the image points up into a number of clusters
-image = a list of points, all of which are inside some image of the star
-R = radius of the star</p>
+<code class="descclassname">model.</code><code class="descname">cluster</code><span class="sig-paren">(</span><em>image</em>, <em>R</em><span class="sig-paren">)</span><a class="headerlink" href="#model.cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split the image points up into a number of clusters</p>
+<dl class="docutils">
+<dt>At first there are 10 clusters</dt>
+<dd><ol class="first last arabic simple">
+<li><dl class="first docutils">
+<dt>The centre of each cluster are set to be equally</dt>
+<dd>spaced out in angle, at a radius of 1</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Each point is looped through and assigned to the</dt>
+<dd>cluster with the closest centre</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>The centre of the clusters is set to be the mean</dt>
+<dd>position of all the points in the cluster.
+If a cluster has no points, then it’s centre is set
+to (100,100), effectively deleting the cluster</dd>
+</dl>
+</li>
+<li>Each point is then reassigned to the nearest cluster</li>
+</ol>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>image:</strong></dt>
+<dd><p class="first last">a list of points, all of which are inside some image of the star</p>
+</dd>
+<dt><strong>R:</strong></dt>
+<dd><p class="first last">radius of the star</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>

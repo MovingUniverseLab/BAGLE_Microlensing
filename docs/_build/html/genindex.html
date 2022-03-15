@@ -1,5 +1,6 @@
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,9 +11,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -39,6 +42,7 @@
 <li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
 </ul>
@@ -71,6 +75,7 @@
 
 <div class="genindex-jumpbox">
  <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#F"><strong>F</strong></a>
@@ -79,6 +84,7 @@
  | <a href="#L"><strong>L</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
@@ -116,12 +122,18 @@
         <li><a href="api/model.PSPL_PhotParam2.html#model.PSPL_PhotParam2.additional_param_names">(model.PSPL_PhotParam2 attribute)</a>
 </li>
       </ul></li>
-      <li><a href="FSPL.html#model.FSPL.animate">animate() (model.FSPL method)</a>
+      <li><a href="BSPL_Data.html#model.BSPL.animate">animate() (model.BSPL method)</a>
 
       <ul>
+        <li><a href="BSPL_Data.html#model.BSPL_Phot.animate">(model.BSPL_Phot method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_PhotAstrom.animate">(model.BSPL_PhotAstrom method)</a>
+</li>
+        <li><a href="FSPL.html#model.FSPL.animate">(model.FSPL method)</a>
+</li>
         <li><a href="FSPL.html#model.FSPL_Limb.animate">(model.FSPL_Limb method)</a>, <a href="api/model.FSPL_Limb.html#model.FSPL_Limb.animate">[1]</a>
 </li>
-        <li><a href="FSPL.html#id1">(model.FSPL_PhotAstrom method)</a>, <a href="FSPL.html#model.FSPL_PhotAstrom.animate">[1]</a>
+        <li><a href="FSPL.html#model.FSPL_PhotAstrom.animate">(model.FSPL_PhotAstrom method)</a>, <a href="FSPL.html#model.FSPL_PhotAstrom.animate">[1]</a>
 </li>
         <li><a href="FSPL_User.html#model.FSPL_PhotAstrom_Par_Param1.animate">(model.FSPL_PhotAstrom_Par_Param1 method)</a>
 </li>
@@ -129,23 +141,7 @@
 </li>
         <li><a href="PSBL_Data.html#model.PSBL_Phot.animate">(model.PSBL_Phot method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.animate">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.animate">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.animate">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.animate">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.animate">(model.PSBL_PhotAstrom method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.animate">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.animate">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.animate">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.animate">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.animate">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -159,6 +155,22 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.animate">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.animate">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.animate">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.animate">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.animate">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.animate">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.animate">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.animate">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.animate">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
         <li><a href="PSPL_Data.html#model.PSPL.animate">(model.PSPL method)</a>, <a href="api/model.PSPL.html#model.PSPL.animate">[1]</a>
 </li>
         <li><a href="PSPL_Data.html#model.PSPL_Astrom.animate">(model.PSPL_Astrom method)</a>, <a href="api/model.PSPL_Astrom.html#model.PSPL_Astrom.animate">[1]</a>
@@ -169,28 +181,6 @@
 </li>
         <li><a href="PSPL_Data.html#model.PSPL_Phot.animate">(model.PSPL_Phot method)</a>
 </li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param1.animate">(model.PSPL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param2.animate">(model.PSPL_Phot_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_Param1.animate">(model.PSPL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_Param2.animate">(model.PSPL_Phot_noPar_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.animate">(model.PSPL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.animate">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.animate">(model.PSPL_Phot_Par_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.animate">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param1.animate">(model.PSPL_Phot_Par_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param2.animate">(model.PSPL_Phot_Par_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Parold_Param2.animate">(model.PSPL_Phot_Parold_Param2 method)</a>
-</li>
         <li><a href="PSPL_Data.html#model.PSPL_PhotAstrom.animate">(model.PSPL_PhotAstrom method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.animate">(model.PSPL_PhotAstrom_LumLens_Par_Param1 method)</a>
@@ -198,16 +188,6 @@
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param2.animate">(model.PSPL_PhotAstrom_LumLens_Par_Param2 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param4.animate">(model.PSPL_PhotAstrom_LumLens_Par_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.animate">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.animate">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.animate">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.animate">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.animate">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.animate">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -233,6 +213,36 @@
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param4.animate">(model.PSPL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.animate">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.animate">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.animate">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.animate">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.animate">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.animate">(model.PSPL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.animate">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.animate">(model.PSPL_Phot_Par_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.animate">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param1.animate">(model.PSPL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param2.animate">(model.PSPL_Phot_Par_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param1.animate">(model.PSPL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param2.animate">(model.PSPL_Phot_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_Param1.animate">(model.PSPL_Phot_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_Param2.animate">(model.PSPL_Phot_noPar_Param2 method)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -255,19 +265,49 @@
   </ul></td>
 </tr></table>
 
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="BSPL_Data.html#model.BSPL">BSPL (class in model)</a>
+</li>
+      <li><a href="BSPL_Param.html#model.BSPL_GP_PhotAstromParam1">BSPL_GP_PhotAstromParam1 (class in model)</a>
+</li>
+      <li><a href="BSPL_Param.html#model.BSPL_GP_PhotAstromParam2">BSPL_GP_PhotAstromParam2 (class in model)</a>
+</li>
+      <li><a href="BSPL_Param.html#model.BSPL_GP_PhotAstromParam3">BSPL_GP_PhotAstromParam3 (class in model)</a>
+</li>
+      <li><a href="BSPL_Param.html#model.BSPL_GP_PhotParam1">BSPL_GP_PhotParam1 (class in model)</a>
+</li>
+      <li><a href="BSPL_Parallax.html#model.BSPL_noParallax">BSPL_noParallax (class in model)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="BSPL_Parallax.html#model.BSPL_Parallax">BSPL_Parallax (class in model)</a>
+</li>
+      <li><a href="BSPL_Data.html#model.BSPL_Phot">BSPL_Phot (class in model)</a>
+</li>
+      <li><a href="BSPL_Data.html#model.BSPL_PhotAstrom">BSPL_PhotAstrom (class in model)</a>
+</li>
+      <li><a href="BSPL_Param.html#model.BSPL_PhotAstromParam1">BSPL_PhotAstromParam1 (class in model)</a>
+</li>
+      <li><a href="BSPL_Param.html#model.BSPL_PhotAstromParam2">BSPL_PhotAstromParam2 (class in model)</a>
+</li>
+      <li><a href="BSPL_Param.html#model.BSPL_PhotAstromParam3">BSPL_PhotAstromParam3 (class in model)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="FSPL.html#model.FSPL_Limb_Parallax.calc_piE_ecliptic">calc_piE_ecliptic() (model.FSPL_Limb_Parallax method)</a>
+      <li><a href="BSPL_Parallax.html#model.BSPL_Parallax.calc_piE_ecliptic">calc_piE_ecliptic() (model.BSPL_Parallax method)</a>
 
       <ul>
+        <li><a href="FSPL.html#model.FSPL_Limb_Parallax.calc_piE_ecliptic">(model.FSPL_Limb_Parallax method)</a>
+</li>
         <li><a href="FSPL.html#model.FSPL_Parallax.calc_piE_ecliptic">(model.FSPL_Parallax method)</a>
 </li>
         <li><a href="FSPL_User.html#model.FSPL_PhotAstrom_Par_Param1.calc_piE_ecliptic">(model.FSPL_PhotAstrom_Par_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.calc_piE_ecliptic">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.calc_piE_ecliptic">(model.PSBL_Phot_Par_Param1 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.calc_piE_ecliptic">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -281,31 +321,17 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.calc_piE_ecliptic">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.calc_piE_ecliptic">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.calc_piE_ecliptic">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param3.calc_piE_ecliptic">(model.PSPL_Astrom_Par_Param3 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param4.calc_piE_ecliptic">(model.PSPL_Astrom_Par_Param4 method)</a>
 </li>
-        <li><a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.calc_piE_ecliptic">(model.PSPL_noParallax method)</a>
-</li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.calc_piE_ecliptic">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#id19">[1]</a>, <a href="PSPL_Parallax.html#id9">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.calc_piE_ecliptic">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.calc_piE_ecliptic">[4]</a>
+        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.calc_piE_ecliptic">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.calc_piE_ecliptic">[1]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.calc_piE_ecliptic">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.calc_piE_ecliptic">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.calc_piE_ecliptic">[4]</a>
 </li>
         <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_LumLens.calc_piE_ecliptic">(model.PSPL_Parallax_LumLens method)</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_old.calc_piE_ecliptic">(model.PSPL_Parallax_old method)</a>, <a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old.calc_piE_ecliptic">[1]</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.calc_piE_ecliptic">(model.PSPL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.calc_piE_ecliptic">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.calc_piE_ecliptic">(model.PSPL_Phot_Par_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.calc_piE_ecliptic">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param1.calc_piE_ecliptic">(model.PSPL_Phot_Par_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param2.calc_piE_ecliptic">(model.PSPL_Phot_Par_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Parold_Param2.calc_piE_ecliptic">(model.PSPL_Phot_Parold_Param2 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.calc_piE_ecliptic">(model.PSPL_PhotAstrom_LumLens_Par_Param1 method)</a>
 </li>
@@ -336,6 +362,20 @@
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param3.calc_piE_ecliptic">(model.PSPL_PhotAstrom_Par_Param3 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param4.calc_piE_ecliptic">(model.PSPL_PhotAstrom_Par_Param4 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.calc_piE_ecliptic">(model.PSPL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.calc_piE_ecliptic">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.calc_piE_ecliptic">(model.PSPL_Phot_Par_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.calc_piE_ecliptic">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param1.calc_piE_ecliptic">(model.PSPL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param2.calc_piE_ecliptic">(model.PSPL_Phot_Par_Param2 method)</a>
+</li>
+        <li><a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.calc_piE_ecliptic">(model.PSPL_noParallax method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -416,13 +456,13 @@
 </li>
       <li><a href="FSPL.html#model.FSPL_Parallax">FSPL_Parallax (class in model)</a>, <a href="api/model.FSPL_Parallax.html#model.FSPL_Parallax">[1]</a>
 </li>
-      <li><a href="FSPL.html#id0">FSPL_PhotAstrom (class in model)</a>, <a href="FSPL.html#model.FSPL_PhotAstrom">[1]</a>, <a href="FSPLTest.html#model.FSPL_PhotAstrom">[2]</a>, <a href="api/model.FSPL_PhotAstrom.html#model.FSPL_PhotAstrom">[3]</a>
+      <li><a href="FSPL.html#model.FSPL_PhotAstrom">FSPL_PhotAstrom (class in model)</a>, <a href="FSPL.html#model.FSPL_PhotAstrom">[1]</a>, <a href="FSPLTest.html#model.FSPL_PhotAstrom">[2]</a>, <a href="api/model.FSPL_PhotAstrom.html#model.FSPL_PhotAstrom">[3]</a>
 </li>
       <li><a href="FSPL_User.html#model.FSPL_PhotAstrom_Par_Param1">FSPL_PhotAstrom_Par_Param1 (class in model)</a>, <a href="api/model.FSPL_PhotAstrom_Par_Param1.html#model.FSPL_PhotAstrom_Par_Param1">[1]</a>
 </li>
       <li><a href="FSPL.html#model.FSPL_PhotAstromParam1">FSPL_PhotAstromParam1 (class in model)</a>, <a href="api/model.FSPL_PhotAstromParam1.html#model.FSPL_PhotAstromParam1">[1]</a>
 </li>
-      <li><a href="PSPL_GP.html#model.Celerite_GP_Model.full_size">full_size() (model.Celerite_GP_Model property)</a>
+      <li><a href="PSPL_GP.html#model.Celerite_GP_Model.full_size">full_size (model.Celerite_GP_Model attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -435,23 +475,7 @@
       <ul>
         <li><a href="PSBL_Data.html#model.PSBL_Phot.get_all_arrays">(model.PSBL_Phot method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_all_arrays">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_all_arrays">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_all_arrays">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_all_arrays">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_all_arrays">(model.PSBL_PhotAstrom method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_all_arrays">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_all_arrays">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_all_arrays">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_all_arrays">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_all_arrays">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -465,29 +489,29 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_all_arrays">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_all_arrays">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_all_arrays">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_all_arrays">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_all_arrays">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_all_arrays">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_all_arrays">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_all_arrays">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_all_arrays">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
       </ul></li>
       <li><a href="PSBL_Data.html#model.PSBL.get_amp_arr">get_amp_arr() (model.PSBL method)</a>, <a href="api/model.PSBL.html#model.PSBL.get_amp_arr">[1]</a>
 
       <ul>
         <li><a href="PSBL_Data.html#model.PSBL_Phot.get_amp_arr">(model.PSBL_Phot method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_amp_arr">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_amp_arr">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_amp_arr">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_amp_arr">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_amp_arr">(model.PSBL_PhotAstrom method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_amp_arr">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_amp_arr">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_amp_arr">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_amp_arr">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_amp_arr">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -501,35 +525,45 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_amp_arr">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_amp_arr">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_amp_arr">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_amp_arr">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_amp_arr">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_amp_arr">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_amp_arr">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_amp_arr">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_amp_arr">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
       </ul></li>
-      <li><a href="api/model.FSPL_Limb.html#model.FSPL_Limb.get_amplification">get_amplification() (model.FSPL_Limb method)</a>
+      <li><a href="BSPL_Data.html#model.BSPL.get_amplification">get_amplification() (model.BSPL method)</a>
 
       <ul>
-        <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_amplification">(model.FSPL_Limb_noParallax method)</a>
+        <li><a href="BSPL_Parallax.html#model.BSPL_Parallax.get_amplification">(model.BSPL_Parallax method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_Phot.get_amplification">(model.BSPL_Phot method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_PhotAstrom.get_amplification">(model.BSPL_PhotAstrom method)</a>
+</li>
+        <li><a href="BSPL_Parallax.html#model.BSPL_noParallax.get_amplification">(model.BSPL_noParallax method)</a>
+</li>
+        <li><a href="api/model.FSPL_Limb.html#model.FSPL_Limb.get_amplification">(model.FSPL_Limb method)</a>
 </li>
         <li><a href="FSPL.html#model.FSPL_Limb_Parallax.get_amplification">(model.FSPL_Limb_Parallax method)</a>
 </li>
-        <li><a href="FSPL.html#model.FSPL_noParallax.get_amplification">(model.FSPL_noParallax method)</a>
+        <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_amplification">(model.FSPL_Limb_noParallax method)</a>
 </li>
         <li><a href="FSPL.html#model.FSPL_Parallax.get_amplification">(model.FSPL_Parallax method)</a>
 </li>
         <li><a href="FSPL_User.html#model.FSPL_PhotAstrom_Par_Param1.get_amplification">(model.FSPL_PhotAstrom_Par_Param1 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_amplification">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_amplification">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_amplification">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_amplification">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_amplification">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_amplification">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_amplification">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_amplification">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+        <li><a href="FSPL.html#model.FSPL_noParallax.get_amplification">(model.FSPL_noParallax method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_amplification">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -543,57 +577,35 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_amplification">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_amplification">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_amplification">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_amplification">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_amplification">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_amplification">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_amplification">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_amplification">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_amplification">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param3.get_amplification">(model.PSPL_Astrom_Par_Param3 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param4.get_amplification">(model.PSPL_Astrom_Par_Param4 method)</a>
 </li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_amplification">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_amplification">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_amplification">[2]</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_amplification">(model.PSPL_noParallax_LumLens method)</a>
-</li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_amplification">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#id1">[1]</a>, <a href="PSPL_Parallax.html#id11">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_amplification">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_amplification">[4]</a>
+        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_amplification">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_amplification">[1]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_amplification">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_amplification">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_amplification">[4]</a>
 </li>
         <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_LumLens.get_amplification">(model.PSPL_Parallax_LumLens method)</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_old.get_amplification">(model.PSPL_Parallax_old method)</a>, <a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old.get_amplification">[1]</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param1.get_amplification">(model.PSPL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param2.get_amplification">(model.PSPL_Phot_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_Param1.get_amplification">(model.PSPL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_Param2.get_amplification">(model.PSPL_Phot_noPar_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_amplification">(model.PSPL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.get_amplification">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.get_amplification">(model.PSPL_Phot_Par_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.get_amplification">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param1.get_amplification">(model.PSPL_Phot_Par_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param2.get_amplification">(model.PSPL_Phot_Par_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Parold_Param2.get_amplification">(model.PSPL_Phot_Parold_Param2 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_amplification">(model.PSPL_PhotAstrom_LumLens_Par_Param1 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param2.get_amplification">(model.PSPL_PhotAstrom_LumLens_Par_Param2 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param4.get_amplification">(model.PSPL_PhotAstrom_LumLens_Par_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_amplification">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_amplification">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_amplification">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_amplification">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_amplification">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.get_amplification">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -619,41 +631,67 @@
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param4.get_amplification">(model.PSPL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_amplification">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_amplification">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_amplification">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_amplification">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_amplification">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_amplification">(model.PSPL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.get_amplification">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.get_amplification">(model.PSPL_Phot_Par_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.get_amplification">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param1.get_amplification">(model.PSPL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param2.get_amplification">(model.PSPL_Phot_Par_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param1.get_amplification">(model.PSPL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param2.get_amplification">(model.PSPL_Phot_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_Param1.get_amplification">(model.PSPL_Phot_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_Param2.get_amplification">(model.PSPL_Phot_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_amplification">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_amplification">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_amplification">[2]</a>
+</li>
+        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_amplification">(model.PSPL_noParallax_LumLens method)</a>
+</li>
       </ul></li>
       <li><a href="Gen_Use.html#model.get_amplitudes">get_amplitudes() (in module model)</a>, <a href="api/model.get_amplitudes.html#model.get_amplitudes">[1]</a>
 </li>
       <li><a href="Gen_Use.html#model.get_angular_einstein_radius">get_angular_einstein_radius() (in module model)</a>, <a href="api/model.get_angular_einstein_radius.html#model.get_angular_einstein_radius">[1]</a>
 </li>
-      <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_astrometry">get_astrometry() (model.FSPL_Limb_noParallax method)</a>
+      <li><a href="BSPL_Parallax.html#model.BSPL_noParallax.get_astrometry">get_astrometry() (model.BSPL_noParallax method)</a>
 
       <ul>
+        <li><a href="BSPL_Parallax.html#model.BSPL_Parallax.get_astrometry">(model.BSPL_Parallax method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_Phot.get_astrometry">(model.BSPL_Phot method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_PhotAstrom.get_astrometry">(model.BSPL_PhotAstrom method)</a>
+</li>
         <li><a href="FSPL.html#model.FSPL_Limb_Parallax.get_astrometry">(model.FSPL_Limb_Parallax method)</a>
 </li>
-        <li><a href="FSPL.html#model.FSPL_noParallax.get_astrometry">(model.FSPL_noParallax method)</a>
+        <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_astrometry">(model.FSPL_Limb_noParallax method)</a>
 </li>
         <li><a href="FSPL.html#model.FSPL_Parallax.get_astrometry">(model.FSPL_Parallax method)</a>
 </li>
         <li><a href="FSPL_User.html#model.FSPL_PhotAstrom_Par_Param1.get_astrometry">(model.FSPL_PhotAstrom_Par_Param1 method)</a>
 </li>
+        <li><a href="FSPL.html#model.FSPL_noParallax.get_astrometry">(model.FSPL_noParallax method)</a>
+</li>
         <li><a href="PSBL_Data.html#model.PSBL_Phot.get_astrometry">(model.PSBL_Phot method)</a>, <a href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_astrometry">[1]</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_astrometry">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_astrometry">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_astrometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_astrometry">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_astrometry">(model.PSBL_PhotAstrom method)</a>, <a href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_astrometry">[1]</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_astrometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_astrometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_astrometry">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -667,19 +705,29 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_astrometry">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_astrometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_astrometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_astrometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_astrometry">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_astrometry">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_astrometry">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param3.get_astrometry">(model.PSPL_Astrom_Par_Param3 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param4.get_astrometry">(model.PSPL_Astrom_Par_Param4 method)</a>
 </li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_astrometry">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_astrometry">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_astrometry">[2]</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_astrometry">(model.PSPL_noParallax_LumLens method)</a>
-</li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_astrometry">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#id13">[1]</a>, <a href="PSPL_Parallax.html#id3">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry">[4]</a>
+        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_astrometry">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry">[1]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry">[4]</a>
 </li>
         <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_LumLens.get_astrometry">(model.PSPL_Parallax_LumLens method)</a>, <a href="api/model.PSPL_Parallax_LumLens.html#model.PSPL_Parallax_LumLens.get_astrometry">[1]</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_old.get_astrometry">(model.PSPL_Parallax_old method)</a>, <a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old.get_astrometry">[1]</a>
 </li>
         <li><a href="api/model.PSPL_Phot.html#model.PSPL_Phot.get_astrometry">(model.PSPL_Phot method)</a>
 </li>
@@ -688,16 +736,6 @@
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param2.get_astrometry">(model.PSPL_PhotAstrom_LumLens_Par_Param2 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param4.get_astrometry">(model.PSPL_PhotAstrom_LumLens_Par_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_astrometry">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_astrometry">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_astrometry">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.get_astrometry">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -723,39 +761,45 @@
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param4.get_astrometry">(model.PSPL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_astrometry">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_astrometry">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_astrometry">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
+</li>
+        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_astrometry">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_astrometry">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_astrometry">[2]</a>
+</li>
+        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_astrometry">(model.PSPL_noParallax_LumLens method)</a>
+</li>
       </ul></li>
-      <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_astrometry_unlensed">get_astrometry_unlensed() (model.FSPL_Limb_noParallax method)</a>
+      <li><a href="BSPL_Parallax.html#model.BSPL_noParallax.get_astrometry_unlensed">get_astrometry_unlensed() (model.BSPL_noParallax method)</a>
 
       <ul>
+        <li><a href="BSPL_Parallax.html#model.BSPL_Parallax.get_astrometry_unlensed">(model.BSPL_Parallax method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_Phot.get_astrometry_unlensed">(model.BSPL_Phot method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_PhotAstrom.get_astrometry_unlensed">(model.BSPL_PhotAstrom method)</a>
+</li>
         <li><a href="FSPL.html#model.FSPL_Limb_Parallax.get_astrometry_unlensed">(model.FSPL_Limb_Parallax method)</a>
 </li>
-        <li><a href="FSPL.html#model.FSPL_noParallax.get_astrometry_unlensed">(model.FSPL_noParallax method)</a>
+        <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_astrometry_unlensed">(model.FSPL_Limb_noParallax method)</a>
 </li>
         <li><a href="FSPL.html#model.FSPL_Parallax.get_astrometry_unlensed">(model.FSPL_Parallax method)</a>
 </li>
-        <li><a href="FSPL.html#id2">(model.FSPL_PhotAstrom method)</a>, <a href="FSPL.html#model.FSPL_PhotAstrom.get_astrometry_unlensed">[1]</a>, <a href="FSPLTest.html#model.FSPL_PhotAstrom.get_astrometry_unlensed">[2]</a>, <a href="api/model.FSPL_PhotAstrom.html#model.FSPL_PhotAstrom.get_astrometry_unlensed">[3]</a>
+        <li><a href="FSPL.html#model.FSPL_PhotAstrom.get_astrometry_unlensed">(model.FSPL_PhotAstrom method)</a>, <a href="FSPL.html#model.FSPL_PhotAstrom.get_astrometry_unlensed">[1]</a>, <a href="FSPLTest.html#model.FSPL_PhotAstrom.get_astrometry_unlensed">[2]</a>, <a href="api/model.FSPL_PhotAstrom.html#model.FSPL_PhotAstrom.get_astrometry_unlensed">[3]</a>
 </li>
         <li><a href="FSPL_User.html#model.FSPL_PhotAstrom_Par_Param1.get_astrometry_unlensed">(model.FSPL_PhotAstrom_Par_Param1 method)</a>
 </li>
+        <li><a href="FSPL.html#model.FSPL_noParallax.get_astrometry_unlensed">(model.FSPL_noParallax method)</a>
+</li>
         <li><a href="PSBL_Data.html#model.PSBL_Phot.get_astrometry_unlensed">(model.PSBL_Phot method)</a>, <a href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_astrometry_unlensed">[1]</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_astrometry_unlensed">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_astrometry_unlensed">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_astrometry_unlensed">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_astrometry_unlensed">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_astrometry_unlensed">(model.PSBL_PhotAstrom method)</a>, <a href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_astrometry_unlensed">[1]</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_astrometry_unlensed">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_astrometry_unlensed">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_astrometry_unlensed">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_astrometry_unlensed">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_astrometry_unlensed">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -769,19 +813,29 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_astrometry_unlensed">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_astrometry_unlensed">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_astrometry_unlensed">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_astrometry_unlensed">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_astrometry_unlensed">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_astrometry_unlensed">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_astrometry_unlensed">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_astrometry_unlensed">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_astrometry_unlensed">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param3.get_astrometry_unlensed">(model.PSPL_Astrom_Par_Param3 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param4.get_astrometry_unlensed">(model.PSPL_Astrom_Par_Param4 method)</a>
 </li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_astrometry_unlensed">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_astrometry_unlensed">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_astrometry_unlensed">[2]</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_astrometry_unlensed">(model.PSPL_noParallax_LumLens method)</a>
-</li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_astrometry_unlensed">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#id15">[1]</a>, <a href="PSPL_Parallax.html#id5">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry_unlensed">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry_unlensed">[4]</a>
+        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_astrometry_unlensed">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry_unlensed">[1]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry_unlensed">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry_unlensed">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_astrometry_unlensed">[4]</a>
 </li>
         <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_LumLens.get_astrometry_unlensed">(model.PSPL_Parallax_LumLens method)</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_old.get_astrometry_unlensed">(model.PSPL_Parallax_old method)</a>, <a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old.get_astrometry_unlensed">[1]</a>
 </li>
         <li><a href="api/model.PSPL_Phot.html#model.PSPL_Phot.get_astrometry_unlensed">(model.PSPL_Phot method)</a>
 </li>
@@ -790,16 +844,6 @@
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param2.get_astrometry_unlensed">(model.PSPL_PhotAstrom_LumLens_Par_Param2 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param4.get_astrometry_unlensed">(model.PSPL_PhotAstrom_LumLens_Par_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_astrometry_unlensed">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_astrometry_unlensed">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_astrometry_unlensed">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_astrometry_unlensed">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_astrometry_unlensed">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.get_astrometry_unlensed">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -825,25 +869,61 @@
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param4.get_astrometry_unlensed">(model.PSPL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_astrometry_unlensed">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_astrometry_unlensed">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_astrometry_unlensed">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_astrometry_unlensed">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_astrometry_unlensed">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
+</li>
+        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_astrometry_unlensed">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_astrometry_unlensed">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_astrometry_unlensed">[2]</a>
+</li>
+        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_astrometry_unlensed">(model.PSPL_noParallax_LumLens method)</a>
+</li>
       </ul></li>
-      <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_centroid_shift">get_centroid_shift() (model.FSPL_Limb_noParallax method)</a>
+      <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_centroid">get_centroid() (model.PSBL_PhotAstrom method)</a>
 
       <ul>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_centroid">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param2.get_centroid">(model.PSBL_PhotAstrom_Par_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param1.get_centroid">(model.PSBL_PhotAstrom_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param2.get_centroid">(model.PSBL_PhotAstrom_Par_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param3.get_centroid">(model.PSBL_PhotAstrom_Par_Param3 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_centroid">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_centroid">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_centroid">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_centroid">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_centroid">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+      </ul></li>
+      <li><a href="BSPL_Parallax.html#model.BSPL_noParallax.get_centroid_shift">get_centroid_shift() (model.BSPL_noParallax method)</a>
+
+      <ul>
+        <li><a href="BSPL_Parallax.html#model.BSPL_Parallax.get_centroid_shift">(model.BSPL_Parallax method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_PhotAstrom.get_centroid_shift">(model.BSPL_PhotAstrom method)</a>
+</li>
         <li><a href="FSPL.html#model.FSPL_Limb_Parallax.get_centroid_shift">(model.FSPL_Limb_Parallax method)</a>
 </li>
-        <li><a href="FSPL.html#model.FSPL_noParallax.get_centroid_shift">(model.FSPL_noParallax method)</a>
+        <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_centroid_shift">(model.FSPL_Limb_noParallax method)</a>
 </li>
         <li><a href="FSPL.html#model.FSPL_Parallax.get_centroid_shift">(model.FSPL_Parallax method)</a>
 </li>
         <li><a href="FSPL_User.html#model.FSPL_PhotAstrom_Par_Param1.get_centroid_shift">(model.FSPL_PhotAstrom_Par_Param1 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_centroid_shift">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_centroid_shift">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_centroid_shift">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_centroid_shift">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+        <li><a href="FSPL.html#model.FSPL_noParallax.get_centroid_shift">(model.FSPL_noParallax method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_centroid_shift">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -857,19 +937,21 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_centroid_shift">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_centroid_shift">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_centroid_shift">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_centroid_shift">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_centroid_shift">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param3.get_centroid_shift">(model.PSPL_Astrom_Par_Param3 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param4.get_centroid_shift">(model.PSPL_Astrom_Par_Param4 method)</a>
 </li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_centroid_shift">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_centroid_shift">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_centroid_shift">[2]</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_centroid_shift">(model.PSPL_noParallax_LumLens method)</a>, <a href="api/model.PSPL_noParallax_LumLens.html#model.PSPL_noParallax_LumLens.get_centroid_shift">[1]</a>
-</li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_centroid_shift">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#id14">[1]</a>, <a href="PSPL_Parallax.html#id4">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_centroid_shift">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_centroid_shift">[4]</a>
+        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_centroid_shift">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_centroid_shift">[1]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_centroid_shift">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_centroid_shift">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_centroid_shift">[4]</a>
 </li>
         <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_LumLens.get_centroid_shift">(model.PSPL_Parallax_LumLens method)</a>, <a href="api/model.PSPL_Parallax_LumLens.html#model.PSPL_Parallax_LumLens.get_centroid_shift">[1]</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_old.get_centroid_shift">(model.PSPL_Parallax_old method)</a>, <a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old.get_centroid_shift">[1]</a>
 </li>
         <li><a href="api/model.PSPL_Phot.html#model.PSPL_Phot.get_centroid_shift">(model.PSPL_Phot method)</a>
 </li>
@@ -878,16 +960,6 @@
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param2.get_centroid_shift">(model.PSPL_PhotAstrom_LumLens_Par_Param2 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param4.get_centroid_shift">(model.PSPL_PhotAstrom_LumLens_Par_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_centroid_shift">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_centroid_shift">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_centroid_shift">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_centroid_shift">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_centroid_shift">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.get_centroid_shift">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -913,6 +985,20 @@
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param4.get_centroid_shift">(model.PSPL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_centroid_shift">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_centroid_shift">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_centroid_shift">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_centroid_shift">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_centroid_shift">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
+</li>
+        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_centroid_shift">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_centroid_shift">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_centroid_shift">[2]</a>
+</li>
+        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_centroid_shift">(model.PSPL_noParallax_LumLens method)</a>, <a href="api/model.PSPL_noParallax_LumLens.html#model.PSPL_noParallax_LumLens.get_centroid_shift">[1]</a>
+</li>
       </ul></li>
       <li><a href="api/model.PSPL_Astrom.html#model.PSPL_Astrom.get_chi2_astrometry">get_chi2_astrometry() (model.PSPL_Astrom method)</a>
 
@@ -925,23 +1011,7 @@
       <li><a href="PSBL_Data.html#model.PSBL_Phot.get_complex_pos">get_complex_pos() (model.PSBL_Phot method)</a>, <a href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_complex_pos">[1]</a>
 
       <ul>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_complex_pos">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_complex_pos">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_complex_pos">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_complex_pos">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_complex_pos">(model.PSBL_PhotAstrom method)</a>, <a href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_complex_pos">[1]</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_complex_pos">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_complex_pos">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_complex_pos">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_complex_pos">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_complex_pos">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -955,6 +1025,22 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_complex_pos">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_complex_pos">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_complex_pos">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_complex_pos">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_complex_pos">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_complex_pos">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_complex_pos">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_complex_pos">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_complex_pos">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
       </ul></li>
       <li><a href="Gen_Use.html#model.get_einstein_time">get_einstein_time() (in module model)</a>, <a href="api/model.get_einstein_time.html#model.get_einstein_time">[1]</a>
 </li>
@@ -965,23 +1051,7 @@
       <ul>
         <li><a href="PSBL_Data.html#model.PSBL_Phot.get_image_pos_arr">(model.PSBL_Phot method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_image_pos_arr">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_image_pos_arr">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_image_pos_arr">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_image_pos_arr">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_image_pos_arr">(model.PSBL_PhotAstrom method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_image_pos_arr">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_image_pos_arr">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_image_pos_arr">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_image_pos_arr">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_image_pos_arr">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -995,27 +1065,77 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_image_pos_arr">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_image_pos_arr">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_image_pos_arr">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_image_pos_arr">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_image_pos_arr">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_image_pos_arr">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_image_pos_arr">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_image_pos_arr">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_image_pos_arr">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
       </ul></li>
-      <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_lens_astrometry">get_lens_astrometry() (model.FSPL_Limb_noParallax method)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="PSBL_Data.html#model.PSBL.get_image_pos_arr_old">get_image_pos_arr_old() (model.PSBL method)</a>
 
       <ul>
+        <li><a href="PSBL_Data.html#model.PSBL_Phot.get_image_pos_arr_old">(model.PSBL_Phot method)</a>
+</li>
+        <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_image_pos_arr_old">(model.PSBL_PhotAstrom method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_image_pos_arr_old">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param2.get_image_pos_arr_old">(model.PSBL_PhotAstrom_Par_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param1.get_image_pos_arr_old">(model.PSBL_PhotAstrom_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param2.get_image_pos_arr_old">(model.PSBL_PhotAstrom_Par_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param3.get_image_pos_arr_old">(model.PSBL_PhotAstrom_Par_Param3 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_image_pos_arr_old">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_image_pos_arr_old">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_image_pos_arr_old">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_image_pos_arr_old">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_image_pos_arr_old">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_image_pos_arr_old">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_image_pos_arr_old">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_image_pos_arr_old">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_image_pos_arr_old">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
+      </ul></li>
+      <li><a href="BSPL_Parallax.html#model.BSPL_noParallax.get_lens_astrometry">get_lens_astrometry() (model.BSPL_noParallax method)</a>
+
+      <ul>
+        <li><a href="BSPL_Parallax.html#model.BSPL_Parallax.get_lens_astrometry">(model.BSPL_Parallax method)</a>
+</li>
         <li><a href="FSPL.html#model.FSPL_Limb_Parallax.get_lens_astrometry">(model.FSPL_Limb_Parallax method)</a>
 </li>
-        <li><a href="FSPL.html#model.FSPL_noParallax.get_lens_astrometry">(model.FSPL_noParallax method)</a>
+        <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_lens_astrometry">(model.FSPL_Limb_noParallax method)</a>
 </li>
         <li><a href="FSPL.html#model.FSPL_Parallax.get_lens_astrometry">(model.FSPL_Parallax method)</a>
 </li>
         <li><a href="api/model.FSPL_PhotAstrom.html#model.FSPL_PhotAstrom.get_lens_astrometry">(model.FSPL_PhotAstrom method)</a>
 </li>
+        <li><a href="FSPL.html#model.FSPL_noParallax.get_lens_astrometry">(model.FSPL_noParallax method)</a>
+</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_lens_astrometry">(model.PSBL_PhotAstrom method)</a>, <a href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_lens_astrometry">[1]</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_lens_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_lens_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_lens_astrometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_lens_astrometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_lens_astrometry">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1029,19 +1149,21 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_lens_astrometry">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_lens_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_lens_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_lens_astrometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_lens_astrometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param3.get_lens_astrometry">(model.PSPL_Astrom_Par_Param3 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param4.get_lens_astrometry">(model.PSPL_Astrom_Par_Param4 method)</a>
 </li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_lens_astrometry">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_lens_astrometry">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_lens_astrometry">[2]</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_lens_astrometry">(model.PSPL_noParallax_LumLens method)</a>
-</li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_lens_astrometry">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#id12">[1]</a>, <a href="PSPL_Parallax.html#id2">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_lens_astrometry">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_lens_astrometry">[4]</a>
+        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_lens_astrometry">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_lens_astrometry">[1]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_lens_astrometry">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_lens_astrometry">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_lens_astrometry">[4]</a>
 </li>
         <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_LumLens.get_lens_astrometry">(model.PSPL_Parallax_LumLens method)</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_old.get_lens_astrometry">(model.PSPL_Parallax_old method)</a>, <a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old.get_lens_astrometry">[1]</a>
 </li>
         <li><a href="api/model.PSPL_Phot.html#model.PSPL_Phot.get_lens_astrometry">(model.PSPL_Phot method)</a>
 </li>
@@ -1050,16 +1172,6 @@
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param2.get_lens_astrometry">(model.PSPL_PhotAstrom_LumLens_Par_Param2 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param4.get_lens_astrometry">(model.PSPL_PhotAstrom_LumLens_Par_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_lens_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_lens_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_lens_astrometry">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_lens_astrometry">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_lens_astrometry">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.get_lens_astrometry">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1085,9 +1197,21 @@
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param4.get_lens_astrometry">(model.PSPL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_lens_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_lens_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_lens_astrometry">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_lens_astrometry">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_lens_astrometry">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
+</li>
+        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_lens_astrometry">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_lens_astrometry">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_lens_astrometry">[2]</a>
+</li>
+        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_lens_astrometry">(model.PSPL_noParallax_LumLens method)</a>
+</li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/model.PSPL.html#model.PSPL.get_lnL_constant">get_lnL_constant() (model.PSPL method)</a>
 
       <ul>
@@ -1099,33 +1223,17 @@
       <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_log_det_covariance">get_log_det_covariance() (model.PSBL_Phot_noPar_GP_Param1 method)</a>
 
       <ul>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_log_det_covariance">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_log_det_covariance">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param2.get_log_det_covariance">(model.PSBL_PhotAstrom_Par_GP_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_log_det_covariance">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_log_det_covariance">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_log_det_covariance">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_log_det_covariance">(model.PSBL_Phot_Par_GP_Param1 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param2.get_log_det_covariance">(model.PSBL_PhotAstrom_Par_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_GP.html#id2">(model.PSPL_GP method)</a>, <a href="PSPL_GP.html#model.PSPL_GP.get_log_det_covariance">[1]</a>, <a href="api/model.PSPL_GP.html#model.PSPL_GP.get_log_det_covariance">[2]</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param1.get_log_det_covariance">(model.PSPL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param2.get_log_det_covariance">(model.PSPL_Phot_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_log_det_covariance">(model.PSPL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.get_log_det_covariance">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.get_log_det_covariance">(model.PSPL_Phot_Par_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.get_log_det_covariance">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_log_det_covariance">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_log_det_covariance">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+        <li><a href="PSPL_GP.html#model.PSPL_GP.get_log_det_covariance">(model.PSPL_GP method)</a>, <a href="PSPL_GP.html#model.PSPL_GP.get_log_det_covariance">[1]</a>, <a href="api/model.PSPL_GP.html#model.PSPL_GP.get_log_det_covariance">[2]</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.get_log_det_covariance">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1142,6 +1250,22 @@
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_LumLens_GP_Param3.get_log_det_covariance">(model.PSPL_PhotAstrom_Par_LumLens_GP_Param3 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_LumLens_GP_Param4.get_log_det_covariance">(model.PSPL_PhotAstrom_Par_LumLens_GP_Param4 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_log_det_covariance">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_log_det_covariance">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_log_det_covariance">(model.PSPL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.get_log_det_covariance">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.get_log_det_covariance">(model.PSPL_Phot_Par_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.get_log_det_covariance">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param1.get_log_det_covariance">(model.PSPL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param2.get_log_det_covariance">(model.PSPL_Phot_noPar_GP_Param2 method)</a>
 </li>
       </ul></li>
       <li><a href="Gen_Use.html#model.get_minus">get_minus() (in module model)</a>, <a href="api/model.get_minus.html#model.get_minus">[1]</a>
@@ -1163,23 +1287,7 @@
 </li>
         <li><a href="PSBL_Data.html#model.PSBL_Phot.get_photometry">(model.PSBL_Phot method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_photometry">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_photometry">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_photometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_photometry">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_photometry">(model.PSBL_PhotAstrom method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_photometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_photometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_photometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_photometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_photometry">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1193,6 +1301,22 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_photometry">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_photometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_photometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_photometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_photometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_photometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_photometry">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_photometry">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_photometry">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
         <li><a href="api/model.PSPL.html#model.PSPL.get_photometry">(model.PSPL method)</a>
 </li>
         <li><a href="api/model.PSPL_Astrom.html#model.PSPL_Astrom.get_photometry">(model.PSPL_Astrom method)</a>
@@ -1201,33 +1325,17 @@
       <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_photometry_with_gp">get_photometry_with_gp() (model.PSBL_Phot_noPar_GP_Param1 method)</a>
 
       <ul>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_photometry_with_gp">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_photometry_with_gp">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param2.get_photometry_with_gp">(model.PSBL_PhotAstrom_Par_GP_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_photometry_with_gp">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_photometry_with_gp">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_photometry_with_gp">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_photometry_with_gp">(model.PSBL_Phot_Par_GP_Param1 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param2.get_photometry_with_gp">(model.PSBL_PhotAstrom_Par_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_GP.html#id1">(model.PSPL_GP method)</a>, <a href="PSPL_GP.html#model.PSPL_GP.get_photometry_with_gp">[1]</a>, <a href="api/model.PSPL_GP.html#model.PSPL_GP.get_photometry_with_gp">[2]</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param1.get_photometry_with_gp">(model.PSPL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param2.get_photometry_with_gp">(model.PSPL_Phot_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_photometry_with_gp">(model.PSPL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.get_photometry_with_gp">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.get_photometry_with_gp">(model.PSPL_Phot_Par_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.get_photometry_with_gp">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_photometry_with_gp">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_photometry_with_gp">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+        <li><a href="PSPL_GP.html#model.PSPL_GP.get_photometry_with_gp">(model.PSPL_GP method)</a>, <a href="PSPL_GP.html#model.PSPL_GP.get_photometry_with_gp">[1]</a>, <a href="api/model.PSPL_GP.html#model.PSPL_GP.get_photometry_with_gp">[2]</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.get_photometry_with_gp">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1245,27 +1353,45 @@
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_LumLens_GP_Param4.get_photometry_with_gp">(model.PSPL_PhotAstrom_Par_LumLens_GP_Param4 method)</a>
 </li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_photometry_with_gp">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_photometry_with_gp">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.get_photometry_with_gp">(model.PSPL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.get_photometry_with_gp">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.get_photometry_with_gp">(model.PSPL_Phot_Par_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.get_photometry_with_gp">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param1.get_photometry_with_gp">(model.PSPL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param2.get_photometry_with_gp">(model.PSPL_Phot_noPar_GP_Param2 method)</a>
+</li>
       </ul></li>
       <li><a href="Gen_Use.html#model.get_plus">get_plus() (in module model)</a>, <a href="api/model.get_plus.html#model.get_plus">[1]</a>
 </li>
-      <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_resolved_amplification">get_resolved_amplification() (model.FSPL_Limb_noParallax method)</a>
+      <li><a href="BSPL_Data.html#model.BSPL.get_resolved_amplification">get_resolved_amplification() (model.BSPL method)</a>
 
       <ul>
+        <li><a href="BSPL_Parallax.html#model.BSPL_Parallax.get_resolved_amplification">(model.BSPL_Parallax method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_Phot.get_resolved_amplification">(model.BSPL_Phot method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_PhotAstrom.get_resolved_amplification">(model.BSPL_PhotAstrom method)</a>
+</li>
+        <li><a href="BSPL_Parallax.html#model.BSPL_noParallax.get_resolved_amplification">(model.BSPL_noParallax method)</a>
+</li>
         <li><a href="FSPL.html#model.FSPL_Limb_Parallax.get_resolved_amplification">(model.FSPL_Limb_Parallax method)</a>
 </li>
-        <li><a href="FSPL.html#model.FSPL_noParallax.get_resolved_amplification">(model.FSPL_noParallax method)</a>
+        <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_resolved_amplification">(model.FSPL_Limb_noParallax method)</a>
 </li>
         <li><a href="FSPL.html#model.FSPL_Parallax.get_resolved_amplification">(model.FSPL_Parallax method)</a>
 </li>
         <li><a href="FSPL_User.html#model.FSPL_PhotAstrom_Par_Param1.get_resolved_amplification">(model.FSPL_PhotAstrom_Par_Param1 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_resolved_amplification">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_resolved_amplification">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_amplification">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_resolved_amplification">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+        <li><a href="FSPL.html#model.FSPL_noParallax.get_resolved_amplification">(model.FSPL_noParallax method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_resolved_amplification">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1279,19 +1405,21 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_resolved_amplification">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_resolved_amplification">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_resolved_amplification">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_amplification">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_resolved_amplification">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param3.get_resolved_amplification">(model.PSPL_Astrom_Par_Param3 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param4.get_resolved_amplification">(model.PSPL_Astrom_Par_Param4 method)</a>
 </li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_resolved_amplification">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_resolved_amplification">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_resolved_amplification">[2]</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_resolved_amplification">(model.PSPL_noParallax_LumLens method)</a>
-</li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_resolved_amplification">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#id17">[1]</a>, <a href="PSPL_Parallax.html#id7">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_amplification">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_amplification">[4]</a>
+        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_resolved_amplification">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_amplification">[1]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_amplification">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_amplification">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_amplification">[4]</a>
 </li>
         <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_LumLens.get_resolved_amplification">(model.PSPL_Parallax_LumLens method)</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_old.get_resolved_amplification">(model.PSPL_Parallax_old method)</a>, <a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old.get_resolved_amplification">[1]</a>
 </li>
         <li><a href="api/model.PSPL_Phot.html#model.PSPL_Phot.get_resolved_amplification">(model.PSPL_Phot method)</a>
 </li>
@@ -1300,16 +1428,6 @@
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param2.get_resolved_amplification">(model.PSPL_PhotAstrom_LumLens_Par_Param2 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param4.get_resolved_amplification">(model.PSPL_PhotAstrom_LumLens_Par_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_resolved_amplification">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_resolved_amplification">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_resolved_amplification">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_resolved_amplification">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_resolved_amplification">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.get_resolved_amplification">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1335,37 +1453,43 @@
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param4.get_resolved_amplification">(model.PSPL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_resolved_amplification">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_resolved_amplification">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_resolved_amplification">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_resolved_amplification">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_resolved_amplification">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
+</li>
+        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_resolved_amplification">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_resolved_amplification">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_resolved_amplification">[2]</a>
+</li>
+        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_resolved_amplification">(model.PSPL_noParallax_LumLens method)</a>
+</li>
       </ul></li>
-      <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_resolved_astrometry">get_resolved_astrometry() (model.FSPL_Limb_noParallax method)</a>
+      <li><a href="BSPL_Parallax.html#model.BSPL_noParallax.get_resolved_astrometry">get_resolved_astrometry() (model.BSPL_noParallax method)</a>
 
       <ul>
+        <li><a href="BSPL_Parallax.html#model.BSPL_Parallax.get_resolved_astrometry">(model.BSPL_Parallax method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_Phot.get_resolved_astrometry">(model.BSPL_Phot method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_PhotAstrom.get_resolved_astrometry">(model.BSPL_PhotAstrom method)</a>
+</li>
         <li><a href="FSPL.html#model.FSPL_Limb_Parallax.get_resolved_astrometry">(model.FSPL_Limb_Parallax method)</a>
 </li>
-        <li><a href="FSPL.html#model.FSPL_noParallax.get_resolved_astrometry">(model.FSPL_noParallax method)</a>
+        <li><a href="FSPL.html#model.FSPL_Limb_noParallax.get_resolved_astrometry">(model.FSPL_Limb_noParallax method)</a>
 </li>
         <li><a href="FSPL.html#model.FSPL_Parallax.get_resolved_astrometry">(model.FSPL_Parallax method)</a>
 </li>
         <li><a href="api/model.FSPL_PhotAstrom.html#model.FSPL_PhotAstrom.get_resolved_astrometry">(model.FSPL_PhotAstrom method)</a>
 </li>
+        <li><a href="FSPL.html#model.FSPL_noParallax.get_resolved_astrometry">(model.FSPL_noParallax method)</a>
+</li>
         <li><a href="PSBL_Data.html#model.PSBL_Phot.get_resolved_astrometry">(model.PSBL_Phot method)</a>, <a href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_resolved_astrometry">[1]</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_resolved_astrometry">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_resolved_astrometry">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_resolved_astrometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_resolved_astrometry">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_resolved_astrometry">(model.PSBL_PhotAstrom method)</a>, <a href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_resolved_astrometry">[1]</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_resolved_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_resolved_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_astrometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_resolved_astrometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_resolved_astrometry">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1379,19 +1503,29 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_resolved_astrometry">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_resolved_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_resolved_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_astrometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_resolved_astrometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_resolved_astrometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_resolved_astrometry">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_resolved_astrometry">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_resolved_astrometry">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param3.get_resolved_astrometry">(model.PSPL_Astrom_Par_Param3 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param4.get_resolved_astrometry">(model.PSPL_Astrom_Par_Param4 method)</a>
 </li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_resolved_astrometry">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_resolved_astrometry">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_resolved_astrometry">[2]</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_resolved_astrometry">(model.PSPL_noParallax_LumLens method)</a>
-</li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_resolved_astrometry">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#id18">[1]</a>, <a href="PSPL_Parallax.html#id8">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_astrometry">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_astrometry">[4]</a>
+        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_resolved_astrometry">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_astrometry">[1]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_astrometry">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_astrometry">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_astrometry">[4]</a>
 </li>
         <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_LumLens.get_resolved_astrometry">(model.PSPL_Parallax_LumLens method)</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_old.get_resolved_astrometry">(model.PSPL_Parallax_old method)</a>, <a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old.get_resolved_astrometry">[1]</a>
 </li>
         <li><a href="api/model.PSPL_Phot.html#model.PSPL_Phot.get_resolved_astrometry">(model.PSPL_Phot method)</a>
 </li>
@@ -1400,16 +1534,6 @@
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param2.get_resolved_astrometry">(model.PSPL_PhotAstrom_LumLens_Par_Param2 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param4.get_resolved_astrometry">(model.PSPL_PhotAstrom_LumLens_Par_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_resolved_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_resolved_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_resolved_astrometry">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_resolved_astrometry">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_resolved_astrometry">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.get_resolved_astrometry">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1435,27 +1559,31 @@
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param4.get_resolved_astrometry">(model.PSPL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.get_resolved_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.get_resolved_astrometry">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param1.get_resolved_astrometry">(model.PSPL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param2.get_resolved_astrometry">(model.PSPL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_Param4.get_resolved_astrometry">(model.PSPL_PhotAstrom_noPar_Param4 method)</a>
+</li>
+        <li><a href="PSBL_Parallax.html#model.PSPL_noParallax.get_resolved_astrometry">(model.PSPL_noParallax method)</a>, <a href="PSPL_Parallax.html#model.PSPL_noParallax.get_resolved_astrometry">[1]</a>, <a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_resolved_astrometry">[2]</a>
+</li>
+        <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens.get_resolved_astrometry">(model.PSPL_noParallax_LumLens method)</a>
+</li>
+      </ul></li>
+      <li><a href="BSPL_Data.html#model.BSPL_Phot.get_resolved_astrometry_unlensed">get_resolved_astrometry_unlensed() (model.BSPL_Phot method)</a>
+
+      <ul>
+        <li><a href="BSPL_Data.html#model.BSPL_PhotAstrom.get_resolved_astrometry_unlensed">(model.BSPL_PhotAstrom method)</a>
+</li>
       </ul></li>
       <li><a href="PSBL_Data.html#model.PSBL_Phot.get_resolved_lens_astrometry">get_resolved_lens_astrometry() (model.PSBL_Phot method)</a>, <a href="api/model.PSBL_Phot.html#model.PSBL_Phot.get_resolved_lens_astrometry">[1]</a>
 
       <ul>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_resolved_lens_astrometry">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_resolved_lens_astrometry">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_resolved_lens_astrometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_resolved_lens_astrometry">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_resolved_lens_astrometry">(model.PSBL_PhotAstrom method)</a>, <a href="api/model.PSBL_PhotAstrom.html#model.PSBL_PhotAstrom.get_resolved_lens_astrometry">[1]</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_resolved_lens_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_resolved_lens_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_lens_astrometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_resolved_lens_astrometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_resolved_lens_astrometry">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1469,29 +1597,29 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_resolved_lens_astrometry">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_resolved_lens_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_resolved_lens_astrometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_lens_astrometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_resolved_lens_astrometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_resolved_lens_astrometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_resolved_lens_astrometry">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_resolved_lens_astrometry">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_resolved_lens_astrometry">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
       </ul></li>
       <li><a href="PSBL_Data.html#model.PSBL.get_resolved_photometry">get_resolved_photometry() (model.PSBL method)</a>, <a href="api/model.PSBL.html#model.PSBL.get_resolved_photometry">[1]</a>
 
       <ul>
         <li><a href="PSBL_Data.html#model.PSBL_Phot.get_resolved_photometry">(model.PSBL_Phot method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_resolved_photometry">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_resolved_photometry">(model.PSBL_Phot_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_resolved_photometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_resolved_photometry">(model.PSBL_Phot_Par_Param1 method)</a>
-</li>
         <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.get_resolved_photometry">(model.PSBL_PhotAstrom method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_resolved_photometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_resolved_photometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_photometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_resolved_photometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_resolved_photometry">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1505,69 +1633,21 @@
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_resolved_photometry">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
 </li>
-      </ul></li>
-      <li><a href="FSPL.html#model.FSPL_Limb_Parallax.get_resolved_shift">get_resolved_shift() (model.FSPL_Limb_Parallax method)</a>
-
-      <ul>
-        <li><a href="FSPL.html#model.FSPL_Parallax.get_resolved_shift">(model.FSPL_Parallax method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.get_resolved_photometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
 </li>
-        <li><a href="FSPL_User.html#model.FSPL_PhotAstrom_Par_Param1.get_resolved_shift">(model.FSPL_PhotAstrom_Par_Param1 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.get_resolved_photometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.get_resolved_shift">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.get_resolved_photometry">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param2.get_resolved_shift">(model.PSBL_PhotAstrom_Par_GP_Param2 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.get_resolved_photometry">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param1.get_resolved_shift">(model.PSBL_PhotAstrom_Par_Param1 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.get_resolved_photometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param2.get_resolved_shift">(model.PSBL_PhotAstrom_Par_Param2 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.get_resolved_photometry">(model.PSBL_Phot_Par_Param1 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param3.get_resolved_shift">(model.PSBL_PhotAstrom_Par_Param3 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.get_resolved_photometry">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.get_resolved_shift">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param3.get_resolved_shift">(model.PSPL_Astrom_Par_Param3 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Astrom_Par_Param4.get_resolved_shift">(model.PSPL_Astrom_Par_Param4 method)</a>
-</li>
-        <li><a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.get_resolved_shift">(model.PSPL_noParallax method)</a>
-</li>
-        <li><a href="PSBL_Parallax.html#model.PSPL_Parallax.get_resolved_shift">(model.PSPL_Parallax method)</a>, <a href="PSPL_Parallax.html#id16">[1]</a>, <a href="PSPL_Parallax.html#id6">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_shift">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.get_resolved_shift">[4]</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_LumLens.get_resolved_shift">(model.PSPL_Parallax_LumLens method)</a>
-</li>
-        <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_old.get_resolved_shift">(model.PSPL_Parallax_old method)</a>, <a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old.get_resolved_shift">[1]</a>
-</li>
-        <li><a href="api/model.PSPL_Phot.html#model.PSPL_Phot.get_resolved_shift">(model.PSPL_Phot method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param1.get_resolved_shift">(model.PSPL_PhotAstrom_LumLens_Par_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param2.get_resolved_shift">(model.PSPL_PhotAstrom_LumLens_Par_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_LumLens_Par_Param4.get_resolved_shift">(model.PSPL_PhotAstrom_LumLens_Par_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.get_resolved_shift">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param2.get_resolved_shift">(model.PSPL_PhotAstrom_Par_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param3.get_resolved_shift">(model.PSPL_PhotAstrom_Par_GP_Param3 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param4.get_resolved_shift">(model.PSPL_PhotAstrom_Par_GP_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_LumLens_GP_Param1.get_resolved_shift">(model.PSPL_PhotAstrom_Par_LumLens_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_LumLens_GP_Param2.get_resolved_shift">(model.PSPL_PhotAstrom_Par_LumLens_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_LumLens_GP_Param3.get_resolved_shift">(model.PSPL_PhotAstrom_Par_LumLens_GP_Param3 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_LumLens_GP_Param4.get_resolved_shift">(model.PSPL_PhotAstrom_Par_LumLens_GP_Param4 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param1.get_resolved_shift">(model.PSPL_PhotAstrom_Par_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param2.get_resolved_shift">(model.PSPL_PhotAstrom_Par_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param3.get_resolved_shift">(model.PSPL_PhotAstrom_Par_Param3 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_Param4.get_resolved_shift">(model.PSPL_PhotAstrom_Par_Param4 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.get_resolved_photometry">(model.PSBL_Phot_noPar_Param1 method)</a>
 </li>
       </ul></li>
       <li><a href="FSPL.html#model.FSPL.get_source_outline_astrometry">get_source_outline_astrometry() (model.FSPL method)</a>, <a href="api/model.FSPL.html#model.FSPL.get_source_outline_astrometry">[1]</a>
@@ -1575,13 +1655,21 @@
       <ul>
         <li><a href="FSPL.html#model.FSPL_Limb.get_source_outline_astrometry">(model.FSPL_Limb method)</a>
 </li>
-        <li><a href="FSPL.html#id3">(model.FSPL_PhotAstrom method)</a>, <a href="FSPL.html#model.FSPL_PhotAstrom.get_source_outline_astrometry">[1]</a>
+        <li><a href="FSPL.html#model.FSPL_PhotAstrom.get_source_outline_astrometry">(model.FSPL_PhotAstrom method)</a>, <a href="FSPL.html#model.FSPL_PhotAstrom.get_source_outline_astrometry">[1]</a>
 </li>
         <li><a href="FSPL_User.html#model.FSPL_PhotAstrom_Par_Param1.get_source_outline_astrometry">(model.FSPL_PhotAstrom_Par_Param1 method)</a>
 </li>
       </ul></li>
       <li><a href="Gen_Use.html#model.get_thetas">get_thetas() (in module model)</a>, <a href="api/model.get_thetas.html#model.get_thetas">[1]</a>
 </li>
+      <li><a href="BSPL_Data.html#model.BSPL.get_u">get_u() (model.BSPL method)</a>
+
+      <ul>
+        <li><a href="BSPL_Data.html#model.BSPL_Phot.get_u">(model.BSPL_Phot method)</a>
+</li>
+        <li><a href="BSPL_Data.html#model.BSPL_PhotAstrom.get_u">(model.BSPL_PhotAstrom method)</a>
+</li>
+      </ul></li>
       <li><a href="Gen_Use.html#model.get_u0">get_u0() (in module model)</a>, <a href="api/model.get_u0.html#model.get_u0">[1]</a>
 </li>
       <li><a href="Gen_Use.html#model.get_uhat">get_uhat() (in module model)</a>, <a href="api/model.get_uhat.html#model.get_uhat">[1]</a>
@@ -1623,37 +1711,21 @@
       <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.log_likely_photometry">log_likely_photometry() (model.PSBL_Phot_noPar_GP_Param1 method)</a>
 
       <ul>
-        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.log_likely_photometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.log_likely_photometry">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param2.log_likely_photometry">(model.PSBL_PhotAstrom_Par_GP_Param2 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.log_likely_photometry">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
 </li>
         <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.log_likely_photometry">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
 </li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.log_likely_photometry">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param2.log_likely_photometry">(model.PSBL_PhotAstrom_Par_GP_Param2 method)</a>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.log_likely_photometry">(model.PSBL_Phot_Par_GP_Param1 method)</a>
 </li>
         <li><a href="api/model.PSPL.html#model.PSPL.log_likely_photometry">(model.PSPL method)</a>
 </li>
         <li><a href="api/model.PSPL_Astrom.html#model.PSPL_Astrom.log_likely_photometry">(model.PSPL_Astrom method)</a>
 </li>
-        <li><a href="PSPL_GP.html#id3">(model.PSPL_GP method)</a>, <a href="PSPL_GP.html#model.PSPL_GP.log_likely_photometry">[1]</a>, <a href="api/model.PSPL_GP.html#model.PSPL_GP.log_likely_photometry">[2]</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param1.log_likely_photometry">(model.PSPL_Phot_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param2.log_likely_photometry">(model.PSPL_Phot_noPar_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.log_likely_photometry">(model.PSPL_Phot_Par_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.log_likely_photometry">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.log_likely_photometry">(model.PSPL_Phot_Par_GP_Param2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.log_likely_photometry">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.log_likely_photometry">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
-</li>
-        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.log_likely_photometry">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+        <li><a href="PSPL_GP.html#model.PSPL_GP.log_likely_photometry">(model.PSPL_GP method)</a>, <a href="PSPL_GP.html#model.PSPL_GP.log_likely_photometry">[1]</a>, <a href="api/model.PSPL_GP.html#model.PSPL_GP.log_likely_photometry">[2]</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_GP_Param1.log_likely_photometry">(model.PSPL_PhotAstrom_Par_GP_Param1 method)</a>
 </li>
@@ -1670,6 +1742,22 @@
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_LumLens_GP_Param3.log_likely_photometry">(model.PSPL_PhotAstrom_Par_LumLens_GP_Param3 method)</a>
 </li>
         <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_Par_LumLens_GP_Param4.log_likely_photometry">(model.PSPL_PhotAstrom_Par_LumLens_GP_Param4 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param1.log_likely_photometry">(model.PSPL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_PhotAstrom_noPar_GP_Param2.log_likely_photometry">(model.PSPL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1.log_likely_photometry">(model.PSPL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param1_2.log_likely_photometry">(model.PSPL_Phot_Par_GP_Param1_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2.log_likely_photometry">(model.PSPL_Phot_Par_GP_Param2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_Par_GP_Param2_2.log_likely_photometry">(model.PSPL_Phot_Par_GP_Param2_2 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param1.log_likely_photometry">(model.PSPL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSPL_User.html#model.PSPL_Phot_noPar_GP_Param2.log_likely_photometry">(model.PSPL_Phot_noPar_GP_Param2 method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -1700,30 +1788,26 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="Gen_Use.html#model.parallax_in_direction">parallax_in_direction() (in module model)</a>
 </li>
-      <li><a href="Gen_Use.html#model.parallax_in_direction_old">parallax_in_direction_old() (in module model)</a>, <a href="api/model.parallax_in_direction_old.html#model.parallax_in_direction_old">[1]</a>
-</li>
       <li><a href="api/model.FSPL_Limb_noParallax.html#model.FSPL_Limb_noParallax.parallaxFlag">parallaxFlag (model.FSPL_Limb_noParallax attribute)</a>
 
       <ul>
         <li><a href="api/model.FSPL_Limb_Parallax.html#model.FSPL_Limb_Parallax.parallaxFlag">(model.FSPL_Limb_Parallax attribute)</a>
 </li>
-        <li><a href="api/model.FSPL_noParallax.html#model.FSPL_noParallax.parallaxFlag">(model.FSPL_noParallax attribute)</a>
-</li>
         <li><a href="api/model.FSPL_Parallax.html#model.FSPL_Parallax.parallaxFlag">(model.FSPL_Parallax attribute)</a>
 </li>
-        <li><a href="api/model.PSBL_noParallax.html#model.PSBL_noParallax.parallaxFlag">(model.PSBL_noParallax attribute)</a>
+        <li><a href="api/model.FSPL_noParallax.html#model.FSPL_noParallax.parallaxFlag">(model.FSPL_noParallax attribute)</a>
 </li>
         <li><a href="api/model.PSBL_Parallax.html#model.PSBL_Parallax.parallaxFlag">(model.PSBL_Parallax attribute)</a>
 </li>
-        <li><a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.parallaxFlag">(model.PSPL_noParallax attribute)</a>
-</li>
-        <li><a href="api/model.PSPL_noParallax_LumLens.html#model.PSPL_noParallax_LumLens.parallaxFlag">(model.PSPL_noParallax_LumLens attribute)</a>
+        <li><a href="api/model.PSBL_noParallax.html#model.PSBL_noParallax.parallaxFlag">(model.PSBL_noParallax attribute)</a>
 </li>
         <li><a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.parallaxFlag">(model.PSPL_Parallax attribute)</a>
 </li>
         <li><a href="api/model.PSPL_Parallax_LumLens.html#model.PSPL_Parallax_LumLens.parallaxFlag">(model.PSPL_Parallax_LumLens attribute)</a>
 </li>
-        <li><a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old.parallaxFlag">(model.PSPL_Parallax_old attribute)</a>
+        <li><a href="api/model.PSPL_noParallax.html#model.PSPL_noParallax.parallaxFlag">(model.PSPL_noParallax attribute)</a>
+</li>
+        <li><a href="api/model.PSPL_noParallax_LumLens.html#model.PSPL_noParallax_LumLens.parallaxFlag">(model.PSPL_noParallax_LumLens attribute)</a>
 </li>
       </ul></li>
       <li><a href="api/model.FSPL_PhotAstromParam1.html#model.FSPL_PhotAstromParam1.paramAstromFlag">paramAstromFlag (model.FSPL_PhotAstromParam1 attribute)</a>
@@ -1758,7 +1842,7 @@
         <li><a href="api/model.PSPL_PhotParam2.html#model.PSPL_PhotParam2.paramAstromFlag">(model.PSPL_PhotParam2 attribute)</a>
 </li>
       </ul></li>
-      <li><a href="PSPL_GP.html#model.Celerite_GP_Model.parameter_vector">parameter_vector() (model.Celerite_GP_Model property)</a>
+      <li><a href="PSPL_GP.html#model.Celerite_GP_Model.parameter_vector">parameter_vector (model.Celerite_GP_Model attribute)</a>
 </li>
       <li><a href="api/model.FSPL_PhotAstromParam1.html#model.FSPL_PhotAstromParam1.paramPhotFlag">paramPhotFlag (model.FSPL_PhotAstromParam1 attribute)</a>
 
@@ -1868,10 +1952,10 @@
 </li>
       <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1">PSBL_Phot_noPar_GP_Param1 (class in model)</a>, <a href="api/model.PSBL_Phot_noPar_GP_Param1.html#model.PSBL_Phot_noPar_GP_Param1">[1]</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1">PSBL_Phot_noPar_Param1 (class in model)</a>, <a href="api/model.PSBL_Phot_noPar_Param1.html#model.PSBL_Phot_noPar_Param1">[1]</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1">PSBL_Phot_Par_GP_Param1 (class in model)</a>, <a href="api/model.PSBL_Phot_Par_GP_Param1.html#model.PSBL_Phot_Par_GP_Param1">[1]</a>
 </li>
       <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1">PSBL_Phot_Par_Param1 (class in model)</a>, <a href="api/model.PSBL_Phot_Par_Param1.html#model.PSBL_Phot_Par_Param1">[1]</a>
@@ -1906,6 +1990,10 @@
 </li>
       <li><a href="PSBL_Param.html#model.PSBL_PhotAstromParam4">PSBL_PhotAstromParam4 (class in model)</a>, <a href="api/model.PSBL_PhotAstromParam4.html#model.PSBL_PhotAstromParam4">[1]</a>
 </li>
+      <li><a href="PSBL_Param.html#model.PSBL_PhotAstromParam5">PSBL_PhotAstromParam5 (class in model)</a>
+</li>
+      <li><a href="PSBL_Param.html#model.PSBL_PhotAstromParam6">PSBL_PhotAstromParam6 (class in model)</a>
+</li>
       <li><a href="api/model.PSBL_PhotParam1.html#model.PSBL_PhotParam1">PSBL_PhotParam1 (class in model)</a>
 </li>
       <li><a href="PSPL_Data.html#model.PSPL">PSPL (class in model)</a>, <a href="api/model.PSPL.html#model.PSPL">[1]</a>
@@ -1920,11 +2008,11 @@
 </li>
       <li><a href="PSPL_Param.html#model.PSPL_AstromParam4">PSPL_AstromParam4 (class in model)</a>, <a href="api/model.PSPL_AstromParam4.html#model.PSPL_AstromParam4">[1]</a>
 </li>
-      <li><a href="PSPL_GP.html#id0">PSPL_GP (class in model)</a>, <a href="PSPL_GP.html#model.PSPL_GP">[1]</a>, <a href="api/model.PSPL_GP.html#model.PSPL_GP">[2]</a>
+      <li><a href="PSPL_GP.html#model.PSPL_GP">PSPL_GP (class in model)</a>, <a href="PSPL_GP.html#model.PSPL_GP">[1]</a>, <a href="api/model.PSPL_GP.html#model.PSPL_GP">[2]</a>
 </li>
       <li><a href="PSPL_Param.html#model.PSPL_GP_PhotAstromParam1">PSPL_GP_PhotAstromParam1 (class in model)</a>, <a href="api/model.PSPL_GP_PhotAstromParam1.html#model.PSPL_GP_PhotAstromParam1">[1]</a>
 </li>
-      <li><a href="PSPL_Param.html#id0">PSPL_GP_PhotAstromParam2 (class in model)</a>, <a href="PSPL_Param.html#model.PSPL_GP_PhotAstromParam2">[1]</a>, <a href="api/model.PSPL_GP_PhotAstromParam2.html#model.PSPL_GP_PhotAstromParam2">[2]</a>
+      <li><a href="PSPL_Param.html#model.PSPL_GP_PhotAstromParam2">PSPL_GP_PhotAstromParam2 (class in model)</a>, <a href="PSPL_Param.html#model.PSPL_GP_PhotAstromParam2">[1]</a>, <a href="api/model.PSPL_GP_PhotAstromParam2.html#model.PSPL_GP_PhotAstromParam2">[2]</a>
 </li>
       <li><a href="PSPL_Param.html#model.PSPL_GP_PhotAstromParam3">PSPL_GP_PhotAstromParam3 (class in model)</a>, <a href="api/model.PSPL_GP_PhotAstromParam3.html#model.PSPL_GP_PhotAstromParam3">[1]</a>
 </li>
@@ -1942,11 +2030,9 @@
 </li>
       <li><a href="PSPL_Parallax.html#model.PSPL_noParallax_LumLens">PSPL_noParallax_LumLens (class in model)</a>, <a href="api/model.PSPL_noParallax_LumLens.html#model.PSPL_noParallax_LumLens">[1]</a>
 </li>
-      <li><a href="PSBL_Parallax.html#model.PSPL_Parallax">PSPL_Parallax (class in model)</a>, <a href="PSPL_Parallax.html#id0">[1]</a>, <a href="PSPL_Parallax.html#id10">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax">[4]</a>
+      <li><a href="PSBL_Parallax.html#model.PSPL_Parallax">PSPL_Parallax (class in model)</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax">[1]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax">[2]</a>, <a href="PSPL_Parallax.html#model.PSPL_Parallax">[3]</a>, <a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax">[4]</a>
 </li>
       <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_LumLens">PSPL_Parallax_LumLens (class in model)</a>, <a href="api/model.PSPL_Parallax_LumLens.html#model.PSPL_Parallax_LumLens">[1]</a>
-</li>
-      <li><a href="PSPL_Parallax.html#model.PSPL_Parallax_old">PSPL_Parallax_old (class in model)</a>, <a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old">[1]</a>
 </li>
       <li><a href="PSPL_Param.html#model.PSPL_Param">PSPL_Param (class in model)</a>, <a href="api/model.PSPL_Param.html#model.PSPL_Param">[1]</a>
 </li>
@@ -1971,8 +2057,6 @@
       <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param1">PSPL_Phot_Par_Param1 (class in model)</a>, <a href="api/model.PSPL_Phot_Par_Param1.html#model.PSPL_Phot_Par_Param1">[1]</a>
 </li>
       <li><a href="PSPL_User.html#model.PSPL_Phot_Par_Param2">PSPL_Phot_Par_Param2 (class in model)</a>, <a href="api/model.PSPL_Phot_Par_Param2.html#model.PSPL_Phot_Par_Param2">[1]</a>
-</li>
-      <li><a href="PSPL_User.html#model.PSPL_Phot_Parold_Param2">PSPL_Phot_Parold_Param2 (class in model)</a>, <a href="api/model.PSPL_Phot_Parold_Param2.html#model.PSPL_Phot_Parold_Param2">[1]</a>
 </li>
       <li><a href="PSPL_Data.html#model.PSPL_PhotAstrom">PSPL_PhotAstrom (class in model)</a>, <a href="api/model.PSPL_PhotAstrom.html#model.PSPL_PhotAstrom">[1]</a>
 </li>
@@ -2024,10 +2108,54 @@
 </li>
       <li><a href="PSPL_Param.html#model.PSPL_PhotAstromParam4">PSPL_PhotAstromParam4 (class in model)</a>, <a href="api/model.PSPL_PhotAstromParam4.html#model.PSPL_PhotAstromParam4">[1]</a>
 </li>
+      <li><a href="PSPL_Param.html#model.PSPL_PhotAstromParam5">PSPL_PhotAstromParam5 (class in model)</a>
+</li>
       <li><a href="PSPL_Param.html#model.PSPL_PhotParam1">PSPL_PhotParam1 (class in model)</a>, <a href="api/model.PSPL_PhotParam1.html#model.PSPL_PhotParam1">[1]</a>
 </li>
       <li><a href="PSPL_Param.html#model.PSPL_PhotParam2">PSPL_PhotParam2 (class in model)</a>, <a href="api/model.PSPL_PhotParam2.html#model.PSPL_PhotParam2">[1]</a>
 </li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="PSBL_Data.html#model.PSBL.rescale_complex_pos">rescale_complex_pos() (model.PSBL method)</a>
+
+      <ul>
+        <li><a href="PSBL_Data.html#model.PSBL_Phot.rescale_complex_pos">(model.PSBL_Phot method)</a>
+</li>
+        <li><a href="PSBL_Data.html#model.PSBL_PhotAstrom.rescale_complex_pos">(model.PSBL_PhotAstrom method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param1.rescale_complex_pos">(model.PSBL_PhotAstrom_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_GP_Param2.rescale_complex_pos">(model.PSBL_PhotAstrom_Par_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param1.rescale_complex_pos">(model.PSBL_PhotAstrom_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param2.rescale_complex_pos">(model.PSBL_PhotAstrom_Par_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param3.rescale_complex_pos">(model.PSBL_PhotAstrom_Par_Param3 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_Par_Param4.rescale_complex_pos">(model.PSBL_PhotAstrom_Par_Param4 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param1.rescale_complex_pos">(model.PSBL_PhotAstrom_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_GP_Param2.rescale_complex_pos">(model.PSBL_PhotAstrom_noPar_GP_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param1.rescale_complex_pos">(model.PSBL_PhotAstrom_noPar_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_PhotAstrom_noPar_Param2.rescale_complex_pos">(model.PSBL_PhotAstrom_noPar_Param2 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_GP_Param1.rescale_complex_pos">(model.PSBL_Phot_Par_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_Par_Param1.rescale_complex_pos">(model.PSBL_Phot_Par_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_GP_Param1.rescale_complex_pos">(model.PSBL_Phot_noPar_GP_Param1 method)</a>
+</li>
+        <li><a href="PSBL_User.html#model.PSBL_Phot_noPar_Param1.rescale_complex_pos">(model.PSBL_Phot_noPar_Param1 method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -2038,14 +2166,10 @@
 </li>
       <li><a href="PSPL_GP.html#model.Celerite_GP_Model.set_parameter_vector">set_parameter_vector() (model.Celerite_GP_Model method)</a>
 </li>
-      <li><a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.start">start() (model.PSPL_Parallax method)</a>
-
-      <ul>
-        <li><a href="api/model.PSPL_Parallax_old.html#model.PSPL_Parallax_old.start">(model.PSPL_Parallax_old method)</a>
-</li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/model.PSPL_Parallax.html#model.PSPL_Parallax.start">start() (model.PSPL_Parallax method)</a>
+</li>
       <li><a href="api/model.startbases.html#model.startbases">startbases() (in module model)</a>
 </li>
       <li><a href="Gen_Use.html#model.sun_position">sun_position() (in module model)</a>, <a href="api/model.sun_position.html#model.sun_position">[1]</a>
@@ -2082,7 +2206,7 @@
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="PSPL_GP.html#model.Celerite_GP_Model.vector_size">vector_size() (model.Celerite_GP_Model property)</a>
+      <li><a href="PSPL_GP.html#model.Celerite_GP_Model.vector_size">vector_size (model.Celerite_GP_Model attribute)</a>
 </li>
   </ul></td>
 </tr></table>
