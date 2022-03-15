@@ -8,3 +8,6 @@ ephem
 joblib
 jplephem
 graphviz 
+pymultinest
+dynesty
+pytest
