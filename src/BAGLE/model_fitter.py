@@ -19,7 +19,7 @@ import numpy as np
 import pylab as plt
 import scipy.stats
 import pymultinest
-from microlens.jlu import model as mmodel
+import src.BAGLE.model as mmodel 
 from astropy.table import Table
 from astropy.table import Row
 from astropy import units

@@ -6705,7 +6705,7 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
 
-    Atrributes
+    Attributes
     ----------
     mL: float
         Mass of the lens (Msun)
@@ -6977,7 +6977,7 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
         Note that
             :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
         such that
-            :math:`b_{sff} = (f_{src1} + f_{src2}) / ( f_{src1} + f_{src2} + f_{blend}
+            :math:`b_{sff} = (f_{src1} + f_{src2}) / ( f_{src1} + f_{src2} + f_{blend})`
     b_sff: array or list
         The ratio of the source flux to the total (source + neighbors + lens)
         :math:` b_{sff} = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
@@ -6991,15 +6991,10 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
         Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
         Guassian process :math:`log(\omega_0)` from the SHO kernel.
-
-    Optional Inputs
-    ---------------
-    Note: Required if calculating with parallax
-    raL: float
-        Right ascension of the lens in decimal degrees.
-    decL: float
-        Declination of the lens in decimal degrees.
-
+    raL: float, optional
+        Right ascension of the lens in decimal degrees - Required if calculating with parallax
+    decL: float, optional
+        Declination of the lens in decimal degrees - Required if calculating with parallax
     """
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 

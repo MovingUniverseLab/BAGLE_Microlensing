@@ -12,7 +12,6 @@ Shared Functions
 .. autofunction:: parallax_in_direction
 
 .. autofunction:: dparallax_dt_in_direction
-.. autofunction:: parallax_in_direction_old
 .. autofunction:: sun_position
 .. autofunction:: get_angular_einstein_radius
 .. autofunction:: get_unit_vector

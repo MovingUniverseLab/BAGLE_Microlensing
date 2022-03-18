@@ -8,7 +8,6 @@ BSPL Models
     :members:
     :inherited-members:
     :show-inheritance:
-    :show-inheritance:
 
 .. autoclass:: model.BSPL_PhotAstromParam1 
     :members:

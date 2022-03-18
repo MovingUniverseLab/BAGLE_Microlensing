@@ -82,6 +82,7 @@ Data containing astrometry will generate a warning that astrometry data will
 not be used in the model when run through a model using `PSPL_Phot`. Data that
 does not contain astrometry run through a model using `PSPL_PhotAstrom` will
 generate a RuntimeError.
+
 Parallax Class Family
 ----------------------
 These classes set whether the model uses parallax when calculating
@@ -89,6 +90,7 @@ photometry, calculating astrometry, and fitting data. There are only two
 options for this class family, `PSPL_noParallax` and `PSPL_Parallax`. Models
 that do not have parallax have the words `noPar` in their names, while models
 that do contain parallax have the words `Par` in their names.
+
 Parameterization Class Family
 ------------------------------
 These classes determine which physical parameters define the model. Currently
@@ -141,6 +143,7 @@ The parameters for each parameterization are:
 `(ra, dec)` are only required if the model is created with a parallax class.
 More details about each parameterization can be found in the Parameterization
 Class docstring.
+
 Making a New Model
 --------------------
 Each model is, as described above, constructed by combining inheriting from
