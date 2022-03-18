@@ -3,7 +3,7 @@ name: bagle
 
 channels:
     - astropy
-    - conda_forge
+    - conda-forge
     - defaults
 
 dependencies:
