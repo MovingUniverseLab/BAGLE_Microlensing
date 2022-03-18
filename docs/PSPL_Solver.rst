@@ -12,7 +12,7 @@ PSPL_Solver
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model_fitter.PSPL_Solver_Hobson_weighted
+.. autoclass:: model_fitter.PSPL_Solver_Hobson_Weighted
     :members:
     :inherited-members:
     :show-inheritance:

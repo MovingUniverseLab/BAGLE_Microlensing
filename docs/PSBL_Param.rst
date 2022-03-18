@@ -39,7 +39,6 @@ PSBL Models
     :members:
     :inherited-members:
     :show-inheritance:
-    :show-inheritance:
 
 GP Models
 --------------
