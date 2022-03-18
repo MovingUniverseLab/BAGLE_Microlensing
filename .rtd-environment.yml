@@ -11,7 +11,6 @@ dependencies:
     - numpydoc 
     - matplotlib
     - numpy
-    - sphinxcontrib
     - celerite
     - ephem
     - joblib
@@ -21,4 +20,5 @@ dependencies:
     - dynesty
     - pytest
     - mpi4py
-
+    - pip:
+	-sphinxcontrib.video
