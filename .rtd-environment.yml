@@ -12,7 +12,7 @@ dependencies:
     - numpydoc 
     - matplotlib
     - numpy
-    - sphinxcontrib.video
+    - sphinxcontrib
     - celerite
     - ephem
     - joblib
