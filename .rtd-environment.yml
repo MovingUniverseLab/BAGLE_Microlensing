@@ -21,4 +21,4 @@ dependencies:
     - pytest
     - mpi4py
     - pip:
-	-sphinxcontrib.video
+	- sphinxcontrib.video
