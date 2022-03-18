@@ -1,0 +1,25 @@
+
+name: bagle 
+
+channels:
+    - astropy
+    - conda_forge
+    - defaults
+
+dependencies:
+    - python
+    - astropy
+    - numpydoc 
+    - matplotlib
+    - numpy
+    - sphinxcontrib.video
+    - celerite
+    - ephem
+    - joblib
+    - jplephem
+    - graphviz 
+    - pymultinest
+    - dynesty
+    - pytest
+    - mpi4py
+
