@@ -10,6 +10,6 @@ setup(
     install_requires=[],
     url='TBD',
     author='Niranjan_Bhatia',
-    author_email='ninjab@berkeley.edu'
+    author_email='ninjab@berkeley.edu',
     package_dir={'BAGLE': 'src/BAGLE'}
 )
