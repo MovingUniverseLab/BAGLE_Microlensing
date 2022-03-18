@@ -42,6 +42,9 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Model.py Overview</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#class-families">Class Families</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#data-class-family">Data Class Family</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallax-class-family">Parallax Class Family</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameterization-class-family">Parameterization Class Family</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#making-a-new-model">Making a New Model</a></li>
 </ul>
 </li>
 </ul>
@@ -52,6 +55,7 @@
 <li class="toctree-l1"><a class="reference internal" href="BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_fitter.html">Model Fitter</a></li>
 </ul>
 
         </div>
@@ -194,17 +198,19 @@ the <cite>PSPL_PhotAstrom</cite> must be selected. These models have the words
 Data containing astrometry will generate a warning that astrometry data will
 not be used in the model when run through a model using <cite>PSPL_Phot</cite>. Data that
 does not contain astrometry run through a model using <cite>PSPL_PhotAstrom</cite> will
-generate a RuntimeError.
-Parallax Class Family
-———————-
-These classes set whether the model uses parallax when calculating
+generate a RuntimeError.</p>
+</div>
+<div class="section" id="parallax-class-family">
+<h3>Parallax Class Family<a class="headerlink" href="#parallax-class-family" title="Permalink to this headline">¶</a></h3>
+<p>These classes set whether the model uses parallax when calculating
 photometry, calculating astrometry, and fitting data. There are only two
 options for this class family, <cite>PSPL_noParallax</cite> and <cite>PSPL_Parallax</cite>. Models
 that do not have parallax have the words <cite>noPar</cite> in their names, while models
-that do contain parallax have the words <cite>Par</cite> in their names.
-Parameterization Class Family
-——————————
-These classes determine which physical parameters define the model. Currently
+that do contain parallax have the words <cite>Par</cite> in their names.</p>
+</div>
+<div class="section" id="parameterization-class-family">
+<h3>Parameterization Class Family<a class="headerlink" href="#parameterization-class-family" title="Permalink to this headline">¶</a></h3>
+<p>These classes determine which physical parameters define the model. Currently
 this file supports one parameterization when using only photometry (<cite>Phot</cite>)
 and three parametrizations when using photometry and astrometery
 (<cite>PhotAstrom</cite>).
@@ -277,10 +283,11 @@ brightness.
 </div></blockquote>
 <p><cite>(ra, dec)</cite> are only required if the model is created with a parallax class.
 More details about each parameterization can be found in the Parameterization
-Class docstring.
-Making a New Model
-——————–
-Each model is, as described above, constructed by combining inheriting from
+Class docstring.</p>
+</div>
+<div class="section" id="making-a-new-model">
+<h3>Making a New Model<a class="headerlink" href="#making-a-new-model" title="Permalink to this headline">¶</a></h3>
+<p>Each model is, as described above, constructed by combining inheriting from
 different parent classes that contain the desired features for the model. Each
 model must have one class from each class family. In addition to this, there
 are several rules that must be followed when creating a new class.</p>
