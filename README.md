@@ -6,7 +6,10 @@ BAGLE allows modeling of gravitational microlensing events both photometrically 
 - PSBL: point-source, binary-lens
 - FSPL: finite-source, point-lens (minimal support... not well tested yet)
      
-All models support fitting data with single or multi-band photometry only, astrometry only, or joint fitting of photometry and astrometry (recommended). 
+All models support fitting data with single or multi-band photometry only, astrometry only, or joint fitting of photometry and astrometry (recommended).
+
+## Documentation
+The documentation to the BAGLE code can be found [here](https://bagle.readthedocs.io/en/latest/)
 
 ## Installation Instructions
 ### Clone the repo: 
@@ -38,3 +41,6 @@ All models support fitting data with single or multi-band photometry only, astro
       - python3 -m pytest tests/test_model.py
       - python3 -m pytest tests/test_model_fitter.py
       - python3 -m pytest tests/testingmodels.py
+
+## Tutorial
+A Jupyter Notebook tutorial to see some examples of how to use the code can be found [here](./BAGLE_TUTORIAL.ipynb)
