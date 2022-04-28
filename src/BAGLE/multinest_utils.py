@@ -36,6 +36,12 @@ def get_data_and_fitter(mnest_base):
                              phot_data=pho_dsets,
                              ast_data=ast_dsets)
 
+    # Need this for backwards compatability.
+    if 'use_phot_optional_params' in info:
+        use_phot_opt = info['use_phot_optional_params']
+    else:
+        use_phot_opt = False
+
     # Load up the first fitter object to get the parameter names.
     fitter = model_fitter.PSPL_Solver(my_data, my_model,
                                       add_error_on_photometry = info['add_error_on_photometry'],
@@ -46,93 +52,149 @@ def get_data_and_fitter(mnest_base):
     return fitter, my_data
 
 
-def check_priors(fitter, target, posterior=False):
-    Nsamp = 5000
-    param_dict = {}
-        
+def check_priors(fitter, target):
+    # This is specifically for photometry + astrometry.
+
     names = fitter.fitter_param_names
     all_names = fitter.all_param_names
+
+    #####
+    # Priors
+    #####
+    # Number of draws from posterior.
+    Nsamp = 5000
+
+    # Store the prior distributions for each parameter.
+    priors_dict = {}
+
+    # First, insert all the independent priors.
+    for i in range(len(names)):
+        priors_dict[names[i]] = fitter.priors[names[i]].rvs(Nsamp)
+
+    # Next, calculate all the derived priors from the independent priors.
+    if 'log10_thetaE' in names:
+        priors_dict['thetaE_amp'] = 10**priors_dict['log10_thetaE']
+    else:
+        priors_dict['thetaE_amp'] = priors_dict['thetaE']
+    priors_dict['piE'] = np.hypot(priors_dict['piE_E'], priors_dict['piE_N'])
+    priors_dict['piRel'] = priors_dict['piE'] * priors_dict['thetaE_amp']
+    kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
+    kappa = kappa_tmp.to(units.mas / units.Msun,
+                         equivalencies=units.dimensionless_angles()).value
+    priors_dict['mL'] = priors_dict['thetaE_amp']**2 / (priors_dict['piRel'] * kappa)
+
+    priors_dict['piL'] = priors_dict['piRel'] + priors_dict['piS']
+
+    priors_dict['muRel'] = priors_dict['thetaE_amp']/(priors_dict['tE']/365.25)
+    priors_dict['muRel_E'] = priors_dict['muRel'] * (priors_dict['piE_E']/priors_dict['piE'])
+    priors_dict['muRel_N'] = priors_dict['muRel'] * (priors_dict['piE_N']/priors_dict['piE'])
+    priors_dict['muL_E'] = priors_dict['muS_E'] - priors_dict['muRel_E']
+    priors_dict['muL_N'] = priors_dict['muS_N'] - priors_dict['muRel_N']
+
+    #####
+    # Posteriors
+    #####
+    res = fitter.load_mnest_results(remake_fits=False)
+
+    #####
+    # Plot posteriors and priors together for comparison.
+    #####
     fig, ax = plt.subplots(nrows=6, ncols=5, figsize=(16, 16))
     fax = ax.flatten()
     fig.subplots_adjust(top = 0.95, bottom = 0.05, left=0.05, right=0.95, hspace = 0.5, wspace = 0.3)
     plt.suptitle(target)
-    for i in range(len(names)):
-        param_dict[names[i]] = fitter.priors[names[i]].rvs(Nsamp)
-        fax[i].hist(fitter.priors[names[i]].rvs(Nsamp), bins=30,
-                    density=True, histtype='step', lw=2, color='blue',
-                    label='Prior')
-        fax[i].set_ylabel(names[i])
-                    
-    # Calculate piL, muS, muRel also
-    if 'log10_thetaE' in names:
-        thetaE_amp = 10**param_dict['log10_thetaE']
-    else:
-        thetaE_amp = param_dict['thetaE']
-    piE = np.hypot(param_dict['piE_E'], param_dict['piE_N'])
-    piRel = piE * thetaE_amp
-    kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
-    kappa = kappa_tmp.to(units.mas / units.Msun,
-                         equivalencies=units.dimensionless_angles()).value
-    mL = thetaE_amp**2 / (piRel * kappa)
-
-    piL = piRel + param_dict['piS']
-
-    muRel = thetaE_amp/(param_dict['tE']/365.25)
-    muRel_E = muRel * (param_dict['piE_E']/piE)
-    muRel_N = muRel * (param_dict['piE_N']/piE)
-    muL_E = param_dict['muS_E'] - muRel_E
-    muL_N = param_dict['muS_N'] - muRel_N
-    
-#    fax[len(names)].hist(thetaE_amp, bins=30,
-#                        density=True, histtype='step', lw=2, color='blue')
-#    fax[len(names)].set_ylabel('thetaE')
-
-    fax[len(names)].hist(mL, bins=30,
-                        density=True, histtype='step', lw=2, color='blue')
-    fax[len(names)].set_ylabel('mL')
+    for ii, name in enumerate(all_names):
+        # Get the 3-sigma upper and lower bounds for the priors and the posteriors,
+        # so we don't have crazy tails that make the x-range of the plot unreadable.
+        sig3_hi = 0.9973
+        sig3_lo = 1.0 - sig3_hi
         
-    fax[len(names)+1].hist(piL, bins=30,
-                          density=True, histtype='step', lw=2, color='blue')
-    fax[len(names)+1].set_ylabel('piL')
+        quantiles = [sig3_lo, sig3_hi]
+        
+        quants_prior = model_fitter.weighted_quantile(priors_dict[name], quantiles)
+        quants_post = model_fitter.weighted_quantile(res[name], quantiles,
+                                                     sample_weight=res['weights'])
 
-    fax[len(names)+2].hist(piRel, bins=30,
-                          density=True, histtype='step', lw=2, color='blue')
-    fax[len(names)+2].set_ylabel('piRel')
+        _min = min([quants_prior[0], quants_post[0]])
+        _max = max([quants_prior[1], quants_post[1]])
 
-    fax[len(names)+3].hist(muL_E, bins=30,
-                          density=True, histtype='step', lw=2, color='blue')
-    fax[len(names)+3].set_ylabel('muL_E')
+        bins = np.linspace(_min, _max, 30)
 
-    fax[len(names)+4].hist(muL_N, bins=30,
-                          density=True, histtype='step', lw=2, color='blue')
-    fax[len(names)+4].set_ylabel('muL_N')
-    
-    fax[len(names)+5].hist(muRel_E, bins=30,
-                          density=True, histtype='step', lw=2, color='blue')
-    fax[len(names)+5].set_ylabel('muRel_E')
+        fax[ii].hist(priors_dict[name], bins=bins,
+                    density=True, histtype='step', lw=2, color='blue',
+                    label='Prior')       
+        fax[ii].hist(res[name], weights=res['weights'], bins=bins,
+                     density=True, histtype='step', lw=2, color='red',
+                     label='Posterior')
+        fax[ii].yaxis.set_ticks([])
+        fax[ii].yaxis.set_ticklabels([])
+        fax[ii].set_ylabel(name)
 
-    fax[len(names)+6].hist(muRel_N, bins=30,
-                          density=True, histtype='step', lw=2, color='blue')
-    fax[len(names)+6].set_ylabel('muRel_N')
-
-    if posterior:
-        res = fitter.load_mnest_results(remake_fits=False)
-        for ii, name in enumerate(all_names):
-            fax[ii].hist(res[name], weights=res['weights'], bins=30,
-                        density=True, histtype='step', lw=2, color='red',
-                        label='Posterior')
-            fax[ii].yaxis.set_ticks([])
-            fax[ii].yaxis.set_ticklabels([])
     fax[0].legend()
         
-#    ax[len(names)].hist(piE, bins=30)
-#    ax[len(names)].set_ylabel('piE')
+    plt.savefig(target + '_posteriors_priors.png')
 
-    if posterior:
-        plt.savefig(target + '_posteriors_priors.png')
-    else:
-        plt.savefig(target + '_priors.png')
+def check_priors_phot(fitter, target):
+    # This is specifically for photometry + astrometry.
 
+    names = fitter.fitter_param_names
+    all_names = fitter.all_param_names
+
+    #####
+    # Priors
+    #####
+    # Number of draws from posterior.
+    Nsamp = 5000
+
+    # Store the prior distributions for each parameter.
+    priors_dict = {}
+
+    # First, insert all the independent priors.
+    for i in range(len(names)):
+        priors_dict[names[i]] = fitter.priors[names[i]].rvs(Nsamp)
+
+    #####
+    # Posteriors
+    #####
+    res = fitter.load_mnest_results(remake_fits=False)
+
+    #####
+    # Plot posteriors and priors together for comparison.
+    #####
+    fig, ax = plt.subplots(nrows=6, ncols=5, figsize=(16, 16))
+    fax = ax.flatten()
+    fig.subplots_adjust(top = 0.95, bottom = 0.05, left=0.05, right=0.95, hspace = 0.5, wspace = 0.3)
+    plt.suptitle(target)
+    for ii, name in enumerate(names):
+        # Get the 3-sigma upper and lower bounds for the priors and the posteriors,
+        # so we don't have crazy tails that make the x-range of the plot unreadable.
+        sig3_hi = 0.9973
+        sig3_lo = 1.0 - sig3_hi
+        
+        quantiles = [sig3_lo, sig3_hi]
+        
+        quants_prior = model_fitter.weighted_quantile(priors_dict[name], quantiles)
+        quants_post = model_fitter.weighted_quantile(res[name], quantiles,
+                                                     sample_weight=res['weights'])
+
+        _min = min([quants_prior[0], quants_post[0]])
+        _max = max([quants_prior[1], quants_post[1]])
+
+        bins = np.linspace(_min, _max, 30)
+
+        fax[ii].hist(priors_dict[name], bins=bins,
+                    density=True, histtype='step', lw=2, color='blue',
+                    label='Prior')       
+        fax[ii].hist(res[name], weights=res['weights'], bins=bins,
+                     density=True, histtype='step', lw=2, color='red',
+                     label='Posterior')
+        fax[ii].yaxis.set_ticks([])
+        fax[ii].yaxis.set_ticklabels([])
+        fax[ii].set_ylabel(name)
+
+    fax[0].legend()
+        
+    plt.savefig(target + '_posteriors_priors.png')
 
 def check_priors_PSPL_Astrom_Par_Param4(fitter, params_from_post, target, posterior=False):
     """
@@ -440,6 +502,8 @@ def MultiDimPrior_Gen(tab, pnames, Nbins, binlims=None, plot_1D=False):
             plt.step(bins[ii][:-1], hist * f, where='post', lw=2, ls='-', label='N-D hist', zorder=1)
             plt.hist(intable[:, ii], weights=tab['weights'], bins=bins[ii], lw=2, ls=':', 
                      label='1-D hist', histtype='step', density=True, zorder=2)
+            plt.axvline(binlims[ii][0])
+            plt.axvline(binlims[ii][1])
             plt.title(pnames[ii])
             plt.legend()
             plt.savefig(pnames[ii] + '.png')

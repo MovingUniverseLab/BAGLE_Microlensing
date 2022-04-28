@@ -1,6 +1,7 @@
 import numpy as np
 import pylab as plt
-from src.BAGLE import model, model_fitter
+from src.BAGLE import model
+from src.BAGLE import model_fitter
 import dynesty
 from dynesty import utils as dyutil
 from dynesty import plotting as dyplot
@@ -15,12 +16,28 @@ import pickle
 import pdb
 import os
 
+# Different versions of ob110462:
+# ob110462 : original photometry,
+# ob110462_corr : original photometry with rescaled errorbars by Mroz, 
+# ob110462_new : original photometry with rescaled errorbars by Mroz, astrometry with bias correction and color offset
+# ob110462_op_bc : original photometry with rescaled errorbars by Mroz, astrometry with newest bias correction
+# ob110462_new2 : new photometry with rescaled errorbars by CYL, astrometry with newest bias correction and color offset
+
 ra = {'mb09260' :  '17:58:28.561',
       'mb10364' :  '17:57:05.401',
       'ob110037' : '17:55:55.83',
       'ob110310' : '17:51:25.39',
       'ob110462' : '17:51:40.19',
       'ob110462_corr' : '17:51:40.19',
+      'ob110462_new' : '17:51:40.19',
+      'ob110462_op_bc' : '17:51:40.19',
+      'ob110462_new2' : '17:51:40.19',
+      'ob110462_new3' : '17:51:40.19',
+      'ob110462_trunc' : '17:51:40.19',
+      'ob110462_corr_trunc' : '17:51:40.19',
+      'ob110462_new_trunc' : '17:51:40.19',
+      'ob110462_new_corr_trunc' : '17:51:40.19',
+      'ob110462_22feb' : '17:51:40.19',
       'ob120169' : '17:49:51.38',
       'ob140613' : '17:53:57.68', 
       'ob150029' : '17:59:46.60', 
@@ -47,6 +64,15 @@ dec = {'mb09260' :  '-26:50:20.88',
        'ob110310' : '-30:24:35.0',
        'ob110462' : '-29:53:26.3',
        'ob110462_corr' : '-29:53:26.3',
+       'ob110462_new' : '-29:53:26.3',
+       'ob110462_op_bc' : '-29:53:26.3',
+       'ob110462_new2' : '-29:53:26.3',
+       'ob110462_new3' : '-29:53:26.3',
+       'ob110462_trunc' : '-29:53:26.3',
+       'ob110462_corr_trunc' : '-29:53:26.3',
+       'ob110462_new_trunc' : '-29:53:26.3',
+       'ob110462_new_corr_trunc' : '-29:53:26.3',
+       'ob110462_22feb' : '-29:53:26.3',
        'ob120169' : '-35:22:28.0',
        'ob140613' : '-28:34:21.6', 
        'ob150029' : '-28:38:41.8', 
@@ -85,14 +111,31 @@ astrom_hst = {'mb09260_f606w'  : '/u/jlu/work/microlens/MB09260/a_2021_07_08/mb0
               'ob110310_f814w' : '/u/jlu/work/microlens/OB110310/a_2021_07_08/ob110310_f814w_astrom_p4_2021_07_08.fits',
               'ob110462_f606w' : '/u/jlu/work/microlens/OB110462/a_2021_07_08/ob110462_f606w_astrom_p5_nomay_2021_07_08.fits',
               'ob110462_f814w' : '/u/jlu/work/microlens/OB110462/a_2021_07_08/ob110462_f814w_astrom_p5_nomay_2021_07_08.fits',
-              'ob110462_corr_f606w' : '/u/jlu/work/microlens/OB110462/a_2021_07_08/ob110462_f606w_astrom_p5_nomay_2021_07_08.fits',
-              'ob110462_corr_f814w' : '/u/jlu/work/microlens/OB110462/a_2021_07_08/ob110462_f814w_astrom_p5_nomay_2021_07_08.fits',
-              'mb19284_f814w'  : '/u/jlu/work/microlens/MB19284/a_2021_08_11_hst_keck/mb19284_astrom_p4_2021_04_10.fits'}
+              'ob110462_corr_f606w' : '/u/jlu/work/microlens/OB110462/a_2021_12_20/ob110462_f606w_astrom_p5_nomay_2021_12_20.fits',
+              'ob110462_corr_f814w' : '/u/jlu/work/microlens/OB110462/a_2021_12_20/ob110462_f814w_astrom_p5_nomay_2021_12_20.fits',
+              'ob110462_new_f606w' : '/u/jlu/work/microlens/OB110462/a_2021_12_28/ob110462_f606w_astrom_p5_nomay_bias_color_corr_2021_12_28.fits',
+              'ob110462_new_f814w' : '/u/jlu/work/microlens/OB110462/a_2021_12_28/ob110462_f814w_astrom_p5_nomay_bias_color_corr_2021_12_28.fits',
+              'ob110462_op_bc_f606w' : '/u/jlu/work/microlens/OB110462/a_2022_03_01/ob110462_f606w_astrom_p5_nomay_bias_corr_2021_12_28.fits',
+              'ob110462_op_bc_f814w' : '/u/jlu/work/microlens/OB110462/a_2022_03_01/ob110462_f814w_astrom_p5_nomay_bias_corr_2021_12_28.fits',
+              'ob110462_new2_f606w' : '/u/jlu/work/microlens/OB110462/a_2022_03_01/ob110462_f606w_astrom_p5_nomay_bias_corr_color_offset_2021_12_28.fits',
+              'ob110462_new2_f814w' : '/u/jlu/work/microlens/OB110462/a_2022_03_01/ob110462_f814w_astrom_p5_nomay_bias_corr_color_offset_2021_12_28.fits',
+              'ob110462_22feb_f606w' : '/u/jlu/work/microlens/OB110462/a_2022_02_02/ob110462_f606w_astrom_p5_nomay_bias_color_corr_gaia_2022_02_02.fits',
+              'ob110462_22feb_f814w' : '/u/jlu/work/microlens/OB110462/a_2022_02_02/ob110462_f814w_astrom_p5_nomay_bias_color_corr_gaia_2022_02_02.fits',
+              'mb19284_f814w'  : '/u/jlu/work/microlens/MB19284/mb19284_astrom_p4_2021_10_1_hst.fits'}
 
 photom_file = {'ob110037' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0037.dat',
                'ob110310' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0310.dat',
                'ob110462' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462.dat',
                'ob110462_corr' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462_corr.dat',
+               'ob110462_new' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462_corr.dat',
+               'ob110462_op_bc' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462_corr.dat',
+               'ob110462_new2' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462_2022_corr.dat',
+               'ob110462_new3' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462_2022.dat',
+               'ob110462_trunc' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462_trunc.dat',
+               'ob110462_corr_trunc' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462_corr_trunc.dat',
+               'ob110462_new_trunc' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462_2022_trunc.dat',
+               'ob110462_new_corr_trunc' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462_2022_corr_trunc.dat',
+               'ob110462_22feb' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462_corr.dat',
                'ob120169' : '/g/lu/data/microlens/ogle/v2019_06/OGLE-2012-BLG-0169.dat',
                'ob140613' : '/g/lu/data/microlens/ogle/v2019_06/OGLE-2014-BLG-0613.dat', 
                'ob150029' : '/g/lu/data/microlens/ogle/v2019_06/OGLE-2015-BLG-0029.dat', 
@@ -119,7 +162,7 @@ photom_moa = {'mb09260' : '/g/lu/data/microlens/moa/MB09260/mb09260-MOA2R-10000.
               'mb11039' : '/g/lu/data/microlens/moa/MB11039/mb11039-MOA2R-10000.phot.dat', # OB110037
               'mb11332' : '/g/lu/data/microlens/moa/MB11332/mb11332-MOA2R-10000.phot.dat', # OB110310
               'mb11191' : '/g/lu/data/microlens/moa/MB11191/mb11191-MOA2R-10000.phot.dat', # OB110462
-              'mb19284' : '/g/lu/data/microlens/moa/MB19284/MOA-2019-BLG-284.dat'}
+              'mb19284' : '/g/lu/data/microlens/moa/MB19284/MOA-2019-BLG-284_arb_calib.dat'}
 
 photom_kmt = {'kb200101' : '/g/lu/data/microlens/kmtnet/alerts_2020/kb200101/KMTA19_I.pysis.txt',
               'kb200122' : '/g/lu/data/microlens/kmtnet/alerts_2020/kb200122/KMTA37_I.pysis'}
@@ -147,9 +190,35 @@ data_sets = {'mb09260' : {'MOA'   :      photom_moa['mb09260'],
                           'MOA'   :      photom_moa['mb11191'],
                           'HST_f606w' :  astrom_hst['ob110462_f606w'],
                           'HST_f814w' :  astrom_hst['ob110462_f814w']},
-             'ob110462_corr': {'I_OGLE':      photom_file['ob110462_corr'],
+             'ob110462_corr': {'I_OGLE': photom_file['ob110462_corr'],
                           'HST_f606w' :  astrom_hst['ob110462_corr_f606w'],
                           'HST_f814w' :  astrom_hst['ob110462_corr_f814w']},
+             'ob110462_new': {'I_OGLE':  photom_file['ob110462_new'],
+                          'MOA'   :      photom_moa['mb11191'],
+                          'HST_f606w' :  astrom_hst['ob110462_new_f606w'],
+                          'HST_f814w' :  astrom_hst['ob110462_new_f814w']},
+             'ob110462_op_bc': {'I_OGLE':  photom_file['ob110462_op_bc'],
+                             'MOA'   :      photom_moa['mb11191'],
+                             'HST_f606w' :  astrom_hst['ob110462_op_bc_f606w'],
+                             'HST_f814w' :  astrom_hst['ob110462_op_bc_f814w']},
+             'ob110462_new2': {'I_OGLE':  photom_file['ob110462_new2'],
+                          'MOA'   :      photom_moa['mb11191'],
+                          'HST_f606w' :  astrom_hst['ob110462_new2_f606w'],
+                          'HST_f814w' :  astrom_hst['ob110462_new2_f814w']},
+             'ob110462_new3': {'I_OGLE':  photom_file['ob110462_new3'],
+                               'MOA'   :      photom_moa['mb11191']},
+             'ob110462_trunc': {'I_OGLE':      photom_file['ob110462_trunc'],
+                                'MOA'   :      photom_moa['mb11191']},
+             'ob110462_corr_trunc': {'I_OGLE':      photom_file['ob110462_corr_trunc'],
+                                     'MOA'   :      photom_moa['mb11191']},
+             'ob110462_new_trunc': {'I_OGLE':      photom_file['ob110462_new_trunc'],
+                                    'MOA'   :      photom_moa['mb11191']},
+             'ob110462_new_corr_trunc': {'I_OGLE':      photom_file['ob110462_new_corr_trunc'],
+                                         'MOA'   :      photom_moa['mb11191']},
+             'ob110462_22feb': {'I_OGLE':  photom_file['ob110462_22feb'],
+                          'MOA'   :      photom_moa['mb11191'],
+                          'HST_f606w' :  astrom_hst['ob110462_22feb_f606w'],
+                          'HST_f814w' :  astrom_hst['ob110462_22feb_f814w']},
              'ob120169': {'I_OGLE':      photom_file['ob120169'],
                           'Kp_Keck':     astrom_file['ob120169']},
              'ob140613': {'I_OGLE':      photom_file['ob140613'],
@@ -177,9 +246,9 @@ data_sets = {'mb09260' : {'MOA'   :      photom_moa['mb09260'],
              'ob040361': {'I_OGLE':      photom_file['ob040361']},
              'ob020061': {'I_OGLE':      photom_file['ob020061']},
              'ob060095': {'I_OGLE':      photom_file['ob060095']},
-             'mb19284' : {'MOA'   :      photom_moa['mb19284']},}
-#                          'HST_f814w' :  astrom_hst['mb19284_f814w']},
-#             }
+             'mb19284' : {'MOA'   :      photom_moa['mb19284'],
+                          'HST_f814w' :  astrom_hst['mb19284_f814w']},
+             }
     
 
 def getdata2(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
@@ -335,6 +404,7 @@ def getdata2(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
             # Convert HJD provided by MOA into JD.
             # https://geohack.toolforge.org/geohack.php?pagename=Mount_John_University_Observatory&params=43_59.2_S_170_27.9_E_region:NZ-CAN_type:landmark
             moa = coord.EarthLocation(lat=-43.986667 * u.deg,lon=170.465*u.deg, height=1029*u.meter)
+            #print(type(atime))
             t_hjd = atime.Time(pho['col1'], format='jd', scale = 'utc')
             ltt = t_hjd.light_travel_time(target_coords, 'heliocentric', location=moa)
 
@@ -344,7 +414,11 @@ def getdata2(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
 
         if filt[0:3] == 'HST':
             pho = Table.read(data_sets[target][filt])
-            if target == 'ob110462_corr':
+            if 'ob110462' in target:
+                tdx = np.where(pho['name'] == 'OB110462')[0][0]
+            elif target == 'ob110462_op_bc':
+                tdx = np.where(pho['name'] == 'OB110462')[0][0]
+            elif target == 'ob110462_new2':
                 tdx = np.where(pho['name'] == 'OB110462')[0][0]
             else:
                 tdx = np.where(pho['name'] == target.upper())[0][0]
@@ -406,7 +480,11 @@ def getdata2(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
 
         if filt[0:3] == 'HST':
             ast = Table.read(data_sets[target][filt])
-            if target == 'ob110462_corr':
+            if 'ob110462' in target:
+                tdx = np.where(ast['name'] == 'OB110462')[0][0]
+            elif target == 'ob110462_op_bc':
+                tdx = np.where(ast['name'] == 'OB110462')[0][0]
+            elif target == 'ob110462_new2':
                 tdx = np.where(ast['name'] == 'OB110462')[0][0]
             else:
                 tdx = np.where(ast['name'] == target.upper())[0][0]
@@ -448,39 +526,6 @@ def getdata2(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
 
     data['phot_files'] = phot_files
     data['ast_files'] = ast_files
-
-#    if (target == 'ob110462_corr') & (len(data['ast_files']) > 0):
-#        ir_dx = 1E-3 * np.array([0.04590994914109796, 0.20270813855993255, 0.27908995259116326, 0.35875856009576756,
-#                                 0.48262772956765027, 0.7147107215435291, 0.288944483266394])
-#        
-#        ir_dy = 1E-3 * np.array([-0.01256823405333261, -0.06794714789262259, -0.11578369111840361, -0.02792184679700993,
-#                                  -0.09577152016290691, -0.11112216615057705, -0.12390124171850343])
-#        
-#        ir_sigx = 1E-3 * np.array([0.05971418057559921, 0.06206567456045358, 0.07087117633447436, 0.10225090213878256,
-#                                   0.13458989321630424, 0.089700718340495, 0.08556130508294131])
-#        
-#        ir_sigy = 1E-3 * np.array([0.04745112174745842, 0.048577468328797176, 0.07096463782218623, 0.137489385754817,
-#                                   0.13347955319714447, 0.10784257501340623, 0.08743743750317869])
-#        
-#        cdx = np.average(data['xpos1'] - data['xpos2'],
-#                         weights=1/np.hypot(data['xpos_err1'], data['xpos_err1']))
-#        
-#        cdy = np.average(data['ypos1'] - data['ypos2'],
-#                         weights=1/np.hypot(data['ypos_err1'], data['ypos_err1']))
-#        
-#        data['xpos2'] += cdx
-#        data['ypos2'] += cdy
-#        
-#        data['xpos1'] += ir_dx
-#        data['ypos1'] += ir_dy
-#        data['xpos_err1'] = np.hypot(data['xpos_err1'], ir_sigx)
-#        data['ypos_err1'] = np.hypot(data['ypos_err1'], ir_sigy)
-#        pdb.set_trace()
-#        
-#        data['xpos2'] += ir_dx
-#        data['ypos2'] += ir_dy
-#        data['xpos_err2'] = np.hypot(data['xpos_err2'], ir_sigx)
-#        data['ypos_err2'] = np.hypot(data['ypos_err2'], ir_sigy)
             
     return data
     
