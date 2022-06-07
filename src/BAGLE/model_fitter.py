@@ -2467,7 +2467,7 @@ def make_muS_EN_gen(t, pos, scale_factor=100.0):
 #    print('         ')
     return make_gen(vel_lo, vel_hi)
 
-def make_muS_EN_norm_gen(t, pos):
+def make_muS_EN_norm_gen(t, pos, n_use=None, scale_factor=10.0):
     """Get an approximate muS search range by looking at the best fit
     straight line to the astrometry. Then allows lots of free space.
 
@@ -2485,17 +2485,47 @@ def make_muS_EN_norm_gen(t, pos):
     """
     # Convert t to years temporarily.
     t_yr = t / mmodel.days_per_year
-    par, cov = np.polyfit(t_yr, pos, 1, cov=True)
+    if n_use is None:
+        par, cov = np.polyfit(t_yr, pos, 1, cov=True)
+    else:
+        print(t_yr)
+        print(t_yr[-n_use:])
+        par, cov = np.polyfit(t_yr[-n_use:], pos[-n_use:], 1, cov=True)
     vel = par[0] * 1e3  # mas/yr
     vel_err = (cov[0][0] ** 0.5) * 1e3  # mas/yr
 
-    scale_factor = 10.0
-
-#    print('make_muS_EN_norm_gen')
-#    print('vel : ', vel)
-#    print('vel_1sigma : ', scale_factor * vel_err)
-#    print('         ')
+    print('make_muS_EN_norm_gen')
+    print('vel : ', vel)
+    print('vel_1sigma : ', scale_factor * vel_err)
+    print('         ')
     return make_norm_gen(vel, scale_factor * vel_err)
+
+
+def calc_muS_EN_norm_gen(t, pos, n_use=None):
+    """Get an approximate muS search range by looking at the best fit
+    straight line to the astrometry. Then allows lots of free space.
+
+    Inputs
+    ------
+    t: array of times in days
+    pos: array of positions in arcsec
+
+    Return
+    ------
+    uniform generator for velocity in mas/yr
+    """
+    # Convert t to years temporarily.
+    t_yr = t / mmodel.days_per_year
+    if n_use is None:
+        par, cov = np.polyfit(t_yr, pos, 1, cov=True)
+    else:
+        print(t_yr)
+        print(t_yr[-n_use:])
+        par, cov = np.polyfit(t_yr[-n_use:], pos[-n_use:], 1, cov=True)
+    vel = par[0] * 1e3  # mas/yr
+    vel_err = (cov[0][0] ** 0.5) * 1e3  # mas/yr
+
+    return vel
 
 
 def make_invgamma_gen(t_arr):
@@ -3095,13 +3125,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
                     mnest_results=None, N_traces=50, fitter=None):
     """Astrometry on the sky
     """
-    fig_list = []
-    plt.close(n_phot_sets + 1)
-    fig = plt.figure(n_phot_sets + 1, figsize=(10, 10))  # PLOT 1
-    fig_list.append(fig)
-    plt.clf()
-    
-    # Get the data out.
+    #### Get the data out.
     dat_x = data['xpos' + str(filt_index + 1)] * 1e3
     dat_y = data['ypos' + str(filt_index + 1)] * 1e3
     dat_xe = data['xpos_err' + str(filt_index + 1)] * 1e3
@@ -3115,10 +3139,8 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
         dat_xe = dat_xe.reshape(len(dat_xe[0]))
         dat_ye = dat_ye.reshape(len(dat_ye[0]))
 
-    # Data
-    plt.errorbar(dat_x, dat_y, xerr=dat_xe, yerr=dat_ye,
-                 fmt='k.', label='Data')
-
+    ### Setup time arrays
+    #
     # Decide if we sample the models at a denser time, or just the
     # same times as the measurements.
     if dense_time:
@@ -3127,46 +3149,85 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     else:
         t_mod = dat_t
 
-    # Model - usually from fitter
-    pos_out = model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index)
-    plt.plot(pos_out[:, 0] * 1e3, pos_out[:, 1] * 1e3, 'r-', label='Model')
+    # Long time    
+    # baseline = np.max((2*(dat_t.max() - dat_t.min()), 5*model.tE))
+    # longtime = np.arange(model.t0 - baseline, model.t0 + baseline, 1)
+    baseline = 3*(dat_t.max() - dat_t.min())
+    t_long = np.arange(t_mod.min() - baseline, t_mod.max() + baseline, 1)
+
+
+    #### Models
+    #
+    # Model
+    p_mod_lens_tdat = model.get_astrometry(dat_t, ast_filt_idx=ast_filt_index)
+    p_mod_lens_tmod = model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index)
+    p_mod_lens_tlon = model.get_astrometry(t_long, ast_filt_idx=ast_filt_index)
+
+    if str(model.__class__).startswith('BS'):
+        # Binary sources have filter dependent unlensed astrometry.
+        p_mod_unlens_tdat = model.get_astrometry_unlensed(dat_t, ast_filt_idx=ast_filt_index)
+        p_mod_unlens_tmod = model.get_astrometry_unlensed(t_mod, ast_filt_idx=ast_filt_index)
+        p_mod_unlens_tlon = model.get_astrometry_unlensed(t_long, ast_filt_idx=ast_filt_index)
+    else:
+        p_mod_unlens_tdat = model.get_astrometry_unlensed(dat_t)
+        p_mod_unlens_tmod = model.get_astrometry_unlensed(t_mod)
+        p_mod_unlens_tlon = model.get_astrometry_unlensed(t_long)
 
     # Input model
     if input_model != None:
-        pos_in = input_model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index)
-        plt.plot(pos_in[:, 0] * 1e3, pos_in[:, 1] * 1e3, 'g-', label='Input Model')
+        p_in_lens_tmod = input_model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index)
+        p_in_lens_tlon = input_model.get_astrometry(t_long, ast_filt_idx=ast_filt_index)
 
-    #####
-    # Traces
-    #####
-    if mnest_results is not None:
+    # Get trace models and positions if we will be plotting traces
+    if mnest_results == None:
+        N_traces = 0
+        print('No mnest_results supplied for traces')
+
+    if N_traces > 0:
         idx_arr = np.random.choice(np.arange(len(mnest_results['weights'])),
                                    p=mnest_results['weights'],
                                    size=N_traces)
-        trace_posxs = []
-        trace_posys = []
-        trace_posxs_no_pm = []
-        trace_posys_no_pm = []
-
+        trace_models = []
+        p_tr_lens_tmod = []
+        p_tr_lens_tlon = []
         for idx in idx_arr:
-            trace_mod = fitter.get_model(mnest_results[idx])
+            trace_model = fitter.get_model(mnest_results[idx])
+            trace_models.append(trace_model)
 
-            trace_pos = trace_mod.get_astrometry(t_mod, ast_filt_idx=ast_filt_index)
-            trace_pos_no_pm = trace_mod.get_astrometry(t_mod, ast_filt_idx=ast_filt_index) - trace_mod.get_astrometry_unlensed(t_mod)
+            pos_tr = trace_model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index)
+            p_tr_lens_tmod.append(pos_tr)
+            
+            pos_tr = trace_model.get_astrometry(t_long, ast_filt_idx=ast_filt_index)
+            p_tr_lens_tlon.append(pos_tr)
 
-            trace_posxs.append(trace_pos[:, 0] * 1e3)
-            trace_posys.append(trace_pos[:, 1] * 1e3)
-            trace_posxs_no_pm.append(trace_pos_no_pm[:, 0] * 1e3)
-            trace_posys_no_pm.append(trace_pos_no_pm[:, 1] * 1e3)
 
-    if mnest_results is not None:
-        for idx in np.arange(len(idx_arr)):
-            plt.plot(trace_posxs[idx], trace_posys[idx], 
-                     color='c',
-                     alpha=0.5,
-                     linewidth=1,
-                     zorder=-1)
+    #####
+    # Plot On-Sky Astrometry 
+    #####
+    # Setup figure
+    fig_list = []
+    plt.close(n_phot_sets + 1)
+    fig = plt.figure(n_phot_sets + 1, figsize=(10, 10))  # PLOT 1
+    fig_list.append(fig)
+    plt.clf()
+    
+    # Data
+    plt.errorbar(dat_x, dat_y, xerr=dat_xe, yerr=dat_ye,
+                 fmt='k.', label='Data')
 
+    # Model - usually from fitter
+    plt.plot(p_mod_lens_tmod[:, 0] * 1e3, p_mod_lens_tmod[:, 1] * 1e3, 'r-', label='Model')
+
+    # Input model
+    if input_model != None:
+        plt.plot(p_in_lens_tmod[:, 0] * 1e3, p_in_lens_tmod[:, 1] * 1e3, 'g-', label='Input Model')
+
+    # Trace models
+    for tt in range(N_traces):
+        pos_tr = p_tr_lens_tmod[tt]
+        plt.plot(pos_tr[:, 0] * 1e3, pos_tr[:, 1] * 1e3,
+                 color='c', alpha=0.5, linewidth=1, zorder=-1)
+        
     plt.gca().invert_xaxis()
     plt.xlabel(r'$\Delta \alpha^*$ (mas)')
     plt.ylabel(r'$\Delta \delta$ (mas)')
@@ -3178,6 +3239,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     # x = RA, y = Dec
     #####
 
+    ### X vs. time
     plt.close(n_phot_sets + 2)
     fig = plt.figure(n_phot_sets + 2, figsize=(10, 10))  # PLOT 2
     fig_list.append(fig)
@@ -3189,34 +3251,38 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
         f1 = plt.gcf().add_axes([0.15, 0.3, 0.8, 0.6])
         f2 = plt.gcf().add_axes([0.15, 0.1, 0.8, 0.2])
     else:
-        plt.gca()
+        f1 = plt.gca()
 
+    # Data
     f1.errorbar(dat_t, dat_x, yerr=dat_xe, fmt='k.', label='Data')
-    f1.plot(t_mod, pos_out[:, 0] * 1e3, 'r-', label='Model')
+    
+    # Model
+    f1.plot(t_mod, p_mod_lens_tmod[:, 0] * 1e3, 'r-', label='Model')
+    
+    # Input Model
     if input_model != None:
-        f1.plot(t_mod, pos_in[:, 0] * 1e3, 'g-', label='Input Model')
+        f1.plot(t_mod, p_in_lens_tmod[:, 0] * 1e3, 'g-', label='Input Model')
+        
+    # Trace Plots
+    for tt in range(N_traces):
+        pos_tr = p_tr_lens_tmod[tt]
+        f1.plot(t_mod, pos_tr[:, 0] * 1e3,
+                color='c', alpha=0.5, linewidth=1, zorder=-1)
+
     f1.set_xlabel('t - t0 (days)')
     f1.set_ylabel(r'$\Delta \alpha^*$ (mas)')
     f1.legend()
-
-    # Decide if plotting traces
-    if mnest_results is not None:
-        for idx in np.arange(len(idx_arr)):
-            f1.plot(t_mod, trace_posxs[idx], 
-                    color='c',
-                    alpha=0.5,
-                    linewidth=1,
-                    zorder=-1)
-
+    
     if residuals:
         f1.get_xaxis().set_visible(False)
         f1.get_shared_x_axes().join(f1, f2)
-        f2.errorbar(dat_t, dat_x - model.get_astrometry(dat_t, ast_filt_idx=ast_filt_index)[:,0] * 1e3,
+        f2.errorbar(dat_t, dat_x - p_mod_lens_tdat[:,0] * 1e3,
                     yerr=dat_xe, fmt='k.', alpha=0.2)
         f2.axhline(0, linestyle='--', color='r')
         f2.set_xlabel('Time (HJD)')
         f2.set_ylabel('Obs - Mod')
 
+    ### Y vs. time
     plt.close(n_phot_sets + 3)
     fig = plt.figure(n_phot_sets + 3, figsize=(10, 10))  # PLOT 3
     fig_list.append(fig)
@@ -3228,30 +3294,33 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
         f1 = plt.gcf().add_axes([0.15, 0.3, 0.8, 0.6])
         f2 = plt.gcf().add_axes([0.15, 0.1, 0.8, 0.2])
     else:
-        plt.gca()
+        f1 = plt.gca()
 
+    # Data
     f1.errorbar(dat_t, dat_y, yerr=dat_ye, fmt='k.', label='Data')
-    f1.plot(t_mod, pos_out[:, 1] * 1e3, 'r-', label='Model')
+    
+    # Model
+    f1.plot(t_mod, p_mod_lens_tmod[:, 1] * 1e3, 'r-', label='Model')
+    
+    # Input Model
     if input_model != None:
-        f1.plot(t_mod, pos_in[:, 1] * 1e3, 'g-', label='Input')
+        f1.plot(t_mod, p_in_lens_tmod[:, 1] * 1e3, 'g-', label='Input')
+        
+    # Trace Plots
+    for tt in range(N_traces):
+        pos_tr = p_tr_lens_tmod[tt]
+        f1.plot(t_mod, pos_tr[:, 1] * 1e3,
+                color='c', alpha=0.5, linewidth=1, zorder=-1)
+
     f1.set_xlabel('t - t0 (days)')
     f1.set_ylabel(r'$\Delta \delta$ (mas)')
     f1.legend()
-
-    # Decide if plotting traces
-    if mnest_results is not None:
-        for idx in np.arange(len(idx_arr)):
-            f1.plot(t_mod, trace_posys[idx], 
-                     color='c',
-                     alpha=0.5,
-                     linewidth=1,
-                     zorder=-1)
 
     if residuals:
         f1.get_xaxis().set_visible(False)
         f1.get_shared_x_axes().join(f1, f2)
         f2.errorbar(dat_t,
-                    dat_y - model.get_astrometry(dat_t, ast_filt_idx=ast_filt_index)[:,1] * 1e3,
+                    dat_y - p_mod_lens_tdat[:,1] * 1e3,
                     yerr=dat_ye, fmt='k.', alpha=0.2)
         f2.axhline(0, linestyle='--', color='r')
         f2.set_xlabel('Time (HJD)')
@@ -3260,32 +3329,30 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     #####
     # Remove the unlensed motion (proper motion)
     # astrometry vs. time
+    #
+    # ALWAYS subtract the same proper motion.
     #####
-    # Make the model unlensed points.
-    p_mod_unlens_tdat = model.get_astrometry_unlensed(dat_t)
+    # Make the model unlensed points matched to the data.
+
+    # Data
     x_mod_tdat = p_mod_unlens_tdat[:, 0]
     y_mod_tdat = p_mod_unlens_tdat[:, 1]
     x_no_pm = data['xpos' + str(filt_index + 1)] - x_mod_tdat
     y_no_pm = data['ypos' + str(filt_index + 1)] - y_mod_tdat
 
-    # Make the dense sampled model for the same plot
-    dp_tmod_unlens = model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index) - model.get_astrometry_unlensed(t_mod)
+    # Dense sampled model
+    dp_tmod_unlens = p_mod_lens_tmod - p_mod_unlens_tmod
     x_mod_no_pm = dp_tmod_unlens[:, 0]
     y_mod_no_pm = dp_tmod_unlens[:, 1]
 
-    # Long time    
-    # baseline = np.max((2*(dat_t.max() - dat_t.min()), 5*model.tE))
-    # longtime = np.arange(model.t0 - baseline, model.t0 + baseline, 1)
-
-    baseline = 3*(dat_t.max() - dat_t.min())
-    longtime = np.arange(t_mod.min()-baseline, t_mod.max()+baseline, 1)
-    dp_tmod_unlens_longtime = model.get_astrometry(longtime) - model.get_astrometry_unlensed(longtime)
+    # Long time sampled model
+    dp_tmod_unlens_longtime = p_mod_lens_tlon - p_mod_unlens_tlon
     x_mod_no_pm_longtime = dp_tmod_unlens_longtime[:, 0]
     y_mod_no_pm_longtime = dp_tmod_unlens_longtime[:, 1]
 
     # Make the dense sampled model for the same plot for INPUT model
     if input_model != None:
-        dp_tmod_unlens_in = input_model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index) - input_model.get_astrometry_unlensed(t_mod)
+        dp_tmod_unlens_in = p_in_lens_tmod - p_mod_unlens_tmod
         x_mod_no_pm_in = dp_tmod_unlens_in[:, 0]
         y_mod_no_pm_in = dp_tmod_unlens_in[:, 1]
 
@@ -3299,81 +3366,93 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     smap = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     smap.set_array([])
 
+    
+    ##### Setup X - PM vs. t figure
     plt.close(n_phot_sets + 4)
     fig = plt.figure(n_phot_sets + 4, figsize=(10, 10))  # PLOT 4
     fig_list.append(fig)
     plt.clf()
 
+    # Plot data
     plt.errorbar(dat_t, x_no_pm * 1e3,
                  yerr=dat_xe, fmt='k.', label='Data')
+
+    # plot model
     plt.plot(t_mod, x_mod_no_pm * 1e3, 'r-', label='Model')
 
-    if mnest_results is not None:
-        for idx in np.arange(len(idx_arr)):
-            plt.plot(t_mod, trace_posxs_no_pm[idx],
-                     color='c',
-                     alpha=0.5,
-                     linewidth=1,
-                     zorder=-1)
+    # Trace models
+    for tt in range(N_traces):
+        pos_no_pm_tr = p_tr_lens_tmod[tt] - p_mod_unlens_tmod
+        plt.plot(t_mod, pos_no_pm_tr[:, 0] * 1e3,
+                color='c', alpha=0.5, linewidth=1, zorder=-1)
 
+    # Input model
     if input_model != None:
         plt.plot(t_mod, x_mod_no_pm_in * 1e3, 'g-', label='Input')
+        
     plt.xlabel('t - t0 (days)')
-    plt.ylabel(r'$\Delta \alpha^*$ (mas)')
+    plt.ylabel(r'$\Delta \alpha^*$ - $\Delta \alpha^*_{unlensed}$ (mas)')
     plt.legend()
 
+    ##### Setup Y - PM vs. t figure
     plt.close(n_phot_sets + 5)
     fig = plt.figure(n_phot_sets + 5, figsize=(10, 10))  # PLOT 5
     fig_list.append(fig)
     plt.clf()
+
+    # Data
     plt.errorbar(dat_t, y_no_pm * 1e3,
                  yerr=dat_ye, fmt='k.', label='Data')
+    # Model
     plt.plot(t_mod, y_mod_no_pm * 1e3, 'r-', label='Model')
 
-    if mnest_results is not None:
-        for idx in np.arange(len(idx_arr)):
-            plt.plot(t_mod, trace_posys_no_pm[idx],
-                     color='c',
-                     alpha=0.5,
-                     linewidth=1,
-                     zorder=-1)
+    # Trace models
+    for tt in range(N_traces):
+        pos_no_pm_tr = p_tr_lens_tmod[tt] - p_mod_unlens_tmod
+        plt.plot(t_mod, pos_no_pm_tr[:, 1] * 1e3,
+                color='c', alpha=0.5, linewidth=1, zorder=-1)
 
+    # Input model
     if input_model != None:
         plt.plot(t_mod, y_mod_no_pm_in * 1e3, 'g-', label='Input')
+        
     plt.xlabel('t - t0 (days)')
-    plt.ylabel(r'$\Delta \delta$ (mas)')
+    plt.ylabel(r'$\Delta \delta$ - $\Delta \delta_{unlensed}$ (mas)')
     plt.legend()
 
+    ##### Setup X - PM vs. Y - PM 
     plt.close(n_phot_sets + 6)
     fig = plt.figure(n_phot_sets + 6)  # PLOT 6
     fig_list.append(fig)
     plt.clf()
 
+    # Data
     plt.scatter(x_no_pm * 1e3, y_no_pm * 1e3, c=dat_t,
                 cmap=cmap, norm=norm, s=5)
     plt.errorbar(x_no_pm * 1e3, y_no_pm * 1e3,
                  xerr=dat_xe, yerr=dat_ye,
                  fmt='none', ecolor=smap.to_rgba(dat_t))
+    # Model
     plt.scatter(x_mod_no_pm * 1e3, y_mod_no_pm * 1e3, c=t_mod, cmap=cmap,
                 norm=norm)
 
-    if mnest_results is not None:
-        for idx in np.arange(len(idx_arr)):
-            plt.plot(trace_posxs_no_pm[idx], trace_posys_no_pm[idx],
-                     color='c',
-                     alpha=0.5,
-                     linewidth=1,
-                     zorder=-1)
+    # Trace models
+    for tt in range(N_traces):
+        pos_no_pm_tr = p_tr_lens_tmod[tt] - p_mod_unlens_tmod
+        plt.plot(pos_no_pm_tr[:, 0] * 1e3, pos_no_pm_tr[:, 1] * 1e3,
+                color='c', alpha=0.5, linewidth=1, zorder=-1)
 
     plt.gca().invert_xaxis()
     plt.axis('equal')
-    plt.xlabel(r'$\Delta \alpha^*$ (mas)')
-    plt.ylabel(r'$\Delta \delta$ (mas)')
+    plt.xlabel(r'$\Delta \alpha^*$ - $\Delta \alpha^*_{unlensed}$ (mas)')
+    plt.ylabel(r'$\Delta \delta$ - $\Delta \delta_{unlensed}$ (mas)')
     plt.colorbar()
 
+    
     #####
-    # Astrometry on the sky
+    # Astrometry on the sky -- LONG TIME
     #####
+    # X vs. Y
     plt.close(n_phot_sets + 7)
     fig = plt.figure(n_phot_sets + 7, figsize=(10, 10))  # PLOT 7
     fig_list.append(fig)
@@ -3384,79 +3463,77 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
                  xerr=dat_xe, yerr=dat_ye,
                  fmt='k.', label='Data')
 
-    # Decide if we sample the models at a denser time, or just the
-    # same times as the measurements.
-    if dense_time:
-        # 1 day sampling over whole range
-        t_mod = np.arange(dat_t.min(), dat_t.max(), 1)
-    else:
-        t_mod = data['t_ast']
-    # Model - usually from fitter
-    pos_out = model.get_astrometry(t_mod)
-    pos_out_unlens = model.get_astrometry_unlensed(longtime)
-    plt.plot(pos_out[:, 0] * 1e3, pos_out[:, 1] * 1e3, 'r-', label='Model')
-    plt.plot(pos_out_unlens[:, 0] * 1e3, pos_out_unlens[:, 1] * 1e3, 'b:', label='Model unlensed')
+    # Model
+    plt.plot(p_mod_lens_tlon[:, 0] * 1e3, p_mod_lens_tlon[:, 1] * 1e3, 'r-', label='Model')
+    plt.plot(p_mod_unlens_tlon[:, 0] * 1e3, p_mod_unlens_tlon[:, 1] * 1e3, 'b:', label='Model unlensed')
 
     # Input model
     if input_model != None:
-        pos_in = input_model.get_astrometry(t_mod)
-        plt.plot(pos_in[:, 0] * 1e3, pos_in[:, 1] * 1e3, 'g-', label='Input Model')
+        plt.plot(p_in_unlens_tlon[:, 0] * 1e3, p_in_unlens_tlon[:, 1] * 1e3, 'g-', label='Input Model')
 
-    if mnest_results is not None:
-        for idx in np.arange(len(idx_arr)):
-            plt.plot(trace_posxs[idx], trace_posys[idx],
-                     color='c',
-                     alpha=0.5,
-                     linewidth=1,
-                     zorder=-1)
+    # Trace models
+    for tt in range(N_traces):
+        plt.plot(p_tr_lens_tlon[tt][:, 0] * 1e3, p_tr_lens_tlon[tt][:, 1] * 1e3,
+                color='c', alpha=0.5, linewidth=1, zorder=-1)
 
     plt.gca().invert_xaxis()
     plt.xlabel(r'$\Delta \alpha^*$ (mas)')
     plt.ylabel(r'$\Delta \delta$ (mas)')
     plt.legend(fontsize=12)
 
+
+    # X vs. T longtime -- Proper motion removed
     plt.close(n_phot_sets + 8)
     fig = plt.figure(n_phot_sets + 8, figsize=(10, 10))  # PLOT 8
     fig_list.append(fig)
     plt.clf()
 
+    # Data
     plt.errorbar(dat_t, x_no_pm * 1e3,
                  yerr=dat_xe, fmt='k.', label='Data')
-    plt.plot(longtime, x_mod_no_pm_longtime * 1e3, 'r-', label='Model')
+
+    # model
+    plt.plot(t_long, x_mod_no_pm_longtime * 1e3, 'r-', label='Model')
+    
+    # Trace models
+    for tt in range(N_traces):
+        pos_no_pm_tr = p_tr_lens_tlon[tt] - p_mod_unlens_tlon
+        plt.plot(t_long, pos_no_pm_tr[:, 0] * 1e3,
+                color='c', alpha=0.5, linewidth=1, zorder=-1)
+
     plt.xlabel('t - t0 (days)')
-    plt.ylabel(r'$\Delta \alpha^*$ (mas)')
+    plt.ylabel(r'$\Delta \alpha^*$ - $\Delta \alpha^*_{unlensed}$ (mas)')
     plt.legend()
 
-    if mnest_results is not None:
-        for idx in np.arange(len(idx_arr)):
-            plt.plot(t_mod, trace_posxs_no_pm[idx],
-                     color='c',
-                     alpha=0.5,
-                     linewidth=1,
-                     zorder=-1)
 
+    
+    # Y vs. T longtime -- Proper motion removed
     plt.close(n_phot_sets + 9)
     fig = plt.figure(n_phot_sets + 9, figsize=(10, 10))  # PLOT 9
     fig_list.append(fig)
     plt.clf()
+
+    # Data
     plt.errorbar(dat_t, y_no_pm * 1e3,
                  yerr=dat_ye, fmt='k.', label='Data')
-    plt.plot(longtime, y_mod_no_pm_longtime * 1e3, 'r-', label='Model')
+    
+    # Model
+    plt.plot(t_long, y_mod_no_pm_longtime * 1e3, 'r-', label='Model')
+
+    # Trace models
+    for tt in range(N_traces):
+        pos_no_pm_tr = p_tr_lens_tlon[tt] - p_mod_unlens_tlon
+        plt.plot(t_long, pos_no_pm_tr[:, 1] * 1e3,
+                color='c', alpha=0.5, linewidth=1, zorder=-1)
+
     plt.xlabel('t - t0 (days)')
-    plt.ylabel(r'$\Delta \delta$ (mas)')
+    plt.ylabel(r'$\Delta \delta$ (mas) - $\Delta \delta_{unlensed}$')
     plt.legend()
 
-    if mnest_results is not None:
-        for idx in np.arange(len(idx_arr)):
-            plt.plot(t_mod, trace_posys_no_pm[idx],
-                     color='c',
-                     alpha=0.5,
-                     linewidth=1,
-                     zorder=-1)
-
+    # Astrometry on sky, proper motion removed, in Color-time    
     # Prep some colorbar stuff
     cmap = plt.cm.viridis
-    norm = plt.Normalize(vmin=dat_t.min(), vmax=dat_t.max())
+    norm = plt.Normalize(vmin=t_long.min(), vmax=t_long.max())
     smap = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     smap.set_array([])
 
@@ -3465,36 +3542,314 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     fig_list.append(fig)
     plt.clf()
 
+    # Data
     plt.scatter(x_no_pm * 1e3, y_no_pm * 1e3, c=dat_t,
                 cmap=cmap, norm=norm, s=5)
     plt.errorbar(x_no_pm * 1e3, y_no_pm * 1e3,
                  xerr=dat_xe, yerr=dat_ye,
                  fmt='none', ecolor=smap.to_rgba(dat_t))
     plt.colorbar()
-    plt.scatter(x_mod_no_pm_longtime * 1e3, y_mod_no_pm_longtime * 1e3, s=1)
-#                c=longtime, cmap=cmap, norm=norm, s=1)
 
-    if mnest_results is not None:
-        for idx in np.arange(len(idx_arr)):
-            plt.plot(trace_posys_no_pm[idx], trace_posxs_no_pm[idx],
-                     color='c',
-                     alpha=0.5,
-                     linewidth=1,
-                     zorder=-1)
+    # model
+    plt.scatter(x_mod_no_pm_longtime * 1e3, y_mod_no_pm_longtime * 1e3,
+                c=t_long, cmap=cmap, norm=norm, s=1)
+ 
+    # Trace models
+    for tt in range(N_traces):
+        pos_no_pm_tr = p_tr_lens_tlon[tt] - p_mod_unlens_tlon
+        plt.plot(pos_no_pm_tr[:, 0] * 1e3, pos_no_pm_tr[:, 1] * 1e3,
+                color='c', alpha=0.5, linewidth=1, zorder=-1)
 
     plt.gca().invert_xaxis()
     plt.axis('equal')
-    plt.xlabel(r'$\Delta \alpha^*$ (mas)')
-    plt.ylabel(r'$\Delta \delta$ (mas)')
+    plt.xlabel(r'$\Delta \alpha^*$ (mas) - $\Delta \alpha^*_{unlensed}$')
+    plt.ylabel(r'$\Delta \delta$ (mas) - $\Delta \delta_{unlensed}$')
 
     return fig_list
 
-def plot_astrometry_on_sky(data, model):
+
+
+def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
+    """Astrometry on the sky in all available filters. 
+    """
+    # Setup all the figures
+    N_figures = 6
+    fig_list = []
+
+    for ff in range(N_figures):
+        plt.close(ff + 1)
+        fig = plt.figure(ff + 1, figsize=(6, 6))
+        fig_list.append(fig)
+        plt.clf()
+
+    ### Setup time arrays
+    #
+    # Decide if we sample the models at a denser time, or just the
+    # same times as the measurements.
+    t_dat = []  # Temporary to get all times. 
+    for ff in range(fitter.n_ast_sets):
+        t_dat = np.append(t_dat, data['t_ast' + str(ff + 1)].tolist())
+    tdat_min = t_dat.min()
+    tdat_max = t_dat.max()
+    
+    if long_time:
+        baseline = 3 * (tdat_max - tdat_min)
+        t_mod = np.arange(tdat_min - baseline, tdat_max + baseline, 1)
+    else:
+        t_mod = np.arange(tdat_min, tdat_max, 1)
+
+    def get_dat_mod_index(filt_index):
+        ff_dat = filt_index + 1
+        if len(fitter.map_phot_idx_to_ast_idx) == 0:
+            ff_mod = filt_index
+        else:
+            ff_mod = fitter.map_phot_idx_to_ast_idx[filt_index]
+            
+        return ff_dat, ff_mod
+        
+        
+    #### Models
+    #
+    # Save the models for each filter.
+    t_dat = []
+    p_dat = []
+    pe_dat = []
+    p_mod_lens_tdat = []
+    p_mod_lens_tmod = []
+    p_mod_unlens_tdat = []
+    p_mod_unlens_tmod = []
+    p_mod_pm_tdat = []
+    p_mod_pm_tmod = []
+
+    for ff in range(fitter.n_ast_sets):
+        ff_dat, ff_mod = get_dat_mod_index(ff)
+        dd = str(ff_dat)
+
+        # Data
+        t_dat.append( np.array(data['t_ast' + dd]) )
+        p_dat.append(  np.array([data['xpos' + dd],     data['ypos' + dd]]).T * 1e3 )
+        pe_dat.append( np.array([data['xpos_err' + dd], data['ypos_err' + dd]]).T * 1e3 )
+
+        # Model lensed astrometry
+        p_mod_lens_tdat.append( model.get_astrometry(t_dat[ff], ast_filt_idx=ff_mod) * 1e3 )
+        p_mod_lens_tmod.append( model.get_astrometry(t_mod, ast_filt_idx=ff_mod) * 1e3 )
+
+        # Model unlensed astrometry
+        if str(model.__class__).startswith('BS'):
+            # Binary sources have filter dependent unlensed astrometry.
+            p_mod_unlens_tdat.append( model.get_astrometry_unlensed(t_dat[ff], ast_filt_idx=ff_mod) * 1e3 )
+            p_mod_unlens_tmod.append( model.get_astrometry_unlensed(t_mod, ast_filt_idx=ff_mod) * 1e3 )
+        else:
+            p_mod_unlens_tdat.append( model.get_astrometry_unlensed(t_dat[ff]) * 1e3 )
+            p_mod_unlens_tmod.append( model.get_astrometry_unlensed(t_mod) * 1e3 )
+
+            
+    # Setup colors for each astrometry filter.
+    norm = plt.Normalize()
+    # colors = plt.cm.jet(np.linspace(0, 1, fitter.n_ast_sets))
+    colors = ['red', 'blue', 'yellow']
+    markers = ['s', 'o', 'x', '^']
+    linestyles = ['-', '--', '-.', '..']
+    cmaps = ['viridis', 'inferno', 'cividis']
+    alphas = np.arange(1, fitter.n_ast_sets+1) / fitter.n_ast_sets
+    alphas = alphas[::-1]
+    
+
+    #####
+    # Plot On-Sky Astrometry 
+    #####
+    fig = fig_list[0]
+    ax = fig.gca()
+    for ff in range(fitter.n_ast_sets):
+        # Data
+        ax.errorbar(p_dat[ff][:, 0], p_dat[ff][:, 1],
+                     xerr=pe_dat[ff][:, 0], yerr=pe_dat[ff][:, 1],
+                     color=colors[ff], marker=markers[ff], ls='none',
+                     label=f'Data {ff+1}')
+
+        # Model - usually from fitter
+        ax.plot(p_mod_lens_tmod[ff][:, 0], p_mod_lens_tmod[ff][:, 1],
+                 color=colors[ff], linestyle='-',
+                 label=f'Model {ff+1}')
+
+    ax.invert_xaxis()
+    ax.set_xlabel(r'$\Delta \alpha^*$ (mas)')
+    ax.set_ylabel(r'$\Delta \delta$ (mas)')
+    ax.legend(fontsize=12)
+
+
+    #####
+    # Astrometry vs. time
+    # x = RA, y = Dec
+    #####
+    ### X vs. time
+    fig = fig_list[1]
+    f1 = fig.add_axes([0.15, 0.3, 0.8, 0.6])
+    f2 = fig.add_axes([0.15, 0.1, 0.8, 0.2])
+
+    for ff in range(fitter.n_ast_sets):
+        # Data
+        f1.errorbar(t_dat[ff], p_dat[ff][:, 0], yerr=pe_dat[ff][:, 0],
+                    linestyle='none', marker=markers[ff], color=colors[ff],
+                    label=f'Data {ff+1}')
+    
+        # Model
+        f1.plot(t_mod, p_mod_lens_tmod[ff][:, 0],
+                linestyle='-', marker=None, color=colors[ff],
+                label=f'Model {ff+1}')
+
+        # Residuals
+        f2.errorbar(t_dat[ff], p_dat[ff][:, 0] - p_mod_lens_tdat[ff][:,0],
+                    yerr=pe_dat[ff][:, 0],
+                    linestyle='none', marker=markers[ff], color=colors[ff])
+        
+    
+    f1.set_xlabel('t - t0 (days)')
+    f1.set_ylabel(r'$\Delta \alpha^*$ (mas)')
+    f1.legend()
+    
+    f1.get_xaxis().set_visible(False)
+    f1.get_shared_x_axes().join(f1, f2)
+    f2.axhline(0, linestyle='--', color='r')
+    f2.set_xlabel('Time (HJD)')
+    f2.set_ylabel('Obs - Mod')
+
+    ### Y vs. time
+    fig = fig_list[2]
+    f1 = fig.add_axes([0.15, 0.3, 0.8, 0.6])
+    f2 = fig.add_axes([0.15, 0.1, 0.8, 0.2])
+
+    for ff in range(fitter.n_ast_sets):
+        # Data
+        f1.errorbar(t_dat[ff], p_dat[ff][:, 1], yerr=pe_dat[ff][:, 1],
+                    linestyle='none', marker=markers[ff], color=colors[ff],
+                    label=f'Data {ff+1}')
+    
+        # Model
+        f1.plot(t_mod, p_mod_lens_tmod[ff][:, 1],
+                    linestyle='-', marker=None, color=colors[ff],
+                    label=f'Model {ff+1}')
+
+        # Residuals
+        f2.errorbar(t_dat[ff], p_dat[ff][:, 1] - p_mod_lens_tdat[ff][:,1],
+                    yerr=pe_dat[ff][:, 1],
+                    linestyle='none', marker=markers[ff], color=colors[ff])
+            
+        
+    f1.set_xlabel('t - t0 (days)')
+    f1.set_ylabel(r'$\Delta \delta$ (mas)')
+    f1.legend()
+
+    f1.get_xaxis().set_visible(False)
+    f1.get_shared_x_axes().join(f1, f2)
+    f2.axhline(0, linestyle='--', color='r')
+    f2.set_xlabel('Time (HJD)')
+    f2.set_ylabel('Obs - Mod')
+
+    #####
+    # Remove the unlensed motion (proper motion and parallax)
+    # astrometry vs. time
+    #
+    # ALWAYS subtract the same unlensed model for all data/models.
+    #####
+
+    ##### X - PM vs. t figure
+    fig = fig_list[3]
+    ax = fig.gca()
+
+    for ff in range(fitter.n_ast_sets):
+        # Plot data
+        ax.errorbar(t_dat[ff], p_dat[ff][:, 0] - p_mod_unlens_tdat[ff][:, 0],
+                     yerr=pe_dat[ff][:, 0],
+                     linestyle='none', marker=markers[ff], color=colors[ff],
+                     label=f'Data {ff+1}')
+
+        # plot model
+        ax.plot(t_mod, p_mod_lens_tmod[ff][:, 0] - p_mod_unlens_tmod[ff][:, 0],
+                 linestyle='-', marker=None, color=colors[ff],
+                 label=f'Model {ff+1}')
+
+    ax.set_xlabel('t - t0 (days)')
+    ax.set_ylabel(r'$\Delta \alpha^*$ - $\Delta \alpha^*_{unlensed}$ (mas)')
+    ax.legend()
+
+    ##### Setup Y - PM vs. t figure
+    fig = fig_list[4]
+    ax = fig.gca()
+
+    for ff in range(fitter.n_ast_sets):
+        # Plot data
+        ax.errorbar(t_dat[ff], p_dat[ff][:, 1] - p_mod_unlens_tdat[ff][:, 1],
+                     yerr=pe_dat[ff][:, 1],
+                     linestyle='none', marker=markers[ff], color=colors[ff],
+                     label=f'Data {ff+1}')
+
+        # plot model
+        ax.plot(t_mod, p_mod_lens_tmod[ff][:, 1] - p_mod_unlens_tmod[ff][:, 1],
+                 linestyle='-', marker=None, color=colors[ff],
+                 label=f'Model {ff+1}')
+
+    ax.set_xlabel('t - t0 (days)')
+    ax.set_ylabel(r'$\Delta \delta$ - $\Delta \delta_{unlensed}$ (mas)')
+    ax.legend()
+
+    ##### Setup X - PM vs. Y - PM -- in color-time
+    fig = fig_list[5]
+    ax = fig.gca()
+
+    from matplotlib.collections import LineCollection
+    
+    for ff in range(fitter.n_ast_sets):
+        cmap = cmaps[0]
+        norm = plt.Normalize(vmin=tdat_min, vmax=tdat_max)
+        smap = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        smap.set_array([])
+                
+        # Data
+        cc = ax.scatter(p_dat[ff][:, 0] - p_mod_unlens_tdat[ff][:, 0],
+                   p_dat[ff][:, 1] - p_mod_unlens_tdat[ff][:, 1],
+                   c=t_dat[ff], marker=markers[ff],
+                   cmap=cmap, norm=norm, s=50,
+                     label=f'Data {ff+1}')
+        ax.errorbar(p_dat[ff][:, 0] - p_mod_unlens_tdat[ff][:, 0],
+                     p_dat[ff][:, 1] - p_mod_unlens_tdat[ff][:, 1],                        
+                     xerr=pe_dat[ff][:, 0], yerr=pe_dat[ff][:, 1],
+                     fmt='none', ecolor=smap.to_rgba(t_dat[ff]), alpha=alphas[ff])
+        
+        # Model
+        points = np.array([p_mod_lens_tmod[ff][:, 0] - p_mod_unlens_tmod[ff][:, 0],
+                           p_mod_lens_tmod[ff][:, 1] - p_mod_unlens_tmod[ff][:, 1]]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+        print(linestyles[ff])
+        lc = LineCollection(segments, cmap=cmap, norm=norm, linestyle='-', alpha=alphas[ff],
+                            label=f'Model {ff+1}')
+        
+        # Set the values used for colormapping
+        lc.set_array(t_mod)
+        lc.set_linewidth(3)
+        line = ax.add_collection(lc)
+
+    ax.invert_xaxis()
+    ax.axis('equal')
+    ax.legend()
+    ax.set_xlabel(r'$\Delta \alpha^*$ - $\Delta \alpha^*_{unlensed}$ (mas)')
+    ax.set_ylabel(r'$\Delta \delta$ - $\Delta \delta_{unlensed}$ (mas)')
+    fig.colorbar(cc)
+
+    return fig_list
+
+def plot_astrometry_on_sky(data, model, ast_filt_index=0):
     t_mod = np.arange(data['t_ast1'].min() - 300.0, data['t_ast1'].max() + 300.0, 5.0)
 
-    pos_out = model.get_astrometry(t_mod)
-    pos_in = model.get_astrometry_unlensed(t_mod)
     lens_in = model.get_lens_astrometry(t_mod)
+    pos_out = model.get_astrometry(t_mod, ast_filt_index=ast_filt_index)
+    # pos_in
+    if str(model.__class__).startswith('BS'):
+        # Binary sources have filter dependent unlensed astrometry.
+        pos_in = model.get_astrometry_unlensed(dat_t, ast_filt_idx=ast_filt_index)
+    else:
+        pos_in = model.get_astrometry_unlensed(dat_t)
 
     plt.close(1)
     fig = plt.figure(1, figsize=(16, 4))
@@ -3557,14 +3912,21 @@ def plot_astrometry_on_sky(data, model):
 
     return fig
 
-def plot_astrometry_proper_motion_removed(data, model):
+
+def plot_astrometry_proper_motion_removed(data, model, ast_filt_index=0):
     """Proper Motion Subtracted
     """
     t_mod = np.arange(data['t_ast1'].min() - 300.0, data['t_ast1'].max() + 300.0, 5.0)
 
-    pos_out = model.get_astrometry(t_mod)
-    pos_in = model.get_astrometry_unlensed(t_mod)
     lens_in = model.get_lens_astrometry(t_mod)
+    pos_out = model.get_astrometry(t_mod, ast_filt_index=ast_filt_index)
+    # pos_in
+    if str(model.__class__).startswith('BS'):
+        # Binary sources have filter dependent unlensed astrometry.
+        pos_in = model.get_astrometry_unlensed(dat_t, ast_filt_idx=ast_filt_index)
+    else:
+        pos_in = model.get_astrometry_unlensed(dat_t)
+    
 
     pos_out -= model.muS[np.newaxis, :] * 1e-3 * (t_mod[:, np.newaxis] - model.t0) / 365.25
     pos_in  -= model.muS[np.newaxis, :] * 1e-3 * (t_mod[:, np.newaxis] - model.t0) / 365.25
@@ -3640,7 +4002,6 @@ def plot_astrometry_proper_motion_removed(data, model):
     plt.gca().invert_xaxis()
 
     return fig
-
 
 
 def quantiles(mnest_results, sigma=1):

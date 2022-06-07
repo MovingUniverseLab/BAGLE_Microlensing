@@ -2562,7 +2562,9 @@ class PSPL_GP(object):
 
             matern = celerite.terms.Matern32Term(self.gp_log_sigma[filt_index], self.gp_log_rho[filt_index])
             sho = celerite.terms.SHOTerm(self.gp_log_S0[filt_index], gp_log_Q, self.gp_log_omega0[filt_index])
-            kernel = matern + sho
+            mean_mag_err_obs = np.average(mag_err_obs)
+            jitter = celerite.terms.JitterTerm(np.log(mean_mag_err_obs))
+            kernel = matern + sho + jitter
 
             my_model = Celerite_GP_Model(self, filt_index)  # self is any instance of PSPL
 
@@ -2597,7 +2599,10 @@ class PSPL_GP(object):
 
             matern = celerite.terms.Matern32Term(self.gp_log_sigma[filt_index], self.gp_log_rho[filt_index])
             sho = celerite.terms.SHOTerm(self.gp_log_S0[filt_index], gp_log_Q, self.gp_log_omega0[filt_index])
-            kernel = matern + sho
+            mean_mag_err_obs = np.average(mag_err_obs)
+            jitter = celerite.terms.JitterTerm(np.log(mean_mag_err_obs))
+
+            kernel = matern + sho + jitter
 
             my_model = Celerite_GP_Model(self, filt_index)  # self is any instance of PSPL
 
@@ -2626,7 +2631,9 @@ class PSPL_GP(object):
 
             matern = celerite.terms.Matern32Term(self.gp_log_sigma[filt_index], self.gp_log_rho[filt_index])
             sho = celerite.terms.SHOTerm(self.gp_log_S0[filt_index], gp_log_Q, self.gp_log_omega0[filt_index])
-            kernel = matern + sho
+            mean_mag_err_obs = np.average(mag_err_obs)
+            jitter = celerite.terms.JitterTerm(np.log(mean_mag_err_obs))
+            kernel = matern + sho + jitter
 
             my_model = Celerite_GP_Model(self, filt_index)  # self is any instance of PSPL
 
@@ -3233,6 +3240,7 @@ class PSBL(PSPL):
         Returns
         -------
         z_arr : array_like
+            Position of the lensed source images.
             Rank-1 array of polynomial roots, possibly complex.
             If check_sols = True, only roots solving the lens
             equation are returned.
@@ -6991,10 +6999,14 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
         Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
         Guassian process :math:`log(\omega_0)` from the SHO kernel.
+
+    Optional Inputs
+    ---------------
+    Note: Required if calculating with parallax
     raL: float, optional
-        Right ascension of the lens in decimal degrees - Required if calculating with parallax
+        Right ascension of the lens in decimal degrees.
     decL: float, optional
-        Declination of the lens in decimal degrees - Required if calculating with parallax
+        Declination of the lens in decimal degrees.
     """
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
@@ -7069,10 +7081,121 @@ class FSPL(PSPL):
         return np.array(sourcepos)
 
 
-class FSPL_PhotAstrom(FSPL):
+
+    def get_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
+        '''
+        Get the photometry for each of the lensed source images.
+
+        Parameters
+        ----------
+        t_obs : array_like
+            Array of times to model.
+
+        Other Parameters
+        ----------
+        amp_arr : array_like
+            Amplifications of each individual image at each time,
+            i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
+
+            This will over-ride t_obs; but is more efficient when calculating
+            both photometry and astrometry. If None, then just use t_obs.
+
+        Returns
+        -------
+        mag_model : array_like
+            Magnitude of the centroid at t_obs.
+        '''
+        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
+        flux_zp = 1.0
+
+        if amp_arr is None:
+            amp_arr, img_arr = self.get_centroids(t_obs, self.radius)
+            amp = amp_arr
+
+            # CHECK THIS STUFF
+        #         # Do we need this masked stuff?
+        #         # Mask invalid values from the amplification array.
+        #         amp_arr_msk = np.ma.masked_invalid(amp_arr)
+        #
+        #         # Sum up all the amplifications b/c surface brightness is conserved.
+        #         amp = np.sum(amp_arr_msk, axis=1)
+
+        flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
+        flux_model = flux_src * amp
+
+        # Account for blending, if necessary.
+        try:
+            # Adding flux of neighbors and lenses
+            # b_sff = fS / (fS + fN + fL)
+            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+        except AttributeError:
+            pass
+        
+        # Catch the edge case where we exceed the zeropoint.
+        bad = np.where(flux_model <= 0)[0]
+        if len(bad) > 0:
+            if print_warning:
+                print('!!!!!!! Warning: get_photometry: bad flux encountered.')
+            flux_model[bad] = np.nan
+
+        mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
+
+        return mag_model
+
+
+class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     """
-    DO NOT USE... in progress
+    Contains methods for model a PSPL photometry + astrometry.
+    This is a Data-type class in our hierarchy. It is abstract and should not
+    be instantiated. 
+
+    Class Variables
+    --------------------
+    Available class variables that should be defined.
+
+    t0
+    tE
+    u0_amp
+    u0_E
+    u0_N
+    beta
+    piE_E - valid only if parallax model
+    piE_N - valid only if parallax model
+    piE_amp
+    mL
+    thetaE_amp
+    thetaE_E
+    thetaE_N
+    xS0_E
+    xS0_N
+    xL0_E
+    xL0_N
+    muS_E
+    muS_N
+    muL_E
+    muL_N
+    muRel_E
+    muRel_N
+    muRel_amp
+    piS
+    piL
+    dL
+    dS
+    dL_dS (dL over dS)
+    radius
+    n
+    b_sff[#]
+    mag_src[#] -- add in
+    mag_base[#] -- add in 
+    raL - if parallax model
+    decL - if parallax model
+
     """
+    photometryFlag = True
+    astrometryFlag = True
+
+    # Inhertied functions include:
+    # get_lens_astrometry
 
     def get_lens_astrometry(self, t):
         # returns the position of the lens in the sky at a list of times, t in units of einstein time
@@ -7247,17 +7370,451 @@ class FSPL_PhotAstrom(FSPL):
     #         mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
     #
     #         return mag_model
+    
+    def get_source_lens_separation_unlensed(self, t_obs):
+        """
+        Get the separation vector, \vec{u}(t), which is the unlensed
+        source - lens separation vector on the plane of the sky 
+        in units of \theta_E.
 
-    def get_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
+        Input Parameters
+        ----------------
+        t_obs : array, float
+            Times in MJD at which to evaluate the separation.
+
+        Return
+        -------
+        u : array, float, shape = [len(t_obs), 2]
+            Separation vector in East, North on the sky in units of \theta_E.
+        """
+        dt_in_years = (t_obs - self.t0) / days_per_year
+            
+        # Equation of motion for the relative angular separation
+        # between the background source and lens. (Source - Lens)
+        thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)  # mas
+
+        if self.parallaxFlag:
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+            thetaS -= (self.piRel * parallax_vec)  # mas
+        
+        u_vec = thetaS / self.thetaE_amp
+
+        # # Second way to calculate, valid for photometry-only fits.
+        # # Get the parallax vector for each date.
+        # parallax_vec = parallax_in_direction_old(self.raL, self.decL, t)
+        # tau = (t - self.t0) / self.tE
+
+        # # Convert to matrices for more efficient operations.
+        # # Matrix shapes below are:
+        # #  u0, thetaE_hat: [1, 2]
+        # #  tau:      [N_times, 1]
+        # u0 = self.u0.reshape(1, len(self.u0))
+
+        # # In direction of muRel_hat
+        # thetaE_hat = self.thetaE_hat.reshape(1, len(self.thetaE_hat))
+        # tau = tau.reshape(len(tau), 1)
+
+        # # Shape of u: [N_times, 2]
+        # u_vec = u0 + tau * thetaE_hat
+        # u_vec -= self.piE_amp * parallax_vec
+
+        return u_vec
+
+    def get_source_outline_lens_separation_unlensed(self, t_obs):
+        """
+        Get the separation vector, \vec{u}(t), which is the unlensed
+        source - lens separation vector for each point of the source 
+        outline. Positions are  on the plane of the sky in units of \theta_E.
+
+        Input Parameters
+        ----------------
+        t_obs : array, float
+            Times in MJD at which to evaluate the separation.
+
+        Return
+        -------
+        u : array, float, shape = [len(t_obs), 2]
+            Separation vector in East, North on the sky in units of \theta_E.
+        """
+        u_vec = self.get_source_lens_separation_unlensed(t_obs)
+
+        # Now expand and do this for all the outline points.
+        u_vec_outline = np.zeros((len(t_obs), self.n_outline, 2), dtype=float)
+        
+        # The angles of the points equally spaced around the source circumference.
+        angles = (np.arange(self.n_outline) / self.n_outline) * 2 * np.pi  # radians
+        rho = self.radius / self.thetaE_amp
+
+        dux = rho * np.cos(angles) 
+        duy = rho * np.sin(angles) 
+
+        # This could be faster with repeat, etc. Get rid of the for loop.
+        for n in range(self.n_outline):
+            u_vec_outline[:, n, 0] = u_vec[:, 0] + dux[n]
+            u_vec_outline[:, n, 1] = u_vec[:, 1] + duy[n]
+
+        return u_vec_outline
+    
+
+    def get_astrometry_outline_unlensed(self, t_obs):
+        """Get the astrometry of the source outline if the lens didn't exist.
+
+        Return
+        -------
+        xS_unlensed : numpy array, dtype=float, shape = [len(t_obs), self.n_outline, 2]
+            The unlensed positions of the source outline points in arcseconds.
+            The source outline is described by a list of points along the circumference
+            of the circular source. The last axis contains East/North positions.
+        """
+        xS_unlensed_center = self.get_astrometry_unlensed(t_obs) # arcsec
+
+        xS_unlensed_outline = np.zeros((len(t_obs), self.n_outline, 2), dtype=float)
+
+        # The angles of the points equally spaced around the source circumference.
+        angles = (np.arange(self.n_outline) / self.n_outline) * 2 * np.pi  # radians
+        dx = self.radius * 1e-3 * np.cos(angles) # arcsec
+        dy = self.radius * 1e-3 * np.sin(angles) # arcsec
+
+        # This could be faster with repeat, etc. Get rid of the for loop.
+        for n in range(self.n_outline):
+            xS_unlensed_outline[:, n, 0] = xS_unlensed_center[:, 0] + dx[n]
+            xS_unlensed_outline[:, n, 1] = xS_unlensed_center[:, 1] + dy[n]
+        
+        return xS_unlensed_outline
+    
+    
+    def get_resolved_shift_outline(self, t_obs):
+        """
+        Get the astrometric microlensing shift of each
+        point in the source outline for each of the multiple
+        lensed images. 
+
+        Note this is actually the source position w.r.t. 
+        the lens. In other words, it is the source - lens separation,
+        not just the astrometric microlensing shift.
+        Sorry it is poorly named.
+
+        Input Parameters
+        ----------------
+        t_obs : array, float
+            Times in MJD at which to evaluate the separation.
+
+        Return
+        -------
+        pos_plus : array, float, shape = [len(t_obs), 2]
+            Relative astrometric position of the plus image in East, North 
+            w.r.t. the lens in units of milli-arcseconds.
+        pos_minus : array, float, shape = [len(t_obs), 2]
+            Relative astrometric position of the minus image in East, North 
+            w.r.t. the lens in units of milli-arcseconds.
+        """
+        
+        # Shape = [len(t_obs), self.n_outline, 2]
+        u_vec = self.get_source_outline_lens_separation_unlensed(t_obs)
+
+        # Shape = [len(t_obs), self.n_outline]
+        u_amp = np.linalg.norm(u_vec, axis=2)
+        u_hat = u_vec / u_amp[:, :, np.newaxis]
+            
+        # Shape = [len(t_obs), self.n_outline, 2]
+        u_obs_amp_plus  = ((u_amp + np.sqrt(u_amp ** 2 + 4)) / 2.0)
+        u_obs_amp_minus = ((u_amp - np.sqrt(u_amp ** 2 + 4)) / 2.0)
+        u_obs_vec_plus  = u_obs_amp_plus[:, :, np.newaxis] * u_hat
+        u_obs_vec_minus = u_obs_amp_minus[:, :, np.newaxis] * u_hat
+
+        pos_plus  = u_obs_vec_plus  * self.thetaE_amp  # in mas
+        pos_minus = u_obs_vec_minus * self.thetaE_amp  # in mas
+
+        return (pos_plus, pos_minus)
+
+    
+    def get_resolved_astrometry_outline(self, t_obs):
+        """Get the x, y astrometry for each of the two lensed source images
+        and all the associated outline points. The two lensed source images
+        are labeled plus and minus.
+
+        These are actual positions on the sky.
+
+        Returns
+        --------
+        [xS_plus, xS_minus] : list of numpy arrays
+            xS_plus is the vector position of the plus image.
+            xS_minus is the vector position of the plus image.
+            Each shape = [len(t_obs), self.n_outline, 2]
+            where the last axis contains East and North positions.
+        """
+        
+        # Things we will need.
+        dt_in_years = (t_obs - self.t0) / days_per_year
+
+        xL = self.get_lens_astrometry(t_obs) # arcsec
+
+        shift_plus, shift_minus = self.get_resolved_shift_outline(t_obs) # S - L position in mas
+
+        # Lensed outline positions
+        xS_plus  = xL[:, np.newaxis, :] + (shift_plus * 1e-3)  # arcsec
+        xS_minus = xL[:, np.newaxis, :] + (shift_minus * 1e-3)  # arcsec
+
+        return (xS_plus, xS_minus)
+        
+    def get_all_arrays(self, t_obs):
+        """
+        Obtain the image and amplitude arrays for each t_obs. These arrays
+        contain the positions for each point in the outline for each lensed image.
+        
+        Parameters
+        ----------
+        t_obs : array_like
+            Array of times to model.
+
+        Returns
+        -------
+        images : array_like
+            Array/tuple of positions of each lensed image at each t_obs.
+            Shape = [len(t_obs), n_images=2, 2]
+            The last axis contains East and North positions on the sky
+            in arcseconds.
+
+        amp_arr : array_like
+            Array/tuple of amplification of each lensed image at each t_obs.
+            Shape = [len(t_obs), n_images=2]
+
+        Notes
+        ----------
+        The algorithm uses green's theorem to change an area integral of the 
+        image of the source into a path integral around the outside outline.
+        We perform a first-order contour integral to approximate the area.
+        """
+        # Lensed positions of each outline point for both plus/minus images.
+        # Note these are positions on the sky. in arcsec
+        images = self.get_resolved_astrometry_outline(t_obs)
+
+        angles = (np.arange(self.n_outline) / self.n_outline) * 2 * np.pi  # radians
+        # d_angles = np.diff(np.append(angles, angles[0:1]))
+        d_angles = np.diff(angles)
+        
+        # Shape of plus array:  [len(times), self.n_outline, 2] where 
+        # the last dimension is E and N on the sky.
+        plus = images[0]
+        minus = images[1]
+
+        # Temporarily duplicate the first point as the last point
+        # to speed up our contour integrals.
+        # Shape of plus array: [len(times), self.n_outline + 1, 2] where
+        plus = np.append(plus, plus[:,0:1,:], axis=1)
+        minus = np.append(minus, minus[:,0:1,:], axis=1)
+
+        # Pre-calculate squared versions...
+        # we use these a lot in the calculations below.
+        plus2 = plus**2
+        minus2 = minus**2
+
+        # First derivatives (len = n_outline)
+        d1_plus = np.diff(plus, axis=1)
+        d1_minus = np.diff(minus, axis=1)
+
+        # Second derivatives (len = n_outline)
+        d2_plus = np.diff( np.append(d1_plus, d1_plus[:, 0:1, :], axis=1), axis=1)
+        d2_minus = np.diff( np.append(d1_minus, d1_minus[:, 0:1, :], axis=1), axis=1)
+
+        # 2 element box addition
+        b2_plus = plus[:, :-1, :] + plus[:, 1:, :]
+        b2_minus = minus[:, :-1, :] + minus[:, 1:, :]
+
+        def wedge_product(aa, bb):
+            foo = aa[:, :, 0] * bb[:, :, 1] - aa[:, :, 1] * bb[:, :, 0]
+
+            return foo
+        
+        # Do the contour integrals.
+        # Equations from Bozza+ 2021 (Eq 8 and 9)
+        # Aplus  =  0.5 * wedge_product( plus[:, :-1, :], plus[:, 1:, :] )
+        Aplus  =  0.25 * (b2_plus[:, :, 0] * d1_plus[:, :, 1] - b2_plus[:, :, 1] * d1_plus[:, :, 0])
+        Aplus = np.sum( Aplus, axis=1 )
+        Aplus += np.sum( (d_angles**3 / 24.) * (  wedge_product( d1_plus[:, :-1, :], d2_plus[:, :-1, :])
+                                                 + wedge_product( d1_plus[:, 1:, :],  d2_plus[:, 1:, :]) ), axis=1)
+
+        # Aminus  =  0.5 * wedge_product( minus[:, :-1, :], minus[:, 1:, :] )
+        Aminus  =  0.25 * (b2_minus[:, :, 0] * d1_minus[:, :, 1] - b2_minus[:, :, 1] * d1_minus[:, :, 0])
+        Aminus = np.sum( Aminus, axis=1 )
+        Aminus += np.sum( (d_angles**3 / 24.) * (  wedge_product( d1_minus[:, :-1, :], d2_minus[:, :-1, :])
+                                                 + wedge_product( d1_minus[:, 1:, :],  d2_minus[:, 1:, :]) ), axis=1)
+
+        Cplus_x = -(1. / 8.0) * np.sum( d1_plus[:, :, 1]  * b2_plus[:, :, 0]**2, axis=1 )
+        Cplus_y =  (1. / 8.0) * np.sum( d1_plus[:, :, 0]  * b2_plus[:, :, 1]**2, axis=1 )
+
+        Cminus_x =  (1. / 8.0) * np.sum( d1_minus[:, :, 1]  * b2_minus[:, :, 0]**2, axis=1 )
+        Cminus_y = -(1. / 8.0) * np.sum( d1_minus[:, :, 0]  * b2_minus[:, :, 1]**2, axis=1 )
+
+        amp_plus  = np.abs(Aplus)  / (np.pi * (self.radius * 1e-3)**2)
+        amp_minus = np.abs(Aminus) / (np.pi * (self.radius * 1e-3)**2)
+        img_pos_plus  = np.array([Cplus_x / np.abs(Aplus),  Cplus_y / np.abs(Aplus)])
+        img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])
+        
+
+        # # Original Broadberry equations.
+        # Aplus  = 0.5 * np.sum(  plus[:, :-1, 0]  * d1_plus[:, :, 1]
+        #                       - plus[:, :-1, 1]  * d1_plus[:, :, 0], axis=1 )
+        
+        # Aminus = 0.5 * np.sum(  minus[:, :-1, 0] * d1_minus[:, :, 1]
+        #                       - minus[:, :-1, 1] * d1_minus[:, :, 0], axis=1 )
+
+        # Cplus1 = np.sum( np.diff(plus[:, :, 1], axis=1)  * (plus2[:, :-1, 0] + plus2[:, 1:, 0]) 
+        #                - np.diff(plus2[:, :, 0], axis=1) * (plus[:, 1:, 1]   + plus[:, :-1, 1]), axis=1 )
+
+        # Cplus2 = np.sum( np.diff(plus[:, :, 0], axis=1)  * (plus2[:, :-1, 1] + plus2[:, 1:, 1])
+        #                - np.diff(plus2[:, :, 1], axis=1) * (plus[:, 1:, 0]   + plus[:, :-1, 0]), axis=1 )
+
+        # Cminus1  = np.sum( np.diff(minus[:, :, 1], axis=1)  * (minus2[:, :-1, 0] + minus2[:, 1:, 0])
+        #                  - np.diff(minus2[:, :, 0], axis=1) * (minus[:, 1:, 1]   + minus[:, :-1, 1]), axis=1 )
+
+        # Cminus2 = np.sum( np.diff(minus[:, :, 0], axis=1)  * (minus2[:, :-1, 1] + minus2[:, 1:, 1])
+        #                 - np.diff(minus2[:, :, 1], axis=1) * (minus[:, 1:, 0]   + minus[:, :-1, 0]), axis=1 )
+
+        # # Above arrays should have shape of len(t_obs).
+        # area_plus = np.abs(Aplus)
+        # area_minus = np.abs(Aminus)
+        
+        # amp_plus  = area_plus  / (np.pi * (self.radius * 1e-3)**2)
+        # amp_minus = area_minus / (np.pi * (self.radius * 1e-3)**2)
+        # img_pos_plus  = np.array([(1 / (2 * Aplus))  * Cplus1,  (1 / (2 * Aplus))  * Cplus2])
+        # img_pos_minus = np.array([(1 / (2 * Aminus)) * Cminus1,  (-1 / (2 * Aminus)) * Cminus2])
+
+
+        print('imag_pos_plus.shape = ', img_pos_plus.shape)
+        print('Aplus.shape = ', Aplus.shape)
+        print('plus.shape = ', plus.shape)
+
+        images = np.array((img_pos_plus, img_pos_minus)).T  # arcsec
+        amps = np.array((amp_plus, amp_minus)).T  # amplifications
+
+        print(amp_plus[:5])
+        print(amp_minus[:5])
+        print(amps[:5].sum(axis=1))
+        
+        pdb.set_trace()
+        
+        return images, amps
+
+    def get_resolved_astrometry(self, t_obs, image_arr=None, amp_arr=None):
+        """
+        Position of the observed (lensed) source position on the sky.
+
+        Parameters
+        ----------
+        t_obs : array_like, shape = [N_times]
+            Array of times to model.
+
+        Optional
+        ----------
+        image_arr : array_like
+            Array of complex image positions at each t_obs,
+            i.e. image_arr.shape = (len(t_obs), number of images at each t_obs).
+            Each value in this array is complex
+            (real = north component, imaginary = east component)
+
+        amp_arr : array_like
+            Array of magnifications of each images.
+            Same shape as image_arr.
+
+        Returns
+        -------
+        model_pos : array_like. shape = [N_times, N_images=2, 2]
+            Array of vector positions of the centroid at each t_obs.
+            Last axis contains East/North positions.
+        """
+        if (image_arr is None) or (amp_arr is None):
+            image_arr, amp_arr = self.get_all_arrays(t_obs)
+
+        xS_lensed_pos = np.swapaxes(image_arr, 0, 1)[::-1, :, :]
+
+        return xS_lensed_pos
+    
+    def get_resolved_amplification(self, t_obs, filt_idx=0, amp_arr=None):
+        """Get the photometric amplification term at a set of times, t for both the
+        plus and minus images.
+
+        Inputs
+        ----------
+        t: Array of times in MJD.DDD
+        """
+        if amp_arr is None:
+            img_arr, amp_arr = self.get_all_arrays(t_obs)
+
+        return np.swapaxis(amp_arr, 0, 1)
+
+    
+    def get_resolved_photometry(self, t_obs, filt_idx=0, amp_arr=None):
         '''
         Get the photometry for each of the lensed source images.
+        Implement with no blending (since we don't support different
+        blendings for the different images).
 
         Parameters
         ----------
         t_obs : array_like
             Array of times to model.
 
-        Other Parameters
+        Optional
+        ----------
+        amp_arr : array_like
+            Amplifications of each individual image and each outline point
+            for that image at each time,
+            i.e. amp_arr.shape = (len(t_obs), self.n_outline, number of images at each t_obs).
+
+            This will over-ride t_obs; but is more efficient when calculating
+            both photometry and astrometry. If None, then just use t_obs.
+        filt_idx : int
+            The filter index (def=0).
+
+        Returns
+        -------
+        mag_model : array_like
+            Magnitude of each lensed image centroid at t_obs.
+            Shape = [2, len(t_obs)]
+        '''
+        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
+        flux_zp = 1.0
+
+        if amp_arr is None:
+            img_arr, amp_arr = self.get_all_arrays(t_obs)
+
+        # Mask invalid values from the amplification array.
+        amp_arr_mskd = np.ma.masked_invalid(amp_arr)
+
+        flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
+        flux_model = flux_src * amp_arr_mskd.T
+
+        # Account for blending, if necessary.
+        try:
+            # Adding flux of neighbors and lens
+            # b_sff = fS / (fS + fN + fL)
+            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / \
+                          self.b_sff[filt_idx]
+        except AttributeError:
+            pass
+        
+        # Catch the edge case where we exceed the zeropoint.
+        bad = np.where(flux_model <= 0)
+        if len(bad[0]) > 0:
+            if print_warning:
+                print('Warning: get_photometry: bad flux encountered.')
+            flux_model[bad] = np.nan
+
+        mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
+
+        return mag_model
+        
+    def get_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
+        '''
+        Get the photometry for the combined source images. 
+
+        Parameters
+        ----------
+        t_obs : array_like
+            Array of times to model.
+
+        Optional
         ----------
         amp_arr : array_like
             Amplifications of each individual image at each time,
@@ -7275,38 +7832,72 @@ class FSPL_PhotAstrom(FSPL):
         flux_zp = 1.0
 
         if amp_arr is None:
-            amp_arr, img_arr = self.get_centroids(t_obs, self.radius)
-            amp = amp_arr
+            img_arr, amp_arr = self.get_all_arrays(t_obs)
 
-            # CHECK THIS STUFF
-        #         # Do we need this masked stuff?
-        #         # Mask invalid values from the amplification array.
-        #         amp_arr_msk = np.ma.masked_invalid(amp_arr)
-        #
-        #         # Sum up all the amplifications b/c surface brightness is conserved.
-        #         amp = np.sum(amp_arr_msk, axis=1)
+        # Mask invalid values from the amplification array.
+        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
+        amp_arr_mskd = amp_arr
+
+        amp = np.sum(amp_arr_mskd, axis=1)
 
         flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
         flux_model = flux_src * amp
 
         # Account for blending, if necessary.
         try:
-            # Adding flux of neighbors and lenses
+            # Adding flux of neighbors and lens
             # b_sff = fS / (fS + fN + fL)
-            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / \
+                          self.b_sff[filt_idx]
         except AttributeError:
             pass
         
         # Catch the edge case where we exceed the zeropoint.
-        bad = np.where(flux_model <= 0)[0]
-        if len(bad) > 0:
+        bad = np.where(flux_model <= 0)
+        if len(bad[0]) > 0:
             if print_warning:
-                print('!!!!!!! Warning: get_photometry: bad flux encountered.')
+                print('Warning: get_photometry: bad flux encountered.')
             flux_model[bad] = np.nan
 
         mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
 
         return mag_model
+
+    def get_astrometry(self, t_obs, image_arr=None, amp_arr=None, ast_filt_idx=0):
+        '''
+        Position of the observed (unresolved) source position in arcsec.
+
+        Parameters
+        ----------
+        t_obs : array_like
+            Array of times to model.
+
+        Optional
+        ----------
+        image_arr : array_like
+            Array of complex image positions at each t_obs,
+            i.e. image_arr.shape = (len(t_obs), number of images at each t_obs).
+            Each value in this array is complex
+            (real = north component, imaginary = east component)
+
+        amp_arr : array_like
+            Array of magnifications of each images.
+            Same shape as image_arr.
+
+        Returns
+        -------
+        model_pos : array_like
+            Array of vector positions of the centroid at each t_obs.
+        '''
+        if (image_arr is None) or (amp_arr is None):
+            image_arr, amp_arr = self.get_all_arrays(t_obs)
+
+        # image_arr shape = [N_times, N_images, 2]
+
+        xS_lensed = np.sum(image_arr * amp_arr[:, np.newaxis, :], axis=1)
+        xS_lensed /= np.sum(amp_arr, axis=1)[:, np.newaxis]
+
+        return xS_lensed
 
     def animate(self, crossings, time_steps, frame_time, name, size, zoom,
                 astrometry):
@@ -7396,8 +7987,14 @@ class FSPL_PhotAstrom(FSPL):
                                              A],
                                       blit=True, interval=frame_time)
         ani.save("%s.mp4" % name, writer="ffmpeg", dpi=600)
+        
         return ani
 
+    
+    
+
+class FSPL_Phot(FSPL):
+    pass
 
 class FSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
