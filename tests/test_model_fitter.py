@@ -23,6 +23,93 @@ import matplotlib as mpl
 # Always generate the same fake data.
 np.random.seed(0)
 
+def test_pspl_parallax_fit_geoproj():
+    outdir = './test_mnest_lmc/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = test_model.fake_data_parallax_lmc()
+    t0par = p_in['t0'] + 50
+
+    data['t0par'] = t0par
+
+    pspl_in = model.PSPL_PhotAstrom_Par_Param1(p_in['mL'],
+                                               p_in['t0'],
+                                               p_in['beta'],
+                                               p_in['dL'],
+                                               p_in['dL'] / p_in['dS'],
+                                               p_in['xS0_E'],
+                                               p_in['xS0_N'],
+                                               p_in['muL_E'],
+                                               p_in['muL_N'],
+                                               p_in['muS_E'],
+                                               p_in['muS_N'],
+                                               p_in['b_sff'],
+                                               p_in['mag_src'],
+                                               raL=p_in['raL'],
+                                               decL=p_in['decL'])
+
+    p_in['dL_dS'] = p_in['dL'] / p_in['dS']
+    p_in['tE'] = pspl_in.tE
+    p_in['thetaE'] = pspl_in.thetaE_amp
+    p_in['piE_E'] = pspl_in.piE[0]
+    p_in['piE_N'] = pspl_in.piE[1]
+    p_in['u0_amp'] = pspl_in.u0_amp
+    p_in['muRel_E'] = pspl_in.muRel[0]
+    p_in['muRel_N'] = pspl_in.muRel[1]
+    p_in['b_sff1'] = p_in['b_sff']
+    p_in['mag_src1'] = p_in['mag_src']
+
+    t0_g, u0_amp_g, tE_g, piE_E_g, piE_N_g = pspl_in.get_geoproj_params(t0par)
+
+#    PSPL_Phot_Par_Param1_geoproj(t0_g, u0_amp_g, tE_g,
+#                                 piE_E_g, piE_N_g, b_sff, mag_src,
+#                                 t0par,
+#                                 raL, decL)
+
+    fitter = PSPL_Solver(data,
+                         model.PSPL_Phot_Par_Param1_geoproj,
+                         n_live_points=300,
+                         outputfiles_basename=outdir + '/bb_',
+                         resume=False)
+
+    # Lets adjust some priors for faster solving.
+    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
+    fitter.priors['u0_amp'] = model_fitter.make_gen(p_in['u0_amp']-0.1, p_in['u0_amp']+0.1)
+    fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.1, p_in['piE_E']+0.1)
+    fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.1, p_in['piE_N']+0.1)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.01, p_in['b_sff']+0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.01, p_in['mag_src']+0.01)
+
+    fitter.solve()
+
+    best = fitter.get_best_fit()
+
+    pspl_out = model.PSPL_Phot_Par_Param1_geoproj(best['t0'], best['u0_amp'], best['tE'],
+                                                  best['piE_E'], best['piE_N'], 
+                                                  best['b_sff1'], best['mag_src1'],
+                                                  t0par,
+                                                  raL=p_in['raL'],
+                                                  decL=p_in['decL'])
+
+    fitter.summarize_results()
+    fitter.plot_dynesty_style(sim_vals=p_in)
+
+    imag_out = pspl_out.get_photometry(data['t_phot1'])
+
+    imag_in = pspl_in.get_photometry(data['t_phot1'])
+
+    np.testing.assert_array_almost_equal(imag_out, imag_in, 1)
+
+    # print("OUTPUT:")
+    lnL_out = fitter.log_likely(best) # , verbose=True)
+    # print("INPUT:")
+    lnL_in = fitter.log_likely(p_in) # , verbose=True)
+
+    assert np.abs(lnL_out - lnL_in) < 50
+
+    return
+
+
 def test_pspl_parallax_fit():
     outdir = './test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)

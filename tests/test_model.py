@@ -2571,6 +2571,271 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     return (time_mjd, pylima_lcurve_mag, our_mag, max_delta)
 
 
+# FIXME: turn this into a real test.
+def test_bagle_self_conversion():
+    raL = 260
+    decL = -30
+
+    t0 = 56000
+    u0_amp = 0.2
+    tE = 135.0
+    piE_E = 0.1
+    piE_N = 0.2
+    b_sff = 1
+    mag_src = 18
+    t0par = 56050
+
+    t_obs = np.arange(t0 - 5*tE, t0 + 5*tE, 0.1)
+
+    pspl_h = model.PSPL_Phot_Par_Param1(t0, u0_amp, tE, 
+                                        piE_E, piE_N, b_sff, mag_src,
+                                        raL, decL)
+
+    t0_g, u0_amp_g, tE_g, piE_E_g, piE_N_g = pspl_h.get_geoproj_params(t0par)
+
+    pspl_g = model.PSPL_Phot_Par_Param1_geoproj(t0_g, u0_amp_g, tE_g, 
+                                                piE_E_g, piE_N_g, b_sff, mag_src,
+                                                t0par,
+                                                raL, decL)
+
+    mag_h = pspl_h.get_photometry(t_obs)
+    mag_g = pspl_g.get_photometry(t_obs)
+
+    amp_h = pspl_h.get_amplification(t_obs)
+    amp_g = pspl_g.get_amplification(t_obs)
+
+    print(np.abs(mag_h - mag_g).max())
+
+    plt.figure(1)
+    plt.clf()
+    plt.plot(t_obs, mag_h, 'o')
+    plt.plot(t_obs, mag_g, '.')
+    plt.show()
+
+    plt.figure(2)
+    plt.clf()
+    plt.plot(t_obs, mag_h - mag_g, '.')
+    plt.show()
+
+    plt.figure(3)
+    plt.clf()
+    plt.plot(t_obs, amp_h, 'o')
+    plt.plot(t_obs, amp_g, '.')
+    plt.show()
+
+    plt.figure(4)
+    plt.clf()
+    plt.plot(t_obs, amp_h - amp_g, '.')
+    plt.show()
+
+    t0_h, u0_amp_h, tE_h, piE_E_h, piE_N_h = pspl_g.get_helio_params()
+
+    pspl_h_from_g = model.PSPL_Phot_Par_Param1(t0_h, u0_amp_h, tE_h, 
+                                               piE_E_h, piE_N_h, b_sff, mag_src,
+                                               raL, decL)
+
+    mag_h_from_g = pspl_h_from_g.get_photometry(t_obs)
+
+    amp_h_from_g = pspl_h_from_g.get_amplification(t_obs)
+
+    print(np.abs(mag_h - mag_h_from_g).max())
+
+def test_PSPL_Phot_Par_Param1_geoproj():
+    t0par = 56000
+    t0 = 56026.03
+    u0_amp = -0.222
+    tE = 135.0
+    piE_E = -0.058
+    piE_N = 0.11
+    b_sff = 1.0
+    mag_src = 19.266
+
+    raL = (17.0 + (49.0 / 60.) + (51.38 / 3600.0)) * 15.0  # degrees
+    decL = -35 + (22.0 / 60.0) + (28.0 / 3600.0)
+
+    run_test_PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE, 
+                                          piE_E, piE_N, b_sff, mag_src,
+                                          t0par, 
+                                          raL, decL, outdir='')
+
+
+def test_PSPL_PhotAstrom_Par_Param4_geoproj():
+    t0par = 56000
+    t0 = 56026.03
+    u0_amp = -0.222
+    tE = 135.0
+    piE_E = -0.058
+    piE_N = 0.11
+    b_sff = 1.0
+    mag_base = 19.266
+
+    thetaE = 3
+    piS = 0.125
+    xS0_E = 0.1
+    xS0_N = -0.1
+    muS_E = 2
+    muS_N = 1
+
+    raL = (17.0 + (49.0 / 60.) + (51.38 / 3600.0)) * 15.0  # degrees
+    decL = -35 + (22.0 / 60.0) + (28.0 / 3600.0)
+
+    run_test_PSPL_PhotAstrom_Par_Param4_geoproj(t0, u0_amp, tE, thetaE, piS,
+                                                piE_E, piE_N,
+                                                xS0_E, xS0_N,
+                                                muS_E, muS_N,
+                                                b_sff, mag_base,
+                                                t0par,
+                                                raL, decL,
+                                                outdir='')
+
+
+def test_geoproj_mm():
+    """
+    Test making sure BAGLE's geocentric projected model gives the same
+    thing as MulensModel.
+    Note: diff of less than 1e-10 is pretty strict. Maybe loosen if needed.
+    """
+    diff = compare_geoproj_mm(260, -30, 56000, 56050, -0.2, 135, -0.058, 0.11)
+    assert np.abs(diff).max() < 1e-10
+
+    diff = compare_geoproj_mm(260, -30, 56000, 56050, 0.02, 135, 0.058, 0.01)
+    assert np.abs(diff).max() < 1e-10
+
+def compare_geoproj_mm(raL, decL, t0par, t0, u0_amp, tE, piE_E, piE_N, show=False):
+    """
+    Compare BAGLE's geocentric projected formalism implementation against
+    that of MulensModel.
+    All conventions are the same, except MulensModel takes times in HJD and 
+    BAGLE takes times in MJD.
+    Note: 
+        raL and decL should be in degrees.
+        t0par and t0 should be in MJD.
+    """
+    import MulensModel as mm
+
+    coords = SkyCoord(raL, decL, unit=(u.deg, u.deg))
+
+    t_mjd = np.arange(t0 - 5*tE, t0 + 5*tE, 0.1)
+    t_hjd = t_mjd + 2400000.5
+
+    params = {}
+    params['t_0'] = t0 + 2400000.5
+    params['t_0_par'] = t0par + 2400000.5
+    params['u_0'] = u0_amp
+    params['t_E'] = tE
+    params['pi_E_N'] = piE_N
+    params['pi_E_E'] = piE_E
+
+    my_model = mm.Model(params, coords=coords)
+
+    A_mm = my_model.get_magnification(t_hjd)
+
+    b_sff = 1
+    mag_src = 18
+
+    pspl = model.PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE, 
+                                              piE_E, piE_N, b_sff, mag_src,
+                                              t0par,
+                                              raL, decL)
+    A_b = pspl.get_amplification(t_mjd)
+
+    if show:
+        # Plot the amplification
+        fig, ax = plt.subplots(2, 1, num=1, sharex=True)
+        plt.clf()
+        fig, ax = plt.subplots(2, 1, num=1, sharex=True)
+        ax[0].plot(t_mjd - t0, A_b, 'ko', label='BAGLE')
+        ax[0].plot(t_mjd - t0, A_mm, 'r.', label='MuLens')
+        ax[1].plot(t_mjd - t0, A_b - A_mm, 'b.')
+        ax[1].set_xlabel('t - t0 (MJD)')
+        ax[0].set_ylabel('A')
+        ax[1].set_ylabel('BAGLE - MuLens')
+        ax[0].legend()
+        plt.show()
+
+    return (A_b - A_mm)/A_mm
+
+
+def run_test_PSPL_PhotAstrom_Par_Param4_geoproj(t0, u0_amp, tE, thetaE, piS,
+                                                piE_E, piE_N,
+                                                xS0_E, xS0_N,
+                                                muS_E, muS_N,
+                                                b_sff, mag_base,
+                                                t0par,
+                                                raL, decL,
+                                                outdir=''):
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
+
+    pspl = model.PSPL_PhotAstrom_Par_Param4_geoproj(t0, u0_amp, tE, thetaE, piS,
+                                                    piE_E, piE_N,
+                                                    xS0_E, xS0_N,
+                                                    muS_E, muS_N,
+                                                    b_sff, mag_base,
+                                                    t0par,
+                                                    raL, decL)
+
+    t = np.arange(t0 - 1000, t0 + 1000, 1)
+    dt = t - pspl.t0
+
+    A = pspl.get_amplification(t)
+    pos = pspl.get_astrometry(t)
+    shift = pspl.get_centroid_shift(t)
+
+    # Plot the amplification
+    plt.figure(1)
+    plt.clf()
+    plt.plot(dt, 2.5 * np.log10(A), 'k.')
+    plt.xlabel('t - t0 (MJD)')
+    plt.ylabel('2.5 * log(A)')
+    plt.savefig(outdir + 'amp_v_time.png')
+    plt.show()
+
+    # Plot the position
+    plt.figure(2)
+    plt.clf()
+    plt.plot(pos[:,0], pos[:,1], 'k.')
+    plt.xlabel('RA (arcsec)')
+    plt.ylabel('Dec (arcsec)')
+    plt.savefig(outdir + 'pos.png')
+    plt.show()
+
+    # Plot the shift
+    plt.figure(3)
+    plt.clf()
+    plt.plot(shift[:,0], shift[:,1], 'k.')
+    plt.xlabel('RA (mas)')
+    plt.ylabel('Dec (mas)')
+    plt.savefig(outdir + 'shift.png')
+    plt.show()
+
+
+def run_test_PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE, 
+                                          piE_E, piE_N, b_sff, mag_src,
+                                          t0par, 
+                                          raL, decL, outdir=''):
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
+
+    pspl = model.PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE, 
+                                              piE_E, piE_N, b_sff, mag_src,
+                                              t0par, 
+                                              raL, decL)
+
+    t = np.arange(t0 - 500, t0 + 500, 1)
+    dt = t - pspl.t0
+
+    A = pspl.get_amplification(t)
+
+    # Plot the amplification
+    plt.figure(1)
+    plt.clf()
+    plt.plot(dt, 2.5 * np.log10(A), 'k.')
+    plt.xlabel('t - t0 (MJD)')
+    plt.ylabel('2.5 * log(A)')
+    plt.savefig(outdir + 'amp_v_time.png')
+    plt.show()
+
 def test_u0_hat_thetaE_hat():
     """
     Tests for:

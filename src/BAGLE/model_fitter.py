@@ -8,6 +8,7 @@
 .. moduleauthor:: Casey Lam <casey_lam@berkeley.edu>
 .. moduleauthor:: Edward Broadberry
 
+Note: all times must be given in MJD.
 """
 
 from pymultinest.solve import Solver
@@ -258,6 +259,7 @@ class PSPL_Solver(Solver):
         self.n_phot_sets = None
         self.n_ast_sets = None
         self.fitter_param_names = None
+        self.fixed_param_names = None
         self.additional_param_names = None
         self.all_param_names = None
         self.n_dims = None
@@ -423,6 +425,10 @@ class PSPL_Solver(Solver):
         self.fitter_param_names = self.model_class.fitter_param_names + \
                                   phot_params + ast_params
 
+        # Is this necessary?
+        if len(self.model_class.fixed_param_names) > 0:
+            self.fixed_param_names = self.model_class.fixed_param_names
+
         if self.custom_additional_param_names is not None:
             self.additional_param_names = []
             for cc, param_name in enumerate(self.custom_additional_param_names):
@@ -562,15 +568,17 @@ class PSPL_Solver(Solver):
         return
 
     def get_model(self, params):
-        if self.model_class.parallaxFlag:
-            raL, decL = self.data['raL'], self.data['decL']
-        else:
-            raL, decL = None, None
         params_dict = generate_params_dict(params,
                                            self.fitter_param_names)
-        mod = self.model_class(*params_dict.values(),
-                                 raL=raL,
-                                 decL=decL)
+
+        if self.fixed_param_names is not None:
+            fixed_params_dict = generate_fixed_params_dict(self.data, 
+                                                           self.fixed_param_names)        
+
+            mod = self.model_class(*params_dict.values(), **fixed_params_dict)
+
+        else:
+            mod = self.model_class(*params_dict.values())
 
         # FIXME: Why are we updating params here???
         if not isinstance(params, (dict, Row)):
@@ -2759,6 +2767,13 @@ def generate_params_dict(params, fitter_param_names):
 
     return params_dict
                     
+
+def generate_fixed_params_dict(data, fixed_param_names):
+    param_dict = {}
+    for param in fixed_param_names:
+        param_dict[param] = data[param]
+
+    return param_dict
 
 ########################################
 ### GENERAL USE AND SHARED FUNCTIONS ###
