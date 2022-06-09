@@ -5,6 +5,7 @@ from astropy.time import Time
 from astropy import units 
 from astropy.coordinates import SkyCoord
 from astropy import time as atime, coordinates as coord, units as u
+from BAGLE import data
 import time
 
 
@@ -14,7 +15,7 @@ class EventDataDict(dict):
     a specified target. 
 
     The object must be initialized with
-        target_name: event name
+        target: event name
         raL: R.A. of the target
         decL: Dec. of the target
     and other entries are expected by the Multinest fitter and 
@@ -71,16 +72,16 @@ class EventDataDict(dict):
         """
         EventDataDict must be instantiated with a dictionary containing
 
-            target_name
+            target
             raL
             decL
         
         See class notes for a full description of what should be defined on 
         the dictionary for normal use. 
         """
-        if ((val is None) or ('target_name' not in val) or
+        if ((val is None) or ('target' not in val) or
                 ('raL' not in val) or ('decL' not in val)):
-            msg = "EventDataDict must be instantiated with a dictionary containing target_name, raL, and decL."
+            msg = "EventDataDict must be instantiated with a dictionary containing target, raL, and decL."
             raise Exception(msg)
 
         super().__init__(val)
@@ -163,7 +164,7 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
           'ob110037' : '17:55:55.83',
           'ob110310' : '17:51:25.39',
           'ob110462' : '17:51:40.19',
-          'ob120169' : '17:49:51.38',
+          'ob120169' : '17:49:51.38'
     }
     
     dec = {'mb09260' :  '-26:50:20.88',
@@ -171,7 +172,7 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
            'ob110037' : '-30:33:39.7',
            'ob110310' : '-30:24:35.0',
            'ob110462' : '-29:53:26.3',
-           'ob120169' : '-35:22:28.0',
+           'ob120169' : '-35:22:28.0'
     }
     
     # The values in astrom_file are from the latest analysis directories
@@ -187,23 +188,23 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
                   'ob110310_f606w' : '/u/jlu/work/microlens/OB110310/a_2021_07_08/ob110310_f606w_astrom_p4_2021_07_08.fits',
                   'ob110310_f814w' : '/u/jlu/work/microlens/OB110310/a_2021_07_08/ob110310_f814w_astrom_p4_2021_07_08.fits',
                   'ob110462_f606w' : '/u/jlu/work/microlens/OB110462/a_2021_07_08/ob110462_f606w_astrom_p5_nomay_2021_07_08.fits',
-                  'ob110462_f814w' : '/u/jlu/work/microlens/OB110462/a_2021_07_08/ob110462_f814w_astrom_p5_nomay_2021_07_08.fits',
+                  'ob110462_f814w' : '/u/jlu/work/microlens/OB110462/a_2021_07_08/ob110462_f814w_astrom_p5_nomay_2021_07_08.fits'
     }
     
     photom_file = {'ob110037' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0037.dat',
                    'ob110310' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0310.dat',
                    'ob110462' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462.dat',
-                   'ob120169' : '/g/lu/data/microlens/ogle/v2019_06/OGLE-2012-BLG-0169.dat',
+                   'ob120169' : '/g/lu/data/microlens/ogle/v2019_06/OGLE-2012-BLG-0169.dat'
     }
     
-    photom_spitzer = {'ob120169': None,
+    photom_spitzer = {'ob120169': None
                       }
     
     photom_moa = {'mb09260' : '/g/lu/data/microlens/moa/MB09260/mb09260-MOA2R-10000.phot.dat',
                   'mb10364' : '/g/lu/data/microlens/moa/MB10364/mb10364-MOA2R-10000.phot.dat',
                   'mb11039' : '/g/lu/data/microlens/moa/MB11039/mb11039-MOA2R-10000.phot.dat', # OB110037
                   'mb11332' : '/g/lu/data/microlens/moa/MB11332/mb11332-MOA2R-10000.phot.dat', # OB110310
-                  'mb11191' : '/g/lu/data/microlens/moa/MB11191/mb11191-MOA2R-10000.phot.dat', # OB110462
+                  'mb11191' : '/g/lu/data/microlens/moa/MB11191/mb11191-MOA2R-10000.phot.dat' # OB110462
                  }
     
     photom_kmt = {'kb200101' : '/g/lu/data/microlens/kmtnet/alerts_2020/kb200101/KMTA19_I.pysis.txt',
@@ -229,7 +230,7 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
                               'HST_f606w' :  astrom_hst['ob110462_f606w'],
                               'HST_f814w' :  astrom_hst['ob110462_f814w']},
                  'ob120169': {'I_OGLE':      photom_file['ob120169'],
-                              'Kp_Keck':     astrom_file['ob120169']},
+                              'Kp_Keck':     astrom_file['ob120169']}
     }
     
 
