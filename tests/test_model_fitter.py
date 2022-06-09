@@ -1,8 +1,8 @@
 from src.BAGLE import model
 from src.BAGLE import model_fitter
 from src.BAGLE import multinest_utils, munge
-from src.BAGLE.model_fitter import PSPL_Solver
-import test_model
+from src.BAGLE.model_fitter import PSPL_Solver, PSPL_Solver_Hobson_Weighted
+import test_model, fake_data
 import numpy as np
 import pylab as plt
 import os
@@ -17,9 +17,273 @@ import matplotlib
 from astropy.table import Table
 import yaml
 import shutil
+import matplotlib as mpl
+
 
 # Always generate the same fake data.
 np.random.seed(0)
+
+def test_pspl_parallax_fit():
+    outdir = './test_mnest_lmc/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = test_model.fake_data_parallax_lmc()
+
+    fitter = PSPL_Solver(data,
+                         model.PSPL_PhotAstrom_Par_Param1,
+                         n_live_points=300,
+                         outputfiles_basename=outdir + '/aa_',
+                         resume=False)
+
+    # Lets adjust some priors for faster solving.
+    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
+    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-3, p_in['xS0_E']+1e-3)
+    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-3, p_in['xS0_N']+1e-3)
+    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.1, p_in['beta']+0.1)
+    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.1, p_in['muL_E']+0.1)
+    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.1, p_in['muL_N']+0.1)
+    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.1, p_in['muS_E']+0.1)
+    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.1, p_in['muS_N']+0.1)
+    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-100, p_in['dL']+100)
+    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.1, (p_in['dL']/p_in['dS'])+0.1)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.1, p_in['b_sff']+0.1)
+    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.1, p_in['mag_src']+0.1)
+
+    fitter.solve()
+
+    best = fitter.get_best_fit()
+
+    pspl_out = model.PSPL_PhotAstrom_Par_Param1(best['mL'],
+                                                best['t0'],
+                                                best['beta'],
+                                                best['dL'],
+                                                best['dL_dS'],
+                                                best['xS0_E'],
+                                                best['xS0_N'],
+                                                best['muL_E'],
+                                                best['muL_N'],
+                                                best['muS_E'],
+                                                best['muS_N'],
+                                                [best['b_sff1']],
+                                                [best['mag_src1']],
+                                                raL=p_in['raL'],
+                                                decL=p_in['decL'])
+
+    pspl_in = model.PSPL_PhotAstrom_Par_Param1(p_in['mL'],
+                                               p_in['t0'],
+                                               p_in['beta'],
+                                               p_in['dL'],
+                                               p_in['dL'] / p_in['dS'],
+                                               p_in['xS0_E'],
+                                               p_in['xS0_N'],
+                                               p_in['muL_E'],
+                                               p_in['muL_N'],
+                                               p_in['muS_E'],
+                                               p_in['muS_N'],
+                                               p_in['b_sff'],
+                                               p_in['mag_src'],
+                                               raL=p_in['raL'],
+                                               decL=p_in['decL'])
+
+
+    p_in['dL_dS'] = p_in['dL'] / p_in['dS']
+    p_in['tE'] = pspl_in.tE
+    p_in['thetaE'] = pspl_in.thetaE_amp
+    p_in['piE_E'] = pspl_in.piE[0]
+    p_in['piE_N'] = pspl_in.piE[1]
+    p_in['u0_amp'] = pspl_in.u0_amp
+    p_in['muRel_E'] = pspl_in.muRel[0]
+    p_in['muRel_N'] = pspl_in.muRel[1]
+    p_in['b_sff1'] = p_in['b_sff']
+    p_in['mag_src1'] = p_in['mag_src']
+
+    fitter.summarize_results()
+    fitter.plot_dynesty_style(sim_vals=p_in)
+    fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
+
+    imag_out = pspl_out.get_photometry(data['t_phot1'])
+    pos_out = pspl_out.get_astrometry(data['t_ast1'])
+
+    imag_in = pspl_in.get_photometry(data['t_phot1'])
+    pos_in = pspl_in.get_astrometry(data['t_ast1'])
+
+    np.testing.assert_array_almost_equal(imag_out, imag_in, 1)
+    np.testing.assert_array_almost_equal(pos_out, pos_in, 4)
+
+    # print("OUTPUT:")
+    lnL_out = fitter.log_likely(best) # , verbose=True)
+    # print("INPUT:")
+    lnL_in = fitter.log_likely(p_in) # , verbose=True)
+ 
+    assert np.abs(lnL_out - lnL_in) < 50
+
+    return
+
+
+def plot_mnest_test(data, imag_in, imag_out, pos_in, pos_out, outroot):
+    plt.figure(1)
+    plt.clf()
+    plt.errorbar(data['t_phot1'], data['mag1'], yerr=data['mag_err1'], fmt='k.')
+    plt.plot(data['t_phot1'], imag_out, 'r-')
+    plt.plot(data['t_phot1'], imag_in, 'g-')
+    plt.xlabel('t - t0 (days)')
+    plt.ylabel('I (mag)')
+    plt.title('Input Data and Output Model')
+    plt.savefig(outroot + '_phot.png')
+
+    plt.figure(2)
+    plt.clf()
+    plt.errorbar(data['xpos'], data['ypos'], xerr=data['xpos_err'],
+                 yerr=data['ypos_err'], fmt='k.')
+    plt.plot(pos_out[:, 0], pos_out[:, 1], 'r-')
+    plt.plot(pos_in[:, 0], pos_in[:, 1], 'g-')
+    plt.gca().invert_xaxis()
+    plt.xlabel('X Pos (")')
+    plt.ylabel('Y Pos (")')
+    plt.title('Input Data and Output Model')
+    plt.savefig(outroot + '_ast.png')
+
+    plt.figure(3)
+    plt.clf()
+    plt.errorbar(data['t_ast'], data['xpos'], yerr=data['xpos_err'], fmt='k.')
+    plt.plot(data['t_ast'], pos_out[:, 0], 'r-')
+    plt.plot(data['t_ast'], pos_in[:, 0], 'g-')
+    plt.xlabel('t - t0 (days)')
+    plt.ylabel('X Pos (")')
+    plt.title('Input Data and Output Model')
+    plt.savefig(outroot + '_t_vs_E.png')
+
+    plt.figure(4)
+    plt.clf()
+    plt.errorbar(data['t_ast'], data['ypos'], yerr=data['ypos_err'], fmt='k.')
+    plt.plot(data['t_ast'], pos_out[:, 1], 'r-')
+    plt.plot(data['t_ast'], pos_in[:, 1], 'g-')
+    plt.xlabel('t - t0 (days)')
+    plt.ylabel('Y Pos (")')
+    plt.title('Input Data and Output Model')
+    plt.savefig(outroot + '_t_vs_N.png')
+
+    return
+
+
+def test_make_t0_gen():
+    data, p_in = test_model.fake_data1()
+
+    t0_gen = model_fitter.make_t0_gen(data['t_phot1'], data['mag1'])
+
+    t0_rand = t0_gen.rvs(size=100)
+
+    plt.clf()
+    plt.plot(data['t_phot1'], data['mag1'], 'k.')
+    plt.axvline(t0_rand.min())
+    plt.axvline(t0_rand.max())
+    print('t0 between: ', t0_rand.min(), t0_rand.max())
+
+    assert t0_rand.min() < 56990
+    assert t0_rand.max() > 57000
+
+    return
+
+
+def test_PSPL_Solver(plot=False):
+    # This is an old run from when the 0 sign was wrong.
+    outdir = './test_pspl_solver/'
+    base = outdir + 'aa'
+
+    # Make directory if it doesn't exist.
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    data, p_in = test_model.fake_data1()
+
+    fitter = PSPL_Solver(data,
+                         model.PSPL_PhotAstrom_noPar_Param1,
+                         n_live_points=100,
+                         outputfiles_basename=base,
+                         resume=False, verbose=False)
+
+    # Lets adjust some priors for faster solving.
+    fitter.priors['mL'] = model_fitter.make_gen(5.0, 15.0)
+    fitter.priors['t0'] = model_fitter.make_gen(56990, 57010)
+    fitter.priors['beta'] = model_fitter.make_gen(-0.5, -0.3)
+    fitter.priors['muL_E'] = model_fitter.make_gen(-1, 1)
+    fitter.priors['muL_N'] = model_fitter.make_gen(-8, -6)
+    fitter.priors['muS_E'] = model_fitter.make_gen(0, 3)
+    fitter.priors['muS_N'] = model_fitter.make_gen(-2, 1)
+    fitter.priors['dL'] = model_fitter.make_gen(3000, 5000)
+    fitter.priors['dL_dS'] = model_fitter.make_gen(0.45, 0.55)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(0.5, 1.1)
+    fitter.priors['mag_src1'] = model_fitter.make_gen(18.9, 19.1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen(-10 ** -3, 10 ** -3)
+    fitter.priors['xS0_N'] = model_fitter.make_gen(-10 ** -3, 10 ** -3)
+
+    # fitter.solve()
+
+    best = fitter.get_best_fit()
+
+    pspl_out = model.PSPL_PhotAstrom_noPar_Param1(mL=best['mL'],
+                                                t0=best['t0'],
+                                                beta=best['beta'],
+                                                dL=best['dL'],
+                                                dL_dS=best['dL_dS'],
+                                                xS0_E=best['xS0_E'],
+                                                xS0_N=best['xS0_N'],
+                                                muL_E=best['muL_E'],
+                                                muL_N=best['muL_N'],
+                                                muS_E=best['muS_E'],
+                                                muS_N=best['muS_N'],
+                                                mag_src=[best['mag_src1']],
+                                                b_sff=[best['b_sff1']])
+
+    pspl_in = model.PSPL_PhotAstrom_noPar_Param1(mL=p_in['mL'],
+                                               t0=p_in['t0'],
+                                               beta=p_in['beta'],
+                                               dL=p_in['dL'],
+                                               dL_dS=p_in['dL'] / p_in['dS'],
+                                               xS0_E=p_in['xS0_E'],
+                                               xS0_N=p_in['xS0_N'],
+                                               muL_E=p_in['muL_E'],
+                                               muL_N=p_in['muL_N'],
+                                               muS_E=p_in['muS_E'],
+                                               muS_N=p_in['muS_N'],
+                                               b_sff=[p_in['b_sff1']],
+                                               mag_src=[p_in['mag_src1']])
+
+
+    p_in['dL_dS'] = p_in['dL'] / p_in['dS']
+    p_in['tE'] = pspl_in.tE
+    p_in['thetaE'] = pspl_in.thetaE_amp
+    p_in['piE_E'] = pspl_in.piE[0]
+    p_in['piE_N'] = pspl_in.piE[1]
+    p_in['u0_amp'] = pspl_in.u0_amp
+    p_in['muRel_E'] = pspl_in.muRel[0]
+    p_in['muRel_N'] = pspl_in.muRel[1]
+
+    # Save the data for future plotting.
+    pickle_data(base, data, p_in)
+
+    # Compare input and output model paramters
+    for param in best.colnames:
+        try:
+            frac_diff = np.abs(p_in[param] - best[param])
+            
+            if p_in[param] != 0:
+                frac_diff /= p_in[param]
+                
+            assert frac_diff < 0.2
+        except KeyError:
+            pass
+
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in)
+        fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
+
+    lnL_out = fitter.log_likely(best, verbose=False)
+    lnL_in = fitter.log_likely(p_in, verbose=False)
+
+    assert np.abs(lnL_out - lnL_in) < 100
+
+    return
 
 def test_pspl_dy_fit():
     # No parallax
@@ -620,268 +884,6 @@ def test_lumlens_parallax_fit_4p2a():
 
     return
 
-def test_pspl_parallax_fit():
-    outdir = './test_mnest_lmc/'
-    os.makedirs(outdir, exist_ok=True)
-
-    data, p_in = test_model.fake_data_parallax_lmc()
-
-    fitter = PSPL_Solver(data,
-                         model.PSPL_PhotAstrom_Par_Param1,
-                         n_live_points=300,
-                         outputfiles_basename=outdir + '/aa_',
-                         resume=False)
-
-    # Lets adjust some priors for faster solving.
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-3, p_in['xS0_E']+1e-3)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-3, p_in['xS0_N']+1e-3)
-    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.1, p_in['beta']+0.1)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.1, p_in['muL_E']+0.1)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.1, p_in['muL_N']+0.1)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.1, p_in['muS_E']+0.1)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.1, p_in['muS_N']+0.1)
-    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-100, p_in['dL']+100)
-    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.1, (p_in['dL']/p_in['dS'])+0.1)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.1, p_in['b_sff']+0.1)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.1, p_in['mag_src']+0.1)
-    
-    fitter.solve()
-
-    best = fitter.get_best_fit()
-
-    pspl_out = model.PSPL_PhotAstrom_Par_Param1(best['mL'],
-                                                best['t0'],
-                                                best['beta'],
-                                                best['dL'],
-                                                best['dL_dS'],
-                                                best['xS0_E'],
-                                                best['xS0_N'],
-                                                best['muL_E'],
-                                                best['muL_N'],
-                                                best['muS_E'],
-                                                best['muS_N'],
-                                                [best['b_sff1']],
-                                                [best['mag_src1']],
-                                                raL=p_in['raL'],
-                                                decL=p_in['decL'])
-
-    pspl_in = model.PSPL_PhotAstrom_Par_Param1(p_in['mL'],
-                                               p_in['t0'],
-                                               p_in['beta'],
-                                               p_in['dL'],
-                                               p_in['dL'] / p_in['dS'],
-                                               p_in['xS0_E'],
-                                               p_in['xS0_N'],
-                                               p_in['muL_E'],
-                                               p_in['muL_N'],
-                                               p_in['muS_E'],
-                                               p_in['muS_N'],
-                                               p_in['b_sff'],
-                                               p_in['mag_src'],
-                                               raL=p_in['raL'],
-                                               decL=p_in['decL'])
-
-
-    p_in['dL_dS'] = p_in['dL'] / p_in['dS']
-    p_in['tE'] = pspl_in.tE
-    p_in['thetaE'] = pspl_in.thetaE_amp
-    p_in['piE_E'] = pspl_in.piE[0]
-    p_in['piE_N'] = pspl_in.piE[1]
-    p_in['u0_amp'] = pspl_in.u0_amp
-    p_in['muRel_E'] = pspl_in.muRel[0]
-    p_in['muRel_N'] = pspl_in.muRel[1]
-    p_in['b_sff1'] = p_in['b_sff']
-    p_in['mag_src1'] = p_in['mag_src']
-
-    fitter.summarize_results()
-    fitter.plot_dynesty_style(sim_vals=p_in)
-    fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
-
-    imag_out = pspl_out.get_photometry(data['t_phot1'])
-    pos_out = pspl_out.get_astrometry(data['t_ast1'])
-
-    imag_in = pspl_in.get_photometry(data['t_phot1'])
-    pos_in = pspl_in.get_astrometry(data['t_ast1'])
-
-    np.testing.assert_array_almost_equal(imag_out, imag_in, 1)
-    np.testing.assert_array_almost_equal(pos_out, pos_in, 4)
-
-    # print("OUTPUT:")
-    lnL_out = fitter.log_likely(best) # , verbose=True)
-    # print("INPUT:")
-    lnL_in = fitter.log_likely(p_in) # , verbose=True)
- 
-    assert np.abs(lnL_out - lnL_in) < 50
-
-    return
-
-
-def plot_mnest_test(data, imag_in, imag_out, pos_in, pos_out, outroot):
-    plt.figure(1)
-    plt.clf()
-    plt.errorbar(data['t_phot1'], data['mag1'], yerr=data['mag_err1'], fmt='k.')
-    plt.plot(data['t_phot1'], imag_out, 'r-')
-    plt.plot(data['t_phot1'], imag_in, 'g-')
-    plt.xlabel('t - t0 (days)')
-    plt.ylabel('I (mag)')
-    plt.title('Input Data and Output Model')
-    plt.savefig(outroot + '_phot.png')
-
-    plt.figure(2)
-    plt.clf()
-    plt.errorbar(data['xpos'], data['ypos'], xerr=data['xpos_err'],
-                 yerr=data['ypos_err'], fmt='k.')
-    plt.plot(pos_out[:, 0], pos_out[:, 1], 'r-')
-    plt.plot(pos_in[:, 0], pos_in[:, 1], 'g-')
-    plt.gca().invert_xaxis()
-    plt.xlabel('X Pos (")')
-    plt.ylabel('Y Pos (")')
-    plt.title('Input Data and Output Model')
-    plt.savefig(outroot + '_ast.png')
-
-    plt.figure(3)
-    plt.clf()
-    plt.errorbar(data['t_ast'], data['xpos'], yerr=data['xpos_err'], fmt='k.')
-    plt.plot(data['t_ast'], pos_out[:, 0], 'r-')
-    plt.plot(data['t_ast'], pos_in[:, 0], 'g-')
-    plt.xlabel('t - t0 (days)')
-    plt.ylabel('X Pos (")')
-    plt.title('Input Data and Output Model')
-    plt.savefig(outroot + '_t_vs_E.png')
-
-    plt.figure(4)
-    plt.clf()
-    plt.errorbar(data['t_ast'], data['ypos'], yerr=data['ypos_err'], fmt='k.')
-    plt.plot(data['t_ast'], pos_out[:, 1], 'r-')
-    plt.plot(data['t_ast'], pos_in[:, 1], 'g-')
-    plt.xlabel('t - t0 (days)')
-    plt.ylabel('Y Pos (")')
-    plt.title('Input Data and Output Model')
-    plt.savefig(outroot + '_t_vs_N.png')
-
-    return
-
-
-def test_make_t0_gen():
-    data, p_in = test_model.fake_data1()
-
-    t0_gen = model_fitter.make_t0_gen(data['t_phot1'], data['mag1'])
-
-    t0_rand = t0_gen.rvs(size=100)
-
-    plt.clf()
-    plt.plot(data['t_phot1'], data['mag1'], 'k.')
-    plt.axvline(t0_rand.min())
-    plt.axvline(t0_rand.max())
-    print('t0 between: ', t0_rand.min(), t0_rand.max())
-
-    assert t0_rand.min() < 56990
-    assert t0_rand.max() > 57000
-
-    return
-
-
-def test_PSPL_Solver(plot=False):
-    # This is an old run from when the 0 sign was wrong.
-    outdir = './test_pspl_solver/'
-    base = outdir + 'aa'
-
-    # Make directory if it doesn't exist.
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-
-    data, p_in = test_model.fake_data1()
-
-    fitter = PSPL_Solver(data,
-                         model.PSPL_PhotAstrom_noPar_Param1,
-                         n_live_points=100,
-                         outputfiles_basename=base,
-                         resume=False, verbose=False)
-
-    # Lets adjust some priors for faster solving.
-    fitter.priors['mL'] = model_fitter.make_gen(5.0, 15.0)
-    fitter.priors['t0'] = model_fitter.make_gen(56990, 57010)
-    fitter.priors['beta'] = model_fitter.make_gen(-0.5, -0.3)
-    fitter.priors['muL_E'] = model_fitter.make_gen(-1, 1)
-    fitter.priors['muL_N'] = model_fitter.make_gen(-8, -6)
-    fitter.priors['muS_E'] = model_fitter.make_gen(0, 3)
-    fitter.priors['muS_N'] = model_fitter.make_gen(-2, 1)
-    fitter.priors['dL'] = model_fitter.make_gen(3000, 5000)
-    fitter.priors['dL_dS'] = model_fitter.make_gen(0.45, 0.55)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(0.5, 1.1)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(18.9, 19.1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(-10 ** -3, 10 ** -3)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(-10 ** -3, 10 ** -3)
-
-    # fitter.solve()
-
-    best = fitter.get_best_fit()
-
-    pspl_out = model.PSPL_PhotAstrom_noPar_Param1(mL=best['mL'],
-                                                t0=best['t0'],
-                                                beta=best['beta'],
-                                                dL=best['dL'],
-                                                dL_dS=best['dL_dS'],
-                                                xS0_E=best['xS0_E'],
-                                                xS0_N=best['xS0_N'],
-                                                muL_E=best['muL_E'],
-                                                muL_N=best['muL_N'],
-                                                muS_E=best['muS_E'],
-                                                muS_N=best['muS_N'],
-                                                mag_src=[best['mag_src1']],
-                                                b_sff=[best['b_sff1']])
-
-    pspl_in = model.PSPL_PhotAstrom_noPar_Param1(mL=p_in['mL'],
-                                               t0=p_in['t0'],
-                                               beta=p_in['beta'],
-                                               dL=p_in['dL'],
-                                               dL_dS=p_in['dL'] / p_in['dS'],
-                                               xS0_E=p_in['xS0_E'],
-                                               xS0_N=p_in['xS0_N'],
-                                               muL_E=p_in['muL_E'],
-                                               muL_N=p_in['muL_N'],
-                                               muS_E=p_in['muS_E'],
-                                               muS_N=p_in['muS_N'],
-                                               b_sff=[p_in['b_sff1']],
-                                               mag_src=[p_in['mag_src1']])
-
-
-    p_in['dL_dS'] = p_in['dL'] / p_in['dS']
-    p_in['tE'] = pspl_in.tE
-    p_in['thetaE'] = pspl_in.thetaE_amp
-    p_in['piE_E'] = pspl_in.piE[0]
-    p_in['piE_N'] = pspl_in.piE[1]
-    p_in['u0_amp'] = pspl_in.u0_amp
-    p_in['muRel_E'] = pspl_in.muRel[0]
-    p_in['muRel_N'] = pspl_in.muRel[1]
-
-    # Save the data for future plotting.
-    pickle_data(base, data, p_in)
-
-    # Compare input and output model paramters
-    for param in best.colnames:
-        try:
-            frac_diff = np.abs(p_in[param] - best[param])
-            
-            if p_in[param] != 0:
-                frac_diff /= p_in[param]
-                
-            assert frac_diff < 0.2
-        except KeyError:
-            pass
-
-    if plot:
-        fitter.plot_dynesty_style(sim_vals=p_in)
-        fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
-
-    lnL_out = fitter.log_likely(best, verbose=False)
-    lnL_in = fitter.log_likely(p_in, verbose=False)
-
-    assert np.abs(lnL_out - lnL_in) < 100
-
-    return
-
 
 # NOTE: some of plotting stuff is not functioning... 
 def test_correlated_data2():
@@ -972,57 +974,73 @@ def test_correlated_data_astrom():
 #                                    mnest_results=mnest_results,
 #                                    zoomx=[[56800, 57200]])
 
-
-def test_PSBL_parallax_Solver():
-    base = './test_psbl_parallax_solver/aa'
+def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow'):
+    base = './test_psbl_photastrom_par_param3_solver/aa'
 
     data, p_in, psbl, ani = test_model.fake_data_PSBL(parallax=True)
 
-    fitter = PSPL_Solver(data, n_live_points=100,
+    fitter = PSPL_Solver(data, 
+                         model.PSBL_PhotAstrom_Par_Param3,
+                         n_live_points=100,
                          outputfiles_basename=base,
-                         resume=False)
+                         resume=True)
 
-    # Lets adjust some priors for faster solving.
-    fitter.priors['mL1'] = model_fitter.make_gen(0.1, 100.0)
-    fitter.priors['mL2'] = model_fitter.make_gen(0.1, 100.0)
-    fitter.priors['t0'] = model_fitter.make_gen(56990, 57010)
-    fitter.priors['beta'] = model_fitter.make_gen(-0.5, -0.3)
-    fitter.priors['muL_E'] = model_fitter.make_gen(-1, 1)
-    fitter.priors['muL_N'] = model_fitter.make_gen(-8, -6)
-    fitter.priors['muS_E'] = model_fitter.make_gen(0, 3)
-    fitter.priors['muS_N'] = model_fitter.make_gen(-2, 1)
-    fitter.priors['dL'] = model_fitter.make_gen(3000, 5000)
-    fitter.priors['dL_dS'] = model_fitter.make_gen(0.45, 0.55)
-    fitter.priors['b_sff'] = model_fitter.make_gen(0.5, 1.1)
-    fitter.priors['mag_src'] = model_fitter.make_gen(18.9, 19.1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(-10**-3, 10**-3)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(-10**-3, 10**-3)
-    fitter.priors['sep'] = model_fitter.make_gen(1e-3, 1e-2)
-    fitter.priors['alpha'] = model_fitter.make_gen(0, 210)
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+                          'piE_E', 'piE_N',
+                          'xS0_E', 'xS0_N',
+                          'muS_E', 'muS_N',
+                          'q', 'sep', 'alpha']
+    phot_param_names = ['b_sff', 'mag_base']
+
+    if prior == 'narrow':
+        # Lets adjust some priors for faster solving.
+        fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-0.1, p_in['t0']+0.1)
+        fitter.priors['u0_amp'] = model_fitter.make_gen(p_in['u0_amp']-0.1, p_in['u0_amp']+0.1)
+        fitter.priors['tE'] = model_fitter.make_gen(p_in['tE']-0.1, p_in['tE']+0.1)
+        fitter.priors['log10_thetaE'] = model_fitter.make_gen(np.log10(p_in['thetaE_amp'])-0.1, np.log10(p_in['thetaE_amp'])+0.1)
+        fitter.priors['piS'] = model_fitter.make_gen(p_in['piS']-0.1, p_in['piS']+0.1)
+        fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.1, p_in['piE_E']+0.1)
+        fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.1, p_in['piE_N']+0.1)
+        fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-0.1, p_in['xS0_E']+0.1)
+        fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-0.1, p_in['xS0_N']+0.1)
+        fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.1, p_in['muS_E']+0.1)
+        fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.1, p_in['muS_N']+0.1)
+        fitter.priors['q'] = model_fitter.make_gen(p_in['q']-0.1, p_in['q']+0.1) 
+        fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.1, p_in['sep']+0.1) 
+        fitter.priors['alpha'] = model_fitter.make_gen(p_in['alpha']-0.1, p_in['alpha']+0.1)
+        fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.1, p_in['b_sff']+0.1) 
+        fitter.priors['mag_base1'] = model_fitter.make_gen(p_in['mag_src'] + 2.5*np.log10(p_in['b_sff'])-0.1, 
+                                                           p_in['mag_src'] + 2.5*np.log10(p_in['b_sff'])+0.1)
 
     fitter.solve()
 
     best = fitter.get_best_fit()
 
-    psbl_out = model.PSBL_PhotAstrom_Par_Param1(best['mL'], best['t0'], np.array([best['xS0_E'], best['xS0_N']]), best['beta'],
-                                       np.array([best['muL_E'], best['muL_N']]), np.array([best['muS_E'], best['muS_N']]),
-                                       best['dL'], best['dS'], best['sep'], best['alpha'], best['b_sff'], best['mag_src'])
+    psbl_out = model.PSBL_PhotAstrom_Par_Param2(best['t0'], best['u0_amp'], best['tE'], best['log10_thetaE'], best['piS'],
+                                                best['piE_E'], best['piE_N'], best['xS0_E'], best['xS0_N'], best['muS_E'], best['muS_N'],
+                                                best['q'], best['sep'], best['alpha'],
+                                                best['b_sff1'], best['mag_src1'] + 2.5*np.log10(p_in['b_sff']),
+                                                raL=data['raL'], decL=data['decL'], root_tol=1e-8)
 
-    psbl_in = model.PSBL_PhotAstrom_Par_Param1(p_in['mL'], p_in['t0'], np.array([p_in['xS0_E'], p_in['xS0_N']]), p_in['beta'],
-                                      np.array([p_in['muL_E'], p_in['muL_N']]), np.array([p_in['muS_E'], p_in['muS_N']]),
-                                      p_in['dL'], p_in['dS'], p_in['sep'], p_in['alpha'], p_in['b_sff'], p_in['mag_src'])
+    psbl_in = model.PSBL_PhotAstrom_Par_Param2(p_in['t0'], p_in['u0_amp'], p_in['tE'], np.log10(p_in['thetaE_amp']), p_in['piS'],
+                                                p_in['piE_E'], p_in['piE_N'], p_in['xS0_E'], p_in['xS0_N'], p_in['muS_E'], p_in['muS_N'],
+                                                p_in['q'], p_in['sep'], p_in['alpha'],
+                                                p_in['b_sff'], p_in['mag_src'] + 2.5*np.log10(p_in['b_sff']),
+                                                raL=data['raL'], decL=data['decL'], root_tol=1e-8)
 
-    p_in['dL_dS'] = p_in['dL'] / p_in['dS']
-    p_in['tE'] = psbl_in.tE
-    p_in['thetaE'] = psbl_in.thetaE_amp
-    p_in['piE_E'] = psbl_in.piE[0]
-    p_in['piE_N'] = psbl_in.piE[1]
-    p_in['u0_amp'] = psbl_in.u0_amp
-    p_in['muRel_E'] = psbl_in.muRel[0]
-    p_in['muRel_N'] = psbl_in.muRel[1]
 
-    # Save the data for future plotting.
+#    # Save the data for future plotting.
     pickle_data(base, data, p_in)
+
+    pnames = ['t0', 'u0_amp', 'tE', 'piS',
+              'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
+              'q', 'sep', 'alpha']
+
+    # There should be a better way to do this.
+    p_in_params = {k: p_in[k] for k in pnames}
+    p_in_params['thetaE'] = p_in['thetaE_amp']
+    p_in_params['b_sff1'] = p_in['b_sff']
+    p_in_params['mag_src1'] = p_in['mag_src']
 
     fitter.summarize_results()
     fitter.plot_dynesty_style(sim_vals=p_in)
@@ -1031,60 +1049,154 @@ def test_PSBL_parallax_Solver():
     print("OUTPUT:")
     lnL_out = fitter.log_likely(best, verbose=True)
     print("INPUT:")
-    lnL_in = fitter.log_likely(p_in, verbose=True)
+    lnL_in = fitter.log_likely(p_in_params, verbose=True)
 
     return
 
-def test_PSBL_parallax2_Solver():
-#    base = './test_psbl_parallax2_solver/aa'
-    base = './test_psbl_solver/bb' # Casey
+
+def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow'):
+    base = './test_psbl_parallax_solver/aa'
 
     data, p_in, psbl, ani = test_model.fake_data_PSBL(parallax=True)
 
-    fitter = PSPL_Solver(data, n_live_points=100,
+    fitter = PSPL_Solver(data, 
+                         model.PSBL_PhotAstrom_Par_Param2,
+                         n_live_points=100,
                          outputfiles_basename=base,
                          resume=False)
 
-    # Lets adjust some priors for faster solving.
-    fitter.priors['t0'] = model_fitter.make_gen(56990, 57010)
-    fitter.priors['u0_amp'] = model_fitter.make_gen(1.0, 1.2)
-    fitter.priors['tE'] = model_fitter.make_gen(800, 900)
-    fitter.priors['piE_E'] = model_fitter.make_gen(0.0, 0.04)
-    fitter.priors['piE_N'] = model_fitter.make_gen(-0.01, 0.01)
-    fitter.priors['b_sff'] = model_fitter.make_gen(0.5, 1.1)
-    fitter.priors['mag_src'] = model_fitter.make_gen(17.9, 18.1)
-    fitter.priors['thetaE'] = model_fitter.make_gen(4.0, 5.0)
-
-    fitter.priors['muS_E'] = model_fitter.make_gen(0, 3)
-    fitter.priors['muS_N'] = model_fitter.make_gen(-2, 1)
-    fitter.priors['piS'] = model_fitter.make_gen(0.1, 0.15)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(-10**-3, 10**-3)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(-10**-3, 10**-3)
-
-    fitter.priors['q'] = model_fitter.make_gen(0.9, 1.1)
-    fitter.priors['sep'] = model_fitter.make_gen(1e-3, 1e-2)
-    fitter.priors['alpha'] = model_fitter.make_gen(80, 100)
+    if prior == 'narrow':
+        # Lets adjust some priors for faster solving.
+        fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-0.1, p_in['t0']+0.1)
+        fitter.priors['u0_amp'] = model_fitter.make_gen(p_in['u0_amp']-0.1, p_in['u0_amp']+0.1)
+        fitter.priors['tE'] = model_fitter.make_gen(p_in['tE']-0.1, p_in['tE']+0.1)
+        fitter.priors['thetaE'] = model_fitter.make_gen(p_in['thetaE_amp']-0.1, p_in['thetaE_amp']+0.1)
+        fitter.priors['piS'] = model_fitter.make_gen(p_in['piS']-0.1, p_in['piS']+0.1)
+        fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.1, p_in['piE_E']+0.1)
+        fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.1, p_in['piE_N']+0.1)
+        fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-0.1, p_in['xS0_E']+0.1)
+        fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-0.1, p_in['xS0_N']+0.1)
+        fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.1, p_in['muS_E']+0.1)
+        fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.1, p_in['muS_N']+0.1)
+        fitter.priors['q'] = model_fitter.make_gen(p_in['q']-0.1, p_in['q']+0.1) 
+        fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.1, p_in['sep']+0.1) 
+        fitter.priors['alpha'] = model_fitter.make_gen(p_in['alpha']-0.1, p_in['alpha']+0.1)
+        fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.1, p_in['b_sff']+0.1) 
+        fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.1, p_in['mag_src']+0.1)
+    if prior == 'wide':
+        # Lets adjust some priors for faster solving.
+        fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
+        fitter.priors['u0_amp'] = model_fitter.make_gen(p_in['u0_amp']-0.5, p_in['u0_amp']+0.5)
+        fitter.priors['tE'] = model_fitter.make_gen(p_in['tE']-10, p_in['tE']+10)
+        fitter.priors['thetaE'] = model_fitter.make_gen(p_in['thetaE_amp']-3, p_in['thetaE_amp']+3)
+        fitter.priors['piS'] = model_fitter.make_gen(p_in['piS']-0.1, p_in['piS']+0.5)
+        fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.5, p_in['piE_E']+0.5)
+        fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.5, p_in['piE_N']+0.5)
+        fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1, p_in['xS0_E']+1)
+        fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1, p_in['xS0_N']+1)
+        fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-3, p_in['muS_E']+3)
+        fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-3, p_in['muS_N']+3)
+        fitter.priors['q'] = model_fitter.make_gen(p_in['q']-0.1, p_in['q']+0.1) 
+        fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.1, p_in['sep']+0.1) 
+        fitter.priors['alpha'] = model_fitter.make_gen(0, 360)
+        fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.1, p_in['b_sff']+0.1) 
+        fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.5, p_in['mag_src']+0.5)
 
     fitter.solve()
 
     best = fitter.get_best_fit()
 
-    psbl_out = model.PSBL_PhotAstrom_Par_Param2(best['t0'], best['u0_amp'], best['tE'], best['piE_E'], best['piE_N'],
-                                        best['b_sff'], best['mag_src'], best['thetaE'],
-                                        best['xS0_E'], best['xS0_N'], best['muS_E'], best['muS_N'], best['piS'],
-                                        best['q'], best['sep'], best['alpha'])
+    psbl_out = model.PSBL_PhotAstrom_Par_Param2(best['t0'], best['u0_amp'], best['tE'], best['thetaE'], best['piS'],
+                                                best['piE_E'], best['piE_N'], best['xS0_E'], best['xS0_N'], best['muS_E'], best['muS_N'],
+                                                best['q'], best['sep'], best['alpha'],
+                                                best['b_sff1'], best['mag_src1'],
+                                                raL=data['raL'], decL=data['decL'], root_tol=1e-8)
 
-    psbl_in = psbl
+    psbl_in = model.PSBL_PhotAstrom_Par_Param2(p_in['t0'], p_in['u0_amp'], p_in['tE'], p_in['thetaE_amp'], p_in['piS'],
+                                                p_in['piE_E'], p_in['piE_N'], p_in['xS0_E'], p_in['xS0_N'], p_in['muS_E'], p_in['muS_N'],
+                                                p_in['q'], p_in['sep'], p_in['alpha'],
+                                                p_in['b_sff'], p_in['mag_src'],
+                                                raL=data['raL'], decL=data['decL'], root_tol=1e-8)
 
-    p_in['mL1'] = psbl_in.mL1
-    p_in['mL2'] = psbl_in.mL2
-    p_in['muL_E'] = psbl_in.muL[0]
-    p_in['muL_N'] = psbl_in.muL[1]
-    p_in['muRel_E'] = psbl_in.muRel[0]
-    p_in['muRel_N'] = psbl_in.muRel[1]
-    p_in['piL'] = psbl_in.piL
-    p_in['piRel'] = psbl_in.piRel
-    p_in['piE'] = psbl_in.piE
+
+#    # Save the data for future plotting.
+    pickle_data(base, data, p_in)
+
+    pnames = ['t0', 'u0_amp', 'tE', 'piS',
+              'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
+              'q', 'sep', 'alpha']
+
+    # There should be a better way to do this.
+    p_in_params = {k: p_in[k] for k in pnames}
+    p_in_params['thetaE'] = p_in['thetaE_amp']
+    p_in_params['b_sff1'] = p_in['b_sff']
+    p_in_params['mag_src1'] = p_in['mag_src']
+
+    fitter.summarize_results()
+    fitter.plot_dynesty_style(sim_vals=p_in)
+    fitter.plot_model_and_data(psbl_out, input_model=psbl_in)
+
+    print("OUTPUT:")
+    lnL_out = fitter.log_likely(best, verbose=True)
+    print("INPUT:")
+    lnL_in = fitter.log_likely(p_in_params, verbose=True)
+
+    return
+
+def test_PSBL_PhotAstrom_Par_Param1():
+    base = './test_psbl_parallax2_solver/aa'
+
+    data, p_in, psbl, ani = test_model.fake_data_PSBL(parallax=True)
+
+    fitter = PSPL_Solver(data, 
+                         model.PSBL_PhotAstrom_Par_Param1,
+                         n_live_points=100,
+                         outputfiles_basename=base,
+                         resume=False)
+
+    # Lets adjust some priors for faster solving.
+    fitter.priors['mLp'] = model_fitter.make_gen(p_in['mLp']-0.1, p_in['mLp']+0.1)
+    fitter.priors['mLs'] = model_fitter.make_gen(p_in['mLs']-0.1, p_in['mLs']+0.1)
+    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-0.1, p_in['t0']+0.1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-0.1, p_in['xS0_E']+0.1)
+    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-0.1, p_in['xS0_N']+0.1)
+    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.1, p_in['beta']+0.1)
+    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.1, p_in['muL_E']+0.1)
+    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.1, p_in['muL_N']+0.1)
+    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.1, p_in['muS_E']+0.1)
+    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.1, p_in['muS_N']+0.1)
+    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-0.1, p_in['dL']+0.1)
+    fitter.priors['dS'] = model_fitter.make_gen(p_in['dS']-0.1, p_in['dS']+0.1) 
+    fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.1, p_in['sep']+0.1) 
+    fitter.priors['alpha'] = model_fitter.make_gen(p_in['alpha']-0.1, p_in['alpha']+0.1)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.1, p_in['b_sff']+0.1) 
+    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.1, p_in['mag_src']+0.1)
+        
+    fitter.solve()
+
+    best = fitter.get_best_fit()
+
+    psbl_out = model.PSBL_PhotAstrom_Par_Param1(best['mLp'], best['mLs'], best['t0'], best['xS0_E'], best['xS0_N'],
+                                                best['beta'], best['muL_E'], best['muL_N'],
+                                                best['muS_E'], best['muS_N'], best['dL'], best['dS'], best['sep'],
+                                                best['alpha'], best['b_sff1'], best['mag_src1'],
+                                                raL=data['raL'], decL=data['decL'])
+    
+    psbl_in = model.PSBL_PhotAstrom_Par_Param1(p_in['mLp'], p_in['mLs'], p_in['t0'], p_in['xS0_E'], p_in['xS0_N'],
+                                                p_in['beta'], p_in['muL_E'], p_in['muL_N'],
+                                                p_in['muS_E'], p_in['muS_N'], p_in['dL'], p_in['dS'], p_in['sep'],
+                                                p_in['alpha'], p_in['b_sff'], p_in['mag_src'],
+                                                raL=data['raL'], decL=data['decL'])
+
+#    p_in['mLp'] = psbl_in.mLp
+#    p_in['mLs'] = psbl_in.mLs
+#    p_in['muL_E'] = psbl_in.muL[0]
+#    p_in['muL_N'] = psbl_in.muL[1]
+#    p_in['muRel_E'] = psbl_in.muRel[0]
+#    p_in['muRel_N'] = psbl_in.muRel[1]
+#    p_in['piL'] = psbl_in.piL
+#    p_in['piRel'] = psbl_in.piRel
+#    p_in['piE'] = psbl_in.piE
 
     # Save the data for future plotting.
     pickle_data(base, data, p_in)
@@ -1124,7 +1236,7 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=False, summarize=False, suffix='')
         # {'t0': 57000, 'u0_amp': 0.7677249386310591, 'tE': 504.61579173573404,
         # 'piE_E': 0.022619312924845883, 'piE_N': 0.022619312924845883,
         # 'q': 0.5, 'sep': 5.0, 'phi': 285.0, 'b_sff1': 0.5, 'mag_src1': 16}
-        data, p_in_tmp, psbl_in, ani = test_model.fake_data_PSBL(mL1 = 10, mL2 = 5,
+        data, p_in_tmp, psbl_in, ani = test_model.fake_data_PSBL(mLp = 10, mLs = 5,
                                                                  beta = 3.0, sep = 5.0,
                                                                  muL_E = -1.0, muL_N = -1.0,
                                                                  alpha = -30,
@@ -1155,7 +1267,7 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=False, summarize=False, suffix='')
     p_in['tE'] = psbl_in.tE
     p_in['piE_E'] = psbl_in.piE[0]
     p_in['piE_N'] = psbl_in.piE[1]
-    p_in['q'] = psbl_in.mL2 / psbl_in.mL1
+    p_in['q'] = psbl_in.mLs / psbl_in.mLp
     p_in['sep'] = psbl_in.sep / psbl_in.thetaE_amp    
     p_in['phi'] = phi
     p_in['b_sff1'] = p_in_tmp['b_sff']    
@@ -1246,7 +1358,7 @@ def test_PSBL_phot_par_fit(regen=False, fit=False, summarize=False, suffix=''):
         _data_pkl.close()
     else:
         # Generate random data
-        data, p_in_tmp, psbl_in, ani = test_model.fake_data_PSBL(mL1 = 10, mL2 = 5,
+        data, p_in_tmp, psbl_in, ani = test_model.fake_data_PSBL(mLp = 10, mLs = 5,
                                                                  beta = 3.0, sep = 5.0,
                                                                  muL_E = -1.0, muL_N = -1.0,
                                                                  alpha = -30,
@@ -1278,7 +1390,7 @@ def test_PSBL_phot_par_fit(regen=False, fit=False, summarize=False, suffix=''):
     p_in['tE'] = psbl_in.tE
     p_in['piE_E'] = psbl_in.piE[0]
     p_in['piE_N'] = psbl_in.piE[1]
-    p_in['q'] = psbl_in.mL2 / psbl_in.mL1
+    p_in['q'] = psbl_in.mLs / psbl_in.mLp
     p_in['sep'] = psbl_in.sep / psbl_in.thetaE_amp    
     p_in['phi'] = phi
     p_in['b_sff1'] = p_in_tmp['b_sff']    
@@ -1764,3 +1876,347 @@ def test_make_default_priors_mag_base():
     
     return
     
+def test_cache_parallax_vector():
+    outdir = './test_mnest_lmc/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = test_model.fake_data_parallax_lmc()
+
+    fitter = PSPL_Solver(data,
+                         model.PSPL_PhotAstrom_Par_Param1,
+                         n_live_points=300,
+                         outputfiles_basename=outdir + '/pvec_',
+                         resume=False)
+
+    # Lets adjust some priors for faster solving.
+    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
+    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-3, p_in['xS0_E']+1e-3)
+    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-3, p_in['xS0_N']+1e-3)
+    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.1, p_in['beta']+0.1)
+    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.1, p_in['muL_E']+0.1)
+    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.1, p_in['muL_N']+0.1)
+    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.1, p_in['muS_E']+0.1)
+    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.1, p_in['muS_N']+0.1)
+    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-100, p_in['dL']+100)
+    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.1, (p_in['dL']/p_in['dS'])+0.1)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.1, p_in['b_sff']+0.1)
+    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.1, p_in['mag_src']+0.1)
+    
+    fitter.solve()
+
+    best = fitter.get_best_fit()
+
+    np.testing.assert_array_almost_equal(best['mL'], p_in['mL'], 0.5)
+
+    pspl_out = model.PSPL_PhotAstrom_Par_Param1(best['mL'],
+                                                best['t0'],
+                                                best['beta'],
+                                                best['dL'],
+                                                best['dL_dS'],
+                                                best['xS0_E'],
+                                                best['xS0_N'],
+                                                best['muL_E'],
+                                                best['muL_N'],
+                                                best['muS_E'],
+                                                best['muS_N'],
+                                                [best['b_sff1']],
+                                                [best['mag_src1']],
+                                                raL=p_in['raL'],
+                                                decL=p_in['decL'])
+
+    pspl_in = model.PSPL_PhotAstrom_Par_Param1(p_in['mL'],
+                                               p_in['t0'],
+                                               p_in['beta'],
+                                               p_in['dL'],
+                                               p_in['dL'] / p_in['dS'],
+                                               p_in['xS0_E'],
+                                               p_in['xS0_N'],
+                                               p_in['muL_E'],
+                                               p_in['muL_N'],
+                                               p_in['muS_E'],
+                                               p_in['muS_N'],
+                                               p_in['b_sff'],
+                                               p_in['mag_src'],
+                                               raL=p_in['raL'],
+                                               decL=p_in['decL'])
+
+
+    p_in['dL_dS'] = p_in['dL'] / p_in['dS']
+    p_in['tE'] = pspl_in.tE
+    p_in['thetaE'] = pspl_in.thetaE_amp
+    p_in['piE_E'] = pspl_in.piE[0]
+    p_in['piE_N'] = pspl_in.piE[1]
+    p_in['u0_amp'] = pspl_in.u0_amp
+    p_in['muRel_E'] = pspl_in.muRel[0]
+    p_in['muRel_N'] = pspl_in.muRel[1]
+    p_in['b_sff1'] = p_in['b_sff']
+    p_in['mag_src1'] = p_in['mag_src']
+
+    fitter.summarize_results()
+    fitter.plot_dynesty_style(sim_vals=p_in)
+    fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
+
+    imag_out = pspl_out.get_photometry(data['t_phot1'])
+    pos_out = pspl_out.get_astrometry(data['t_ast1'])
+
+    imag_in = pspl_in.get_photometry(data['t_phot1'])
+    pos_in = pspl_in.get_astrometry(data['t_ast1'])
+
+    np.testing.assert_array_almost_equal(imag_out, imag_in, 1)
+    np.testing.assert_array_almost_equal(pos_out, pos_in, 4)
+
+    # print("OUTPUT:")
+    lnL_out = fitter.log_likely(best) # , verbose=True)
+    # print("INPUT:")
+    lnL_in = fitter.log_likely(p_in) # , verbose=True)
+ 
+    assert np.abs(lnL_out - lnL_in) < 50
+
+    return
+
+def test_hobson_weights(hobson=True, resume=False):
+    outdir = './test_mnest_hobson/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = test_model.fake_data_parallax_lmc()
+
+    if hobson:
+        fitter = PSPL_Solver_Hobson_Weighted(data,
+                         model.PSPL_PhotAstrom_Par_Param1,
+                         n_live_points=300,
+                         outputfiles_basename=outdir + '/hh_',
+                         resume=resume, verbose=False)
+
+    else:
+        fitter = PSPL_Solver(data,
+                         model.PSPL_PhotAstrom_Par_Param1,
+                         n_live_points=300,
+                         outputfiles_basename=outdir + '/aa_',
+                         resume=resume, verbose=False)
+    
+    # Lets adjust some priors for faster solving.
+    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
+    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-3, p_in['xS0_E']+1e-3)
+    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-3, p_in['xS0_N']+1e-3)
+    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.1, p_in['beta']+0.1)
+    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.1, p_in['muL_E']+0.1)
+    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.1, p_in['muL_N']+0.1)
+    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.1, p_in['muS_E']+0.1)
+    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.1, p_in['muS_N']+0.1)
+    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-100, p_in['dL']+100)
+    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.1, (p_in['dL']/p_in['dS'])+0.1)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.1, p_in['b_sff']+0.1)
+    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.1, p_in['mag_src']+0.1)
+
+    t0 = time.time()
+
+    ##########
+    # MultiNest
+    ##########
+    fitter.solve()
+    
+    best = fitter.get_best_fit()
+    
+    ##########
+    # Dynesty
+    ##########
+    # n_cpu = 4
+    # pool = Pool(n_cpu)
+    
+    # sampler = dynesty.NestedSampler(fitter.LogLikelihood, fitter.Prior, 
+    #                                        ndim=fitter.n_dims, bound='multi',
+    #                                        sample='unif', pool = pool,
+    #                                        queue_size = n_cpu)
+    # sampler.run_nested(print_progress=True, maxiter=2000)
+
+    # fitter.additional_param_names = []
+    # fitter.custom_additional_param_names = []
+    # sampler = dynesty.DynamicNestedSampler(fitter.LogLikelihood, fitter.Prior, 
+    #                                        ndim=fitter.n_dims, bound='multi',
+    #                                        sample='unif')#, pool = pool,
+    #                                        #queue_size = n_cpu)
+    # sampler.run_nested(nlive_init=500, print_progress=True, maxiter=1500, use_stop=False)
+
+    
+    # results = sampler.results
+    # samples = results.samples
+    # weights = np.exp(results.logwt - results.logz[-1])
+    # best_avg, best_cov = dyutil.mean_and_cov(samples, weights)
+
+    # best = {}
+    # for i, param_name in enumerate(fitter.fitter_param_names):
+    #     best[param_name] = best_avg[i]
+
+    ##########
+    # Results
+    ##########
+    t1 = time.time()
+    print('Runtime: ', t1 - t0)
+
+    # Multinest only.
+    remake_fits = resume == False
+    fitter.summarize_results(remake_fits=remake_fits)
+    
+
+    pspl_out = model.PSPL_PhotAstrom_Par_Param1(best['mL'],
+                                                best['t0'],
+                                                best['beta'],
+                                                best['dL'],
+                                                best['dL_dS'],
+                                                best['xS0_E'],
+                                                best['xS0_N'],
+                                                best['muL_E'],
+                                                best['muL_N'],
+                                                best['muS_E'],
+                                                best['muS_N'],
+                                                [best['b_sff1']],
+                                                [best['mag_src1']],
+                                                raL=p_in['raL'],
+                                                decL=p_in['decL'])
+
+    pspl_in = model.PSPL_PhotAstrom_Par_Param1(p_in['mL'],
+                                               p_in['t0'],
+                                               p_in['beta'],
+                                               p_in['dL'],
+                                               p_in['dL'] / p_in['dS'],
+                                               p_in['xS0_E'],
+                                               p_in['xS0_N'],
+                                               p_in['muL_E'],
+                                               p_in['muL_N'],
+                                               p_in['muS_E'],
+                                               p_in['muS_N'],
+                                               p_in['b_sff'],
+                                               p_in['mag_src'],
+                                               raL=p_in['raL'],
+                                               decL=p_in['decL'])
+
+
+    p_in['dL_dS'] = p_in['dL'] / p_in['dS']
+    p_in['tE'] = pspl_in.tE
+    p_in['thetaE'] = pspl_in.thetaE_amp
+    p_in['piE_E'] = pspl_in.piE[0]
+    p_in['piE_N'] = pspl_in.piE[1]
+    p_in['u0_amp'] = pspl_in.u0_amp
+    p_in['muRel_E'] = pspl_in.muRel[0]
+    p_in['muRel_N'] = pspl_in.muRel[1]
+    p_in['b_sff1'] = p_in['b_sff']
+    p_in['mag_src1'] = p_in['mag_src']
+
+    pspl_out = fitter.get_model(best)
+    pspl_in = fitter.get_model(p_in)
+
+    fitter.summarize_results()
+    fitter.plot_dynesty_style(sim_vals=p_in)
+    fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
+
+    # TEST that the generated photometry closely matches the input.
+    filt_idx = 0
+    mod_m_at_dat_out = pspl_out.get_photometry(data['t_phot' + str(filt_idx + 1)], filt_idx)
+    mod_m_at_dat_in = pspl_in.get_photometry(data['t_phot' + str(filt_idx + 1)], filt_idx)
+    np.testing.assert_allclose(mod_m_at_dat_out, mod_m_at_dat_in, rtol=1e-2)
+    
+    model_fitter.plot_photometry(data, pspl_out, input_model = pspl_in)
+    model_fitter.plot_astrometry(data, pspl_out, input_model = pspl_in, n_phot_sets=1)
+    
+    imag_out = pspl_out.get_photometry(data['t_phot1'])
+    pos_out = pspl_out.get_astrometry(data['t_ast1'])
+
+    imag_in = pspl_in.get_photometry(data['t_phot1'])
+    pos_in = pspl_in.get_astrometry(data['t_ast1'])
+
+    np.testing.assert_array_almost_equal(imag_out, imag_in, 1)
+    np.testing.assert_array_almost_equal(pos_out, pos_in, 4)    
+
+    # print("OUTPUT:")
+    lnL_out = fitter.log_likely(best) # , verbose=True)
+    # print("INPUT:")
+    lnL_in = fitter.log_likely(p_in) # , verbose=True)
+
+    # TEST that output params match input within 20%
+    for key in fitter.fitter_param_names:
+        if p_in[key] == 0:
+            assert np.abs(best[key] - p_in[key]) < 0.3
+        else:
+            assert np.abs( (best[key] - p_in[key]) / p_in[key] ) < 0.3
+    
+ 
+    assert np.abs(lnL_out - lnL_in) < 50
+
+    return
+
+
+def test_bspl_parallax_fit():
+    outdir = './test_bspl_solver/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in, bspl_in, ani = fake_data.fake_data_BSPL()
+
+    fitter = PSPL_Solver(data,
+                         model.BSPL_PhotAstrom_Par_Param1,
+                         n_live_points=300,
+                         outputfiles_basename=outdir + '/aa_',
+                         resume=False)
+
+    # Lets adjust some priors for faster solving.
+    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0'] - 5, p_in['t0'] + 5)
+    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E'] - 1e-3, p_in['xS0_E'] + 1e-3)
+    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N'] - 1e-3, p_in['xS0_N'] + 1e-3)
+    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta'] - 0.1, p_in['beta'] + 0.1)
+    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E'] - 0.1, p_in['muL_E'] + 0.1)
+    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N'] - 0.1, p_in['muL_N'] + 0.1)
+    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E'] - 0.1, p_in['muS_E'] + 0.1)
+    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N'] - 0.1, p_in['muS_N'] + 0.1)
+    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL'] - 100, p_in['dL'] + 100)
+    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL'] / p_in['dS']) - 0.1, (p_in['dL'] / p_in['dS']) + 0.1)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff'] - 0.1, p_in['b_sff'] + 0.1)
+    fitter.priors['mag_src_pri1'] = model_fitter.make_gen(p_in['mag_src_pri']-0.1, p_in['mag_src_pri']+0.1)
+    fitter.priors['mag_src_sec1'] = model_fitter.make_gen(p_in['mag_src_sec']-0.1, p_in['mag_src_sec']+0.1)
+    fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.1, p_in['sep']+0.1)
+    fitter.priors['alpha'] = model_fitter.make_gen(p_in['alpha'] - 1, p_in['alpha'] + 1)
+
+    # fitter.additional_param_names = []
+    # fitter.custom_additional_param_names = []
+    # sampler = dynesty.DynamicNestedSampler(fitter.LogLikelihood, fitter.Prior,
+    #                                        ndim=fitter.n_dims, bound='multi',
+    #                                        sample='unif')#, pool = pool,
+    #                                        #queue_size = n_cpu)
+    # sampler.run_nested(nlive_init=500, print_progress=True, maxiter=1500, use_stop=False)
+
+    # fitter.solve()
+
+    best = fitter.get_best_fit()
+    bspl_out = fitter.get_best_fit_model()
+
+    p_in['dL_dS'] = p_in['dL'] / p_in['dS']
+    p_in['tE'] = bspl_in.tE
+    p_in['thetaE'] = bspl_in.thetaE_amp
+    p_in['piE_E'] = bspl_in.piE[0]
+    p_in['piE_N'] = bspl_in.piE[1]
+    p_in['u0_amp'] = bspl_in.u0_amp
+    p_in['muRel_E'] = bspl_in.muRel[0]
+    p_in['muRel_N'] = bspl_in.muRel[1]
+    p_in['b_sff1'] = p_in['b_sff'][0]
+    p_in['mag_src_pri1'] = p_in['mag_src_pri'][0]
+    p_in['mag_src_sec1'] = p_in['mag_src_sec'][0]
+
+    fitter.summarize_results()
+    fitter.plot_dynesty_style(sim_vals=p_in)
+    fitter.plot_model_and_data(bspl_out, input_model=bspl_in)
+
+    imag_out = bspl_out.get_photometry(data['t_phot1'])
+    pos_out = bspl_out.get_astrometry(data['t_ast1'])
+
+    imag_in = bspl_in.get_photometry(data['t_phot1'])
+    pos_in = bspl_in.get_astrometry(data['t_ast1'])
+
+    np.testing.assert_array_almost_equal(imag_out, imag_in, 1)
+    np.testing.assert_array_almost_equal(pos_out, pos_in, 4)
+
+    # print("OUTPUT:")
+    lnL_out = fitter.log_likely(best)  # , verbose=True)
+    # print("INPUT:")
+    lnL_in = fitter.log_likely(p_in)  # , verbose=True)
+
+    assert np.abs(lnL_out - lnL_in) < 50
+
+    return

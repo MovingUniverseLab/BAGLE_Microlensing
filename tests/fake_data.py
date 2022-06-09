@@ -9,7 +9,6 @@ import os
 from src.BAGLE import model
 from src.BAGLE import model_fitter
 from src.BAGLE import plot_models
-import plot_models
 import time
 import pdb
 import pytest
