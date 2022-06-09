@@ -225,6 +225,10 @@ are several rules that must be followed when creating a new class.
     4)  Models should be named to reflect the parents classes used to construct
         it, as outlined in the above sections.
 
+Other notes
+-----------
+All times must be reported in MJD.
+
 """
 
 import matplotlib.pyplot as plt

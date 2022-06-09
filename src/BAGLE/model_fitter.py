@@ -8,6 +8,7 @@
 .. moduleauthor:: Casey Lam <casey_lam@berkeley.edu>
 .. moduleauthor:: Edward Broadberry
 
+Note: all times must be given in MJD.
 """
 
 from pymultinest.solve import Solver
