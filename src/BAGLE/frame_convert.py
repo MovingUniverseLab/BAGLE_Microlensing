@@ -5,7 +5,7 @@ from astropy.time import Time
 from astropy.coordinates.builtin_frames.utils import get_jd12
 import erfa
 import matplotlib.pyplot as plt
-from microlens.jlu import model
+from src.BAGLE import model
 
 
 # Note: this hasn't been checked/tested yet.
@@ -224,31 +224,53 @@ def convert_helio_geo_phot(ra, dec,
         fig, ax = plt.subplots(1, 1, num=2, figsize=(9,6))
         plt.subplots_adjust(left=0.15, right=0.7)
 
+        ax.annotate(r'', 
+                    xy=(vec_u0_in[0], vec_u0_in[1]), xycoords='data',
+                    xytext=(vec_u0_in[0] + vec_tau_in[0], vec_u0_in[1] + vec_tau_in[1]), textcoords='data',
+                    ha='right',
+                    arrowprops=dict(arrowstyle= '<|-',
+                                    color='red'))
+        ax.annotate(r'', 
+                    xy=(vec_u0_out[0], vec_u0_out[1]), xycoords='data',
+                    xytext=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), textcoords='data',
+                    ha='right',
+                    arrowprops=dict(arrowstyle= '<|-',
+                                    color='blue'))
+        ax.plot(0, 0, 'o', ms=10, mec='k', color='yellow')
         ax.plot([0, vec_u0_in[0]], 
                    [0, vec_u0_in[1]], color='red')
+        ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=10, color='red', label='Helio')
         ax.plot([vec_u0_in[0], vec_u0_in[0] + vec_tau_in[0]], 
                    [vec_u0_in[1], vec_u0_in[1] + vec_tau_in[1]], color='red')
         ax.plot([0, vec_u0_out[0]], 
                    [0, vec_u0_out[1]], color='blue')
+        ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=10, color='blue', label='Geo proj')
         ax.plot([vec_u0_out[0], vec_u0_out[0] + vec_tau_out[0]], 
                    [vec_u0_out[1], vec_u0_out[1] + vec_tau_out[1]], color='blue')
         if in_frame=='helio':
+            ax.annotate(r'', xy=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), xycoords='data',
+                        xytext=(vec_u0_out[0] + vec_tau_out[0] + vec_par[0]*piE, 
+                                vec_u0_out[1] + vec_tau_out[1] + vec_par[1]*piE), textcoords='data',
+                        ha='right',
+                        arrowprops=dict(arrowstyle= '<|-',
+                                        color='gray'))
             ax.plot([vec_u0_out[0] + vec_tau_out[0], vec_u0_out[0] + vec_tau_out[0] + vec_par[0]*piE], 
-                       [vec_u0_out[1] + vec_tau_out[1], vec_u0_out[1] + vec_tau_out[1] + vec_par[1]*piE], color='k')
+                       [vec_u0_out[1] + vec_tau_out[1], vec_u0_out[1] + vec_tau_out[1] + vec_par[1]*piE], color='gray')
             ax.plot([vec_u0_in[0] + vec_tau_in[0], vec_u0_in[0] + vec_tau_in[0] - vec_par[0]*piE], 
-                       [vec_u0_in[1] + vec_tau_in[1], vec_u0_in[1] + vec_tau_in[1] - vec_par[1]*piE], color='k')
+                       [vec_u0_in[1] + vec_tau_in[1], vec_u0_in[1] + vec_tau_in[1] - vec_par[1]*piE], color='gray')
         else:
             ax.plot([vec_u0_out[0] + vec_tau_out[0], vec_u0_out[0] + vec_tau_out[0] - vec_par[0]*piE], 
-                       [vec_u0_out[1] + vec_tau_out[1], vec_u0_out[1] + vec_tau_out[1] - vec_par[1]*piE], color='k')
+                       [vec_u0_out[1] + vec_tau_out[1], vec_u0_out[1] + vec_tau_out[1] - vec_par[1]*piE], color='gray')
             ax.plot([vec_u0_in[0] + vec_tau_in[0], vec_u0_in[0] + vec_tau_in[0] + vec_par[0]*piE], 
-                       [vec_u0_in[1] + vec_tau_in[1], vec_u0_in[1] + vec_tau_in[1] + vec_par[1]*piE], color='k')
+                       [vec_u0_in[1] + vec_tau_in[1], vec_u0_in[1] + vec_tau_in[1] + vec_par[1]*piE], color='gray')
+        ax.legend()
         ax.axhline(y=0, ls=':', color='gray')
         ax.axvline(x=0, ls=':', color='gray')
         ax.set_xlabel('$u_E$')
         ax.set_ylabel('$u_N$')
         ax.axis('equal')
         ax.invert_xaxis()
-        ax.set_title('Red = in (H), Blue = out (G)')
+        ax.set_title('Lu convention (S-L frame, E-N coord)')
 
 #        ax[1].annotate(r'$\vec{P}$($t_{0,par}$)', xy=(0,0), xycoords='data',
 #                       xytext=(vec_par[0]/np.hypot(vec_par[0], vec_par[1]), vec_par[1]/np.hypot(vec_par[0], vec_par[1])), textcoords='data',
@@ -513,9 +535,9 @@ def convert_helio_geo_phot_old(ra, dec,
         plt.subplots_adjust(left=0.15, right=0.7)
 
         ax.plot([0, vec_u0_in[0]], 
-                   [0, vec_u0_in[1]], color='red')
+                [0, vec_u0_in[1]], color='red')
         ax.plot([vec_u0_in[0], vec_u0_in[0] + vec_tau_in[0]], 
-                   [vec_u0_in[1], vec_u0_in[1] + vec_tau_in[1]], color='red')
+                [vec_u0_in[1], vec_u0_in[1] + vec_tau_in[1]], color='red')
         ax.plot([0, vec_u0_out[0]], 
                    [0, vec_u0_out[1]], color='blue')
         ax.plot([vec_u0_out[0], vec_u0_out[0] + vec_tau_out[0]], 
