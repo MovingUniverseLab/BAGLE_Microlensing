@@ -1,8 +1,9 @@
 from src.BAGLE import model
 from src.BAGLE import model_fitter
 from src.BAGLE import multinest_utils, munge
+from src.BAGLE import fake_data
 from src.BAGLE.model_fitter import PSPL_Solver, PSPL_Solver_Hobson_Weighted
-import test_model, fake_data
+from tests import test_model
 import numpy as np
 import pylab as plt
 import os
@@ -304,7 +305,7 @@ def test_PSPL_Solver(plot=False):
     fitter.priors['xS0_E'] = model_fitter.make_gen(-10 ** -3, 10 ** -3)
     fitter.priors['xS0_N'] = model_fitter.make_gen(-10 ** -3, 10 ** -3)
 
-    # fitter.solve()
+    fitter.solve()
 
     best = fitter.get_best_fit()
 
