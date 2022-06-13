@@ -1,9 +1,9 @@
 import pdb
-from microlens.jlu import model
+from src.BAGLE import model
 import numpy as np
 import matplotlib.pyplot as plt
 import MulensModel as mm
-from microlens.jlu import frame_convert as fc
+from src.BAGLE import frame_convert as fc
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 
@@ -19,7 +19,6 @@ def test_bagle_geoproj_to_bagle(t0_g, u0_g, tE_g, piEE_g, piEN_g, t0par):
                                                                  t0par, in_frame='geo',
                                                                  murel_in='LS', murel_out='SL',
                                                                  coord_in='tb', coord_out='EN')
-
 
     mag_bagle_geoproj = get_phot_bagle_geoproj(ra, dec, t0_g, u0_g, tE_g, piEE_g, piEN_g, t_mjd, t0par)
     mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, tE_h, piEE_h, piEN_h, t_mjd)
