@@ -226,11 +226,6 @@ def convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
         u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par
         u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
-        if u0vec_out[0] > 0:
-            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
-        else:
-            u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
-
     if in_frame=='geo':
         dp_dt_t0par = -1*((tauhat_in/tE_in) - (tauhat_out/tE_out))/piE
 
@@ -238,10 +233,10 @@ def convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
         u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par
         u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
-        if u0vec_out[0] > 0:
-            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
-        else:
-            u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
+    if u0vec_out[0] > 0:
+        u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+    else:
+        u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
 
     return t0_out, u0vec_out
 
@@ -388,8 +383,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
                             t0_out, u0_out, tE_out, piEE_out, piEN_out):
     """
     FIXME: Finish fixing the plotting of parallax vector.
-    Also need to clean up and comment.
-    Instead of "in" and "out" change to helio and geo.
+    The direction should always be Earth to Sun.
     """
     fig, ax = plt.subplots(1, 1, num=2, figsize=(9,6))
     plt.clf()
@@ -446,7 +440,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
                     xytext=(vec_u0_out[0] + vec_tau_out[0] - vec_par[0]*piE, 
                             vec_u0_out[1] + vec_tau_out[1] - vec_par[1]*piE), textcoords='data',
                     ha='right',
-                    arrowprops=dict(arrowstyle= '<|-',
+                    arrowprops=dict(arrowstyle= '-|>',
                                     color='gray'))
         ax.plot([vec_u0_out[0] + vec_tau_out[0], vec_u0_out[0] + vec_tau_out[0] - vec_par[0]*piE], 
                 [vec_u0_out[1] + vec_tau_out[1], vec_u0_out[1] + vec_tau_out[1] - vec_par[1]*piE], color='gray')
@@ -488,7 +482,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
     fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(piEN_out), fontsize=12)
     fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
     plt.show()
-#    plt.pause(1)
+    plt.pause(0.2)
 
     fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
     plt.clf()
@@ -545,7 +539,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
                     xytext=(-vec_u0_out[0] - vec_tau_out[0] + vec_par[0]*piE, 
                              -vec_u0_out[1] - vec_tau_out[1] + vec_par[1]*piE), textcoords='data',
                     ha='right',
-                    arrowprops=dict(arrowstyle= '<|-',
+                    arrowprops=dict(arrowstyle= '-|>',
                                     color='gray'))
         ax.plot([-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[0] - vec_tau_out[0] + vec_par[0]*piE], 
                 [-vec_u0_out[1] - vec_tau_out[1], -vec_u0_out[1] - vec_tau_out[1] + vec_par[1]*piE], color='gray')
@@ -595,5 +589,5 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
     fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
     
     plt.show()
-#    plt.pause(1)
+    plt.pause(0.2)
 
