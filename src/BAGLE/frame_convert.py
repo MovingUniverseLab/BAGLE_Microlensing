@@ -121,84 +121,49 @@ def convert_helio_geo_phot(ra, dec,
     tauhatE_out = piEE_out/piE
     tauhatN_out = piEN_out/piE
 
-    try:
-        nn = len(t0par)
-        u0hatE_in = np.empty(nn)
-        u0hatN_in = np.empty(nn)
-        u0hatE_out = np.empty(nn)
-        u0hatN_out = np.empty(nn)
-
-        if coord_in=='EN':
-            u0hatE_in = np.where(np.sign(u0_in * piEN_in) < 0, -tauhatN_in, tauhatN_in)
-            u0hatN_in = np.where(np.sign(u0_in * piEN_in) < 0, tauhatE_in, -tauhatE_in)
-
-        if coord_in=='tb':
-            u0hatE_in = np.where(np.sign(u0_in) < 0, -tauhatN_in, tauhatN_in)
-            u0hatN_in = np.where(np.sign(u0_in) < 0, tauhatE_in, -tauhatE_in)
-    
-    except:
     # Define the u0hat vector, which is orthogonal to the tauhat vector.
     # It is the source-lens separation vector.
-        if coord_in=='EN':
-            if np.sign(u0_in * piEN_in) < 0:
-                u0hatE_in = -tauhatN_in
-                u0hatN_in = tauhatE_in
-            else:
-                u0hatE_in = tauhatN_in
-                u0hatN_in = -tauhatE_in
-
-        if coord_in=='tb':
-            if np.sign(u0_in) > 0:
-                u0hatE_in = tauhatN_in
-                u0hatN_in = -tauhatE_in
-            else:
-                u0hatE_in = -tauhatN_in
-                u0hatN_in = tauhatE_in
-
-    # out_frame == 'helio':
-    # why doesn't this matter on u0 sign?
-    # why is it piEN_in and not piEN_out? 
-    # is this an edge case?
-    if in_frame=='geo':
-        if piEN_in > 0:
-            u0hatE_out = tauhatN_out
-            u0hatN_out = -tauhatE_out
+    if coord_in=='EN':
+        if np.sign(u0_in * piEN_in) < 0:
+            u0hatE_in = -tauhatN_in
+            u0hatN_in = tauhatE_in
         else:
-            u0hatE_out = -tauhatN_out
-            u0hatN_out = tauhatE_out
-    # out_frame = 'geo':
-    else:
-        u0hatE_out = tauhatN_out
-        u0hatN_out = -tauhatE_out
+            u0hatE_in = tauhatN_in
+            u0hatN_in = -tauhatE_in
 
-    _t0_out, u0vec_out = convert_u0_t0_old(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE, 
-                                   tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
-                                   tauhatE_out, tauhatN_out, # u0hatE_out, u0hatN_out,
-                                   in_frame=in_frame)
+    if coord_in=='tb':
+        if np.sign(u0_in) > 0:
+            u0hatE_in = tauhatN_in
+            u0hatN_in = -tauhatE_in
+        else:
+            u0hatE_in = -tauhatN_in
+            u0hatN_in = tauhatE_in
 
-    x = np.sign(np.cross(-np.array([tauhatE_out, tauhatN_out]), -u0vec_out))
-    if x > 0:
-        u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
-    else:
+#    # out_frame == 'helio':
+#    # why doesn't this matter on u0 sign?
+#    # why is it piEN_in and not piEN_out? 
+#    # is this an edge case?
+#    if in_frame=='geo':
+#        if piEN_in > 0:
+#            u0hatE_out = tauhatN_out
+#            u0hatN_out = -tauhatE_out
+#        else:
+#            u0hatE_out = -tauhatN_out
+#            u0hatN_out = tauhatE_out
+#    # out_frame = 'geo':
+#    else:
+#        u0hatE_out = tauhatN_out
+#        u0hatN_out = -tauhatE_out
+
+    t0_out, u0vec_out = convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE, 
+                                      tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
+                                      tauhatE_out, tauhatN_out,
+                                      in_frame=in_frame)
+
+    if u0vec_out[0] > 0:
         u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
-
-    print(_t0_out)
-    print(u0_out)
-
-    t0_out, u0_out = convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE, 
-                                   tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
-                                   tauhatE_out, tauhatN_out, u0hatE_out, u0hatN_out,
-                                   in_frame=in_frame)
-
-    print(t0_out)
-    print(u0_out)
-
-
-    # Undo flip from LS to SL as needed
-    # (so user gets back what they expect).
-    if murel_out=='LS':
-        piEE_out *= -1
-        piEN_out *= -1
+    else:
+        u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
 
     tau_in = (t0par - t0_in)/tE_in
     tau_out = (t0par - t0_out)/tE_out
@@ -216,9 +181,6 @@ def convert_helio_geo_phot(ra, dec,
                par_t0par[1]]
 
     if plot:
-#        fig, ax = plt.subplots(1, 2, num=2, figsize=(15,6))
-#        plt.clf()
-#        fig, ax = plt.subplots(1, 2, num=2, figsize=(15,6))
         fig, ax = plt.subplots(1, 1, num=2, figsize=(9,6))
         plt.clf()
         fig, ax = plt.subplots(1, 1, num=2, figsize=(9,6))
@@ -236,15 +198,15 @@ def convert_helio_geo_phot(ra, dec,
                     ha='right',
                     arrowprops=dict(arrowstyle= '<|-',
                                     color='blue'))
-        ax.plot(0, 0, 'o', ms=10, mec='k', color='yellow')
+        ax.plot(0, 0, 'o', ms=10, mec='k', color='yellow', label='Source')
         ax.plot([0, vec_u0_in[0]], 
                    [0, vec_u0_in[1]], color='red')
-        ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=10, color='red', label='Helio')
+        ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=10, color='red', label='Lens In')
         ax.plot([vec_u0_in[0], vec_u0_in[0] + vec_tau_in[0]], 
                    [vec_u0_in[1], vec_u0_in[1] + vec_tau_in[1]], color='red')
         ax.plot([0, vec_u0_out[0]], 
                    [0, vec_u0_out[1]], color='blue')
-        ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=10, color='blue', label='Geo proj')
+        ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=10, color='blue', label='Lens Out')
         ax.plot([vec_u0_out[0], vec_u0_out[0] + vec_tau_out[0]], 
                    [vec_u0_out[1], vec_u0_out[1] + vec_tau_out[1]], color='blue')
         if in_frame=='helio':
@@ -271,53 +233,8 @@ def convert_helio_geo_phot(ra, dec,
         ax.axis('equal')
         ax.invert_xaxis()
         ax.set_title('Lu convention (S-L frame, E-N coord)')
-
-#        ax[1].annotate(r'$\vec{P}$($t_{0,par}$)', xy=(0,0), xycoords='data',
-#                       xytext=(vec_par[0]/np.hypot(vec_par[0], vec_par[1]), vec_par[1]/np.hypot(vec_par[0], vec_par[1])), textcoords='data',
-#                       ha='right',
-#                       arrowprops=dict(arrowstyle= '<|-',
-#                                       color='k',
-#                                       lw=3.5,
-#                                       ls='-'))
-#        ax[1].annotate(r'$\hat{\tau}_{rel}^{geo}$', xy=(0,0), xycoords='data',
-#                       xytext=(tauhatE_out, tauhatN_out), textcoords='data',
-#                       ha='right',
-#                       arrowprops=dict(arrowstyle= '<|-',
-#                                       color='blue',
-#                                       lw=3.5,
-#                                       ls='-'))
-#        ax[1].annotate(r'$\hat{\tau}_{rel}^{hel}$', xy=(0,0), xycoords='data',
-#                       xytext=(tauhatE_in, tauhatN_in), textcoords='data',
-#                       ha='right',
-#                       arrowprops=dict(arrowstyle= '<|-',
-#                                       color='red',
-#                                       lw=3.5,
-#                                       ls='-'))
-#        ax[1].annotate('$\hat{u}_0^{geo}$', xy=(0,0), xycoords='data',
-#                       xytext=(u0hatE_out, u0hatN_out), textcoords='data',
-#                       ha='right',
-#                       arrowprops=dict(arrowstyle= '<|-',
-#                                       color='blue',
-#                                       lw=3.5,
-#                                       ls='--'))
-#        ax[1].annotate('$\hat{u}_0^{hel}$', xy=(0,0), xycoords='data',
-#                       xytext=(u0hatE_in, u0hatN_in), textcoords='data',
-#                       ha='right',
-#                       arrowprops=dict(arrowstyle= '<|-',
-#                                       color='red',
-#                                       lw=3.5,
-#                                       ls='--'))
-#        ax[1].set_aspect('equal')
-#        ax[1].set_xlabel('$u_E$')
-#        ax[1].set_ylabel('$u_N$')
-#        ax[1].axhline(y=0, ls=':', color='gray')
-#        ax[1].axvline(x=0, ls=':', color='gray')
-#        ax[1].set_xlim(-1.5, 1.5)
-#        ax[1].set_ylim(-1.5, 1.5)
-#        ax[1].invert_xaxis()
         
         tleft = 0.75
-#        tleft = 0.8
         ttop = 0.8
         ttstep = 0.05
         fig.text(tleft, ttop - 0*ttstep, 't0_in = {0:.1f}'.format(t0_in), fontsize=12)
@@ -333,11 +250,109 @@ def convert_helio_geo_phot(ra, dec,
         fig.text(tleft, ttop - 11*ttstep, 'piEE_out = {0:.2f}'.format(piEE_out), fontsize=12)
         fig.text(tleft, ttop - 12*ttstep, 'piEN_out = {0:.2f}'.format(piEN_out), fontsize=12)
         fig.text(tleft, ttop - 13*ttstep, 'piEE_out/piEN_out = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+        plt.show()
+        plt.pause(1)
+
+
+        fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
+        plt.clf()
+        fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
+        plt.subplots_adjust(left=0.15, right=0.7)
+
+        ax.annotate(r'', 
+                    xy=(-vec_u0_in[0], -vec_u0_in[1]), xycoords='data',
+                    xytext=(-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[1] - vec_tau_in[1]), textcoords='data',
+                    ha='right',
+                    arrowprops=dict(arrowstyle= '<|-',
+                                    color='red'))
+        ax.annotate(r'', 
+                    xy=(-vec_u0_out[0], -vec_u0_out[1]), xycoords='data',
+                    xytext=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), textcoords='data',
+                    ha='right',
+                    arrowprops=dict(arrowstyle= '<|-',
+                                    color='blue'))
+        ax.plot(0, 0, 'o', ms=10, mec='k', color='k', label='Lens')
+        ax.plot([0, -vec_u0_in[0]], 
+                   [0, -vec_u0_in[1]], color='red')
+        ax.plot(-vec_u0_in[0], -vec_u0_in[1], 'o', ms=10, color='red', label='Src In')
+        ax.plot([-vec_u0_in[0], -vec_u0_in[0] - vec_tau_in[0]], 
+                   [-vec_u0_in[1], -vec_u0_in[1] - vec_tau_in[1]], color='red')
+        ax.plot([0, -vec_u0_out[0]], 
+                   [0, -vec_u0_out[1]], color='blue')
+        ax.plot(-vec_u0_out[0], -vec_u0_out[1], 'o', ms=10, color='blue', label='Src Out')
+        ax.plot([-vec_u0_out[0], -vec_u0_out[0] - vec_tau_out[0]], 
+                   [-vec_u0_out[1], -vec_u0_out[1] - vec_tau_out[1]], color='blue')
+        if in_frame=='helio':
+            ax.annotate(r'', xy=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), xycoords='data',
+                        xytext=(-vec_u0_out[0] - vec_tau_out[0] - vec_par[0]*piE, 
+                                -vec_u0_out[1] - vec_tau_out[1] - vec_par[1]*piE), textcoords='data',
+                        ha='right',
+                        arrowprops=dict(arrowstyle= '<|-',
+                                        color='gray'))
+            ax.plot([-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[0] - vec_tau_out[0] - vec_par[0]*piE], 
+                       [-vec_u0_out[1] - vec_tau_out[1], -vec_u0_out[1] - vec_tau_out[1] - vec_par[1]*piE], color='gray')
+            ax.plot([-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[0] - vec_tau_in[0] + vec_par[0]*piE], 
+                       [-vec_u0_in[1] - vec_tau_in[1], -vec_u0_in[1] - vec_tau_in[1] + vec_par[1]*piE], color='gray')
+#        else:
+#            ax.plot([vec_u0_out[0] + vec_tau_out[0], vec_u0_out[0] + vec_tau_out[0] - vec_par[0]*piE], 
+#                       [vec_u0_out[1] + vec_tau_out[1], vec_u0_out[1] + vec_tau_out[1] - vec_par[1]*piE], color='gray')
+#            ax.plot([vec_u0_in[0] + vec_tau_in[0], vec_u0_in[0] + vec_tau_in[0] + vec_par[0]*piE], 
+#                       [vec_u0_in[1] + vec_tau_in[1], vec_u0_in[1] + vec_tau_in[1] + vec_par[1]*piE], color='gray')
+        ax.legend()
+        ax.axhline(y=0, ls=':', color='gray')
+        ax.axvline(x=0, ls=':', color='gray')
+        ax.set_xlabel('$u_E$')
+        ax.set_ylabel('$u_N$')
+        ax.axis('equal')
+        ax.invert_xaxis()
+        ax.set_title(r'Gould convention (L-S frame, $\tau$-$\beta$ coord)')
+        
+        tleft = 0.75
+        ttop = 0.8
+        ttstep = 0.05
+        fig.text(tleft, ttop - 0*ttstep, 't0_in = {0:.1f}'.format(t0_in), fontsize=12)
+        if np.sign(u0_in * piEN_in) > 0:
+            fig.text(tleft, ttop - 1*ttstep, 'u0_in = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
+        else:
+            fig.text(tleft, ttop - 1*ttstep, 'u0_in = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
+        fig.text(tleft, ttop - 2*ttstep, 'tE_in = {0:.1f}'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 3*ttstep, 'piEE_in = {0:.2f}'.format(-piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 4*ttstep, 'piEN_in = {0:.2f}'.format(-piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, 'piEE_in/piEN_in = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, 't0par = {0:.1f}'.format(t0par), fontsize=12)
+        fig.text(tleft, ttop - 8*ttstep, 't0_out = {0:.1f}'.format(t0_out), fontsize=12)
+        if np.sign(u0_out * piEN_out) > 0:
+            fig.text(tleft, ttop - 9*ttstep, 'u0_out = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
+        else:
+            fig.text(tleft, ttop - 9*ttstep, 'u0_out = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
+        fig.text(tleft, ttop - 10*ttstep, 'tE_out = {0:.1f}'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 11*ttstep, 'piEE_out = {0:.2f}'.format(-piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 12*ttstep, 'piEN_out = {0:.2f}'.format(-piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, 'piEE_out/piEN_out = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
         
         plt.show()
         plt.pause(1)
+
         import pdb
         pdb.set_trace()
+
+    if coord_out=='tb':
+        x = np.sign(np.cross(-np.array([tauhatE_out, tauhatN_out]), -u0vec_out))
+        if x > 0:
+            u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
+        else:
+            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+    if coord_out=='EN':
+        if u0vec_out[0] > 0:
+            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+        else:
+            u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
+
+    # Undo flip from LS to SL as needed
+    # (so user gets back what they expect).
+    if murel_out=='LS':
+        piEE_out *= -1
+        piEN_out *= -1
 
     return t0_out, u0_out, tE_out, piEE_out, piEN_out
 
@@ -468,7 +483,7 @@ def convert_helio_geo_phot_old(ra, dec,
         u0hatE_out = tauhatN_out
         u0hatN_out = -tauhatE_out
 
-    _t0_out, u0vec_out = convert_u0_t0_old(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE, 
+    _t0_out, u0vec_out = convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE, 
                                    tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
                                    tauhatE_out, tauhatN_out, # u0hatE_out, u0hatN_out,
                                    in_frame=in_frame)
@@ -482,7 +497,7 @@ def convert_helio_geo_phot_old(ra, dec,
     print(_t0_out)
     print(u0_out)
 
-    t0_out, u0_out = convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE, 
+    t0_out, u0_out = convert_u0_t0_old(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE, 
                                    tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
                                    tauhatE_out, tauhatN_out, u0hatE_out, u0hatN_out,
                                    in_frame=in_frame)
@@ -629,7 +644,7 @@ def convert_helio_geo_phot_old(ra, dec,
 
     return t0_out, u0_out, tE_out, piEE_out, piEN_out
 
-def convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
+def convert_u0_t0_old(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
                   tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
                   tauhatE_out, tauhatN_out, u0hatE_out, u0hatN_out,
                   in_frame='helio'):
@@ -667,9 +682,9 @@ def convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
 
     return t0_out, u0_out
 
-def convert_u0_t0_old(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
+def convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
                   tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
-                  tauhatE_out, tauhatN_out, # u0hatE_out, u0hatN_out,
+                  tauhatE_out, tauhatN_out,
                   in_frame='helio'):
     """
     *** PROPER MOTIONS ARE DEFINED AS SOURCE - LENS ***
@@ -700,7 +715,6 @@ def convert_u0_t0_old(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
     # Get direction of tauhat_out and u0hat_out.
     tauhat_out = np.array([tauhatE_out, tauhatN_out])
     tauhat_in = np.array([tauhatE_in, tauhatN_in])
-#    u0hat_out = np.array([u0hatE_out, u0hatN_out])
     
     # Actually get u0 and t0...
     dp_dt_t0par = ((tauhat_in/tE_in)  - (tauhat_out/tE_out))/piE
