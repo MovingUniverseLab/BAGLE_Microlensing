@@ -53,7 +53,7 @@ def convert_helio_geo_phot(ra, dec,
                            in_frame='helio',
                            murel_in='SL', murel_out='LS', 
                            coord_in='EN', coord_out='tb',
-                           plot=False):
+                           plot=True):
     """
     Convert between heliocentric and geocentric projected parameters.
     This converts only the subset of parameters in photometry fits
@@ -325,6 +325,7 @@ def convert_piE_tE(ra, dec, t0par,
     
     return piEE_out, piEN_out, tE_out
 
+
 def v_Earth_proj(ra, dec, mjd):
     """
     !!! This is the Earth-Sun vector direction. 
@@ -381,6 +382,7 @@ def v_Earth_proj(ra, dec, mjd):
 
     return v_Earth_perp_E, v_Earth_perp_N
 
+
 def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE, vec_par, in_frame,
                             t0par, t0_in, u0_in, tE_in, piEE_in, piEN_in,
                             t0_out, u0_out, tE_out, piEE_out, piEN_out):
@@ -393,30 +395,41 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
     plt.clf()
     fig, ax = plt.subplots(1, 1, num=2, figsize=(9,6))
     plt.subplots_adjust(left=0.15, right=0.7)
-    
+
+    if in_frame == 'helio':
+        label_in = 'Lens Hel'
+        label_out = 'Lens Geo'
+        color_in = 'red'
+        color_out = 'blue'
+    if in_frame == 'geo':
+        label_in = 'Lens Geo'
+        label_out = 'Lens Hel'
+        color_in = 'blue'
+        color_out = 'red'
+
     ax.annotate(r'', 
                 xy=(vec_u0_in[0], vec_u0_in[1]), xycoords='data',
                 xytext=(vec_u0_in[0] + vec_tau_in[0], vec_u0_in[1] + vec_tau_in[1]), textcoords='data',
                 ha='right',
                 arrowprops=dict(arrowstyle= '<|-',
-                                color='red'))
+                                color=color_in))
     ax.annotate(r'', 
                 xy=(vec_u0_out[0], vec_u0_out[1]), xycoords='data',
                 xytext=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), textcoords='data',
                 ha='right',
                 arrowprops=dict(arrowstyle= '<|-',
-                                color='blue'))
+                                color=color_out))
     ax.plot(0, 0, 'o', ms=10, mec='k', color='yellow', label='Source')
     ax.plot([0, vec_u0_in[0]], 
-            [0, vec_u0_in[1]], color='red')
-    ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=10, color='red', label='Lens In')
+            [0, vec_u0_in[1]], color=color_in)
+    ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=10, color=color_in, label=label_in)
     ax.plot([vec_u0_in[0], vec_u0_in[0] + vec_tau_in[0]], 
-            [vec_u0_in[1], vec_u0_in[1] + vec_tau_in[1]], color='red')
+            [vec_u0_in[1], vec_u0_in[1] + vec_tau_in[1]], color=color_in)
     ax.plot([0, vec_u0_out[0]], 
-            [0, vec_u0_out[1]], color='blue')
-    ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=10, color='blue', label='Lens Out')
+            [0, vec_u0_out[1]], color=color_out)
+    ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=10, color=color_out, label=label_out)
     ax.plot([vec_u0_out[0], vec_u0_out[0] + vec_tau_out[0]], 
-            [vec_u0_out[1], vec_u0_out[1] + vec_tau_out[1]], color='blue')
+            [vec_u0_out[1], vec_u0_out[1] + vec_tau_out[1]], color=color_out)
     if in_frame=='helio':
         ax.annotate(r'', xy=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), xycoords='data',
                     xytext=(vec_u0_out[0] + vec_tau_out[0] + vec_par[0]*piE, 
@@ -429,6 +442,12 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
         ax.plot([vec_u0_in[0] + vec_tau_in[0], vec_u0_in[0] + vec_tau_in[0] - vec_par[0]*piE], 
                 [vec_u0_in[1] + vec_tau_in[1], vec_u0_in[1] + vec_tau_in[1] - vec_par[1]*piE], color='gray')
     else:
+        ax.annotate(r'', xy=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), xycoords='data',
+                    xytext=(vec_u0_out[0] + vec_tau_out[0] - vec_par[0]*piE, 
+                            vec_u0_out[1] + vec_tau_out[1] - vec_par[1]*piE), textcoords='data',
+                    ha='right',
+                    arrowprops=dict(arrowstyle= '<|-',
+                                    color='gray'))
         ax.plot([vec_u0_out[0] + vec_tau_out[0], vec_u0_out[0] + vec_tau_out[0] - vec_par[0]*piE], 
                 [vec_u0_out[1] + vec_tau_out[1], vec_u0_out[1] + vec_tau_out[1] - vec_par[1]*piE], color='gray')
         ax.plot([vec_u0_in[0] + vec_tau_in[0], vec_u0_in[0] + vec_tau_in[0] + vec_par[0]*piE], 
@@ -445,50 +464,71 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
     tleft = 0.75
     ttop = 0.8
     ttstep = 0.05
-    fig.text(tleft, ttop - 0*ttstep, 't0_in = {0:.1f}'.format(t0_in), fontsize=12)
-    fig.text(tleft, ttop - 1*ttstep, 'u0_in = {0:.2f}'.format(u0_in), fontsize=12)
-    fig.text(tleft, ttop - 2*ttstep, 'tE_in = {0:.1f}'.format(tE_in), fontsize=12)
-    fig.text(tleft, ttop - 3*ttstep, 'piEE_in = {0:.2f}'.format(piEE_in), fontsize=12)
-    fig.text(tleft, ttop - 4*ttstep, 'piEN_in = {0:.2f}'.format(piEN_in), fontsize=12)
-    fig.text(tleft, ttop - 5*ttstep, 'piEE_in/piEN_in = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-    fig.text(tleft, ttop - 7*ttstep, 't0par = {0:.1f}'.format(t0par), fontsize=12)
-    fig.text(tleft, ttop - 8*ttstep, 't0_out = {0:.1f}'.format(t0_out), fontsize=12)
-    fig.text(tleft, ttop - 9*ttstep, 'u0_out = {0:.2f}'.format(u0_out), fontsize=12)
-    fig.text(tleft, ttop - 10*ttstep, 'tE_out = {0:.1f}'.format(tE_out), fontsize=12)
-    fig.text(tleft, ttop - 11*ttstep, 'piEE_out = {0:.2f}'.format(piEE_out), fontsize=12)
-    fig.text(tleft, ttop - 12*ttstep, 'piEN_out = {0:.2f}'.format(piEN_out), fontsize=12)
-    fig.text(tleft, ttop - 13*ttstep, 'piEE_out/piEN_out = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+
+    fig.text(tleft, ttop - -1*ttstep, 't0par = {0:.1f}'.format(t0par), fontsize=12)
+
+    if in_frame == 'helio':
+        fig.text(tleft, ttop - 1*ttstep, 'Helio', weight='bold', fontsize=14)
+        fig.text(tleft, ttop - 9*ttstep, 'Geo proj', weight='bold', fontsize=14)
+    if in_frame == 'geo':
+        fig.text(tleft, ttop - 1*ttstep, 'Geo proj', weight='bold', fontsize=14)
+        fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
+
+    fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+    fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)
+    fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
+    fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(piEE_in), fontsize=12)
+    fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(piEN_in), fontsize=12)
+    fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+
+    fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+    fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(u0_out), fontsize=12)
+    fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
+    fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(piEE_out), fontsize=12)
+    fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(piEN_out), fontsize=12)
+    fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
     plt.show()
-    plt.pause(1)
+#    plt.pause(1)
 
     fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
     plt.clf()
     fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
     plt.subplots_adjust(left=0.15, right=0.7)
+
+    if in_frame == 'helio':
+        label_in = 'Src Hel'
+        label_out = 'Src Geo'
+        color_in = 'red'
+        color_out = 'blue'
+    if in_frame == 'geo':
+        label_in = 'Src Geo'
+        label_out = 'Src Hel'
+        color_in = 'blue'
+        color_out = 'red'
     
     ax.annotate(r'', 
                 xy=(-vec_u0_in[0], -vec_u0_in[1]), xycoords='data',
                 xytext=(-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[1] - vec_tau_in[1]), textcoords='data',
                 ha='right',
                 arrowprops=dict(arrowstyle= '<|-',
-                                color='red'))
+                                color=color_in))
     ax.annotate(r'', 
                 xy=(-vec_u0_out[0], -vec_u0_out[1]), xycoords='data',
                 xytext=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), textcoords='data',
                 ha='right',
                 arrowprops=dict(arrowstyle= '<|-',
-                                color='blue'))
+                                color=color_out))
     ax.plot(0, 0, 'o', ms=10, mec='k', color='k', label='Lens')
     ax.plot([0, -vec_u0_in[0]], 
-            [0, -vec_u0_in[1]], color='red')
-    ax.plot(-vec_u0_in[0], -vec_u0_in[1], 'o', ms=10, color='red', label='Src In')
+            [0, -vec_u0_in[1]], color=color_in)
+    ax.plot(-vec_u0_in[0], -vec_u0_in[1], 'o', ms=10, color=color_in, label=label_in)
     ax.plot([-vec_u0_in[0], -vec_u0_in[0] - vec_tau_in[0]], 
-            [-vec_u0_in[1], -vec_u0_in[1] - vec_tau_in[1]], color='red')
+            [-vec_u0_in[1], -vec_u0_in[1] - vec_tau_in[1]], color=color_in)
     ax.plot([0, -vec_u0_out[0]], 
-            [0, -vec_u0_out[1]], color='blue')
-    ax.plot(-vec_u0_out[0], -vec_u0_out[1], 'o', ms=10, color='blue', label='Src Out')
+            [0, -vec_u0_out[1]], color=color_out)
+    ax.plot(-vec_u0_out[0], -vec_u0_out[1], 'o', ms=10, color=color_out, label=label_out)
     ax.plot([-vec_u0_out[0], -vec_u0_out[0] - vec_tau_out[0]], 
-            [-vec_u0_out[1], -vec_u0_out[1] - vec_tau_out[1]], color='blue')
+            [-vec_u0_out[1], -vec_u0_out[1] - vec_tau_out[1]], color=color_out)
     if in_frame=='helio':
         ax.annotate(r'', xy=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), xycoords='data',
                     xytext=(-vec_u0_out[0] - vec_tau_out[0] - vec_par[0]*piE, 
@@ -509,6 +549,8 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
                                     color='gray'))
         ax.plot([-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[0] - vec_tau_out[0] + vec_par[0]*piE], 
                 [-vec_u0_out[1] - vec_tau_out[1], -vec_u0_out[1] - vec_tau_out[1] + vec_par[1]*piE], color='gray')
+        ax.plot([-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[0] - vec_tau_in[0] - vec_par[0]*piE], 
+                [-vec_u0_in[1] - vec_tau_in[1], -vec_u0_in[1] - vec_tau_in[1] - vec_par[1]*piE], color='gray')
     ax.legend()
     ax.axhline(y=0, ls=':', color='gray')
     ax.axvline(x=0, ls=':', color='gray')
@@ -521,26 +563,37 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
     tleft = 0.75
     ttop = 0.8
     ttstep = 0.05
-    fig.text(tleft, ttop - 0*ttstep, 't0_in = {0:.1f}'.format(t0_in), fontsize=12)
+
+    fig.text(tleft, ttop - -1*ttstep, 't0par = {0:.1f}'.format(t0par), fontsize=12)
+
+    if in_frame == 'helio':
+        fig.text(tleft, ttop - 1*ttstep, 'Helio', weight='bold', fontsize=14)
+        fig.text(tleft, ttop - 9*ttstep, 'Geo proj', weight='bold', fontsize=14)
+    if in_frame == 'geo':
+        fig.text(tleft, ttop - 1*ttstep, 'Geo proj', weight='bold', fontsize=14)
+        fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
+
+    fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
     if np.sign(u0_in * piEN_in) > 0:
-        fig.text(tleft, ttop - 1*ttstep, 'u0_in = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
+        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
     else:
-        fig.text(tleft, ttop - 1*ttstep, 'u0_in = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
-    fig.text(tleft, ttop - 2*ttstep, 'tE_in = {0:.1f}'.format(tE_in), fontsize=12)
-    fig.text(tleft, ttop - 3*ttstep, 'piEE_in = {0:.2f}'.format(-piEE_in), fontsize=12)
-    fig.text(tleft, ttop - 4*ttstep, 'piEN_in = {0:.2f}'.format(-piEN_in), fontsize=12)
-    fig.text(tleft, ttop - 5*ttstep, 'piEE_in/piEN_in = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-    fig.text(tleft, ttop - 7*ttstep, 't0par = {0:.1f}'.format(t0par), fontsize=12)
-    fig.text(tleft, ttop - 8*ttstep, 't0_out = {0:.1f}'.format(t0_out), fontsize=12)
+        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
+
+    fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
+    fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(-piEE_in), fontsize=12)
+    fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(-piEN_in), fontsize=12)
+    fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+
+    fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
     if np.sign(u0_out * piEN_out) > 0:
-        fig.text(tleft, ttop - 9*ttstep, 'u0_out = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
+        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
     else:
-        fig.text(tleft, ttop - 9*ttstep, 'u0_out = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
-    fig.text(tleft, ttop - 10*ttstep, 'tE_out = {0:.1f}'.format(tE_out), fontsize=12)
-    fig.text(tleft, ttop - 11*ttstep, 'piEE_out = {0:.2f}'.format(-piEE_out), fontsize=12)
-    fig.text(tleft, ttop - 12*ttstep, 'piEN_out = {0:.2f}'.format(-piEN_out), fontsize=12)
-    fig.text(tleft, ttop - 13*ttstep, 'piEE_out/piEN_out = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
+    fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
+    fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(-piEE_out), fontsize=12)
+    fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(-piEN_out), fontsize=12)
+    fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
     
     plt.show()
-    plt.pause(1)
+#    plt.pause(1)
 
