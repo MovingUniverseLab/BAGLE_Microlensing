@@ -7,8 +7,6 @@ import erfa
 import matplotlib.pyplot as plt
 from src.BAGLE import model
 
-
-# Note: this hasn't been checked/tested yet.
 def convert_helio_geo_ast(ra, dec,
                           piS, xS0E_in, xS0N_in,
                           muSE_in, muSN_in, 
@@ -37,11 +35,13 @@ def convert_helio_geo_ast(ra, dec,
         muSN_out = muSN_in + piS * dp_dt_t0par[1] * day_to_yr
         xS0E_out = xS0E_in + muSE_in * (t0_out - t0_in) + piS * par_t0par[0]
         xS0N_out = xS0N_in + muSN_in * (t0_out - t0_in) + piS * par_t0par[1]
-    else:
+    elif in_frame=='geo':
         muSE_out = muSE_in - piS * dp_dt_t0par[0] * day_to_yr
         muSN_out = muSN_in - piS * dp_dt_t0par[1] * day_to_yr
         xS0E_out = xS0E_in + muSE_in * (t0_out - t0_in) - piS * par_t0par[0] - piS * (t0_out - t0_in) * dp_dt_t0par[0]
         xS0N_out = xS0N_in + muSN_in * (t0_out - t0_in) - piS * par_t0par[1] - piS * (t0_out - t0_in) * dp_dt_t0par[1]
+    else:
+        raise Exception('in_frame can only be "helio" or "geo"!')
 
     return xS0E_out, xS0N_out, muSE_out, muSN_out
 
@@ -129,13 +129,16 @@ def convert_helio_geo_phot(ra, dec,
             u0hatE_in = tauhatN_in
             u0hatN_in = -tauhatE_in
 
-    if coord_in=='tb':
+    elif coord_in=='tb':
         if np.sign(u0_in) > 0:
             u0hatE_in = tauhatN_in
             u0hatN_in = -tauhatE_in
         else:
             u0hatE_in = -tauhatN_in
             u0hatN_in = tauhatE_in
+
+    else:
+        raise Exception('coord_in can only be "EN" or "tb"!')
 
     # Calculate t0 and u0 vector.
     t0_out, u0vec_out = convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE, 
@@ -173,7 +176,7 @@ def convert_helio_geo_phot(ra, dec,
                                 t0par, t0_in, u0_in, tE_in, piEE_in, piEN_in,
                                 t0_out, u0_out, tE_out, piEE_out, piEN_out)
 
-    # Undo transformation from tb to EN as needed (so user gets back what they expect).
+    # Transform from tb to EN as needed (so user gets back what they expect).
     if coord_out=='tb':
         x = np.sign(np.cross(np.array([tauhatE_out, tauhatN_out]), u0vec_out))
         if x > 0:
@@ -181,7 +184,7 @@ def convert_helio_geo_phot(ra, dec,
         else:
             u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
-    # Undo flip from LS to SL as needed (so user gets back what they expect).
+    # Flip from LS to SL as needed (so user gets back what they expect).
     if murel_out=='LS':
         piEE_out *= -1
         piEN_out *= -1
@@ -206,7 +209,10 @@ def convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
     # Parallax vector (Sun-Earth projected separation vector in AU) at t0par.
     # Get dp_dt_t0par in 1/days.
     par_t0par = model.parallax_in_direction(ra, dec, np.array([t0par])).reshape(2,)
-    dp_dt_t0par = model.dparallax_dt_in_direction(ra, dec, np.array([t0par])).reshape(2,)/365.25
+    
+    # NOTE: dp_dt_t0par doesn't seem quite as good as calculating it from tauhat/tE/piE...
+    # not sure why this is....
+    # dp_dt_t0par = model.dparallax_dt_in_direction(ra, dec, np.array([t0par])).reshape(2,)/365.25
         
     # Calculate a bunch of values we need to get u0 and t0.
     tau_in = (t0par - t0_in)/tE_in
@@ -218,7 +224,7 @@ def convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
     tauhat_out = np.array([tauhatE_out, tauhatN_out])
     tauhat_in = np.array([tauhatE_in, tauhatN_in])
     
-    # Actually get u0 and t0...
+    # Actually get u0 and t0.
     if in_frame=='helio':
         dp_dt_t0par = ((tauhat_in/tE_in)  - (tauhat_out/tE_out))/piE
 
@@ -226,12 +232,15 @@ def convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
         u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par
         u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
-    if in_frame=='geo':
+    elif in_frame=='geo':
         dp_dt_t0par = -1*((tauhat_in/tE_in) - (tauhat_out/tE_out))/piE
 
         t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par)
         u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par
         u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+
+    else:
+        raise Exception('in_frame can only be "helio" or "geo"!')
 
     if u0vec_out[0] > 0:
         u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
@@ -307,6 +316,8 @@ def convert_piE_tE(ra, dec, t0par,
     elif in_frame=='geo':
         vtildeN_out = -vtildeN_in + v_Earth_perp_N
         vtildeE_out = -vtildeE_in + v_Earth_perp_E
+    else:
+        raise Exception('in_frame can only be "helio" or "geo"!')
 
     # Convert piEE, piEN, and tE
     vtilde_in = np.hypot(vtildeE_in, vtildeN_in)
