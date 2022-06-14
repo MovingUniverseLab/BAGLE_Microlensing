@@ -6,14 +6,8 @@ from src.BAGLE import frame_convert as fc
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 
-ra = 259.0
-dec = -29.0
-coords = SkyCoord(ra, dec, unit=(u.deg, u.deg))
-t_mjd = np.arange(57000 - 500, 57000 + 500, 1)
-t_hjd = t_mjd + 2400000.5
-
-# test_bagle_geoproj_to_bagle
-def test_bagle_geo_to_helio_phot(t0_g, u0_g, tE_g, 
+def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
+                                 t0_g, u0_g, tE_g, 
                                  piEE_g, piEN_g, 
                                  t0par, plot=False):
     """
@@ -22,6 +16,8 @@ def test_bagle_geo_to_helio_phot(t0_g, u0_g, tE_g,
     heliocentric frame (using source-lens East-North 
     convention) photometry parameters in BAGLE.
     """
+    # Convert the geoprojected parameters (in lens-source tau-beta)
+    # to heliocentric parameters (in source-lens East-North).
     output = fc.convert_helio_geo_phot(ra, dec, t0_g, u0_g, 
                                        tE_g, piEE_g, piEN_g,
                                        t0par, in_frame='geo',
@@ -30,14 +26,14 @@ def test_bagle_geo_to_helio_phot(t0_g, u0_g, tE_g,
 
     t0_h, u0_h, tE_h, piEE_h, piEN_h = output
 
+    # Get the lightcurve from the geoprojected parameters.
     mag_bagle_geoproj = get_phot_bagle_geoproj(ra, dec, t0_g, u0_g, 
                                                tE_g, piEE_g, piEN_g, 
                                                t_mjd, t0par)
+
+    # Get the lightcurve from the heliocentric parameters.
     mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, 
                                tE_h, piEE_h, piEN_h, t_mjd)
-
-    # For a formal test, require this to be smaller than some number.
-    # x = np.sum(np.abs(mag_mulens - mag_bagle))
 
     if plot:
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
@@ -53,8 +49,16 @@ def test_bagle_geo_to_helio_phot(t0_g, u0_g, tE_g,
         plt.show()
 #        plt.pause(0.5)
 
-# test_bagle_to_bagle_geoproj
-def test_bagle_helio_to_geo_phot(t0_h, u0_h, tE_h, 
+    # Make sure that the conversion works by asserting
+    # that the lightcurves are no more different than
+    # 1e-4 magnitudes on average.
+    # Note: current test fails if require < 1e-5.
+    diff = (mag_bagle_geoproj - mag_bagle)/mag_bagle_geoproj
+    total_diff = np.sum(np.abs(diff))
+    assert total_diff/len(t_mjd) < 1e-4
+
+def test_bagle_helio_to_geo_phot(ra, dec, t_mjd,
+                                 t0_h, u0_h, tE_h, 
                                  piEE_h, piEN_h, 
                                  t0par, plot=False):
     """
@@ -63,6 +67,8 @@ def test_bagle_helio_to_geo_phot(t0_h, u0_h, tE_h,
     projected frame (using lens-source tau-beta convention)
     photometry parameters in BAGLE.
     """
+    # Convert the heliocentric parameters (in source-lens East-North)
+    # to geoprojected parameters (in lens-source tau-beta).
     output = fc.convert_helio_geo_phot(ra, dec, t0_h, u0_h, 
                                        tE_h, piEE_h, piEN_h,
                                        t0par, in_frame='helio',
@@ -71,14 +77,14 @@ def test_bagle_helio_to_geo_phot(t0_h, u0_h, tE_h,
 
     t0_g, u0_g, tE_g, piEE_g, piEN_g = output
 
+    # Get the lightcurve from the geoprojected parameters.
     mag_bagle_geoproj = get_phot_bagle_geoproj(ra, dec, t0_g, u0_g, 
                                                tE_g, piEE_g, piEN_g, 
                                                t_mjd, t0par)
+
+    # Get the lightcurve from the heliocentric parameters.
     mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, 
                                tE_h, piEE_h, piEN_h, t_mjd)
-    
-    # For a formal test, require this to be smaller than some number.
-    # x = np.sum(np.abs(mag_mulens - mag_bagle))
 
     if plot:
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
@@ -94,8 +100,17 @@ def test_bagle_helio_to_geo_phot(t0_h, u0_h, tE_h,
         plt.show()
 #        plt.pause(0.5)
 
+    # Make sure that the conversion works by asserting
+    # that the lightcurves are no more different than
+    # 1e-5 magnitudes on average.
+    # Note: current test fails if require < 1e-6.
+    diff = (mag_bagle - mag_bagle_geoproj)/mag_bagle
+    total_diff = np.sum(np.abs(diff))
+    assert total_diff/len(t_mjd) < 1e-5
 
-def test_bagle_to_mulens(t0_h, u0_h, tE_h, 
+
+def test_bagle_to_mulens(ra, dec, t_mjd,
+                         t0_h, u0_h, tE_h, 
                          piEE_h, piEN_h, 
                          t0par, plot=False):
     """
@@ -104,6 +119,8 @@ def test_bagle_to_mulens(t0_h, u0_h, tE_h,
     projected frame (using lens-source tau-beta convention)
     in MulensModel for photometry parameters .
     """
+    # Convert the heliocentric parameters (in source-lens East-North)
+    # to geoprojected parameters (in lens-source tau-beta).
     output = fc.convert_helio_geo_phot(ra, dec, t0_h, u0_h, 
                                        tE_h, piEE_h, piEN_h,
                                        t0par, in_frame='helio',
@@ -112,14 +129,20 @@ def test_bagle_to_mulens(t0_h, u0_h, tE_h,
 
     t0_g, u0_g, tE_g, piEE_g, piEN_g = output
 
+    # Get HJD from MJD (since MulensModel uses HJD).
+    t_hjd = t_mjd + 2400000.5
+    
+    # Turn RA and Dec into SkyCoord object (for MulensModel).
+    coords = SkyCoord(ra, dec, unit=(u.deg, u.deg))
+
+    # Get the lightcurve from the geoprojected parameters.
     mag_mulens = get_phot_mulens(coords, t0_g, u0_g, 
                                  tE_g, piEE_g, piEN_g, 
                                  t0par, t_hjd)
+
+    # Get the lightcurve from the heliocentric parameters.
     mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, 
                                tE_h, piEE_h, piEN_h, t_mjd)
-    
-    # For a formal test, require this to be smaller than some number.
-    # x = np.sum(np.abs(mag_mulens - mag_bagle))
     
     if plot:
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
@@ -135,7 +158,16 @@ def test_bagle_to_mulens(t0_h, u0_h, tE_h,
         plt.show()
 #        plt.pause(0.5)
 
-def test_mulens_to_bagle(t0_g, u0_g, tE_g, 
+    # Make sure that the conversion works by asserting
+    # that the lightcurves are no more different than
+    # 1e-5 magnitudes on average.
+    # Note: current test fails if require < 1e-6.
+    diff = (mag_bagle - mag_mulens)/mag_bagle
+    total_diff = np.sum(np.abs(diff))
+    assert total_diff/len(t_mjd) < 1e-5
+
+def test_mulens_to_bagle(ra, dec, t_mjd,
+                         t0_g, u0_g, tE_g, 
                          piEE_g, piEN_g, 
                          t0par, plot=False):
     """
@@ -144,6 +176,8 @@ def test_mulens_to_bagle(t0_g, u0_g, tE_g,
     heliocentric frame (using source-lens East-North 
     convention) in BAGLE for photometry parameters .
     """
+    # Convert the geoprojected parameters (in lens-source tau-beta)
+    # to heliocentric parameters (in source-lens East-North).
     output = fc.convert_helio_geo_phot(ra, dec, t0_g, u0_g, 
                                        tE_g, piEE_g, piEN_g,
                                        t0par, in_frame='geo',
@@ -152,14 +186,20 @@ def test_mulens_to_bagle(t0_g, u0_g, tE_g,
 
     t0_h, u0_h, tE_h, piEE_h, piEN_h = output
 
+    # Get HJD from MJD (since MulensModel uses HJD).
+    t_hjd = t_mjd + 2400000.5
+
+    # Turn RA and Dec into SkyCoord object (for MulensModel).
+    coords = SkyCoord(ra, dec, unit=(u.deg, u.deg))
+
+    # Get the lightcurve from the heliocentric parameters.
     mag_mulens = get_phot_mulens(coords, t0_g, u0_g, 
                                  tE_g, piEE_g, piEN_g, 
                                  t0par, t_hjd)
+
+    # Get the lightcurve from the geoprojected parameters.
     mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, 
                                tE_h, piEE_h, piEN_h, t_mjd)
-
-    # For a formal test, require this to be smaller than some number.
-    # x = np.sum(np.abs(mag_mulens - mag_bagle))
 
     if plot:
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
@@ -174,6 +214,14 @@ def test_mulens_to_bagle(t0_g, u0_g, tE_g,
         ax[1].set_xlabel('MJD')
         plt.show()
         plt.pause(0.5)
+
+    # Make sure that the conversion works by asserting
+    # that the lightcurves are no more different than
+    # 1e-4 magnitudes on average.
+    # Note: current test fails if require < 1e-5.
+    diff = (mag_mulens - mag_bagle)/mag_mulens
+    total_diff = np.sum(np.abs(diff))
+    assert total_diff/len(t_mjd) < 1e-4
     
     
 def get_phot_mulens(coords, t0_g, u0_g, tE_g, 
@@ -203,7 +251,8 @@ def get_phot_mulens(coords, t0_g, u0_g, tE_g,
 
     return mag_obs
 
-def get_phot_bagle(ra, dec, t0_h, u0_h, tE_h, piEE_h, piEN_h, t_mjd):
+def get_phot_bagle(ra, dec, t0_h, u0_h, 
+                   tE_h, piEE_h, piEN_h, t_mjd):
     """
     Get lightcurve from BAGLE, assuming an unblended 
     22nd mag source. This BAGLE model uses the 
@@ -224,7 +273,8 @@ def get_phot_bagle(ra, dec, t0_h, u0_h, tE_h, piEE_h, piEN_h, t_mjd):
     params['mag_src'] = 22
     
     # Then instantiate model and get lightcurve.
-    mod = model.PSPL_Phot_Par_Param1(params['t0'], params['u0_amp'], params['tE'],
+    mod = model.PSPL_Phot_Par_Param1(params['t0'], params['u0_amp'], 
+                                     params['tE'],
                                      params['piE_E'], params['piE_N'],
                                      params['b_sff'], params['mag_src'],
                                      raL=params['raL'], decL=params['decL'])
@@ -234,7 +284,8 @@ def get_phot_bagle(ra, dec, t0_h, u0_h, tE_h, piEE_h, piEN_h, t_mjd):
     return mag_obs
 
 
-def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h, piEE_h, piEN_h, t_mjd, t0par):
+def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h, 
+                           piEE_h, piEN_h, t_mjd, t0par):
     """
     Get lightcurve from BAGLE, assuming an unblended 
     22nd mag source. This BAGLE model uses the    
@@ -267,126 +318,130 @@ def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h, piEE_h, piEN_h, t_mjd, t0p
     return mag_obs
 
 def test():
+    t_mjd = np.arange(57000 - 500, 57000 + 500, 1)
+
     print('set 1')
-    test_bagle_to_mulens(57000, 0.5, 300, 0.2, 0.1, 57100)
-    test_bagle_to_mulens(57000, 0.5, 300, -0.2, 0.1, 57100)
-    test_bagle_to_mulens(57000, 0.5, 300, 0.2, -0.1, 57100)
-    test_bagle_to_mulens(57000, 0.5, 300, -0.2, -0.1, 57100)
-    test_bagle_to_mulens(57000, -0.5, 300, 0.2, 0.1, 57100)
-    test_bagle_to_mulens(57000, -0.5, 300, -0.2, 0.1, 57100)
-    test_bagle_to_mulens(57000, -0.5, 300, 0.2, -0.1, 57100)
-    test_bagle_to_mulens(57000, -0.5, 300, -0.2, -0.1, 57100)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57100)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57100)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57100)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57100)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57100)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57100)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57100)
     
     print('set 2')
-    test_mulens_to_bagle(57000, 0.5, 300, 0.2, 0.1, 57100)
-    test_mulens_to_bagle(57000, 0.5, 300, -0.2, 0.1, 57100)
-    test_mulens_to_bagle(57000, 0.5, 300, 0.2, -0.1, 57100)
-    test_mulens_to_bagle(57000, 0.5, 300, -0.2, -0.1, 57100)
-    test_mulens_to_bagle(57000, -0.5, 300, 0.2, 0.1, 57100)
-    test_mulens_to_bagle(57000, -0.5, 300, -0.2, 0.1, 57100)
-    test_mulens_to_bagle(57000, -0.5, 300, 0.2, -0.1, 57100)
-    test_mulens_to_bagle(57000, -0.5, 300, -0.2, -0.1, 57100)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57100)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57100)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57100)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57100)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57100)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57100)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57100)
     
     print('set 3')
-    test_bagle_to_mulens(57000, 0.5, 300, 0.2, 0.1, 57000)
-    test_bagle_to_mulens(57000, 0.5, 300, -0.2, 0.1, 57000)
-    test_bagle_to_mulens(57000, 0.5, 300, 0.2, -0.1, 57000)
-    test_bagle_to_mulens(57000, 0.5, 300, -0.2, -0.1, 57000)
-    test_bagle_to_mulens(57000, -0.5, 300, 0.2, 0.1, 57000)
-    test_bagle_to_mulens(57000, -0.5, 300, -0.2, 0.1, 57000)
-    test_bagle_to_mulens(57000, -0.5, 300, 0.2, -0.1, 57000)
-    test_bagle_to_mulens(57000, -0.5, 300, -0.2, -0.1, 57000)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57000)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57000)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57000)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57000)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57000)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57000)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57000)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57000)
     
     print('set 4')
-    test_mulens_to_bagle(57000, 0.5, 300, 0.2, 0.1, 57000)
-    test_mulens_to_bagle(57000, 0.5, 300, -0.2, 0.1, 57000)
-    test_mulens_to_bagle(57000, 0.5, 300, 0.2, -0.1, 57000)
-    test_mulens_to_bagle(57000, 0.5, 300, -0.2, -0.1, 57000)
-    test_mulens_to_bagle(57000, -0.5, 300, 0.2, 0.1, 57000)
-    test_mulens_to_bagle(57000, -0.5, 300, -0.2, 0.1, 57000)
-    test_mulens_to_bagle(57000, -0.5, 300, 0.2, -0.1, 57000)
-    test_mulens_to_bagle(57000, -0.5, 300, -0.2, -0.1, 57000)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57000)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57000)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57000)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57000)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57000)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57000)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57000)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57000)
     
     print('set 5')
-    test_bagle_to_mulens(57000, 0.5, 300, 0.2, 0.1, 69900)
-    test_bagle_to_mulens(57000, 0.5, 300, -0.2, 0.1, 69900)
-    test_bagle_to_mulens(57000, 0.5, 300, 0.2, -0.1, 69900)
-    test_bagle_to_mulens(57000, 0.5, 300, -0.2, -0.1, 69900)
-    test_bagle_to_mulens(57000, -0.5, 300, 0.2, 0.1, 69900)
-    test_bagle_to_mulens(57000, -0.5, 300, -0.2, 0.1, 69900)
-    test_bagle_to_mulens(57000, -0.5, 300, 0.2, -0.1, 69900)
-    test_bagle_to_mulens(57000, -0.5, 300, -0.2, -0.1, 69900)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 69900)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 69900)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 69900)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 69900)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 69900)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 69900)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 69900)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 69900)
     
     print('set 6')
-    test_mulens_to_bagle(57000, 0.5, 300, 0.2, 0.1, 69900)
-    test_mulens_to_bagle(57000, 0.5, 300, -0.2, 0.1, 69900)
-    test_mulens_to_bagle(57000, 0.5, 300, 0.2, -0.1, 69900)
-    test_mulens_to_bagle(57000, 0.5, 300, -0.2, -0.1, 69900)
-    test_mulens_to_bagle(57000, -0.5, 300, 0.2, 0.1, 69900)
-    test_mulens_to_bagle(57000, -0.5, 300, -0.2, 0.1, 69900)
-    test_mulens_to_bagle(57000, -0.5, 300, 0.2, -0.1, 69900)
-    test_mulens_to_bagle(57000, -0.5, 300, -0.2, -0.1, 69900)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 69900)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 69900)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 69900)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 69900)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 69900)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 69900)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 69900)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 69900)
 
 def test_2():
-    print('set 1')
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, 0.2, 0.1, 57100)
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, -0.2, 0.1, 57100)
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, 0.2, -0.1, 57100)
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, -0.2, -0.1, 57100)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, 0.2, 0.1, 57100)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, -0.2, 0.1, 57100)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, 0.2, -0.1, 57100)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, -0.2, -0.1, 57100)
+    t_mjd = np.arange(57000 - 500, 57000 + 500, 1)
+
+    print('set 1') 
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57100)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57100)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57100)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57100)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57100)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57100)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57100)
     
     print('set 2')
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, 0.2, 0.1, 57100)
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, -0.2, 0.1, 57100)
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, 0.2, -0.1, 57100)
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, -0.2, -0.1, 57100)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, 0.2, 0.1, 57100)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, -0.2, 0.1, 57100)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, 0.2, -0.1, 57100)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, -0.2, -0.1, 57100)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57100)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57100)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57100)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57100)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57100)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57100)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57100)
     
     print('set 3')
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, 0.2, 0.1, 57000)
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, -0.2, 0.1, 57000)
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, 0.2, -0.1, 57000)
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, -0.2, -0.1, 57000)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, 0.2, 0.1, 57000)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, -0.2, 0.1, 57000)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, 0.2, -0.1, 57000)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, -0.2, -0.1, 57000)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57000)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57000)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57000)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57000)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57000)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57000)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57000)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57000)
     
     print('set 4')
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, 0.2, 0.1, 57000)
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, -0.2, 0.1, 57000)
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, 0.2, -0.1, 57000)
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, -0.2, -0.1, 57000)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, 0.2, 0.1, 57000)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, -0.2, 0.1, 57000)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, 0.2, -0.1, 57000)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, -0.2, -0.1, 57000)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57000)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57000)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57000)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57000)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57000)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57000)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57000)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57000)
     
     print('set 5')
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, 0.2, 0.1, 69900)
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, -0.2, 0.1, 69900)
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, 0.2, -0.1, 69900)
-    test_bagle_to_bagle_geoproj(57000, 0.5, 300, -0.2, -0.1, 69900)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, 0.2, 0.1, 69900)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, -0.2, 0.1, 69900)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, 0.2, -0.1, 69900)
-    test_bagle_to_bagle_geoproj(57000, -0.5, 300, -0.2, -0.1, 69900)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 69900)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 69900)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 69900)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 69900)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 69900)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 69900)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 69900)
+    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 69900)
     
     print('set 6')
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, 0.2, 0.1, 69900)
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, -0.2, 0.1, 69900)
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, 0.2, -0.1, 69900)
-    test_bagle_geoproj_to_bagle(57000, 0.5, 300, -0.2, -0.1, 69900)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, 0.2, 0.1, 69900)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, -0.2, 0.1, 69900)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, 0.2, -0.1, 69900)
-    test_bagle_geoproj_to_bagle(57000, -0.5, 300, -0.2, -0.1, 69900)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 69900)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 69900)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 69900)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 69900)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 69900)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 69900)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 69900)
+    test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 69900)
 
 ################################################################################
 ###########  Stuff below is incomplete/wrong/not yet functional...  ############
