@@ -15,7 +15,9 @@ def convert_helio_geo_ast(ra, dec,
                           in_frame='helio',
                           murel_in='SL', murel_out='LS', 
                           coord_in='EN', coord_out='tb'):
-
+    """
+    NOTE: THIS IS NOT YET TESTED
+    """
     day_to_yr = 365.25
 
     # UNITS: I think this is 1/days, NOT 1/years.
@@ -53,7 +55,7 @@ def convert_helio_geo_phot(ra, dec,
                            in_frame='helio',
                            murel_in='SL', murel_out='LS', 
                            coord_in='EN', coord_out='tb',
-                           plot=True):
+                           plot=False):
     """
     Convert between heliocentric and geocentric projected parameters.
     This converts only the subset of parameters in photometry fits
@@ -389,13 +391,19 @@ def v_Earth_proj(ra, dec, mjd):
     return v_Earth_perp_E, v_Earth_perp_N
 
 
-def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE, vec_par, in_frame,
+def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, 
+                            piE, vec_par, in_frame,
                             t0par, t0_in, u0_in, tE_in, piEE_in, piEN_in,
                             t0_out, u0_out, tE_out, piEE_out, piEN_out):
     """
     FIXME: Finish fixing the plotting of parallax vector.
     The direction should always be Earth to Sun.
+    All the input values are in the heliocentric frame, following the
+    source-lens and East-North coordinate conventions.
     """
+    #####
+    # Figure in Lu convention (S-L frame, E-N coord)
+    ####
     fig, ax = plt.subplots(1, 1, num=2, figsize=(9,6))
     plt.clf()
     fig, ax = plt.subplots(1, 1, num=2, figsize=(9,6))
@@ -466,6 +474,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
     ax.invert_xaxis()
     ax.set_title('Lu convention (S-L frame, E-N coord)')
     
+    # Text panel listing parameters.
     tleft = 0.75
     ttop = 0.8
     ttstep = 0.05
@@ -495,6 +504,10 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
     plt.show()
     plt.pause(0.2)
 
+
+    #####
+    # Figure in Gould convention (L-S frame, tau-beta coord)
+    ####
     fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
     plt.clf()
     fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
@@ -565,6 +578,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
     ax.invert_xaxis()
     ax.set_title(r'Gould convention (L-S frame, $\tau$-$\beta$ coord)')
     
+    # Text panel listing parameters.
     tleft = 0.75
     ttop = 0.8
     ttstep = 0.05
