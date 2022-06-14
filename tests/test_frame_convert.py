@@ -15,6 +15,16 @@ def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
     (using lens-source tau-beta convention) to
     heliocentric frame (using source-lens East-North 
     convention) photometry parameters in BAGLE.
+    
+    Parameters
+    ----------
+    ra, dec : int or float (degrees)
+
+    t_mjd, t0_g, t0par need to be in MJD.
+
+    t0_g, u0_g, tE_g, piEE_g, piEN_g need to be
+    in geocentric projected frame using lens-source
+    and tau-beta conventions.
     """
     # Convert the geoprojected parameters (in lens-source tau-beta)
     # to heliocentric parameters (in source-lens East-North).
@@ -66,6 +76,16 @@ def test_bagle_helio_to_geo_phot(ra, dec, t_mjd,
     source-lens East-North convention) to geocentric 
     projected frame (using lens-source tau-beta convention)
     photometry parameters in BAGLE.
+
+    Parameters
+    ----------
+    ra, dec : int or float (degrees)
+
+    t_mjd, t0_h, t0par need to be in MJD.
+    
+    t0_h, u0_h, tE_h, piEE_h, piEN_h need to be
+    in heliocentric frame using source-lens
+    and East-North conventions.
     """
     # Convert the heliocentric parameters (in source-lens East-North)
     # to geoprojected parameters (in lens-source tau-beta).
@@ -117,7 +137,17 @@ def test_bagle_to_mulens(ra, dec, t_mjd,
     Test conversion from heliocentric frame (using 
     source-lens East-North convention) in BAGLE to geocentric 
     projected frame (using lens-source tau-beta convention)
-    in MulensModel for photometry parameters .
+    in MulensModel for photometry parameters.
+
+    Parameters
+    ----------
+    ra, dec : int or float (degrees)
+
+    t_mjd, t0_h, t0par need to be in MJD.
+
+    t0_h, u0_h, tE_h, piEE_h, piEN_h need to be
+    in heliocentric frame using source-lens
+    and East-North conventions.
     """
     # Convert the heliocentric parameters (in source-lens East-North)
     # to geoprojected parameters (in lens-source tau-beta).
@@ -174,7 +204,17 @@ def test_mulens_to_bagle(ra, dec, t_mjd,
     Test conversion from geocentric projected frame (using 
     lens-source tau-beta convention) in MulensModel to 
     heliocentric frame (using source-lens East-North 
-    convention) in BAGLE for photometry parameters .
+    convention) in BAGLE for photometry parameters.
+
+    Parameters
+    ----------
+    ra, dec : int or float (degrees)
+
+    t_mjd, t0_g, t0par need to be in MJD.
+
+    t0_g, u0_g, tE_g, piEE_g, piEN_g need to be
+    in geocentric projected frame using lens-source
+    and tau-beta conventions.
     """
     # Convert the geoprojected parameters (in lens-source tau-beta)
     # to heliocentric parameters (in source-lens East-North).
@@ -213,7 +253,7 @@ def test_mulens_to_bagle(ra, dec, t_mjd,
         ax[1].set_ylabel('MM - Bagle')
         ax[1].set_xlabel('MJD')
         plt.show()
-        plt.pause(0.5)
+#        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
@@ -317,7 +357,12 @@ def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h,
 
     return mag_obs
 
-def test():
+def test_bagle_mulens_set():
+    """
+    Test BAGLE --> Mulens as well as Mulens --> BAGLE 
+    conversions for all combos of u0/piEE/piEN sign,
+    as well as three sets of t0par (<, =, and > t0).
+    """
     t_mjd = np.arange(57000 - 500, 57000 + 500, 1)
 
     print('set 1')
@@ -380,7 +425,12 @@ def test():
     test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 69900)
     test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 69900)
 
-def test_2():
+def test_bagle_helio_geo_set():
+    """
+    Test BAGLE's helio --> geo as well as geo --> helio
+    conversions for all combos of u0/piEE/piEN sign,
+    as well as three sets of t0par (<, =, and > t0).
+    """
     t_mjd = np.arange(57000 - 500, 57000 + 500, 1)
 
     print('set 1') 
