@@ -1085,38 +1085,6 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         return
 
 
-class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
-    def __init__(self, t0, u0_amp, tE, thetaE, piS,
-                 piE_E, piE_N,
-                 xS0_E, xS0_N,
-                 muS_E, muS_N,
-                 b_sff, mag_base,
-                 t0par,
-                 raL=None, decL=None):
-
-        self.t0par = t0par
-        self.t0 = t0
-        self.u0_amp = u0_amp
-        self.tE = tE
-        self.piE = np.array([piE_E, piE_N])
-        self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
-        self.muS = np.array([muS_E, muS_N])
-        self.piS = piS
-        self.b_sff = b_sff
-        self.mag_base = mag_base
-        self.raL = raL
-        self.decL = decL
-
-        super().__init__(t0, u0_amp, tE, thetaE, piS,
-                         piE_E, piE_N,
-                         xS0_E, xS0_N,
-                         muS_E, muS_N,
-                         b_sff, mag_base,
-                         raL, decL)
-
-        return
-
 class PSPL_PhotAstromParam2(PSPL_Param):
     """PSPL model for photometry and astrometry -- photom-like parameterization
 
@@ -1578,6 +1546,40 @@ class PSPL_PhotAstromParam4(PSPL_Param):
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         return
+
+
+class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 b_sff, mag_base,
+                 t0par,
+                 raL=None, decL=None):
+
+        self.t0par = t0par
+        self.t0 = t0
+        self.u0_amp = u0_amp
+        self.tE = tE
+        self.piE = np.array([piE_E, piE_N])
+        self.thetaE_amp = thetaE
+        self.xS0 = np.array([xS0_E, xS0_N])
+        self.muS = np.array([muS_E, muS_N])
+        self.piS = piS
+        self.b_sff = b_sff
+        self.mag_base = mag_base
+        self.raL = raL
+        self.decL = decL
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                         piE_E, piE_N,
+                         xS0_E, xS0_N,
+                         muS_E, muS_N,
+                         b_sff, mag_base,
+                         raL, decL)
+
+        return
+
 
 # NOTE: NOT SURE IF THIS WORKs OR NOT
 class PSPL_PhotAstromParam5(PSPL_Param):
