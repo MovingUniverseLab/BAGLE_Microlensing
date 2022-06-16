@@ -20,7 +20,7 @@ import numpy as np
 import pylab as plt
 import scipy.stats
 import pymultinest
-import src.BAGLE.model as mmodel 
+import BAGLE.model as mmodel 
 from astropy.table import Table
 from astropy.table import Row
 from astropy import units

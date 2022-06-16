@@ -12,7 +12,13 @@ Overview
 =========================
 
 This set of classes and functions allows the user to construct microlensing
-models built up from a menu of different features. Each model is built using
+models. The available classes for instantiating a microlensing event include:
+
+- PSPL_PhotAstrom_LumLens_Par_Param2
+- PSPL_PhotAstrom_LumLens_Par_Param4
+
+
+built up from a menu of different features. Each model is built using
 the inheritance of multiple classes, each from a different 'family' of
 related classes.
 
@@ -249,7 +255,7 @@ from joblib import Memory
 import os
 from functools import lru_cache, wraps
 import copy
-from src.BAGLE import frame_convert as fc
+from BAGLE import frame_convert as fc
 
 au_day_to_km_s = 1731.45683
 
