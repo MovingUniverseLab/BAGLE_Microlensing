@@ -1061,11 +1061,14 @@ class PSPL_Solver(Solver):
         """Returns best-fit parameters, where best-fit can be
         median, maxl, or MAP. Default is maxl.
 
-        If best-fit is median, then also return +/- 1 sigma
+        If def_best is median, then also return +/- 1 sigma
         uncertainties.
 
-        `tab = self.load_mnest_results()`
-        `smy = self.load_mnest_summary()`
+        Returns
+        --------
+        Either a dicitonary or a tuple of length=2 holding 
+        two dictionaries, one for values and one for uncertainty ranges. 
+        See calc_best_fit() for details.
         """
         tab = self.load_mnest_results()
         smy = self.load_mnest_summary()
@@ -1076,18 +1079,27 @@ class PSPL_Solver(Solver):
         return best_fit
 
     def get_best_fit_modes(self, def_best='maxl'):
-        """Identify best-fit model
+        """Returns a list of best-fit parameters, where best-fit can be
+        median, maxl, or MAP. Default is maxl.
+
+        If def_best is median, then also return +/- 1 sigma
+        uncertainties.
+
+        Returns
+        --------
+        Either a list of dicitonaries or a list where each entry is
+        a tuple of length=2 holding two dictionaries, one for values
+        and one for uncertainty ranges. 
+        See calc_best_fit() for details.
         """
         tab_list = self.load_mnest_modes()
         smy = self.load_mnest_summary()
 
         best_fit_list = []
 
-        # ADD A USEFUL COMMENT HERE ABOUT INDEXING!!!!!!
         for ii, tab in enumerate(tab_list, 1):
             best_fit = self.calc_best_fit(tab=tab, smy=smy, s_idx=ii,
                                           def_best=def_best)
-#            best_fit_list.append(best_fit[0])
             best_fit_list.append(best_fit)
 
         return best_fit_list
@@ -1114,7 +1126,10 @@ class PSPL_Solver(Solver):
         pspl_mod_list = []
 
         for best in best_list:
-            pspl_mod = self.get_model(best)
+            if ((def_best == 'median') or (def_best == 'mean')):
+                pspl_mod = self.get_model(best[0])
+            else:
+                pspl_mod = self.get_model(best)
             pspl_mod_list.append(pspl_mod)
 
         return pspl_mod_list

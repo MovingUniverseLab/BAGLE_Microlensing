@@ -100,6 +100,9 @@ class EventDataDict(dict):
 def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
             time_format='mjd', verbose=False):
     """
+    Helper function to illustrate how to load photometric and astrometric data.
+    You will likely want to write your own version of this. 
+
     Get the photometric and astrometric data for the specified target. 
     Specify the types of data through the phot_data and ast_data lists. 
 
