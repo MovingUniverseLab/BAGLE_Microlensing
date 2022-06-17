@@ -1,34 +1,72 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html4" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Model.py Overview &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="User Classes" href="UserClass.html" />
-    <link rel="prev" title="BAGLE TUTORIAL" href="intro.html" /> 
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Model.py Overview &mdash; BAGLE 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="BAGLE 0.1 documentation" href="index.html"/>
+        <link rel="next" title="User Classes" href="UserClass.html"/>
+        <link rel="prev" title="BAGLE TUTORIAL" href="intro.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav" role="document">
+
   <div class="wy-grid-for-nav">
+
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search">
+          
+
+          
             <a href="index.html" class="icon icon-home"> BAGLE
+          
+
+          
           </a>
+
+          
+            
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -36,8 +74,15 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Model.py Overview</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#class-families">Class Families</a><ul>
@@ -58,30 +103,48 @@
 <li class="toctree-l1"><a class="reference internal" href="model_fitter.html">Model Fitter</a></li>
 </ul>
 
+            
+          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">BAGLE</a>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">BAGLE</a>
       </nav>
 
+
+      
       <div class="wy-nav-content">
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Model.py Overview</li>
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Model.py Overview</li>
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="_sources/model3.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
   </ul>
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <div class="section" id="model-py-overview">
 <h1>Model.py Overview<a class="headerlink" href="#model-py-overview" title="Permalink to this headline">¶</a></h1>
 <p>This set of classes and functions allows the user to construct microlensing
@@ -91,48 +154,50 @@ related classes.
 Each microlensing model must contain:</p>
 <blockquote>
 <div><ol class="arabic">
-<li><p class="first">A class from the Data Class Family:</p>
+<li><p>A class from the Data Class Family:</p>
 <blockquote>
 <div><ul class="simple">
-<li><cite>PSPL</cite> – base class for all Data classes:<ul>
-<li><cite>PSPL_Phot</cite></li>
-<li><cite>PSPL_PhotAstrom</cite></li>
-<li><cite>PSPL_GP_Phot</cite></li>
-<li><cite>PSPL_GP_PhotAstrom</cite></li>
+<li><p><cite>PSPL</cite> – base class for all Data classes:</p>
+<ul>
+<li><p><cite>PSPL_Phot</cite></p></li>
+<li><p><cite>PSPL_PhotAstrom</cite></p></li>
+<li><p><cite>PSPL_GP_Phot</cite></p></li>
+<li><p><cite>PSPL_GP_PhotAstrom</cite></p></li>
 </ul>
 </li>
 </ul>
 </div></blockquote>
 </li>
-<li><p class="first">A class from the Parallax Class Family:</p>
+<li><p>A class from the Parallax Class Family:</p>
 <blockquote>
 <div><ul class="simple">
-<li><cite>PSPL_noParallax</cite></li>
-<li><cite>PSPL_Parallax</cite></li>
+<li><p><cite>PSPL_noParallax</cite></p></li>
+<li><p><cite>PSPL_Parallax</cite></p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p class="first">A class from the GP Class Family: (optional)</p>
+<li><p>A class from the GP Class Family: (optional)</p>
 <blockquote>
 <div><ul class="simple">
-<li><cite>PSPL_GP</cite></li>
+<li><p><cite>PSPL_GP</cite></p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p class="first">A class from the Parametrization Class Family:</p>
+<li><p>A class from the Parametrization Class Family:</p>
 <blockquote>
 <div><ul class="simple">
-<li><cite>PSPL_Param</cite> – abstract base class for all Param classes<ul>
-<li><cite>PSPL_PhotParam1</cite></li>
-<li><cite>PSPL_PhotParam2</cite></li>
-<li><cite>PSPL_PhotAstromParam1</cite></li>
-<li><cite>PSPL_PhotAstromParam2</cite></li>
-<li><cite>PSPL_PhotAstromParam3</cite></li>
-<li><cite>PSPL_GP_PhotParam1</cite></li>
-<li><cite>PSPL_GP_PhotParam2</cite></li>
-<li><cite>PSPL_GP_PhotAstromParam1</cite></li>
-<li><cite>PSPL_GP_PhotAstromParam2</cite></li>
-<li><cite>PSPL_GP_PhotAstromParam3</cite></li>
+<li><p><cite>PSPL_Param</cite> – abstract base class for all Param classes</p>
+<ul>
+<li><p><cite>PSPL_PhotParam1</cite></p></li>
+<li><p><cite>PSPL_PhotParam2</cite></p></li>
+<li><p><cite>PSPL_PhotAstromParam1</cite></p></li>
+<li><p><cite>PSPL_PhotAstromParam2</cite></p></li>
+<li><p><cite>PSPL_PhotAstromParam3</cite></p></li>
+<li><p><cite>PSPL_GP_PhotParam1</cite></p></li>
+<li><p><cite>PSPL_GP_PhotParam2</cite></p></li>
+<li><p><cite>PSPL_GP_PhotAstromParam1</cite></p></li>
+<li><p><cite>PSPL_GP_PhotAstromParam2</cite></p></li>
+<li><p><cite>PSPL_GP_PhotAstromParam3</cite></p></li>
 </ul>
 </li>
 </ul>
@@ -140,35 +205,35 @@ Each microlensing model must contain:</p>
 </li>
 </ol>
 </div></blockquote>
-<dl class="docutils">
-<dt>There is a parallax hierarchy for PSBL:</dt>
-<dd><ol class="first last arabic">
-<li><p class="first">A class from the Data Class Family:</p>
+<dl>
+<dt>There is a parallax hierarchy for PSBL:</dt><dd><ol class="arabic">
+<li><p>A class from the Data Class Family:</p>
 <blockquote>
 <div><ul class="simple">
-<li><cite>PSBL</cite> – base class for all Data classes:<ul>
-<li><cite>PSBL_Phot</cite></li>
-<li><cite>PSBL_PhotAstrom</cite></li>
+<li><p><cite>PSBL</cite> – base class for all Data classes:</p>
+<ul>
+<li><p><cite>PSBL_Phot</cite></p></li>
+<li><p><cite>PSBL_PhotAstrom</cite></p></li>
 </ul>
 </li>
 </ul>
 </div></blockquote>
 </li>
-<li><p class="first">A class from the Parallax Class Family:</p>
+<li><p>A class from the Parallax Class Family:</p>
 <blockquote>
 <div><ul class="simple">
-<li><cite>PSBL_noParallax</cite></li>
-<li><cite>PSBL_Parallax</cite></li>
+<li><p><cite>PSBL_noParallax</cite></p></li>
+<li><p><cite>PSBL_Parallax</cite></p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p class="first">A class from the Parametrization Class Family:</p>
+<li><p>A class from the Parametrization Class Family:</p>
 <blockquote>
 <div><ul class="simple">
-<li><cite>PSBL_PhotParam1</cite></li>
-<li><cite>PSBL_PhotAstromParam1</cite></li>
-<li><cite>PSBL_PhotAstromParam2</cite></li>
-<li><cite>PSBL_PhotAstromParam3</cite></li>
+<li><p><cite>PSBL_PhotParam1</cite></p></li>
+<li><p><cite>PSBL_PhotAstromParam1</cite></p></li>
+<li><p><cite>PSBL_PhotAstromParam2</cite></p></li>
+<li><p><cite>PSBL_PhotAstromParam3</cite></p></li>
 </ul>
 </div></blockquote>
 </li>
@@ -178,7 +243,8 @@ Each microlensing model must contain:</p>
 <p>Several pre-built models are included in this file.
 For example, the <cite>PSPL_PhotAstrom_noPar_Param1</cite> model is declared as:</p>
 <blockquote>
-<div><code class="docutils literal notranslate"><span class="pre">class</span> <span class="pre">PSPL_PhotAstrom_noPar_Param1(PSPL_PhotAstrom,</span> <span class="pre">PSPL_noParallax,</span> <span class="pre">PSPL_PhotAstromParam1)</span></code></div></blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">class</span> <span class="pre">PSPL_PhotAstrom_noPar_Param1(PSPL_PhotAstrom,</span> <span class="pre">PSPL_noParallax,</span> <span class="pre">PSPL_PhotAstromParam1)</span></code></p>
+</div></blockquote>
 <p>The words in the models name, and the classes used to declare it, tell us
 what features the model contains. In this example, we can see that the model’s
 name contains the words <cite>PhotAstrom</cite>, <cite>noPar</cite>, and <cite>Param1</cite>. From these words,
@@ -216,13 +282,12 @@ and three parametrizations when using photometry and astrometery
 (<cite>PhotAstrom</cite>).
 The parameters for each parameterization are:</p>
 <blockquote>
-<div><dl class="docutils">
-<dt>PhotParam1 :</dt>
-<dd><p class="first">Point source point lens model for microlensing photometry only.
+<div><dl>
+<dt>PhotParam1 :</dt><dd><p>Point source point lens model for microlensing photometry only.
 This model includes the relative proper motion between the lens
 and the source. Parameters are reduced with the use of piRel
 <cite>Parameters</cite>:</p>
-<blockquote class="last">
+<blockquote>
 <div><div class="line-block">
 <div class="line">t0, u0_amp, tE,</div>
 <div class="line">piE_E, piE_N,</div>
@@ -231,11 +296,10 @@ and the source. Parameters are reduced with the use of piRel
 </div>
 </div></blockquote>
 </dd>
-<dt>PhotAstromParam1 :</dt>
-<dd><p class="first">Point Source Point Lens model for microlensing. This model includes
+<dt>PhotAstromParam1 :</dt><dd><p>Point Source Point Lens model for microlensing. This model includes
 proper motions of both the lens and source.
 <cite>Parameters</cite>:</p>
-<blockquote class="last">
+<blockquote>
 <div><div class="line-block">
 <div class="line">mL, t0, beta,</div>
 <div class="line">dL, dL_dS,</div>
@@ -247,11 +311,10 @@ proper motions of both the lens and source.
 </div>
 </div></blockquote>
 </dd>
-<dt>PhotAstromParam2 :</dt>
-<dd><p class="first">Point Source Point Lens model for microlensing. This model includes
+<dt>PhotAstromParam2 :</dt><dd><p>Point Source Point Lens model for microlensing. This model includes
 proper motions of the source and the source position on the sky.
 <cite>Parameters</cite>:</p>
-<blockquote class="last">
+<blockquote>
 <div><div class="line-block">
 <div class="line">t0, u0_amp, tE, thetaE, piS,</div>
 <div class="line">piE_E, piE_N,</div>
@@ -262,13 +325,12 @@ proper motions of the source and the source position on the sky.
 </div>
 </div></blockquote>
 </dd>
-<dt>PhotAstromParam3 :</dt>
-<dd><p class="first">Point Source Point Lens model for microlensing. This model includes
+<dt>PhotAstromParam3 :</dt><dd><p>Point Source Point Lens model for microlensing. This model includes
 proper motions of the source and the source position on the sky.
 Note it fits the baseline magnitude rather than the unmagnified source
 brightness.
 <cite>Parameters</cite>:</p>
-<blockquote class="last">
+<blockquote>
 <div><div class="line-block">
 <div class="line">t0, u0_amp, tE, log10_thetaE, piS,</div>
 <div class="line">piE_E, piE_N,</div>
@@ -293,54 +355,52 @@ model must have one class from each class family. In addition to this, there
 are several rules that must be followed when creating a new class.</p>
 <blockquote>
 <div><ol class="arabic">
-<li><p class="first">The data class must match the parameterization class. For example,
+<li><p>The data class must match the parameterization class. For example,
 if the chosen data class is <cite>PSPL_Phot</cite>, then the parameter class
 must be <cite>PSPL_PhotParam1</cite> (or a different PhotParam in a future
 version). If the data class is <cite>PSPL_PhotAstrom</cite>, then the parameter
-class must be one of the classes with a PhotAstromParam.</p>
-</li>
-<li><p class="first">Models are built using python’s multiple inheritance feature. Therefore
+class must be one of the classes with a PhotAstromParam.</p></li>
+<li><p>Models are built using python’s multiple inheritance feature. Therefore
 the order in which the parent classes are listed in the model class’
 definition matters. Parent classes to models should always be listed
 in the order:</p>
 <blockquote>
 <div><ol class="loweralpha simple">
-<li>Data Class</li>
-<li>Parallax Class</li>
-<li>Parameterization Class</li>
+<li><p>Data Class</p></li>
+<li><p>Parallax Class</p></li>
+<li><p>Parameterization Class</p></li>
 </ol>
 </div></blockquote>
 <p>If using the optional GP class, then the order is</p>
 <blockquote>
 <div><ol class="loweralpha simple">
-<li>GP Class</li>
-<li>Data Class</li>
-<li>Parallax Class</li>
-<li>Parameterization Class</li>
+<li><p>GP Class</p></li>
+<li><p>Data Class</p></li>
+<li><p>Parallax Class</p></li>
+<li><p>Parameterization Class</p></li>
 </ol>
 </div></blockquote>
 </li>
-<li><p class="first">Each class must be given the <cite>&#64;inheritdocstring</cite> decorator, and include
+<li><p>Each class must be given the <cite>&#64;inheritdocstring</cite> decorator, and include
 the following commands in the model’s <code class="docutils literal notranslate"><span class="pre">__init__</span></code>:</p>
 <blockquote>
 <div><ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">a.super().__init__(*args,</span> <span class="pre">**kwargs)</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">startbases(self)</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">checkconflicts(self)</span></code></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">a.super().__init__(*args,</span> <span class="pre">**kwargs)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">startbases(self)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">checkconflicts(self)</span></code></p></li>
 </ul>
 </div></blockquote>
 <p>Each of these performs the following function:</p>
 <blockquote>
 <div><ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">super().__init__(*args,</span> <span class="pre">**kwargs)</span></code>: Inherits the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> from the Parameterization Class.</li>
-<li><code class="docutils literal notranslate"><span class="pre">startbases(self)</span></code>: Runs a <cite>start</cite> command on each parent class, giving each parent class a chance to run a set of functions upon instantiation.</li>
-<li><code class="docutils literal notranslate"><span class="pre">checkconflicts(self)</span></code>: Checks to confirm that the combination of parent classes in the model are valid.</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">super().__init__(*args,</span> <span class="pre">**kwargs)</span></code>: Inherits the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> from the Parameterization Class.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">startbases(self)</span></code>: Runs a <cite>start</cite> command on each parent class, giving each parent class a chance to run a set of functions upon instantiation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">checkconflicts(self)</span></code>: Checks to confirm that the combination of parent classes in the model are valid.</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p class="first">Models should be named to reflect the parents classes used to construct
-it, as outlined in the above sections.</p>
-</li>
+<li><p>Models should be named to reflect the parents classes used to construct
+it, as outlined in the above sections.</p></li>
 </ol>
 </div></blockquote>
 </div>
@@ -350,32 +410,71 @@ it, as outlined in the above sections.</p>
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="intro.html" class="btn btn-neutral float-left" title="BAGLE TUTORIAL" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="UserClass.html" class="btn btn-neutral float-right" title="User Classes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="UserClass.html" class="btn btn-neutral float-right" title="User Classes" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="intro.html" class="btn btn-neutral" title="BAGLE TUTORIAL" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
+  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Niranjan.</p>
-  </div>
+    <p>
+        &copy; Copyright 2022, Niranjan.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/language_data.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
+          SphinxRtdTheme.StickyNav.enable();
       });
-  </script> 
+  </script>
+   
 
 </body>
 </html>

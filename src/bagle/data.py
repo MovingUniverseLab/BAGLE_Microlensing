@@ -5,7 +5,6 @@ from astropy.time import Time
 from astropy import units 
 from astropy.coordinates import SkyCoord
 from astropy import time as atime, coordinates as coord, units as u
-from BAGLE import data
 import time
 
 
@@ -338,7 +337,7 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
     data_in['phot_files'] = phot_files
     data_in['ast_files'] = ast_files
 
-    data_obj = data.EventDataDict(data_in)
+    data_obj = EventDataDict(data_in)
 
     return data_obj
     
