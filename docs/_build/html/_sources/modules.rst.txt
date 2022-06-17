@@ -1,7 +1,0 @@
-BAGLE
-=====
-
-.. toctree::
-   :maxdepth: 4
-
-   BAGLE
