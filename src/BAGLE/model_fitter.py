@@ -219,7 +219,7 @@ class PSPL_Solver(Solver):
                  max_modes=100, mode_tolerance=-1e90,
                  outputfiles_basename="chains/1-", seed=-1, verbose=False,
                  resume=False, context=0, write_output=True, log_zero=-1e100,
-                 max_iter=0, init_MPI=False, dump_callback=None):
+                 max_iter=0, init_MPI=False, dump_callback='default'):
         """
         Accepted optional inputs are the same as on pymultinest.run().
 
@@ -289,7 +289,10 @@ class PSPL_Solver(Solver):
         self.max_iter = max_iter
         self.init_MPI = init_MPI
 
-        if dump_callback is None:
+        # Use "default" string to indicate default callback.
+        # Otherwise, user specified and can be None for no dumping.
+        # The latter is important for NERSC runs. 
+        if dump_callback is 'default':
             self.dump_callback = self.callback_plotter
         else:
             self.dump_callback = dump_callback

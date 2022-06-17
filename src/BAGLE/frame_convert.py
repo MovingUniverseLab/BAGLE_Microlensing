@@ -7,8 +7,6 @@ import erfa
 import matplotlib.pyplot as plt
 from src.BAGLE import model
 
-
-# Note: this hasn't been checked/tested yet.
 def convert_helio_geo_ast(ra, dec,
                           piS, xS0E_in, xS0N_in,
                           muSE_in, muSN_in, 
@@ -17,7 +15,9 @@ def convert_helio_geo_ast(ra, dec,
                           in_frame='helio',
                           murel_in='SL', murel_out='LS', 
                           coord_in='EN', coord_out='tb'):
-
+    """
+    NOTE: THIS IS NOT YET TESTED
+    """
     day_to_yr = 365.25
 
     # UNITS: I think this is 1/days, NOT 1/years.
@@ -37,11 +37,13 @@ def convert_helio_geo_ast(ra, dec,
         muSN_out = muSN_in + piS * dp_dt_t0par[1] * day_to_yr
         xS0E_out = xS0E_in + muSE_in * (t0_out - t0_in) + piS * par_t0par[0]
         xS0N_out = xS0N_in + muSN_in * (t0_out - t0_in) + piS * par_t0par[1]
-    else:
+    elif in_frame=='geo':
         muSE_out = muSE_in - piS * dp_dt_t0par[0] * day_to_yr
         muSN_out = muSN_in - piS * dp_dt_t0par[1] * day_to_yr
         xS0E_out = xS0E_in + muSE_in * (t0_out - t0_in) - piS * par_t0par[0] - piS * (t0_out - t0_in) * dp_dt_t0par[0]
         xS0N_out = xS0N_in + muSN_in * (t0_out - t0_in) - piS * par_t0par[1] - piS * (t0_out - t0_in) * dp_dt_t0par[1]
+    else:
+        raise Exception('in_frame can only be "helio" or "geo"!')
 
     return xS0E_out, xS0N_out, muSE_out, muSN_out
 
@@ -53,7 +55,7 @@ def convert_helio_geo_phot(ra, dec,
                            in_frame='helio',
                            murel_in='SL', murel_out='LS', 
                            coord_in='EN', coord_out='tb',
-                           plot=True):
+                           plot=False):
     """
     Convert between heliocentric and geocentric projected parameters.
     This converts only the subset of parameters in photometry fits
@@ -102,9 +104,9 @@ def convert_helio_geo_phot(ra, dec,
     #####
     # Calculate piEE, piEN, and tE. 
     #####
-    piEE_out, piEN_out, tE_out = convert_piE_tE(ra, dec, t0par, 
-                                                piEE_in, piEN_in, tE_in, 
-                                                in_frame=in_frame)
+    piEE_out, piEN_out, tE_out = convert_piEvec_tE(ra, dec, t0par, 
+                                                   piEE_in, piEN_in, tE_in, 
+                                                   in_frame=in_frame)
 
     piE = np.hypot(piEE_in, piEN_in)
 
@@ -129,7 +131,7 @@ def convert_helio_geo_phot(ra, dec,
             u0hatE_in = tauhatN_in
             u0hatN_in = -tauhatE_in
 
-    if coord_in=='tb':
+    elif coord_in=='tb':
         if np.sign(u0_in) > 0:
             u0hatE_in = tauhatN_in
             u0hatN_in = -tauhatE_in
@@ -137,17 +139,25 @@ def convert_helio_geo_phot(ra, dec,
             u0hatE_in = -tauhatN_in
             u0hatN_in = tauhatE_in
 
+    else:
+        raise Exception('coord_in can only be "EN" or "tb"!')
+
     # Calculate t0 and u0 vector.
-    t0_out, u0vec_out = convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE, 
-                                      tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
-                                      tauhatE_out, tauhatN_out,
-                                      in_frame=in_frame)
+    t0_out, u0vec_out = convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE, 
+                                         tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
+                                         tauhatE_out, tauhatN_out,
+                                         in_frame=in_frame)
 
     # Now get u0 (the scalar) and its associated sign from u0 vector.
-    if u0vec_out[0] > 0:
-        u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
-    else:
-        u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
+    try:
+        if u0vec_out[0] > 0:
+            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+        else:
+            u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
+    except:
+        u0_out = np.zeros(len(t0par))
+        _u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
+        u0_out = np.where(u0vec_out[:,0] > 0, _u0_out, -_u0_out)
 
     if plot:
         #####
@@ -173,26 +183,35 @@ def convert_helio_geo_phot(ra, dec,
                                 t0par, t0_in, u0_in, tE_in, piEE_in, piEN_in,
                                 t0_out, u0_out, tE_out, piEE_out, piEN_out)
 
-    # Undo transformation from tb to EN as needed (so user gets back what they expect).
+    # Transform from tb to EN as needed (so user gets back what they expect).
     if coord_out=='tb':
-        x = np.sign(np.cross(np.array([tauhatE_out, tauhatN_out]), u0vec_out))
-        if x > 0:
-            u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
-        else:
-            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+        try:
+            x = np.sign(np.cross(np.array([tauhatE_out, tauhatN_out]), u0vec_out))
+            if x > 0:
+                u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
+            else:
+                u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+        except:
+            # CHECK
+            x = np.sign(tauhatE_out * u0vec_out[:,1] - tauhatN_out * u0vec_out[:,0])
+            u0_out = np.zeros(len(t0par))
+            _u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
+            u0_out = np.where(x < 0, _u0_out, -_u0_out)
 
-    # Undo flip from LS to SL as needed (so user gets back what they expect).
+    # Flip from LS to SL as needed (so user gets back what they expect).
     if murel_out=='LS':
         piEE_out *= -1
         piEN_out *= -1
 
+    print(t0_out)
+    print(u0_out)
+
     return t0_out, u0_out, tE_out, piEE_out, piEN_out
 
-
-def convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
-                  tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
-                  tauhatE_out, tauhatN_out,
-                  in_frame='helio'):
+def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
+                     tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
+                     tauhatE_out, tauhatN_out,
+                     in_frame='helio'):
     """
     *** PROPER MOTIONS ARE DEFINED AS SOURCE - LENS ***
     *** COORDINATE SYSTEM IS ON-SKY (NOT TAU-BETA) ***
@@ -205,45 +224,76 @@ def convert_u0_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
     """
     # Parallax vector (Sun-Earth projected separation vector in AU) at t0par.
     # Get dp_dt_t0par in 1/days.
-    par_t0par = model.parallax_in_direction(ra, dec, np.array([t0par])).reshape(2,)
-    dp_dt_t0par = model.dparallax_dt_in_direction(ra, dec, np.array([t0par])).reshape(2,)/365.25
+    try:
+        par_t0par = model.parallax_in_direction(ra, dec, np.array([t0par])).reshape(2,)
+    except:
+        nn = len(t0par)
+        par_t0par = model.parallax_in_direction(ra, dec, t0par)
+
+    # NOTE: dp_dt_t0par doesn't seem quite as good as calculating it from tauhat/tE/piE...
+    # not sure why this is....
+    # dp_dt_t0par = model.dparallax_dt_in_direction(ra, dec, np.array([t0par])).reshape(2,)/365.25
         
     # Calculate a bunch of values we need to get u0 and t0.
     tau_in = (t0par - t0_in)/tE_in
     u0vec_in = np.abs(u0_in) * np.array([u0hatE_in, u0hatN_in])
-    tauvec_in = tau_in * np.array([tauhatE_in, tauhatN_in])
+    try:
+        tauvec_in = tau_in * np.array([tauhatE_in, tauhatN_in])
+    except:
+        tauvec_in = tau_in[:, np.newaxis] * np.array([tauhatE_in, tauhatN_in])
     uvec_in = u0vec_in + tauvec_in
 
     # Get direction of tauhat_out and u0hat_out.
     tauhat_out = np.array([tauhatE_out, tauhatN_out])
     tauhat_in = np.array([tauhatE_in, tauhatN_in])
     
-    # Actually get u0 and t0...
+    # Actually get u0 and t0.
     if in_frame=='helio':
-        dp_dt_t0par = ((tauhat_in/tE_in)  - (tauhat_out/tE_out))/piE
+        try:
+            dp_dt_t0par = ((tauhat_in/tE_in)  - (tauhat_out/tE_out))/piE
+            t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par)
+            u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par
+            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
-        t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par)
-        u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par
-        u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+        except:
+            tauhat_out = tauhat_out.T
+            dp_dt_t0par = ((tauhat_in[np.newaxis,:]/tE_in)  - (tauhat_out/tE_out[:,np.newaxis]))/piE
+#            t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in - piE*par_t0par - (t0_in - t0par[:,np.newaxis])*piE*dp_dt_t0par)
+            _vec = u0vec_in - piE*par_t0par - (t0_in - t0par[:,np.newaxis])*piE*dp_dt_t0par
+            t0_out = t0_in - tE_out * np.sum(tauhat_out* _vec, axis=1)
+            u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out[np.newaxis,:]).T*tauhat_out - piE*par_t0par - (t0_in - t0par[:,np.newaxis])*piE*dp_dt_t0par
+            u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
 
-    if in_frame=='geo':
+#            np.sum(b*c, axis=0)
+
+    elif in_frame=='geo':
         dp_dt_t0par = -1*((tauhat_in/tE_in) - (tauhat_out/tE_out))/piE
 
         t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par)
         u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par
         u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
-    if u0vec_out[0] > 0:
-        u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
     else:
-        u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
+        raise Exception('in_frame can only be "helio" or "geo"!')
 
+    try:
+        if u0vec_out[0] > 0:
+            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+        else:
+            u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
+    except:
+        u0_out = np.zeros(len(t0par))
+        _u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
+        u0_out = np.where(u0vec_out[:,0] > 0, _u0_out, -_u0_out)
+
+    print(t0_out)
+    print(u0_out)
     return t0_out, u0vec_out
 
 
-def convert_piE_tE(ra, dec, t0par, 
-                   piEE_in, piEN_in, tE_in, 
-                   in_frame='helio'):     
+def convert_piEvec_tE(ra, dec, t0par, 
+                      piEE_in, piEN_in, tE_in, 
+                      in_frame='helio'):     
     """
     *** PROPER MOTIONS ARE DEFINED AS SOURCE - LENS ***
 
@@ -307,6 +357,8 @@ def convert_piE_tE(ra, dec, t0par,
     elif in_frame=='geo':
         vtildeN_out = -vtildeN_in + v_Earth_perp_N
         vtildeE_out = -vtildeE_in + v_Earth_perp_E
+    else:
+        raise Exception('in_frame can only be "helio" or "geo"!')
 
     # Convert piEE, piEN, and tE
     vtilde_in = np.hypot(vtildeE_in, vtildeN_in)
@@ -378,13 +430,19 @@ def v_Earth_proj(ra, dec, mjd):
     return v_Earth_perp_E, v_Earth_perp_N
 
 
-def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE, vec_par, in_frame,
+def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, 
+                            piE, vec_par, in_frame,
                             t0par, t0_in, u0_in, tE_in, piEE_in, piEN_in,
                             t0_out, u0_out, tE_out, piEE_out, piEN_out):
     """
     FIXME: Finish fixing the plotting of parallax vector.
     The direction should always be Earth to Sun.
+    All the input values are in the heliocentric frame, following the
+    source-lens and East-North coordinate conventions.
     """
+    #####
+    # Figure in Lu convention (S-L frame, E-N coord)
+    ####
     fig, ax = plt.subplots(1, 1, num=2, figsize=(9,6))
     plt.clf()
     fig, ax = plt.subplots(1, 1, num=2, figsize=(9,6))
@@ -455,6 +513,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
     ax.invert_xaxis()
     ax.set_title('Lu convention (S-L frame, E-N coord)')
     
+    # Text panel listing parameters.
     tleft = 0.75
     ttop = 0.8
     ttstep = 0.05
@@ -484,6 +543,10 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
     plt.show()
     plt.pause(0.2)
 
+
+    #####
+    # Figure in Gould convention (L-S frame, tau-beta coord)
+    ####
     fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
     plt.clf()
     fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
@@ -554,6 +617,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out, piE,
     ax.invert_xaxis()
     ax.set_title(r'Gould convention (L-S frame, $\tau$-$\beta$ coord)')
     
+    # Text panel listing parameters.
     tleft = 0.75
     ttop = 0.8
     ttstep = 0.05
