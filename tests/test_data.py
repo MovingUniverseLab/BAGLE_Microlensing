@@ -1,4 +1,4 @@
-from BAGLE import data
+from bagle import data
 import pytest
 
 def test_EventDataDict_init():

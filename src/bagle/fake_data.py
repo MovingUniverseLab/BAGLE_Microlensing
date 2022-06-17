@@ -6,13 +6,10 @@ import numpy as np
 import pylab as plt
 from astropy.table import Table
 import os
-from src.BAGLE import model
-from src.BAGLE import model_fitter
-from src.BAGLE import plot_models
-import plot_models
+from bagle import model
+from bagle import model_fitter
+from bagle import plot_models
 import time
-import pdb
-import pytest
 
 from astropy.time import Time
 from astropy.coordinates import solar_system_ephemeris, EarthLocation, spherical_to_cartesian, cartesian_to_spherical

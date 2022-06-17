@@ -8,9 +8,9 @@ from astropy.coordinates import SkyCoord, GCRS
 from astropy.time import Time
 from astropy.table import Table
 import os
-from BAGLE import model
-from BAGLE import model_fitter
-from BAGLE.fake_data import *
+from bagle import model
+from bagle import model_fitter
+from bagle.fake_data import *
 import time
 import pdb
 import pytest

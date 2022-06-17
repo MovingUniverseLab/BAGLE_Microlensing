@@ -255,7 +255,7 @@ from joblib import Memory
 import os
 from functools import lru_cache, wraps
 import copy
-from BAGLE import frame_convert as fc
+from bagle import frame_convert as fc
 
 au_day_to_km_s = 1731.45683
 

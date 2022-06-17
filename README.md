@@ -25,7 +25,6 @@ The documentation to the BAGLE code can be found [here](https://bagle.readthedoc
       - pip3 install celerite
       - pip3 install ephem
       - pip3 install pymultinest
-      - pip3 install dynesty
       
       The above commands can also be executed as:
       - python3 -m pip install <module name>
