@@ -19,7 +19,7 @@ All models support fitting data with single or multi-band photometry only, astro
 
    intro.rst
    model3.rst
-   UserClass.rst
+   ModelClass.rst
    PSPL.rst
    PSBL.rst
    BSPL.rst

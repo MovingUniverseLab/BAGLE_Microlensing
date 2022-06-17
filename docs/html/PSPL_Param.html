@@ -85,7 +85,8 @@
             
                 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model3.html">Overview of bagle.model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model3.html#developers">Developers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Parameterization Class Family</a><ul>
@@ -152,20 +153,20 @@
   <div class="section" id="parameterization-class-family">
 <h1>Parameterization Class Family<a class="headerlink" href="#parameterization-class-family" title="Permalink to this headline">¶</a></h1>
 <p>Here is a subsection of the inheritance diagram for the PSPL Parametrization classes showing the AstromParam, PhotParam, and PhotAstromParam structures.</p>
-<div class="graphviz"><img src="_images/inheritance-ecc7636e5fb65cdaed341a3e9cf89b363945a9e0.png" alt="Inheritance diagram of model.PSPL_GP_PhotAstromParam1, model.PSPL_GP_PhotParam1, model.PSPL_AstromParam3" usemap="#inheritancec92ce35261" class="inheritance graphviz" /></div>
+<div class="graphviz"><img src="_images/inheritance-5d424182134aa600394d2edf0e1740995c039fc1.png" alt="Inheritance diagram of model.PSPL_GP_PhotAstromParam1, model.PSPL_GP_PhotParam1, model.PSPL_AstromParam3" usemap="#inheritancec92ce35261" class="inheritance graphviz" /></div>
 <map id="inheritancec92ce35261" name="inheritancec92ce35261">
-<area shape="rect" id="node1" href="api/model.PSPL_AstromParam3.html#model.PSPL_AstromParam3" target="_top" title="DESCRIPTION:" alt="" coords="5,79,197,104"/>
-<area shape="rect" id="node2" href="api/model.PSPL_Param.html#model.PSPL_Param" target="_top" title="An abstract class that all Param classes should sub&#45;class." alt="" coords="261,5,403,31"/>
-<area shape="rect" id="node4" href="api/model.PSPL_PhotAstromParam1.html#model.PSPL_PhotAstromParam1" target="_top" title="PSPL model for astrometry and photometry &#45; physical parameterization." alt="" coords="222,79,442,104"/>
-<area shape="rect" id="node6" href="api/model.PSPL_PhotParam1.html#model.PSPL_PhotParam1" target="_top" title="PSPL model for photometry only." alt="" coords="479,79,657,104"/>
-<area shape="rect" id="node3" href="api/model.PSPL_GP_PhotAstromParam1.html#model.PSPL_GP_PhotAstromParam1" target="_top" title="model.PSPL_GP_PhotAstromParam1" alt="" coords="202,152,449,177"/>
-<area shape="rect" id="node5" href="api/model.PSPL_GP_PhotParam1.html#model.PSPL_GP_PhotParam1" target="_top" title="model.PSPL_GP_PhotParam1" alt="" coords="473,152,677,177"/>
+<area shape="rect" id="node3" href="api/model.PSPL_Param.html#model.PSPL_Param" target="_top" title="An abstract class that all Param classes should sub&#45;class." alt="" coords="261,79,403,104"/>
+<area shape="rect" id="node2" href="api/model.PSPL_AstromParam3.html#model.PSPL_AstromParam3" target="_top" title="DESCRIPTION:" alt="" coords="5,152,197,177"/>
+<area shape="rect" id="node5" href="api/model.PSPL_PhotAstromParam1.html#model.PSPL_PhotAstromParam1" target="_top" title="PSPL model for astrometry and photometry &#45; physical parameterization." alt="" coords="222,152,442,177"/>
+<area shape="rect" id="node7" href="api/model.PSPL_PhotParam1.html#model.PSPL_PhotParam1" target="_top" title="PSPL model for photometry only." alt="" coords="479,152,657,177"/>
+<area shape="rect" id="node4" href="api/model.PSPL_GP_PhotAstromParam1.html#model.PSPL_GP_PhotAstromParam1" target="_top" title="model.PSPL_GP_PhotAstromParam1" alt="" coords="202,225,449,251"/>
+<area shape="rect" id="node6" href="api/model.PSPL_GP_PhotParam1.html#model.PSPL_GP_PhotParam1" target="_top" title="model.PSPL_GP_PhotParam1" alt="" coords="473,225,677,251"/>
 </map><div class="section" id="pspl-models">
 <h2>PSPL Models<a class="headerlink" href="#pspl-models" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="model.PSPL_Param">
 <em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_Param</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Param" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>An abstract class that all Param classes should sub-class.
 This serves as a reminder for the class variables that
 MUST be set.</p>
@@ -899,7 +900,7 @@ list or array, with one entry for each photometric filter.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2022, Niranjan.
+        &copy; Copyright 2022 Moving Universe Lab.
 
     </p>
   </div>
