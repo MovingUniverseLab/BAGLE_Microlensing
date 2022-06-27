@@ -1,8 +1,8 @@
 import pdb
-from src.BAGLE import model
+from bagle import model
 import numpy as np
 import matplotlib.pyplot as plt
-from src.BAGLE import frame_convert as fc
+from bagle import frame_convert as fc
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 

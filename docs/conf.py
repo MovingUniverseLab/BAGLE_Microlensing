@@ -12,17 +12,17 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../src/BAGLE/'))
+sys.path.insert(0, os.path.abspath('../src/bagle/'))
 sys.path.insert(0, os.path.abspath('../src/'))
 sys.path.insert(0, os.path.abspath('../'))
-sys.path.insert(0, os.path.abspath('../src/BAGLE/tests'))
+sys.path.insert(0, os.path.abspath('../src/bagle/tests'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'BAGLE'
-copyright = '2022, Niranjan'
-author = 'Niranjan'
+copyright = '2022 Moving Universe Lab'
+author = 'Niranjan Bhatia, Jessica Lu'
 master_doc = 'index'
 
 # The full version, including alpha/beta/rc tags

@@ -1,8 +1,8 @@
-from src.BAGLE import model
-from src.BAGLE import model_fitter
-from src.BAGLE import multinest_utils, munge
-from src.BAGLE import fake_data
-from src.BAGLE.model_fitter import PSPL_Solver, PSPL_Solver_Hobson_Weighted
+from bagle import model
+from bagle import model_fitter
+from bagle import multinest_utils, munge
+from bagle import fake_data
+from bagle.model_fitter import PSPL_Solver, PSPL_Solver_Hobson_Weighted
 from tests import test_model
 import numpy as np
 import pylab as plt

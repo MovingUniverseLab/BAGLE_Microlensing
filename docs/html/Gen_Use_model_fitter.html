@@ -1,33 +1,72 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html4" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GENERAL USE AND SHARED FUNCTIONS &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Prior Generators" href="Prior_Generator.html" /> 
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>GENERAL USE AND SHARED FUNCTIONS &mdash; BAGLE 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="BAGLE 0.1 documentation" href="index.html"/>
+        <link rel="up" title="Model Fitter" href="model_fitter.html"/>
+        <link rel="prev" title="Prior Generators" href="Prior_Generator.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav" role="document">
+
   <div class="wy-grid-for-nav">
+
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search">
+          
+
+          
             <a href="index.html" class="icon icon-home"> BAGLE
+          
+
+          
           </a>
+
+          
+            
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -35,10 +74,18 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model3.html">Overview of bagle.model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model3.html#developers">Developers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
@@ -56,31 +103,50 @@
 </li>
 </ul>
 
+            
+          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">BAGLE</a>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">BAGLE</a>
       </nav>
 
+
+      
       <div class="wy-nav-content">
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
           <li><a href="model_fitter.html">Model Fitter</a> &raquo;</li>
-      <li>GENERAL USE AND SHARED FUNCTIONS</li>
+      
+    <li>GENERAL USE AND SHARED FUNCTIONS</li>
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="_sources/Gen_Use_model_fitter.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
   </ul>
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <div class="section" id="general-use-and-shared-functions">
 <h1>GENERAL USE AND SHARED FUNCTIONS<a class="headerlink" href="#general-use-and-shared-functions" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="shared-functions">
@@ -122,12 +188,12 @@
 
 <dl class="function">
 <dt id="model_fitter.plot_astrometry_on_sky">
-<code class="descclassname">model_fitter.</code><code class="descname">plot_astrometry_on_sky</code><span class="sig-paren">(</span><em>data</em>, <em>model</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_astrometry_on_sky" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">model_fitter.</code><code class="descname">plot_astrometry_on_sky</code><span class="sig-paren">(</span><em>data</em>, <em>model</em>, <em>ast_filt_index=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_astrometry_on_sky" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="model_fitter.plot_astrometry_proper_motion_removed">
-<code class="descclassname">model_fitter.</code><code class="descname">plot_astrometry_proper_motion_removed</code><span class="sig-paren">(</span><em>data</em>, <em>model</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_astrometry_proper_motion_removed" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">model_fitter.</code><code class="descname">plot_astrometry_proper_motion_removed</code><span class="sig-paren">(</span><em>data</em>, <em>model</em>, <em>ast_filt_index=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_astrometry_proper_motion_removed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Proper Motion Subtracted</p>
 </dd></dl>
 
@@ -135,46 +201,34 @@
 <dt id="model_fitter.quantiles">
 <code class="descclassname">model_fitter.</code><code class="descname">quantiles</code><span class="sig-paren">(</span><em>mnest_results</em>, <em>sigma=1</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.quantiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the median and N sigma credicble interval.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>mnest_results</strong> <span class="classifier-delimiter">:</span> <span class="classifier">astropy table</span></dt>
-<dd><p class="first last">The table that comes out of load_mnest_results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mnest_results</strong><span class="classifier">astropy table</span></dt><dd><p>The table that comes out of load_mnest_results.</p>
 </dd>
-<dt><strong>sigma</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">1, 2, or 3 sigma to determine which credible interval
+<dt><strong>sigma</strong><span class="classifier">int, optional</span></dt><dd><p>1, 2, or 3 sigma to determine which credible interval
 to return.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="model_fitter.get_mnest_results">
 <code class="descclassname">model_fitter.</code><code class="descname">get_mnest_results</code><span class="sig-paren">(</span><em>root_name</em>, <em>parameters</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.get_mnest_results" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>root_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">The directory and base name of the MultiNest output.</p>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>root_name</strong><span class="classifier">str</span></dt><dd><p>The directory and base name of the MultiNest output.</p>
 </dd>
-<dt><strong>parameters</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list or array</span></dt>
-<dd><p class="first last">A list of strings with the parameter names to be displayed.
+<dt><strong>parameters</strong><span class="classifier">list or array</span></dt><dd><p>A list of strings with the parameter names to be displayed.
 There should be one name for each parameter in MultiNest and
 in the order that they appeared in the hyper-cube.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -203,146 +257,116 @@ in the order that they appeared in the hyper-cube.</p>
 <code class="descclassname">model_fitter.</code><code class="descname">postplot</code><span class="sig-paren">(</span><em>results, span=None, quantiles=[0.025, 0.5, 0.975], q_color='gray', smooth=0.02, post_color='blue', post_kwargs=None, kde=True, nkde=1000, max_n_ticks=5, use_math_text=False, labels=None, label_kwargs=None, show_titles=False, title_fmt='.2f', title_kwargs=None, truths1=None, truths2=None, truth_color1='red', truth_color2='blue', truth_kwargs1=None, truth_kwargs2=None, verbose=False, fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.postplot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot marginalized posteriors for each parameter.
 Basically copied half of traceplot.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>results</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance</span></dt>
-<dd><p class="first last">A <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance from a nested
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>results</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance</span></dt><dd><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance from a nested
 sampling run. <strong>Compatible with results derived from</strong>
 <a class="reference external" href="http://kylebarbary.com/nestle/">nestle</a>.</p>
 </dd>
-<dt><strong>span</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first">A list where each element is either a length-2 tuple containing
+<dt><strong>span</strong><span class="classifier">iterable with shape (ndim,), optional</span></dt><dd><p>A list where each element is either a length-2 tuple containing
 lower and upper bounds or a float from <cite>(0., 1.]</cite> giving the
 fraction of (weighted) samples to include. If a fraction is provided,
 the bounds are chosen to be equal-tailed. An example would be:</p>
-<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">span</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">),</span> <span class="mf">0.95</span><span class="p">,</span> <span class="p">(</span><span class="mf">5.</span><span class="p">,</span> <span class="mf">6.</span><span class="p">)]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">span</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">),</span> <span class="mf">0.95</span><span class="p">,</span> <span class="p">(</span><span class="mf">5.</span><span class="p">,</span> <span class="mf">6.</span><span class="p">)]</span>
 </pre></div>
 </div>
-<p class="last">Default is <cite>0.999999426697</cite> (5-sigma credible interval) for each
+<p>Default is <cite>0.999999426697</cite> (5-sigma credible interval) for each
 parameter.</p>
 </dd>
-<dt><strong>quantiles</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable, optional</span></dt>
-<dd><p class="first last">A list of fractional quantiles to overplot on the 1-D marginalized
+<dt><strong>quantiles</strong><span class="classifier">iterable, optional</span></dt><dd><p>A list of fractional quantiles to overplot on the 1-D marginalized
 posteriors as vertical dashed lines. Default is <cite>[0.025, 0.5, 0.975]</cite>
 (the 95%/2-sigma credible interval).</p>
 </dd>
-<dt><strong>smooth</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first last">The standard deviation (either a single value or a different value for
+<dt><strong>smooth</strong><span class="classifier">float or iterable with shape (ndim,), optional</span></dt><dd><p>The standard deviation (either a single value or a different value for
 each subplot) for the Gaussian kernel used to smooth the 1-D
 marginalized posteriors, expressed as a fraction of the span.
 Default is <cite>0.02</cite> (2% smoothing). If an integer is provided instead,
 this will instead default to a simple (weighted) histogram with
 <cite>bins=smooth</cite>.</p>
 </dd>
-<dt><strong>post_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first last">A <cite>~matplotlib</cite>-style color (either a single color or a different
+<dt><strong>post_color</strong><span class="classifier">str or iterable with shape (ndim,), optional</span></dt><dd><p>A <cite>~matplotlib</cite>-style color (either a single color or a different
 value for each subplot) used when plotting the histograms.
 Default is <cite>‘blue’</cite>.</p>
 </dd>
-<dt><strong>post_kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
-<dd><p class="first last">Extra keyword arguments that will be used for plotting the
+<dt><strong>post_kwargs</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra keyword arguments that will be used for plotting the
 marginalized 1-D posteriors.</p>
 </dd>
-<dt><strong>kde</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">Whether to use kernel density estimation to estimate and plot
+<dt><strong>kde</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to use kernel density estimation to estimate and plot
 the PDF of the importance weights as a function of log-volume
 (as opposed to the importance weights themselves). Default is
 <cite>True</cite>.</p>
 </dd>
-<dt><strong>nkde</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">The number of grid points used when plotting the kernel density
+<dt><strong>nkde</strong><span class="classifier">int, optional</span></dt><dd><p>The number of grid points used when plotting the kernel density
 estimate. Default is <cite>1000</cite>.</p>
 </dd>
-<dt><strong>max_n_ticks</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Maximum number of ticks allowed. Default is <cite>5</cite>.</p>
+<dt><strong>max_n_ticks</strong><span class="classifier">int, optional</span></dt><dd><p>Maximum number of ticks allowed. Default is <cite>5</cite>.</p>
 </dd>
-<dt><strong>use_math_text</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">Whether the axis tick labels for very large/small exponents should be
+<dt><strong>use_math_text</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether the axis tick labels for very large/small exponents should be
 displayed as powers of 10 rather than using <cite>e</cite>. Default is <cite>False</cite>.</p>
 </dd>
-<dt><strong>labels</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first last">A list of names for each parameter. If not provided, the default name
+<dt><strong>labels</strong><span class="classifier">iterable with shape (ndim,), optional</span></dt><dd><p>A list of names for each parameter. If not provided, the default name
 used when plotting will follow <span class="math notranslate nohighlight">\(x_i\)</span> style.</p>
 </dd>
-<dt><strong>label_kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
-<dd><p class="first last">Extra keyword arguments that will be sent to the
+<dt><strong>label_kwargs</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra keyword arguments that will be sent to the
 <cite>~matplotlib.axes.Axes.set_xlabel</cite> and
 <cite>~matplotlib.axes.Axes.set_ylabel</cite> methods.</p>
 </dd>
-<dt><strong>show_titles</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">Whether to display a title above each 1-D marginalized posterior
+<dt><strong>show_titles</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to display a title above each 1-D marginalized posterior
 showing the 0.5 quantile along with the upper/lower bounds associated
 with the 0.025 and 0.975 (95%/2-sigma credible interval) quantiles.
 Default is <cite>True</cite>.</p>
 </dd>
-<dt><strong>title_fmt</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd><p class="first last">The format string for the quantiles provided in the title. Default is
+<dt><strong>title_fmt</strong><span class="classifier">str, optional</span></dt><dd><p>The format string for the quantiles provided in the title. Default is
 <cite>‘.2f’</cite>.</p>
 </dd>
-<dt><strong>title_kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
-<dd><p class="first last">Extra keyword arguments that will be sent to the
+<dt><strong>title_kwargs</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra keyword arguments that will be sent to the
 <cite>~matplotlib.axes.Axes.set_title</cite> command.</p>
 </dd>
-<dt><strong>truths</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first last">A list of reference values that will be overplotted on the traces and
+<dt><strong>truths</strong><span class="classifier">iterable with shape (ndim,), optional</span></dt><dd><p>A list of reference values that will be overplotted on the traces and
 marginalized 1-D posteriors as solid horizontal/vertical lines.
 Individual values can be exempt using <cite>None</cite>. Default is <cite>None</cite>.</p>
 </dd>
-<dt><strong>truth_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first last">A <cite>~matplotlib</cite>-style color (either a single color or a different
+<dt><strong>truth_color</strong><span class="classifier">str or iterable with shape (ndim,), optional</span></dt><dd><p>A <cite>~matplotlib</cite>-style color (either a single color or a different
 value for each subplot) used when plotting <cite>truths</cite>.
 Default is <cite>‘red’</cite>.</p>
 </dd>
-<dt><strong>truth_kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
-<dd><p class="first last">Extra keyword arguments that will be used for plotting the vertical
+<dt><strong>truth_kwargs</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra keyword arguments that will be used for plotting the vertical
 and horizontal lines with <cite>truths</cite>.</p>
 </dd>
-<dt><strong>verbose</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">Whether to print the values of the computed quantiles associated with
+<dt><strong>verbose</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to print the values of the computed quantiles associated with
 each parameter. Default is <cite>False</cite>.</p>
 </dd>
-<dt><strong>fig</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>), optional</span></dt>
-<dd><p class="first last">If provided, overplot the traces and marginalized 1-D posteriors
+<dt><strong>fig</strong><span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>), optional</span></dt><dd><p>If provided, overplot the traces and marginalized 1-D posteriors
 onto the provided figure. Otherwise, by default an
 internal figure is generated.</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>traceplot</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>)</span></dt>
-<dd><p class="first last">Output trace plot.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>traceplot</strong><span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>)</span></dt><dd><p>Output trace plot.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="model_fitter.cornerplot_2truth">
 <code class="descclassname">model_fitter.</code><code class="descname">cornerplot_2truth</code><span class="sig-paren">(</span><em>results, dims=None, span=None, quantiles=[0.025, 0.5, 0.975], color='black', smooth=0.02, quantiles_2d=None, hist_kwargs=None, hist2d_kwargs=None, labels=None, label_kwargs=None, show_titles=False, title_fmt='.2f', title_kwargs=None, truths1=None, truth_color1='red', truth_kwargs1=None, truths2=None, truth_color2='blue', truth_kwargs2=None, max_n_ticks=5, top_ticks=False, use_math_text=False, verbose=False, fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.cornerplot_2truth" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a corner plot of the 1-D and 2-D marginalized posteriors.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>results</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance</span></dt>
-<dd><p class="first last">A <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance from a nested
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>results</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance</span></dt><dd><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance from a nested
 sampling run. <strong>Compatible with results derived from</strong>
 <a class="reference external" href="http://kylebarbary.com/nestle/">nestle</a>.</p>
 </dd>
-<dt><strong>dims</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable of shape (ndim,), optional</span></dt>
-<dd><p class="first last">The subset of dimensions that should be plotted. If not provided,
+<dt><strong>dims</strong><span class="classifier">iterable of shape (ndim,), optional</span></dt><dd><p>The subset of dimensions that should be plotted. If not provided,
 all dimensions will be shown.</p>
 </dd>
-<dt><strong>span</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first">A list where each element is either a length-2 tuple containing
+<dt><strong>span</strong><span class="classifier">iterable with shape (ndim,), optional</span></dt><dd><p>A list where each element is either a length-2 tuple containing
 lower and upper bounds or a float from <cite>(0., 1.]</cite> giving the
 fraction of (weighted) samples to include. If a fraction is provided,
 the bounds are chosen to be equal-tailed. An example would be:</p>
@@ -352,106 +376,84 @@ the bounds are chosen to be equal-tailed. An example would be:</p>
 <blockquote>
 <div><p>span = [(0., 10.), 0.95, (5., 6.)]</p>
 </div></blockquote>
-<p class="last">Default is <cite>0.999999426697</cite> (5-sigma credible interval).</p>
+<p>Default is <cite>0.999999426697</cite> (5-sigma credible interval).</p>
 </dd>
-<dt><strong>quantiles</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable, optional</span></dt>
-<dd><p class="first last">A list of fractional quantiles to overplot on the 1-D marginalized
+<dt><strong>quantiles</strong><span class="classifier">iterable, optional</span></dt><dd><p>A list of fractional quantiles to overplot on the 1-D marginalized
 posteriors as vertical dashed lines. Default is <cite>[0.025, 0.5, 0.975]</cite>
 (spanning the 95%/2-sigma credible interval).</p>
 </dd>
-<dt><strong>color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first last">A <cite>~matplotlib</cite>-style color (either a single color or a different
+<dt><strong>color</strong><span class="classifier">str or iterable with shape (ndim,), optional</span></dt><dd><p>A <cite>~matplotlib</cite>-style color (either a single color or a different
 value for each subplot) used when plotting the histograms.
 Default is <cite>‘black’</cite>.</p>
 </dd>
-<dt><strong>smooth</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first last">The standard deviation (either a single value or a different value for
+<dt><strong>smooth</strong><span class="classifier">float or iterable with shape (ndim,), optional</span></dt><dd><p>The standard deviation (either a single value or a different value for
 each subplot) for the Gaussian kernel used to smooth the 1-D and 2-D
 marginalized posteriors, expressed as a fraction of the span.
 Default is <cite>0.02</cite> (2% smoothing). If an integer is provided instead,
 this will instead default to a simple (weighted) histogram with
 <cite>bins=smooth</cite>.</p>
 </dd>
-<dt><strong>quantiles_2d</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable with shape (nquant,), optional</span></dt>
-<dd><p class="first last">The quantiles used for plotting the smoothed 2-D distributions.
+<dt><strong>quantiles_2d</strong><span class="classifier">iterable with shape (nquant,), optional</span></dt><dd><p>The quantiles used for plotting the smoothed 2-D distributions.
 If not provided, these default to 0.5, 1, 1.5, and 2-sigma contours
 roughly corresponding to quantiles of <cite>[0.1, 0.4, 0.65, 0.85]</cite>.</p>
 </dd>
-<dt><strong>hist_kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
-<dd><p class="first last">Extra keyword arguments to send to the 1-D (smoothed) histograms.</p>
+<dt><strong>hist_kwargs</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra keyword arguments to send to the 1-D (smoothed) histograms.</p>
 </dd>
-<dt><strong>hist2d_kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
-<dd><p class="first last">Extra keyword arguments to send to the 2-D (smoothed) histograms.</p>
+<dt><strong>hist2d_kwargs</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra keyword arguments to send to the 2-D (smoothed) histograms.</p>
 </dd>
-<dt><strong>labels</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first last">A list of names for each parameter. If not provided, the default name
+<dt><strong>labels</strong><span class="classifier">iterable with shape (ndim,), optional</span></dt><dd><p>A list of names for each parameter. If not provided, the default name
 used when plotting will follow <span class="math notranslate nohighlight">\(x_i\)</span> style.</p>
 </dd>
-<dt><strong>label_kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
-<dd><p class="first last">Extra keyword arguments that will be sent to the
+<dt><strong>label_kwargs</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra keyword arguments that will be sent to the
 <cite>~matplotlib.axes.Axes.set_xlabel</cite> and
 <cite>~matplotlib.axes.Axes.set_ylabel</cite> methods.</p>
 </dd>
-<dt><strong>show_titles</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">Whether to display a title above each 1-D marginalized posterior
+<dt><strong>show_titles</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to display a title above each 1-D marginalized posterior
 showing the 0.5 quantile along with the upper/lower bounds associated
 with the 0.025 and 0.975 (95%/2-sigma credible interval) quantiles.
 Default is <cite>True</cite>.</p>
 </dd>
-<dt><strong>title_fmt</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd><p class="first last">The format string for the quantiles provided in the title. Default is
+<dt><strong>title_fmt</strong><span class="classifier">str, optional</span></dt><dd><p>The format string for the quantiles provided in the title. Default is
 <cite>‘.2f’</cite>.</p>
 </dd>
-<dt><strong>title_kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
-<dd><p class="first last">Extra keyword arguments that will be sent to the
+<dt><strong>title_kwargs</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra keyword arguments that will be sent to the
 <cite>~matplotlib.axes.Axes.set_title</cite> command.</p>
 </dd>
-<dt><strong>truths</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first last">A list of reference values that will be overplotted on the traces and
+<dt><strong>truths</strong><span class="classifier">iterable with shape (ndim,), optional</span></dt><dd><p>A list of reference values that will be overplotted on the traces and
 marginalized 1-D posteriors as solid horizontal/vertical lines.
 Individual values can be exempt using <cite>None</cite>. Default is <cite>None</cite>.</p>
 </dd>
-<dt><strong>truth_color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first last">A <cite>~matplotlib</cite>-style color (either a single color or a different
+<dt><strong>truth_color</strong><span class="classifier">str or iterable with shape (ndim,), optional</span></dt><dd><p>A <cite>~matplotlib</cite>-style color (either a single color or a different
 value for each subplot) used when plotting <cite>truths</cite>.
 Default is <cite>‘red’</cite>.</p>
 </dd>
-<dt><strong>truth_kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
-<dd><p class="first last">Extra keyword arguments that will be used for plotting the vertical
+<dt><strong>truth_kwargs</strong><span class="classifier">dict, optional</span></dt><dd><p>Extra keyword arguments that will be used for plotting the vertical
 and horizontal lines with <cite>truths</cite>.</p>
 </dd>
-<dt><strong>max_n_ticks</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd><p class="first last">Maximum number of ticks allowed. Default is <cite>5</cite>.</p>
+<dt><strong>max_n_ticks</strong><span class="classifier">int, optional</span></dt><dd><p>Maximum number of ticks allowed. Default is <cite>5</cite>.</p>
 </dd>
-<dt><strong>top_ticks</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">Whether to label the top (rather than bottom) ticks. Default is
+<dt><strong>top_ticks</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to label the top (rather than bottom) ticks. Default is
 <cite>False</cite>.</p>
 </dd>
-<dt><strong>use_math_text</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">Whether the axis tick labels for very large/small exponents should be
+<dt><strong>use_math_text</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether the axis tick labels for very large/small exponents should be
 displayed as powers of 10 rather than using <cite>e</cite>. Default is <cite>False</cite>.</p>
 </dd>
-<dt><strong>verbose</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">Whether to print the values of the computed quantiles associated with
+<dt><strong>verbose</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to print the values of the computed quantiles associated with
 each parameter. Default is <cite>False</cite>.</p>
 </dd>
-<dt><strong>fig</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>), optional</span></dt>
-<dd><p class="first last">If provided, overplot the traces and marginalized 1-D posteriors
+<dt><strong>fig</strong><span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>), optional</span></dt><dd><p>If provided, overplot the traces and marginalized 1-D posteriors
 onto the provided figure. Otherwise, by default an
 internal figure is generated.</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>cornerplot</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>)</span></dt>
-<dd><p class="first last">Output corner plot.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>cornerplot</strong><span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>)</span></dt><dd><p>Output corner plot.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -460,60 +462,45 @@ internal figure is generated.</p>
 <dd><p>Simplified/modified from dynesty’s plotting._hist2d function.
 Plots non-filled 2D contours, where the contours are the 
 0.5, 1, 1.5, 2 sigma contours (note this)</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>x</strong> <span class="classifier-delimiter">:</span> <span class="classifier">interable with shape (nsamps,)</span></dt>
-<dd><p class="first last">Sample positions in the first dimension.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>x</strong><span class="classifier">interable with shape (nsamps,)</span></dt><dd><p>Sample positions in the first dimension.</p>
 </dd>
-<dt><strong>y</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable with shape (nsamps,)</span></dt>
-<dd><p class="first last">Sample positions in the second dimension.</p>
+<dt><strong>y</strong><span class="classifier">iterable with shape (nsamps,)</span></dt><dd><p>Sample positions in the second dimension.</p>
 </dd>
-<dt><strong>span</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable with shape (ndim,), optional</span></dt>
-<dd><p class="first">A list where each element is either a length-2 tuple containing
+<dt><strong>span</strong><span class="classifier">iterable with shape (ndim,), optional</span></dt><dd><p>A list where each element is either a length-2 tuple containing
 lower and upper bounds or a float from <cite>(0., 1.]</cite> giving the
 fraction of (weighted) samples to include. If a fraction is provided,
 the bounds are chosen to be equal-tailed. An example would be:</p>
-<div class="code highlight-default notranslate"><div class="highlight"><pre><span></span>`span = [(0., 10.), 0.95, (5., 6.)]`
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>`span = [(0., 10.), 0.95, (5., 6.)]`
 </pre></div>
 </div>
-<p class="last">Default is <cite>0.999999426697</cite> (5-sigma credible interval).</p>
+<p>Default is <cite>0.999999426697</cite> (5-sigma credible interval).</p>
 </dd>
-<dt><strong>weights</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable with shape (nsamps,)</span></dt>
-<dd><p class="first last">Weights associated with the samples. Default is <cite>None</cite> (no weights).</p>
+<dt><strong>weights</strong><span class="classifier">iterable with shape (nsamps,)</span></dt><dd><p>Weights associated with the samples. Default is <cite>None</cite> (no weights).</p>
 </dd>
-<dt><strong>sigma_levels</strong> <span class="classifier-delimiter">:</span> <span class="classifier">iterable, optional</span></dt>
-<dd><p class="first last">The contour levels to draw. Default are <cite>[1, 2, 3]</cite>-sigma.
+<dt><strong>sigma_levels</strong><span class="classifier">iterable, optional</span></dt><dd><p>The contour levels to draw. Default are <cite>[1, 2, 3]</cite>-sigma.
 UNITS ARE IN SIGMA</p>
 </dd>
-<dt><strong>ax</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><cite>~matplotlib.axes.Axes</cite>, optional</span></dt>
-<dd><p class="first last">An <cite>~matplotlib.axes.axes</cite> instance on which to add the 2-D histogram.
+<dt><strong>ax</strong><span class="classifier"><cite>~matplotlib.axes.Axes</cite>, optional</span></dt><dd><p>An <cite>~matplotlib.axes.axes</cite> instance on which to add the 2-D histogram.
 If not provided, a figure will be generated.</p>
 </dd>
-<dt><strong>color</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd><p class="first last">The <cite>~matplotlib</cite>-style color used to draw lines and color cells
+<dt><strong>color</strong><span class="classifier">str, optional</span></dt><dd><p>The <cite>~matplotlib</cite>-style color used to draw lines and color cells
 and contours. Default is <cite>‘gray’</cite>.</p>
 </dd>
-<dt><strong>plot_density</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">Whether to draw the density colormap. Default is <cite>True</cite>.</p>
+<dt><strong>plot_density</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to draw the density colormap. Default is <cite>True</cite>.</p>
 </dd>
-<dt><strong>plot_contours</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">Whether to draw the contours. Default is <cite>True</cite>.</p>
+<dt><strong>plot_contours</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to draw the contours. Default is <cite>True</cite>.</p>
 </dd>
-<dt><strong>contour_kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">Any additional keyword arguments to pass to the <cite>contour</cite> method.</p>
+<dt><strong>contour_kwargs</strong><span class="classifier">dict</span></dt><dd><p>Any additional keyword arguments to pass to the <cite>contour</cite> method.</p>
 </dd>
-<dt><strong>data_kwargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">Any additional keyword arguments to pass to the <cite>plot</cite> method when
+<dt><strong>data_kwargs</strong><span class="classifier">dict</span></dt><dd><p>Any additional keyword arguments to pass to the <cite>plot</cite> method when
 adding the individual data points.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -522,34 +509,26 @@ adding the individual data points.</p>
 <dd><p>Plot traces and marginalized posteriors for each parameter.
 Allows you to plot multiple trace plots on top of each other.
 The keywords are mostly the same as the dynesty default, only listing the new keywords here.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>results_list</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance</span></dt>
-<dd><p class="first last">A <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance from a nested
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>results_list</strong><span class="classifier">list of <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance</span></dt><dd><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance from a nested
 sampling run. <strong>Compatible with results derived from</strong>
 <a class="reference external" href="http://kylebarbary.com/nestle/">nestle</a>.</p>
 </dd>
-<dt><strong>color_list</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of length the same as results_list</span></dt>
-<dd><p class="first last">List of <cite>~matplotlib</cite>-style colors.</p>
+<dt><strong>color_list</strong><span class="classifier">list of length the same as results_list</span></dt><dd><p>List of <cite>~matplotlib</cite>-style colors.</p>
 </dd>
-<dt><strong>contour_labels_list</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of length the same as results_list</span></dt>
-<dd><p class="first last">List of strings for labelling each contour.</p>
+<dt><strong>contour_labels_list</strong><span class="classifier">list of length the same as results_list</span></dt><dd><p>List of strings for labelling each contour.</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>traceplot</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>)</span></dt>
-<dd><p class="first last">Output trace plot.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>traceplot</strong><span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>)</span></dt><dd><p>Output trace plot.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -558,34 +537,26 @@ sampling run. <strong>Compatible with results derived from</strong>
 <dd><p>Generate a corner plot of the 1-D and 2-D marginalized posteriors.
 Allows you to plot multiple corner plots on top of each other.
 The keywords are mostly the same as dynesty default, only listing the new keywords here.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>results_list</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of  <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance</span></dt>
-<dd><p class="first last">A <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance from a nested
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>results_list</strong><span class="classifier">list of  <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance</span></dt><dd><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">Results</span></code> instance from a nested
 sampling run. <strong>Compatible with results derived from</strong>
 <a class="reference external" href="http://kylebarbary.com/nestle/">nestle</a>.</p>
 </dd>
-<dt><strong>color_list</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of length the same as results_list</span></dt>
-<dd><p class="first last">List of <cite>~matplotlib</cite>-style colors.</p>
+<dt><strong>color_list</strong><span class="classifier">list of length the same as results_list</span></dt><dd><p>List of <cite>~matplotlib</cite>-style colors.</p>
 </dd>
-<dt><strong>contour_labels_list</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of length the same as results_list</span></dt>
-<dd><p class="first last">List of strings for labelling each contour.</p>
+<dt><strong>contour_labels_list</strong><span class="classifier">list of length the same as results_list</span></dt><dd><p>List of strings for labelling each contour.</p>
 </dd>
 </dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>cornerplot</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>)</span></dt>
-<dd><p class="first last">Output corner plot.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>cornerplot</strong><span class="classifier">(<cite>~matplotlib.figure.Figure</cite>, <cite>~matplotlib.axes.Axes</cite>)</span></dt><dd><p>Output corner plot.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -594,31 +565,69 @@ sampling run. <strong>Compatible with results derived from</strong>
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="Prior_Generator.html" class="btn btn-neutral float-left" title="Prior Generators" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="Prior_Generator.html" class="btn btn-neutral" title="Prior Generators" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
+  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Niranjan.</p>
-  </div>
+    <p>
+        &copy; Copyright 2022 Moving Universe Lab.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/language_data.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
+          SphinxRtdTheme.StickyNav.enable();
       });
-  </script> 
+  </script>
+   
 
 </body>
 </html>

@@ -8,12 +8,13 @@ from astropy.coordinates import SkyCoord, GCRS
 from astropy.time import Time
 from astropy.table import Table
 import os
-from src.BAGLE import model
-from src.BAGLE import model_fitter
-from src.BAGLE.fake_data import *
+from bagle import model
+from bagle import model_fitter
+from bagle.fake_data import *
 import time
 import pdb
 import pytest
+import inspect, sys
 
 from astropy.time import Time
 from astropy.coordinates import solar_system_ephemeris, EarthLocation, spherical_to_cartesian, cartesian_to_spherical
@@ -81,6 +82,18 @@ def run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
                                               muS[1],
                                               [b_sff],
                                               [mag_src])
+
+    assert pspl.t0 == t0
+    assert pspl.beta == beta
+    assert pspl.dL == dL
+    assert pspl.xS0[0] == xS0[0]
+    assert pspl.xS0[1] == xS0[1]
+    assert pspl.muL[0] == muL[0]
+    assert pspl.muL[1] == muL[1]
+    assert pspl.muS[0] == muS[0]
+    assert pspl.muS[1] == muS[1]
+    assert pspl.b_sff[0] == b_sff
+    assert pspl.mag_src[0] == mag_src
 
     t = np.arange(t0 - 3000, t0 + 3000, 1)
     dt = t - pspl.t0
@@ -3404,7 +3417,6 @@ def test_PSPL_PhotAstrom_LumLens_Par_Param1():
                                                    mag_src=[mag_src_in])
     return
 
-# Should this be split into different tests?
 def test_PSPL_GP_MRO():
     """
     For the GP class, the PSPL_GP likelihood should be the one that's used.
@@ -3428,9 +3440,7 @@ def test_PSPL_GP_MRO():
         pspl_gp_idx = [mro.__name__ for mro in mro_list].index('PSPL_GP')
         np.testing.assert_array_equal(pspl_gp_idx, 1)
 
-#        pspl_idx = [mro.__name__ for mro in mro_list].index('PSPL')
-#        pspl_gp_idx = [mro.__name__ for mro in mro_list].index('PSPL_GP')
-#        np.testing.assert_array_less(pspl_gp_idx, pspl_idx)
+    return
 
 def test_PSBL_GP_MRO():
     """
@@ -3449,3 +3459,66 @@ def test_PSBL_GP_MRO():
         mro_list = pp.mro()
         pspl_gp_idx = [mro.__name__ for mro in mro_list].index('PSPL_GP')
         np.testing.assert_array_equal(pspl_gp_idx, 1)
+
+    return
+
+def test_ABC_MRO():
+    classes_list = []
+    data_classes = []
+    parallax_classes = []
+    gp_classes = []
+    param_classes = []
+    model_classes = []
+
+    for name, obj in inspect.getmembers(model):
+        if inspect.isclass(obj) and obj.__module__ == 'bagle.model':
+            classes_list.append(obj)
+
+            # First, figure out if it is a ModelClass
+            mro_list = obj.mro()
+            mro_names = [foo.__name__ for foo in mro_list]
+
+            # Loop through the inherited objects and check for 
+            if 'ModelClassABC' in mro_names and 'ModelClassABC' != obj.__name__:
+                model_classes.append(obj.__name__)
+            else:
+                if ('PSPL_Parallax' in mro_names) or ('PSPL_noParallax' in mro_names):
+                    parallax_classes.append(obj.__name__)
+
+                if ('PSPL_Param' in mro_names):
+                    param_classes.append(obj.__name__)
+
+                if ('PSPL_GP' in mro_names):
+                    gp_classes.append(obj.__name__)
+
+                if ('PSPL' in mro_names):
+                    data_classes.append(obj.__name__)
+            
+
+    # All ModelClass objects should probably have "_Param" in their name.
+    for pcls in model_classes:
+        assert '_Param' in pcls
+
+    # All data classes should be hard-coded into this test.
+    # But we will test such that new ones won't make this test fail. 
+    data_classes_good = ['BSPL', 'BSPL_Phot', 'BSPL_PhotAstrom',
+                         'FSPL', 'FSPL_Limb', 'FSPL_Phot', 'FSPL_PhotAstrom',
+                         'PSBL', 'PSBL_Phot', 'PSBL_PhotAstrom', 'PSPL',
+                         'PSPL_Astrom', 'PSPL_Phot', 'PSPL_PhotAstrom']
+    for dcls in data_classes_good:
+        assert dcls in data_classes
+
+    assert gp_classes[0] == 'PSPL_GP'
+
+    parallax_classes_good = ['BSPL_Parallax', 'BSPL_noParallax', 'FSPL_Limb_Parallax',
+                             'FSPL_Limb_noParallax', 'FSPL_Parallax', 'FSPL_noParallax',
+                             'PSBL_Parallax', 'PSBL_noParallax', 'PSPL_Parallax',
+                             'PSPL_Parallax_LumLens', 'PSPL_Parallax_geoproj',
+                             'PSPL_noParallax', 'PSPL_noParallax_LumLens']
+    for pcls in parallax_classes_good:
+        assert pcls in parallax_classes
+        
+    model_classes.sort()
+    model_classes = model_classes[::-1]
+    print(model_classes)
+    return

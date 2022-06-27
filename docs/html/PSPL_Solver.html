@@ -1,33 +1,72 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html4" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PSPL_Solver &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Model Fitter" href="model_fitter.html" /> 
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>PSPL_Solver &mdash; BAGLE 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="BAGLE 0.1 documentation" href="index.html"/>
+        <link rel="up" title="Model Fitter" href="model_fitter.html"/>
+        <link rel="prev" title="Model Fitter" href="model_fitter.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav" role="document">
+
   <div class="wy-grid-for-nav">
+
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search">
+          
+
+          
             <a href="index.html" class="icon icon-home"> BAGLE
+          
+
+          
           </a>
+
+          
+            
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -35,10 +74,18 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model3.html">Overview of bagle.model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model3.html#developers">Developers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
@@ -55,36 +102,55 @@
 </li>
 </ul>
 
+            
+          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">BAGLE</a>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">BAGLE</a>
       </nav>
 
+
+      
       <div class="wy-nav-content">
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
           <li><a href="model_fitter.html">Model Fitter</a> &raquo;</li>
-      <li>PSPL_Solver</li>
+      
+    <li>PSPL_Solver</li>
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="_sources/PSPL_Solver.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
   </ul>
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <div class="section" id="pspl-solver">
 <h1>PSPL_Solver<a class="headerlink" href="#pspl-solver" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="model_fitter.PSPL_Solver">
-<em class="property">class </em><code class="descclassname">model_fitter.</code><code class="descname">PSPL_Solver</code><span class="sig-paren">(</span><em>data</em>, <em>model_class</em>, <em>custom_additional_param_names=None</em>, <em>add_error_on_photometry=False</em>, <em>multiply_error_on_photometry=False</em>, <em>use_phot_optional_params=True</em>, <em>use_ast_optional_params=True</em>, <em>wrapped_params=None</em>, <em>importance_nested_sampling=False</em>, <em>multimodal=True</em>, <em>const_efficiency_mode=False</em>, <em>n_live_points=300</em>, <em>evidence_tolerance=0.5</em>, <em>sampling_efficiency=0.8</em>, <em>n_iter_before_update=100</em>, <em>null_log_evidence=-1e+90</em>, <em>max_modes=100</em>, <em>mode_tolerance=-1e+90</em>, <em>outputfiles_basename='chains/1-'</em>, <em>seed=-1</em>, <em>verbose=False</em>, <em>resume=False</em>, <em>context=0</em>, <em>write_output=True</em>, <em>log_zero=-1e+100</em>, <em>max_iter=0</em>, <em>init_MPI=False</em>, <em>dump_callback=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">model_fitter.</code><code class="descname">PSPL_Solver</code><span class="sig-paren">(</span><em>data</em>, <em>model_class</em>, <em>custom_additional_param_names=None</em>, <em>add_error_on_photometry=False</em>, <em>multiply_error_on_photometry=False</em>, <em>use_phot_optional_params=True</em>, <em>use_ast_optional_params=True</em>, <em>wrapped_params=None</em>, <em>importance_nested_sampling=False</em>, <em>multimodal=True</em>, <em>const_efficiency_mode=False</em>, <em>n_live_points=300</em>, <em>evidence_tolerance=0.5</em>, <em>sampling_efficiency=0.8</em>, <em>n_iter_before_update=100</em>, <em>null_log_evidence=-1e+90</em>, <em>max_modes=100</em>, <em>mode_tolerance=-1e+90</em>, <em>outputfiles_basename='chains/1-'</em>, <em>seed=-1</em>, <em>verbose=False</em>, <em>resume=False</em>, <em>context=0</em>, <em>write_output=True</em>, <em>log_zero=-1e+100</em>, <em>max_iter=0</em>, <em>init_MPI=False</em>, <em>dump_callback='default'</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pymultinest.solve.Solver</span></code></p>
 <p>A PyMultiNest solver to find the optimal PSPL parameters, given data and
 a microlensing model from model.py.
@@ -102,22 +168,19 @@ with the following commands:
 <span class="n">fitter</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
 </pre></div>
 </div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dictionary</span></dt>
-<dd><p class="first">Observational data used to fit a microlensing model. What the data must
+<dl class="field-list">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl>
+<dt><strong>data</strong><span class="classifier">dictionary</span></dt><dd><p>Observational data used to fit a microlensing model. What the data must
 contain depends on what type of microlensing model you are solving for.</p>
 <p>The data dictionary must always photometry information of at least one
 filter. This data must contain the times, magnitudes, and magnitude
 errors of the observations. The keys to these arrays are:</p>
 <blockquote>
 <div><ul class="simple">
-<li><cite>t_phot1</cite> (MJD)</li>
-<li><cite>mag1</cite> (magnitudes)</li>
-<li><cite>mag_err1</cite> (magnitudes)</li>
+<li><p><cite>t_phot1</cite> (MJD)</p></li>
+<li><p><cite>mag1</cite> (magnitudes)</p></li>
+<li><p><cite>mag_err1</cite> (magnitudes)</p></li>
 </ul>
 </div></blockquote>
 <p>PSPL_Solver supports multiple photometric filters. For each
@@ -125,9 +188,9 @@ additional filter, increments the extension of the above keys by one.
 For example, a second filter would be:</p>
 <blockquote>
 <div><ul class="simple">
-<li><cite>t_phot2</cite> (MJD)</li>
-<li><cite>mag2</cite> (magnitudes)</li>
-<li><cite>mag_err2</cite> (magnitudes)</li>
+<li><p><cite>t_phot2</cite> (MJD)</p></li>
+<li><p><cite>mag2</cite> (magnitudes)</p></li>
+<li><p><cite>mag_err2</cite> (magnitudes)</p></li>
 </ul>
 </div></blockquote>
 <p>PSPL_Solver supports solving microlensing models that calculate with
@@ -135,233 +198,206 @@ parallax. These models must be accompanied with data that contains the
 right ascenscion and declination of the target. These keys are:</p>
 <blockquote>
 <div><ul class="simple">
-<li><cite>raL</cite> (decimal degrees)</li>
-<li><cite>decL</cite> (decimal degrees)</li>
+<li><p><cite>raL</cite> (decimal degrees)</p></li>
+<li><p><cite>decL</cite> (decimal degrees)</p></li>
 </ul>
 </div></blockquote>
 <p>PSPL_Solver supports solving microlensing models that fit astrometry.
 These models must be accompanied with data that contains astrometric
 observations in the following keys:</p>
-<blockquote class="last">
+<blockquote>
 <div><ul class="simple">
-<li><cite>t_ast</cite> (MJD)</li>
-<li><cite>xpos</cite> (arcsec along East-West increasing to the East)</li>
-<li><cite>ypos</cite> (arcsec along the North-South increasing to the North)</li>
-<li><cite>xpos_err</cite> (arcsec)</li>
-<li><cite>ypos_err</cite> (arcsec)</li>
+<li><p><cite>t_ast</cite> (MJD)</p></li>
+<li><p><cite>xpos</cite> (arcsec along East-West increasing to the East)</p></li>
+<li><p><cite>ypos</cite> (arcsec along the North-South increasing to the North)</p></li>
+<li><p><cite>xpos_err</cite> (arcsec)</p></li>
+<li><p><cite>ypos_err</cite> (arcsec)</p></li>
 </ul>
 </div></blockquote>
 </dd>
-<dt><strong>model_class :</strong></dt>
-<dd><p class="first">PSPL_Solver must be provided with the microlensing model that you are
+<dt><strong>model_class :</strong></dt><dd><p>PSPL_Solver must be provided with the microlensing model that you are
 trying to fit to your data. These models are written out in model.py,
 along with extensive documentation as to their content and
 construction in the file’s docstring. The model can support either</p>
 <ol class="arabic simple">
-<li>photometric data or photometric and astrometric data,</li>
-<li>parallax or no parallax, and</li>
-<li>different parameterizations of the model.</li>
+<li><p>photometric data or photometric and astrometric data,</p></li>
+<li><p>parallax or no parallax, and</p></li>
+<li><p>different parameterizations of the model.</p></li>
 </ol>
-<p class="last">For example, a model with accepts both astrometric and photometric
+<p>For example, a model with accepts both astrometric and photometric
 data, uses parallax, and uses a parameterization that includes the
 distance to the source and the lens is: <cite>PSPL_PhotAstrom_Par_Param1</cite>.</p>
 </dd>
-<dt><strong>custom_additional_param_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list, optional</span></dt>
-<dd><p class="first">If provided, the fitter will override the default
+<dt><strong>custom_additional_param_names</strong><span class="classifier">list, optional</span></dt><dd><p>If provided, the fitter will override the default
 <cite>additional_param_names</cite> of the model_class. These are the parameters,
 besides those that are being fitted for, that are written out to disk
 for posterior plotting after the fit has completed. To see the default
 additional_param_names run:</p>
-<blockquote class="last">
+<blockquote>
 <div><p><cite>print(model_class.additional _param_names)</cite></p>
 </div></blockquote>
 </dd>
-<dt><strong>add_error_on_photometry</strong> <span class="classifier-delimiter">:</span> <span class="classifier">boolean, optional</span></dt>
-<dd><p class="first last">If set to True, the fitter will fit for an additive error to the
+<dt><strong>add_error_on_photometry</strong><span class="classifier">boolean, optional</span></dt><dd><p>If set to True, the fitter will fit for an additive error to the
 photometric magnitudes in the fitting process. This error will have
 the name <cite>add_errN</cite>, with an <cite>N</cite> equal to the filter number.</p>
 </dd>
-<dt><strong>multiply_error_on_photometry</strong> <span class="classifier-delimiter">:</span> <span class="classifier">boolean, optional</span></dt>
-<dd><p class="first last">If set to True, the fitter will fit for a multiplicative error to the
+<dt><strong>multiply_error_on_photometry</strong><span class="classifier">boolean, optional</span></dt><dd><p>If set to True, the fitter will fit for a multiplicative error to the
 photometric magnitudes in the fitting process. This error will have
 the name <cite>mult_errN</cite>, with an <cite>N</cite> equal to the filter number.</p>
 </dd>
-<dt><strong>All other parameters :</strong></dt>
-<dd><p class="first last">See pymultinest.run() for a description of all other parameters.</p>
+<dt><strong>All other parameters :</strong></dt><dd><p>See pymultinest.run() for a description of all other parameters.</p>
 </dd>
 </dl>
-</td>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-center">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.LogLikelihood" title="model_fitter.PSPL_Solver.LogLikelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LogLikelihood</span></code></a>(cube[, ndim, n_params])</p></td>
+<td><p>This is just a wrapper because PyMultinest requires passing in the ndim and nparams.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior</span></code>(cube[, ndim, nparams])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.Prior_from_post" title="model_fitter.PSPL_Solver.Prior_from_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior_from_post</span></code></a>(cube[, ndim, nparams])</p></td>
+<td><p>Get the bin midpoints</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.calc_best_fit" title="model_fitter.PSPL_Solver.calc_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_best_fit</span></code></a>(tab, smy[, s_idx, def_best])</p></td>
+<td><p>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.calc_chi2" title="model_fitter.PSPL_Solver.calc_chi2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2</span></code></a>([params, verbose])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.calc_chi2_manual" title="model_fitter.PSPL_Solver.calc_chi2_manual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2_manual</span></code></a>([params, verbose])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.get_best_fit" title="model_fitter.PSPL_Solver.get_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit</span></code></a>([def_best])</p></td>
+<td><p>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.get_best_fit_model" title="model_fitter.PSPL_Solver.get_best_fit_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_model</span></code></a>([def_best])</p></td>
+<td><p>Identify best-fit model</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.get_best_fit_modes" title="model_fitter.PSPL_Solver.get_best_fit_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_modes</span></code></a>([def_best])</p></td>
+<td><p>Returns a list of best-fit parameters, where best-fit can be median, maxl, or MAP.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.load_mnest_modes" title="model_fitter.PSPL_Solver.load_mnest_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes</span></code></a>([remake_fits])</p></td>
+<td><p>Load up the separate modes results into an astropy table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.load_mnest_modes_results_for_dynesty" title="model_fitter.PSPL_Solver.load_mnest_modes_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes_results_for_dynesty</span></code></a>([…])</p></td>
+<td><p>Make a Dynesty-style results object that can  be used in the nicer plotting codes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.load_mnest_results" title="model_fitter.PSPL_Solver.load_mnest_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results</span></code></a>([remake_fits])</p></td>
+<td><p>Load up the MultiNest results into an astropy table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.load_mnest_results_for_dynesty" title="model_fitter.PSPL_Solver.load_mnest_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results_for_dynesty</span></code></a>([remake_fits])</p></td>
+<td><p>Make a Dynesty-style results object that can be used in the nicer plotting codes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.load_mnest_summary" title="model_fitter.PSPL_Solver.load_mnest_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_summary</span></code></a>([remake_fits])</p></td>
+<td><p>Load up the MultiNest results into an astropy table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.log_likely" title="model_fitter.PSPL_Solver.log_likely"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely</span></code></a>(cube[, verbose])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.make_default_priors" title="model_fitter.PSPL_Solver.make_default_priors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_default_priors</span></code></a>()</p></td>
+<td><p>Setup our prior distributions (i.e.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.plot_dynesty_style" title="model_fitter.PSPL_Solver.plot_dynesty_style"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_dynesty_style</span></code></a>([sim_vals, fit_vals, …])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.plot_model_and_data" title="model_fitter.PSPL_Solver.plot_model_and_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data</span></code></a>(model[, input_model, …])</p></td>
+<td><p>Make and save the model and data plots.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.plot_model_and_data_modes" title="model_fitter.PSPL_Solver.plot_model_and_data_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data_modes</span></code></a>([def_best])</p></td>
+<td><p>Plots photometry data, along with n random draws from the posterior.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.print_likelihood" title="model_fitter.PSPL_Solver.print_likelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_likelihood</span></code></a>([params, verbose])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.sample_post" title="model_fitter.PSPL_Solver.sample_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_post</span></code></a>(binmids, cdf, bininds)</p></td>
+<td><p>Randomly sample from a multinest posterior distribution.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.separate_modes" title="model_fitter.PSPL_Solver.separate_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">separate_modes</span></code></a>()</p></td>
+<td><p>Reads in the fits for the different modes (post_separate.dat) and splits it into a .dat file per mode.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.solve" title="model_fitter.PSPL_Solver.solve"><code class="xref py py-obj docutils literal notranslate"><span class="pre">solve</span></code></a>()</p></td>
+<td><p>Run a MultiNest fit to find the optimal parameters (and their posteriors) given the data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver.write_params_yaml" title="model_fitter.PSPL_Solver.write_params_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_params_yaml</span></code></a>()</p></td>
+<td><p>Write a YAML file that contains the parameters to re-initialize this object, if desired.</p></td>
 </tr>
 </tbody>
 </table>
-<p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
+<table class="docutils align-center">
 <colgroup>
-<col width="10%" />
-<col width="90%" />
+<col style="width: 74%" />
+<col style="width: 26%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.LogLikelihood" title="model_fitter.PSPL_Solver.LogLikelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LogLikelihood</span></code></a>(cube[,&nbsp;ndim,&nbsp;n_params])</td>
-<td>This is just a wrapper because PyMultinest requires passing in the ndim and nparams.</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior</span></code>(cube[,&nbsp;ndim,&nbsp;nparams])</td>
+<tbody>
+<tr class="row-odd"><td><p><strong>Prior_copy</strong></p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.Prior_from_post" title="model_fitter.PSPL_Solver.Prior_from_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior_from_post</span></code></a>(cube[,&nbsp;ndim,&nbsp;nparams])</td>
-<td>Get the bin midpoints</td>
+<tr class="row-even"><td><p><strong>callback_plotter</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.calc_best_fit" title="model_fitter.PSPL_Solver.calc_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_best_fit</span></code></a>(tab,&nbsp;smy[,&nbsp;s_idx,&nbsp;def_best])</td>
-<td>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</td>
+<tr class="row-odd"><td><p><strong>check_data</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.calc_chi2" title="model_fitter.PSPL_Solver.calc_chi2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2</span></code></a>([params,&nbsp;verbose])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
+<tr class="row-even"><td><p><strong>dyn_log_likely</strong></p></td>
+<td></td>
 </tr>
-</tbody>
-</table>
-</td>
+<tr class="row-odd"><td><p><strong>dyn_prior</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.calc_chi2_manual" title="model_fitter.PSPL_Solver.calc_chi2_manual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2_manual</span></code></a>([params,&nbsp;verbose])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
+<tr class="row-even"><td><p><strong>get_best_fit_modes_model</strong></p></td>
+<td></td>
 </tr>
-</tbody>
-</table>
-</td>
+<tr class="row-odd"><td><p><strong>get_model</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.get_best_fit" title="model_fitter.PSPL_Solver.get_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit</span></code></a>([def_best])</td>
-<td>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</td>
+<tr class="row-even"><td><p><strong>get_modified_mag_err</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.get_best_fit_model" title="model_fitter.PSPL_Solver.get_best_fit_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_model</span></code></a>([def_best])</td>
-<td>Identify best-fit model</td>
+<tr class="row-odd"><td><p><strong>log_likely_astrometry</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.get_best_fit_modes" title="model_fitter.PSPL_Solver.get_best_fit_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_modes</span></code></a>([def_best])</td>
-<td>Identify best-fit model</td>
+<tr class="row-even"><td><p><strong>log_likely_photometry</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.load_mnest_modes" title="model_fitter.PSPL_Solver.load_mnest_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes</span></code></a>([remake_fits])</td>
-<td>Load up the separate modes results into an astropy table.</td>
+<tr class="row-odd"><td><p><strong>setup_params</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.load_mnest_modes_results_for_dynesty" title="model_fitter.PSPL_Solver.load_mnest_modes_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes_results_for_dynesty</span></code></a>([…])</td>
-<td>Make a Dynesty-style results object that can  be used in the nicer plotting codes.</td>
+<tr class="row-even"><td><p><strong>summarize_results</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.load_mnest_results" title="model_fitter.PSPL_Solver.load_mnest_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results</span></code></a>([remake_fits])</td>
-<td>Load up the MultiNest results into an astropy table.</td>
+<tr class="row-odd"><td><p><strong>summarize_results_modes</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.load_mnest_results_for_dynesty" title="model_fitter.PSPL_Solver.load_mnest_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results_for_dynesty</span></code></a>([remake_fits])</td>
-<td>Make a Dynesty-style results object that can be used in the nicer plotting codes.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.load_mnest_summary" title="model_fitter.PSPL_Solver.load_mnest_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_summary</span></code></a>([remake_fits])</td>
-<td>Load up the MultiNest results into an astropy table.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.log_likely" title="model_fitter.PSPL_Solver.log_likely"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely</span></code></a>(cube[,&nbsp;verbose])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.make_default_priors" title="model_fitter.PSPL_Solver.make_default_priors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_default_priors</span></code></a>()</td>
-<td>Setup our prior distributions (i.e.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.plot_dynesty_style" title="model_fitter.PSPL_Solver.plot_dynesty_style"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_dynesty_style</span></code></a>([sim_vals,&nbsp;fit_vals,&nbsp;…])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.plot_model_and_data" title="model_fitter.PSPL_Solver.plot_model_and_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data</span></code></a>(model[,&nbsp;input_model,&nbsp;…])</td>
-<td>Make and save the model and data plots.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.plot_model_and_data_modes" title="model_fitter.PSPL_Solver.plot_model_and_data_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data_modes</span></code></a>([def_best])</td>
-<td>Plots photometry data, along with n random draws from the posterior.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.print_likelihood" title="model_fitter.PSPL_Solver.print_likelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_likelihood</span></code></a>([params,&nbsp;verbose])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.sample_post" title="model_fitter.PSPL_Solver.sample_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_post</span></code></a>(binmids,&nbsp;cdf,&nbsp;bininds)</td>
-<td>Randomly sample from a multinest posterior distribution.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.separate_modes" title="model_fitter.PSPL_Solver.separate_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">separate_modes</span></code></a>()</td>
-<td>Reads in the fits for the different modes (post_separate.dat) and splits it into a .dat file per mode.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.solve" title="model_fitter.PSPL_Solver.solve"><code class="xref py py-obj docutils literal notranslate"><span class="pre">solve</span></code></a>()</td>
-<td>Run a MultiNest fit to find the optimal parameters (and their posteriors) given the data.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver.write_params_yaml" title="model_fitter.PSPL_Solver.write_params_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_params_yaml</span></code></a>()</td>
-<td>Write a YAML file that contains the parameters to re-initialize this object, if desired.</td>
-</tr>
-</tbody>
-</table>
-<table border="1" class="docutils">
-<colgroup>
-<col width="74%" />
-<col width="26%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><strong>Prior_copy</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>callback_plotter</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>check_data</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>dyn_log_likely</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>dyn_prior</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>get_best_fit_modes_model</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>get_model</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>get_modified_mag_err</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>log_likely_astrometry</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>log_likely_photometry</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>setup_params</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>summarize_results</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>summarize_results_modes</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>write_summary_maxL</strong></td>
-<td>&#160;</td>
+<tr class="row-even"><td><p><strong>write_summary_maxL</strong></p></td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -386,34 +422,24 @@ with different limits.</p>
 <dt id="model_fitter.PSPL_Solver.sample_post">
 <code class="descname">sample_post</code><span class="sig-paren">(</span><em>binmids</em>, <em>cdf</em>, <em>bininds</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver.sample_post" title="Permalink to this definition">¶</a></dt>
 <dd><p>Randomly sample from a multinest posterior distribution.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>Nparams:</strong></dt>
-<dd><p class="first last">number of parameters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>Nparams:</strong></dt><dd><p>number of parameters</p>
 </dd>
-<dt><strong>Nbins:</strong></dt>
-<dd><p class="first last">number of histogram bins per dimension</p>
+<dt><strong>Nbins:</strong></dt><dd><p>number of histogram bins per dimension</p>
 </dd>
-<dt><strong>Nnzero:</strong></dt>
-<dd><p class="first last">number of histogram bins with non-zero probability</p>
+<dt><strong>Nnzero:</strong></dt><dd><p>number of histogram bins with non-zero probability</p>
 </dd>
-<dt><strong>binmids</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of length N, each list entry is an array of shape (M, )</span></dt>
-<dd><p class="first last">The centers of the bins for each parameter</p>
+<dt><strong>binmids</strong><span class="classifier">list of length N, each list entry is an array of shape (M, )</span></dt><dd><p>The centers of the bins for each parameter</p>
 </dd>
-<dt><strong>cdf</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(Nnzero, ) array</span></dt>
-<dd><p class="first last">CDF of the distribution. Only the non-zero probability entries.</p>
+<dt><strong>cdf</strong><span class="classifier">(Nnzero, ) array</span></dt><dd><p>CDF of the distribution. Only the non-zero probability entries.</p>
 </dd>
-<dt><strong>bininds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(Nnzero, Nparams) array</span></dt>
-<dd><p class="first last">Histogram indices of the non-zero probability entries.</p>
+<dt><strong>bininds</strong><span class="classifier">(Nnzero, Nparams) array</span></dt><dd><p>Histogram indices of the non-zero probability entries.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -426,19 +452,14 @@ the ndim and nparams.</p>
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver.log_likely">
 <code class="descname">log_likely</code><span class="sig-paren">(</span><em>cube</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver.log_likely" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>cube</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list or dict</span></dt>
-<dd><p class="first last">The dictionary or cube of the model parameters.</p>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cube</strong><span class="classifier">list or dict</span></dt><dd><p>The dictionary or cube of the model parameters.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -484,36 +505,51 @@ summary table to use. Default is <cite>s_idx = 0</cite> (global solution).
 <code class="descname">get_best_fit</code><span class="sig-paren">(</span><em>def_best='maxl'</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver.get_best_fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns best-fit parameters, where best-fit can be
 median, maxl, or MAP. Default is maxl.</p>
-<p>If best-fit is median, then also return +/- 1 sigma
+<p>If def_best is median, then also return +/- 1 sigma
 uncertainties.</p>
-<p><cite>tab = self.load_mnest_results()</cite>
-<cite>smy = self.load_mnest_summary()</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>Either a dicitonary or a tuple of length=2 holding</strong></dt><dd></dd>
+<dt><strong>two dictionaries, one for values and one for uncertainty ranges.</strong></dt><dd></dd>
+<dt><strong>See calc_best_fit() for details.</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver.get_best_fit_modes">
 <code class="descname">get_best_fit_modes</code><span class="sig-paren">(</span><em>def_best='maxl'</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver.get_best_fit_modes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Identify best-fit model</p>
+<dd><p>Returns a list of best-fit parameters, where best-fit can be
+median, maxl, or MAP. Default is maxl.</p>
+<p>If def_best is median, then also return +/- 1 sigma
+uncertainties.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>Either a list of dicitonaries or a list where each entry is</strong></dt><dd></dd>
+<dt><strong>a tuple of length=2 holding two dictionaries, one for values</strong></dt><dd></dd>
+<dt><strong>and one for uncertainty ranges.</strong></dt><dd></dd>
+<dt><strong>See calc_best_fit() for details.</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver.get_best_fit_model">
 <code class="descname">get_best_fit_model</code><span class="sig-paren">(</span><em>def_best='maxl'</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver.get_best_fit_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Identify best-fit model</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>def_best</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Choices are ‘map’ (maximum a posteriori), ‘median’, or
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>def_best</strong><span class="classifier">str</span></dt><dd><p>Choices are ‘map’ (maximum a posteriori), ‘median’, or
 ‘maxl’ (maximum likelihood)</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -551,24 +587,18 @@ be used in the nicer plotting codes.</p>
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver.plot_dynesty_style">
 <code class="descname">plot_dynesty_style</code><span class="sig-paren">(</span><em>sim_vals=None</em>, <em>fit_vals=None</em>, <em>remake_fits=False</em>, <em>dims=None</em>, <em>traceplot=True</em>, <em>cornerplot=True</em>, <em>kde=True</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver.plot_dynesty_style" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>sim_vals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">Dictionary of simulated input or comparison values to 
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sim_vals</strong><span class="classifier">dict</span></dt><dd><p>Dictionary of simulated input or comparison values to 
 overplot on posteriors.</p>
 </dd>
-<dt><strong>fit_vals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Choices are ‘map’ (maximum a posteriori), ‘mean’, or
+<dt><strong>fit_vals</strong><span class="classifier">str</span></dt><dd><p>Choices are ‘map’ (maximum a posteriori), ‘mean’, or
 ‘maxl’ (maximum likelihood)</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -588,64 +618,48 @@ Each entry of the list is a list <cite>[a, b]</cite> cooresponding to the plot l
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver.print_likelihood">
 <code class="descname">print_likelihood</code><span class="sig-paren">(</span><em>params='best'</em>, <em>verbose=True</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver.print_likelihood" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>model_params</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or dict, optional</span></dt>
-<dd><dl class="first last docutils">
-<dt>model_params = ‘best’ will load up the best solution and calculate</dt>
-<dd><p class="first last">the chi^2 based on those values. Alternatively, pass in a dictionary
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>model_params</strong><span class="classifier">str or dict, optional</span></dt><dd><dl class="simple">
+<dt>model_params = ‘best’ will load up the best solution and calculate</dt><dd><p>the chi^2 based on those values. Alternatively, pass in a dictionary
 with the model parameters to use.</p>
 </dd>
 </dl>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver.calc_chi2">
 <code class="descname">calc_chi2</code><span class="sig-paren">(</span><em>params='best'</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver.calc_chi2" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>params</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or dict, optional</span></dt>
-<dd><p class="first last">model_params = ‘best’ will load up the best solution and calculate
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>params</strong><span class="classifier">str or dict, optional</span></dt><dd><p>model_params = ‘best’ will load up the best solution and calculate
 the chi^2 based on those values. Alternatively, pass in a dictionary
 with the model parameters to use.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver.calc_chi2_manual">
 <code class="descname">calc_chi2_manual</code><span class="sig-paren">(</span><em>params='best'</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver.calc_chi2_manual" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>params</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or dict, optional</span></dt>
-<dd><p class="first last">model_params = ‘best’ will load up the best solution and calculate
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>params</strong><span class="classifier">str or dict, optional</span></dt><dd><p>model_params = ‘best’ will load up the best solution and calculate
 the chi^2 based on those values. Alternatively, pass in a dictionary
 with the model parameters to use.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -659,176 +673,156 @@ set weigthed equally (i.e. not the natural weighting by
 the number of points; but rather each contributes
 1/n_k where n is the number of data points and k is the data set.</p>
 <p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
+<table class="longtable docutils align-center">
 <colgroup>
-<col width="10%" />
-<col width="90%" />
+<col style="width: 10%" />
+<col style="width: 90%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.LogLikelihood" title="model_fitter.PSPL_Solver_weighted.LogLikelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LogLikelihood</span></code></a>(cube[,&nbsp;ndim,&nbsp;n_params])</td>
-<td>This is just a wrapper because PyMultinest requires passing in the ndim and nparams.</td>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.LogLikelihood" title="model_fitter.PSPL_Solver_weighted.LogLikelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LogLikelihood</span></code></a>(cube[, ndim, n_params])</p></td>
+<td><p>This is just a wrapper because PyMultinest requires passing in the ndim and nparams.</p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior</span></code>(cube[,&nbsp;ndim,&nbsp;nparams])</td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior</span></code>(cube[, ndim, nparams])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.Prior_from_post" title="model_fitter.PSPL_Solver_weighted.Prior_from_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior_from_post</span></code></a>(cube[, ndim, nparams])</p></td>
+<td><p>Get the bin midpoints</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.calc_best_fit" title="model_fitter.PSPL_Solver_weighted.calc_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_best_fit</span></code></a>(tab, smy[, s_idx, def_best])</p></td>
+<td><p>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.calc_chi2" title="model_fitter.PSPL_Solver_weighted.calc_chi2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2</span></code></a>([params, verbose])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.calc_chi2_manual" title="model_fitter.PSPL_Solver_weighted.calc_chi2_manual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2_manual</span></code></a>([params, verbose])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.calc_weights" title="model_fitter.PSPL_Solver_weighted.calc_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_weights</span></code></a>(weights)</p></td>
+<td><p>order of weight_arr is  <cite>[phot_1, phot_2, …phot_n, ast_1, ast_2, …ast_n]</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.get_best_fit" title="model_fitter.PSPL_Solver_weighted.get_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit</span></code></a>([def_best])</p></td>
+<td><p>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.get_best_fit_model" title="model_fitter.PSPL_Solver_weighted.get_best_fit_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_model</span></code></a>([def_best])</p></td>
+<td><p>Identify best-fit model</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.get_best_fit_modes" title="model_fitter.PSPL_Solver_weighted.get_best_fit_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_modes</span></code></a>([def_best])</p></td>
+<td><p>Returns a list of best-fit parameters, where best-fit can be median, maxl, or MAP.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.load_mnest_modes" title="model_fitter.PSPL_Solver_weighted.load_mnest_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes</span></code></a>([remake_fits])</p></td>
+<td><p>Load up the separate modes results into an astropy table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.load_mnest_modes_results_for_dynesty" title="model_fitter.PSPL_Solver_weighted.load_mnest_modes_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes_results_for_dynesty</span></code></a>([…])</p></td>
+<td><p>Make a Dynesty-style results object that can  be used in the nicer plotting codes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.load_mnest_results" title="model_fitter.PSPL_Solver_weighted.load_mnest_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results</span></code></a>([remake_fits])</p></td>
+<td><p>Load up the MultiNest results into an astropy table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.load_mnest_results_for_dynesty" title="model_fitter.PSPL_Solver_weighted.load_mnest_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results_for_dynesty</span></code></a>([remake_fits])</p></td>
+<td><p>Make a Dynesty-style results object that can be used in the nicer plotting codes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.load_mnest_summary" title="model_fitter.PSPL_Solver_weighted.load_mnest_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_summary</span></code></a>([remake_fits])</p></td>
+<td><p>Load up the MultiNest results into an astropy table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.log_likely" title="model_fitter.PSPL_Solver_weighted.log_likely"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely</span></code></a>(cube[, verbose])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.make_default_priors" title="model_fitter.PSPL_Solver_weighted.make_default_priors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_default_priors</span></code></a>()</p></td>
+<td><p>Setup our prior distributions (i.e.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.plot_dynesty_style" title="model_fitter.PSPL_Solver_weighted.plot_dynesty_style"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_dynesty_style</span></code></a>([sim_vals, fit_vals, …])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.plot_model_and_data" title="model_fitter.PSPL_Solver_weighted.plot_model_and_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data</span></code></a>(model[, input_model, …])</p></td>
+<td><p>Make and save the model and data plots.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.plot_model_and_data_modes" title="model_fitter.PSPL_Solver_weighted.plot_model_and_data_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data_modes</span></code></a>([def_best])</p></td>
+<td><p>Plots photometry data, along with n random draws from the posterior.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.print_likelihood" title="model_fitter.PSPL_Solver_weighted.print_likelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_likelihood</span></code></a>([params, verbose])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.sample_post" title="model_fitter.PSPL_Solver_weighted.sample_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_post</span></code></a>(binmids, cdf, bininds)</p></td>
+<td><p>Randomly sample from a multinest posterior distribution.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.separate_modes" title="model_fitter.PSPL_Solver_weighted.separate_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">separate_modes</span></code></a>()</p></td>
+<td><p>Reads in the fits for the different modes (post_separate.dat) and splits it into a .dat file per mode.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.solve" title="model_fitter.PSPL_Solver_weighted.solve"><code class="xref py py-obj docutils literal notranslate"><span class="pre">solve</span></code></a>()</p></td>
+<td><p>Run a MultiNest fit to find the optimal parameters (and their posteriors) given the data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.write_params_yaml" title="model_fitter.PSPL_Solver_weighted.write_params_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_params_yaml</span></code></a>()</p></td>
+<td><p>Write a YAML file that contains the parameters to re-initialize this object, if desired.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-center">
+<colgroup>
+<col style="width: 74%" />
+<col style="width: 26%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Prior_copy</strong></p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.Prior_from_post" title="model_fitter.PSPL_Solver_weighted.Prior_from_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior_from_post</span></code></a>(cube[,&nbsp;ndim,&nbsp;nparams])</td>
-<td>Get the bin midpoints</td>
+<tr class="row-even"><td><p><strong>callback_plotter</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.calc_best_fit" title="model_fitter.PSPL_Solver_weighted.calc_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_best_fit</span></code></a>(tab,&nbsp;smy[,&nbsp;s_idx,&nbsp;def_best])</td>
-<td>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</td>
+<tr class="row-odd"><td><p><strong>check_data</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.calc_chi2" title="model_fitter.PSPL_Solver_weighted.calc_chi2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2</span></code></a>([params,&nbsp;verbose])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
+<tr class="row-even"><td><p><strong>dyn_log_likely</strong></p></td>
+<td></td>
 </tr>
-</tbody>
-</table>
-</td>
+<tr class="row-odd"><td><p><strong>dyn_prior</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.calc_chi2_manual" title="model_fitter.PSPL_Solver_weighted.calc_chi2_manual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2_manual</span></code></a>([params,&nbsp;verbose])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
+<tr class="row-even"><td><p><strong>get_best_fit_modes_model</strong></p></td>
+<td></td>
 </tr>
-</tbody>
-</table>
-</td>
+<tr class="row-odd"><td><p><strong>get_model</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.calc_weights" title="model_fitter.PSPL_Solver_weighted.calc_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_weights</span></code></a>(weights)</td>
-<td>order of weight_arr is  <cite>[phot_1, phot_2, …phot_n, ast_1, ast_2, …ast_n]</cite>.</td>
+<tr class="row-even"><td><p><strong>get_modified_mag_err</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.get_best_fit" title="model_fitter.PSPL_Solver_weighted.get_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit</span></code></a>([def_best])</td>
-<td>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</td>
+<tr class="row-odd"><td><p><strong>log_likely_astrometry</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.get_best_fit_model" title="model_fitter.PSPL_Solver_weighted.get_best_fit_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_model</span></code></a>([def_best])</td>
-<td>Identify best-fit model</td>
+<tr class="row-even"><td><p><strong>log_likely_photometry</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.get_best_fit_modes" title="model_fitter.PSPL_Solver_weighted.get_best_fit_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_modes</span></code></a>([def_best])</td>
-<td>Identify best-fit model</td>
+<tr class="row-odd"><td><p><strong>setup_params</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.load_mnest_modes" title="model_fitter.PSPL_Solver_weighted.load_mnest_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes</span></code></a>([remake_fits])</td>
-<td>Load up the separate modes results into an astropy table.</td>
+<tr class="row-even"><td><p><strong>summarize_results</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.load_mnest_modes_results_for_dynesty" title="model_fitter.PSPL_Solver_weighted.load_mnest_modes_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes_results_for_dynesty</span></code></a>([…])</td>
-<td>Make a Dynesty-style results object that can  be used in the nicer plotting codes.</td>
+<tr class="row-odd"><td><p><strong>summarize_results_modes</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.load_mnest_results" title="model_fitter.PSPL_Solver_weighted.load_mnest_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results</span></code></a>([remake_fits])</td>
-<td>Load up the MultiNest results into an astropy table.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.load_mnest_results_for_dynesty" title="model_fitter.PSPL_Solver_weighted.load_mnest_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results_for_dynesty</span></code></a>([remake_fits])</td>
-<td>Make a Dynesty-style results object that can be used in the nicer plotting codes.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.load_mnest_summary" title="model_fitter.PSPL_Solver_weighted.load_mnest_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_summary</span></code></a>([remake_fits])</td>
-<td>Load up the MultiNest results into an astropy table.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.log_likely" title="model_fitter.PSPL_Solver_weighted.log_likely"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely</span></code></a>(cube[,&nbsp;verbose])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.make_default_priors" title="model_fitter.PSPL_Solver_weighted.make_default_priors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_default_priors</span></code></a>()</td>
-<td>Setup our prior distributions (i.e.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.plot_dynesty_style" title="model_fitter.PSPL_Solver_weighted.plot_dynesty_style"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_dynesty_style</span></code></a>([sim_vals,&nbsp;fit_vals,&nbsp;…])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.plot_model_and_data" title="model_fitter.PSPL_Solver_weighted.plot_model_and_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data</span></code></a>(model[,&nbsp;input_model,&nbsp;…])</td>
-<td>Make and save the model and data plots.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.plot_model_and_data_modes" title="model_fitter.PSPL_Solver_weighted.plot_model_and_data_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data_modes</span></code></a>([def_best])</td>
-<td>Plots photometry data, along with n random draws from the posterior.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.print_likelihood" title="model_fitter.PSPL_Solver_weighted.print_likelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_likelihood</span></code></a>([params,&nbsp;verbose])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.sample_post" title="model_fitter.PSPL_Solver_weighted.sample_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_post</span></code></a>(binmids,&nbsp;cdf,&nbsp;bininds)</td>
-<td>Randomly sample from a multinest posterior distribution.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.separate_modes" title="model_fitter.PSPL_Solver_weighted.separate_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">separate_modes</span></code></a>()</td>
-<td>Reads in the fits for the different modes (post_separate.dat) and splits it into a .dat file per mode.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.solve" title="model_fitter.PSPL_Solver_weighted.solve"><code class="xref py py-obj docutils literal notranslate"><span class="pre">solve</span></code></a>()</td>
-<td>Run a MultiNest fit to find the optimal parameters (and their posteriors) given the data.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_weighted.write_params_yaml" title="model_fitter.PSPL_Solver_weighted.write_params_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_params_yaml</span></code></a>()</td>
-<td>Write a YAML file that contains the parameters to re-initialize this object, if desired.</td>
-</tr>
-</tbody>
-</table>
-<table border="1" class="docutils">
-<colgroup>
-<col width="74%" />
-<col width="26%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><strong>Prior_copy</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>callback_plotter</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>check_data</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>dyn_log_likely</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>dyn_prior</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>get_best_fit_modes_model</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>get_model</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>get_modified_mag_err</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>log_likely_astrometry</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>log_likely_photometry</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>setup_params</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>summarize_results</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>summarize_results_modes</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>write_summary_maxL</strong></td>
-<td>&#160;</td>
+<tr class="row-even"><td><p><strong>write_summary_maxL</strong></p></td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -869,41 +863,31 @@ summary table to use. Default is <cite>s_idx = 0</cite> (global solution).
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_weighted.calc_chi2">
 <code class="descname">calc_chi2</code><span class="sig-paren">(</span><em>params='best'</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_weighted.calc_chi2" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>params</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or dict, optional</span></dt>
-<dd><p class="first last">model_params = ‘best’ will load up the best solution and calculate
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>params</strong><span class="classifier">str or dict, optional</span></dt><dd><p>model_params = ‘best’ will load up the best solution and calculate
 the chi^2 based on those values. Alternatively, pass in a dictionary
 with the model parameters to use.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_weighted.calc_chi2_manual">
 <code class="descname">calc_chi2_manual</code><span class="sig-paren">(</span><em>params='best'</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_weighted.calc_chi2_manual" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>params</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or dict, optional</span></dt>
-<dd><p class="first last">model_params = ‘best’ will load up the best solution and calculate
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>params</strong><span class="classifier">str or dict, optional</span></dt><dd><p>model_params = ‘best’ will load up the best solution and calculate
 the chi^2 based on those values. Alternatively, pass in a dictionary
 with the model parameters to use.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -911,36 +895,51 @@ with the model parameters to use.</p>
 <code class="descname">get_best_fit</code><span class="sig-paren">(</span><em>def_best='maxl'</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_weighted.get_best_fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns best-fit parameters, where best-fit can be
 median, maxl, or MAP. Default is maxl.</p>
-<p>If best-fit is median, then also return +/- 1 sigma
+<p>If def_best is median, then also return +/- 1 sigma
 uncertainties.</p>
-<p><cite>tab = self.load_mnest_results()</cite>
-<cite>smy = self.load_mnest_summary()</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>Either a dicitonary or a tuple of length=2 holding</strong></dt><dd></dd>
+<dt><strong>two dictionaries, one for values and one for uncertainty ranges.</strong></dt><dd></dd>
+<dt><strong>See calc_best_fit() for details.</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_weighted.get_best_fit_model">
 <code class="descname">get_best_fit_model</code><span class="sig-paren">(</span><em>def_best='maxl'</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_weighted.get_best_fit_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Identify best-fit model</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>def_best</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Choices are ‘map’ (maximum a posteriori), ‘median’, or
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>def_best</strong><span class="classifier">str</span></dt><dd><p>Choices are ‘map’ (maximum a posteriori), ‘median’, or
 ‘maxl’ (maximum likelihood)</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_weighted.get_best_fit_modes">
 <code class="descname">get_best_fit_modes</code><span class="sig-paren">(</span><em>def_best='maxl'</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_weighted.get_best_fit_modes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Identify best-fit model</p>
+<dd><p>Returns a list of best-fit parameters, where best-fit can be
+median, maxl, or MAP. Default is maxl.</p>
+<p>If def_best is median, then also return +/- 1 sigma
+uncertainties.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>Either a list of dicitonaries or a list where each entry is</strong></dt><dd></dd>
+<dt><strong>a tuple of length=2 holding two dictionaries, one for values</strong></dt><dd></dd>
+<dt><strong>and one for uncertainty ranges.</strong></dt><dd></dd>
+<dt><strong>See calc_best_fit() for details.</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -978,19 +977,14 @@ be used in the nicer plotting codes.</p>
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_weighted.log_likely">
 <code class="descname">log_likely</code><span class="sig-paren">(</span><em>cube</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_weighted.log_likely" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>cube</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list or dict</span></dt>
-<dd><p class="first last">The dictionary or cube of the model parameters.</p>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cube</strong><span class="classifier">list or dict</span></dt><dd><p>The dictionary or cube of the model parameters.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1007,24 +1001,18 @@ with different limits.</p>
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_weighted.plot_dynesty_style">
 <code class="descname">plot_dynesty_style</code><span class="sig-paren">(</span><em>sim_vals=None</em>, <em>fit_vals=None</em>, <em>remake_fits=False</em>, <em>dims=None</em>, <em>traceplot=True</em>, <em>cornerplot=True</em>, <em>kde=True</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_weighted.plot_dynesty_style" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>sim_vals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">Dictionary of simulated input or comparison values to 
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sim_vals</strong><span class="classifier">dict</span></dt><dd><p>Dictionary of simulated input or comparison values to 
 overplot on posteriors.</p>
 </dd>
-<dt><strong>fit_vals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Choices are ‘map’ (maximum a posteriori), ‘mean’, or
+<dt><strong>fit_vals</strong><span class="classifier">str</span></dt><dd><p>Choices are ‘map’ (maximum a posteriori), ‘mean’, or
 ‘maxl’ (maximum likelihood)</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1044,58 +1032,42 @@ Each entry of the list is a list <cite>[a, b]</cite> cooresponding to the plot l
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_weighted.print_likelihood">
 <code class="descname">print_likelihood</code><span class="sig-paren">(</span><em>params='best'</em>, <em>verbose=True</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_weighted.print_likelihood" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>model_params</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or dict, optional</span></dt>
-<dd><dl class="first last docutils">
-<dt>model_params = ‘best’ will load up the best solution and calculate</dt>
-<dd><p class="first last">the chi^2 based on those values. Alternatively, pass in a dictionary
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>model_params</strong><span class="classifier">str or dict, optional</span></dt><dd><dl class="simple">
+<dt>model_params = ‘best’ will load up the best solution and calculate</dt><dd><p>the chi^2 based on those values. Alternatively, pass in a dictionary
 with the model parameters to use.</p>
 </dd>
 </dl>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_weighted.sample_post">
 <code class="descname">sample_post</code><span class="sig-paren">(</span><em>binmids</em>, <em>cdf</em>, <em>bininds</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_weighted.sample_post" title="Permalink to this definition">¶</a></dt>
 <dd><p>Randomly sample from a multinest posterior distribution.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>Nparams:</strong></dt>
-<dd><p class="first last">number of parameters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>Nparams:</strong></dt><dd><p>number of parameters</p>
 </dd>
-<dt><strong>Nbins:</strong></dt>
-<dd><p class="first last">number of histogram bins per dimension</p>
+<dt><strong>Nbins:</strong></dt><dd><p>number of histogram bins per dimension</p>
 </dd>
-<dt><strong>Nnzero:</strong></dt>
-<dd><p class="first last">number of histogram bins with non-zero probability</p>
+<dt><strong>Nnzero:</strong></dt><dd><p>number of histogram bins with non-zero probability</p>
 </dd>
-<dt><strong>binmids</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of length N, each list entry is an array of shape (M, )</span></dt>
-<dd><p class="first last">The centers of the bins for each parameter</p>
+<dt><strong>binmids</strong><span class="classifier">list of length N, each list entry is an array of shape (M, )</span></dt><dd><p>The centers of the bins for each parameter</p>
 </dd>
-<dt><strong>cdf</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(Nnzero, ) array</span></dt>
-<dd><p class="first last">CDF of the distribution. Only the non-zero probability entries.</p>
+<dt><strong>cdf</strong><span class="classifier">(Nnzero, ) array</span></dt><dd><p>CDF of the distribution. Only the non-zero probability entries.</p>
 </dd>
-<dt><strong>bininds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(Nnzero, Nparams) array</span></dt>
-<dd><p class="first last">Histogram indices of the non-zero probability entries.</p>
+<dt><strong>bininds</strong><span class="classifier">(Nnzero, Nparams) array</span></dt><dd><p>Histogram indices of the non-zero probability entries.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1126,174 +1098,158 @@ this object, if desired.</p>
 
 <dl class="class">
 <dt id="model_fitter.PSPL_Solver_Hobson_Weighted">
-<em class="property">class </em><code class="descclassname">model_fitter.</code><code class="descname">PSPL_Solver_Hobson_Weighted</code><span class="sig-paren">(</span><em>data</em>, <em>model_class</em>, <em>custom_additional_param_names=None</em>, <em>add_error_on_photometry=False</em>, <em>multiply_error_on_photometry=False</em>, <em>use_phot_optional_params=True</em>, <em>use_ast_optional_params=True</em>, <em>wrapped_params=None</em>, <em>importance_nested_sampling=False</em>, <em>multimodal=True</em>, <em>const_efficiency_mode=False</em>, <em>n_live_points=300</em>, <em>evidence_tolerance=0.5</em>, <em>sampling_efficiency=0.8</em>, <em>n_iter_before_update=100</em>, <em>null_log_evidence=-1e+90</em>, <em>max_modes=100</em>, <em>mode_tolerance=-1e+90</em>, <em>outputfiles_basename='chains/1-'</em>, <em>seed=-1</em>, <em>verbose=False</em>, <em>resume=False</em>, <em>context=0</em>, <em>write_output=True</em>, <em>log_zero=-1e+100</em>, <em>max_iter=0</em>, <em>init_MPI=False</em>, <em>dump_callback=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_Hobson_Weighted" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">model_fitter.</code><code class="descname">PSPL_Solver_Hobson_Weighted</code><span class="sig-paren">(</span><em>data</em>, <em>model_class</em>, <em>custom_additional_param_names=None</em>, <em>add_error_on_photometry=False</em>, <em>multiply_error_on_photometry=False</em>, <em>use_phot_optional_params=True</em>, <em>use_ast_optional_params=True</em>, <em>wrapped_params=None</em>, <em>importance_nested_sampling=False</em>, <em>multimodal=True</em>, <em>const_efficiency_mode=False</em>, <em>n_live_points=300</em>, <em>evidence_tolerance=0.5</em>, <em>sampling_efficiency=0.8</em>, <em>n_iter_before_update=100</em>, <em>null_log_evidence=-1e+90</em>, <em>max_modes=100</em>, <em>mode_tolerance=-1e+90</em>, <em>outputfiles_basename='chains/1-'</em>, <em>seed=-1</em>, <em>verbose=False</em>, <em>resume=False</em>, <em>context=0</em>, <em>write_output=True</em>, <em>log_zero=-1e+100</em>, <em>max_iter=0</em>, <em>init_MPI=False</em>, <em>dump_callback='default'</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_Hobson_Weighted" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#model_fitter.PSPL_Solver" title="model_fitter.PSPL_Solver"><code class="xref py py-class docutils literal notranslate"><span class="pre">model_fitter.PSPL_Solver</span></code></a></p>
 <p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
+<table class="longtable docutils align-center">
 <colgroup>
-<col width="10%" />
-<col width="90%" />
+<col style="width: 10%" />
+<col style="width: 90%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.LogLikelihood" title="model_fitter.PSPL_Solver_Hobson_Weighted.LogLikelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LogLikelihood</span></code></a>(cube[,&nbsp;ndim,&nbsp;n_params])</td>
-<td>This is just a wrapper because PyMultinest requires passing in the ndim and nparams.</td>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.LogLikelihood" title="model_fitter.PSPL_Solver_Hobson_Weighted.LogLikelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LogLikelihood</span></code></a>(cube[, ndim, n_params])</p></td>
+<td><p>This is just a wrapper because PyMultinest requires passing in the ndim and nparams.</p></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior</span></code>(cube[,&nbsp;ndim,&nbsp;nparams])</td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior</span></code>(cube[, ndim, nparams])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.Prior_from_post" title="model_fitter.PSPL_Solver_Hobson_Weighted.Prior_from_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior_from_post</span></code></a>(cube[, ndim, nparams])</p></td>
+<td><p>Get the bin midpoints</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.calc_best_fit" title="model_fitter.PSPL_Solver_Hobson_Weighted.calc_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_best_fit</span></code></a>(tab, smy[, s_idx, def_best])</p></td>
+<td><p>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2" title="model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2</span></code></a>([params, verbose])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2_manual" title="model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2_manual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2_manual</span></code></a>([params, verbose])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit" title="model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit</span></code></a>([def_best])</p></td>
+<td><p>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_model" title="model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_model</span></code></a>([def_best])</p></td>
+<td><p>Identify best-fit model</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_modes" title="model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_modes</span></code></a>([def_best])</p></td>
+<td><p>Returns a list of best-fit parameters, where best-fit can be median, maxl, or MAP.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.get_hobson_effective_weights" title="model_fitter.PSPL_Solver_Hobson_Weighted.get_hobson_effective_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_hobson_effective_weights</span></code></a>(cube)</p></td>
+<td><p>Return the effective weights, alpha_k, for each data set.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.hobson_weight_log_likely" title="model_fitter.PSPL_Solver_Hobson_Weighted.hobson_weight_log_likely"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hobson_weight_log_likely</span></code></a>(ln_prob_dk_giv_ak_1)</p></td>
+<td><p>Implement a data-set-specific weighting scheme by using a hyperparameter, alpha_k, for the kth data set as  described in Hobson et al.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_modes" title="model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes</span></code></a>([remake_fits])</p></td>
+<td><p>Load up the separate modes results into an astropy table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_modes_results_for_dynesty" title="model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_modes_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes_results_for_dynesty</span></code></a>([…])</p></td>
+<td><p>Make a Dynesty-style results object that can  be used in the nicer plotting codes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_results" title="model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results</span></code></a>([remake_fits])</p></td>
+<td><p>Load up the MultiNest results into an astropy table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_results_for_dynesty" title="model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results_for_dynesty</span></code></a>([remake_fits])</p></td>
+<td><p>Make a Dynesty-style results object that can be used in the nicer plotting codes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_summary" title="model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_summary</span></code></a>([remake_fits])</p></td>
+<td><p>Load up the MultiNest results into an astropy table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.log_likely" title="model_fitter.PSPL_Solver_Hobson_Weighted.log_likely"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely</span></code></a>(cube[, verbose])</p></td>
+<td><p>Compute a log-likelihood where there is a hyperparameter, alpha_k, that controls the weighting between each data k set.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.make_default_priors" title="model_fitter.PSPL_Solver_Hobson_Weighted.make_default_priors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_default_priors</span></code></a>()</p></td>
+<td><p>Setup our prior distributions (i.e.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.plot_dynesty_style" title="model_fitter.PSPL_Solver_Hobson_Weighted.plot_dynesty_style"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_dynesty_style</span></code></a>([sim_vals, fit_vals, …])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.plot_model_and_data" title="model_fitter.PSPL_Solver_Hobson_Weighted.plot_model_and_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data</span></code></a>(model[, input_model, …])</p></td>
+<td><p>Make and save the model and data plots.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.plot_model_and_data_modes" title="model_fitter.PSPL_Solver_Hobson_Weighted.plot_model_and_data_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data_modes</span></code></a>([def_best])</p></td>
+<td><p>Plots photometry data, along with n random draws from the posterior.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.print_likelihood" title="model_fitter.PSPL_Solver_Hobson_Weighted.print_likelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_likelihood</span></code></a>([params, verbose])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.sample_post" title="model_fitter.PSPL_Solver_Hobson_Weighted.sample_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_post</span></code></a>(binmids, cdf, bininds)</p></td>
+<td><p>Randomly sample from a multinest posterior distribution.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.separate_modes" title="model_fitter.PSPL_Solver_Hobson_Weighted.separate_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">separate_modes</span></code></a>()</p></td>
+<td><p>Reads in the fits for the different modes (post_separate.dat) and splits it into a .dat file per mode.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.solve" title="model_fitter.PSPL_Solver_Hobson_Weighted.solve"><code class="xref py py-obj docutils literal notranslate"><span class="pre">solve</span></code></a>()</p></td>
+<td><p>Run a MultiNest fit to find the optimal parameters (and their posteriors) given the data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.write_params_yaml" title="model_fitter.PSPL_Solver_Hobson_Weighted.write_params_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_params_yaml</span></code></a>()</p></td>
+<td><p>Write a YAML file that contains the parameters to re-initialize this object, if desired.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-center">
+<colgroup>
+<col style="width: 74%" />
+<col style="width: 26%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Prior_copy</strong></p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.Prior_from_post" title="model_fitter.PSPL_Solver_Hobson_Weighted.Prior_from_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Prior_from_post</span></code></a>(cube[,&nbsp;ndim,&nbsp;nparams])</td>
-<td>Get the bin midpoints</td>
+<tr class="row-even"><td><p><strong>callback_plotter</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.calc_best_fit" title="model_fitter.PSPL_Solver_Hobson_Weighted.calc_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_best_fit</span></code></a>(tab,&nbsp;smy[,&nbsp;s_idx,&nbsp;def_best])</td>
-<td>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</td>
+<tr class="row-odd"><td><p><strong>check_data</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2" title="model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2</span></code></a>([params,&nbsp;verbose])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
+<tr class="row-even"><td><p><strong>dyn_log_likely</strong></p></td>
+<td></td>
 </tr>
-</tbody>
-</table>
-</td>
+<tr class="row-odd"><td><p><strong>dyn_prior</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2_manual" title="model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2_manual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_chi2_manual</span></code></a>([params,&nbsp;verbose])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
+<tr class="row-even"><td><p><strong>get_best_fit_modes_model</strong></p></td>
+<td></td>
 </tr>
-</tbody>
-</table>
-</td>
+<tr class="row-odd"><td><p><strong>get_model</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit" title="model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit</span></code></a>([def_best])</td>
-<td>Returns best-fit parameters, where best-fit can be median, maxl, or MAP.</td>
+<tr class="row-even"><td><p><strong>get_modified_mag_err</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_model" title="model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_model</span></code></a>([def_best])</td>
-<td>Identify best-fit model</td>
+<tr class="row-odd"><td><p><strong>log_likely_astrometry</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_modes" title="model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_best_fit_modes</span></code></a>([def_best])</td>
-<td>Identify best-fit model</td>
+<tr class="row-even"><td><p><strong>log_likely_photometry</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.get_hobson_effective_weights" title="model_fitter.PSPL_Solver_Hobson_Weighted.get_hobson_effective_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_hobson_effective_weights</span></code></a>(cube)</td>
-<td>Return the effective weights, alpha_k, for each data set.</td>
+<tr class="row-odd"><td><p><strong>setup_params</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.hobson_weight_log_likely" title="model_fitter.PSPL_Solver_Hobson_Weighted.hobson_weight_log_likely"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hobson_weight_log_likely</span></code></a>(ln_prob_dk_giv_ak_1)</td>
-<td>Implement a data-set-specific weighting scheme by using a hyperparameter, alpha_k, for the kth data set as  described in Hobson et al.</td>
+<tr class="row-even"><td><p><strong>summarize_results</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_modes" title="model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes</span></code></a>([remake_fits])</td>
-<td>Load up the separate modes results into an astropy table.</td>
+<tr class="row-odd"><td><p><strong>summarize_results_modes</strong></p></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_modes_results_for_dynesty" title="model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_modes_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_modes_results_for_dynesty</span></code></a>([…])</td>
-<td>Make a Dynesty-style results object that can  be used in the nicer plotting codes.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_results" title="model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results</span></code></a>([remake_fits])</td>
-<td>Load up the MultiNest results into an astropy table.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_results_for_dynesty" title="model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_results_for_dynesty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_results_for_dynesty</span></code></a>([remake_fits])</td>
-<td>Make a Dynesty-style results object that can be used in the nicer plotting codes.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_summary" title="model_fitter.PSPL_Solver_Hobson_Weighted.load_mnest_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_mnest_summary</span></code></a>([remake_fits])</td>
-<td>Load up the MultiNest results into an astropy table.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.log_likely" title="model_fitter.PSPL_Solver_Hobson_Weighted.log_likely"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely</span></code></a>(cube[,&nbsp;verbose])</td>
-<td>Compute a log-likelihood where there is a hyperparameter, alpha_k, that controls the weighting between each data k set.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.make_default_priors" title="model_fitter.PSPL_Solver_Hobson_Weighted.make_default_priors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_default_priors</span></code></a>()</td>
-<td>Setup our prior distributions (i.e.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.plot_dynesty_style" title="model_fitter.PSPL_Solver_Hobson_Weighted.plot_dynesty_style"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_dynesty_style</span></code></a>([sim_vals,&nbsp;fit_vals,&nbsp;…])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.plot_model_and_data" title="model_fitter.PSPL_Solver_Hobson_Weighted.plot_model_and_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data</span></code></a>(model[,&nbsp;input_model,&nbsp;…])</td>
-<td>Make and save the model and data plots.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.plot_model_and_data_modes" title="model_fitter.PSPL_Solver_Hobson_Weighted.plot_model_and_data_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_model_and_data_modes</span></code></a>([def_best])</td>
-<td>Plots photometry data, along with n random draws from the posterior.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.print_likelihood" title="model_fitter.PSPL_Solver_Hobson_Weighted.print_likelihood"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_likelihood</span></code></a>([params,&nbsp;verbose])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.sample_post" title="model_fitter.PSPL_Solver_Hobson_Weighted.sample_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_post</span></code></a>(binmids,&nbsp;cdf,&nbsp;bininds)</td>
-<td>Randomly sample from a multinest posterior distribution.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.separate_modes" title="model_fitter.PSPL_Solver_Hobson_Weighted.separate_modes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">separate_modes</span></code></a>()</td>
-<td>Reads in the fits for the different modes (post_separate.dat) and splits it into a .dat file per mode.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.solve" title="model_fitter.PSPL_Solver_Hobson_Weighted.solve"><code class="xref py py-obj docutils literal notranslate"><span class="pre">solve</span></code></a>()</td>
-<td>Run a MultiNest fit to find the optimal parameters (and their posteriors) given the data.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#model_fitter.PSPL_Solver_Hobson_Weighted.write_params_yaml" title="model_fitter.PSPL_Solver_Hobson_Weighted.write_params_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_params_yaml</span></code></a>()</td>
-<td>Write a YAML file that contains the parameters to re-initialize this object, if desired.</td>
-</tr>
-</tbody>
-</table>
-<table border="1" class="docutils">
-<colgroup>
-<col width="74%" />
-<col width="26%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><strong>Prior_copy</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>callback_plotter</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>check_data</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>dyn_log_likely</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>dyn_prior</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>get_best_fit_modes_model</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>get_model</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>get_modified_mag_err</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>log_likely_astrometry</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>log_likely_photometry</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>setup_params</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>summarize_results</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>summarize_results_modes</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>write_summary_maxL</strong></td>
-<td>&#160;</td>
+<tr class="row-even"><td><p><strong>write_summary_maxL</strong></p></td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -1304,19 +1260,14 @@ this object, if desired.</p>
 alpha_k, that controls the weighting between each data k set. 
 This algorithm is described in Hobson et al. 2002.</p>
 <p>Specifically, we are implementing Eq. 35.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>cube</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list or dict</span></dt>
-<dd><p class="first last">The dictionary or cube of the model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cube</strong><span class="classifier">list or dict</span></dt><dd><p>The dictionary or cube of the model parameters.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1367,41 +1318,31 @@ summary table to use. Default is <cite>s_idx = 0</cite> (global solution).
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2">
 <code class="descname">calc_chi2</code><span class="sig-paren">(</span><em>params='best'</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>params</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or dict, optional</span></dt>
-<dd><p class="first last">model_params = ‘best’ will load up the best solution and calculate
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>params</strong><span class="classifier">str or dict, optional</span></dt><dd><p>model_params = ‘best’ will load up the best solution and calculate
 the chi^2 based on those values. Alternatively, pass in a dictionary
 with the model parameters to use.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2_manual">
 <code class="descname">calc_chi2_manual</code><span class="sig-paren">(</span><em>params='best'</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_Hobson_Weighted.calc_chi2_manual" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>params</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or dict, optional</span></dt>
-<dd><p class="first last">model_params = ‘best’ will load up the best solution and calculate
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>params</strong><span class="classifier">str or dict, optional</span></dt><dd><p>model_params = ‘best’ will load up the best solution and calculate
 the chi^2 based on those values. Alternatively, pass in a dictionary
 with the model parameters to use.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1409,36 +1350,51 @@ with the model parameters to use.</p>
 <code class="descname">get_best_fit</code><span class="sig-paren">(</span><em>def_best='maxl'</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns best-fit parameters, where best-fit can be
 median, maxl, or MAP. Default is maxl.</p>
-<p>If best-fit is median, then also return +/- 1 sigma
+<p>If def_best is median, then also return +/- 1 sigma
 uncertainties.</p>
-<p><cite>tab = self.load_mnest_results()</cite>
-<cite>smy = self.load_mnest_summary()</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>Either a dicitonary or a tuple of length=2 holding</strong></dt><dd></dd>
+<dt><strong>two dictionaries, one for values and one for uncertainty ranges.</strong></dt><dd></dd>
+<dt><strong>See calc_best_fit() for details.</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_model">
 <code class="descname">get_best_fit_model</code><span class="sig-paren">(</span><em>def_best='maxl'</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Identify best-fit model</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>def_best</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Choices are ‘map’ (maximum a posteriori), ‘median’, or
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>def_best</strong><span class="classifier">str</span></dt><dd><p>Choices are ‘map’ (maximum a posteriori), ‘median’, or
 ‘maxl’ (maximum likelihood)</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_modes">
 <code class="descname">get_best_fit_modes</code><span class="sig-paren">(</span><em>def_best='maxl'</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_Hobson_Weighted.get_best_fit_modes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Identify best-fit model</p>
+<dd><p>Returns a list of best-fit parameters, where best-fit can be
+median, maxl, or MAP. Default is maxl.</p>
+<p>If def_best is median, then also return +/- 1 sigma
+uncertainties.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>Either a list of dicitonaries or a list where each entry is</strong></dt><dd></dd>
+<dt><strong>a tuple of length=2 holding two dictionaries, one for values</strong></dt><dd></dd>
+<dt><strong>and one for uncertainty ranges.</strong></dt><dd></dd>
+<dt><strong>See calc_best_fit() for details.</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1487,24 +1443,18 @@ with different limits.</p>
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_Hobson_Weighted.plot_dynesty_style">
 <code class="descname">plot_dynesty_style</code><span class="sig-paren">(</span><em>sim_vals=None</em>, <em>fit_vals=None</em>, <em>remake_fits=False</em>, <em>dims=None</em>, <em>traceplot=True</em>, <em>cornerplot=True</em>, <em>kde=True</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_Hobson_Weighted.plot_dynesty_style" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>sim_vals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">Dictionary of simulated input or comparison values to 
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sim_vals</strong><span class="classifier">dict</span></dt><dd><p>Dictionary of simulated input or comparison values to 
 overplot on posteriors.</p>
 </dd>
-<dt><strong>fit_vals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Choices are ‘map’ (maximum a posteriori), ‘mean’, or
+<dt><strong>fit_vals</strong><span class="classifier">str</span></dt><dd><p>Choices are ‘map’ (maximum a posteriori), ‘mean’, or
 ‘maxl’ (maximum likelihood)</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1524,58 +1474,42 @@ Each entry of the list is a list <cite>[a, b]</cite> cooresponding to the plot l
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_Hobson_Weighted.print_likelihood">
 <code class="descname">print_likelihood</code><span class="sig-paren">(</span><em>params='best'</em>, <em>verbose=True</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_Hobson_Weighted.print_likelihood" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>model_params</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or dict, optional</span></dt>
-<dd><dl class="first last docutils">
-<dt>model_params = ‘best’ will load up the best solution and calculate</dt>
-<dd><p class="first last">the chi^2 based on those values. Alternatively, pass in a dictionary
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>model_params</strong><span class="classifier">str or dict, optional</span></dt><dd><dl class="simple">
+<dt>model_params = ‘best’ will load up the best solution and calculate</dt><dd><p>the chi^2 based on those values. Alternatively, pass in a dictionary
 with the model parameters to use.</p>
 </dd>
 </dl>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="model_fitter.PSPL_Solver_Hobson_Weighted.sample_post">
 <code class="descname">sample_post</code><span class="sig-paren">(</span><em>binmids</em>, <em>cdf</em>, <em>bininds</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.PSPL_Solver_Hobson_Weighted.sample_post" title="Permalink to this definition">¶</a></dt>
 <dd><p>Randomly sample from a multinest posterior distribution.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>Nparams:</strong></dt>
-<dd><p class="first last">number of parameters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>Nparams:</strong></dt><dd><p>number of parameters</p>
 </dd>
-<dt><strong>Nbins:</strong></dt>
-<dd><p class="first last">number of histogram bins per dimension</p>
+<dt><strong>Nbins:</strong></dt><dd><p>number of histogram bins per dimension</p>
 </dd>
-<dt><strong>Nnzero:</strong></dt>
-<dd><p class="first last">number of histogram bins with non-zero probability</p>
+<dt><strong>Nnzero:</strong></dt><dd><p>number of histogram bins with non-zero probability</p>
 </dd>
-<dt><strong>binmids</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of length N, each list entry is an array of shape (M, )</span></dt>
-<dd><p class="first last">The centers of the bins for each parameter</p>
+<dt><strong>binmids</strong><span class="classifier">list of length N, each list entry is an array of shape (M, )</span></dt><dd><p>The centers of the bins for each parameter</p>
 </dd>
-<dt><strong>cdf</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(Nnzero, ) array</span></dt>
-<dd><p class="first last">CDF of the distribution. Only the non-zero probability entries.</p>
+<dt><strong>cdf</strong><span class="classifier">(Nnzero, ) array</span></dt><dd><p>CDF of the distribution. Only the non-zero probability entries.</p>
 </dd>
-<dt><strong>bininds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">(Nnzero, Nparams) array</span></dt>
-<dd><p class="first last">Histogram indices of the non-zero probability entries.</p>
+<dt><strong>bininds</strong><span class="classifier">(Nnzero, Nparams) array</span></dt><dd><p>Histogram indices of the non-zero probability entries.</p>
 </dd>
 </dl>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1609,31 +1543,69 @@ this object, if desired.</p>
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="model_fitter.html" class="btn btn-neutral float-left" title="Model Fitter" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="model_fitter.html" class="btn btn-neutral" title="Model Fitter" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
+  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Niranjan.</p>
-  </div>
+    <p>
+        &copy; Copyright 2022 Moving Universe Lab.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/language_data.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
+          SphinxRtdTheme.StickyNav.enable();
       });
-  </script> 
+  </script>
+   
 
 </body>
 </html>

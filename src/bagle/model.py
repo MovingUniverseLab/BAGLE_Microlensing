@@ -12,8 +12,111 @@ Overview
 =========================
 
 This set of classes and functions allows the user to construct microlensing
-models built up from a menu of different features. Each model is built using
-the inheritance of multiple classes, each from a different 'family' of
+models. The available classes for instantiating a microlensing event are shown
+in the list below. See the API documentation for each class for details.
+
+Note, each model class has a name that typically has a structure of 
+
+    <ModelDataType>_<Parallax>_<GP>_<Parameterization>
+
+For example, `PSPL_Phot_noPar_Param2` has a data and model class type of PSPL_Phot,
+which contains a point-source, point-lens event with photometry only. The model
+has no parallax, no GP and uses parameterization #2.
+
+The complete list of instantiable model classes is: 
+
+Point source, point lens, photometry only:
+    - 'PSPL_Phot_noPar_Param1'
+    - 'PSPL_Phot_noPar_Param2'
+    - 'PSPL_Phot_Par_Param1'
+    - 'PSPL_Phot_Par_Param2'
+    - 'PSPL_Phot_Par_Param1_geoproj'
+    - 'PSPL_Phot_noPar_GP_Param1'
+    - 'PSPL_Phot_noPar_GP_Param2'
+    - 'PSPL_Phot_Par_GP_Param1'
+    - 'PSPL_Phot_Par_GP_Param1_2'
+    - 'PSPL_Phot_Par_GP_Param2'
+    - 'PSPL_Phot_Par_GP_Param2_2'
+
+Point source, point lens, photometry and astrometry:
+    - 'PSPL_PhotAstrom_noPar_Param1'
+    - 'PSPL_PhotAstrom_noPar_Param2'
+    - 'PSPL_PhotAstrom_noPar_Param3'
+    - 'PSPL_PhotAstrom_noPar_Param4'
+    - 'PSPL_PhotAstrom_Par_Param4_geoproj'
+    - 'PSPL_PhotAstrom_Par_Param1'
+    - 'PSPL_PhotAstrom_Par_Param2'
+    - 'PSPL_PhotAstrom_Par_Param3'
+    - 'PSPL_PhotAstrom_Par_Param4'
+    - 'PSPL_PhotAstrom_Par_Param5'
+    - 'PSPL_PhotAstrom_LumLens_Par_Param1'
+    - 'PSPL_PhotAstrom_LumLens_Par_Param2'
+    - 'PSPL_PhotAstrom_LumLens_Par_Param4'
+    - 'PSPL_PhotAstrom_noPar_GP_Param1'
+    - 'PSPL_PhotAstrom_noPar_GP_Param2'
+    - 'PSPL_PhotAstrom_Par_GP_Param1'
+    - 'PSPL_PhotAstrom_Par_GP_Param2'
+    - 'PSPL_PhotAstrom_Par_GP_Param3'
+    - 'PSPL_PhotAstrom_Par_GP_Param4'
+    - 'PSPL_PhotAstrom_Par_LumLens_GP_Param1'
+    - 'PSPL_PhotAstrom_Par_LumLens_GP_Param2'
+    - 'PSPL_PhotAstrom_Par_LumLens_GP_Param3'
+    - 'PSPL_PhotAstrom_Par_LumLens_GP_Param4'
+
+Point source, point lens, astrometry only
+    - 'PSPL_Astrom_Par_Param4'
+    - 'PSPL_Astrom_Par_Param3'
+
+Point soruce, binary lens, photometry only
+    - 'PSBL_Phot_noPar_Param1'
+    - 'PSBL_Phot_Par_Param1'
+    - 'PSBL_Phot_noPar_GP_Param1'
+    - 'PSBL_Phot_Par_GP_Param1'
+
+Point source, binary lens, photometry and astrometry
+    - 'PSBL_PhotAstrom_noPar_Param1'
+    - 'PSBL_PhotAstrom_noPar_Param2'
+    - 'PSBL_PhotAstrom_noPar_Param3'
+    - 'PSBL_PhotAstrom_Par_Param1'
+    - 'PSBL_PhotAstrom_Par_Param2'
+    - 'PSBL_PhotAstrom_Par_Param3'
+    - 'PSBL_PhotAstrom_Par_Param4'
+    - 'PSBL_PhotAstrom_Par_Param5'
+    - 'PSBL_PhotAstrom_noPar_GP_Param1'
+    - 'PSBL_PhotAstrom_noPar_GP_Param2'
+    - 'PSBL_PhotAstrom_Par_GP_Param1'
+    - 'PSBL_PhotAstrom_Par_GP_Param2'
+
+Binary source, point lens, photometry and only
+    - 'BSPL_Phot_noPar_Param1'
+    - 'BSPL_Phot_Par_Param1'
+    - 'BSPL_Phot_noPar_GP_Param1'
+    - 'BSPL_Phot_Par_GP_Param1'
+
+Binary source, point lens, photometry and astrometry
+    - 'BSPL_PhotAstrom_noPar_Param1'
+    - 'BSPL_PhotAstrom_noPar_Param2'
+    - 'BSPL_PhotAstrom_noPar_Param3'
+    - 'BSPL_PhotAstrom_Par_Param1'
+    - 'BSPL_PhotAstrom_Par_Param2'
+    - 'BSPL_PhotAstrom_Par_Param3'
+    - 'BSPL_PhotAstrom_noPar_GP_Param1'
+    - 'BSPL_PhotAstrom_noPar_GP_Param2'
+    - 'BSPL_PhotAstrom_noPar_GP_Param3'
+    - 'BSPL_PhotAstrom_Par_GP_Param1'
+    - 'BSPL_PhotAstrom_Par_GP_Param2'
+    - 'BSPL_PhotAstrom_Par_GP_Param3'
+
+Finite source, point lens, photometry and astrometry (broken)
+    - 'FSPL_PhotAstrom_Par_Param1'
+
+
+=========================
+Developers
+=========================
+
+Each model class i built up from a menu of different features
+by inheriting from multiple base classes, each from a different 'family' of
 related classes.
 
 Each microlensing model must contain:
@@ -28,16 +131,18 @@ Each microlensing model must contain:
           
     2) A class from the Parallax Class Family:
     
-        * `PSPL_noParallax`
-        * `PSPL_Parallax`
+        * `ParallaxClassABC` -- base class for all Parallax classes:
+
+          - `PSPL_noParallax`
+          - `PSPL_Parallax`
         
     3) A class from the GP Class Family: (optional)
     
-        * `PSPL_GP`
+        * `PSPL_GP` -- base class for all GP classes.
         
     4) A class from the Parametrization Class Family:
     
-        * `PSPL_Param` -- abstract base class for all Param classes
+        * `PSPL_Param` -- base class for all Param classes
         
           - `PSPL_PhotParam1`
           - `PSPL_PhotParam2`
@@ -53,44 +158,19 @@ Each microlensing model must contain:
           - `PSPL_GP_PhotAstromParam3`
           - `PSPL_GP_PhotAstromParam4`
 
-There is a parallax hierarchy for PSBL:
-    1) A class from the Data Class Family:
-    
-        * `PSBL` -- base class for all Data classes:
-        
-          - `PSBL_Phot`
-          - `PSBL_PhotAstrom`
-          
-    2) A class from the Parallax Class Family:
-    
-        * `PSBL_noParallax`
-        * `PSBL_Parallax`
-        
-    3) A class from the Parametrization Class Family:
-    
-        * `PSBL_PhotParam1`
-        * `PSBL_PhotAstromParam1`
-        * `PSBL_PhotAstromParam2`
-        * `PSBL_PhotAstromParam3`
-        * `PSBL_PhotAstromParam4`
-        * `PSBL_PhotAstromParam5`
-        * `PSBL_PhotAstromParam6`
-
-Several pre-built models are included in this file.
+There is a similar hierarchy for PSBL, etc.
 
 For example, the `PSPL_PhotAstrom_noPar_Param1` model is declared as:
 
-    ``class PSPL_PhotAstrom_noPar_Param1(PSPL_PhotAstrom, PSPL_noParallax, PSPL_PhotAstromParam1)``
-
-The words in the models name, and the classes used to declare it, tell us
-what features the model contains. In this example, we can see that the model's
-name contains the words `PhotAstrom`, `noPar`, and `Param1`. From these words,
-we know that this model (1) uses both photometry and astrometry data, (2) does
-not include parallax in the model, and (3) uses the first
-photometry / astrometry parameterization for declaring the model.
+    ``class PSPL_PhotAstrom_noPar_Param1(ModelClassABC, PSPL_PhotAstrom, PSPL_noParallax, PSPL_PhotAstromParam1)``
 
 Class Families
 =================
+
+Model Class Family
+------------------
+These are the classes that can be instantiated by the user.
+The base class is ModelClassABC.
 
 Data Class Family
 -----------------
@@ -107,6 +187,8 @@ not be used in the model when run through a model using `PSPL_Phot`. Data that
 does not contain astrometry run through a model using `PSPL_PhotAstrom` will
 generate a RuntimeError.
 
+The base class is PSPL.
+
 Parallax Class Family
 ----------------------
 
@@ -116,6 +198,8 @@ options for this class family, `PSPL_noParallax` and `PSPL_Parallax`. Models
 that do not have parallax have the words `noPar` in their names, while models
 that do contain parallax have the words `Par` in their names.
 
+The base class is ParallaxClassABC.
+
 Parameterization Class Family
 ------------------------------
 
@@ -123,6 +207,8 @@ These classes determine which physical parameters define the model. Currently
 this file supports one parameterization when using only photometry (`Phot`)
 and three parametrizations when using photometry and astrometery
 (`PhotAstrom`).
+
+The base class is PSPL_Param.
 
 The parameters for each parameterization are:
     PhotParam1 :
@@ -198,16 +284,18 @@ are several rules that must be followed when creating a new class.
         definition matters. Parent classes to models should always be listed
         in the order:
         
-            a) Data Class
-            b) Parallax Class
-            c) Parameterization Class
-            
-        If using the optional GP class, then the order is
-        
-            a) GP Class
+            a) ModelClassABC
             b) Data Class
             c) Parallax Class
             d) Parameterization Class
+            
+        If using the optional GP class, then the order is
+        
+            a) ModelClassABC
+            b) GP Class
+            c) Data Class
+            d) Parallax Class
+            e) Parameterization Class
 
     3)  Each class must be given the `@inheritdocstring` decorator, and include
         the following commands in the model's ``__init__``:
@@ -249,7 +337,8 @@ from joblib import Memory
 import os
 from functools import lru_cache, wraps
 import copy
-from src.BAGLE import frame_convert as fc
+from bagle import frame_convert as fc
+from abc import ABC
 
 au_day_to_km_s = 1731.45683
 
@@ -269,7 +358,7 @@ cache_memory = Memory(cache_dir, verbose=0)
 # Parameterization Class Family
 #
 # --------------------------------------------------
-class PSPL_Param(object):
+class PSPL_Param(ABC):
     """
     An abstract class that all Param classes should sub-class.
     This serves as a reminder for the class variables that
@@ -2149,7 +2238,7 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
 # Data Class Family
 #
 # --------------------------------------------------
-class PSPL(object):
+class PSPL(ABC):
     def animate(self, tE, time_steps, frame_time, name, size, zoom,
                 astrometry):
         """ Produces animation of microlensing event. 
@@ -2641,7 +2730,7 @@ class Celerite_GP_Model(celerite.modeling.Model):
         return pspl_vals
 
 
-class PSPL_GP(object):
+class PSPL_GP(ABC):
     """
     PSPL object that has optional support for gaussian process on each photometric filter.
     """
@@ -2761,12 +2850,16 @@ class PSPL_GP(object):
             return lnL.sum()
 
 
+        
 # --------------------------------------------------
 #
 # Parallax Class Family
 #
 # --------------------------------------------------
-class PSPL_noParallax(object):
+class ParallaxClassABC(ABC):
+    pass
+
+class PSPL_noParallax(ParallaxClassABC):
     parallaxFlag = False
 
     def get_amplification(self, t):
@@ -2913,8 +3006,8 @@ class PSPL_noParallax(object):
             "piE_ecliptic is not supported on this object: "
             + str(self.__class__))
 
-
-class PSPL_Parallax(object):
+    
+class PSPL_Parallax(ParallaxClassABC):
     parallaxFlag = True
     fixed_param_names = ['raL', 'decL']
 
@@ -8964,13 +9057,19 @@ def checkconflicts(self):
                                                  "more details.")
 
 
-# =====
-# PSPL User Classes
-# =====
+# --------------------------------------------------
+#
+# Model Class Family
+#
+# --------------------------------------------------
+# Abstract base class for Model objects (end-user uses these).
+class ModelClassABC(ABC):
+    pass
 
 # PSPL
 @inheritdocstring
-class PSPL_PhotAstrom_noPar_Param1(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_noPar_Param1(ModelClassABC,
+                                   PSPL_PhotAstrom,
                                    PSPL_noParallax,
                                    PSPL_PhotAstromParam1):
     def __init__(self, *args, **kwargs):
@@ -8981,7 +9080,8 @@ class PSPL_PhotAstrom_noPar_Param1(PSPL_PhotAstrom,
 
 # PSPL_parallax
 @inheritdocstring
-class PSPL_PhotAstrom_Par_Param1(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_Par_Param1(ModelClassABC,
+                                 PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam1):
     def __init__(self, *args, **kwargs):
@@ -8992,7 +9092,8 @@ class PSPL_PhotAstrom_Par_Param1(PSPL_PhotAstrom,
 
 # PSPL_parallax
 @inheritdocstring
-class PSPL_PhotAstrom_LumLens_Par_Param1(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_LumLens_Par_Param1(ModelClassABC,
+                                         PSPL_PhotAstrom,
                                          PSPL_Parallax_LumLens,
                                          PSPL_PhotAstromParam1):
     def __init__(self, *args, **kwargs):
@@ -9003,7 +9104,8 @@ class PSPL_PhotAstrom_LumLens_Par_Param1(PSPL_PhotAstrom,
 
 # PSPL_parallax
 @inheritdocstring
-class PSPL_PhotAstrom_LumLens_Par_Param2(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_LumLens_Par_Param2(ModelClassABC,
+                                         PSPL_PhotAstrom,
                                          PSPL_Parallax_LumLens,
                                          PSPL_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
@@ -9014,7 +9116,8 @@ class PSPL_PhotAstrom_LumLens_Par_Param2(PSPL_PhotAstrom,
 
 # PSPL_parallax
 @inheritdocstring
-class PSPL_PhotAstrom_LumLens_Par_Param4(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_LumLens_Par_Param4(ModelClassABC,
+                                         PSPL_PhotAstrom,
                                          PSPL_Parallax_LumLens,
                                          PSPL_PhotAstromParam4):
     def __init__(self, *args, **kwargs):
@@ -9025,7 +9128,8 @@ class PSPL_PhotAstrom_LumLens_Par_Param4(PSPL_PhotAstrom,
 
 # PSPL_parallax2 / PSPL_multiphot_parallax
 @inheritdocstring
-class PSPL_PhotAstrom_Par_Param2(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_Par_Param2(ModelClassABC,
+                                 PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
@@ -9036,7 +9140,8 @@ class PSPL_PhotAstrom_Par_Param2(PSPL_PhotAstrom,
 
 # PSPL_parallax2 / PSPL_multiphot_parallax
 @inheritdocstring
-class PSPL_PhotAstrom_noPar_Param2(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_noPar_Param2(ModelClassABC,
+                                   PSPL_PhotAstrom,
                                    PSPL_noParallax,
                                    PSPL_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
@@ -9046,16 +9151,18 @@ class PSPL_PhotAstrom_noPar_Param2(PSPL_PhotAstrom,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_noPar_Param3(PSPL_PhotAstrom,
-                                 PSPL_noParallax,
-                                 PSPL_PhotAstromParam3):
+class PSPL_PhotAstrom_noPar_Param3(ModelClassABC,
+                                   PSPL_PhotAstrom,
+                                   PSPL_noParallax,
+                                   PSPL_PhotAstromParam3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
         
 @inheritdocstring
-class PSPL_PhotAstrom_Par_Param3(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_Par_Param3(ModelClassABC,
+                                 PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam3):
     def __init__(self, *args, **kwargs):
@@ -9065,7 +9172,8 @@ class PSPL_PhotAstrom_Par_Param3(PSPL_PhotAstrom,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_Par_Param4(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_Par_Param4(ModelClassABC,
+                                 PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam4):
     def __init__(self, *args, **kwargs):
@@ -9075,7 +9183,8 @@ class PSPL_PhotAstrom_Par_Param4(PSPL_PhotAstrom,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_Par_Param4_geoproj(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_Par_Param4_geoproj(ModelClassABC,
+                                         PSPL_PhotAstrom,
                                          PSPL_Parallax_geoproj,
                                          PSPL_PhotAstromParam4_geoproj):
     def __init__(self, *args, **kwargs):
@@ -9085,7 +9194,8 @@ class PSPL_PhotAstrom_Par_Param4_geoproj(PSPL_PhotAstrom,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_Par_Param5(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_Par_Param5(ModelClassABC,
+                                 PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam5):
     def __init__(self, *args, **kwargs):
@@ -9094,7 +9204,8 @@ class PSPL_PhotAstrom_Par_Param5(PSPL_PhotAstrom,
         checkconflicts(self)
 
 @inheritdocstring
-class PSPL_PhotAstrom_noPar_Param4(PSPL_PhotAstrom,
+class PSPL_PhotAstrom_noPar_Param4(ModelClassABC,
+                                   PSPL_PhotAstrom,
                                    PSPL_noParallax,
                                    PSPL_PhotAstromParam4):
     def __init__(self, *args, **kwargs):
@@ -9104,7 +9215,8 @@ class PSPL_PhotAstrom_noPar_Param4(PSPL_PhotAstrom,
 
 
 @inheritdocstring
-class PSPL_Astrom_Par_Param4(PSPL_Astrom,
+class PSPL_Astrom_Par_Param4(ModelClassABC,
+                             PSPL_Astrom,
                              PSPL_Parallax,
                              PSPL_AstromParam4):
     def __init__(self, *args, **kwargs):
@@ -9114,7 +9226,8 @@ class PSPL_Astrom_Par_Param4(PSPL_Astrom,
 
 
 @inheritdocstring
-class PSPL_Astrom_Par_Param3(PSPL_Astrom,
+class PSPL_Astrom_Par_Param3(ModelClassABC,
+                             PSPL_Astrom,
                              PSPL_Parallax,
                              PSPL_AstromParam3):
     def __init__(self, *args, **kwargs):
@@ -9125,7 +9238,8 @@ class PSPL_Astrom_Par_Param3(PSPL_Astrom,
 
 # PSPL_phot
 @inheritdocstring
-class PSPL_Phot_noPar_Param1(PSPL_Phot,
+class PSPL_Phot_noPar_Param1(ModelClassABC,
+                             PSPL_Phot,
                              PSPL_noParallax,
                              PSPL_PhotParam1):
     def __init__(self, *args, **kwargs):
@@ -9136,7 +9250,8 @@ class PSPL_Phot_noPar_Param1(PSPL_Phot,
 
 # PSPL_phot
 @inheritdocstring
-class PSPL_Phot_noPar_Param2(PSPL_Phot,
+class PSPL_Phot_noPar_Param2(ModelClassABC,
+                             PSPL_Phot,
                              PSPL_noParallax,
                              PSPL_PhotParam2):
     def __init__(self, *args, **kwargs):
@@ -9147,7 +9262,8 @@ class PSPL_Phot_noPar_Param2(PSPL_Phot,
 
 # PSPL_phot_parallax / PSPL_phot_multiphot_parallax
 @inheritdocstring
-class PSPL_Phot_Par_Param1(PSPL_Phot,
+class PSPL_Phot_Par_Param1(ModelClassABC,
+                           PSPL_Phot,
                            PSPL_Parallax,
                            PSPL_PhotParam1):
     def __init__(self, *args, **kwargs):
@@ -9156,7 +9272,8 @@ class PSPL_Phot_Par_Param1(PSPL_Phot,
         checkconflicts(self)
 
 @inheritdocstring
-class PSPL_Phot_Par_Param1_geoproj(PSPL_Phot,
+class PSPL_Phot_Par_Param1_geoproj(ModelClassABC,
+                                   PSPL_Phot,
                                    PSPL_Parallax_geoproj,
                                    PSPL_PhotParam1_geoproj):
     def __init__(self, *args, **kwargs):
@@ -9166,7 +9283,8 @@ class PSPL_Phot_Par_Param1_geoproj(PSPL_Phot,
 
 
 @inheritdocstring
-class PSPL_Phot_Par_Param2(PSPL_Phot,
+class PSPL_Phot_Par_Param2(ModelClassABC,
+                           PSPL_Phot,
                            PSPL_Parallax,
                            PSPL_PhotParam2):
     def __init__(self, *args, **kwargs):
@@ -9177,7 +9295,8 @@ class PSPL_Phot_Par_Param2(PSPL_Phot,
 
 # PSPL Phot parallax with GP
 @inheritdocstring
-class PSPL_Phot_Par_GP_Param1(PSPL_GP,
+class PSPL_Phot_Par_GP_Param1(ModelClassABC,
+                              PSPL_GP,
                               PSPL_Phot,
                               PSPL_Parallax,
                               PSPL_GP_PhotParam1):
@@ -9188,7 +9307,8 @@ class PSPL_Phot_Par_GP_Param1(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_Phot_Par_GP_Param2(PSPL_GP,
+class PSPL_Phot_Par_GP_Param2(ModelClassABC,
+                              PSPL_GP,
                               PSPL_Phot,
                               PSPL_Parallax,
                               PSPL_GP_PhotParam2):
@@ -9199,7 +9319,8 @@ class PSPL_Phot_Par_GP_Param2(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_Phot_Par_GP_Param1_2(PSPL_GP,
+class PSPL_Phot_Par_GP_Param1_2(ModelClassABC,
+                                PSPL_GP,
                                 PSPL_Phot,
                                 PSPL_Parallax,
                                 PSPL_GP_PhotParam1_2):
@@ -9210,7 +9331,8 @@ class PSPL_Phot_Par_GP_Param1_2(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_Phot_Par_GP_Param2_2(PSPL_GP,
+class PSPL_Phot_Par_GP_Param2_2(ModelClassABC,
+                                PSPL_GP,
                                 PSPL_Phot,
                                 PSPL_Parallax,
                                 PSPL_GP_PhotParam2_2):
@@ -9222,7 +9344,8 @@ class PSPL_Phot_Par_GP_Param2_2(PSPL_GP,
 
 # PSPL Phot, no parallax with GP
 @inheritdocstring
-class PSPL_Phot_noPar_GP_Param1(PSPL_GP,
+class PSPL_Phot_noPar_GP_Param1(ModelClassABC,
+                                PSPL_GP,
                                 PSPL_Phot,
                                 PSPL_noParallax,
                                 PSPL_GP_PhotParam1):
@@ -9233,7 +9356,8 @@ class PSPL_Phot_noPar_GP_Param1(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_Phot_noPar_GP_Param2(PSPL_GP,
+class PSPL_Phot_noPar_GP_Param2(ModelClassABC,
+                                PSPL_GP,
                                 PSPL_Phot,
                                 PSPL_noParallax,
                                 PSPL_GP_PhotParam2):
@@ -9245,7 +9369,8 @@ class PSPL_Phot_noPar_GP_Param2(PSPL_GP,
 
 # PSPL PhotAstrom, parallax with GP
 @inheritdocstring
-class PSPL_PhotAstrom_Par_GP_Param1(PSPL_GP,
+class PSPL_PhotAstrom_Par_GP_Param1(ModelClassABC,
+                                    PSPL_GP,
                                     PSPL_PhotAstrom,
                                     PSPL_Parallax,
                                     PSPL_GP_PhotAstromParam1):
@@ -9256,7 +9381,8 @@ class PSPL_PhotAstrom_Par_GP_Param1(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_Par_GP_Param2(PSPL_GP,
+class PSPL_PhotAstrom_Par_GP_Param2(ModelClassABC,
+                                    PSPL_GP,
                                     PSPL_PhotAstrom,
                                     PSPL_Parallax,
                                     PSPL_GP_PhotAstromParam2):
@@ -9267,7 +9393,8 @@ class PSPL_PhotAstrom_Par_GP_Param2(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_Par_GP_Param3(PSPL_GP,
+class PSPL_PhotAstrom_Par_GP_Param3(ModelClassABC,
+                                    PSPL_GP,
                                     PSPL_PhotAstrom,
                                     PSPL_Parallax,
                                     PSPL_GP_PhotAstromParam3):
@@ -9278,7 +9405,8 @@ class PSPL_PhotAstrom_Par_GP_Param3(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_Par_GP_Param4(PSPL_GP,
+class PSPL_PhotAstrom_Par_GP_Param4(ModelClassABC,
+                                    PSPL_GP,
                                     PSPL_PhotAstrom,
                                     PSPL_Parallax,
                                     PSPL_GP_PhotAstromParam4):
@@ -9289,7 +9417,8 @@ class PSPL_PhotAstrom_Par_GP_Param4(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_Par_LumLens_GP_Param1(PSPL_GP,
+class PSPL_PhotAstrom_Par_LumLens_GP_Param1(ModelClassABC,
+                                            PSPL_GP,
                                             PSPL_PhotAstrom,
                                             PSPL_Parallax_LumLens,
                                             PSPL_GP_PhotAstromParam1):
@@ -9300,7 +9429,8 @@ class PSPL_PhotAstrom_Par_LumLens_GP_Param1(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_Par_LumLens_GP_Param2(PSPL_GP,
+class PSPL_PhotAstrom_Par_LumLens_GP_Param2(ModelClassABC,
+                                            PSPL_GP,
                                             PSPL_PhotAstrom,
                                             PSPL_Parallax_LumLens,
                                             PSPL_GP_PhotAstromParam2):
@@ -9311,7 +9441,8 @@ class PSPL_PhotAstrom_Par_LumLens_GP_Param2(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_Par_LumLens_GP_Param3(PSPL_GP,
+class PSPL_PhotAstrom_Par_LumLens_GP_Param3(ModelClassABC,
+                                            PSPL_GP,
                                             PSPL_PhotAstrom,
                                             PSPL_Parallax_LumLens,
                                             PSPL_GP_PhotAstromParam3):
@@ -9322,7 +9453,8 @@ class PSPL_PhotAstrom_Par_LumLens_GP_Param3(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_Par_LumLens_GP_Param4(PSPL_GP,
+class PSPL_PhotAstrom_Par_LumLens_GP_Param4(ModelClassABC,
+                                            PSPL_GP,
                                             PSPL_PhotAstrom,
                                             PSPL_Parallax_LumLens,
                                             PSPL_GP_PhotAstromParam4):
@@ -9334,7 +9466,8 @@ class PSPL_PhotAstrom_Par_LumLens_GP_Param4(PSPL_GP,
 
 # PSPL PhotAstrom, parallax with GP
 @inheritdocstring
-class PSPL_PhotAstrom_noPar_GP_Param1(PSPL_GP,
+class PSPL_PhotAstrom_noPar_GP_Param1(ModelClassABC,
+                                      PSPL_GP,
                                       PSPL_PhotAstrom,
                                       PSPL_noParallax,
                                       PSPL_GP_PhotAstromParam1):
@@ -9345,7 +9478,8 @@ class PSPL_PhotAstrom_noPar_GP_Param1(PSPL_GP,
 
 
 @inheritdocstring
-class PSPL_PhotAstrom_noPar_GP_Param2(PSPL_GP,
+class PSPL_PhotAstrom_noPar_GP_Param2(ModelClassABC,
+                                      PSPL_GP,
                                       PSPL_PhotAstrom,
                                       PSPL_noParallax,
                                       PSPL_GP_PhotAstromParam2):
@@ -9356,11 +9490,12 @@ class PSPL_PhotAstrom_noPar_GP_Param2(PSPL_GP,
 
 
 # =====
-# PSBL User Classes
+# PSBL Model Classes
 # =====
 # PSBL
 @inheritdocstring
-class PSBL_PhotAstrom_noPar_Param1(PSBL_PhotAstrom,
+class PSBL_PhotAstrom_noPar_Param1(ModelClassABC,
+                                   PSBL_PhotAstrom,
                                    PSBL_noParallax,
                                    PSBL_PhotAstromParam1):
     def __init__(self, *args, **kwargs):
@@ -9371,7 +9506,8 @@ class PSBL_PhotAstrom_noPar_Param1(PSBL_PhotAstrom,
 
 # PSBL_parallax
 @inheritdocstring
-class PSBL_PhotAstrom_Par_Param1(PSBL_PhotAstrom,
+class PSBL_PhotAstrom_Par_Param1(ModelClassABC,
+                                 PSBL_PhotAstrom,
                                  PSBL_Parallax,
                                  PSBL_PhotAstromParam1):
     def __init__(self, *args, **kwargs):
@@ -9382,7 +9518,8 @@ class PSBL_PhotAstrom_Par_Param1(PSBL_PhotAstrom,
 
 # PSBL
 @inheritdocstring
-class PSBL_PhotAstrom_noPar_Param2(PSBL_PhotAstrom,
+class PSBL_PhotAstrom_noPar_Param2(ModelClassABC,
+                                   PSBL_PhotAstrom,
                                    PSBL_noParallax,
                                    PSBL_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
@@ -9393,7 +9530,8 @@ class PSBL_PhotAstrom_noPar_Param2(PSBL_PhotAstrom,
 
 # PSBL_parallax
 @inheritdocstring
-class PSBL_PhotAstrom_Par_Param2(PSBL_PhotAstrom,
+class PSBL_PhotAstrom_Par_Param2(ModelClassABC,
+                                 PSBL_PhotAstrom,
                                  PSBL_Parallax,
                                  PSBL_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
@@ -9403,7 +9541,8 @@ class PSBL_PhotAstrom_Par_Param2(PSBL_PhotAstrom,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_Par_Param3(PSBL_PhotAstrom,
+class PSBL_PhotAstrom_Par_Param3(ModelClassABC,
+                                 PSBL_PhotAstrom,
                                  PSBL_Parallax,
                                  PSBL_PhotAstromParam3):
     def __init__(self, *args, **kwargs):
@@ -9413,16 +9552,18 @@ class PSBL_PhotAstrom_Par_Param3(PSBL_PhotAstrom,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_noPar_Param3(PSBL_PhotAstrom,
-                                 PSBL_noParallax,
-                                 PSBL_PhotAstromParam3):
+class PSBL_PhotAstrom_noPar_Param3(ModelClassABC,
+                                   PSBL_PhotAstrom,
+                                   PSBL_noParallax,
+                                   PSBL_PhotAstromParam3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
 @inheritdocstring
-class PSBL_PhotAstrom_Par_Param4(PSBL_PhotAstrom,
+class PSBL_PhotAstrom_Par_Param4(ModelClassABC,
+                                 PSBL_PhotAstrom,
                                  PSBL_Parallax,
                                  PSBL_PhotAstromParam4):
     def __init__(self, *args, **kwargs):
@@ -9431,7 +9572,8 @@ class PSBL_PhotAstrom_Par_Param4(PSBL_PhotAstrom,
         checkconflicts(self)
 
 @inheritdocstring
-class PSBL_PhotAstrom_Par_Param5(PSBL_PhotAstrom,
+class PSBL_PhotAstrom_Par_Param5(ModelClassABC,
+                                 PSBL_PhotAstrom,
                                  PSBL_Parallax,
                                  PSBL_PhotAstromParam5):
     def __init__(self, *args, **kwargs):
@@ -9441,7 +9583,8 @@ class PSBL_PhotAstrom_Par_Param5(PSBL_PhotAstrom,
 
 # PSBL_phot
 @inheritdocstring
-class PSBL_Phot_noPar_Param1(PSBL_Phot,
+class PSBL_Phot_noPar_Param1(ModelClassABC,
+                             PSBL_Phot,
                              PSBL_noParallax,
                              PSBL_PhotParam1):
     def __init__(self, *args, **kwargs):
@@ -9452,7 +9595,8 @@ class PSBL_Phot_noPar_Param1(PSBL_Phot,
 
 # PSBL_phot_parallax
 @inheritdocstring
-class PSBL_Phot_Par_Param1(PSBL_Phot,
+class PSBL_Phot_Par_Param1(ModelClassABC,
+                           PSBL_Phot,
                            PSBL_Parallax,
                            PSBL_PhotParam1):
     def __init__(self, *args, **kwargs):
@@ -9463,7 +9607,8 @@ class PSBL_Phot_Par_Param1(PSBL_Phot,
 
 # PSBL phot+astrom, no parallax , with GP
 @inheritdocstring
-class PSBL_PhotAstrom_noPar_GP_Param1(PSPL_GP,
+class PSBL_PhotAstrom_noPar_GP_Param1(ModelClassABC,
+                                      PSPL_GP,
                                       PSBL_PhotAstrom,
                                       PSBL_noParallax,
                                       PSBL_PhotAstromParam1):
@@ -9475,7 +9620,8 @@ class PSBL_PhotAstrom_noPar_GP_Param1(PSPL_GP,
 
 # PSBL_parallax
 @inheritdocstring
-class PSBL_PhotAstrom_Par_GP_Param1(PSPL_GP,
+class PSBL_PhotAstrom_Par_GP_Param1(ModelClassABC,
+                                    PSPL_GP,
                                     PSBL_PhotAstrom,
                                     PSBL_Parallax,
                                     PSBL_PhotAstromParam1):
@@ -9487,7 +9633,8 @@ class PSBL_PhotAstrom_Par_GP_Param1(PSPL_GP,
 
 # PSBL
 @inheritdocstring
-class PSBL_PhotAstrom_noPar_GP_Param2(PSPL_GP,
+class PSBL_PhotAstrom_noPar_GP_Param2(ModelClassABC,
+                                      PSPL_GP,
                                       PSBL_PhotAstrom,
                                       PSBL_noParallax,
                                       PSBL_PhotAstromParam2):
@@ -9499,7 +9646,8 @@ class PSBL_PhotAstrom_noPar_GP_Param2(PSPL_GP,
 
 # PSBL_parallax
 @inheritdocstring
-class PSBL_PhotAstrom_Par_GP_Param2(PSPL_GP,
+class PSBL_PhotAstrom_Par_GP_Param2(ModelClassABC,
+                                    PSPL_GP,
                                     PSBL_PhotAstrom,
                                     PSBL_Parallax,
                                     PSBL_PhotAstromParam2):
@@ -9511,7 +9659,8 @@ class PSBL_PhotAstrom_Par_GP_Param2(PSPL_GP,
 
 # PSBL_phot
 @inheritdocstring
-class PSBL_Phot_noPar_GP_Param1(PSPL_GP,
+class PSBL_Phot_noPar_GP_Param1(ModelClassABC,
+                                PSPL_GP,
                                 PSBL_Phot,
                                 PSBL_noParallax,
                                 PSBL_PhotParam1):
@@ -9523,7 +9672,8 @@ class PSBL_Phot_noPar_GP_Param1(PSPL_GP,
 
 # PSBL_phot_parallax
 @inheritdocstring
-class PSBL_Phot_Par_GP_Param1(PSPL_GP,
+class PSBL_Phot_Par_GP_Param1(ModelClassABC,
+                              PSPL_GP,
                               PSBL_Phot,
                               PSBL_Parallax,
                               PSBL_PhotParam1):
@@ -9534,11 +9684,12 @@ class PSBL_Phot_Par_GP_Param1(PSPL_GP,
 
 
 # =====
-# BSPL User Classes
+# BSPL Model Classes
 # =====
 # BSPL no parallax
 @inheritdocstring
-class BSPL_Phot_noPar_Param1(BSPL_Phot,
+class BSPL_Phot_noPar_Param1(ModelClassABC,
+                             BSPL_Phot,
                              BSPL_noParallax,
                              BSPL_PhotParam1):
     def __init__(self, *args, **kwargs):
@@ -9549,7 +9700,8 @@ class BSPL_Phot_noPar_Param1(BSPL_Phot,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_Phot_Par_Param1(BSPL_Phot,
+class BSPL_Phot_Par_Param1(ModelClassABC,
+                           BSPL_Phot,
                            BSPL_Parallax,
                            BSPL_PhotParam1):
     def __init__(self, *args, **kwargs):
@@ -9560,7 +9712,8 @@ class BSPL_Phot_Par_Param1(BSPL_Phot,
 
 # BSPL no parallax
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_Param1(BSPL_PhotAstrom,
+class BSPL_PhotAstrom_noPar_Param1(ModelClassABC,
+                                   BSPL_PhotAstrom,
                                    BSPL_noParallax,
                                    BSPL_PhotAstromParam1):
     def __init__(self, *args, **kwargs):
@@ -9571,7 +9724,8 @@ class BSPL_PhotAstrom_noPar_Param1(BSPL_PhotAstrom,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_PhotAstrom_Par_Param1(BSPL_PhotAstrom,
+class BSPL_PhotAstrom_Par_Param1(ModelClassABC,
+                                 BSPL_PhotAstrom,
                                  BSPL_Parallax,
                                  BSPL_PhotAstromParam1):
     def __init__(self, *args, **kwargs):
@@ -9582,7 +9736,8 @@ class BSPL_PhotAstrom_Par_Param1(BSPL_PhotAstrom,
 
 # BSPL no parallax
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_Param2(BSPL_PhotAstrom,
+class BSPL_PhotAstrom_noPar_Param2(ModelClassABC,
+                                   BSPL_PhotAstrom,
                                    BSPL_noParallax,
                                    BSPL_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
@@ -9593,7 +9748,8 @@ class BSPL_PhotAstrom_noPar_Param2(BSPL_PhotAstrom,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_PhotAstrom_Par_Param2(BSPL_PhotAstrom,
+class BSPL_PhotAstrom_Par_Param2(ModelClassABC,
+                                 BSPL_PhotAstrom,
                                  BSPL_Parallax,
                                  BSPL_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
@@ -9604,7 +9760,8 @@ class BSPL_PhotAstrom_Par_Param2(BSPL_PhotAstrom,
 
 # BSPL no parallax
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_Param3(BSPL_PhotAstrom,
+class BSPL_PhotAstrom_noPar_Param3(ModelClassABC,
+                                   BSPL_PhotAstrom,
                                    BSPL_noParallax,
                                    BSPL_PhotAstromParam3):
     def __init__(self, *args, **kwargs):
@@ -9615,7 +9772,8 @@ class BSPL_PhotAstrom_noPar_Param3(BSPL_PhotAstrom,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_PhotAstrom_Par_Param3(BSPL_PhotAstrom,
+class BSPL_PhotAstrom_Par_Param3(ModelClassABC,
+                                 BSPL_PhotAstrom,
                                  BSPL_Parallax,
                                  BSPL_PhotAstromParam3):
     def __init__(self, *args, **kwargs):
@@ -9624,11 +9782,12 @@ class BSPL_PhotAstrom_Par_Param3(BSPL_PhotAstrom,
         checkconflicts(self)
 
 # =====
-# BSPL + GP User Classes
+# BSPL + GP Model Classes
 # =====
 # BSPL no parallax
 @inheritdocstring
-class BSPL_Phot_noPar_GP_Param1(PSPL_GP,
+class BSPL_Phot_noPar_GP_Param1(ModelClassABC,
+                                PSPL_GP,
                                 BSPL_Phot,
                                 BSPL_noParallax,
                                 BSPL_GP_PhotParam1):
@@ -9640,10 +9799,11 @@ class BSPL_Phot_noPar_GP_Param1(PSPL_GP,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_Phot_Par_GP_Param1(PSPL_GP,
-                           BSPL_Phot,
-                           BSPL_Parallax,
-                           BSPL_GP_PhotParam1):
+class BSPL_Phot_Par_GP_Param1(ModelClassABC,
+                              PSPL_GP,
+                              BSPL_Phot,
+                              BSPL_Parallax,
+                              BSPL_GP_PhotParam1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -9652,7 +9812,8 @@ class BSPL_Phot_Par_GP_Param1(PSPL_GP,
 
 # BSPL no parallax
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_GP_Param1(PSPL_GP,
+class BSPL_PhotAstrom_noPar_GP_Param1(ModelClassABC,
+                                      PSPL_GP,
                                       BSPL_PhotAstrom,
                                       BSPL_noParallax,
                                       BSPL_GP_PhotAstromParam1):
@@ -9664,7 +9825,8 @@ class BSPL_PhotAstrom_noPar_GP_Param1(PSPL_GP,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_PhotAstrom_Par_GP_Param1(PSPL_GP,
+class BSPL_PhotAstrom_Par_GP_Param1(ModelClassABC,
+                                    PSPL_GP,
                                     BSPL_PhotAstrom,
                                     BSPL_Parallax,
                                     BSPL_GP_PhotAstromParam1):
@@ -9676,7 +9838,8 @@ class BSPL_PhotAstrom_Par_GP_Param1(PSPL_GP,
 
 # BSPL no parallax
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_GP_Param2(PSPL_GP,
+class BSPL_PhotAstrom_noPar_GP_Param2(ModelClassABC,
+                                      PSPL_GP,
                                       BSPL_PhotAstrom,
                                       BSPL_noParallax,
                                       BSPL_GP_PhotAstromParam2):
@@ -9688,7 +9851,8 @@ class BSPL_PhotAstrom_noPar_GP_Param2(PSPL_GP,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_PhotAstrom_Par_GP_Param2(PSPL_GP,
+class BSPL_PhotAstrom_Par_GP_Param2(ModelClassABC,
+                                    PSPL_GP,
                                     BSPL_PhotAstrom,
                                     BSPL_Parallax,
                                     BSPL_GP_PhotAstromParam2):
@@ -9700,7 +9864,8 @@ class BSPL_PhotAstrom_Par_GP_Param2(PSPL_GP,
 
 # BSPL no parallax
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_GP_Param3(PSPL_GP,
+class BSPL_PhotAstrom_noPar_GP_Param3(ModelClassABC,
+                                      PSPL_GP,
                                       BSPL_PhotAstrom,
                                       BSPL_noParallax,
                                       BSPL_GP_PhotAstromParam3):
@@ -9712,7 +9877,8 @@ class BSPL_PhotAstrom_noPar_GP_Param3(PSPL_GP,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_PhotAstrom_Par_GP_Param3(PSPL_GP,
+class BSPL_PhotAstrom_Par_GP_Param3(ModelClassABC,
+                                    PSPL_GP,
                                     BSPL_PhotAstrom,
                                     BSPL_Parallax,
                                     BSPL_GP_PhotAstromParam3):
@@ -9727,7 +9893,8 @@ class BSPL_PhotAstrom_Par_GP_Param3(PSPL_GP,
 # =====
 # FSPL_parallax
 @inheritdocstring
-class FSPL_PhotAstrom_Par_Param1(FSPL_PhotAstrom,
+class FSPL_PhotAstrom_Par_Param1(ModelClassABC,
+                                 FSPL_PhotAstrom,
                                  FSPL_Parallax,
                                  FSPL_PhotAstromParam1):
     def __init__(self, *args, **kwargs):
@@ -10488,7 +10655,7 @@ def cluster(image, R):
 # ### FINITE SOURCE BINARY LENS (FSBL) MODELS ###
 # ###############################################
 #
-# class FSBL(object):
+# class FSBL(ABC):
 #     """
 #     INPUTS:
 #     ###############################################################################

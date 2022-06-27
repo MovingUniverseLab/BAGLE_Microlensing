@@ -1,34 +1,72 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html4" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BAGLE TUTORIAL &mdash; BAGLE 0.1 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Model.py Overview" href="model3.html" />
-    <link rel="prev" title="BAGLE - Bayesian Analysis of Gravitational Lensing Events" href="index.html" /> 
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>BAGLE TUTORIAL &mdash; BAGLE 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="BAGLE 0.1 documentation" href="index.html"/>
+        <link rel="next" title="Overview of bagle.model" href="model3.html"/>
+        <link rel="prev" title="BAGLE - Bayesian Analysis of Gravitational Lensing Events" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav" role="document">
+
   <div class="wy-grid-for-nav">
+
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search">
+          
+
+          
             <a href="index.html" class="icon icon-home"> BAGLE
+          
+
+          
           </a>
+
+          
+            
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -36,76 +74,106 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">BAGLE TUTORIAL</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#pspl-model-no-parallax">PSPL Model - No Parallax</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pspl-model-with-parallax">PSPL Model - With parallax</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pspl-model-from-belokurov-and-evans-2002-figure-1">PSPL Model From Belokurov and Evans 2002 (Figure 1)</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Model.py Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model3.html">Overview of bagle.model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model3.html#developers">Developers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_fitter.html">Model Fitter</a></li>
 </ul>
 
+            
+          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">BAGLE</a>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">BAGLE</a>
       </nav>
 
+
+      
       <div class="wy-nav-content">
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>BAGLE TUTORIAL</li>
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>BAGLE TUTORIAL</li>
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="_sources/intro.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
   </ul>
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <div class="section" id="bagle-tutorial">
 <h1>BAGLE TUTORIAL<a class="headerlink" href="#bagle-tutorial" title="Permalink to this headline">¶</a></h1>
-<p>To learn to use the model.py code and make microlensing events and obtain/graph various information such as the amplification of the event or the astrometric shift, we have created a <a class="reference external" href="https://github.com/MovingUniverseLab/BAGLE_Microlensing/blob/main/BAGLE_TUTORIAL.ipynb">Jupyter Notebook tutorial</a>.</p>
+<p>To learn to use BAGLE models, make microlensing events, and make
+photometric or astrometric plots, we have created a <a class="reference external" href="https://github.com/MovingUniverseLab/BAGLE_Microlensing/blob/main/BAGLE_TUTORIAL.ipynb">Jupyter Notebook tutorial</a>.</p>
 <div class="section" id="pspl-model-no-parallax">
 <h2>PSPL Model - No Parallax<a class="headerlink" href="#pspl-model-no-parallax" title="Permalink to this headline">¶</a></h2>
 <p>The first step in the tutorial is to generate a PSPL model with no parallax and do the following:</p>
 <ul class="simple">
-<li>Get amplification of event</li>
-<li>Animate the microlensing event</li>
-<li>Plot the astrometric shift</li>
+<li><p>Get amplification of event over time</p></li>
+<li><p>Plot the astrometric shift over time</p></li>
+<li><p>Animate the microlensing event</p></li>
 </ul>
-<div class="figure">
+<div class="figure align-center">
 <img alt="_images/amp_1.png" src="_images/amp_1.png" />
 </div>
-<div class="figure">
+<div class="figure align-center">
 <img alt="_images/as_1.png" src="_images/as_1.png" />
 </div>
 </div>
 <div class="section" id="pspl-model-with-parallax">
 <h2>PSPL Model - With parallax<a class="headerlink" href="#pspl-model-with-parallax" title="Permalink to this headline">¶</a></h2>
-<p>The second step is to generate a PSPL model with parralax adding the <em>ra</em> (right ascention of lens) and <em>dec</em> (declination of lens).</p>
+<p>The second step is to generate a PSPL model with parallax adding the <em>ra</em> (right ascention of lens) and <em>dec</em> (declination of lens).</p>
 </div>
 <div class="section" id="pspl-model-from-belokurov-and-evans-2002-figure-1">
 <h2>PSPL Model From Belokurov and Evans 2002 (Figure 1)<a class="headerlink" href="#pspl-model-from-belokurov-and-evans-2002-figure-1" title="Permalink to this headline">¶</a></h2>
-<p>Now we will do perform tests with an image from a paper and graph the lens, source, and image positions in addition to graphing the shifts on the sky.</p>
-<div class="figure">
+<p>Then a series of plots are made of the lens, source, and image
+positions on the sky for a set of microlensing event parameters
+previously published.</p>
+<div class="figure align-center">
 <img alt="_images/lsi_pos.png" src="_images/lsi_pos.png" />
 </div>
-<div class="figure">
+<div class="figure align-center">
 <img alt="_images/shifttE.png" src="_images/shifttE.png" />
 </div>
 </div>
@@ -114,32 +182,71 @@
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="BAGLE - Bayesian Analysis of Gravitational Lensing Events" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="model3.html" class="btn btn-neutral float-right" title="Model.py Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="model3.html" class="btn btn-neutral float-right" title="Overview of bagle.model" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="BAGLE - Bayesian Analysis of Gravitational Lensing Events" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
+  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Niranjan.</p>
-  </div>
+    <p>
+        &copy; Copyright 2022 Moving Universe Lab.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/language_data.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
+          SphinxRtdTheme.StickyNav.enable();
       });
-  </script> 
+  </script>
+   
 
 </body>
 </html>

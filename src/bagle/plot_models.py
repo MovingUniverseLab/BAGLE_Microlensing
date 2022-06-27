@@ -1,4 +1,4 @@
-from src.BAGLE import model
+from bagle import model
 import numpy as np
 import pylab as plt
 import matplotlib.animation as animation

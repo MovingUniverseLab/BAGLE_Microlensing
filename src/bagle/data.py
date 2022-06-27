@@ -5,7 +5,6 @@ from astropy.time import Time
 from astropy import units 
 from astropy.coordinates import SkyCoord
 from astropy import time as atime, coordinates as coord, units as u
-from BAGLE import data
 import time
 
 
@@ -100,6 +99,9 @@ class EventDataDict(dict):
 def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
             time_format='mjd', verbose=False):
     """
+    Helper function to illustrate how to load photometric and astrometric data.
+    You will likely want to write your own version of this. 
+
     Get the photometric and astrometric data for the specified target. 
     Specify the types of data through the phot_data and ast_data lists. 
 
@@ -335,7 +337,7 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
     data_in['phot_files'] = phot_files
     data_in['ast_files'] = ast_files
 
-    data_obj = data.EventDataDict(data_in)
+    data_obj = EventDataDict(data_in)
 
     return data_obj
     

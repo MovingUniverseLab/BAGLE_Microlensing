@@ -5,7 +5,7 @@ from astropy.time import Time
 from astropy.coordinates.builtin_frames.utils import get_jd12
 import erfa
 import matplotlib.pyplot as plt
-from src.BAGLE import model
+from bagle import model
 
 def convert_helio_geo_ast(ra, dec,
                           piS, xS0E_in, xS0N_in,
