@@ -1,72 +1,36 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GENERAL USE AND SHARED FUNCTIONS &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="BAGLE 0.1 documentation" href="index.html"/>
-        <link rel="up" title="Model Fitter" href="model_fitter.html"/>
-        <link rel="prev" title="Prior Generators" href="Prior_Generator.html"/> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Prior Generators" href="Prior_Generator.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
-
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
+        <div class="wy-side-nav-search" >
             <a href="index.html" class="icon icon-home"> BAGLE
-          
-
-          
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -74,19 +38,13 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-                <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Overview of bagle.model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html#developers">Developers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Overview of bagle.model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html#developers">Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ModelClass.html">Instantiable Model Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
@@ -103,103 +61,84 @@
 </li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">BAGLE</a>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BAGLE</a>
       </nav>
 
-
-      
       <div class="wy-nav-content">
         <div class="rst-content">
-          
-
- 
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="model_fitter.html">Model Fitter</a> &raquo;</li>
-      
-    <li>GENERAL USE AND SHARED FUNCTIONS</li>
+      <li>GENERAL USE AND SHARED FUNCTIONS</li>
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/Gen_Use_model_fitter.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
   </ul>
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="general-use-and-shared-functions">
-<h1>GENERAL USE AND SHARED FUNCTIONS<a class="headerlink" href="#general-use-and-shared-functions" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="shared-functions">
-<h2>Shared Functions<a class="headerlink" href="#shared-functions" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="model_fitter.pointwise_likelihood">
-<code class="descclassname">model_fitter.</code><code class="descname">pointwise_likelihood</code><span class="sig-paren">(</span><em>data</em>, <em>model</em>, <em>filt_index=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.pointwise_likelihood" title="Permalink to this definition">¶</a></dt>
+             
+  <section id="general-use-and-shared-functions">
+<h1>GENERAL USE AND SHARED FUNCTIONS<a class="headerlink" href="#general-use-and-shared-functions" title="Permalink to this heading"></a></h1>
+<section id="shared-functions">
+<h2>Shared Functions<a class="headerlink" href="#shared-functions" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.pointwise_likelihood">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">pointwise_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.pointwise_likelihood" title="Permalink to this definition"></a></dt>
 <dd><p>Makes some plots to diagnose weirdness in GP fits.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.debug_gp_nan">
-<code class="descclassname">model_fitter.</code><code class="descname">debug_gp_nan</code><span class="sig-paren">(</span><em>data</em>, <em>model</em>, <em>filt_index=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.debug_gp_nan" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.debug_gp_nan">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">debug_gp_nan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.debug_gp_nan" title="Permalink to this definition"></a></dt>
 <dd><p>Makes some plots to diagnose weirdness in GP fits.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.plot_params">
-<code class="descclassname">model_fitter.</code><code class="descname">plot_params</code><span class="sig-paren">(</span><em>model</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_params" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.plot_params">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">plot_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_params" title="Permalink to this definition"></a></dt>
 <dd><p>Print parameters</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.plot_photometry">
-<code class="descclassname">model_fitter.</code><code class="descname">plot_photometry</code><span class="sig-paren">(</span><em>data</em>, <em>model</em>, <em>input_model=None</em>, <em>dense_time=True</em>, <em>residuals=True</em>, <em>filt_index=0</em>, <em>zoomx=None</em>, <em>zoomy=None</em>, <em>zoomy_res=None</em>, <em>mnest_results=None</em>, <em>N_traces=50</em>, <em>gp=False</em>, <em>fitter=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_photometry" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.plot_photometry">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">plot_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dense_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residuals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoomx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoomy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoomy_res</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mnest_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_traces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_photometry" title="Permalink to this definition"></a></dt>
 <dd><p>Get the data out.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.plot_photometry_gp">
-<code class="descclassname">model_fitter.</code><code class="descname">plot_photometry_gp</code><span class="sig-paren">(</span><em>data</em>, <em>model</em>, <em>input_model=None</em>, <em>dense_time=True</em>, <em>residuals=True</em>, <em>filt_index=0</em>, <em>zoomx=None</em>, <em>zoomy=None</em>, <em>zoomy_res=None</em>, <em>mnest_results=None</em>, <em>N_traces=50</em>, <em>gp=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_photometry_gp" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.plot_photometry_gp">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">plot_photometry_gp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dense_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residuals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoomx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoomy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoomy_res</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mnest_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_traces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_photometry_gp" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.plot_astrometry">
-<code class="descclassname">model_fitter.</code><code class="descname">plot_astrometry</code><span class="sig-paren">(</span><em>data</em>, <em>model</em>, <em>input_model=None</em>, <em>dense_time=True</em>, <em>residuals=True</em>, <em>n_phot_sets=0</em>, <em>filt_index=0</em>, <em>ast_filt_index=0</em>, <em>mnest_results=None</em>, <em>N_traces=50</em>, <em>fitter=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_astrometry" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.plot_astrometry">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">plot_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dense_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residuals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_phot_sets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mnest_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_traces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_astrometry" title="Permalink to this definition"></a></dt>
 <dd><p>Astrometry on the sky</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.plot_astrometry_on_sky">
-<code class="descclassname">model_fitter.</code><code class="descname">plot_astrometry_on_sky</code><span class="sig-paren">(</span><em>data</em>, <em>model</em>, <em>ast_filt_index=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_astrometry_on_sky" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.plot_astrometry_on_sky">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">plot_astrometry_on_sky</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_astrometry_on_sky" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.plot_astrometry_proper_motion_removed">
-<code class="descclassname">model_fitter.</code><code class="descname">plot_astrometry_proper_motion_removed</code><span class="sig-paren">(</span><em>data</em>, <em>model</em>, <em>ast_filt_index=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_astrometry_proper_motion_removed" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.plot_astrometry_proper_motion_removed">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">plot_astrometry_proper_motion_removed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.plot_astrometry_proper_motion_removed" title="Permalink to this definition"></a></dt>
 <dd><p>Proper Motion Subtracted</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.quantiles">
-<code class="descclassname">model_fitter.</code><code class="descname">quantiles</code><span class="sig-paren">(</span><em>mnest_results</em>, <em>sigma=1</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.quantiles" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.quantiles">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">quantiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mnest_results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.quantiles" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate the median and N sigma credicble interval.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -214,9 +153,9 @@ to return.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.get_mnest_results">
-<code class="descclassname">model_fitter.</code><code class="descname">get_mnest_results</code><span class="sig-paren">(</span><em>root_name</em>, <em>parameters</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.get_mnest_results" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.get_mnest_results">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">get_mnest_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.get_mnest_results" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
@@ -231,9 +170,9 @@ in the order that they appeared in the hyper-cube.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.calc_AIC">
-<code class="descclassname">model_fitter.</code><code class="descname">calc_AIC</code><span class="sig-paren">(</span><em>k</em>, <em>maxlogL</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.calc_AIC" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.calc_AIC">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">calc_AIC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxlogL</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.calc_AIC" title="Permalink to this definition"></a></dt>
 <dd><div class="line-block">
 <div class="line">Calculate Akaike Information Criterion.</div>
 <div class="line">k = number of parameters</div>
@@ -241,9 +180,9 @@ in the order that they appeared in the hyper-cube.</p>
 </div>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.calc_BIC">
-<code class="descclassname">model_fitter.</code><code class="descname">calc_BIC</code><span class="sig-paren">(</span><em>n</em>, <em>k</em>, <em>maxlogL</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.calc_BIC" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.calc_BIC">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">calc_BIC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxlogL</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.calc_BIC" title="Permalink to this definition"></a></dt>
 <dd><div class="line-block">
 <div class="line">Calculate Bayesian Information Criterion.</div>
 <div class="line">n = sample size</div>
@@ -252,9 +191,9 @@ in the order that they appeared in the hyper-cube.</p>
 <p>maxlogL = maximum log likelihood</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.postplot">
-<code class="descclassname">model_fitter.</code><code class="descname">postplot</code><span class="sig-paren">(</span><em>results, span=None, quantiles=[0.025, 0.5, 0.975], q_color='gray', smooth=0.02, post_color='blue', post_kwargs=None, kde=True, nkde=1000, max_n_ticks=5, use_math_text=False, labels=None, label_kwargs=None, show_titles=False, title_fmt='.2f', title_kwargs=None, truths1=None, truths2=None, truth_color1='red', truth_color2='blue', truth_kwargs1=None, truth_kwargs2=None, verbose=False, fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.postplot" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.postplot">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">postplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.025,</span> <span class="pre">0.5,</span> <span class="pre">0.975]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kde</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nkde</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_n_ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_math_text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_titles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_fmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.2f'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truths1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truths2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_color1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_color2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_kwargs1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_kwargs2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.postplot" title="Permalink to this definition"></a></dt>
 <dd><p>Plot marginalized posteriors for each parameter.
 Basically copied half of traceplot.</p>
 <dl class="field-list">
@@ -352,9 +291,9 @@ internal figure is generated.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.cornerplot_2truth">
-<code class="descclassname">model_fitter.</code><code class="descname">cornerplot_2truth</code><span class="sig-paren">(</span><em>results, dims=None, span=None, quantiles=[0.025, 0.5, 0.975], color='black', smooth=0.02, quantiles_2d=None, hist_kwargs=None, hist2d_kwargs=None, labels=None, label_kwargs=None, show_titles=False, title_fmt='.2f', title_kwargs=None, truths1=None, truth_color1='red', truth_kwargs1=None, truths2=None, truth_color2='blue', truth_kwargs2=None, max_n_ticks=5, top_ticks=False, use_math_text=False, verbose=False, fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.cornerplot_2truth" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.cornerplot_2truth">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">cornerplot_2truth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.025,</span> <span class="pre">0.5,</span> <span class="pre">0.975]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles_2d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist2d_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_titles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_fmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.2f'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truths1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_color1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_kwargs1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truths2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_color2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_kwargs2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_n_ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_math_text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.cornerplot_2truth" title="Permalink to this definition"></a></dt>
 <dd><p>Generate a corner plot of the 1-D and 2-D marginalized posteriors.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -456,9 +395,9 @@ internal figure is generated.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.contour2d_alpha">
-<code class="descclassname">model_fitter.</code><code class="descname">contour2d_alpha</code><span class="sig-paren">(</span><em>x, y, smooth=0.02, span=None, weights=None, sigma_levels=[1, 2, 3], ax=None, color='gray', plot_density=True, plot_contours=True, contour_kwargs=None, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.contour2d_alpha" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.contour2d_alpha">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">contour2d_alpha</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_levels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1,</span> <span class="pre">2,</span> <span class="pre">3]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_density</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_contours</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contour_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.contour2d_alpha" title="Permalink to this definition"></a></dt>
 <dd><p>Simplified/modified from dynesty’s plotting._hist2d function.
 Plots non-filled 2D contours, where the contours are the 
 0.5, 1, 1.5, 2 sigma contours (note this)</p>
@@ -503,9 +442,9 @@ adding the individual data points.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.traceplot_custom">
-<code class="descclassname">model_fitter.</code><code class="descname">traceplot_custom</code><span class="sig-paren">(</span><em>results_list, quantiles=[0.025, 0.5, 0.975], smooth=0.02, thin=1, dims=None, contour_labels_list=None, post_color_list=['blue'], post_kwargs=None, kde=True, nkde=1000, trace_cmap='plasma', trace_color=None, trace_kwargs=None, connect=False, connect_highlight=10, connect_color='red', connect_kwargs=None, max_n_ticks=5, use_math_text=False, labels=None, label_kwargs=None, show_titles=False, title_fmt='.2f', title_kwargs=None, truths=None, truth_color='red', truth_kwargs=None, verbose=False, fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.traceplot_custom" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.traceplot_custom">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">traceplot_custom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.025,</span> <span class="pre">0.5,</span> <span class="pre">0.975]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contour_labels_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_color_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['blue']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kde</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nkde</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trace_cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'plasma'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trace_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trace_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connect</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connect_highlight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connect_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connect_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_n_ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_math_text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_titles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_fmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.2f'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.traceplot_custom" title="Permalink to this definition"></a></dt>
 <dd><p>Plot traces and marginalized posteriors for each parameter.
 Allows you to plot multiple trace plots on top of each other.
 The keywords are mostly the same as the dynesty default, only listing the new keywords here.</p>
@@ -531,9 +470,9 @@ sampling run. <strong>Compatible with results derived from</strong>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.cornerplot_custom">
-<code class="descclassname">model_fitter.</code><code class="descname">cornerplot_custom</code><span class="sig-paren">(</span><em>results_list, dims=None, quantiles=[0.025, 0.5, 0.975], color_list=['blue'], smooth=0.02, quantiles_2d=None, hist_kwargs=None, hist2d_kwargs=None, labels=None, label_kwargs=None, contour_labels_list=None, show_titles=False, title_fmt='.2f', title_kwargs=None, truths=None, truth_color='red', truth_kwargs=None, max_n_ticks=5, top_ticks=False, use_math_text=False, verbose=False, fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.cornerplot_custom" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.cornerplot_custom">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">cornerplot_custom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.025,</span> <span class="pre">0.5,</span> <span class="pre">0.975]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['blue']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles_2d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist2d_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contour_labels_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_titles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_fmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.2f'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">truth_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_n_ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_math_text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.cornerplot_custom" title="Permalink to this definition"></a></dt>
 <dd><p>Generate a corner plot of the 1-D and 2-D marginalized posteriors.
 Allows you to plot multiple corner plots on top of each other.
 The keywords are mostly the same as dynesty default, only listing the new keywords here.</p>
@@ -559,75 +498,37 @@ sampling run. <strong>Compatible with results derived from</strong>
 </dl>
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-      
-        <a href="Prior_Generator.html" class="btn btn-neutral" title="Prior Generators" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Prior_Generator.html" class="btn btn-neutral float-left" title="Prior Generators" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2022 Moving Universe Lab.
-
-    </p>
+    <p>&#169; Copyright 2022 Moving Universe Lab.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.1',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="_static/language_data.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

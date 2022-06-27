@@ -1267,8 +1267,11 @@ class PSPL_Solver(Solver):
         logZ = stats['logZ']
         logvol = np.log(weights) - loglike + logZ
         logvol = logvol - logvol.max()
+        # logwt = np.log(weights)
 
-        results = dict(samples=samples, weights=weights, logvol=logvol, loglike=loglike)
+        results = dict(samples=samples, weights=weights,
+                           logvol=logvol, loglike=loglike)
+                           #logwt=logwt, logz=logZ)
 
         return results
 
@@ -1358,14 +1361,18 @@ class PSPL_Solver(Solver):
             labels=self.all_param_names
 
         if traceplot:
-            dyplot.traceplot(res, labels=labels, dims=dims,
+            # dyplot.traceplot(res, labels=labels, dims=dims,
+            #                  show_titles=True, truths=truths, kde=kde)
+            traceplot_custom([res], labels=labels, dims=dims,
                              show_titles=True, truths=truths, kde=kde)
             plt.subplots_adjust(hspace=0.7)
             plt.savefig(self.outputfiles_basename + 'dy_trace.png')
             plt.close()
 
         if cornerplot:
-            dyplot.cornerplot(res, labels=labels, dims=dims,
+            # dyplot.cornerplot(res, labels=labels, dims=dims,
+            #                   show_titles=True, truths=truths)
+            cornerplot_custom([res], labels=labels, dims=dims,
                               show_titles=True, truths=truths)
             ax = plt.gca()
             ax.tick_params(axis='both', which='major', labelsize=10)
@@ -3210,6 +3217,12 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     if input_model != None:
         p_in_lens_tmod = input_model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index)
         p_in_lens_tlon = input_model.get_astrometry(t_long, ast_filt_idx=ast_filt_index)
+        if str(model.__class__).startswith('BS'):
+            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod, ast_filt_idx=ast_filt_index)
+            p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long, ast_filt_idx=ast_filt_index)
+        else:
+            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod)
+            p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long)
 
     # Get trace models and positions if we will be plotting traces
     if mnest_results == None:
@@ -4827,9 +4840,12 @@ def cornerplot_2truth(results, dims=None, span=None, quantiles=[0.025, 0.5, 0.97
                                                                fill_contours)
             hist2d_kwargs['plot_contours'] = hist2d_kwargs.get('plot_contours',
                                                                plot_contours)
-            dyplot._hist2d(y, x, ax=ax, span=[span[j], span[i]],
+            contour2d_alpha(y, x, ax=ax, span=[span[j], span[i]],
                     weights=weights, color=color, smooth=[sy, sx],
                     **hist2d_kwargs)
+            # dyplot._hist2d(y, x, ax=ax, span=[span[j], span[i]],
+            #         weights=weights, color=color, smooth=[sy, sx],
+            #         **hist2d_kwargs)
             # Add truth values for mode 1.
             if truths1 is not None:
                 if truths1[j] is not None:
@@ -5078,7 +5094,7 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
         sampling run. **Compatible with results derived from**
         `nestle <http://kylebarbary.com/nestle/>`_.
 
-    color_list : list of length the same as results_list
+    post_color_list : list of length the same as results_list
         List of `~matplotlib`-style colors.
     
     contour_labels_list : list of length the same as results_list
@@ -5219,7 +5235,7 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
 
     # Setting up default plot layout.
     if fig is None:
-        fig, axes = pl.subplots(ndim, 2, figsize=(12, 3*ndim))
+        fig, axes = plt.subplots(ndim, 2, figsize=(12, 3*ndim))
     else:
         fig, axes = fig
         try:
@@ -5231,12 +5247,14 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
     # Plotting.
     for j, samples in enumerate(samples_list):
         weights = weights_list[j]
-        color = color_list[j]
+        color = post_color_list[j]
         if contour_labels_list is not None:
             contour_label = contour_labels_list[j]
         for i, x in enumerate(samples):
-    
+
+            #
             # Plot trace.
+            #
     
             # Establish axes.
             if np.shape(samples)[0] == 1:
@@ -5248,13 +5266,13 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
                 if isinstance(trace_color, str_type):
                     color = trace_color
                 else:
-                    color = trace_color[i]
+                    color = trace_color[j]
             else:
                 color = wts[::thin]
             if isinstance(trace_cmap, str_type):
                 cmap = trace_cmap
             else:
-                cmap = trace_cmap[i]
+                cmap = trace_cmap[j]
             # Setup axes.
             ax.set_xlim([0., -min(logvol)])
             ax.set_ylim([min(x), max(x)])
@@ -5294,10 +5312,10 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
             else:
                 ax = axes[i, 1]
             # Set color(s).
-            if isinstance(post_color, str_type):
-                color = post_color
+            if isinstance(post_color_list, str_type):
+                color = post_color_list
             else:
-                color = post_color[i]
+                color = post_color_list[j]
             # Setup axes
             ax.set_xlim(span[i])
             if max_n_ticks == 0:
@@ -5656,9 +5674,12 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                 hist_kwargs['alpha'] = hist_kwargs.get('alpha', 0.6)
 #                hist2d_kwargs['label'] = hist_kwargs.get('label', contour_label)
 
-                dyplot._hist2d(y, x, ax=ax, span=[span[j], span[i]],
-                               weights=weights, color=color, smooth=[sy, sx],
-                               **hist2d_kwargs)
+                contour2d_alpha(y, x, ax=ax, span=[span[j], span[i]],
+                                weights=weights, color=color, smooth=[sy, sx],
+                                **hist2d_kwargs)
+                # dyplot._hist2d(y, x, ax=ax, span=[span[j], span[i]],
+                #                weights=weights, color=color, smooth=[sy, sx],
+                #                **hist2d_kwargs)
                 # Add truth values
                 if truths is not None:
                     if truths[j] is not None:

@@ -1,73 +1,37 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Parameterization Class Family &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="BAGLE 0.1 documentation" href="index.html"/>
-        <link rel="up" title="POINT SOURCE POINT LENS (PSPL) CLASSES" href="PSPL.html"/>
-        <link rel="next" title="Data Class Family" href="PSPL_Data.html"/>
-        <link rel="prev" title="POINT SOURCE POINT LENS (PSPL) CLASSES" href="PSPL.html"/> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Data Class Family" href="PSPL_Data.html" />
+    <link rel="prev" title="POINT SOURCE POINT LENS (PSPL) CLASSES" href="PSPL.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
-
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
+        <div class="wy-side-nav-search" >
             <a href="index.html" class="icon icon-home"> BAGLE
-          
-
-          
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -75,19 +39,13 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-                <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Overview of bagle.model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html#developers">Developers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Overview of bagle.model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html#developers">Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ModelClass.html">Instantiable Model Classes</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Parameterization Class Family</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#pspl-models">PSPL Models</a></li>
@@ -106,54 +64,35 @@
 <li class="toctree-l1"><a class="reference internal" href="model_fitter.html">Model Fitter</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">BAGLE</a>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BAGLE</a>
       </nav>
 
-
-      
       <div class="wy-nav-content">
         <div class="rst-content">
-          
-
- 
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a> &raquo;</li>
-      
-    <li>Parameterization Class Family</li>
+      <li>Parameterization Class Family</li>
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/PSPL_Param.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
   </ul>
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="parameterization-class-family">
-<h1>Parameterization Class Family<a class="headerlink" href="#parameterization-class-family" title="Permalink to this headline">¶</a></h1>
+             
+  <section id="parameterization-class-family">
+<h1>Parameterization Class Family<a class="headerlink" href="#parameterization-class-family" title="Permalink to this heading"></a></h1>
 <p>Here is a subsection of the inheritance diagram for the PSPL Parametrization classes showing the AstromParam, PhotParam, and PhotAstromParam structures.</p>
-<div class="graphviz"><img src="_images/inheritance-5d424182134aa600394d2edf0e1740995c039fc1.png" alt="Inheritance diagram of model.PSPL_GP_PhotAstromParam1, model.PSPL_GP_PhotParam1, model.PSPL_AstromParam3" usemap="#inheritancec92ce35261" class="inheritance graphviz" /></div>
+<div class="graphviz"><img src="_images/inheritance-3107ed1b1a5b4279f5e6feae2f097cb3ea5d9304.png" alt="Inheritance diagram of model.PSPL_GP_PhotAstromParam1, model.PSPL_GP_PhotParam1, model.PSPL_AstromParam3" usemap="#inheritancec92ce35261" class="inheritance graphviz" /></div>
 <map id="inheritancec92ce35261" name="inheritancec92ce35261">
 <area shape="rect" id="node3" href="api/model.PSPL_Param.html#model.PSPL_Param" target="_top" title="An abstract class that all Param classes should sub&#45;class." alt="" coords="261,79,403,104"/>
 <area shape="rect" id="node2" href="api/model.PSPL_AstromParam3.html#model.PSPL_AstromParam3" target="_top" title="DESCRIPTION:" alt="" coords="5,152,197,177"/>
@@ -161,21 +100,21 @@
 <area shape="rect" id="node7" href="api/model.PSPL_PhotParam1.html#model.PSPL_PhotParam1" target="_top" title="PSPL model for photometry only." alt="" coords="479,152,657,177"/>
 <area shape="rect" id="node4" href="api/model.PSPL_GP_PhotAstromParam1.html#model.PSPL_GP_PhotAstromParam1" target="_top" title="model.PSPL_GP_PhotAstromParam1" alt="" coords="202,225,449,251"/>
 <area shape="rect" id="node6" href="api/model.PSPL_GP_PhotParam1.html#model.PSPL_GP_PhotParam1" target="_top" title="model.PSPL_GP_PhotParam1" alt="" coords="473,225,677,251"/>
-</map><div class="section" id="pspl-models">
-<h2>PSPL Models<a class="headerlink" href="#pspl-models" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="model.PSPL_Param">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_Param</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Param" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+</map><section id="pspl-models">
+<h2>PSPL Models<a class="headerlink" href="#pspl-models" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_Param">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_Param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_Param" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>An abstract class that all Param classes should sub-class.
 This serves as a reminder for the class variables that
 MUST be set.</p>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_AstromParam4">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_AstromParam4</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>thetaE</em>, <em>piS</em>, <em>piE_E</em>, <em>piE_N</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_AstromParam4" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_AstromParam4">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_AstromParam4</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_AstromParam4" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_Param</span></code></a></p>
 <p>Point Source Point Lens model for microlensing. This model includes
 proper motions of the source and the source position on the sky.
 It is the same as PSPL_PhotAstromParam2 except it fits for baseline instead
@@ -226,10 +165,10 @@ plane of the sky at closest approach in units of thetaE. Can be</p>
 </dl>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_AstromParam3">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_AstromParam3</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>log10_thetaE</em>, <em>piS</em>, <em>piE_E</em>, <em>piE_N</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_AstromParam3" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_AstromParam3">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_AstromParam3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log10_thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_AstromParam3" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_Param</span></code></a></p>
 <p>DESCRIPTION:
 Point Source Point Lens model for microlensing. This model includes
 proper motions of the source and the source position on the sky.
@@ -281,10 +220,10 @@ plane of the sky at closest approach in units of thetaE. Can be</p>
 </dl>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_PhotParam1">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_PhotParam1</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>piE_E</em>, <em>piE_N</em>, <em>b_sff</em>, <em>mag_src</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotParam1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotParam1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotParam1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotParam1" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_Param</span></code></a></p>
 <p>PSPL model for photometry only.</p>
 <p>Point source point lens model for microlensing photometry only.
 This model includes the relative proper motion between the lens
@@ -328,10 +267,10 @@ list or array, with one entry for each photometric filter.</p>
 </dl>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_PhotParam2">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_PhotParam2</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>piE_E</em>, <em>piE_N</em>, <em>b_sff</em>, <em>mag_base</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotParam2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotParam2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotParam2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotParam2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_Param</span></code></a></p>
 <p>DESCRIPTION:
 Point source point lens model for microlensing photometry only.
 This model includes the relative proper motion between the lens
@@ -376,10 +315,10 @@ list or array, with one entry for each photometric filter.</p>
 </dl>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_PhotAstromParam1">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_PhotAstromParam1</code><span class="sig-paren">(</span><em>mL</em>, <em>t0</em>, <em>beta</em>, <em>dL</em>, <em>dL_dS</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muL_E</em>, <em>muL_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>b_sff</em>, <em>mag_src</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotAstromParam1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotAstromParam1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL_dS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam1" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_Param</span></code></a></p>
 <p>PSPL model for astrometry and photometry - physical parameterization.</p>
 <p>A Point Source Point Lens model for microlensing. This model uses a 
 parameterization that depends on only physical quantities such as the 
@@ -434,10 +373,10 @@ list or array, with one entry for each photometric filter.</p>
 </dl>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_PhotAstromParam2">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_PhotAstromParam2</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>thetaE</em>, <em>piS</em>, <em>piE_E</em>, <em>piE_N</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>b_sff</em>, <em>mag_src</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotAstromParam2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotAstromParam2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_Param</span></code></a></p>
 <p>PSPL model for photometry and astrometry – photom-like parameterization</p>
 <p>Point Source Point Lens model for microlensing. This model includes
 proper motions of the source and the source position on the sky.</p>
@@ -489,10 +428,10 @@ list or array, with one entry for each photometric filter.</p>
 </dl>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_PhotAstromParam3">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_PhotAstromParam3</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>log10_thetaE</em>, <em>piS</em>, <em>piE_E</em>, <em>piE_N</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>b_sff</em>, <em>mag_base</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam3" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotAstromParam3">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotAstromParam3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log10_thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam3" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_Param</span></code></a></p>
 <p>Point Source Point Lens model for microlensing. This model includes
 proper motions of the source and the source position on the sky.
 It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
@@ -556,10 +495,10 @@ list or array, with one entry for each photometric filter.</p>
 </dl>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_PhotAstromParam4">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_PhotAstromParam4</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>thetaE</em>, <em>piS</em>, <em>piE_E</em>, <em>piE_N</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>b_sff</em>, <em>mag_base</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam4" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotAstromParam4">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotAstromParam4</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam4" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_Param</span></code></a></p>
 <p>DESCRIPTION:
 Point Source Point Lens model for microlensing. This model includes
 proper motions of the source and the source position on the sky.
@@ -624,10 +563,10 @@ list or array, with one entry for each photometric filter.</p>
 </div>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_PhotAstromParam5">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_PhotAstromParam5</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>log10_thetaE</em>, <em>piS</em>, <em>piE_E</em>, <em>piEN_piEE</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>b_sff</em>, <em>mag_base</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam5" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Param</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_PhotAstromParam5">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_PhotAstromParam5</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log10_thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piEN_piEE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_PhotAstromParam5" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_Param.html#model.PSPL_Param" title="model.PSPL_Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_Param</span></code></a></p>
 <p>DESCRIPTION:
 Point Source Point Lens model for microlensing. This model includes
 proper motions of the source and the source position on the sky.
@@ -691,56 +630,56 @@ list or array, with one entry for each photometric filter.</p>
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="gp-models">
-<h2>GP Models<a class="headerlink" href="#gp-models" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="model.PSPL_GP_PhotParam1">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_GP_PhotParam1</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>piE_E</em>, <em>piE_N</em>, <em>b_sff</em>, <em>mag_src</em>, <em>gp_log_sigma</em>, <em>gp_log_rho</em>, <em>gp_log_S0</em>, <em>gp_log_omega0</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam1.html#model.PSPL_PhotParam1" title="model.PSPL_PhotParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotParam1</span></code></a></p>
+</section>
+<section id="gp-models">
+<h2>GP Models<a class="headerlink" href="#gp-models" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotParam1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotParam1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam1" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam1.html#model.PSPL_PhotParam1" title="model.PSPL_PhotParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_PhotParam1</span></code></a></p>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_GP_PhotParam1_2">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_GP_PhotParam1_2</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>piE_E</em>, <em>piE_N</em>, <em>b_sff</em>, <em>mag_src</em>, <em>gp_log_sigma</em>, <em>gp_rho</em>, <em>gp_log_omega04_S0</em>, <em>gp_log_omega0</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam1_2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam1.html#model.PSPL_PhotParam1" title="model.PSPL_PhotParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotParam1</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotParam1_2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotParam1_2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam1_2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam1.html#model.PSPL_PhotParam1" title="model.PSPL_PhotParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_PhotParam1</span></code></a></p>
 <p>Figuring out the new prior parametrization.</p>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_GP_PhotParam2">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_GP_PhotParam2</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>piE_E</em>, <em>piE_N</em>, <em>b_sff</em>, <em>mag_base</em>, <em>gp_log_sigma</em>, <em>gp_log_rho</em>, <em>gp_log_S0</em>, <em>gp_log_omega0</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam2.html#model.PSPL_PhotParam2" title="model.PSPL_PhotParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotParam2</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotParam2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotParam2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam2.html#model.PSPL_PhotParam2" title="model.PSPL_PhotParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_PhotParam2</span></code></a></p>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_GP_PhotParam2_2">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_GP_PhotParam2_2</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>piE_E</em>, <em>piE_N</em>, <em>b_sff</em>, <em>mag_base</em>, <em>gp_log_sigma</em>, <em>gp_rho</em>, <em>gp_log_omega04_S0</em>, <em>gp_log_omega0</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam2_2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam2.html#model.PSPL_PhotParam2" title="model.PSPL_PhotParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotParam2</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotParam2_2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotParam2_2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotParam2_2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotParam2.html#model.PSPL_PhotParam2" title="model.PSPL_PhotParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_PhotParam2</span></code></a></p>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_GP_PhotAstromParam1">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_GP_PhotAstromParam1</code><span class="sig-paren">(</span><em>mL</em>, <em>t0</em>, <em>beta</em>, <em>dL</em>, <em>dL_dS</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muL_E</em>, <em>muL_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>b_sff</em>, <em>mag_src</em>, <em>gp_log_sigma</em>, <em>gp_rho</em>, <em>gp_log_omega04_S0</em>, <em>gp_log_omega0</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam1.html#model.PSPL_PhotAstromParam1" title="model.PSPL_PhotAstromParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam1</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotAstromParam1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotAstromParam1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dL_dS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muL_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam1" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam1.html#model.PSPL_PhotAstromParam1" title="model.PSPL_PhotAstromParam1"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_PhotAstromParam1</span></code></a></p>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_GP_PhotAstromParam2">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_GP_PhotAstromParam2</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>thetaE</em>, <em>piS</em>, <em>piE_E</em>, <em>piE_N</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>b_sff</em>, <em>mag_src</em>, <em>gp_log_sigma</em>, <em>gp_rho</em>, <em>gp_log_omega04_S0</em>, <em>gp_log_omega0</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam2.html#model.PSPL_PhotAstromParam2" title="model.PSPL_PhotAstromParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam2</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotAstromParam2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotAstromParam2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam2" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam2.html#model.PSPL_PhotAstromParam2" title="model.PSPL_PhotAstromParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_PhotAstromParam2</span></code></a></p>
 </dd></dl>
 
-<dl class="class">
-<dt>
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_GP_PhotAstromParam2</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>thetaE</em>, <em>piS</em>, <em>piE_E</em>, <em>piE_N</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>b_sff</em>, <em>mag_src</em>, <em>gp_log_sigma</em>, <em>gp_rho</em>, <em>gp_log_omega04_S0</em>, <em>gp_log_omega0</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam2.html#model.PSPL_PhotAstromParam2" title="model.PSPL_PhotAstromParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam2</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotAstromParam2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id0" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam2.html#model.PSPL_PhotAstromParam2" title="model.PSPL_PhotAstromParam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_PhotAstromParam2</span></code></a></p>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_GP_PhotAstromParam3">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_GP_PhotAstromParam3</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>log10_thetaE</em>, <em>piS</em>, <em>piE_E</em>, <em>piE_N</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>b_sff</em>, <em>mag_base</em>, <em>gp_log_sigma</em>, <em>gp_rho</em>, <em>gp_log_omega04_S0</em>, <em>gp_log_omega0</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam3" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam3.html#model.PSPL_PhotAstromParam3" title="model.PSPL_PhotAstromParam3"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam3</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotAstromParam3">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotAstromParam3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log10_thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam3" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam3.html#model.PSPL_PhotAstromParam3" title="model.PSPL_PhotAstromParam3"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_PhotAstromParam3</span></code></a></p>
 <p>Point Source Point Lens with GP model for microlensing. This model includes
 proper motions of the source and the source position on the sky.
 It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
@@ -806,10 +745,10 @@ list or array, with one entry for each photometric filter.</p>
 </dl>
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_GP_PhotAstromParam4">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_GP_PhotAstromParam4</code><span class="sig-paren">(</span><em>t0</em>, <em>u0_amp</em>, <em>tE</em>, <em>thetaE</em>, <em>piS</em>, <em>piE_E</em>, <em>piE_N</em>, <em>xS0_E</em>, <em>xS0_N</em>, <em>muS_E</em>, <em>muS_N</em>, <em>b_sff</em>, <em>mag_base</em>, <em>gp_log_sigma</em>, <em>gp_rho</em>, <em>gp_log_omega04_S0</em>, <em>gp_log_omega0</em>, <em>raL=None</em>, <em>decL=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam4" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam4.html#model.PSPL_PhotAstromParam4" title="model.PSPL_PhotAstromParam4"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstromParam4</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP_PhotAstromParam4">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP_PhotAstromParam4</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u0_amp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetaE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">piE_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xS0_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">muS_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_sff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega04_S0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_log_omega0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP_PhotAstromParam4" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL_PhotAstromParam4.html#model.PSPL_PhotAstromParam4" title="model.PSPL_PhotAstromParam4"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_PhotAstromParam4</span></code></a></p>
 <p>Point Source Point Lens with GP model for microlensing. This model includes
 proper motions of the source and the source position on the sky.
 It is the same as PSPL_PhotAstromParam2 except it fits for baseline instead
@@ -878,77 +817,38 @@ list or array, with one entry for each photometric filter.</p>
 </dl>
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="PSPL_Data.html" class="btn btn-neutral float-right" title="Data Class Family" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="PSPL.html" class="btn btn-neutral" title="POINT SOURCE POINT LENS (PSPL) CLASSES" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="PSPL.html" class="btn btn-neutral float-left" title="POINT SOURCE POINT LENS (PSPL) CLASSES" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="PSPL_Data.html" class="btn btn-neutral float-right" title="Data Class Family" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2022 Moving Universe Lab.
-
-    </p>
+    <p>&#169; Copyright 2022 Moving Universe Lab.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.1',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="_static/language_data.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

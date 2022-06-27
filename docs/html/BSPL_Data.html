@@ -1,72 +1,36 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Data Class Family &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="BAGLE 0.1 documentation" href="index.html"/>
-        <link rel="up" title="BINARY SOURCE POINT LENS (BSPL) CLASSES" href="BSPL.html"/>
-        <link rel="prev" title="Parameterization Class Family - BSPL" href="BSPL_Param.html"/> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Parallax Class Family" href="BSPL_Parallax.html" />
+    <link rel="prev" title="Parameterization Class Family - BSPL" href="BSPL_Param.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
-
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
+        <div class="wy-side-nav-search" >
             <a href="index.html" class="icon icon-home"> BAGLE
-          
-
-          
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -74,26 +38,18 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-                <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Overview of bagle.model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html#developers">Developers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Overview of bagle.model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html#developers">Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ModelClass.html">Instantiable Model Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="BSPL_Param.html">Parameterization Class Family - BSPL</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Data Class Family</a><ul class="simple">
-</ul>
-</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Data Class Family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="BSPL_Parallax.html">Parallax Class Family</a></li>
 </ul>
 </li>
@@ -102,64 +58,45 @@
 <li class="toctree-l1"><a class="reference internal" href="model_fitter.html">Model Fitter</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">BAGLE</a>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BAGLE</a>
       </nav>
 
-
-      
       <div class="wy-nav-content">
         <div class="rst-content">
-          
-
- 
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a> &raquo;</li>
-      
-    <li>Data Class Family</li>
+      <li>Data Class Family</li>
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/BSPL_Data.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
   </ul>
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="data-class-family">
-<h1>Data Class Family<a class="headerlink" href="#data-class-family" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="model.BSPL">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">BSPL</code><a class="headerlink" href="#model.BSPL" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="api/model.PSPL.html#model.PSPL" title="model.PSPL"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL</span></code></a></p>
+             
+  <section id="data-class-family">
+<h1>Data Class Family<a class="headerlink" href="#data-class-family" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.BSPL">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">BSPL</span></span><a class="headerlink" href="#model.BSPL" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="api/model.PSPL.html#model.PSPL" title="model.PSPL"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL</span></code></a></p>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-center">
+<table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.BSPL.animate" title="model.BSPL.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.BSPL.animate" title="model.BSPL.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.BSPL.get_amplification" title="model.BSPL.get_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code></a>(t[, filt_idx])</p></td>
@@ -177,7 +114,7 @@
 </tr>
 </tbody>
 </table>
-<table class="docutils align-center">
+<table class="docutils align-default">
 <colgroup>
 <col style="width: 75%" />
 <col style="width: 25%" />
@@ -200,9 +137,9 @@
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="model.BSPL.get_u">
-<code class="descname">get_u</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL.get_u" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL.get_u">
+<span class="sig-name descname"><span class="pre">get_u</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL.get_u" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
@@ -219,9 +156,9 @@
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL.get_resolved_amplification">
-<code class="descname">get_resolved_amplification</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL.get_resolved_amplification" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL.get_resolved_amplification">
+<span class="sig-name descname"><span class="pre">get_resolved_amplification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL.get_resolved_amplification" title="Permalink to this definition"></a></dt>
 <dd><p>Parallax: Get the photometric amplification term at a set of times, t for both the
 plus and minus images.</p>
 <dl class="field-list simple">
@@ -253,9 +190,9 @@ first source’s “minus” image at the first time.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL.get_amplification">
-<code class="descname">get_amplification</code><span class="sig-paren">(</span><em>t</em>, <em>filt_idx=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL.get_amplification" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL.get_amplification">
+<span class="sig-name descname"><span class="pre">get_amplification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL.get_amplification" title="Permalink to this definition"></a></dt>
 <dd><p>Parallax: Get the photometric amplification term at a set of times, t.</p>
 <p>Note that this is a convenience function that combines amplifications from 
 multiple sources. The returned amplification is</p>
@@ -282,9 +219,9 @@ multiple sources. The returned amplification is</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL.animate">
-<code class="descname">animate</code><span class="sig-paren">(</span><em>tE</em>, <em>time_steps</em>, <em>frame_time</em>, <em>name</em>, <em>size</em>, <em>zoom</em>, <em>astrometry</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL.animate" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL.animate">
+<span class="sig-name descname"><span class="pre">animate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL.animate" title="Permalink to this definition"></a></dt>
 <dd><p>Produces animation of microlensing event. 
 This function takes the PSPL and makes an animation, the input variables are as follows</p>
 <dl class="field-list simple">
@@ -313,10 +250,10 @@ be 2 times this value</p>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="model.BSPL_Phot">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">BSPL_Phot</code><a class="headerlink" href="#model.BSPL_Phot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#model.BSPL" title="model.BSPL"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.BSPL</span></code></a>, <a class="reference internal" href="api/model.PSPL_Phot.html#model.PSPL_Phot" title="model.PSPL_Phot"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_Phot</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.BSPL_Phot">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">BSPL_Phot</span></span><a class="headerlink" href="#model.BSPL_Phot" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#model.BSPL" title="model.BSPL"><code class="xref py py-class docutils literal notranslate"><span class="pre">BSPL</span></code></a>, <a class="reference internal" href="api/model.PSPL_Phot.html#model.PSPL_Phot" title="model.PSPL_Phot"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_Phot</span></code></a></p>
 <p>Contains methods for model a BSPL photometry only.
 This is a Data-type class in our hierarchy. It is abstract and should not
 be instantiated.</p>
@@ -346,13 +283,13 @@ be instantiated.</p>
 </dd>
 </dl>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-center">
+<table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.BSPL_Phot.animate" title="model.BSPL_Phot.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.BSPL_Phot.animate" title="model.BSPL_Phot.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.BSPL_Phot.get_amplification" title="model.BSPL_Phot.get_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code></a>(t[, filt_idx])</p></td>
@@ -362,7 +299,7 @@ be instantiated.</p>
 <td><p>Position of the observed (unresolved) source position in Einstein radii.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.BSPL_Phot.get_astrometry_unlensed" title="model.BSPL_Phot.get_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry_unlensed</span></code></a>(t[, ast_filt_idx])</p></td>
-<td><p>Get the astrometry of the source if the lens didn’t exist.</p></td>
+<td><p>Get the astrometry of the source if the lens didn't exist.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#model.BSPL_Phot.get_resolved_amplification" title="model.BSPL_Phot.get_resolved_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_amplification</span></code></a>(t)</p></td>
 <td><p>Parallax: Get the photometric amplification term at a set of times, t for both the plus and minus images.</p></td>
@@ -371,7 +308,7 @@ be instantiated.</p>
 <td><p>Position of the observed source position in Einstein radii.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#model.BSPL_Phot.get_resolved_astrometry_unlensed" title="model.BSPL_Phot.get_resolved_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry_unlensed</span></code></a>(t)</p></td>
-<td><p>Get the astrometry of the source if the lens didn’t exist.</p></td>
+<td><p>Get the astrometry of the source if the lens didn't exist.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.BSPL_Phot.get_u" title="model.BSPL_Phot.get_u"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_u</span></code></a>(t)</p></td>
 <td><p><dl class="field-list simple">
@@ -382,7 +319,7 @@ be instantiated.</p>
 </tr>
 </tbody>
 </table>
-<table class="docutils align-center">
+<table class="docutils align-default">
 <colgroup>
 <col style="width: 75%" />
 <col style="width: 25%" />
@@ -414,9 +351,9 @@ be instantiated.</p>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="model.BSPL_Phot.get_resolved_astrometry_unlensed">
-<code class="descname">get_resolved_astrometry_unlensed</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_resolved_astrometry_unlensed" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_Phot.get_resolved_astrometry_unlensed">
+<span class="sig-name descname"><span class="pre">get_resolved_astrometry_unlensed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_resolved_astrometry_unlensed" title="Permalink to this definition"></a></dt>
 <dd><p>Get the astrometry of the source if the lens didn’t exist.
 Note, this is a photometry only model, so units are in Einstein radii.</p>
 <dl class="field-list simple">
@@ -424,10 +361,10 @@ Note, this is a photometry only model, so units are in Einstein radii.</p>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>xS_resolved_unlensed</strong><span class="classifier">numpy array, [shape = len(t_obs), N_sources, 2]</span></dt><dd><p>The unlensed positions of the sources in Einstein radii.</p>
 </dd>
-<dt><strong>In other words,</strong></dt><dd><p>xS[0, 0, :] returns the 2D sky position of the
+<dt>In other words,</dt><dd><p>xS[0, 0, :] returns the 2D sky position of the
 first source at the first time.</p>
 </dd>
-<dt><strong>Similarly,</strong></dt><dd><p>xS[0, 1, :] returns the 2D sky position of the
+<dt>Similarly,</dt><dd><p>xS[0, 1, :] returns the 2D sky position of the
 second source at the first time.</p>
 </dd>
 </dl>
@@ -435,9 +372,9 @@ second source at the first time.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_Phot.get_astrometry_unlensed">
-<code class="descname">get_astrometry_unlensed</code><span class="sig-paren">(</span><em>t</em>, <em>ast_filt_idx=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_astrometry_unlensed" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_Phot.get_astrometry_unlensed">
+<span class="sig-name descname"><span class="pre">get_astrometry_unlensed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_astrometry_unlensed" title="Permalink to this definition"></a></dt>
 <dd><p>Get the astrometry of the source if the lens didn’t exist.
 Note, this is a photometry only model, so units are in Einstein radii.</p>
 <dl class="field-list simple">
@@ -450,9 +387,9 @@ Note, this is a photometry only model, so units are in Einstein radii.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_Phot.get_resolved_astrometry">
-<code class="descname">get_resolved_astrometry</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_resolved_astrometry" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_Phot.get_resolved_astrometry">
+<span class="sig-name descname"><span class="pre">get_resolved_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_resolved_astrometry" title="Permalink to this definition"></a></dt>
 <dd><p>Position of the observed source position in Einstein radii.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -470,9 +407,9 @@ Note, this is a photometry only model, so units are in Einstein radii.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_Phot.get_astrometry">
-<code class="descname">get_astrometry</code><span class="sig-paren">(</span><em>t</em>, <em>ast_filt_idx=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_astrometry" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_Phot.get_astrometry">
+<span class="sig-name descname"><span class="pre">get_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_astrometry" title="Permalink to this definition"></a></dt>
 <dd><p>Position of the observed (unresolved) source position in Einstein radii.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -490,9 +427,9 @@ Note, this is a photometry only model, so units are in Einstein radii.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_Phot.animate">
-<code class="descname">animate</code><span class="sig-paren">(</span><em>tE</em>, <em>time_steps</em>, <em>frame_time</em>, <em>name</em>, <em>size</em>, <em>zoom</em>, <em>astrometry</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.animate" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_Phot.animate">
+<span class="sig-name descname"><span class="pre">animate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.animate" title="Permalink to this definition"></a></dt>
 <dd><p>Produces animation of microlensing event. 
 This function takes the PSPL and makes an animation, the input variables are as follows</p>
 <dl class="field-list simple">
@@ -519,9 +456,9 @@ be 2 times this value</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_Phot.get_amplification">
-<code class="descname">get_amplification</code><span class="sig-paren">(</span><em>t</em>, <em>filt_idx=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_amplification" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_Phot.get_amplification">
+<span class="sig-name descname"><span class="pre">get_amplification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_amplification" title="Permalink to this definition"></a></dt>
 <dd><p>Parallax: Get the photometric amplification term at a set of times, t.</p>
 <p>Note that this is a convenience function that combines amplifications from 
 multiple sources. The returned amplification is</p>
@@ -548,9 +485,9 @@ multiple sources. The returned amplification is</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_Phot.get_resolved_amplification">
-<code class="descname">get_resolved_amplification</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_resolved_amplification" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_Phot.get_resolved_amplification">
+<span class="sig-name descname"><span class="pre">get_resolved_amplification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_resolved_amplification" title="Permalink to this definition"></a></dt>
 <dd><p>Parallax: Get the photometric amplification term at a set of times, t for both the
 plus and minus images.</p>
 <dl class="field-list simple">
@@ -582,9 +519,9 @@ first source’s “minus” image at the first time.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_Phot.get_u">
-<code class="descname">get_u</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_u" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_Phot.get_u">
+<span class="sig-name descname"><span class="pre">get_u</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_Phot.get_u" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
@@ -603,18 +540,18 @@ first source’s “minus” image at the first time.</p>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="model.BSPL_PhotAstrom">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">BSPL_PhotAstrom</code><a class="headerlink" href="#model.BSPL_PhotAstrom" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#model.BSPL" title="model.BSPL"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.BSPL</span></code></a>, <a class="reference internal" href="api/model.PSPL_PhotAstrom.html#model.PSPL_PhotAstrom" title="model.PSPL_PhotAstrom"><code class="xref py py-class docutils literal notranslate"><span class="pre">model.PSPL_PhotAstrom</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.BSPL_PhotAstrom">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">BSPL_PhotAstrom</span></span><a class="headerlink" href="#model.BSPL_PhotAstrom" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#model.BSPL" title="model.BSPL"><code class="xref py py-class docutils literal notranslate"><span class="pre">BSPL</span></code></a>, <a class="reference internal" href="api/model.PSPL_PhotAstrom.html#model.PSPL_PhotAstrom" title="model.PSPL_PhotAstrom"><code class="xref py py-class docutils literal notranslate"><span class="pre">PSPL_PhotAstrom</span></code></a></p>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-center">
+<table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#model.BSPL_PhotAstrom.animate" title="model.BSPL_PhotAstrom.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#model.BSPL_PhotAstrom.animate" title="model.BSPL_PhotAstrom.animate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">animate</span></code></a>(tE, time_steps, frame_time, name, ...)</p></td>
 <td><p>Produces animation of microlensing event.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.BSPL_PhotAstrom.get_amplification" title="model.BSPL_PhotAstrom.get_amplification"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_amplification</span></code></a>(t[, filt_idx])</p></td>
@@ -624,7 +561,7 @@ first source’s “minus” image at the first time.</p>
 <td><p>Parallax: Get unresolved astrometry for binary source, point lens.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.BSPL_PhotAstrom.get_astrometry_unlensed" title="model.BSPL_PhotAstrom.get_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_astrometry_unlensed</span></code></a>(t[, ast_filt_idx])</p></td>
-<td><p>Get the astrometry of the sources if the lens didn’t exist.</p></td>
+<td><p>Get the astrometry of the sources if the lens didn't exist.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#model.BSPL_PhotAstrom.get_centroid_shift" title="model.BSPL_PhotAstrom.get_centroid_shift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_centroid_shift</span></code></a>(t[, ast_filt_idx])</p></td>
 <td><p>Parallax: Get the centroid shift (in mas) for a list of observation times (in MJD).</p></td>
@@ -636,7 +573,7 @@ first source’s “minus” image at the first time.</p>
 <td><p>Parallax: For each source, get the x, y astrometry for the  two lensed source images.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.BSPL_PhotAstrom.get_resolved_astrometry_unlensed" title="model.BSPL_PhotAstrom.get_resolved_astrometry_unlensed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_resolved_astrometry_unlensed</span></code></a>(t)</p></td>
-<td><p>Get the astrometry of the source if the lens didn’t exist.</p></td>
+<td><p>Get the astrometry of the source if the lens didn't exist.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#model.BSPL_PhotAstrom.get_u" title="model.BSPL_PhotAstrom.get_u"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_u</span></code></a>(t)</p></td>
 <td><p><dl class="field-list simple">
@@ -647,7 +584,7 @@ first source’s “minus” image at the first time.</p>
 </tr>
 </tbody>
 </table>
-<table class="docutils align-center">
+<table class="docutils align-default">
 <colgroup>
 <col style="width: 75%" />
 <col style="width: 25%" />
@@ -679,19 +616,19 @@ first source’s “minus” image at the first time.</p>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="model.BSPL_PhotAstrom.get_resolved_astrometry_unlensed">
-<code class="descname">get_resolved_astrometry_unlensed</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_resolved_astrometry_unlensed" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_PhotAstrom.get_resolved_astrometry_unlensed">
+<span class="sig-name descname"><span class="pre">get_resolved_astrometry_unlensed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_resolved_astrometry_unlensed" title="Permalink to this definition"></a></dt>
 <dd><p>Get the astrometry of the source if the lens didn’t exist.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>xS_resolved_unlensed</strong><span class="classifier">numpy array, [shape = len(t_obs), N_sources, 2]</span></dt><dd><p>The unlensed positions of the sources in arcseconds.</p>
 </dd>
-<dt><strong>In other words,</strong></dt><dd><p>xS[0, 0, :] returns the 2D sky position of the
+<dt>In other words,</dt><dd><p>xS[0, 0, :] returns the 2D sky position of the
 first source at the first time.</p>
 </dd>
-<dt><strong>Similarly,</strong></dt><dd><p>xS[0, 1, :] returns the 2D sky position of the
+<dt>Similarly,</dt><dd><p>xS[0, 1, :] returns the 2D sky position of the
 second source at the first time.</p>
 </dd>
 </dl>
@@ -699,9 +636,9 @@ second source at the first time.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_PhotAstrom.get_astrometry_unlensed">
-<code class="descname">get_astrometry_unlensed</code><span class="sig-paren">(</span><em>t</em>, <em>ast_filt_idx=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_astrometry_unlensed" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_PhotAstrom.get_astrometry_unlensed">
+<span class="sig-name descname"><span class="pre">get_astrometry_unlensed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_astrometry_unlensed" title="Permalink to this definition"></a></dt>
 <dd><p>Get the astrometry of the sources if the lens didn’t exist.</p>
 <dl class="field-list">
 <dt class="field-odd">Returns</dt>
@@ -716,9 +653,9 @@ second source at the first time.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_PhotAstrom.get_resolved_astrometry">
-<code class="descname">get_resolved_astrometry</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_resolved_astrometry" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_PhotAstrom.get_resolved_astrometry">
+<span class="sig-name descname"><span class="pre">get_resolved_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_resolved_astrometry" title="Permalink to this definition"></a></dt>
 <dd><p>Parallax: For each source, get the x, y astrometry for the 
 two lensed source images. For each source, we label the two
 images as plus and minus.</p>
@@ -746,9 +683,9 @@ first source’s “minus” image at the first time.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_PhotAstrom.get_astrometry">
-<code class="descname">get_astrometry</code><span class="sig-paren">(</span><em>t</em>, <em>ast_filt_idx=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_astrometry" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_PhotAstrom.get_astrometry">
+<span class="sig-name descname"><span class="pre">get_astrometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_astrometry" title="Permalink to this definition"></a></dt>
 <dd><p>Parallax: Get unresolved astrometry for binary source, point lens.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -759,16 +696,16 @@ first source’s “minus” image at the first time.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>xS_lensed</strong></dt><dd><p>Returns flux-weighted average of lensed source positions.</p>
+<dt>xS_lensed</dt><dd><p>Returns flux-weighted average of lensed source positions.</p>
 </dd>
 </dl>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_PhotAstrom.get_centroid_shift">
-<code class="descname">get_centroid_shift</code><span class="sig-paren">(</span><em>t</em>, <em>ast_filt_idx=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_centroid_shift" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_PhotAstrom.get_centroid_shift">
+<span class="sig-name descname"><span class="pre">get_centroid_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_centroid_shift" title="Permalink to this definition"></a></dt>
 <dd><p>Parallax: Get the centroid shift (in mas) for a list of
 observation times (in MJD).</p>
 <p>Returns the flux-weighted centroid of all the sources lensed images.</p>
@@ -788,9 +725,9 @@ observation times (in MJD).</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_PhotAstrom.animate">
-<code class="descname">animate</code><span class="sig-paren">(</span><em>tE</em>, <em>time_steps</em>, <em>frame_time</em>, <em>name</em>, <em>size</em>, <em>zoom</em>, <em>astrometry</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.animate" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_PhotAstrom.animate">
+<span class="sig-name descname"><span class="pre">animate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">astrometry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.animate" title="Permalink to this definition"></a></dt>
 <dd><p>Produces animation of microlensing event. 
 This function takes the PSPL and makes an animation, the input variables are as follows</p>
 <dl class="field-list simple">
@@ -817,9 +754,9 @@ be 2 times this value</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_PhotAstrom.get_amplification">
-<code class="descname">get_amplification</code><span class="sig-paren">(</span><em>t</em>, <em>filt_idx=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_amplification" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_PhotAstrom.get_amplification">
+<span class="sig-name descname"><span class="pre">get_amplification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_amplification" title="Permalink to this definition"></a></dt>
 <dd><p>Parallax: Get the photometric amplification term at a set of times, t.</p>
 <p>Note that this is a convenience function that combines amplifications from 
 multiple sources. The returned amplification is</p>
@@ -846,9 +783,9 @@ multiple sources. The returned amplification is</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_PhotAstrom.get_resolved_amplification">
-<code class="descname">get_resolved_amplification</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_resolved_amplification" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_PhotAstrom.get_resolved_amplification">
+<span class="sig-name descname"><span class="pre">get_resolved_amplification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_resolved_amplification" title="Permalink to this definition"></a></dt>
 <dd><p>Parallax: Get the photometric amplification term at a set of times, t for both the
 plus and minus images.</p>
 <dl class="field-list simple">
@@ -880,9 +817,9 @@ first source’s “minus” image at the first time.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.BSPL_PhotAstrom.get_u">
-<code class="descname">get_u</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_u" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.BSPL_PhotAstrom.get_u">
+<span class="sig-name descname"><span class="pre">get_u</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.BSPL_PhotAstrom.get_u" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
@@ -901,74 +838,37 @@ first source’s “minus” image at the first time.</p>
 
 </dd></dl>
 
-</div>
+</section>
 
 
            </div>
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-      
-        <a href="BSPL_Param.html" class="btn btn-neutral" title="Parameterization Class Family - BSPL" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="BSPL_Param.html" class="btn btn-neutral float-left" title="Parameterization Class Family - BSPL" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="BSPL_Parallax.html" class="btn btn-neutral float-right" title="Parallax Class Family" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2022 Moving Universe Lab.
-
-    </p>
+    <p>&#169; Copyright 2022 Moving Universe Lab.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.1',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="_static/language_data.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

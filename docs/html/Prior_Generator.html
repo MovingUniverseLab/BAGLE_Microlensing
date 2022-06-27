@@ -1,72 +1,37 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Prior Generators &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="BAGLE 0.1 documentation" href="index.html"/>
-        <link rel="up" title="Model Fitter" href="model_fitter.html"/>
-        <link rel="next" title="GENERAL USE AND SHARED FUNCTIONS" href="Gen_Use_model_fitter.html"/> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="GENERAL USE AND SHARED FUNCTIONS" href="Gen_Use_model_fitter.html" />
+    <link rel="prev" title="PSPL_Solver" href="PSPL_Solver.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
-
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
+        <div class="wy-side-nav-search" >
             <a href="index.html" class="icon icon-home"> BAGLE
-          
-
-          
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -74,19 +39,13 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-                <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Overview of bagle.model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html#developers">Developers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Overview of bagle.model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html#developers">Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ModelClass.html">Instantiable Model Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
@@ -100,72 +59,53 @@
 </li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">BAGLE</a>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BAGLE</a>
       </nav>
 
-
-      
       <div class="wy-nav-content">
         <div class="rst-content">
-          
-
- 
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="model_fitter.html">Model Fitter</a> &raquo;</li>
-      
-    <li>Prior Generators</li>
+      <li>Prior Generators</li>
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/Prior_Generator.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
   </ul>
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="prior-generators">
-<h1>Prior Generators<a class="headerlink" href="#prior-generators" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="model_fitter.make_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_gen</code><span class="sig-paren">(</span><em>min</em>, <em>max</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_gen" title="Permalink to this definition">¶</a></dt>
+             
+  <section id="prior-generators">
+<h1>Prior Generators<a class="headerlink" href="#prior-generators" title="Permalink to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_gen" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_norm_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_norm_gen</code><span class="sig-paren">(</span><em>mean</em>, <em>std</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_norm_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_norm_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_norm_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_norm_gen" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_lognorm_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_lognorm_gen</code><span class="sig-paren">(</span><em>mean</em>, <em>std</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_lognorm_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_lognorm_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_lognorm_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_lognorm_gen" title="Permalink to this definition"></a></dt>
 <dd><p>Make a natural-log normal distribution for a variable.
 The specified mean and std should be in the ln() space.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_log10norm_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_log10norm_gen</code><span class="sig-paren">(</span><em>mean_in_log10</em>, <em>std_in_log10</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_log10norm_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_log10norm_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_log10norm_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean_in_log10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std_in_log10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_log10norm_gen" title="Permalink to this definition"></a></dt>
 <dd><p>Scale scipy lognorm from natural log to base 10.
 Note the mean and std should be in the log10() space already.</p>
 <dl class="field-list simple">
@@ -180,66 +120,66 @@ Note the mean and std should be in the log10() space already.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_truncnorm_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_truncnorm_gen</code><span class="sig-paren">(</span><em>mean</em>, <em>std</em>, <em>lo_cut</em>, <em>hi_cut</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_truncnorm_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_truncnorm_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_truncnorm_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lo_cut</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hi_cut</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_truncnorm_gen" title="Permalink to this definition"></a></dt>
 <dd><p>lo_cut and hi_cut are in the units of sigma</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_truncnorm_gen_with_bounds">
-<code class="descclassname">model_fitter.</code><code class="descname">make_truncnorm_gen_with_bounds</code><span class="sig-paren">(</span><em>mean</em>, <em>std</em>, <em>low_bound</em>, <em>hi_bound</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_truncnorm_gen_with_bounds" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_truncnorm_gen_with_bounds">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_truncnorm_gen_with_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_bound</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hi_bound</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_truncnorm_gen_with_bounds" title="Permalink to this definition"></a></dt>
 <dd><p>low_bound and hi_bound are in the same units as mean and std</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_t0_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_t0_gen</code><span class="sig-paren">(</span><em>t</em>, <em>mag</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_t0_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_t0_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_t0_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_t0_gen" title="Permalink to this definition"></a></dt>
 <dd><p>Get an approximate t0 search range by finding the brightest point
 and then searching days where flux is higher than 80% of this peak.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_mag_base_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_mag_base_gen</code><span class="sig-paren">(</span><em>mag</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_mag_base_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_mag_base_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_mag_base_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mag</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_mag_base_gen" title="Permalink to this definition"></a></dt>
 <dd><p>Make a prior for baseline magnitude using the data.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_mag_src_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_mag_src_gen</code><span class="sig-paren">(</span><em>mag</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_mag_src_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_mag_src_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_mag_src_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mag</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_mag_src_gen" title="Permalink to this definition"></a></dt>
 <dd><p>Make a prior for source magnitude using the data.
 Allow negative blending.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_xS0_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_xS0_gen</code><span class="sig-paren">(</span><em>pos</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_xS0_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_xS0_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_xS0_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_xS0_gen" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_xS0_norm_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_xS0_norm_gen</code><span class="sig-paren">(</span><em>pos</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_xS0_norm_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_xS0_norm_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_xS0_norm_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_xS0_norm_gen" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_muS_EN_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_muS_EN_gen</code><span class="sig-paren">(</span><em>t</em>, <em>pos</em>, <em>scale_factor=100.0</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_muS_EN_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_muS_EN_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_muS_EN_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_muS_EN_gen" title="Permalink to this definition"></a></dt>
 <dd><p>Get an approximate muS search range by looking at the best fit
 straight line to the astrometry. Then allows lots of free space.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>gen:</strong></dt><dd><p>uniform generator for velocity in mas/yr</p>
+<dt>gen:</dt><dd><p>uniform generator for velocity in mas/yr</p>
 </dd>
 </dl>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_muS_EN_norm_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_muS_EN_norm_gen</code><span class="sig-paren">(</span><em>t</em>, <em>pos</em>, <em>n_use=None</em>, <em>scale_factor=10.0</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_muS_EN_norm_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_muS_EN_norm_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_muS_EN_norm_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_use</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_muS_EN_norm_gen" title="Permalink to this definition"></a></dt>
 <dd><p>Get an approximate muS search range by looking at the best fit
 straight line to the astrometry. Then allows lots of free space.</p>
 <dl class="field-list simple">
@@ -253,16 +193,16 @@ straight line to the astrometry. Then allows lots of free space.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>gen:</strong></dt><dd><p>uniform generator for velocity in mas/yr</p>
+<dt>gen:</dt><dd><p>uniform generator for velocity in mas/yr</p>
 </dd>
 </dl>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_invgamma_gen">
-<code class="descclassname">model_fitter.</code><code class="descname">make_invgamma_gen</code><span class="sig-paren">(</span><em>t_arr</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_invgamma_gen" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_invgamma_gen">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_invgamma_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_arr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_invgamma_gen" title="Permalink to this definition"></a></dt>
 <dd><p>ADD DESCRIPTION</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -274,9 +214,9 @@ straight line to the astrometry. Then allows lots of free space.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.compute_invgamma_params">
-<code class="descclassname">model_fitter.</code><code class="descname">compute_invgamma_params</code><span class="sig-paren">(</span><em>t_arr</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.compute_invgamma_params" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.compute_invgamma_params">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">compute_invgamma_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_arr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.compute_invgamma_params" title="Permalink to this definition"></a></dt>
 <dd><div class="line-block">
 <div class="line">Based on function of same name from </div>
 </div>
@@ -308,24 +248,24 @@ of the time series.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_piS">
-<code class="descclassname">model_fitter.</code><code class="descname">make_piS</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_piS" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_piS">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_piS</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_piS" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.make_fdfdt">
-<code class="descclassname">model_fitter.</code><code class="descname">make_fdfdt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_fdfdt" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.make_fdfdt">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">make_fdfdt</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.make_fdfdt" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.random_prob">
-<code class="descclassname">model_fitter.</code><code class="descname">random_prob</code><span class="sig-paren">(</span><em>generator</em>, <em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.random_prob" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.random_prob">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">random_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">generator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.random_prob" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.weighted_quantile">
-<code class="descclassname">model_fitter.</code><code class="descname">weighted_quantile</code><span class="sig-paren">(</span><em>values</em>, <em>quantiles</em>, <em>sample_weight=None</em>, <em>values_sorted=False</em>, <em>old_style=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.weighted_quantile" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.weighted_quantile">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">weighted_quantile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values_sorted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.weighted_quantile" title="Permalink to this definition"></a></dt>
 <dd><p>Very close to numplt.percentile, but supports weights.</p>
 <dl class="simple">
 <dt>values: </dt><dd><p>numplt.array with data</p>
@@ -342,7 +282,7 @@ of the time series.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>arr:</strong></dt><dd><p>numplt.array with computed quantiles.</p>
+<dt>arr:</dt><dd><p>numplt.array with computed quantiles.</p>
 </dd>
 </dl>
 </dd>
@@ -354,9 +294,9 @@ of the time series.</p>
 </div>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.split_param_filter_index1">
-<code class="descclassname">model_fitter.</code><code class="descname">split_param_filter_index1</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.split_param_filter_index1" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.split_param_filter_index1">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">split_param_filter_index1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.split_param_filter_index1" title="Permalink to this definition"></a></dt>
 <dd><p>Split a parameter name into the &lt;string&gt;&lt;number&gt; components
 where &lt;string&gt; is the parameter name and &lt;number&gt; is the filter
 index (1-based). If there is no number at the end for a filter
@@ -373,9 +313,9 @@ index, then return None for the second argument.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="model_fitter.generate_params_dict">
-<code class="descclassname">model_fitter.</code><code class="descname">generate_params_dict</code><span class="sig-paren">(</span><em>params</em>, <em>fitter_param_names</em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.generate_params_dict" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_fitter.generate_params_dict">
+<span class="sig-prename descclassname"><span class="pre">model_fitter.</span></span><span class="sig-name descname"><span class="pre">generate_params_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fitter_param_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_fitter.generate_params_dict" title="Permalink to this definition"></a></dt>
 <dd><p>Take a list, dictionary, or astropy Row of fit parameters
 and extra parameters and convert it into a well-formed dictionary 
 that can be fed straight into a model object.</p>
@@ -405,74 +345,37 @@ delivered, in order, in the output.</p>
 </dl>
 </dd></dl>
 
-</div>
+</section>
 
 
            </div>
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="Gen_Use_model_fitter.html" class="btn btn-neutral float-right" title="GENERAL USE AND SHARED FUNCTIONS" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="PSPL_Solver.html" class="btn btn-neutral float-left" title="PSPL_Solver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Gen_Use_model_fitter.html" class="btn btn-neutral float-right" title="GENERAL USE AND SHARED FUNCTIONS" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2022 Moving Universe Lab.
-
-    </p>
+    <p>&#169; Copyright 2022 Moving Universe Lab.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.1',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="_static/language_data.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

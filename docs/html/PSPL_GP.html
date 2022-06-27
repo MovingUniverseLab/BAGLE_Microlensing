@@ -1,71 +1,36 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GP Class Family &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="BAGLE 0.1 documentation" href="index.html"/>
-        <link rel="up" title="POINT SOURCE POINT LENS (PSPL) CLASSES" href="PSPL.html"/> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Parallax Class Family" href="PSPL_Parallax.html" />
+    <link rel="prev" title="Data Class Family" href="PSPL_Data.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
-
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
+        <div class="wy-side-nav-search" >
             <a href="index.html" class="icon icon-home"> BAGLE
-          
-
-          
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -73,25 +38,17 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-                <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Overview of bagle.model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html#developers">Developers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Overview of bagle.model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html#developers">Developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ModelClass.html">Instantiable Model Classes</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="PSPL_Param.html">Parameterization Class Family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="PSPL_Data.html">Data Class Family</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">GP Class Family</a><ul class="simple">
-</ul>
-</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">GP Class Family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="PSPL_Parallax.html">Parallax Class Family</a></li>
 </ul>
 </li>
@@ -102,56 +59,37 @@
 <li class="toctree-l1"><a class="reference internal" href="model_fitter.html">Model Fitter</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">BAGLE</a>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BAGLE</a>
       </nav>
 
-
-      
       <div class="wy-nav-content">
         <div class="rst-content">
-          
-
- 
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a> &raquo;</li>
-      
-    <li>GP Class Family</li>
+      <li>GP Class Family</li>
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/PSPL_GP.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
   </ul>
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="gp-class-family">
-<h1>GP Class Family<a class="headerlink" href="#gp-class-family" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="model.Celerite_GP_Model">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">Celerite_GP_Model</code><span class="sig-paren">(</span><em>pspl_model</em>, <em>filter_index</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">celerite.modeling.Model</span></code></p>
+             
+  <section id="gp-class-family">
+<h1>GP Class Family<a class="headerlink" href="#gp-class-family" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">Celerite_GP_Model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pspl_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
 <p>This is nedeed for the GP.
 Just a wrapper over our model so it is a 
 celerite model.</p>
@@ -168,14 +106,14 @@ celerite model.</p>
 </dd>
 </dl>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-center">
+<table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#model.Celerite_GP_Model.compute_gradient" title="model.Celerite_GP_Model.compute_gradient"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_gradient</span></code></a>(*args, **kwargs)</p></td>
-<td><p>Compute the “gradient” of the model for the current parameters</p></td>
+<td><p>Compute the &quot;gradient&quot; of the model for the current parameters</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.Celerite_GP_Model.freeze_all_parameters" title="model.Celerite_GP_Model.freeze_all_parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">freeze_all_parameters</span></code></a>()</p></td>
 <td><p>Freeze all parameters of the model</p></td>
@@ -199,7 +137,7 @@ celerite model.</p>
 <td><p>Get an array of the parameter values in the correct order</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/model.Celerite_GP_Model.html#model.Celerite_GP_Model.get_value" title="model.Celerite_GP_Model.get_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_value</span></code></a>(t_obs)</p></td>
-<td><p>Compute the “value” of the model for the current parameters</p></td>
+<td><p>Compute the &quot;value&quot; of the model for the current parameters</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#model.Celerite_GP_Model.log_prior" title="model.Celerite_GP_Model.log_prior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_prior</span></code></a>()</p></td>
 <td><p>Compute the log prior probability of the current parameters</p></td>
@@ -218,7 +156,7 @@ celerite model.</p>
 </tr>
 </tbody>
 </table>
-<table class="docutils align-center">
+<table class="docutils align-default">
 <colgroup>
 <col style="width: 62%" />
 <col style="width: 38%" />
@@ -229,32 +167,32 @@ celerite model.</p>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="model.Celerite_GP_Model.get_value">
-<code class="descname">get_value</code><span class="sig-paren">(</span><em>t_obs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_value" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.get_value">
+<span class="sig-name descname"><span class="pre">get_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_value" title="Permalink to this definition"></a></dt>
 <dd><p>Compute the “value” of the model for the current parameters</p>
 <p>This method should be overloaded by subclasses to implement the actual
 functionality of the model.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.compute_gradient">
-<code class="descname">compute_gradient</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.compute_gradient" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.compute_gradient">
+<span class="sig-name descname"><span class="pre">compute_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.compute_gradient" title="Permalink to this definition"></a></dt>
 <dd><p>Compute the “gradient” of the model for the current parameters</p>
 <p>This method should be overloaded by subclasses to implement the actual
 functionality of the model. The output of this function should be an
 array where the first dimension is <code class="docutils literal notranslate"><span class="pre">full_size</span></code>.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.freeze_all_parameters">
-<code class="descname">freeze_all_parameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.freeze_all_parameters" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.freeze_all_parameters">
+<span class="sig-name descname"><span class="pre">freeze_all_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.freeze_all_parameters" title="Permalink to this definition"></a></dt>
 <dd><p>Freeze all parameters of the model</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.freeze_parameter">
-<code class="descname">freeze_parameter</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.freeze_parameter" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.freeze_parameter">
+<span class="sig-name descname"><span class="pre">freeze_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.freeze_parameter" title="Permalink to this definition"></a></dt>
 <dd><p>Freeze a parameter by name</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>name: The name of the parameter</p>
@@ -262,15 +200,15 @@ array where the first dimension is <code class="docutils literal notranslate"><s
 </dl>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="model.Celerite_GP_Model.full_size">
-<code class="descname">full_size</code><a class="headerlink" href="#model.Celerite_GP_Model.full_size" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.full_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">full_size</span></span><a class="headerlink" href="#model.Celerite_GP_Model.full_size" title="Permalink to this definition"></a></dt>
 <dd><p>The total number of parameters (including frozen parameters)</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.get_parameter">
-<code class="descname">get_parameter</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_parameter" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.get_parameter">
+<span class="sig-name descname"><span class="pre">get_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_parameter" title="Permalink to this definition"></a></dt>
 <dd><p>Get a parameter value by name</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>name: The name of the parameter</p>
@@ -278,9 +216,9 @@ array where the first dimension is <code class="docutils literal notranslate"><s
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.get_parameter_bounds">
-<code class="descname">get_parameter_bounds</code><span class="sig-paren">(</span><em>include_frozen=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_parameter_bounds" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.get_parameter_bounds">
+<span class="sig-name descname"><span class="pre">get_parameter_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_frozen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_parameter_bounds" title="Permalink to this definition"></a></dt>
 <dd><p>Get a list of the parameter bounds</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -291,9 +229,9 @@ array where the first dimension is <code class="docutils literal notranslate"><s
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.get_parameter_dict">
-<code class="descname">get_parameter_dict</code><span class="sig-paren">(</span><em>include_frozen=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_parameter_dict" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.get_parameter_dict">
+<span class="sig-name descname"><span class="pre">get_parameter_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_frozen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_parameter_dict" title="Permalink to this definition"></a></dt>
 <dd><p>Get an ordered dictionary of the parameters</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -304,9 +242,9 @@ array where the first dimension is <code class="docutils literal notranslate"><s
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.get_parameter_names">
-<code class="descname">get_parameter_names</code><span class="sig-paren">(</span><em>include_frozen=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_parameter_names" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.get_parameter_names">
+<span class="sig-name descname"><span class="pre">get_parameter_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_frozen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_parameter_names" title="Permalink to this definition"></a></dt>
 <dd><p>Get a list of the parameter names</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -317,9 +255,9 @@ array where the first dimension is <code class="docutils literal notranslate"><s
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.get_parameter_vector">
-<code class="descname">get_parameter_vector</code><span class="sig-paren">(</span><em>include_frozen=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_parameter_vector" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.get_parameter_vector">
+<span class="sig-name descname"><span class="pre">get_parameter_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_frozen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.get_parameter_vector" title="Permalink to this definition"></a></dt>
 <dd><p>Get an array of the parameter values in the correct order</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -330,21 +268,21 @@ array where the first dimension is <code class="docutils literal notranslate"><s
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.log_prior">
-<code class="descname">log_prior</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.log_prior" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.log_prior">
+<span class="sig-name descname"><span class="pre">log_prior</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.log_prior" title="Permalink to this definition"></a></dt>
 <dd><p>Compute the log prior probability of the current parameters</p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="model.Celerite_GP_Model.parameter_vector">
-<code class="descname">parameter_vector</code><a class="headerlink" href="#model.Celerite_GP_Model.parameter_vector" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.parameter_vector">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parameter_vector</span></span><a class="headerlink" href="#model.Celerite_GP_Model.parameter_vector" title="Permalink to this definition"></a></dt>
 <dd><p>An array of all parameters (including frozen parameters)</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.set_parameter">
-<code class="descname">set_parameter</code><span class="sig-paren">(</span><em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.set_parameter" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.set_parameter">
+<span class="sig-name descname"><span class="pre">set_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.set_parameter" title="Permalink to this definition"></a></dt>
 <dd><p>Set a parameter value by name</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>name: The name of the parameter
@@ -353,9 +291,9 @@ value (float): The new value for the parameter</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.set_parameter_vector">
-<code class="descname">set_parameter_vector</code><span class="sig-paren">(</span><em>vector</em>, <em>include_frozen=False</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.set_parameter_vector" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.set_parameter_vector">
+<span class="sig-name descname"><span class="pre">set_parameter_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_frozen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.set_parameter_vector" title="Permalink to this definition"></a></dt>
 <dd><p>Set the parameter values to the given vector</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -370,15 +308,15 @@ parameters if <code class="docutils literal notranslate"><span class="pre">inclu
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.thaw_all_parameters">
-<code class="descname">thaw_all_parameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.thaw_all_parameters" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.thaw_all_parameters">
+<span class="sig-name descname"><span class="pre">thaw_all_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.thaw_all_parameters" title="Permalink to this definition"></a></dt>
 <dd><p>Thaw all parameters of the model</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.Celerite_GP_Model.thaw_parameter">
-<code class="descname">thaw_parameter</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.thaw_parameter" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.thaw_parameter">
+<span class="sig-name descname"><span class="pre">thaw_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.Celerite_GP_Model.thaw_parameter" title="Permalink to this definition"></a></dt>
 <dd><p>Thaw a parameter by name</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>name: The name of the parameter</p>
@@ -386,40 +324,40 @@ parameters if <code class="docutils literal notranslate"><span class="pre">inclu
 </dl>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="model.Celerite_GP_Model.vector_size">
-<code class="descname">vector_size</code><a class="headerlink" href="#model.Celerite_GP_Model.vector_size" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="model.Celerite_GP_Model.vector_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">vector_size</span></span><a class="headerlink" href="#model.Celerite_GP_Model.vector_size" title="Permalink to this definition"></a></dt>
 <dd><p>The number of active (or unfrozen) parameters</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="model.PSPL_GP">
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_GP</code><a class="headerlink" href="#model.PSPL_GP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model.PSPL_GP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP</span></span><a class="headerlink" href="#model.PSPL_GP" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>PSPL object that has optional support for gaussian process on each photometric filter.</p>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-center">
+<table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.get_log_det_covariance" title="model.PSPL_GP.get_log_det_covariance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_log_det_covariance</span></code></a>(t_obs, mag_obs, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.get_log_det_covariance" title="model.PSPL_GP.get_log_det_covariance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_log_det_covariance</span></code></a>(t_obs, mag_obs, ...)</p></td>
 <td><p>Returns photometry with GP noise added in.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.get_photometry_with_gp" title="model.PSPL_GP.get_photometry_with_gp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry_with_gp</span></code></a>(t_obs, mag_obs, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.get_photometry_with_gp" title="model.PSPL_GP.get_photometry_with_gp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry_with_gp</span></code></a>(t_obs, mag_obs, ...)</p></td>
 <td><p>Returns photometry with GP noise added in.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.log_likely_photometry" title="model.PSPL_GP.log_likely_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry</span></code></a>(t_obs, mag_obs, …[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.log_likely_photometry" title="model.PSPL_GP.log_likely_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry</span></code></a>(t_obs, mag_obs, ...[, ...])</p></td>
 <td><p>Calculate the log-likelihood for the PSPL + GP model and photometric data.</p></td>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="model.PSPL_GP.get_photometry_with_gp">
-<code class="descname">get_photometry_with_gp</code><span class="sig-paren">(</span><em>t_obs</em>, <em>mag_obs</em>, <em>mag_err_obs</em>, <em>filt_index=0</em>, <em>t_pred=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP.get_photometry_with_gp" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.PSPL_GP.get_photometry_with_gp">
+<span class="sig-name descname"><span class="pre">get_photometry_with_gp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_pred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP.get_photometry_with_gp" title="Permalink to this definition"></a></dt>
 <dd><p>Returns photometry with GP noise added in.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -427,9 +365,9 @@ parameters if <code class="docutils literal notranslate"><span class="pre">inclu
 </div>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.PSPL_GP.get_log_det_covariance">
-<code class="descname">get_log_det_covariance</code><span class="sig-paren">(</span><em>t_obs</em>, <em>mag_obs</em>, <em>mag_err_obs</em>, <em>filt_index=0</em>, <em>t_pred=None</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP.get_log_det_covariance" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.PSPL_GP.get_log_det_covariance">
+<span class="sig-name descname"><span class="pre">get_log_det_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_pred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP.get_log_det_covariance" title="Permalink to this definition"></a></dt>
 <dd><p>Returns photometry with GP noise added in.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -437,9 +375,9 @@ parameters if <code class="docutils literal notranslate"><span class="pre">inclu
 </div>
 </dd></dl>
 
-<dl class="method">
-<dt id="model.PSPL_GP.log_likely_photometry">
-<code class="descname">log_likely_photometry</code><span class="sig-paren">(</span><em>t_obs</em>, <em>mag_obs</em>, <em>mag_err_obs</em>, <em>filt_index=0</em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP.log_likely_photometry" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="model.PSPL_GP.log_likely_photometry">
+<span class="sig-name descname"><span class="pre">log_likely_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model.PSPL_GP.log_likely_photometry" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate the log-likelihood for the PSPL + GP model and photometric data.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -449,32 +387,32 @@ parameters if <code class="docutils literal notranslate"><span class="pre">inclu
 
 </dd></dl>
 
-<dl class="class">
-<dt>
-<em class="property">class </em><code class="descclassname">model.</code><code class="descname">PSPL_GP</code></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">PSPL_GP</span></span><a class="headerlink" href="#id0" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>PSPL object that has optional support for gaussian process on each photometric filter.</p>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-center">
+<table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.get_log_det_covariance" title="model.PSPL_GP.get_log_det_covariance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_log_det_covariance</span></code></a>(t_obs, mag_obs, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.get_log_det_covariance" title="model.PSPL_GP.get_log_det_covariance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_log_det_covariance</span></code></a>(t_obs, mag_obs, ...)</p></td>
 <td><p>Returns photometry with GP noise added in.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.get_photometry_with_gp" title="model.PSPL_GP.get_photometry_with_gp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry_with_gp</span></code></a>(t_obs, mag_obs, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.get_photometry_with_gp" title="model.PSPL_GP.get_photometry_with_gp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_photometry_with_gp</span></code></a>(t_obs, mag_obs, ...)</p></td>
 <td><p>Returns photometry with GP noise added in.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.log_likely_photometry" title="model.PSPL_GP.log_likely_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry</span></code></a>(t_obs, mag_obs, …[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/model.PSPL_GP.html#model.PSPL_GP.log_likely_photometry" title="model.PSPL_GP.log_likely_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_likely_photometry</span></code></a>(t_obs, mag_obs, ...[, ...])</p></td>
 <td><p>Calculate the log-likelihood for the PSPL + GP model and photometric data.</p></td>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt>
-<code class="descname">get_photometry_with_gp</code><span class="sig-paren">(</span><em>t_obs</em>, <em>mag_obs</em>, <em>mag_err_obs</em>, <em>filt_index=0</em>, <em>t_pred=None</em><span class="sig-paren">)</span></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">get_photometry_with_gp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_pred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id1" title="Permalink to this definition"></a></dt>
 <dd><p>Returns photometry with GP noise added in.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -482,9 +420,9 @@ parameters if <code class="docutils literal notranslate"><span class="pre">inclu
 </div>
 </dd></dl>
 
-<dl class="method">
-<dt>
-<code class="descname">get_log_det_covariance</code><span class="sig-paren">(</span><em>t_obs</em>, <em>mag_obs</em>, <em>mag_err_obs</em>, <em>filt_index=0</em>, <em>t_pred=None</em><span class="sig-paren">)</span></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">get_log_det_covariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_pred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id2" title="Permalink to this definition"></a></dt>
 <dd><p>Returns photometry with GP noise added in.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -492,9 +430,9 @@ parameters if <code class="docutils literal notranslate"><span class="pre">inclu
 </div>
 </dd></dl>
 
-<dl class="method">
-<dt>
-<code class="descname">log_likely_photometry</code><span class="sig-paren">(</span><em>t_obs</em>, <em>mag_obs</em>, <em>mag_err_obs</em>, <em>filt_index=0</em><span class="sig-paren">)</span></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">log_likely_photometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_err_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filt_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id3" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate the log-likelihood for the PSPL + GP model and photometric data.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -504,67 +442,37 @@ parameters if <code class="docutils literal notranslate"><span class="pre">inclu
 
 </dd></dl>
 
-</div>
+</section>
 
 
            </div>
           </div>
-          <footer>
-  
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="PSPL_Data.html" class="btn btn-neutral float-left" title="Data Class Family" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="PSPL_Parallax.html" class="btn btn-neutral float-right" title="Parallax Class Family" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2022 Moving Universe Lab.
-
-    </p>
+    <p>&#169; Copyright 2022 Moving Universe Lab.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.1',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="_static/language_data.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

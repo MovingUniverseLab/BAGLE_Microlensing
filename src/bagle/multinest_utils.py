@@ -1,7 +1,7 @@
 import numpy as np
 import pylab as plt
 from matplotlib.colors import LinearSegmentedColormap, colorConverter
-from bagle import model, model_fitter, munge
+from bagle import model, model_fitter
 import dynesty
 from dynesty import utils as dyutil
 from dynesty import plotting as dyplot
@@ -32,7 +32,7 @@ def get_data_and_fitter(mnest_base):
         ast_dsets = []
     
     my_model = getattr(model, info['model'])
-    my_data = munge.getdata2(info['target'].lower(), 
+    my_data = data.getdata(info['target'].lower(), 
                              phot_data=pho_dsets,
                              ast_data=ast_dsets)
 
