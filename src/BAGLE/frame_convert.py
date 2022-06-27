@@ -203,9 +203,6 @@ def convert_helio_geo_phot(ra, dec,
         piEE_out *= -1
         piEN_out *= -1
 
-    print(t0_out)
-    print(u0_out)
-
     return t0_out, u0_out, tE_out, piEE_out, piEN_out
 
 def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
@@ -264,8 +261,6 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
             u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out[np.newaxis,:]).T*tauhat_out - piE*par_t0par - (t0_in - t0par[:,np.newaxis])*piE*dp_dt_t0par
             u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
 
-#            np.sum(b*c, axis=0)
-
     elif in_frame=='geo':
         dp_dt_t0par = -1*((tauhat_in/tE_in) - (tauhat_out/tE_out))/piE
 
@@ -286,8 +281,6 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
         _u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
         u0_out = np.where(u0vec_out[:,0] > 0, _u0_out, -_u0_out)
 
-    print(t0_out)
-    print(u0_out)
     return t0_out, u0vec_out
 
 
@@ -439,6 +432,8 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     The direction should always be Earth to Sun.
     All the input values are in the heliocentric frame, following the
     source-lens and East-North coordinate conventions.
+
+    FIXME: There seems to be some bugs in the reported values in the side panel still.
     """
     #####
     # Figure in Lu convention (S-L frame, E-N coord)

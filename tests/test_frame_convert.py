@@ -9,7 +9,7 @@ from astropy import units as u
 def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
                                  t0_g, u0_g, tE_g, 
                                  piEE_g, piEN_g, 
-                                 t0par, plot=False):
+                                 t0par, plot=True):
     """
     Test conversion from geocentric projected frame
     (using lens-source tau-beta convention) to
@@ -57,7 +57,7 @@ def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
         ax[1].set_ylabel('Bagle Geoproj - Bagle')
         ax[1].set_xlabel('MJD')
         plt.show()
-#        plt.pause(0.5)
+        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
@@ -70,7 +70,7 @@ def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
 def test_bagle_helio_to_geo_phot(ra, dec, t_mjd,
                                  t0_h, u0_h, tE_h, 
                                  piEE_h, piEN_h, 
-                                 t0par, plot=False):
+                                 t0par, plot=True):
     """
     Test conversion from heliocentric frame (using 
     source-lens East-North convention) to geocentric 
@@ -118,7 +118,7 @@ def test_bagle_helio_to_geo_phot(ra, dec, t_mjd,
         ax[1].set_ylabel('Bagle Geoproj - Bagle')
         ax[1].set_xlabel('MJD')
         plt.show()
-#        plt.pause(0.5)
+        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
@@ -132,7 +132,7 @@ def test_bagle_helio_to_geo_phot(ra, dec, t_mjd,
 def test_bagle_to_mulens(ra, dec, t_mjd,
                          t0_h, u0_h, tE_h, 
                          piEE_h, piEN_h, 
-                         t0par, plot=False):
+                         t0par, plot=True):
     """
     Test conversion from heliocentric frame (using 
     source-lens East-North convention) in BAGLE to geocentric 
@@ -186,7 +186,7 @@ def test_bagle_to_mulens(ra, dec, t_mjd,
         ax[1].set_ylabel('MM - Bagle')
         ax[1].set_xlabel('MJD')
         plt.show()
-#        plt.pause(0.5)
+        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
@@ -199,7 +199,7 @@ def test_bagle_to_mulens(ra, dec, t_mjd,
 def test_mulens_to_bagle(ra, dec, t_mjd,
                          t0_g, u0_g, tE_g, 
                          piEE_g, piEN_g, 
-                         t0par, plot=False):
+                         t0par, plot=True):
     """
     Test conversion from geocentric projected frame (using 
     lens-source tau-beta convention) in MulensModel to 
@@ -253,7 +253,7 @@ def test_mulens_to_bagle(ra, dec, t_mjd,
         ax[1].set_ylabel('MM - Bagle')
         ax[1].set_xlabel('MJD')
         plt.show()
-#        plt.pause(0.5)
+        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
