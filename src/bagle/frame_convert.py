@@ -116,7 +116,7 @@ def convert_helio_geo_phot(ra, dec,
                            in_frame='helio',
                            murel_in='SL', murel_out='LS', 
                            coord_in='EN', coord_out='tb',
-                           plot=False):
+                           plot=True):
     """
     Convert between heliocentric and geocentric projected parameters.
     This converts only the subset of parameters in photometry fits
@@ -580,26 +580,46 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     if in_frame == 'helio':
         fig.text(tleft, ttop - 1*ttstep, 'Helio', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Geo proj', weight='bold', fontsize=14)
+
+        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)
+        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        
+        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(u0_out), fontsize=12)
+        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+
     if in_frame == 'geo':
         fig.text(tleft, ttop - 1*ttstep, 'Geo proj', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
 
-    fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
-    fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)
-    fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
-    fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(piEE_in), fontsize=12)
-    fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(piEN_in), fontsize=12)
-    fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+#        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)
+        if np.sign(u0_in * piEN_in) > 0:
+            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
+        else:
+            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
 
-    fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
-    fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(u0_out), fontsize=12)
-    fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
-    fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(piEE_out), fontsize=12)
-    fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(piEN_out), fontsize=12)
-    fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        
+        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(u0_out), fontsize=12)
+        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+
     plt.show()
-    plt.pause(0.2)
-
+#    plt.pause(0.2)
 
     #####
     # Figure in Gould convention (L-S frame, tau-beta coord)
@@ -684,31 +704,58 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     if in_frame == 'helio':
         fig.text(tleft, ttop - 1*ttstep, 'Helio', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Geo proj', weight='bold', fontsize=14)
+
+        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+        if np.sign(u0_in * piEN_in) > 0:
+            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
+        else:
+            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
+            
+        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(-piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(-piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        
+        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+        if np.sign(u0_out * piEN_out) > 0:
+            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
+        else:
+            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
+#        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(u0_out), fontsize=12)
+
+        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(-piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(-piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+    
     if in_frame == 'geo':
         fig.text(tleft, ttop - 1*ttstep, 'Geo proj', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
 
-    fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
-    if np.sign(u0_in * piEN_in) > 0:
-        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
-    else:
-        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
+        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+#        if np.sign(u0_in * piEN_in) > 0:
+#            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
+#        else:
+#            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
+        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)
+           
+        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(-piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(-piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        
+        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+        if np.sign(u0_out * piEN_out) > 0:
+            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
+        else:
+            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
+        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(-piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(-piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
-    fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
-    fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(-piEE_in), fontsize=12)
-    fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(-piEN_in), fontsize=12)
-    fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-
-    fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
-    if np.sign(u0_out * piEN_out) > 0:
-        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
-    else:
-        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
-    fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
-    fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(-piEE_out), fontsize=12)
-    fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(-piEN_out), fontsize=12)
-    fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
-    
     plt.show()
-    plt.pause(0.2)
+#    plt.pause(0.2)
+    import pdb
+    pdb.set_trace()
 
