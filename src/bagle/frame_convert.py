@@ -7,6 +7,57 @@ import erfa
 import matplotlib.pyplot as plt
 from bagle import model
 
+def convert_bagle_mulens_psbl_phot(ra, dec, 
+                                   t0_in, u0_in, tE_in, 
+                                   piEE_in, piEN_in, t0par,
+                                   q_in, alpha_in, sep,
+                                   mod_in='bagle'):
+    """
+    alpha_in : degrees.
+
+    mod_in = 'bagle' or 'mulens'
+    """
+    ##########
+    # Convert between helio and geo projected.
+    ##########
+    if mod_in == 'bagle':
+        output = convert_helio_geo_phot(ra, dec, t0_in, u0_in,
+                                        tE_in, piEE_in, piEN_in,
+                                        t0par, in_frame='helio',
+                                        murel_in='SL', murel_out='LS',
+                                        coord_in='EN', coord_out='tb')
+
+    elif mod_in == 'mulens':
+        output = convert_helio_geo_phot(ra, dec, t0_in, u0_in,
+                                        tE_in, piEE_in, piEN_in,
+                                        t0par, in_frame='geo',
+                                        murel_in='LS', murel_out='SL',
+                                        coord_in='tb', coord_out='EN')
+        
+    else:
+        raise Exception("mod_in must be 'bagle' or 'mulens'")
+
+    t0_out, u0_out, tE_out, piEE_out, piEN_out = output
+
+    ##########
+    # Calculate the trajectory made by the source-lens relative the 
+    # binary axis (this is different, because the source-lens relative motion
+    # changes across the two frames).
+    ##########
+    murel_in = np.rad2deg(np.arctan2(piEN_in, piEE_in))
+    murel_out = np.rad2deg(np.arctan2(piEN_out, piEE_out))
+    # The 180 is because one is source-lens and the other is lens-source.
+    delta_alpha = murel_out - murel_in + 180
+    alpha_out = alpha_in - delta_alpha
+    
+    q_out = 1.0/q_in
+    q_prime = 0.5 * (1 - q_in) / (1 + q_in)
+    t0_out += q_prime * sep * tE_out * np.cos(np.deg2rad(alpha_out))
+    u0_out += q_prime * sep * np.sin(np.deg2rad(alpha_out))
+
+    return t0_out, u0_out, tE_out, piEE_out, piEN_out, q_out, alpha_out
+
+
 def convert_helio_geo_ast(ra, dec,
                           piS, xS0E_in, xS0N_in,
                           muSE_in, muSN_in, 
@@ -203,10 +254,8 @@ def convert_helio_geo_phot(ra, dec,
         piEE_out *= -1
         piEN_out *= -1
 
-    print(t0_out)
-    print(u0_out)
-
     return t0_out, u0_out, tE_out, piEE_out, piEN_out
+
 
 def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
                      tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
@@ -286,8 +335,6 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
         _u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
         u0_out = np.where(u0vec_out[:,0] > 0, _u0_out, -_u0_out)
 
-    print(t0_out)
-    print(u0_out)
     return t0_out, u0vec_out
 
 
