@@ -1,71 +1,35 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BAGLE - Bayesian Analysis of Gravitational Lensing Events &mdash; BAGLE 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="BAGLE 0.1 documentation" href="#"/>
-        <link rel="next" title="BAGLE TUTORIAL" href="intro.html"/> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
-
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
+        <div class="wy-side-nav-search" >
             <a href="#" class="icon icon-home"> BAGLE
-          
-
-          
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -73,19 +37,13 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-                <ul>
-<li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Overview of bagle.model</a></li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html#developers">Developers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a></li>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Using BAGLE Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="new_models.html">Making Your Own Microlens Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ModelClass.html">Instantiable Model Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSPL.html">POINT SOURCE POINT LENS (PSPL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a></li>
 <li class="toctree-l1"><a class="reference internal" href="BSPL.html">BINARY SOURCE POINT LENS (BSPL) CLASSES</a></li>
@@ -94,150 +52,108 @@
 <li class="toctree-l1"><a class="reference internal" href="model_fitter.html">Model Fitter</a></li>
 </ul>
 
-            
-          
         </div>
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="#">BAGLE</a>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">BAGLE</a>
       </nav>
 
-
-      
       <div class="wy-nav-content">
         <div class="rst-content">
-          
-
- 
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="#">Docs</a> &raquo;</li>
-      
-    <li>BAGLE - Bayesian Analysis of Gravitational Lensing Events</li>
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+      <li>BAGLE - Bayesian Analysis of Gravitational Lensing Events</li>
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
   </ul>
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="bagle-bayesian-analysis-of-gravitational-lensing-events">
-<h1>BAGLE - Bayesian Analysis of Gravitational Lensing Events<a class="headerlink" href="#bagle-bayesian-analysis-of-gravitational-lensing-events" title="Permalink to this headline">¶</a></h1>
-<video controls src="_static/pspl.mp4"></video><p>BAGLE allows modeling of gravitational microlensing events both photometrically and astrometrically. Supported microlensing models include:</p>
+             
+  <section id="bagle-bayesian-analysis-of-gravitational-lensing-events">
+<h1>BAGLE - Bayesian Analysis of Gravitational Lensing Events<a class="headerlink" href="#bagle-bayesian-analysis-of-gravitational-lensing-events" title="Permalink to this heading"></a></h1>
+<video controls src="_static/pspl.mp4"></video><p>BAGLE is a python package used to model gravitational microlensing
+events both photometrically and astrometrically. Supported
+microlensing models include:</p>
 <ul class="simple">
 <li><p>PSPL: point-source, point-lens with parallax</p></li>
 <li><p>PSBL: point-source, binary-lens</p></li>
 <li><p>FSPL: finite-source, point-lens (currently testing further)</p></li>
 </ul>
-<p>All models support fitting data with single or multi-band photometry only, astrometry only, or joint fitting of photometry and astrometry (recommended).</p>
+<p>All models support fitting data with single or multi-band photometry
+only, astrometry only, or joint fitting of photometry and astrometry
+(recommended).</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="intro.html">BAGLE TUTORIAL</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="intro.html#pspl-model-no-parallax">PSPL Model - No Parallax</a></li>
-<li class="toctree-l2"><a class="reference internal" href="intro.html#pspl-model-with-parallax">PSPL Model - With parallax</a></li>
-<li class="toctree-l2"><a class="reference internal" href="intro.html#pspl-model-from-belokurov-and-evans-2002-figure-1">PSPL Model From Belokurov and Evans 2002 (Figure 1)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#from-source">From source</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html">Overview of bagle.model</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="model3.html#example">Example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model3.html#point-source-point-lens-photometry-only">Point source, point lens, photometry only:</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model3.html#point-source-point-lens-photometry-and-astrometry">Point source, point lens, photometry and astrometry:</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model3.html#point-source-point-lens-astrometry-only">Point source, point lens, astrometry only</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model3.html#point-soruce-binary-lens-photometry-only">Point soruce, binary lens, photometry only</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model3.html#point-source-binary-lens-photometry-and-astrometry">Point source, binary lens, photometry and astrometry</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model3.html#binary-source-point-lens-photometry-and-only">Binary source, point lens, photometry and only</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model3.html#binary-source-point-lens-photometry-and-astrometry">Binary source, point lens, photometry and astrometry</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model3.html#finite-source-point-lens-photometry-and-astrometry-broken">Finite source, point lens, photometry and astrometry (broken)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#using-bagle">Using BAGLE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#making-a-pspl-model-with-no-parallax">Making a PSPL Model with No Parallax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#making-a-pspl-model-with-parallax">Making a PSPL Model with parallax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#advanced-astrometric-plots">Advanced Astrometric Plots</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="model3.html#developers">Developers</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="model3.html#class-families">Class Families</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="model3.html#model-class-family">Model Class Family</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model3.html#data-class-family">Data Class Family</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model3.html#parallax-class-family">Parallax Class Family</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model3.html#parameterization-class-family">Parameterization Class Family</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model3.html#making-a-new-model">Making a New Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Using BAGLE Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="models.html#example-a-microlens-model-event">Example: A Microlens Model Event</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#list-of-available-models">List of Available Models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.html#point-source-point-lens-photometry-only">Point source, point lens, photometry only:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#point-source-point-lens-photometry-and-astrometry">Point source, point lens, photometry and astrometry:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#point-source-point-lens-astrometry-only">Point source, point lens, astrometry only</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#point-soruce-binary-lens-photometry-only">Point soruce, binary lens, photometry only</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#point-source-binary-lens-photometry-and-astrometry">Point source, binary lens, photometry and astrometry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#binary-source-point-lens-photometry-and-only">Binary source, point lens, photometry and only</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#binary-source-point-lens-photometry-and-astrometry">Binary source, point lens, photometry and astrometry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.html#finite-source-point-lens-photometry-and-astrometry-broken">Finite source, point lens, photometry and astrometry (broken)</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="UserClass.html">User Classes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="PSPL_User.html">PSPL User Classes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl">PSPL</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-parallax">PSPL Parallax</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-parallax2-pspl-multiphot-parallax">PSPL_parallax2 / PSPL_multiphot_parallax</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot">PSPL_phot</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot-parallax-pspl-phot-multiphot-parallax">PSPL_phot_parallax / PSPL_phot_multiphot_parallax</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot-parallax-with-gp">PSPL Phot parallax with GP</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-phot-no-parallax-with-gp">PSPL Phot, no parallax with GP</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-photastrom-parallax-with-gp">PSPL PhotAstrom, parallax with GP</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSPL_User.html#pspl-photastrom-no-parallax-with-gp">PSPL PhotAstrom, no parallax with GP</a><ul class="simple">
+<li class="toctree-l1"><a class="reference internal" href="new_models.html">Making Your Own Microlens Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="new_models.html#class-families">Class Families</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="new_models.html#model-class-family">Model Class Family</a></li>
+<li class="toctree-l3"><a class="reference internal" href="new_models.html#data-class-family">Data Class Family</a></li>
+<li class="toctree-l3"><a class="reference internal" href="new_models.html#parallax-class-family">Parallax Class Family</a></li>
+<li class="toctree-l3"><a class="reference internal" href="new_models.html#parameterization-class-family">Parameterization Class Family</a></li>
+<li class="toctree-l3"><a class="reference internal" href="new_models.html#making-a-new-model">Making a New Model</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="PSBL_User.html">PSBL User Classes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl">PSBL</a><ul class="simple">
+<li class="toctree-l1"><a class="reference internal" href="ModelClass.html">Instantiable Model Classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="PSPL_Model.html">PSPL Model Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_Model.html#pspl">PSPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_Model.html#pspl-parallax">PSPL Parallax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_Model.html#pspl-parallax2-pspl-multiphot-parallax">PSPL_parallax2 / PSPL_multiphot_parallax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_Model.html#pspl-phot">PSPL_phot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_Model.html#pspl-phot-parallax-pspl-phot-multiphot-parallax">PSPL_phot_parallax / PSPL_phot_multiphot_parallax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_Model.html#pspl-phot-parallax-with-gp">PSPL Phot parallax with GP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_Model.html#pspl-phot-no-parallax-with-gp">PSPL Phot, no parallax with GP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_Model.html#pspl-photastrom-parallax-with-gp">PSPL PhotAstrom, parallax with GP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSPL_Model.html#pspl-photastrom-no-parallax-with-gp">PSPL PhotAstrom, no parallax with GP</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-parallax">PSBL Parallax</a><ul class="simple">
+<li class="toctree-l2"><a class="reference internal" href="PSBL_Model.html">PSBL User Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_Model.html#psbl">PSBL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_Model.html#psbl-parallax">PSBL Parallax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_Model.html#psbl-phot">PSBL_Phot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_Model.html#psbl-phot-parallax">PSBL_phot_parallax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_Model.html#psbl-photastrom-no-parallax-with-gp">PSBL PhotAstrom, no parallax with GP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_Model.html#psbl-photastrom-parallax-with-gp">PSBL PhotAstrom, parallax with GP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_Model.html#psbl-phot-no-parallax-with-gp">PSBL Phot, no parallax with GP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PSBL_Model.html#psbl-phot-parallax-with-gp">PSBL Phot, parallax with GP</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot">PSBL_Phot</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot-parallax">PSBL_phot_parallax</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-photastrom-no-parallax-with-gp">PSBL PhotAstrom, no parallax with GP</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-photastrom-parallax-with-gp">PSBL PhotAstrom, parallax with GP</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot-no-parallax-with-gp">PSBL Phot, no parallax with GP</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="PSBL_User.html#psbl-phot-parallax-with-gp">PSBL Phot, parallax with GP</a><ul class="simple">
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="FSPL_User.html">FSPL User Class</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="FSPL_User.html#fspl-parallax">FSPL_parallax</a><ul class="simple">
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="FSPL_Model.html">FSPL User Class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="FSPL_Model.html#fspl-parallax">FSPL_parallax</a></li>
 </ul>
 </li>
 </ul>
@@ -248,24 +164,14 @@
 <li class="toctree-l3"><a class="reference internal" href="PSPL_Param.html#gp-models">GP Models</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="PSPL_Data.html">Data Class Family</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="PSPL_GP.html">GP Class Family</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="PSPL_Parallax.html">Parallax Class Family</a><ul class="simple">
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="PSPL_Data.html">Data Class Family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PSPL_GP.html">GP Class Family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PSPL_Parallax.html">Parallax Class Family</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="PSBL.html">POINT SOURCE BINARY LENS (PSBL) CLASSES</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="PSBL_Data.html">Data Class Family</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="PSBL_Parallax.html">Parallax Class Family - PSBL</a><ul class="simple">
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="PSBL_Data.html">Data Class Family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PSBL_Parallax.html">Parallax Class Family - PSBL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="PSBL_Param.html">Parameterization Class Family - PSBL</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="PSBL_Param.html#psbl-models">PSBL Models</a></li>
 <li class="toctree-l3"><a class="reference internal" href="PSBL_Param.html#gp-models">GP Models</a></li>
@@ -279,21 +185,13 @@
 <li class="toctree-l3"><a class="reference internal" href="BSPL_Param.html#gp-models">GP Models</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="BSPL_Data.html">Data Class Family</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="BSPL_Parallax.html">Parallax Class Family</a><ul class="simple">
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="BSPL_Data.html">Data Class Family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="BSPL_Parallax.html">Parallax Class Family</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="FSPL.html">FSPL(Finite-Source Point Lens) Models - NOT DONE YET… place holders</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="FSPL.html#fspl-classes">FSPL Classes</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="FSPL.html#fspl-limb-classes">FSPL Limb Classes</a><ul class="simple">
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="FSPL.html#fspl-classes">FSPL Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FSPL.html#fspl-limb-classes">FSPL Limb Classes</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Gen_Use.html">GENERAL USE AND SHARED FUNCTIONS</a><ul>
@@ -301,9 +199,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="model_fitter.html">Model Fitter</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="PSPL_Solver.html">PSPL_Solver</a><ul class="simple">
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="PSPL_Solver.html">PSPL_Solver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Prior_Generator.html">Prior Generators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Gen_Use_model_fitter.html">GENERAL USE AND SHARED FUNCTIONS</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="Gen_Use_model_fitter.html#shared-functions">Shared Functions</a></li>
@@ -313,74 +209,36 @@
 </li>
 </ul>
 </div>
-</div>
+</section>
 
 
            </div>
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="intro.html" class="btn btn-neutral float-right" title="BAGLE TUTORIAL" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &copy; Copyright 2022 Moving Universe Lab.
-
-    </p>
+    <p>&#169; Copyright 2022 Moving Universe Lab.</p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.1',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="_static/language_data.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>
