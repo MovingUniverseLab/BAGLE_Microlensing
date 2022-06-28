@@ -6,6 +6,64 @@ from bagle import frame_convert as fc
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 
+
+def test_mulens_to_bagle_psbl_phot(ra, dec, t_mjd,
+                                   t0_m, u0_m, tE_m,
+                                   piEE_m, piEN_m, t0par,
+                                   q_m, alpha_m, sep,
+                                   plot=True):
+
+    output = fc.convert_bagle_mulens_psbl_phot(ra, dec,
+                                               t0_m, u0_m, tE_m,
+                                               piEE_m, piEN_m, t0par,
+                                               q_m, alpha_m, sep,
+                                               mod_in='mulens')
+
+    t0_b, u0_b, tE_b, piEE_b, piEN_b, q_b, alpha_b = output
+
+    # Get HJD from MJD (since MulensModel uses HJD).
+    t_hjd = t_mjd + 2400000.5
+
+    # Turn RA and Dec into SkyCoord object (for MulensModel).
+    coords = SkyCoord(ra, dec, unit=(u.deg, u.deg))
+
+    # Get the lightcurve from the geoprojected parameters.
+    mag_mulens = get_phot_mulens_psbl(coords, t0_m, u0_m, tE_m, 
+                                      piEE_m, piEN_m, t0par, 
+                                      alpha_m, q_m, sep, t_hjd)
+    print(t0_m, u0_m, tE_m, 
+          piEE_m, piEN_m,
+          alpha_m, q_m, sep)
+    # Get the lightcurve from the heliocentric parameters.
+    mag_bagle = get_phot_bagle_psbl(ra, dec, t0_b, u0_b,
+                                    tE_b, piEE_b, piEN_b, 
+                                    alpha_b, q_b, sep, t_mjd)
+    print(t0_b, u0_b, tE_b, 
+          piEE_b, piEN_b, 
+          alpha_b, q_b, sep)
+    if plot:
+        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+        plt.clf()
+        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+        ax[0].plot(t_mjd, mag_mulens, 'o')
+        ax[0].plot(t_mjd, mag_bagle, '.')
+        ax[0].invert_yaxis()
+        ax[1].plot(t_mjd, mag_mulens - mag_bagle, '.')
+        ax[0].set_ylabel('Mag')
+        ax[1].set_ylabel('Mag Mulens - Bagle')
+        ax[1].set_xlabel('MJD')
+        plt.show()
+#        plt.pause(0.5)
+
+    # Make sure that the conversion works by asserting
+    # that the lightcurves are no more different than
+    # 1e-4 magnitudes on average.
+    # Note: current test fails if require < 1e-5.
+    diff = (mag_mulens - mag_bagle)/mag_mulens
+    total_diff = np.sum(np.abs(diff))
+    assert total_diff/len(t_mjd) < 1e-4
+
+
 def test_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
                                    t0_b, u0_b, tE_b,
                                    piEE_b, piEN_b, t0par,
@@ -30,12 +88,16 @@ def test_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
     mag_mulens = get_phot_mulens_psbl(coords, t0_m, u0_m, tE_m, 
                                       piEE_m, piEN_m, t0par, 
                                       alpha_m, q_m, sep, t_hjd)
-
+    print(t0_m, u0_m, tE_m, 
+          piEE_m, piEN_m, t0par, 
+          alpha_m, q_m, sep)
     # Get the lightcurve from the heliocentric parameters.
     mag_bagle = get_phot_bagle_psbl(ra, dec, t0_b, u0_b,
                                     tE_b, piEE_b, piEN_b, 
                                     alpha_b, q_b, sep, t_mjd)
-
+    print(t0_b, u0_b,
+          tE_b, piEE_b, piEN_b, 
+          alpha_b, q_b, sep)
     if plot:
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
         plt.clf()
@@ -48,7 +110,7 @@ def test_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
         ax[1].set_ylabel('Mag Mulens - Bagle')
         ax[1].set_xlabel('MJD')
         plt.show()
-#        plt.pause(0.5)
+        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
@@ -57,9 +119,6 @@ def test_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
     diff = (mag_mulens - mag_bagle)/mag_mulens
     total_diff = np.sum(np.abs(diff))
     assert total_diff/len(t_mjd) < 1e-4
-
-def test_mulens_to_bagle_psbl_phot():
-    pass
 
 def test_mm_vs_vbbl():
     pass
@@ -492,8 +551,18 @@ def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h,
 def test_bagle_mulens_psbl_phot_set():
     t_mjd = np.arange(57000 - 500, 57000 + 500, 0.1)
 
-    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
-    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.3, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
+#    print('set 1')
+#    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
+#    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.3, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
+#    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.1, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
+#    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.1, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
+
+    print('set 2')
+#    test_mulens_to_bagle_psbl_phot(259, -29, t_mjd, 57067.49054573558, 0.6378670566069137, 
+#                                   255.12120946554256, -0.19705897762298288, -0.10567761985484313, 
+#                                   57100, 2.0, 88.36154573925313, 1.5)
+    test_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
+    test_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.3, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
 
 def test_bagle_mulens_set():
     """

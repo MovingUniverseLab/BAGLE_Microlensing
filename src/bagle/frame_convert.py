@@ -47,13 +47,23 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
     murel_in = np.rad2deg(np.arctan2(piEN_in, piEE_in))
     murel_out = np.rad2deg(np.arctan2(piEN_out, piEE_out))
     # The 180 is because one is source-lens and the other is lens-source.
-    delta_alpha = murel_out - murel_in + 180
-    alpha_out = alpha_in - delta_alpha
-    
-    q_out = 1.0/q_in
-    q_prime = 0.5 * (1 - q_in) / (1 + q_in)
-    t0_out += q_prime * sep * tE_out * np.cos(np.deg2rad(alpha_out))
-    u0_out += q_prime * sep * np.sin(np.deg2rad(alpha_out))
+    if mod_in == 'bagle':
+        delta_alpha = murel_out - murel_in + 180
+        alpha_out = alpha_in - delta_alpha
+        
+        q_out = 1.0/q_in
+        q_prime = 0.5 * (1 - q_in) / (1 + q_in)
+        t0_out += q_prime * sep * tE_out * np.cos(np.deg2rad(alpha_out))
+        u0_out += q_prime * sep * np.sin(np.deg2rad(alpha_out))
+    elif mod_in == 'mulens': 
+        delta_alpha = murel_out - murel_in + 180
+        alpha_out = alpha_in + delta_alpha
+        
+        q_out = 1.0/q_in
+        q_prime = 0.5 * (1 - q_out) / (1 + q_out)
+        t0_out -= q_prime * sep * tE_out * np.cos(np.deg2rad(alpha_out))
+        u0_out += q_prime * sep * np.sin(np.deg2rad(alpha_out))
+        
 
     return t0_out, u0_out, tE_out, piEE_out, piEN_out, q_out, alpha_out
 
