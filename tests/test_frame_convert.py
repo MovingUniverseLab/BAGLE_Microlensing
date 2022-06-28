@@ -6,6 +6,64 @@ from bagle import frame_convert as fc
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 
+def test_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
+                                   t0_b, u0_b, tE_b,
+                                   piEE_b, piEN_b, t0par,
+                                   q_b, alpha_b, sep,
+                                   plot=True):
+
+    output = fc.convert_bagle_mulens_psbl_phot(ra, dec,
+                                               t0_b, u0_b, tE_b,
+                                               piEE_b, piEN_b, t0par,
+                                               q_b, alpha_b, sep,
+                                               mod_in='bagle')
+
+    t0_m, u0_m, tE_m, piEE_m, piEN_m, q_m, alpha_m = output
+
+    # Get HJD from MJD (since MulensModel uses HJD).
+    t_hjd = t_mjd + 2400000.5
+
+    # Turn RA and Dec into SkyCoord object (for MulensModel).
+    coords = SkyCoord(ra, dec, unit=(u.deg, u.deg))
+
+    # Get the lightcurve from the geoprojected parameters.
+    mag_mulens = get_phot_mulens_psbl(coords, t0_m, u0_m, tE_m, 
+                                      piEE_m, piEN_m, t0par, 
+                                      alpha_m, q_m, sep, t_hjd)
+
+    # Get the lightcurve from the heliocentric parameters.
+    mag_bagle = get_phot_bagle_psbl(ra, dec, t0_b, u0_b,
+                                    tE_b, piEE_b, piEN_b, 
+                                    alpha_b, q_b, sep, t_mjd)
+
+    if plot:
+        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+        plt.clf()
+        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+        ax[0].plot(t_mjd, mag_mulens, 'o')
+        ax[0].plot(t_mjd, mag_bagle, '.')
+        ax[0].invert_yaxis()
+        ax[1].plot(t_mjd, mag_mulens - mag_bagle, '.')
+        ax[0].set_ylabel('Mag')
+        ax[1].set_ylabel('Mag Mulens - Bagle')
+        ax[1].set_xlabel('MJD')
+        plt.show()
+#        plt.pause(0.5)
+
+    # Make sure that the conversion works by asserting
+    # that the lightcurves are no more different than
+    # 1e-4 magnitudes on average.
+    # Note: current test fails if require < 1e-5.
+    diff = (mag_mulens - mag_bagle)/mag_mulens
+    total_diff = np.sum(np.abs(diff))
+    assert total_diff/len(t_mjd) < 1e-4
+
+def test_mulens_to_bagle_psbl_phot():
+    pass
+
+def test_mm_vs_vbbl():
+    pass
+
 def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
                                  t0_g, u0_g, tE_g, 
                                  piEE_g, piEN_g, 
@@ -291,6 +349,39 @@ def get_phot_mulens(coords, t0_g, u0_g, tE_g,
 
     return mag_obs
 
+
+def get_phot_mulens_psbl(coords, t0_g, u0_g, tE_g, 
+                         piEE_g, piEN_g, t0par, 
+                         alpha_g, q, sep, t_hjd):
+    """
+    Get PSBL lightcurve from MulensModel, assuming an 
+    unblended 22nd mag source. MulensModel uses the 
+    geocentric projected frame, with Gould (tau-beta) 
+    and lens-source conventions.
+    """
+    import MulensModel as mm
+
+    # Set up parameter dictionary. 
+    # t_0 and t_0_par need to be in HJD.
+    params = {}
+    params['t_0'] = t0_g + 2400000.5
+    params['t_0_par'] = t0par + 2400000.5
+    params['u_0'] = u0_g
+    params['t_E'] = tE_g
+    params['pi_E_N'] = piEN_g
+    params['pi_E_E'] = piEE_g
+    params['alpha'] = alpha_g
+    params['s'] = sep
+    params['q'] = q
+
+    # Then instantiate model and get lightcurve.
+    my_model = mm.Model(params, coords=coords)
+
+    mag_obs = my_model.get_lc(times=t_hjd, source_flux=1, blend_flux=0)
+
+    return mag_obs
+
+
 def get_phot_bagle(ra, dec, t0_h, u0_h, 
                    tE_h, piEE_h, piEN_h, t_mjd):
     """
@@ -316,6 +407,46 @@ def get_phot_bagle(ra, dec, t0_h, u0_h,
     mod = model.PSPL_Phot_Par_Param1(params['t0'], params['u0_amp'], 
                                      params['tE'],
                                      params['piE_E'], params['piE_N'],
+                                     params['b_sff'], params['mag_src'],
+                                     raL=params['raL'], decL=params['decL'])
+
+    mag_obs = mod.get_photometry(t_mjd)
+
+    return mag_obs
+
+
+def get_phot_bagle_psbl(ra, dec, t0_h, u0_h,
+                        tE_h, piEE_h, piEN_h, 
+                        alpha_h, q, sep, t_mjd):
+    """
+    Get PSBL lightcurve from BAGLE, assuming an unblended 
+    22nd mag source. This BAGLE model uses the 
+    heliocentric frame, with Lu (East-North) and
+    source-lens conventions.
+    """
+    # Set up parameter dictionary.
+    # t0 needs to be in MJD.
+    params = {}
+    params['raL'] = ra
+    params['decL'] = dec
+    params['t0'] = t0_h
+    params['u0_amp'] = u0_h
+    params['tE'] = tE_h
+    params['piE_E'] = piEE_h
+    params['piE_N'] = piEN_h
+    params['q'] = q
+    params['alpha'] = alpha_h
+    params['sep'] = sep
+    params['b_sff'] = 1
+    params['mag_src'] = 22
+    
+    # Then instantiate model and get lightcurve.
+    # FIXME notational consistency: alpha or phi? (or are they the same?)
+    mod = model.PSBL_Phot_Par_Param1(params['t0'], params['u0_amp'], 
+                                     params['tE'],
+                                     params['piE_E'], params['piE_N'],
+                                     params['q'], params['sep'], 
+                                     params['alpha'],
                                      params['b_sff'], params['mag_src'],
                                      raL=params['raL'], decL=params['decL'])
 
@@ -356,6 +487,13 @@ def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h,
     mag_obs = mod.get_photometry(t_mjd)
 
     return mag_obs
+
+
+def test_bagle_mulens_psbl_phot_set():
+    t_mjd = np.arange(57000 - 500, 57000 + 500, 0.1)
+
+    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
+    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.3, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
 
 def test_bagle_mulens_set():
     """
@@ -424,6 +562,7 @@ def test_bagle_mulens_set():
     test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 69900)
     test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 69900)
     test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 69900)
+
 
 def test_bagle_helio_geo_set():
     """
