@@ -516,6 +516,8 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         color_in = 'blue'
         color_out = 'red'
 
+    # FIXME; need some way to make the width scale as the vector's length...
+    # 0.003 is good for close in but not far.
     # u0 vector
     ax.quiver(0, 0, vec_u0_out[0], vec_u0_out[1],
               color=color_out, units='xy', angles='xy', scale=1, width=0.003)
