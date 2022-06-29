@@ -586,13 +586,12 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(piEN_out), fontsize=12)
         fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
-    # Input is Gould geo, so need to fix those to play nice with our vectors in Lu helio. 
     if in_frame == 'geo':
         fig.text(tleft, ttop - 1*ttstep, 'Geo proj', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
 
         fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
-#        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)
+        # Input is Gould geo, so need to fix those to play nice with our vectors in Lu helio. 
         if np.sign(u0_in * piEN_in) > 0:
             fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
         else:
@@ -678,28 +677,28 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     ax[0].invert_xaxis()
     ax[0].set_title(r'Gould convention (L-S frame, $\tau$-$\beta$ coord)')
 
-    tau_out = np.hypot(vec_tau_out[0], vec_tau_out[1])
-    tau_in = np.hypot(vec_tau_in[0], vec_tau_in[1])
-    print(tau_out)
-    print(tau_in)
-
-    q_tau_out = ax[1].quiver(0, 0, -vec_tau_out[0]/tau_out, -vec_tau_out[1]/tau_out, 
+    q_tau_out = ax[1].quiver(0, 0, -piEE_out/piE, -piEN_out/piE, 
                            color=color_out, scale_units='xy', angles='xy', scale=1)
     
-    q_tau_in = ax[1].quiver(0, 0, -vec_tau_in[0]/tau_in, -vec_tau_in[1]/tau_in, 
+    q_tau_in = ax[1].quiver(0, 0, -piEE_in/piE, -piEN_in/piE, 
                           color=color_in, scale_units='xy', angles='xy', scale=1)
 
-    q_u0_out = ax[1].quiver(0, 0, -vec_tau_out[1]/tau_out, vec_tau_out[0]/tau_out, 
+    q_u0_out = ax[1].quiver(0, 0, -piEN_out/piE, piEE_out/piE, 
                           color=color_out, scale_units='xy', angles='xy', scale=1, alpha=0.5, width=0.02)
     
-    q_u0_in = ax[1].quiver(0, 0, -vec_tau_in[1]/tau_in, vec_tau_in[0]/tau_in, 
+    q_u0_in = ax[1].quiver(0, 0, -piEN_in/piE, piEE_in/piE, 
                          color=color_in, scale_units='xy', angles='xy', scale=1, alpha=0.5, width=0.02)
     
-    # Fix subscripts
-    ax[1].quiverkey(q_tau_out, 1, -2.0, 0.3, r'$\hat{\tau}_H$', coordinates='data', labelpos='E', labelsep=0.5)
-    ax[1].quiverkey(q_tau_in, 1, -2.4, 0.3, r'$\hat{\tau}_G$', coordinates='data', labelpos='E', labelsep=0.5)
-    ax[1].quiverkey(q_u0_out, 0, -2.0, 0.3, r'$\hat{\beta}_H$', coordinates='data', labelpos='E', labelsep=0.5)
-    ax[1].quiverkey(q_u0_in, 0, -2.4, 0.3, r'$\hat{\beta}_G$', coordinates='data', labelpos='E', labelsep=0.5)
+    if in_frame == 'helio':
+        ax[1].quiverkey(q_tau_out, 1, -2.0, 0.3, r'$\hat{\tau}_G$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_tau_in, 1, -2.4, 0.3, r'$\hat{\tau}_H$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_u0_out, 0, -2.0, 0.3, r'$\hat{\beta}_G$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_u0_in, 0, -2.4, 0.3, r'$\hat{\beta}_H$', coordinates='data', labelpos='E', labelsep=0.5)
+    else:
+        ax[1].quiverkey(q_tau_out, 1, -2.0, 0.3, r'$\hat{\tau}_H$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_tau_in, 1, -2.4, 0.3, r'$\hat{\tau}_G$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_u0_out, 0, -2.0, 0.3, r'$\hat{\beta}_H$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_u0_in, 0, -2.4, 0.3, r'$\hat{\beta}_G$', coordinates='data', labelpos='E', labelsep=0.5)
 
     ax[1].set_xlim(-1, 1)
     ax[1].set_ylim(-1, 1)
@@ -717,12 +716,12 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
 
     fig.text(tleft, ttop - -1*ttstep, 't0par = {0:.1f}'.format(t0par), fontsize=12)
 
-    # Output is Lu helio, so need to fix those to be in Gould geo.
     if in_frame == 'helio':
         fig.text(tleft, ttop - 1*ttstep, 'Helio', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Geo proj', weight='bold', fontsize=14)
 
         fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+        # Input is Lu helio, so need to fix those to be in Gould geo.
         if np.sign(u0_in * piEN_in) > 0:
             fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
         else:
@@ -734,35 +733,30 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
         
         fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
-        if np.sign(u0_in * piEN_in) > 0:
+        # Output is Lu helio, so need to fix those to be in Gould geo.
+        if np.sign(u0_out * piEN_out) > 0:
             fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
         else:
             fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
-#        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(u0_out), fontsize=12)
 
         fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
         fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(-piEE_out), fontsize=12)
         fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(-piEN_out), fontsize=12)
         fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
     
-    # Output is Lu helio, so need to fix those to be in Gould geo.
     if in_frame == 'geo':
         fig.text(tleft, ttop - 1*ttstep, 'Geo proj', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
 
         fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
-#        if np.sign(u0_in * piEN_in) > 0:
-#            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
-#        else:
-#            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
-        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)
-           
+        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)           
         fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(-piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(-piEN_in), fontsize=12)
         fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
         
         fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+        # Output is Lu helio, so need to fix those to be in Gould geo.
         if np.sign(u0_out * piEN_out) > 0:
             fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
         else:
