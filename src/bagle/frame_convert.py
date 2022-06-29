@@ -6,6 +6,7 @@ from astropy.coordinates.builtin_frames.utils import get_jd12
 import erfa
 import matplotlib.pyplot as plt
 from bagle import model
+from matplotlib.ticker import MaxNLocator
 
 def convert_bagle_mulens_psbl_phot(ra, dec, 
                                    t0_in, u0_in, tE_in, 
@@ -533,8 +534,8 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     ax.plot(0, 0, 'o', ms=10, mec='k', color='yellow', label='Source')
 
     # Plot the lens (both helio and geo proj positions at t0)
-    ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=10, color=color_in, label=label_in)
-    ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=10, color=color_out, label=label_out)
+    ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=10, mec=color_in, color='k', mew=3, label=label_in)
+    ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=10, mec=color_out, color='k', mew=3, label=label_out)
 
     # Parallax vector
     if in_frame=='helio':
@@ -615,10 +616,10 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     #####
     # Figure in Gould convention (L-S frame, tau-beta coord)
     ####
-    fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
+    fig, ax = plt.subplots(1, 2, num=4, figsize=(12,6), gridspec_kw={'width_ratios': [2.5, 1]})
     plt.clf()
-    fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
-    plt.subplots_adjust(left=0.15, right=0.7)
+    fig, ax = plt.subplots(1, 2, num=4, figsize=(12,6), gridspec_kw={'width_ratios': [2.5, 1]})
+    plt.subplots_adjust(left=0.15*3/4, right=0.78, wspace=0.3)
 
     # FIXME: is the parallax vector supposed to be the same direction
     # in Gould frame or antiparallel to the one in Lu???
@@ -634,51 +635,83 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         color_out = 'red'
 
     # u0 vector
-    ax.quiver(0, 0, -vec_u0_out[0], -vec_u0_out[1],
+    ax[0].quiver(0, 0, -vec_u0_out[0], -vec_u0_out[1],
               color=color_out, units='xy', angles='xy', scale=1, width=0.003)
 
-    ax.quiver(0, 0, -vec_u0_in[0], -vec_u0_in[1],
+    ax[0].quiver(0, 0, -vec_u0_in[0], -vec_u0_in[1],
               color=color_in, units='xy', angles='xy', scale=1, width=0.003)
 
     # tau vector (starting at u0 vector)
-    ax.quiver(-vec_u0_out[0], -vec_u0_out[1], -vec_tau_out[0], -vec_tau_out[1], 
+    ax[0].quiver(-vec_u0_out[0], -vec_u0_out[1], -vec_tau_out[0], -vec_tau_out[1], 
               color=color_out, units='xy', angles='xy', scale=1, width=0.003)
 
-    ax.quiver(-vec_u0_in[0], -vec_u0_in[1], -vec_tau_in[0], -vec_tau_in[1], 
+    ax[0].quiver(-vec_u0_in[0], -vec_u0_in[1], -vec_tau_in[0], -vec_tau_in[1], 
               color=color_in, units='xy', angles='xy', scale=1, width=0.003)
 
     # Plot the lens (i.e. origin)
-    ax.plot(0, 0, 'o', ms=10, mec='k', color='yellow', label='Lens')
+    ax[0].plot(0, 0, 'o', ms=10, mec='k', color='k', label='Lens')
 
     # Plot the source (both helio and geo proj positions at t0)
-    ax.plot(-vec_u0_in[0], -vec_u0_in[1], 'o', ms=10, color=color_in, label=label_in)
-    ax.plot(-vec_u0_out[0], -vec_u0_out[1], 'o', ms=10, color=color_out, label=label_out)
+    ax[0].plot(-vec_u0_in[0], -vec_u0_in[1], 'o', ms=10, mec=color_in, mew=3, color='yellow', label=label_in)
+    ax[0].plot(-vec_u0_out[0], -vec_u0_out[1], 'o', ms=10, mec=color_out, mew=3, color='yellow', label=label_out)
 
     # Parallax vector
     if in_frame=='helio':
-        ax.quiver(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1], 
+        ax[0].quiver(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1], 
                   -vec_par[0]*piE, -vec_par[1]*piE, 
                   color='gray', units='xy', angles='xy', scale=1, width=0.003)
     else:
-        ax.quiver(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1], 
+        ax[0].quiver(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1], 
                   vec_par[0]*piE, vec_par[1]*piE, 
                   color='gray', units='xy', angles='xy', scale=1, width=0.003)
 
     # Not sure why these next two lines are totally necessary...
-    ax.plot(-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[1] - vec_tau_in[1], 'o', ms=0.001, color=color_in)
-    ax.plot(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1], 'o', ms=0.001, color=color_out)
+    ax[0].plot(-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[1] - vec_tau_in[1], 'o', ms=0.001, color=color_in)
+    ax[0].plot(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1], 'o', ms=0.001, color=color_out)
 
-    ax.legend()
-    ax.axhline(y=0, ls=':', color='gray')
-    ax.axvline(x=0, ls=':', color='gray')
-    ax.set_xlabel('$u_E$')
-    ax.set_ylabel('$u_N$')
-    ax.axis('equal')
-    ax.invert_xaxis()
-    ax.set_title(r'Gould convention (L-S frame, $\tau$-$\beta$ coord)')
+    ax[0].legend()
+    ax[0].axhline(y=0, ls=':', color='gray')
+    ax[0].axvline(x=0, ls=':', color='gray')
+    ax[0].set_xlabel('$u_E$')
+    ax[0].set_ylabel('$u_N$')
+    ax[0].axis('equal')
+    ax[0].invert_xaxis()
+    ax[0].set_title(r'Gould convention (L-S frame, $\tau$-$\beta$ coord)')
+
+    tau_out = np.hypot(vec_tau_out[0], vec_tau_out[1])
+    tau_in = np.hypot(vec_tau_in[0], vec_tau_in[1])
+    print(tau_out)
+    print(tau_in)
+
+    q_tau_out = ax[1].quiver(0, 0, -vec_tau_out[0]/tau_out, -vec_tau_out[1]/tau_out, 
+                           color=color_out, scale_units='xy', angles='xy', scale=1)
     
+    q_tau_in = ax[1].quiver(0, 0, -vec_tau_in[0]/tau_in, -vec_tau_in[1]/tau_in, 
+                          color=color_in, scale_units='xy', angles='xy', scale=1)
+
+    q_u0_out = ax[1].quiver(0, 0, -vec_tau_out[1]/tau_out, vec_tau_out[0]/tau_out, 
+                          color=color_out, scale_units='xy', angles='xy', scale=1, alpha=0.5, width=0.02)
+    
+    q_u0_in = ax[1].quiver(0, 0, -vec_tau_in[1]/tau_in, vec_tau_in[0]/tau_in, 
+                         color=color_in, scale_units='xy', angles='xy', scale=1, alpha=0.5, width=0.02)
+    
+    # Fix subscripts
+    ax[1].quiverkey(q_tau_out, 1, -2.0, 0.3, r'$\hat{\tau}_H$', coordinates='data', labelpos='E', labelsep=0.5)
+    ax[1].quiverkey(q_tau_in, 1, -2.4, 0.3, r'$\hat{\tau}_G$', coordinates='data', labelpos='E', labelsep=0.5)
+    ax[1].quiverkey(q_u0_out, 0, -2.0, 0.3, r'$\hat{\beta}_H$', coordinates='data', labelpos='E', labelsep=0.5)
+    ax[1].quiverkey(q_u0_in, 0, -2.4, 0.3, r'$\hat{\beta}_G$', coordinates='data', labelpos='E', labelsep=0.5)
+
+    ax[1].set_xlim(-1, 1)
+    ax[1].set_ylim(-1, 1)
+    ax[1].set_xlabel('$E$')
+    ax[1].set_ylabel('$N$')
+    ax[1].xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax[1].yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax[1].invert_xaxis()
+    ax[1].set_aspect('equal', 'box')
+
     # Text panel listing parameters.
-    tleft = 0.75
+    tleft = 0.75 * 1.08
     ttop = 0.8
     ttstep = 0.05
 
