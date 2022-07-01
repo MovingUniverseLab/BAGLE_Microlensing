@@ -58,8 +58,8 @@ List of Available Models
 
 The complete list of instantiable model classes is: 
 
-Point source, point lens, photometry only:
-------------------------------------------
+Point source, point lens, photometry only
+-----------------------------------------
 
     - PSPL_Phot_noPar_Param1
     - PSPL_Phot_noPar_Param2
@@ -73,8 +73,8 @@ Point source, point lens, photometry only:
     - PSPL_Phot_Par_GP_Param2
     - PSPL_Phot_Par_GP_Param2_2
 
-Point source, point lens, photometry and astrometry:
-----------------------------------------------------
+Point source, point lens, photometry and astrometry
+---------------------------------------------------
 
     - PSPL_PhotAstrom_noPar_Param1
     - PSPL_PhotAstrom_noPar_Param2

@@ -2536,8 +2536,8 @@ class PSPL_PhotAstrom(PSPL):
     This is a Data-type class in our hierarchy. It is abstract and should not
     be instantiated. 
 
-    Class Variables
-    ---------------
+    Attributes
+    ----------
     Available class variables that should be defined.
 
     t0
@@ -2616,8 +2616,8 @@ class PSPL_Astrom(PSPL):
     This is a Data-type class in our hierarchy. It is abstract and should not
     be instantiated. 
 
-    Class Variables
-    ---------------
+    Attributes
+    ----------
     Available class variables that should be defined.
 
     t0
@@ -6400,6 +6400,7 @@ class BSPL_PhotParam1(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
@@ -7624,8 +7625,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     This is a Data-type class in our hierarchy. It is abstract and should not
     be instantiated. 
 
-    Class Variables
-    --------------------
+    Attributes
+    ----------
     Available class variables that should be defined.
 
     t0
@@ -10487,7 +10488,7 @@ def cluster(image, R):
             4. Each point is then reassigned to the nearest cluster
     
     Parameters
-    --------------
+    ----------
     image:
         a list of points, all of which are inside some image of the star
     R:

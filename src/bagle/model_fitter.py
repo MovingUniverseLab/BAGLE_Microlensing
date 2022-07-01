@@ -2468,8 +2468,8 @@ def make_muS_EN_gen(t, pos, scale_factor=100.0):
     """Get an approximate muS search range by looking at the best fit
     straight line to the astrometry. Then allows lots of free space.
 
-    Inputs
-    ------
+    Parameters
+    ----------
     t: 
         array of times in days
     pos: 
@@ -2568,6 +2568,7 @@ def make_invgamma_gen(t_arr):
     ----------
     t_arr: 
         time array
+
     """
     a,b = compute_invgamma_params(t_arr)
 
@@ -2579,11 +2580,11 @@ def make_invgamma_gen(t_arr):
 
 
 def compute_invgamma_params(t_arr):
-    """
-    | Based on function of same name from 
-    Fran Bartolic's ``caustic`` package:
+    """Based on function of same name from  Fran Bartolic's ``caustic`` package:
+
     https://github.com/fbartolic/caustic
-    | Returns parameters of an inverse gamma distribution s.t.
+
+    Returns parameters of an inverse gamma distribution s.t.
      * 1% of total prob. mass is assigned to values of :math:`t < t_{min}` and
      * 1% of total prob. masss  to values greater than t_{tmax}.
  
@@ -2600,6 +2601,7 @@ def compute_invgamma_params(t_arr):
     -------
     invgamma_a, invgamma_b : float (?)
         The parameters a,b of the inverse gamma function.
+
     """
     def solve_for_params(params, x_min, x_max):
         lower_mass = 0.01
@@ -2649,8 +2651,7 @@ def weighted_quantile(values, quantiles, sample_weight=None,
     """ Very close to numplt.percentile, but supports weights.
     
     Parameters
-    _____________
-
+    ----------
     values: 
         numplt.array with data
     quantiles: 
