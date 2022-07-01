@@ -165,7 +165,7 @@ For example, the `PSPL_PhotAstrom_noPar_Param1` model is declared as:
     ``class PSPL_PhotAstrom_noPar_Param1(ModelClassABC, PSPL_PhotAstrom, PSPL_noParallax, PSPL_PhotAstromParam1)``
 
 Class Families
-=================
+==============
 
 Model Class Family
 ------------------
@@ -266,7 +266,7 @@ More details about each parameterization can be found in the Parameterization
 Class docstring.
 
 Making a New Model
---------------------
+------------------
 
 Each model is, as described above, constructed by combining inheriting from
 different parent classes that contain the desired features for the model. Each
@@ -517,7 +517,7 @@ class PSPL_AstromParam4(PSPL_Param):
     
     
     Notes
-    ---------
+    -----
     
     .. note:: Required parameters if calculating with parallax
     
@@ -664,7 +664,7 @@ class PSPL_AstromParam3(PSPL_Param):
     
  
     Notes
-    ---------
+    -----
     
     .. note:: Required parameters if calculating with parallax
     
@@ -894,7 +894,7 @@ class PSPL_PhotParam2(PSPL_Param):
         
         
     Notes
-    ---------
+    -----
     
     .. note:: Required parameters if calculating with parallax
     
@@ -1330,7 +1330,7 @@ class PSPL_PhotAstromParam3(PSPL_Param):
 
 
     Attributes	
-    -------------
+    ----------
 
     t0 : float
         Time of photometric peak, as seen from Earth (MJD.DDD)
@@ -1372,7 +1372,7 @@ class PSPL_PhotAstromParam3(PSPL_Param):
         list or array, with one entry for each photometric filter.
 
     Notes
-    ---------
+    -----
     
     .. note:: Required parameters if calculating with parallax
     
@@ -1489,7 +1489,7 @@ class PSPL_PhotAstromParam4(PSPL_Param):
     of source magnitude.
 
     Parameters
-    ------------
+    ----------
 
     t0 : float
         Time of photometric peak, as seen from Earth (MJD.DDD)
@@ -1531,7 +1531,7 @@ class PSPL_PhotAstromParam4(PSPL_Param):
         list or array, with one entry for each photometric filter.
 
     Notes
-    ---------
+    -----
     
     .. note:: Required parameters if calculating with parallax
     
@@ -1679,7 +1679,7 @@ class PSPL_PhotAstromParam5(PSPL_Param):
     It fits for piEN/piEE and piEE, instead of piEE and piEN.
 
     Attributes
-    -------------
+    ----------
     t0 : float
         Time of photometric peak, as seen from Earth (MJD.DDD)
     u0_amp : float
@@ -1720,7 +1720,7 @@ class PSPL_PhotAstromParam5(PSPL_Param):
         list or array, with one entry for each photometric filter.
 
     Notes
-    ---------
+    -----
     
     .. note:: Required parameters if calculating with parallax
     
@@ -2041,7 +2041,7 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
     instead of thetaE.
 
     Attributes
-    -------------
+    ----------
 
     t0: float
         Time of photometric peak, as seen from Earth (MJD.DDD)
@@ -2089,7 +2089,7 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
         Declination of the lens in decimal degrees.
 
     Notes
-    ---------
+    -----
     .. note::
        `raL` and `decL` are required parameters if calculating with parallax
     """
@@ -2139,7 +2139,7 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
     of source magnitude.
 
     Attributes
-    -----------
+    ----------
     t0: float
         Time of photometric peak, as seen from Earth (MJD.DDD)
 
@@ -2189,7 +2189,7 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
 
 
     Notes
-    ---------
+    -----
     .. note::
        | `raL` and `decL` are required parameters if calculating with parallax
        | For an explanation of the Guassian process parameters, see Golovich et al. 2019()
@@ -2245,7 +2245,7 @@ class PSPL(ABC):
         This function takes the PSPL and makes an animation, the input variables are as follows
 
         Parameters
-        --------------
+        ----------
 
         tE: 
             number of einstein crossings times before/after the peak you want the animation to plot
@@ -2473,8 +2473,8 @@ class PSPL_Phot(PSPL):
     This is a Data-type class in our hierarchy. It is abstract and should not
     be instantiated. 
 
-    Class Variables
-    --------------------
+    Attributes
+    ----------
     Available class variables that should be defined.
 
     t0
@@ -2537,7 +2537,7 @@ class PSPL_PhotAstrom(PSPL):
     be instantiated. 
 
     Class Variables
-    --------------------
+    ---------------
     Available class variables that should be defined.
 
     t0
@@ -2617,7 +2617,7 @@ class PSPL_Astrom(PSPL):
     be instantiated. 
 
     Class Variables
-    --------------------
+    ---------------
     Available class variables that should be defined.
 
     t0
@@ -2966,7 +2966,7 @@ class PSPL_noParallax(ParallaxClassABC):
         which we label plus and minus.
 
         Returns
-        --------
+        -------
         [xS_plus, xS_minus] : list of numpy arrays
             * xS_plus is the vector position of the plus image in arcsec
             * xS_minus is the vector position of the plus image in arcsec
@@ -3161,7 +3161,7 @@ class PSPL_Parallax(ParallaxClassABC):
         which we label plus and minus.
 
         Returns
-        --------
+        -------
         [xS_plus, xS_minus] : list of numpy arrays
             * xS_plus is the vector position of the plus image.
             * xS_minus is the vector position of the plus image.
@@ -3292,6 +3292,7 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
 
     def get_amplification(self, t):
         """Parallax: Get the photometric amplification term at a set of times, t.
+
         Parameters
         ----------
         t: 
@@ -3379,6 +3380,7 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
     ### FIXME? ###
     def get_astrometry_unlensed(self, t_obs, t0par):
         """Get the astrometry of the source if the lens didn't exist.
+
         Returns
         -------
         xS_unlensed : numpy array, dtype=float, shape = len(t_obs) x 2
@@ -3398,6 +3400,7 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
     def get_resolved_amplification(self, t):
         """Parallax: Get the photometric amplification term at a set of times, t for both the
         plus and minus images.
+
         Parameters
         ----------
         t: 
@@ -3424,8 +3427,9 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
     def get_resolved_astrometry(self, t_obs, t0par):
         """Parallax: Get the x, y astrometry for each of the two source images,
         which we label plus and minus.
+
         Returns
-        --------
+        -------
         [xS_plus, xS_minus] : list of numpy arrays
             * xS_plus is the vector position of the plus image.
             * xS_minus is the vector position of the plus image.
@@ -4048,8 +4052,8 @@ class PSBL(PSPL):
         t_obs : array_like
             Array of times to model.
 
-        Optional
-        ----------
+        Other Parameters
+        ----------------
         amp_arr : array_like
             Amplifications of each individual image at each time,
             i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
@@ -4107,8 +4111,8 @@ class PSBL(PSPL):
         t_obs : array_like
             Array of times to model.
 
-        Optional
-        ----------
+        Other Parameters
+        ----------------
         amp_arr : array_like
             Amplifications of each individual image at each time,
             i.e. ``amp_arr.shape = (len(t_obs)``, number of images at each t_obs).
@@ -4175,7 +4179,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         is just rewriting vectors :math:`z = (x,y)` as :math:`z = x + iy`.
 
         Returns
-        ----------
+        -------
         w : complex array
             Source position as an array of complex numbers with
             real = east component, imaginary = north component
@@ -4251,7 +4255,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
 
 
         Notes
-        -------
+        -----
         .. note::
            Note, this is a photometry only model, so units are in Einstein radii.
         """
@@ -4283,8 +4287,8 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         t_obs : array_like, shape = [N_times]
             Array of times to model.
 
-        Optional
-        ----------
+        Other Parameters
+        ----------------
         image_arr : array_like
             Array of complex image positions at each t_obs,
             i.e. image_arr.shape = (len(t_obs), number of images at each t_obs).
@@ -4317,8 +4321,8 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         t_obs : array_like
             Array of times to model.
 
-        Optional
-        ----------
+        Other Parameters
+        ----------------
         image_arr : array_like
             Array of complex image positions at each t_obs,
             i.e. image_arr.shape = (len(t_obs), number of images at each t_obs).
@@ -4367,7 +4371,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         is just rewriting vectors :math:`z = (x,y)` as :math:`z = x + iy`.
 
         Returns
-        ----------
+        -------
         w : complex array
             Source position as an array of complex numbers with
             real = east component, imaginary = north component
@@ -4404,8 +4408,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         t_obs : array_like, shape = [N_times]
             Array of times to model.
 
-        Optional
-        ----------
+        Other Parameters
+        ----------------
         image_arr : array_like
             Array of complex image positions at each t_obs,
             i.e. `image_arr.shape = (len(t_obs)`, number of images at each t_obs).
@@ -4437,8 +4441,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         t_obs : array_like
             Array of times to model.
 
-        Optional
-        ----------
+        Other Parameters
+        ----------------
         image_arr : array_like
             Array of complex image positions at each t_obs,
             i.e. `image_arr.shape = (len(t_obs)`, number of images at each t_obs).
@@ -4537,7 +4541,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         t_obs : array or float
 
         Other Parameters
-        ---------------------
+        ----------------
         ast_filt_idx : int
             Index into the photometry parameter lists for the photometry that
             corresponds to this astrometry data set.
@@ -5633,7 +5637,7 @@ class PSBL_PhotParam1(PSPL_Param):
         list or array, with one entry for each photometric filter.
 
     Other Parameters
-    ---------------
+    ----------------
     raL: float
         Right ascension of the lens in decimal degrees.
         Required if calculating with parallax
@@ -5862,12 +5866,12 @@ class BSPL(PSPL):
         t: Array of times in MJD.DDD
 
         Returns
-        ----------
+        -------
         A_resolved : numpy array 
             [shape = len(t), len(sources), 2]
             
         Notes
-        ----------
+        -----
 
         For each time t and each source, we have:
             * A_plus is the amplification for the plus image.
@@ -5921,7 +5925,7 @@ class BSPL(PSPL):
         t: Array of times in MJD.DDD
         
         Returns
-        -----------
+        -------
         A : numpy array
             | Array of combined amplifications in the specified filter. 
             | Shape = [len(t)]
@@ -5998,7 +6002,7 @@ class BSPL_Phot(BSPL, PSPL_Phot):
     be instantiated. 
 
     Attributes
-    --------------------
+    ----------
     t0
     tE
     u0_amp
@@ -6211,12 +6215,12 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         images as plus and minus.
 
         Returns
-        --------
+        -------
         xS_resolved : numpy array 
             [shape = len(t), len(sources), 2, 2]
 
         Notes
-        ------
+        -----
         For each time t and each source, we have:
             * xS_plus is the vector position of the plus image.
             * xS_minus is the vector position of the minus image.
@@ -6276,7 +6280,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             Array of times in MJD.DDD
 
         Returns
-        ----------
+        -------
         xS_lensed
             Returns flux-weighted average of lensed source positions.
         """
@@ -6322,7 +6326,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             Array of times in MJD.DDD
 
         Returns
-        ----------
+        -------
         centroid_shift : numpy array 
             [shape = len(t), 2]
         """
@@ -7416,7 +7420,7 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
     instead of thetaE.
 
     Attributes
-    -----------
+    ----------
     t0: float
         Time of photometric peak, as seen from Earth (MJD.DDD)
     u0_amp: float
@@ -7471,8 +7475,8 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
     gp_log_omega0: float
         Guassian process :math:`log(\omega_0)` from the SHO kernel.
 
-    Optional Inputs
-    ---------------
+    Other Parameters
+    ----------------
     Note: Required if calculating with parallax
     raL: float, optional
         Right ascension of the lens in decimal degrees.
@@ -7563,7 +7567,7 @@ class FSPL(PSPL):
             Array of times to model.
 
         Other Parameters
-        ----------
+        ----------------
         amp_arr : array_like
             Amplifications of each individual image at each time,
             i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
@@ -7793,8 +7797,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     #         t_obs : array_like
     #             Array of times to model.
     #
-    #         Optional
-    #         ----------
+    #         Other Parameters
+    #         ----------------
     #         amp_arr : array_like
     #             Amplifications of each individual image at each time,
     #             i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
@@ -8007,7 +8011,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         These are actual positions on the sky.
 
         Returns
-        --------
+        -------
         [xS_plus, xS_minus] : list of numpy arrays
             xS_plus is the vector position of the plus image.
             xS_minus is the vector position of the plus image.
@@ -8051,7 +8055,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             Shape = [len(t_obs), n_images=2]
 
         Notes
-        ----------
+        -----
         The algorithm uses green's theorem to change an area integral of the 
         image of the source into a path integral around the outside outline.
         We perform a first-order contour integral to approximate the area.
@@ -8176,8 +8180,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         t_obs : array_like, shape = [N_times]
             Array of times to model.
 
-        Optional
-        ----------
+        Other Parameters
+        ----------------
         image_arr : array_like
             Array of complex image positions at each t_obs,
             i.e. image_arr.shape = (len(t_obs), number of images at each t_obs).
@@ -8226,8 +8230,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         t_obs : array_like
             Array of times to model.
 
-        Optional
-        ----------
+        Other Parameters
+        ----------------
         amp_arr : array_like
             Amplifications of each individual image and each outline point
             for that image at each time,
@@ -8285,8 +8289,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         t_obs : array_like
             Array of times to model.
 
-        Optional
-        ----------
+        Other Parameters
+        ----------------
         amp_arr : array_like
             Amplifications of each individual image at each time,
             i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
@@ -8343,8 +8347,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         t_obs : array_like
             Array of times to model.
 
-        Optional
-        ----------
+        Other Parameters
+        ----------------
         image_arr : array_like
             Array of complex image positions at each t_obs,
             i.e. image_arr.shape = (len(t_obs), number of images at each t_obs).
@@ -8642,7 +8646,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     be instantiated. 
 
     Attributes
-    --------------------
+    ----------
     Available class variables that should be defined.
 
     t0
@@ -8772,8 +8776,8 @@ class FSPL_Limb(FSPL):
         t_obs : array_like
             Array of times to model.
 
-        Optional
-        ----------
+        Other Parameters
+        ----------------
         amp_arr : array_like
             Amplifications of each individual image at each time,
             i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
@@ -10396,7 +10400,7 @@ def get_image(y0, m1, d, R):
     """ Function to find the images of the star
     
     Parameters
-    -----------
+    ----------
     y0:
         position of the cente of the source star, in units of anguler Einstein radius
     m1:

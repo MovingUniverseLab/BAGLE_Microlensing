@@ -4,7 +4,7 @@ test_pspl_*/
 .idea/
 src/BAGLE/parallax_cache
 .ipynb_checkpoints/
-docs/_build/html
+docs/_build
 
 *.pyc
 *~
