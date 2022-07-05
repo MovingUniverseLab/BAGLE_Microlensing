@@ -11,7 +11,13 @@ def test_mulens_to_bagle_psbl_phot(ra, dec, t_mjd,
                                    t0_m, u0_m, tE_m,
                                    piEE_m, piEN_m, t0par,
                                    q_m, alpha_m, sep,
+                                   return_mag=False,
                                    plot=True):
+    """
+    mag : bool
+        True will return magnitudes (baseline 22, unblended)
+        False will return magnification.
+    """
 
     output = fc.convert_bagle_mulens_psbl_phot(ra, dec,
                                                t0_m, u0_m, tE_m,
@@ -30,28 +36,41 @@ def test_mulens_to_bagle_psbl_phot(ra, dec, t_mjd,
     # Get the lightcurve from the geoprojected parameters.
     mag_mulens = get_phot_mulens_psbl(coords, t0_m, u0_m, tE_m, 
                                       piEE_m, piEN_m, t0par, 
-                                      alpha_m, q_m, sep, t_hjd)
-    print(t0_m, u0_m, tE_m, 
-          piEE_m, piEN_m,
-          alpha_m, q_m, sep)
+                                      alpha_m, q_m, sep, t_hjd,
+                                      return_mag=return_mag)
+
+    mag_pylima = get_phot_pylima_psbl(ra, dec, t0_m, u0_m, tE_m, 
+                                      piEE_m, piEN_m, t0par, 
+                                      alpha_m, q_m, sep, t_hjd,
+                                      return_mag=return_mag)
+
     # Get the lightcurve from the heliocentric parameters.
     mag_bagle = get_phot_bagle_psbl(ra, dec, t0_b, u0_b,
                                     tE_b, piEE_b, piEN_b, 
-                                    alpha_b, q_b, sep, t_mjd)
-    print(t0_b, u0_b, tE_b, 
-          piEE_b, piEN_b, 
-          alpha_b, q_b, sep)
+                                    alpha_b, q_b, sep, t_mjd,
+                                    return_mag=return_mag)
+#    print(t0_b, u0_b, tE_b, 
+#          piEE_b, piEN_b, 
+#          alpha_b, q_b, sep)
     if plot:
-        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+        fig, ax = plt.subplots(3, 1, figsize=(8,8), sharex=True, num=3)
         plt.clf()
-        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
-        ax[0].plot(t_mjd, mag_mulens, 'o')
-        ax[0].plot(t_mjd, mag_bagle, '.')
-        ax[0].invert_yaxis()
+        fig, ax = plt.subplots(3, 1, figsize=(8,8), sharex=True, num=3)
+        ax[0].plot(t_mjd, mag_mulens, '.', ms=10)
+        ax[0].plot(t_mjd, mag_pylima, '.', ms=5)
+        ax[0].plot(t_mjd, mag_bagle, '.', ms=3)
         ax[1].plot(t_mjd, mag_mulens - mag_bagle, '.')
-        ax[0].set_ylabel('Mag')
-        ax[1].set_ylabel('Mag Mulens - Bagle')
-        ax[1].set_xlabel('MJD')
+        ax[2].plot(t_mjd, mag_mulens - mag_pylima, '.')
+        if return_mag:
+            ax[0].set_ylabel('Mag')
+            ax[1].set_ylabel('Mag Mulens - Bagle')
+            ax[2].set_ylabel('Mag Mulens - pyLIMA')
+            ax[0].invert_yaxis()
+        else:
+            ax[0].set_ylabel('Amp')
+            ax[1].set_ylabel('Amp Mulens - Bagle')
+            ax[2].set_ylabel('Amp Mulens - pyLIMA')
+        ax[2].set_xlabel('MJD')
         plt.show()
 #        plt.pause(0.5)
 
@@ -68,8 +87,9 @@ def test_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
                                    t0_b, u0_b, tE_b,
                                    piEE_b, piEN_b, t0par,
                                    q_b, alpha_b, sep,
+                                   return_mag=False,
                                    plot=True):
-
+    
     output = fc.convert_bagle_mulens_psbl_phot(ra, dec,
                                                t0_b, u0_b, tE_b,
                                                piEE_b, piEN_b, t0par,
@@ -87,30 +107,65 @@ def test_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
     # Get the lightcurve from the geoprojected parameters.
     mag_mulens = get_phot_mulens_psbl(coords, t0_m, u0_m, tE_m, 
                                       piEE_m, piEN_m, t0par, 
-                                      alpha_m, q_m, sep, t_hjd)
+                                      alpha_m, q_m, sep, t_hjd,
+                                      return_mag=return_mag)
+
+    mag_pylima = get_phot_pylima_psbl(ra, dec, t0_m, u0_m, tE_m, 
+                                      piEE_m, piEN_m, t0par, 
+                                      alpha_m, q_m, sep, t_hjd,
+                                      return_mag=return_mag)
+
     print(t0_m, u0_m, tE_m, 
           piEE_m, piEN_m, t0par, 
           alpha_m, q_m, sep)
+
     # Get the lightcurve from the heliocentric parameters.
     mag_bagle = get_phot_bagle_psbl(ra, dec, t0_b, u0_b,
                                     tE_b, piEE_b, piEN_b, 
-                                    alpha_b, q_b, sep, t_mjd)
+                                    alpha_b, q_b, sep, t_mjd,
+                                    return_mag=return_mag)
     print(t0_b, u0_b,
           tE_b, piEE_b, piEN_b, 
           alpha_b, q_b, sep)
+
     if plot:
-        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+        fig, ax = plt.subplots(3, 1, figsize=(8,8), sharex=True, num=3)
         plt.clf()
-        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
-        ax[0].plot(t_mjd, mag_mulens, 'o')
-        ax[0].plot(t_mjd, mag_bagle, '.')
-        ax[0].invert_yaxis()
+        fig, ax = plt.subplots(3, 1, figsize=(8,8), sharex=True, num=3)
+        ax[0].plot(t_mjd, mag_mulens, '.', ms=10, label='M')
+        ax[0].plot(t_mjd, mag_pylima, '.', ms=5, label='P')
+        ax[0].plot(t_mjd, mag_bagle, '.', ms=3, label='B')
+        ax[0].legend()
         ax[1].plot(t_mjd, mag_mulens - mag_bagle, '.')
-        ax[0].set_ylabel('Mag')
-        ax[1].set_ylabel('Mag Mulens - Bagle')
-        ax[1].set_xlabel('MJD')
+        ax[2].plot(t_mjd, mag_mulens - mag_pylima, '.')
+        if return_mag:
+            ax[0].set_ylabel('Mag')
+            ax[1].set_ylabel('Mag Mulens - Bagle')
+            ax[2].set_ylabel('Mag Mulens - pyLIMA')
+            ax[0].invert_yaxis()
+        else:
+            ax[0].set_ylabel('Amp')
+            ax[1].set_ylabel('Amp Mulens - Bagle')
+            ax[2].set_ylabel('Amp Mulens - pyLIMA')    
+        ax[2].set_xlabel('MJD')
         plt.show()
         plt.pause(0.5)
+
+#        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+#        plt.clf()
+#        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+#        ax[0].plot(t_mjd, mag_pylima, '.', ms=10)
+#        ax[0].plot(t_mjd, mag_bagle, '.', ms=5)
+#        ax[0].plot(t_mjd, mag_mulens, '.', ms=3)
+#        ax[0].invert_yaxis()
+#        ax[1].plot(t_mjd, mag_mulens - mag_pylima, '.', ms=10, label='M-P')
+#        ax[1].plot(t_mjd, mag_mulens - mag_bagle, '.', ms=5, label='M-B')
+#        ax[0].set_ylabel('Mag')
+#        ax[1].set_ylabel('Mag Diff')
+#        ax[1].set_xlabel('MJD')
+#        ax[1].legend()
+#        plt.show()
+#        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
@@ -120,8 +175,6 @@ def test_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
     total_diff = np.sum(np.abs(diff))
     assert total_diff/len(t_mjd) < 1e-4
 
-def test_mm_vs_vbbl():
-    pass
 
 def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
                                  t0_g, u0_g, tE_g, 
@@ -379,10 +432,79 @@ def test_mulens_to_bagle(ra, dec, t_mjd,
     diff = (mag_mulens - mag_bagle)/mag_mulens
     total_diff = np.sum(np.abs(diff))
     assert total_diff/len(t_mjd) < 1e-4
-    
-    
+
+
+def get_phot_pylima_psbl(ra, dec, t0_g, u0_g, tE_g,
+                         piEE_g, piEN_g, t0par, 
+                         alpha_g, q, sep, t_hjd,
+                         return_mag=True):
+    """
+    Compare pyLIMA to our models with some plots. 
+
+    Input parameters are in our conventions and heliocentric coordinate system.
+    """
+    from pyLIMA import microlmodels
+    from pyLIMA import event
+    from pyLIMA import telescopes
+    from pyLIMA import microltoolbox
+    from pyLIMA import microlmodels
+
+    #####
+    # PyLIMA setup stuff.
+    #####
+    # Make fake data for pyLIMA... need this for time array definition.
+    pylima_data = np.zeros((len(t_hjd), 3))
+    pylima_data[:,0] = t_hjd
+    pylima_data[:,1] = np.ones(len(t_hjd))
+    pylima_data[:,2] = np.ones(len(t_hjd))
+
+    # Make a telescope object
+    pylima_tel = telescopes.Telescope(name='OGLE', camera_filter='I', light_curve_flux=pylima_data)
+    pylima_ev = event.Event()
+    pylima_ev.name = 'Fubar'
+    pylima_ev.telescopes.append(pylima_tel)
+    pylima_ev.ra = ra
+    pylima_ev.dec = dec
+
+    # Set up parameters.
+    pylima_t0 = t0_g + 2400000.5
+    pylima_u0 = u0_g
+    pylima_tE = tE_g
+    pylima_piEE = piEE_g 
+    pylima_piEN = piEN_g
+    pylima_t0_par = t0par + 2400000.5
+    pylima_phi = np.deg2rad(alpha_g) # phi in radians
+    pylima_log_q = np.log10(q)
+    pylima_log_s = np.log10(sep)
+
+    # Now finally... create the model.
+    pylima_mod = microlmodels.create_model('PSBL', pylima_ev, parallax=['Annual', pylima_t0_par])
+
+    tmp_params = [pylima_t0, pylima_u0, pylima_tE, 
+                  pylima_log_s, pylima_log_q, pylima_phi,
+                  pylima_piEN, pylima_piEE]
+       
+    pylima_mod.define_model_parameters()
+    pylima_mod.blend_flux_ratio = False
+
+    mag_src=22
+    b_sff=1
+    pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
+    pylima_par.fs_OGLE = microltoolbox.magnitude_to_flux(mag_src)
+    pylima_par.fb_OGLE = pylima_par.fs_OGLE * (1.0 - b_sff) / b_sff
+
+    if return_mag:    
+        pylima_lcurve, sf, bf = pylima_mod.compute_the_microlensing_model(pylima_tel, pylima_par)
+        pylima_lcurve_mag = microltoolbox.flux_to_magnitude(pylima_lcurve)
+    else:
+        pylima_amp = pylima_mod.model_magnification(pylima_tel, pylima_par)
+        pylima_lcurve_mag = pylima_amp
+
+    return pylima_lcurve_mag
+
 def get_phot_mulens(coords, t0_g, u0_g, tE_g, 
-                    piEE_g, piEN_g, t0par, t_hjd):
+                    piEE_g, piEN_g, t0par, t_hjd,
+                    return_mag=True):
     """
     Get lightcurve from MulensModel, assuming an 
     unblended 22nd mag source. MulensModel uses the 
@@ -404,14 +526,18 @@ def get_phot_mulens(coords, t0_g, u0_g, tE_g,
     # Then instantiate model and get lightcurve.
     my_model = mm.Model(params, coords=coords)
 
-    mag_obs = my_model.get_lc(times=t_hjd, source_flux=1, blend_flux=0)
+    if return_mag:
+        mag_obs = my_model.get_lc(times=t_hjd, source_flux=1, blend_flux=0)
+    else:
+        mag_obs = my_model.get_magnification(t_hjd)
 
     return mag_obs
 
 
 def get_phot_mulens_psbl(coords, t0_g, u0_g, tE_g, 
                          piEE_g, piEN_g, t0par, 
-                         alpha_g, q, sep, t_hjd):
+                         alpha_g, q, sep, t_hjd,
+                         return_mag=True):
     """
     Get PSBL lightcurve from MulensModel, assuming an 
     unblended 22nd mag source. MulensModel uses the 
@@ -436,13 +562,16 @@ def get_phot_mulens_psbl(coords, t0_g, u0_g, tE_g,
     # Then instantiate model and get lightcurve.
     my_model = mm.Model(params, coords=coords)
 
-    mag_obs = my_model.get_lc(times=t_hjd, source_flux=1, blend_flux=0)
-
+    if return_mag:
+        mag_obs = my_model.get_lc(times=t_hjd, source_flux=1, blend_flux=0)
+    else:
+        mag_obs = my_model.get_magnification(t_hjd)
     return mag_obs
 
 
 def get_phot_bagle(ra, dec, t0_h, u0_h, 
-                   tE_h, piEE_h, piEN_h, t_mjd):
+                   tE_h, piEE_h, piEN_h, t_mjd,
+                   return_mag=True):
     """
     Get lightcurve from BAGLE, assuming an unblended 
     22nd mag source. This BAGLE model uses the 
@@ -469,14 +598,18 @@ def get_phot_bagle(ra, dec, t0_h, u0_h,
                                      params['b_sff'], params['mag_src'],
                                      raL=params['raL'], decL=params['decL'])
 
-    mag_obs = mod.get_photometry(t_mjd)
+    if return_mag:
+        mag_obs = mod.get_photometry(t_mjd)
+    else:
+        mag_obs = mod.get_amplification(t_mjd)
 
     return mag_obs
 
 
 def get_phot_bagle_psbl(ra, dec, t0_h, u0_h,
                         tE_h, piEE_h, piEN_h, 
-                        alpha_h, q, sep, t_mjd):
+                        alpha_h, q, sep, t_mjd,
+                        return_mag=True):
     """
     Get PSBL lightcurve from BAGLE, assuming an unblended 
     22nd mag source. This BAGLE model uses the 
@@ -509,13 +642,17 @@ def get_phot_bagle_psbl(ra, dec, t0_h, u0_h,
                                      params['b_sff'], params['mag_src'],
                                      raL=params['raL'], decL=params['decL'])
 
-    mag_obs = mod.get_photometry(t_mjd)
+    if return_mag:
+        mag_obs = mod.get_photometry(t_mjd)
+    else:
+        mag_obs = mod.get_amplification(t_mjd)
 
     return mag_obs
 
 
 def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h, 
-                           piEE_h, piEN_h, t_mjd, t0par):
+                           piEE_h, piEN_h, t_mjd, t0par,
+                           return_mag=True):
     """
     Get lightcurve from BAGLE, assuming an unblended 
     22nd mag source. This BAGLE model uses the    
@@ -543,7 +680,10 @@ def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h,
                                              params['b_sff'], params['mag_src'],
                                              params['t0par'],
                                              raL=params['raL'], decL=params['decL'])
-    mag_obs = mod.get_photometry(t_mjd)
+    if return_mag:
+        mag_obs = mod.get_photometry(t_mjd)
+    else:
+        mag_obs = mod.get_amplification(t_mjd)
 
     return mag_obs
 
@@ -551,8 +691,8 @@ def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h,
 def test_bagle_mulens_psbl_phot_set():
     t_mjd = np.arange(57000 - 500, 57000 + 500, 0.1)
 
-#    print('set 1')
-#    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
+    print('set 1')
+    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
 #    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.3, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
 #    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.1, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
 #    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.1, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
@@ -561,8 +701,8 @@ def test_bagle_mulens_psbl_phot_set():
 #    test_mulens_to_bagle_psbl_phot(259, -29, t_mjd, 57067.49054573558, 0.6378670566069137, 
 #                                   255.12120946554256, -0.19705897762298288, -0.10567761985484313, 
 #                                   57100, 2.0, 88.36154573925313, 1.5)
-    test_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
-    test_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.3, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
+#    test_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
+#    test_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.3, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
 
 def test_bagle_mulens_set():
     """
