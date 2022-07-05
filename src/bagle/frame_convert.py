@@ -770,6 +770,4 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
 
     plt.show()
     plt.pause(1)
-    import pdb
-    pdb.set_trace()
 

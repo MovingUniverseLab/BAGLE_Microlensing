@@ -238,12 +238,14 @@ def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
         plt.clf()
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
-        ax[0].plot(t_mjd, mag_bagle_geoproj, 'o')
-        ax[0].plot(t_mjd, mag_bagle, '.')
+        ax[0].plot(t_mjd, mag_bagle_geoproj, 'o', label='Geo proj')
+        ax[0].plot(t_mjd, mag_bagle, '.', label='Helio')
+        ax[0].legend()
         ax[0].invert_yaxis()
         ax[1].plot(t_mjd, mag_bagle_geoproj - mag_bagle, '.')
         ax[0].set_ylabel('Mag')
-        ax[1].set_ylabel('Bagle Geoproj - Bagle')
+        ax[1].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+        ax[1].set_ylabel('Geo proj - Helio')
         ax[1].set_xlabel('MJD')
         plt.show()
 #        plt.pause(0.5)
@@ -318,12 +320,14 @@ def test_bagle_helio_to_geo_phot(ra, dec, t_mjd,
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
         plt.clf()
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
-        ax[0].plot(t_mjd, mag_bagle_geoproj, 'o')
-        ax[0].plot(t_mjd, mag_bagle, '.')
+        ax[0].plot(t_mjd, mag_bagle_geoproj, 'o', label='Geo proj')
+        ax[0].plot(t_mjd, mag_bagle, '.', label='Helio')
         ax[0].invert_yaxis()
+        ax[0].legend()
         ax[1].plot(t_mjd, mag_bagle_geoproj - mag_bagle, '.')
         ax[0].set_ylabel('Mag')
-        ax[1].set_ylabel('Bagle Geoproj - Bagle')
+        ax[1].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+        ax[1].set_ylabel('Geo proj - Helio')
         ax[1].set_xlabel('MJD')
         plt.show()
         plt.pause(1)
@@ -340,7 +344,10 @@ def test_bagle_helio_to_geo_phot(ra, dec, t_mjd,
 def test_bagle_to_mulens(ra, dec, t_mjd,
                          t0_h, u0_h, tE_h, 
                          piEE_h, piEN_h, 
-                         t0par, plot=False):
+                         t0par, 
+                         plot_conv=False,
+                         plot_lc=False,
+                         verbose=False):
     """
     Test conversion from heliocentric frame (using 
     source-lens East-North convention) in BAGLE to geocentric 
@@ -363,7 +370,8 @@ def test_bagle_to_mulens(ra, dec, t_mjd,
                                        tE_h, piEE_h, piEN_h,
                                        t0par, in_frame='helio',
                                        murel_in='SL', murel_out='LS',
-                                       coord_in='EN', coord_out='tb')
+                                       coord_in='EN', coord_out='tb',
+                                       plot=plot_conv)
 
     t0_g, u0_g, tE_g, piEE_g, piEN_g = output
 
@@ -382,16 +390,33 @@ def test_bagle_to_mulens(ra, dec, t_mjd,
     mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, 
                                tE_h, piEE_h, piEN_h, t_mjd)
     
-    if plot:
+    if verbose:
+        label = ['t0 (MJD)', 'u0', 'tE (days)', 'piEE', 'piEN', 't0par']
+        geoproj = [t0_g, u0_g, tE_g, piEE_g, piEN_g, t0par]
+        helio = [t0_h, u0_h, tE_h, piEE_h, piEN_h]
+
+        print('*******************************************')
+        print('Geo proj parameters, tau-beta, L-S frame')
+        for gg, _ in enumerate(geoproj):
+            print('{0} : {1:.2f}'.format(label[gg], geoproj[gg]))
+        print('-------------------------------------------')
+        print('Helio parameters, East-North, S-L frame')
+        for hh, _ in enumerate(helio):
+            print('{0} : {1:.2f}'.format(label[hh], helio[hh]))
+        print('*******************************************')
+
+    if plot_lc:
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
         plt.clf()
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
-        ax[0].plot(t_mjd, mag_mulens, 'o')
-        ax[0].plot(t_mjd, mag_bagle, '.')
+        ax[0].plot(t_mjd, mag_mulens, 'o', label='Mulens')
+        ax[0].plot(t_mjd, mag_bagle, '.', label='BAGLE')
         ax[0].invert_yaxis()
+        ax[0].legend()
         ax[1].plot(t_mjd, mag_mulens - mag_bagle, '.')
         ax[0].set_ylabel('Mag')
-        ax[1].set_ylabel('MM - Bagle')
+        ax[1].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+        ax[1].set_ylabel('Mulens - BAGLE')
         ax[1].set_xlabel('MJD')
         plt.show()
 #        plt.pause(0.5)
@@ -407,7 +432,10 @@ def test_bagle_to_mulens(ra, dec, t_mjd,
 def test_mulens_to_bagle(ra, dec, t_mjd,
                          t0_g, u0_g, tE_g, 
                          piEE_g, piEN_g, 
-                         t0par, plot=False):
+                         t0par,
+                         plot_conv=False,
+                         plot_lc=False,
+                         verbose=False):
     """
     Test conversion from geocentric projected frame (using 
     lens-source tau-beta convention) in MulensModel to 
@@ -430,7 +458,8 @@ def test_mulens_to_bagle(ra, dec, t_mjd,
                                        tE_g, piEE_g, piEN_g,
                                        t0par, in_frame='geo',
                                        murel_in='LS', murel_out='SL',
-                                       coord_in='tb', coord_out='EN')
+                                       coord_in='tb', coord_out='EN',
+                                       plot=plot_conv)
 
     t0_h, u0_h, tE_h, piEE_h, piEN_h = output
 
@@ -449,16 +478,33 @@ def test_mulens_to_bagle(ra, dec, t_mjd,
     mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, 
                                tE_h, piEE_h, piEN_h, t_mjd)
 
-    if plot:
+    if verbose:
+        label = ['t0 (MJD)', 'u0', 'tE (days)', 'piEE', 'piEN', 't0par']
+        geoproj = [t0_g, u0_g, tE_g, piEE_g, piEN_g, t0par]
+        helio = [t0_h, u0_h, tE_h, piEE_h, piEN_h]
+
+        print('*******************************************')
+        print('Geo proj parameters, tau-beta, L-S frame')
+        for gg, _ in enumerate(geoproj):
+            print('{0} : {1:.2f}'.format(label[gg], geoproj[gg]))
+        print('-------------------------------------------')
+        print('Helio parameters, East-North, S-L frame')
+        for hh, _ in enumerate(helio):
+            print('{0} : {1:.2f}'.format(label[hh], helio[hh]))
+        print('*******************************************')
+
+    if plot_lc:
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
         plt.clf()
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
-        ax[0].plot(t_mjd, mag_mulens, 'o')
-        ax[0].plot(t_mjd, mag_bagle, '.')
+        ax[0].plot(t_mjd, mag_mulens, 'o', label='Mulens')
+        ax[0].plot(t_mjd, mag_bagle, '.', label='BAGLE')
         ax[0].invert_yaxis()
+        ax[0].legend()
         ax[1].plot(t_mjd, mag_mulens - mag_bagle, '.')
         ax[0].set_ylabel('Mag')
-        ax[1].set_ylabel('MM - Bagle')
+        ax[1].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+        ax[1].set_ylabel('Mulens - BAGLE')
         ax[1].set_xlabel('MJD')
         plt.show()
 #        plt.pause(0.5)
@@ -742,7 +788,7 @@ def test_bagle_mulens_psbl_phot_set():
 #    test_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
 #    test_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.3, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
 
-def test_bagle_mulens_set():
+def test_bagle_mulens_set(plot_lc=False, plot_conv=False, verbose=False):
     """
     Test BAGLE --> Mulens as well as Mulens --> BAGLE 
     conversions for all combos of u0/piEE/piEN sign,
@@ -750,65 +796,67 @@ def test_bagle_mulens_set():
     """
     t_mjd = np.arange(57000 - 500, 57000 + 500, 1)
 
+    kwargs = {'plot_lc' : plot_lc, 'plot_conv' : plot_lc, 'verbose' : verbose}
+
     print('set 1')
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57100)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57100)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57100)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57100)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57100)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57100)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57100)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57100, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57100, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57100, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57100, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57100, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57100, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57100, **kwargs)
     
     print('set 2')
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57100)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57100)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57100)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57100)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57100)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57100)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57100)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57100, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57100, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57100, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57100, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57100, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57100, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57100, **kwargs)
     
     print('set 3')
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57000)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57000)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57000)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57000)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57000)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57000)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57000)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57000)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57000, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57000, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57000, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57000, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57000, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57000, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57000, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57000, **kwargs)
     
     print('set 4')
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57000)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57000)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57000)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57000)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57000)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57000)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57000)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57000)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57000, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57000, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57000, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57000, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57000, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57000, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57000, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57000, **kwargs)
     
     print('set 5')
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 69900)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 69900)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 69900)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 69900)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 69900)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 69900)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 69900)
-    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 69900)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 69900, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 69900, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 69900, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 69900, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 69900, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 69900, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 69900, **kwargs)
+    test_bagle_to_mulens(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 69900, **kwargs)
     
     print('set 6')
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 69900)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 69900)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 69900)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 69900)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 69900)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 69900)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 69900)
-    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 69900)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 69900, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 69900, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 69900, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 69900, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 69900, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 69900, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 69900, **kwargs)
+    test_mulens_to_bagle(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 69900, **kwargs)
 
 
 def test_bagle_helio_geo_set(plot_lc=False, plot_conv=False, verbose=False):
