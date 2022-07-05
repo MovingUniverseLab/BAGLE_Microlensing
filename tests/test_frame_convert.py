@@ -179,7 +179,10 @@ def test_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
 def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
                                  t0_g, u0_g, tE_g, 
                                  piEE_g, piEN_g, 
-                                 t0par, plot=False):
+                                 t0par, 
+                                 plot_conv=False,
+                                 plot_lc=False,
+                                 verbose=False):
     """
     Test conversion from geocentric projected frame
     (using lens-source tau-beta convention) to
@@ -202,7 +205,8 @@ def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
                                        tE_g, piEE_g, piEN_g,
                                        t0par, in_frame='geo',
                                        murel_in='LS', murel_out='SL',
-                                       coord_in='tb', coord_out='EN')
+                                       coord_in='tb', coord_out='EN',
+                                       plot=plot_conv)
 
     t0_h, u0_h, tE_h, piEE_h, piEN_h = output
 
@@ -215,7 +219,22 @@ def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
     mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, 
                                tE_h, piEE_h, piEN_h, t_mjd)
 
-    if plot:
+    if verbose:
+        label = ['t0 (MJD)', 'u0', 'tE (days)', 'piEE', 'piEN', 't0par']
+        geoproj = [t0_g, u0_g, tE_g, piEE_g, piEN_g, t0par]
+        helio = [t0_h, u0_h, tE_h, piEE_h, piEN_h]
+
+        print('*******************************************')
+        print('Geo proj parameters, tau-beta, L-S frame')
+        for gg, _ in enumerate(geoproj):
+            print('{0} : {1:.2f}'.format(label[gg], geoproj[gg]))
+        print('-------------------------------------------')
+        print('Helio parameters, East-North, S-L frame')
+        for hh, _ in enumerate(helio):
+            print('{0} : {1:.2f}'.format(label[hh], helio[hh]))
+        print('*******************************************')
+
+    if plot_lc:
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
         plt.clf()
         fig, ax = plt.subplots(2, 1, sharex=True, num=3)
