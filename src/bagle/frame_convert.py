@@ -516,40 +516,44 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         color_in = 'blue'
         color_out = 'red'
 
-    # FIXME; need some way to make the width scale as the vector's length...
-    # 0.003 is good for close in but not far.
     # u0 vector
-    ax.quiver(0, 0, vec_u0_out[0], vec_u0_out[1],
-              color=color_out, units='xy', angles='xy', scale=1, width=0.003)
+    ax.annotate('', xy=(0,0), xycoords='data',
+                xytext=(vec_u0_out[0], vec_u0_out[1]), textcoords='data',
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_out, lw=2, mutation_scale=15))
 
-    ax.quiver(0, 0, vec_u0_in[0], vec_u0_in[1],
-              color=color_in, units='xy', angles='xy', scale=1, width=0.003)
+    ax.annotate('', xy=(0,0), xycoords='data',
+                xytext=(vec_u0_in[0], vec_u0_in[1]), textcoords='data',
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_in, lw=2, mutation_scale=15))
 
     # tau vector (starting at u0 vector)
-    ax.quiver(vec_u0_out[0], vec_u0_out[1], vec_tau_out[0], vec_tau_out[1], 
-              color=color_out, units='xy', angles='xy', scale=1, width=0.003)
+    ax.annotate('', xy=(vec_u0_out[0], vec_u0_out[1]), xycoords='data',
+                xytext=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), textcoords='data',
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_out, lw=2, mutation_scale=15, shrinkA=0))
 
-    ax.quiver(vec_u0_in[0], vec_u0_in[1], vec_tau_in[0], vec_tau_in[1], 
-              color=color_in, units='xy', angles='xy', scale=1, width=0.003)
+    ax.annotate('', xy=(vec_u0_in[0], vec_u0_in[1]), xycoords='data',
+                xytext=(vec_u0_in[0] + vec_tau_in[0], vec_u0_in[1] + vec_tau_in[1]), textcoords='data',
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_in, lw=2, mutation_scale=15, shrinkA=0))
 
     # Plot the source (i.e. origin)
-    ax.plot(0, 0, 'o', ms=10, mec='k', color='yellow', label='Source')
+    ax.plot(0, 0, 'o', ms=8, mec='k', color='yellow', label='Source')
 
     # Plot the lens (both helio and geo proj positions at t0)
-    ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=10, mec=color_in, color='k', mew=3, label=label_in)
-    ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=10, mec=color_out, color='k', mew=3, label=label_out)
+    ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=8, mec=color_in, color='k', mew=2, label=label_in)
+    ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=8, mec=color_out, color='k', mew=2, label=label_out)
 
     # Parallax vector
     if in_frame=='helio':
-        ax.quiver(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1], 
-                  vec_par[0]*piE, vec_par[1]*piE, 
-                  color='gray', units='xy', angles='xy', scale=1, width=0.003)
+        ax.annotate('', xy=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), xycoords='data',
+                    xytext=(vec_u0_out[0] + vec_tau_out[0] + vec_par[0]*piE, vec_u0_out[1] + vec_tau_out[1] + vec_par[1]*piE),
+                    textcoords='data', ha='right', 
+                    arrowprops=dict(arrowstyle= '<|-', color='gray', lw=2, mutation_scale=15, shrinkA=0, shrinkB=0))
     else:
-        ax.quiver(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1], 
-                  -vec_par[0]*piE, -vec_par[1]*piE, 
-                  color='gray', units='xy', angles='xy', scale=1, width=0.003)
+        ax.annotate('', xy=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), xycoords='data',
+                    xytext=(vec_u0_out[0] + vec_tau_out[0] - vec_par[0]*piE, vec_u0_out[1] + vec_tau_out[1] - vec_par[1]*piE),
+                    textcoords='data', ha='right', 
+                    arrowprops=dict(arrowstyle= '<|-', color='gray', lw=2, mutation_scale=15, shrinkA=0, shrinkB=0))
 
-    # Not sure why these next two lines are totally necessary...
+#    # Not sure why these next two lines are totally necessary...
     ax.plot(vec_u0_in[0] + vec_tau_in[0], vec_u0_in[1] + vec_tau_in[1], 'o', ms=0.001, color=color_in)
     ax.plot(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1], 'o', ms=0.001, color=color_out)
 
@@ -636,35 +640,41 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         color_out = 'red'
 
     # u0 vector
-    ax[0].quiver(0, 0, -vec_u0_out[0], -vec_u0_out[1],
-              color=color_out, units='xy', angles='xy', scale=1, width=0.003)
+    ax[0].annotate('', xy=(0,0), xycoords='data',
+                xytext=(-vec_u0_out[0], -vec_u0_out[1]), textcoords='data',
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_out, lw=2, mutation_scale=15))
 
-    ax[0].quiver(0, 0, -vec_u0_in[0], -vec_u0_in[1],
-              color=color_in, units='xy', angles='xy', scale=1, width=0.003)
+    ax[0].annotate('', xy=(0,0), xycoords='data',
+                xytext=(-vec_u0_in[0], -vec_u0_in[1]), textcoords='data',
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_in, lw=2, mutation_scale=15))
 
     # tau vector (starting at u0 vector)
-    ax[0].quiver(-vec_u0_out[0], -vec_u0_out[1], -vec_tau_out[0], -vec_tau_out[1], 
-              color=color_out, units='xy', angles='xy', scale=1, width=0.003)
+    ax[0].annotate('', xy=(-vec_u0_out[0], -vec_u0_out[1]), xycoords='data',
+                   xytext=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), textcoords='data',
+                   ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_out, lw=2, mutation_scale=15, shrinkA=0))
 
-    ax[0].quiver(-vec_u0_in[0], -vec_u0_in[1], -vec_tau_in[0], -vec_tau_in[1], 
-              color=color_in, units='xy', angles='xy', scale=1, width=0.003)
+    ax[0].annotate('', xy=(-vec_u0_in[0], -vec_u0_in[1]), xycoords='data',
+                   xytext=(-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[1] - vec_tau_in[1]), textcoords='data',
+                   ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_in, lw=2, mutation_scale=15, shrinkA=0))
 
     # Plot the lens (i.e. origin)
-    ax[0].plot(0, 0, 'o', ms=10, mec='k', color='k', label='Lens')
+    ax[0].plot(0, 0, 'o', ms=8, mec='k', color='k', label='Lens')
 
     # Plot the source (both helio and geo proj positions at t0)
-    ax[0].plot(-vec_u0_in[0], -vec_u0_in[1], 'o', ms=10, mec=color_in, mew=3, color='yellow', label=label_in)
-    ax[0].plot(-vec_u0_out[0], -vec_u0_out[1], 'o', ms=10, mec=color_out, mew=3, color='yellow', label=label_out)
+    ax[0].plot(-vec_u0_in[0], -vec_u0_in[1], 'o', ms=8, mec=color_in, mew=2, color='yellow', label=label_in)
+    ax[0].plot(-vec_u0_out[0], -vec_u0_out[1], 'o', ms=8, mec=color_out, mew=2, color='yellow', label=label_out)
 
     # Parallax vector
     if in_frame=='helio':
-        ax[0].quiver(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1], 
-                  -vec_par[0]*piE, -vec_par[1]*piE, 
-                  color='gray', units='xy', angles='xy', scale=1, width=0.003)
+        ax[0].annotate('', xy=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), xycoords='data',
+                    xytext=(-vec_u0_out[0] - vec_tau_out[0] - vec_par[0]*piE, -vec_u0_out[1] - vec_tau_out[1] - vec_par[1]*piE),
+                    textcoords='data', ha='right', 
+                    arrowprops=dict(arrowstyle= '<|-', color='gray', lw=2, mutation_scale=15, shrinkA=0, shrinkB=0))
     else:
-        ax[0].quiver(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1], 
-                  vec_par[0]*piE, vec_par[1]*piE, 
-                  color='gray', units='xy', angles='xy', scale=1, width=0.003)
+        ax[0].annotate('', xy=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), xycoords='data',
+                    xytext=(-vec_u0_out[0] - vec_tau_out[0] + vec_par[0]*piE, vec_u0_out[1] - vec_tau_out[1] + vec_par[1]*piE),
+                    textcoords='data', ha='right', 
+                    arrowprops=dict(arrowstyle= '<|-', color='gray', lw=2, mutation_scale=15, shrinkA=0, shrinkB=0))
 
     # Not sure why these next two lines are totally necessary...
     ax[0].plot(-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[1] - vec_tau_in[1], 'o', ms=0.001, color=color_in)
