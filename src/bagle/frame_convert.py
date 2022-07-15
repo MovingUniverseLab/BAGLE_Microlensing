@@ -312,7 +312,8 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
         try:
             dp_dt_t0par = ((tauhat_in/tE_in)  - (tauhat_out/tE_out))/piE
             t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par)
-            u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par
+#            u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par
+            u0vec_out = u0vec_in + tauhat_in * (t0par - t0_in)/tE_in - tauhat_out * (t0par - t0_out)/tE_out - piE*par_t0par
             u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
         except:
@@ -330,7 +331,8 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
         dp_dt_t0par = -1*((tauhat_in/tE_in) - (tauhat_out/tE_out))/piE
 
         t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par)
-        u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par
+#        u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par
+        u0vec_out = u0vec_in + tauhat_in * (t0par - t0_in)/tE_in - tauhat_out * (t0par - t0_out)/tE_out + piE*par_t0par
         u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
     else:
