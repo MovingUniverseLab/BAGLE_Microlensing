@@ -110,6 +110,50 @@ def convert_helio_geo_ast(ra, dec,
     return xS0E_out, xS0N_out, muSE_out, muSN_out
 
 
+def _check_input_convert_helio_geo_phot(ra, dec, 
+                                        t0_in, u0_in, tE_in, 
+                                        piEE_in, piEN_in, t0par,
+                                        in_frame,
+                                        murel_in, murel_out, 
+                                        coord_in, coord_out,
+                                        plot):
+
+    var_str = ['ra', 'dec']
+    for vv, var in enumerate([ra, dec]):
+        if not isinstance(var, (int, float, str)):
+            raise Exception('{0} ({1}) must be an integer, float, or string.'.format(var_str[vv], var))
+
+    var_str = ['t0_in', 'u0_in', 'tE_in', 'piEE_in', 'piEN_in']
+    array_like = 5 * [True]
+    for vv, var in enumerate([t0_in, u0_in, tE_in, piEE_in, piEN_in]):
+        if not hasattr(var, '__len__'):
+            array_like[vv] = False
+            if not isinstance(var, (int, float)):
+                raise Exception('{0} ({1}) must be an integer, float, or array-like.'.format(var_str[vv], var))
+
+    if np.sum(array_like) > 1:
+        lens = [len([t0_in, u0_in, tE_in, piEE_in, piEN_in][i]) for i, x in enumerate(array_like) if x]
+        if len(np.unique(lens)) > 1:
+            raise Exception('t0_in, u0_in, tE_in, piEE_in, piEN_in must all be the same length, floats, or integers.')
+
+    if not isinstance(t0par, (int, float)):
+        raise Exception('t0par ({0}) must be either an integer or float.'.format(in_frame))
+    
+    if in_frame != 'helio' and in_frame != 'geo':
+        raise Exception('in_frame ({0}) must be either "helio" or "geo".'.format(in_frame))
+
+    var_str = ['murel_in', 'murel_out']
+    for vv, var in enumerate([murel_in, murel_out]):
+        if var != 'SL' and var != 'LS':
+            raise Exception('{0} ({1}) must be "SL" or "LS".'.format(var_str[vv], in_frame))
+
+    var_str = ['coord_in', 'coord_out']
+    for vv, var in enumerate([coord_in, coord_out]):
+        if var != 'EN' and var != 'tb':
+            raise Exception('{0} ({1}) must be "EN" or "tb".'.format(var_str[vv], in_frame))
+
+    if not isinstance(plot, bool):
+        raise Exception('plot ({0}) must be a boolean.'.format(plot))
 
 def convert_helio_geo_phot(ra, dec, 
                            t0_in, u0_in, tE_in, 
@@ -158,6 +202,15 @@ def convert_helio_geo_phot(ra, dec,
         Use fixed on-sky coordinate system (Lu) or right-handed
         system based on murel and minimum separation (Gould)
     """
+    # Check inputs.
+    _check_input_convert_helio_geo_phot(ra, dec, 
+                                        t0_in, u0_in, tE_in, 
+                                        piEE_in, piEN_in, t0par,
+                                        in_frame,
+                                        murel_in, murel_out, 
+                                        coord_in, coord_out,
+                                        plot)
+
     # Flip from LS to SL as needed (conversion equations assume SL)
     if murel_in=='LS':
         piEE_in *= -1
