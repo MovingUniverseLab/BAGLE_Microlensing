@@ -186,20 +186,32 @@ def convert_helio_geo_phot(ra, dec,
     # always the same direction as Gould's beta vector (they are sometimes
     # antiparallel).
     if coord_in=='EN':
-        if np.sign(u0_in * piEN_in) < 0:
-            u0hatE_in = -tauhatN_in
-            u0hatN_in = tauhatE_in
-        else:
-            u0hatE_in = tauhatN_in
-            u0hatN_in = -tauhatE_in
+        try:
+            if np.sign(u0_in * piEN_in) < 0:
+                u0hatE_in = -tauhatN_in
+                u0hatN_in = tauhatE_in
+            else:
+                u0hatE_in = tauhatN_in
+                u0hatN_in = -tauhatE_in
+        except:
+            _u0hatE_in = -tauhatN_in
+            _u0hatN_in = tauhatE_in
+            u0hatE_in = np.where(np.sign(u0_in * piEN_in) < 0, _u0hatE_in, -_u0hatE_in)
+            u0hatN_in = np.where(np.sign(u0_in * piEN_in) < 0, _u0hatN_in, -_u0hatN_in)
 
     elif coord_in=='tb':
-        if np.sign(u0_in) > 0:
-            u0hatE_in = tauhatN_in
-            u0hatN_in = -tauhatE_in
-        else:
-            u0hatE_in = -tauhatN_in
-            u0hatN_in = tauhatE_in
+        try:
+            if np.sign(u0_in) > 0:
+                u0hatE_in = tauhatN_in
+                u0hatN_in = -tauhatE_in
+            else:
+                u0hatE_in = -tauhatN_in
+                u0hatN_in = tauhatE_in
+        except:
+            _u0hatE_in = tauhatN_in
+            _u0hatN_in = -tauhatE_in
+            u0hatE_in = np.where(np.sign(u0_in) > 0, _u0hatE_in, -_u0hatE_in)
+            u0hatN_in = np.where(np.sign(u0_in) > 0, _u0hatN_in, -_u0hatN_in)
 
     else:
         raise Exception('coord_in can only be "EN" or "tb"!')
@@ -217,7 +229,7 @@ def convert_helio_geo_phot(ra, dec,
         else:
             u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
     except:
-        u0_out = np.zeros(len(t0par))
+        u0_out = np.zeros(len(t0_in))
         _u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
         u0_out = np.where(u0vec_out[:,0] > 0, _u0_out, -_u0_out)
 
@@ -254,10 +266,9 @@ def convert_helio_geo_phot(ra, dec,
             else:
                 u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
         except:
-            # CHECK
-            x = np.sign(tauhatE_out * u0vec_out[:,1] - tauhatN_out * u0vec_out[:,0])
-            u0_out = np.zeros(len(t0par))
-            _u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
+            x = np.sign(tauhatE_out * u0vec_out[1] - tauhatN_out * u0vec_out[0])
+            u0_out = np.zeros(len(t0_in))
+            _u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
             u0_out = np.where(x < 0, _u0_out, -_u0_out)
 
     # Flip from LS to SL as needed (so user gets back what they expect).
@@ -284,11 +295,7 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
     """
     # Parallax vector (Sun-Earth projected separation vector in AU) at t0par.
     # Get dp_dt_t0par in 1/days.
-    try:
-        par_t0par = model.parallax_in_direction(ra, dec, np.array([t0par])).reshape(2,)
-    except:
-        nn = len(t0par)
-        par_t0par = model.parallax_in_direction(ra, dec, t0par)
+    par_t0par = model.parallax_in_direction(ra, dec, np.array([t0par])).reshape(2,)
 
     # NOTE: dp_dt_t0par doesn't seem quite as good as calculating it from tauhat/tE/piE...
     # not sure why this is....
@@ -317,23 +324,28 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
             u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
         except:
-            tauhat_out = tauhat_out.T
-            dp_dt_t0par = ((tauhat_in[np.newaxis,:]/tE_in)  - (tauhat_out/tE_out[:,np.newaxis]))/piE
-#            t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in - piE*par_t0par - (t0_in - t0par[:,np.newaxis])*piE*dp_dt_t0par)
-            _vec = u0vec_in - piE*par_t0par - (t0_in - t0par[:,np.newaxis])*piE*dp_dt_t0par
-            t0_out = t0_in - tE_out * np.sum(tauhat_out* _vec, axis=1)
-            u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out[np.newaxis,:]).T*tauhat_out - piE*par_t0par - (t0_in - t0par[:,np.newaxis])*piE*dp_dt_t0par
-            u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
+            par_t0par = np.tile(par_t0par,(8,1)).T
+            dp_dt_t0par = ((tauhat_in/tE_in)  - (tauhat_out/tE_out))/piE
+            _vec = u0vec_in - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par
+            t0_out = t0_in - tE_out * np.sum(tauhat_out* _vec, axis=0)
+            u0vec_out = u0vec_in + tauhat_in * (t0par - t0_in)/tE_in - tauhat_out * (t0par - t0_out)/tE_out - piE*par_t0par
+            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
-#            np.sum(b*c, axis=0)
 
     elif in_frame=='geo':
-        dp_dt_t0par = -1*((tauhat_in/tE_in) - (tauhat_out/tE_out))/piE
-
-        t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par)
-#        u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par
-        u0vec_out = u0vec_in + tauhat_in * (t0par - t0_in)/tE_in - tauhat_out * (t0par - t0_out)/tE_out + piE*par_t0par
-        u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+        try:
+            dp_dt_t0par = -1*((tauhat_in/tE_in) - (tauhat_out/tE_out))/piE
+            t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par)
+        #        u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par
+            u0vec_out = u0vec_in + tauhat_in * (t0par - t0_in)/tE_in - tauhat_out * (t0par - t0_out)/tE_out + piE*par_t0par
+            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+        except:
+            par_t0par = np.tile(par_t0par,(8,1)).T
+            dp_dt_t0par = ((tauhat_in/tE_in)  - (tauhat_out/tE_out))/piE
+            _vec = u0vec_in + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par
+            t0_out = t0_in - tE_out * np.sum(tauhat_out* _vec, axis=0)
+            u0vec_out = u0vec_in + tauhat_in * (t0par - t0_in)/tE_in - tauhat_out * (t0par - t0_out)/tE_out + piE*par_t0par
+            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
     else:
         raise Exception('in_frame can only be "helio" or "geo"!')
@@ -344,7 +356,7 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
         else:
             u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
     except:
-        u0_out = np.zeros(len(t0par))
+        u0_out = np.zeros(len(t0_out))
         _u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
         u0_out = np.where(u0vec_out[:,0] > 0, _u0_out, -_u0_out)
 

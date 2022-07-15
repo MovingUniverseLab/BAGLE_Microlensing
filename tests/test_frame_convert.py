@@ -7,6 +7,42 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 
 
+def test_array_input():
+    ra = 259.0
+    dec = -29.0
+    t0_h = 57000 * np.ones(8)
+    u0_h = np.array([0.5, 0.5, 0.5, 0.5, -0.5, -0.5, -0.5, -0.5])
+    tE_h = 300 * np.ones(8)
+    piEE_h = np.array([0.2, -0.2, 0.2, -0.2, 0.2, -0.2, 0.2, -0.2])
+    piEN_h = np.array([0.1, 0.1, -0.1, -0.1, 0.1, 0.1, -0.1, -0.1])
+    t0par = 57100
+
+    output_arr = fc.convert_helio_geo_phot(ra, dec, t0_h, u0_h, 
+                                       tE_h, piEE_h, piEN_h,
+                                       t0par, in_frame='helio',
+                                       murel_in='SL', murel_out='LS',
+                                       coord_in='EN', coord_out='tb',
+                                       plot=False)
+
+    t0_g_arr, u0_g_arr, tE_g_arr, piEE_g_arr, piEN_g_arr = output_arr
+
+    for ii in np.arange(8):
+        print(ii)
+        output = fc.convert_helio_geo_phot(ra, dec, t0_h[ii], u0_h[ii], 
+                                           tE_h[ii], piEE_h[ii], piEN_h[ii],
+                                           t0par, in_frame='helio',
+                                           murel_in='SL', murel_out='LS',
+                                           coord_in='EN', coord_out='tb',
+                                           plot=False)
+
+        t0_g, u0_g, tE_g, piEE_g, piEN_g = output
+        
+        assert t0_g == t0_g_arr[ii]
+        assert u0_g == u0_g_arr[ii]
+        assert tE_g == tE_g_arr[ii]
+        assert piEE_g == piEE_g_arr[ii]
+        assert piEN_g == piEN_g_arr[ii]
+        
 def test_mulens_to_bagle_psbl_phot(ra, dec, t_mjd,
                                    t0_m, u0_m, tE_m,
                                    piEE_m, piEN_m, t0par,
