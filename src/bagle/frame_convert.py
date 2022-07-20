@@ -6,6 +6,7 @@ from astropy.coordinates.builtin_frames.utils import get_jd12
 import erfa
 import matplotlib.pyplot as plt
 from bagle import model
+from matplotlib.ticker import MaxNLocator
 
 def convert_bagle_mulens_psbl_phot(ra, dec, 
                                    t0_in, u0_in, tE_in, 
@@ -47,13 +48,23 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
     murel_in = np.rad2deg(np.arctan2(piEN_in, piEE_in))
     murel_out = np.rad2deg(np.arctan2(piEN_out, piEE_out))
     # The 180 is because one is source-lens and the other is lens-source.
-    delta_alpha = murel_out - murel_in + 180
-    alpha_out = alpha_in - delta_alpha
-    
-    q_out = 1.0/q_in
-    q_prime = 0.5 * (1 - q_in) / (1 + q_in)
-    t0_out += q_prime * sep * tE_out * np.cos(np.deg2rad(alpha_out))
-    u0_out += q_prime * sep * np.sin(np.deg2rad(alpha_out))
+    if mod_in == 'bagle':
+        delta_alpha = murel_out - murel_in + 180
+        alpha_out = alpha_in - delta_alpha
+        
+        q_out = 1.0/q_in
+        q_prime = 0.5 * (1 - q_in) / (1 + q_in)
+        t0_out += q_prime * sep * tE_out * np.cos(np.deg2rad(alpha_out))
+        u0_out += q_prime * sep * np.sin(np.deg2rad(alpha_out))
+    elif mod_in == 'mulens': 
+        delta_alpha = murel_out - murel_in + 180
+        alpha_out = alpha_in + delta_alpha
+        
+        q_out = 1.0/q_in
+        q_prime = 0.5 * (1 - q_out) / (1 + q_out)
+        t0_out -= q_prime * sep * tE_out * np.cos(np.deg2rad(alpha_out))
+        u0_out += q_prime * sep * np.sin(np.deg2rad(alpha_out))
+        
 
     return t0_out, u0_out, tE_out, piEE_out, piEN_out, q_out, alpha_out
 
@@ -106,7 +117,7 @@ def convert_helio_geo_phot(ra, dec,
                            in_frame='helio',
                            murel_in='SL', murel_out='LS', 
                            coord_in='EN', coord_out='tb',
-                           plot=False):
+                           plot=True):
     """
     Convert between heliocentric and geocentric projected parameters.
     This converts only the subset of parameters in photometry fits
@@ -482,8 +493,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
                             t0par, t0_in, u0_in, tE_in, piEE_in, piEN_in,
                             t0_out, u0_out, tE_out, piEE_out, piEN_out):
     """
-    FIXME: Finish fixing the plotting of parallax vector.
-    The direction should always be Earth to Sun.
+    The parallax vector direction is always Earth to Sun (blue to red).
     All the input values are in the heliocentric frame, following the
     source-lens and East-North coordinate conventions.
     """
@@ -506,51 +516,47 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         color_in = 'blue'
         color_out = 'red'
 
-    ax.annotate(r'', 
-                xy=(vec_u0_in[0], vec_u0_in[1]), xycoords='data',
-                xytext=(vec_u0_in[0] + vec_tau_in[0], vec_u0_in[1] + vec_tau_in[1]), textcoords='data',
-                ha='right',
-                arrowprops=dict(arrowstyle= '<|-',
-                                color=color_in))
-    ax.annotate(r'', 
-                xy=(vec_u0_out[0], vec_u0_out[1]), xycoords='data',
+    # u0 vector
+    ax.annotate('', xy=(0,0), xycoords='data',
+                xytext=(vec_u0_out[0], vec_u0_out[1]), textcoords='data',
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_out, lw=2, mutation_scale=15))
+
+    ax.annotate('', xy=(0,0), xycoords='data',
+                xytext=(vec_u0_in[0], vec_u0_in[1]), textcoords='data',
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_in, lw=2, mutation_scale=15))
+
+    # tau vector (starting at u0 vector)
+    ax.annotate('', xy=(vec_u0_out[0], vec_u0_out[1]), xycoords='data',
                 xytext=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), textcoords='data',
-                ha='right',
-                arrowprops=dict(arrowstyle= '<|-',
-                                color=color_out))
-    ax.plot(0, 0, 'o', ms=10, mec='k', color='yellow', label='Source')
-    ax.plot([0, vec_u0_in[0]], 
-            [0, vec_u0_in[1]], color=color_in)
-    ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=10, color=color_in, label=label_in)
-    ax.plot([vec_u0_in[0], vec_u0_in[0] + vec_tau_in[0]], 
-            [vec_u0_in[1], vec_u0_in[1] + vec_tau_in[1]], color=color_in)
-    ax.plot([0, vec_u0_out[0]], 
-            [0, vec_u0_out[1]], color=color_out)
-    ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=10, color=color_out, label=label_out)
-    ax.plot([vec_u0_out[0], vec_u0_out[0] + vec_tau_out[0]], 
-            [vec_u0_out[1], vec_u0_out[1] + vec_tau_out[1]], color=color_out)
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_out, lw=2, mutation_scale=15, shrinkA=0))
+
+    ax.annotate('', xy=(vec_u0_in[0], vec_u0_in[1]), xycoords='data',
+                xytext=(vec_u0_in[0] + vec_tau_in[0], vec_u0_in[1] + vec_tau_in[1]), textcoords='data',
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_in, lw=2, mutation_scale=15, shrinkA=0))
+
+    # Plot the source (i.e. origin)
+    ax.plot(0, 0, 'o', ms=8, mec='k', color='yellow', label='Source')
+
+    # Plot the lens (both helio and geo proj positions at t0)
+    ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=8, mec=color_in, color='k', mew=2, label=label_in)
+    ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=8, mec=color_out, color='k', mew=2, label=label_out)
+
+    # Parallax vector
     if in_frame=='helio':
-        ax.annotate(r'', xy=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), xycoords='data',
-                    xytext=(vec_u0_out[0] + vec_tau_out[0] + vec_par[0]*piE, 
-                            vec_u0_out[1] + vec_tau_out[1] + vec_par[1]*piE), textcoords='data',
-                    ha='right',
-                    arrowprops=dict(arrowstyle= '<|-',
-                                    color='gray'))
-        ax.plot([vec_u0_out[0] + vec_tau_out[0], vec_u0_out[0] + vec_tau_out[0] + vec_par[0]*piE], 
-                [vec_u0_out[1] + vec_tau_out[1], vec_u0_out[1] + vec_tau_out[1] + vec_par[1]*piE], color='gray')
-        ax.plot([vec_u0_in[0] + vec_tau_in[0], vec_u0_in[0] + vec_tau_in[0] - vec_par[0]*piE], 
-                [vec_u0_in[1] + vec_tau_in[1], vec_u0_in[1] + vec_tau_in[1] - vec_par[1]*piE], color='gray')
+        ax.annotate('', xy=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), xycoords='data',
+                    xytext=(vec_u0_out[0] + vec_tau_out[0] + vec_par[0]*piE, vec_u0_out[1] + vec_tau_out[1] + vec_par[1]*piE),
+                    textcoords='data', ha='right', 
+                    arrowprops=dict(arrowstyle= '<|-', color='gray', lw=2, mutation_scale=15, shrinkA=0, shrinkB=0))
     else:
-        ax.annotate(r'', xy=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), xycoords='data',
-                    xytext=(vec_u0_out[0] + vec_tau_out[0] - vec_par[0]*piE, 
-                            vec_u0_out[1] + vec_tau_out[1] - vec_par[1]*piE), textcoords='data',
-                    ha='right',
-                    arrowprops=dict(arrowstyle= '-|>',
-                                    color='gray'))
-        ax.plot([vec_u0_out[0] + vec_tau_out[0], vec_u0_out[0] + vec_tau_out[0] - vec_par[0]*piE], 
-                [vec_u0_out[1] + vec_tau_out[1], vec_u0_out[1] + vec_tau_out[1] - vec_par[1]*piE], color='gray')
-        ax.plot([vec_u0_in[0] + vec_tau_in[0], vec_u0_in[0] + vec_tau_in[0] + vec_par[0]*piE], 
-                [vec_u0_in[1] + vec_tau_in[1], vec_u0_in[1] + vec_tau_in[1] + vec_par[1]*piE], color='gray')
+        ax.annotate('', xy=(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1]), xycoords='data',
+                    xytext=(vec_u0_out[0] + vec_tau_out[0] - vec_par[0]*piE, vec_u0_out[1] + vec_tau_out[1] - vec_par[1]*piE),
+                    textcoords='data', ha='right', 
+                    arrowprops=dict(arrowstyle= '<|-', color='gray', lw=2, mutation_scale=15, shrinkA=0, shrinkB=0))
+
+#    # Not sure why these next two lines are totally necessary...
+    ax.plot(vec_u0_in[0] + vec_tau_in[0], vec_u0_in[1] + vec_tau_in[1], 'o', ms=0.001, color=color_in)
+    ax.plot(vec_u0_out[0] + vec_tau_out[0], vec_u0_out[1] + vec_tau_out[1], 'o', ms=0.001, color=color_out)
+
     ax.legend()
     ax.axhline(y=0, ls=':', color='gray')
     ax.axvline(x=0, ls=':', color='gray')
@@ -567,38 +573,61 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
 
     fig.text(tleft, ttop - -1*ttstep, 't0par = {0:.1f}'.format(t0par), fontsize=12)
 
+    # Input and output are helio, Lu convention. So parameters are as reported.
     if in_frame == 'helio':
         fig.text(tleft, ttop - 1*ttstep, 'Helio', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Geo proj', weight='bold', fontsize=14)
+
+        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)
+        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        
+        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(u0_out), fontsize=12)
+        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+
     if in_frame == 'geo':
         fig.text(tleft, ttop - 1*ttstep, 'Geo proj', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
 
-    fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
-    fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)
-    fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
-    fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(piEE_in), fontsize=12)
-    fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(piEN_in), fontsize=12)
-    fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+        # Input is Gould geo, so need to fix those to play nice with our vectors in Lu helio. 
+        if np.sign(u0_in * piEN_in) > 0:
+            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
+        else:
+            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
 
-    fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
-    fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(u0_out), fontsize=12)
-    fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
-    fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(piEE_out), fontsize=12)
-    fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(piEN_out), fontsize=12)
-    fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        
+        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(u0_out), fontsize=12)
+        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+
     plt.show()
-    plt.pause(0.2)
-
+    plt.pause(1)
 
     #####
     # Figure in Gould convention (L-S frame, tau-beta coord)
     ####
-    fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
+    fig, ax = plt.subplots(1, 2, num=4, figsize=(12,6), gridspec_kw={'width_ratios': [2.5, 1]})
     plt.clf()
-    fig, ax = plt.subplots(1, 1, num=4, figsize=(9,6))
-    plt.subplots_adjust(left=0.15, right=0.7)
+    fig, ax = plt.subplots(1, 2, num=4, figsize=(12,6), gridspec_kw={'width_ratios': [2.5, 1]})
+    plt.subplots_adjust(left=0.15*3/4, right=0.78, wspace=0.3)
 
+    # FIXME: is the parallax vector supposed to be the same direction
+    # in Gould frame or antiparallel to the one in Lu???
     if in_frame == 'helio':
         label_in = 'Src Hel'
         label_out = 'Src Geo'
@@ -609,63 +638,91 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         label_out = 'Src Hel'
         color_in = 'blue'
         color_out = 'red'
-    
-    ax.annotate(r'', 
-                xy=(-vec_u0_in[0], -vec_u0_in[1]), xycoords='data',
-                xytext=(-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[1] - vec_tau_in[1]), textcoords='data',
-                ha='right',
-                arrowprops=dict(arrowstyle= '<|-',
-                                color=color_in))
-    ax.annotate(r'', 
-                xy=(-vec_u0_out[0], -vec_u0_out[1]), xycoords='data',
-                xytext=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), textcoords='data',
-                ha='right',
-                arrowprops=dict(arrowstyle= '<|-',
-                                color=color_out))
-    ax.plot(0, 0, 'o', ms=10, mec='k', color='k', label='Lens')
-    ax.plot([0, -vec_u0_in[0]], 
-            [0, -vec_u0_in[1]], color=color_in)
-    ax.plot(-vec_u0_in[0], -vec_u0_in[1], 'o', ms=10, color=color_in, label=label_in)
-    ax.plot([-vec_u0_in[0], -vec_u0_in[0] - vec_tau_in[0]], 
-            [-vec_u0_in[1], -vec_u0_in[1] - vec_tau_in[1]], color=color_in)
-    ax.plot([0, -vec_u0_out[0]], 
-            [0, -vec_u0_out[1]], color=color_out)
-    ax.plot(-vec_u0_out[0], -vec_u0_out[1], 'o', ms=10, color=color_out, label=label_out)
-    ax.plot([-vec_u0_out[0], -vec_u0_out[0] - vec_tau_out[0]], 
-            [-vec_u0_out[1], -vec_u0_out[1] - vec_tau_out[1]], color=color_out)
+
+    # u0 vector
+    ax[0].annotate('', xy=(0,0), xycoords='data',
+                xytext=(-vec_u0_out[0], -vec_u0_out[1]), textcoords='data',
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_out, lw=2, mutation_scale=15))
+
+    ax[0].annotate('', xy=(0,0), xycoords='data',
+                xytext=(-vec_u0_in[0], -vec_u0_in[1]), textcoords='data',
+                ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_in, lw=2, mutation_scale=15))
+
+    # tau vector (starting at u0 vector)
+    ax[0].annotate('', xy=(-vec_u0_out[0], -vec_u0_out[1]), xycoords='data',
+                   xytext=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), textcoords='data',
+                   ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_out, lw=2, mutation_scale=15, shrinkA=0))
+
+    ax[0].annotate('', xy=(-vec_u0_in[0], -vec_u0_in[1]), xycoords='data',
+                   xytext=(-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[1] - vec_tau_in[1]), textcoords='data',
+                   ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_in, lw=2, mutation_scale=15, shrinkA=0))
+
+    # Plot the lens (i.e. origin)
+    ax[0].plot(0, 0, 'o', ms=8, mec='k', color='k', label='Lens')
+
+    # Plot the source (both helio and geo proj positions at t0)
+    ax[0].plot(-vec_u0_in[0], -vec_u0_in[1], 'o', ms=8, mec=color_in, mew=2, color='yellow', label=label_in)
+    ax[0].plot(-vec_u0_out[0], -vec_u0_out[1], 'o', ms=8, mec=color_out, mew=2, color='yellow', label=label_out)
+
+    # Parallax vector
     if in_frame=='helio':
-        ax.annotate(r'', xy=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), xycoords='data',
-                    xytext=(-vec_u0_out[0] - vec_tau_out[0] - vec_par[0]*piE, 
-                             -vec_u0_out[1] - vec_tau_out[1] - vec_par[1]*piE), textcoords='data',
-                    ha='right',
-                    arrowprops=dict(arrowstyle= '<|-',
-                                    color='gray'))
-        ax.plot([-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[0] - vec_tau_out[0] - vec_par[0]*piE], 
-                [-vec_u0_out[1] - vec_tau_out[1], -vec_u0_out[1] - vec_tau_out[1] - vec_par[1]*piE], color='gray')
-        ax.plot([-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[0] - vec_tau_in[0] + vec_par[0]*piE], 
-                [-vec_u0_in[1] - vec_tau_in[1], -vec_u0_in[1] - vec_tau_in[1] + vec_par[1]*piE], color='gray')
+        ax[0].annotate('', xy=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), xycoords='data',
+                    xytext=(-vec_u0_out[0] - vec_tau_out[0] - vec_par[0]*piE, -vec_u0_out[1] - vec_tau_out[1] - vec_par[1]*piE),
+                    textcoords='data', ha='right', 
+                    arrowprops=dict(arrowstyle= '<|-', color='gray', lw=2, mutation_scale=15, shrinkA=0, shrinkB=0))
     else:
-        ax.annotate(r'', xy=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), xycoords='data',
-                    xytext=(-vec_u0_out[0] - vec_tau_out[0] + vec_par[0]*piE, 
-                             -vec_u0_out[1] - vec_tau_out[1] + vec_par[1]*piE), textcoords='data',
-                    ha='right',
-                    arrowprops=dict(arrowstyle= '-|>',
-                                    color='gray'))
-        ax.plot([-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[0] - vec_tau_out[0] + vec_par[0]*piE], 
-                [-vec_u0_out[1] - vec_tau_out[1], -vec_u0_out[1] - vec_tau_out[1] + vec_par[1]*piE], color='gray')
-        ax.plot([-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[0] - vec_tau_in[0] - vec_par[0]*piE], 
-                [-vec_u0_in[1] - vec_tau_in[1], -vec_u0_in[1] - vec_tau_in[1] - vec_par[1]*piE], color='gray')
-    ax.legend()
-    ax.axhline(y=0, ls=':', color='gray')
-    ax.axvline(x=0, ls=':', color='gray')
-    ax.set_xlabel('$u_E$')
-    ax.set_ylabel('$u_N$')
-    ax.axis('equal')
-    ax.invert_xaxis()
-    ax.set_title(r'Gould convention (L-S frame, $\tau$-$\beta$ coord)')
+        ax[0].annotate('', xy=(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1]), xycoords='data',
+                    xytext=(-vec_u0_out[0] - vec_tau_out[0] + vec_par[0]*piE, vec_u0_out[1] - vec_tau_out[1] + vec_par[1]*piE),
+                    textcoords='data', ha='right', 
+                    arrowprops=dict(arrowstyle= '<|-', color='gray', lw=2, mutation_scale=15, shrinkA=0, shrinkB=0))
+
+    # Not sure why these next two lines are totally necessary...
+    ax[0].plot(-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[1] - vec_tau_in[1], 'o', ms=0.001, color=color_in)
+    ax[0].plot(-vec_u0_out[0] - vec_tau_out[0], -vec_u0_out[1] - vec_tau_out[1], 'o', ms=0.001, color=color_out)
+
+    ax[0].legend()
+    ax[0].axhline(y=0, ls=':', color='gray')
+    ax[0].axvline(x=0, ls=':', color='gray')
+    ax[0].set_xlabel('$u_E$')
+    ax[0].set_ylabel('$u_N$')
+    ax[0].axis('equal')
+    ax[0].invert_xaxis()
+    ax[0].set_title(r'Gould convention (L-S frame, $\tau$-$\beta$ coord)')
+
+    q_tau_out = ax[1].quiver(0, 0, -piEE_out/piE, -piEN_out/piE, 
+                           color=color_out, scale_units='xy', angles='xy', scale=1)
     
+    q_tau_in = ax[1].quiver(0, 0, -piEE_in/piE, -piEN_in/piE, 
+                          color=color_in, scale_units='xy', angles='xy', scale=1)
+
+    q_u0_out = ax[1].quiver(0, 0, -piEN_out/piE, piEE_out/piE, 
+                          color=color_out, scale_units='xy', angles='xy', scale=1, alpha=0.5, width=0.02)
+    
+    q_u0_in = ax[1].quiver(0, 0, -piEN_in/piE, piEE_in/piE, 
+                         color=color_in, scale_units='xy', angles='xy', scale=1, alpha=0.5, width=0.02)
+    
+    if in_frame == 'helio':
+        ax[1].quiverkey(q_tau_out, 1, -2.0, 0.3, r'$\hat{\tau}_G$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_tau_in, 1, -2.4, 0.3, r'$\hat{\tau}_H$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_u0_out, 0, -2.0, 0.3, r'$\hat{\beta}_G$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_u0_in, 0, -2.4, 0.3, r'$\hat{\beta}_H$', coordinates='data', labelpos='E', labelsep=0.5)
+    else:
+        ax[1].quiverkey(q_tau_out, 1, -2.0, 0.3, r'$\hat{\tau}_H$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_tau_in, 1, -2.4, 0.3, r'$\hat{\tau}_G$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_u0_out, 0, -2.0, 0.3, r'$\hat{\beta}_H$', coordinates='data', labelpos='E', labelsep=0.5)
+        ax[1].quiverkey(q_u0_in, 0, -2.4, 0.3, r'$\hat{\beta}_G$', coordinates='data', labelpos='E', labelsep=0.5)
+
+    ax[1].set_xlim(-1, 1)
+    ax[1].set_ylim(-1, 1)
+    ax[1].set_xlabel('$E$')
+    ax[1].set_ylabel('$N$')
+    ax[1].xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax[1].yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax[1].invert_xaxis()
+    ax[1].set_aspect('equal', 'box')
+
     # Text panel listing parameters.
-    tleft = 0.75
+    tleft = 0.75 * 1.08
     ttop = 0.8
     ttstep = 0.05
 
@@ -674,31 +731,53 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     if in_frame == 'helio':
         fig.text(tleft, ttop - 1*ttstep, 'Helio', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Geo proj', weight='bold', fontsize=14)
+
+        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+        # Input is Lu helio, so need to fix those to be in Gould geo.
+        if np.sign(u0_in * piEN_in) > 0:
+            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
+        else:
+            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
+            
+        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(-piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(-piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        
+        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+        # Output is Lu helio, so need to fix those to be in Gould geo.
+        if np.sign(u0_out * piEN_out) > 0:
+            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
+        else:
+            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
+
+        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(-piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(-piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+    
     if in_frame == 'geo':
         fig.text(tleft, ttop - 1*ttstep, 'Geo proj', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
 
-    fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
-    if np.sign(u0_in * piEN_in) > 0:
-        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
-    else:
-        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
+        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)           
+        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(-piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(-piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        
+        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+        # Output is Lu helio, so need to fix those to be in Gould geo.
+        if np.sign(u0_out * piEN_out) > 0:
+            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
+        else:
+            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
+        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(-piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(-piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
-    fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
-    fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(-piEE_in), fontsize=12)
-    fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(-piEN_in), fontsize=12)
-    fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-
-    fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
-    if np.sign(u0_out * piEN_out) > 0:
-        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
-    else:
-        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
-    fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
-    fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(-piEE_out), fontsize=12)
-    fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(-piEN_out), fontsize=12)
-    fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
-    
     plt.show()
-    plt.pause(0.2)
+    plt.pause(1)
 
