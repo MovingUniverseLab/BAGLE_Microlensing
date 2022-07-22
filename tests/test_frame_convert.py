@@ -940,7 +940,11 @@ def test_bagle_helio_geo_set(plot_lc=False, plot_conv=False, verbose=False):
     """
     t_mjd = np.arange(57000 - 500, 57000 + 500, 1)
 
-    kwargs = {'plot_lc' : plot_lc, 'plot_conv' : plot_lc, 'verbose' : verbose}
+    kwargs = {'plot_lc' : plot_lc, 'plot_conv' : plot_conv, 'verbose' : verbose}
+
+#    one example to test (make figure for notes).
+#    test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57000, **kwargs)
+#    pdb.set_trace()
 
     print('set 1') 
     test_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, **kwargs)
