@@ -155,6 +155,7 @@ def _check_input_convert_helio_geo_phot(ra, dec,
     if not isinstance(plot, bool):
         raise Exception('plot ({0}) must be a boolean.'.format(plot))
 
+
 def convert_helio_geo_phot(ra, dec, 
                            t0_in, u0_in, tE_in, 
                            piEE_in, piEN_in, t0par,
@@ -240,6 +241,7 @@ def convert_helio_geo_phot(ra, dec,
     # antiparallel).
     if coord_in=='EN':
         try:
+            # Handle conversion of single values.
             if np.sign(u0_in * piEN_in) < 0:
                 u0hatE_in = -tauhatN_in
                 u0hatN_in = tauhatE_in
@@ -247,6 +249,7 @@ def convert_helio_geo_phot(ra, dec,
                 u0hatE_in = tauhatN_in
                 u0hatN_in = -tauhatE_in
         except:
+            # Handle conversions with array-like inputs.
             _u0hatE_in = -tauhatN_in
             _u0hatN_in = tauhatE_in
             u0hatE_in = np.where(np.sign(u0_in * piEN_in) < 0, _u0hatE_in, -_u0hatE_in)
@@ -254,6 +257,7 @@ def convert_helio_geo_phot(ra, dec,
 
     elif coord_in=='tb':
         try:
+            # Handle conversion of single values.
             if np.sign(u0_in) > 0:
                 u0hatE_in = tauhatN_in
                 u0hatN_in = -tauhatE_in
@@ -261,6 +265,7 @@ def convert_helio_geo_phot(ra, dec,
                 u0hatE_in = -tauhatN_in
                 u0hatN_in = tauhatE_in
         except:
+            # Handle conversions with array-like inputs.
             _u0hatE_in = tauhatN_in
             _u0hatN_in = -tauhatE_in
             u0hatE_in = np.where(np.sign(u0_in) > 0, _u0hatE_in, -_u0hatE_in)
@@ -277,11 +282,13 @@ def convert_helio_geo_phot(ra, dec,
 
     # Now get u0 (the scalar) and its associated sign from u0 vector.
     try:
+        # Handle conversion of single values.
         if u0vec_out[0] > 0:
             u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
         else:
             u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
     except:
+        # Handle conversions with array-like inputs.
         u0_out = np.zeros(len(t0_in))
         _u0_out = np.hypot(u0vec_out[:,0], u0vec_out[:,1])
         u0_out = np.where(u0vec_out[:,0] > 0, _u0_out, -_u0_out)
@@ -313,12 +320,14 @@ def convert_helio_geo_phot(ra, dec,
     # Transform from tb to EN as needed (so user gets back what they expect).
     if coord_out=='tb':
         try:
+            # Handle conversion of single values.
             x = np.sign(np.cross(np.array([tauhatE_out, tauhatN_out]), u0vec_out))
             if x > 0:
                 u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
             else:
                 u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
         except:
+            # Handle conversions with array-like inputs.
             x = np.sign(tauhatE_out * u0vec_out[1] - tauhatN_out * u0vec_out[0])
             u0_out = np.zeros(len(t0_in))
             _u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
@@ -336,6 +345,8 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
                      tauhatE_in, tauhatN_in, u0hatE_in, u0hatN_in, 
                      tauhatE_out, tauhatN_out,
                      in_frame='helio'):
+    # FIXME: Fix the broadcasting stuff using the check above for the lenght
+    # don't hardcode as t0_in.
     """
     *** PROPER MOTIONS ARE DEFINED AS SOURCE - LENS ***
     *** COORDINATE SYSTEM IS ON-SKY (NOT TAU-BETA) ***
@@ -377,7 +388,7 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
             u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
         except:
-            par_t0par = np.tile(par_t0par,(8,1)).T
+            par_t0par = np.tile(par_t0par,(len(t0_in),1)).T
             dp_dt_t0par = ((tauhat_in/tE_in)  - (tauhat_out/tE_out))/piE
             _vec = u0vec_in - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par
             t0_out = t0_in - tE_out * np.sum(tauhat_out* _vec, axis=0)
@@ -393,7 +404,7 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
             u0vec_out = u0vec_in + tauhat_in * (t0par - t0_in)/tE_in - tauhat_out * (t0par - t0_out)/tE_out + piE*par_t0par
             u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
         except:
-            par_t0par = np.tile(par_t0par,(8,1)).T
+            par_t0par = np.tile(par_t0par,(len(t0_in),1)).T
             dp_dt_t0par = ((tauhat_in/tE_in)  - (tauhat_out/tE_out))/piE
             _vec = u0vec_in + piE*par_t0par + (t0_in - t0par)*piE*dp_dt_t0par
             t0_out = t0_in - tE_out * np.sum(tauhat_out* _vec, axis=0)
@@ -524,7 +535,7 @@ def v_Earth_proj(ra, dec, mjd):
     # Make this check dec too.
     if type(ra) == str:
         coord = SkyCoord(ra, dec, unit=(u.hourangle, u.deg))
-    if ((type(ra) == float) or (type(ra) == int)):
+    elif ((type(ra) == float) or (type(ra) == int)):
         coord = SkyCoord(ra, dec, unit=(u.deg, u.deg))
     else:
         raise Exception('ra and dec must be either strings or int/floats.')
