@@ -5,14 +5,50 @@ import matplotlib.pyplot as plt
 from bagle import frame_convert as fc
 from astropy.coordinates import SkyCoord
 from astropy import units as u
+from astropy.table import Table
 
+def blah():
+    t = Table.read('/u/jlu/work/microlens/OB110462/a_2022_03_01/model_fits/pspl/ogle_hst_phot_gp/base_b/b0_post_equal_weights.dat', format='ascii')
+    t = Table.read('/u/jlu/work/microlens/OB110462/a_2021_12_20/model_fits/ogle_hst_phot/base_a/a0_post_equal_weights.dat', format='ascii')
+    ra = '17:51:40.19'
+    dec = '-29:53:26.3'
+
+    t0_h = t['col1']
+    u0_h = t['col2']
+    tE_h = t['col3']
+    piEE_h = t['col4']
+    piEN_h = t['col5']
+    t0par = 55763.327
+
+    output_arr = fc.convert_helio_geo_phot(ra, dec, t0_h, u0_h, 
+                                           tE_h, piEE_h, piEN_h,
+                                           t0par, in_frame='helio',
+                                           murel_in='SL', murel_out='LS',
+                                           coord_in='EN', coord_out='tb',
+                                           plot=False)
+
+    t0_g, u0_g, tE_g, piEE_g, piEN_g = output_arr
+
+    fig, ax = plt.subplots(2, 5, figsize=(10, 6))
+    ax[0,0].hist(t0_h)
+    ax[0,1].hist(u0_h)
+    ax[0,2].hist(tE_h)
+    ax[0,3].hist(piEE_h)
+    ax[0,4].hist(piEN_h)
+
+    ax[1,0].hist(t0_g)
+    ax[1,1].hist(u0_g)
+    ax[1,2].hist(tE_g)
+    ax[1,3].hist(piEE_g)
+    ax[1,4].hist(piEN_g)
+    plt.show()
 
 def test_array_input():
     ra = 259.0
     dec = -29.0
     t0_h = 57000 * np.ones(8)
-    u0_h = np.array([0.5, 0.5, 0.5, 0.5, -0.5, -0.5, -0.5, -0.5])
-    tE_h = 300 * np.ones(8)
+    u0_h = [0.5, 0.5, 0.5, 0.5, -0.5, -0.5, -0.5, -0.5]
+    tE_h = 300 #* np.ones(8)
     piEE_h = np.array([0.2, -0.2, 0.2, -0.2, 0.2, -0.2, 0.2, -0.2])
     piEN_h = np.array([0.1, 0.1, -0.1, -0.1, 0.1, 0.1, -0.1, -0.1])
     t0par = 57100
@@ -29,7 +65,8 @@ def test_array_input():
     for ii in np.arange(8):
         print(ii)
         output = fc.convert_helio_geo_phot(ra, dec, t0_h[ii], u0_h[ii], 
-                                           tE_h[ii], piEE_h[ii], piEN_h[ii],
+                                           tE_h,#[ii], 
+                                           piEE_h[ii], piEN_h[ii],
                                            t0par, in_frame='helio',
                                            murel_in='SL', murel_out='LS',
                                            coord_in='EN', coord_out='tb',
