@@ -584,13 +584,13 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     plt.subplots_adjust(left=0.15, right=0.7)
 
     if in_frame == 'helio':
-        label_in = 'Lens Hel'
-        label_out = 'Lens Geo'
+        label_in = 'Src Hel'
+        label_out = 'Src Geo'
         color_in = 'red'
         color_out = 'blue'
     if in_frame == 'geo':
-        label_in = 'Lens Geo'
-        label_out = 'Lens Hel'
+        label_in = 'Src Geo'
+        label_out = 'Src Hel'
         color_in = 'blue'
         color_out = 'red'
 
@@ -612,12 +612,12 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
                 xytext=(vec_u0_in[0] + vec_tau_in[0], vec_u0_in[1] + vec_tau_in[1]), textcoords='data',
                 ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_in, lw=2, mutation_scale=15, shrinkA=0))
 
-    # Plot the source (i.e. origin)
-    ax.plot(0, 0, 'o', ms=8, mec='k', color='yellow', label='Source')
+    # Plot the lens (i.e. origin)
+    ax.plot(0, 0, 'o', ms=8, mec='k', color='k', label='Lens')
 
-    # Plot the lens (both helio and geo proj positions at t0)
-    ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=8, mec=color_in, color='k', mew=2, label=label_in)
-    ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=8, mec=color_out, color='k', mew=2, label=label_out)
+    # Plot the source (both helio and geo proj positions at t0)
+    ax.plot(vec_u0_in[0], vec_u0_in[1], 'o', ms=8, mec=color_in, color='yellow', mew=2, label=label_in)
+    ax.plot(vec_u0_out[0], vec_u0_out[1], 'o', ms=8, mec=color_out, color='yellow', mew=2, label=label_out)
 
     # Parallax vector
     if in_frame=='helio':
@@ -707,13 +707,13 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     # FIXME: is the parallax vector supposed to be the same direction
     # in Gould frame or antiparallel to the one in Lu???
     if in_frame == 'helio':
-        label_in = 'Src Hel'
-        label_out = 'Src Geo'
+        label_in = 'Lens Hel'
+        label_out = 'Lens Geo'
         color_in = 'red'
         color_out = 'blue'
     if in_frame == 'geo':
-        label_in = 'Src Geo'
-        label_out = 'Src Hel'
+        label_in = 'Lens Geo'
+        label_out = 'Lensc Hel'
         color_in = 'blue'
         color_out = 'red'
 
@@ -735,12 +735,12 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
                    xytext=(-vec_u0_in[0] - vec_tau_in[0], -vec_u0_in[1] - vec_tau_in[1]), textcoords='data',
                    ha='right', arrowprops=dict(arrowstyle= '<|-', color=color_in, lw=2, mutation_scale=15, shrinkA=0))
 
-    # Plot the lens (i.e. origin)
-    ax[0].plot(0, 0, 'o', ms=8, mec='k', color='k', label='Lens')
+    # Plot the source (i.e. origin)
+    ax[0].plot(0, 0, 'o', ms=8, mec='k', color='yellow', label='Source')
 
-    # Plot the source (both helio and geo proj positions at t0)
-    ax[0].plot(-vec_u0_in[0], -vec_u0_in[1], 'o', ms=8, mec=color_in, mew=2, color='yellow', label=label_in)
-    ax[0].plot(-vec_u0_out[0], -vec_u0_out[1], 'o', ms=8, mec=color_out, mew=2, color='yellow', label=label_out)
+    # Plot the lens (both helio and geo proj positions at t0)
+    ax[0].plot(-vec_u0_in[0], -vec_u0_in[1], 'o', ms=8, mec=color_in, mew=2, color='k', label=label_in)
+    ax[0].plot(-vec_u0_out[0], -vec_u0_out[1], 'o', ms=8, mec=color_out, mew=2, color='k', label=label_out)
 
     # Parallax vector
     if in_frame=='helio':
