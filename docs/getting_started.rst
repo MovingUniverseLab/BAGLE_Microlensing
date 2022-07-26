@@ -18,7 +18,7 @@ To fit microlensing data with models::
 
 
 Making a PSPL Model with No Parallax
---------------------------
+------------------------------------
 The first step in the tutorial is to generate a PSPL model with no
 parallax and to use the model to:
 
@@ -103,8 +103,8 @@ Other methods that return event values over time include:
  - ``event1.get_resolved_astrometry``
 
 
-Making a PSPL Model with parallax
----------------------------
+Making a PSPL Model with Parallax
+---------------------------------
 The second step is to generate a PSPL model with parallax adding the
 *ra* (right ascention of lens) and *dec* (declination of lens).
 Again, all of the parameters are specified in heliocentric coordinates.
