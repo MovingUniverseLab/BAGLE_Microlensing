@@ -161,6 +161,8 @@ class PSPL_Solver(Solver):
 
     default_priors = {
         'mL': ('make_gen', 0, 100),
+        'mLp': ('make_gen', 0, 100),
+        'mLs': ('make_gen', 0, 100),
         't0': ('make_t0_gen', None, None),
         't0_prim': ('make_t0_gen', None, None),
         'xS0_E': ('make_xS0_gen', None, None),
