@@ -966,7 +966,7 @@ def test_pspl_parallax2_bulge():
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
-        
+
     # Scenario from Belokurov and Evans 2002 (Figure 1)
     raL = 17.5 * 15.0  # in degrees
     decL = -30.0
@@ -1020,7 +1020,7 @@ def test_pspl_parallax2_bulge():
     for kk in members1.keys():
         if kk in members2.keys():
             print('{0:13s}  {1:25s}  {2:25s}'.format(kk, str(members1[kk]),
-                                                         str(members2[kk])))
+                                                     str(members2[kk])))
             np.testing.assert_almost_equal(members1[kk], members2[kk], 3)
 
     t = np.arange(t0 - 1000, t0 + 1000, 1)
@@ -1113,6 +1113,7 @@ def test_pspl_parallax2_bulge():
 
     return
 
+
 def compare_lumlens_parallax_bulge():
     raL_in = 17.30 * 15.  # Bulge R.A.
     decL_in = -29.0
@@ -1128,20 +1129,20 @@ def compare_lumlens_parallax_bulge():
     mag_src_in = 19.0
 
     pspl_ll = model.PSPL_PhotAstrom_LumLens_Par_Param1(mL=mL_in,
-                                               t0=t0_in,
-                                               beta=beta_in,
-                                               dL=dL_in,
-                                               dL_dS=dL_in / dS_in,
-                                               xS0_E=xS0_in[0],
-                                               xS0_N=xS0_in[1],
-                                               muL_E=muL_in[0],
-                                               muL_N=muL_in[1],
-                                               muS_E=muS_in[0],
-                                               muS_N=muS_in[1],
-                                               raL=raL_in,
-                                               decL=decL_in,
-                                               b_sff=[b_sff_in],
-                                               mag_src=[mag_src_in])
+                                                       t0=t0_in,
+                                                       beta=beta_in,
+                                                       dL=dL_in,
+                                                       dL_dS=dL_in / dS_in,
+                                                       xS0_E=xS0_in[0],
+                                                       xS0_N=xS0_in[1],
+                                                       muL_E=muL_in[0],
+                                                       muL_N=muL_in[1],
+                                                       muS_E=muS_in[0],
+                                                       muS_N=muS_in[1],
+                                                       raL=raL_in,
+                                                       decL=decL_in,
+                                                       b_sff=[b_sff_in],
+                                                       mag_src=[mag_src_in])
 
     pspl = model.PSPL_PhotAstrom_Par_Param1(mL=mL_in,
                                             t0=t0_in,
@@ -1172,18 +1173,18 @@ def compare_lumlens_parallax_bulge():
     plt.figure(1)
     plt.clf()
     plt.subplots_adjust(left=0.2)
-#    plt.plot(pos[:, 0], pos[:, 1], label='Dark Lens')
-#    plt.plot(pos_ll[:, 0], pos_ll[:, 1], label='Lum Lens')
-#    plt.plot(pos_src[:, 0], pos_src[:, 1], label='Dark Unlens')
-#    plt.plot(pos_src_ll[:, 0], pos_src_ll[:, 1], label='Lum Unlens')
-    plt.plot((pos[:, 0] - pos_src[:, 0])*1E3, (pos[:, 1] - pos_src[:, 1])*1E3, label='Dark Lens')
-    plt.plot((pos_ll[:, 0] - pos_src_ll[:, 0])*1E3, (pos_ll[:, 1]  - pos_src_ll[:, 1])*1E3, label='Lum Lens')
+    #    plt.plot(pos[:, 0], pos[:, 1], label='Dark Lens')
+    #    plt.plot(pos_ll[:, 0], pos_ll[:, 1], label='Lum Lens')
+    #    plt.plot(pos_src[:, 0], pos_src[:, 1], label='Dark Unlens')
+    #    plt.plot(pos_src_ll[:, 0], pos_src_ll[:, 1], label='Lum Unlens')
+    plt.plot((pos[:, 0] - pos_src[:, 0]) * 1E3, (pos[:, 1] - pos_src[:, 1]) * 1E3, label='Dark Lens')
+    plt.plot((pos_ll[:, 0] - pos_src_ll[:, 0]) * 1E3, (pos_ll[:, 1] - pos_src_ll[:, 1]) * 1E3, label='Lum Lens')
     plt.legend()
     plt.axis('equal')
     plt.xlabel('$\delta_{c,x}$ (mas)')
     plt.ylabel('$\delta_{c,y}$ (mas)')
     plt.show()
-#
+    #
     plt.figure(2)
     plt.clf()
     plt.plot(t, mag, label='Dark Lens')
@@ -1193,6 +1194,7 @@ def compare_lumlens_parallax_bulge():
     plt.ylabel('Mag')
     plt.legend()
     plt.show()
+
 
 def test_parallax():
     """
@@ -1233,7 +1235,6 @@ def test_parallax():
                                             raL=raL_in,
                                             decL=decL_in)
 
-
     # Fetch the astrometry for the unlensed source and lens.
     # Note these are the positions in the observers geocentric frame; but
     # fixed to stars reference. 
@@ -1241,8 +1242,7 @@ def test_parallax():
     t += t0_in
 
     xS_bagle = pspl.get_astrometry_unlensed(t) * 1e3 * u.mas  # in mas
-    xL_bagle = pspl.get_lens_astrometry(t) * 1e3 * u.mas # in mas
-
+    xL_bagle = pspl.get_lens_astrometry(t) * 1e3 * u.mas  # in mas
 
     ##########
     # Astropy
@@ -1257,11 +1257,11 @@ def test_parallax():
     # serve as the origin point for our relative coordinate system.
     print(f'c0 coords = {raL_in:.10f}, {decL_in:.10f}')
     c0 = SkyCoord(raL_in * u.deg, decL_in * u.deg,
-                   pm_ra_cosdec=0.0 * u.mas / u.yr,
-                   pm_dec=0.0 * u.mas / u.yr,
-                   distance=1e6 * u.Mpc,
-                   obstime=Time(t0_in, format='mjd'))
-    
+                  pm_ra_cosdec=0.0 * u.mas / u.yr,
+                  pm_dec=0.0 * u.mas / u.yr,
+                  distance=1e6 * u.Mpc,
+                  obstime=Time(t0_in, format='mjd'))
+
     # Propogate the motion (velocity and parallax) to the correct times).
     x0_astropy_icrs = c0.apply_space_motion(new_obstime=t_obj)
     x0_astropy_gcrs = x0_astropy_icrs.transform_to('gcrs')
@@ -1271,7 +1271,7 @@ def test_parallax():
 
     #### SOURCE
     # Define the source coordinates (with the correct proper motion and distance).
-    raS0 =  (raL_in * u.deg)  + (pspl.xS0[0] * u.deg / 3600)
+    raS0 = (raL_in * u.deg) + (pspl.xS0[0] * u.deg / 3600)
     decS0 = (decL_in * u.deg) + (pspl.xS0[1] * u.deg / 3600)
     print(f'S0 coords = {raS0:.10f}, {decS0:.10f}')
     cS = SkyCoord(raS0, decS0,
@@ -1280,20 +1280,19 @@ def test_parallax():
                   distance=dS_in * u.pc,
                   obstime=Time(t0_in, format='mjd'))
 
-
     # Propogate the motion (velocity and parallax) to the correct times).
     xS_astropy_icrs = cS.apply_space_motion(new_obstime=t_obj)
     xS_astropy_gcrs = xS_astropy_icrs.transform_to('gcrs')
     xS_apy_ra = xS_astropy_gcrs.ra
     xS_apy_dec = xS_astropy_gcrs.dec
 
-    dxS_apy = (xS_apy_ra  - x0_apy_ra ).to('mas') * cosd
+    dxS_apy = (xS_apy_ra - x0_apy_ra).to('mas') * cosd
     dyS_apy = (xS_apy_dec - x0_apy_dec).to('mas')
 
     xS_astropy = np.vstack([dxS_apy.value, dyS_apy.value]).T * u.mas
 
     #### LENS
-    raL0  = (raL_in * u.deg)  + (pspl.xL0[0] * u.deg / 3600)
+    raL0 = (raL_in * u.deg) + (pspl.xL0[0] * u.deg / 3600)
     decL0 = (decL_in * u.deg) + (pspl.xL0[1] * u.deg / 3600)
     print(f'L0 coords = {raL0:.10f}, {decL0:.10f}')
     cL = SkyCoord(raL0, decL0,
@@ -1304,44 +1303,43 @@ def test_parallax():
 
     xL_astropy_icrs = cL.apply_space_motion(new_obstime=t_obj)
     xL_astropy_gcrs = xL_astropy_icrs.transform_to('gcrs')
-    xL_apy_ra  = xL_astropy_gcrs.ra
+    xL_apy_ra = xL_astropy_gcrs.ra
     xL_apy_dec = xL_astropy_gcrs.dec
     print(f'xL_apy_ra  = {xL_apy_ra[0]}, {xL_apy_ra[-1]}')
     print(f'xL_apy_dec = {xL_apy_dec[0]}, {xL_apy_dec[-1]}')
     print(f'x0_apy_ra  = {x0_apy_ra[0]}, {x0_apy_ra[-1]}')
     print(f'x0_apy_dec = {x0_apy_dec[0]}, {x0_apy_dec[-1]}')
 
-    dxL_apy = (xL_apy_ra  - x0_apy_ra ).to('mas') * cosd
+    dxL_apy = (xL_apy_ra - x0_apy_ra).to('mas') * cosd
     dyL_apy = (xL_apy_dec - x0_apy_dec).to('mas')
 
     xL_astropy = np.vstack([dxL_apy.value, dyL_apy.value]).T * u.mas
-    
+
     ##########
     # Casey's conversion.
     ##########
     from microlens.jlu import helio_geo_conversion as hgc
     print('!!! Casey conversions')
     foo = hgc.convert_helio_to_geo_phot(raL_in, decL_in, t0_in, pspl.u0_amp, pspl.tE,
-                                            pspl.piE[0], pspl.piE[1], t0_in)
+                                        pspl.piE[0], pspl.piE[1], t0_in)
     t0_geo_casey = foo[0]
     u0_geo_casey = foo[1]
     tE_geo_casey = foo[2]
     piEE_geo_casey = foo[3]
     piEN_geo_casey = foo[4]
 
-    
     ##########
     # Gould 2004 version:
     ##########
     #
     # Set the ephemeris
     t0_obj = Time(t0_in, format='mjd')
-    
+
     solar_system_ephemeris.set('builtin')
-    
+
     # Get the position and velocity of the Earth in the barycentric frame.
     Earth_t0 = get_body_barycentric_posvel('Earth', t0_obj)
-    Earth_t  = get_body_barycentric_posvel('Earth', t_obj)
+    Earth_t = get_body_barycentric_posvel('Earth', t_obj)
 
     Earth_pos_t0 = Earth_t0[0].get_xyz()
     Earth_vel_t0 = Earth_t0[1].get_xyz()
@@ -1358,19 +1356,19 @@ def test_parallax():
     #
     #    ds(t) = s(t) - v_earth(t0) * (t - t0) - s(t0)
     #
-    ds_gould_3d  = Sun_pos_t - (Sun_vel_t0 *(t_obj - t0_obj)[:, None]).T
+    ds_gould_3d = Sun_pos_t - (Sun_vel_t0 * (t_obj - t0_obj)[:, None]).T
     ds_gould_3d -= Sun_pos_t0[:, None]
 
     # Project onto East and North -- identical code to PyLIMA
     target_angles_in_the_sky = [raL_in * np.pi / 180, decL_in * np.pi / 180]
     Target = np.array(
-         [np.cos(target_angles_in_the_sky[1]) * np.cos(target_angles_in_the_sky[0]),
-          np.cos(target_angles_in_the_sky[1]) * np.sin(target_angles_in_the_sky[0]),
-          np.sin(target_angles_in_the_sky[1])])
+        [np.cos(target_angles_in_the_sky[1]) * np.cos(target_angles_in_the_sky[0]),
+         np.cos(target_angles_in_the_sky[1]) * np.sin(target_angles_in_the_sky[0]),
+         np.sin(target_angles_in_the_sky[1])])
 
     East = np.array([-np.sin(target_angles_in_the_sky[0]),
-                      np.cos(target_angles_in_the_sky[0]),
-                      0.0])
+                     np.cos(target_angles_in_the_sky[0]),
+                     0.0])
     North = np.cross(Target, East)
 
     Sun_pos_t0_EN = np.array([np.dot(Sun_pos_t0.value, East),
@@ -1390,15 +1388,15 @@ def test_parallax():
                                     np.dot(ds_gould_3d.value[:, tt], North)])
 
     Sun_pos_t_EN *= u.AU
-    Sun_vel_t_EN *= u.AU/u.day
+    Sun_vel_t_EN *= u.AU / u.day
     ds_gould_2d *= u.AU
 
     # ds_gould_2d  = Sun_pos_t_EN - (Sun_vel_t0_EN *(t_obj.value - t0_obj.value)[:, None])
     # ds_gould_2d -= Sun_pos_t0_EN[:, None].T
 
     # Calculate d-tau and d-beta
-    dtau  = ds_gould_2d[:, 0]/u.AU * pspl.piE[0] + ds_gould_2d[:, 1]/u.AU * pspl.piE[1]
-    dbeta = ds_gould_2d[:, 0]/u.AU * pspl.piE[1] - ds_gould_2d[:, 1]/u.AU * pspl.piE[0]
+    dtau = ds_gould_2d[:, 0] / u.AU * pspl.piE[0] + ds_gould_2d[:, 1] / u.AU * pspl.piE[1]
+    dbeta = ds_gould_2d[:, 0] / u.AU * pspl.piE[1] - ds_gould_2d[:, 1] / u.AU * pspl.piE[0]
 
     # dtau = np.dot(pspl.piE, ds_gould_2d)
     # dbeta = np.cross(pspl.piE, ds_gould_2d.T)
@@ -1406,10 +1404,10 @@ def test_parallax():
     # Need to convert to t0_geo at tr... pick a reference time (arbitrarily choose t0):
     A = (pspl.muRel[0] / pspl.thetaE_amp) / u.yr - (pspl.piE_amp * Sun_vel_t0_EN[0] / u.AU)
     B = (pspl.muRel[1] / pspl.thetaE_amp) / u.yr - (pspl.piE_amp * Sun_vel_t0_EN[1] / u.AU)
-    t0_obj_geotr = (-1 / (A**2 + B**2)) * (  A*pspl.u0[0]
-                                           + B*pspl.u0[1]
-                                           - A*pspl.piE_amp*Sun_pos_t0_EN[0]/u.AU
-                                           - B*pspl.piE_amp*Sun_pos_t0_EN[1]/u.AU)
+    t0_obj_geotr = (-1 / (A ** 2 + B ** 2)) * (A * pspl.u0[0]
+                                               + B * pspl.u0[1]
+                                               - A * pspl.piE_amp * Sun_pos_t0_EN[0] / u.AU
+                                               - B * pspl.piE_amp * Sun_pos_t0_EN[1] / u.AU)
     t0_obj_geotr += t0_obj
 
     # Need to convert to u0_geo at tr
@@ -1420,9 +1418,10 @@ def test_parallax():
 
     # Need to convert u0 amplitude.
     u0_amp_geotr = np.linalg.norm(u0_geotr)
-    
+
     # Need to convert to tE_geo at tr
-    tE_geotr = (pspl.tE * u.day * np.linalg.norm(pspl.muRel) * u.mas / u.yr) / (np.hypot(A, B) * pspl.thetaE_amp * u.mas)
+    tE_geotr = (pspl.tE * u.day * np.linalg.norm(pspl.muRel) * u.mas / u.yr) / (
+                np.hypot(A, B) * pspl.thetaE_amp * u.mas)
 
     # Just for comparison, lets also calculate piE and muRel in both frames.
     muRel_geotr = (pspl.muRel * u.mas / u.yr) - (pspl.piE_amp * pspl.thetaE_amp * u.mas * Sun_vel_t0_EN / u.AU)
@@ -1433,7 +1432,7 @@ def test_parallax():
     print(f'A = {A}')
     print(f'B = {B}')
     print(f'Sun vel at t0 (East) = {Sun_vel_t0_EN[0]}')
-    
+
     print(f'u0E:    pspl = {pspl.u0[0]:.3f},  geotr = {u0_geotr[0]:.3f}')
     print(f'u0N:    pspl = {pspl.u0[1]:.3f},  geotr = {u0_geotr[1]:.3f}')
     print(f'u0_amp: pspl = {pspl.u0_amp:.3f},  geotr = {np.linalg.norm(u0_geotr):.3f}, geotr_c = {u0_geo_casey:.3f}')
@@ -1443,7 +1442,7 @@ def test_parallax():
     print(f'muRelN: pspl = {pspl.muRel[1]:.3f},  geotr = {muRel_geotr[1]:.3f}')
     print(f'piEE:   pspl = {pspl.piE[0]:.4f},  geotr = {piE_geotr[0]:.4f},  geotr_c = {piEE_geo_casey:.4f}')
     print(f'piEN:   pspl = {pspl.piE[1]:.4f},  geotr = {piE_geotr[1]:.4f},  geotr_c = {piEN_geo_casey:.4f}')
-    
+
     # Calculate tau (in relative proper motion direction) and beta (in u0 direction)
     tau = ((t_obj.value - t0_obj_geotr.value) * u.day / tE_geotr) + dtau
     beta = u0_amp_geotr + dbeta
@@ -1457,14 +1456,13 @@ def test_parallax():
     print('beta   = ', beta[0:500:80])
     print('dbeta  = ', dbeta[0:500:80])
 
-
-    u_bagel   = (xS_bagle - xL_bagle) / (pspl.thetaE_amp * u.mas)
+    u_bagel = (xS_bagle - xL_bagle) / (pspl.thetaE_amp * u.mas)
     u_astropy = (xS_astropy - xL_astropy) / (pspl.thetaE_amp * u.mas)
     u_gould = tau_vec + beta_vec
-    
+
     xL_gould = xL_bagle
     xS_gould = (u_gould * pspl.thetaE_amp * u.mas) + xL_gould
-    
+
     # Position of source w.r.t. lens in Gould frame. 
     print('t = ', t[0:500:80])
     print('xL_bagle   = ', xL_bagle[0:500:80])
@@ -1528,7 +1526,6 @@ def test_parallax():
     plt.ylabel(r'$\Delta\delta$ ($\theta_E$)')
     plt.legend(fontsize=10)
     plt.axis('equal')
-    
 
     plt.figure()
     plt.plot(t, resid[:, 0], 'b--', label=r'$\Delta\alpha^*$ diff')
@@ -1614,6 +1611,7 @@ def testing_astropy_parallax():
 
     return
 
+
 def plot_PSBL(psbl, t_obs):
     """
     Make some standard plots for PSBL.
@@ -1632,14 +1630,13 @@ def plot_PSBL(psbl, t_obs):
     plt.ylabel('Photometry (mag)')
     plt.xlabel('Time (MJD)')
     plt.gca().invert_yaxis()
-    
+
     ##########
     # Astrometry
     ##########
     if psbl.astrometryFlag:
         # Find the points closest to t0
         t0idx = np.argmin(np.abs(t_obs - psbl.t0))
-
 
         xL1, xL2 = psbl.get_resolved_lens_astrometry(t_obs)
         xL1 *= 1e3
@@ -1648,7 +1645,6 @@ def plot_PSBL(psbl, t_obs):
         xS_lensed = psbl.get_astrometry(t_obs, image_arr=images, amp_arr=amps) * 1e3
 
         dxS = (xS_lensed - xS_unlens)
-
 
         # Plot the positions of everything
         plt.figure(2)
@@ -1702,6 +1698,7 @@ def plot_PSBL(psbl, t_obs):
 
     return
 
+
 def plot_PSBL_compare(psbl1, label1, psbl2, label2, t_obs):
     """
     Make some standard plots for PSBL.
@@ -1724,7 +1721,7 @@ def plot_PSBL_compare(psbl1, label1, psbl2, label2, t_obs):
     plt.ylabel('Photometry (mag)')
     plt.xlabel('Time (MJD)')
     plt.gca().invert_yaxis()
-    
+
     ##########
     # Astrometry
     ##########
@@ -1739,7 +1736,7 @@ def plot_PSBL_compare(psbl1, label1, psbl2, label2, t_obs):
         xL1_2, xL2_2 = psbl2.get_resolved_lens_astrometry(t_obs)
         xL1_2 *= 1e3
         xL2_2 *= 1e3
-        
+
         xS_unlens1 = psbl1.get_astrometry_unlensed(t_obs) * 1e3
         xS_unlens2 = psbl2.get_astrometry_unlensed(t_obs) * 1e3
         xS_lensed1 = psbl1.get_astrometry(t_obs, image_arr=images1, amp_arr=amps1) * 1e3
@@ -1755,10 +1752,10 @@ def plot_PSBL_compare(psbl1, label1, psbl2, label2, t_obs):
                  'b--', mfc='blue', mec='blue')
         plt.plot(xS_unlens2[:, 0], xS_unlens2[:, 1],
                  'b--', mfc='blue', mec='blue', alpha=0.2)
-        
+
         plt.plot(xS_lensed1[:, 0], xS_lensed1[:, 1], 'b-')
         plt.plot(xS_lensed2[:, 0], xS_lensed2[:, 1], 'b-', alpha=0.2)
-        
+
         plt.plot(xL1_1[:, 0], xL1_1[:, 1], 'g--', mfc='none', mec='green')
         plt.plot(xL1_2[:, 0], xL1_2[:, 1], 'g--', mfc='none', mec='green', alpha=0.2)
         plt.plot(xL2_1[:, 0], xL2_1[:, 1], 'g--', mfc='none', mec='dark green')
@@ -1775,19 +1772,19 @@ def plot_PSBL_compare(psbl1, label1, psbl2, label2, t_obs):
                  'bo',
                  label='xS, lensed, ' + label1)
         plt.plot(xS_lensed2[t0idx2, 0], xS_lensed2[t0idx2, 1],
-                 'bo', alpha=0.2, 
+                 'bo', alpha=0.2,
                  label='xS, lensed, ' + label2)
         plt.plot(xL1_1[t0idx1, 0], xL1_1[t0idx1, 1],
                  'gs', mfc='green', mec='green',
                  label='Primary lens, ' + label1)
         plt.plot(xL1_2[t0idx2, 0], xL1_2[t0idx2, 1],
-                 'gs', mfc='green', mec='green', alpha=0.2, 
+                 'gs', mfc='green', mec='green', alpha=0.2,
                  label='Primary lens, ' + label2)
         plt.plot(xL2_1[t0idx1, 0], xL2_1[t0idx1, 1],
                  'gs', mfc='none', mec='green',
                  label='Secondary lens, ' + label1)
         plt.plot(xL2_2[t0idx2, 0], xL2_2[t0idx2, 1],
-                 'gs', mfc='none', mec='green', alpha=0.2, 
+                 'gs', mfc='none', mec='green', alpha=0.2,
                  label='Secondary lens, ' + label2)
 
         plt.legend(fontsize=10)
@@ -1841,25 +1838,25 @@ def test_PSBL_PhotAstrom_noPar_Param2():
     piE_N = -0.01
     b_sff = np.array([1.0])
     mag_src = np.array([18])
-    thetaE = 3.0 # in mas
+    thetaE = 3.0  # in mas
     xS0_E = 0.0
     xS0_N = 0.01
     muS_E = 3.0
     muS_N = 0.0
     piS = (1.0 / 8000.0) * 1e3  # mas
-    q = 0.8    # M2 / M1
+    q = 0.8  # M2 / M1
     sep = 3.0  # mas
     alpha = 135.0
 
     psbl = model.PSBL_PhotAstrom_noPar_Param2(t0, u0, tE,
-                                thetaE, piS, 
-                                piE_E, piE_N, 
-                                xS0_E, xS0_N,
-                                muS_E, muS_N, 
-                                q, sep, alpha,
-                                b_sff, mag_src,
-                                raL=raL, decL=decL, 
-                                root_tol=1e-4)
+                                              thetaE, piS,
+                                              piE_E, piE_N,
+                                              xS0_E, xS0_N,
+                                              muS_E, muS_N,
+                                              q, sep, alpha,
+                                              b_sff, mag_src,
+                                              raL=raL, decL=decL,
+                                              root_tol=1e-4)
 
     t_obs = np.arange(56000.0, 58000.0, 3)
 
@@ -1868,10 +1865,11 @@ def test_PSBL_PhotAstrom_noPar_Param2():
     # Check that we have some extreme magnifications since this
     # is caustic crossing.
     phot = psbl.get_photometry(t_obs)
-    
+
     assert phot.min() < 16
 
     return
+
 
 def test_PSBL_Phot_noPar_Param1():
     """
@@ -1888,22 +1886,22 @@ def test_PSBL_Phot_noPar_Param1():
     piE_N = -0.01
     b_sff = np.array([1.0])
     mag_src = np.array([18])
-    q = 0.8    # M2 / M1
-    #sep = 3e-3 # in arcsec
-    sep = 1.0 # in Einstein radii
-    alpha = 135.0   # PA of binary on the sky
-    phi_piE = np.degrees(np.arctan2(piE_N, piE_E))   # PA of muRel on the sky
+    q = 0.8  # M2 / M1
+    # sep = 3e-3 # in arcsec
+    sep = 1.0  # in Einstein radii
+    alpha = 135.0  # PA of binary on the sky
+    phi_piE = np.degrees(np.arctan2(piE_N, piE_E))  # PA of muRel on the sky
     phi = alpha - phi_piE  # relative angle between binary and muRel.
     print('alpha = ', alpha, ' deg')
     print('phi_piE = ', phi_piE, ' deg')
     print('phi = ', phi, ' deg')
 
     psbl = model.PSBL_Phot_noPar_Param1(t0, u0, tE,
-                                piE_E, piE_N, 
-                                q, sep, phi,
-                                b_sff, mag_src,
-                                raL=raL, decL=decL, 
-                                root_tol=1e-4)
+                                        piE_E, piE_N,
+                                        q, sep, phi,
+                                        b_sff, mag_src,
+                                        raL=raL, decL=decL,
+                                        root_tol=1e-4)
 
     t_obs = np.arange(56000.0, 58000.0, 3)
 
@@ -1912,10 +1910,11 @@ def test_PSBL_Phot_noPar_Param1():
     # Check that we have some extreme magnifications since this
     # is caustic crossing.
     phot = psbl.get_photometry(t_obs)
-    
+
     assert phot.max() > 15
 
     return
+
 
 def test_PSBL_PhotAstrom_Par_Param2():
     """
@@ -1931,36 +1930,36 @@ def test_PSBL_PhotAstrom_Par_Param2():
     piE_N = -0.01
     b_sff = np.array([1.0])
     mag_src = np.array([18])
-    thetaE = 3.0 # in mas
+    thetaE = 3.0  # in mas
     xS0_E = 0.0
     xS0_N = 0.01
     muS_E = 3.0
     muS_N = 0.0
     piS = (1.0 / 8000.0) * 1e3  # mas
-    q = 0.8    # M2 / M1
+    q = 0.8  # M2 / M1
     sep = 3.0  # mas
     alpha = 135.0
 
     psbl_n = model.PSBL_PhotAstrom_noPar_Param2(t0, u0, tE,
-                                thetaE, piS, 
-                                piE_E, piE_N, 
-                                xS0_E, xS0_N,
-                                muS_E, muS_N, 
-                                q, sep, alpha,
-                                b_sff, mag_src,
-                                raL=raL, decL=decL, 
-                                root_tol=1e-4)
+                                                thetaE, piS,
+                                                piE_E, piE_N,
+                                                xS0_E, xS0_N,
+                                                muS_E, muS_N,
+                                                q, sep, alpha,
+                                                b_sff, mag_src,
+                                                raL=raL, decL=decL,
+                                                root_tol=1e-4)
 
     psbl_p = model.PSBL_PhotAstrom_Par_Param2(t0, u0, tE,
-                                thetaE, piS, 
-                                piE_E, piE_N, 
-                                xS0_E, xS0_N,
-                                muS_E, muS_N, 
-                                q, sep, alpha,
-                                b_sff, mag_src,
-                                raL=raL, decL=decL, 
-                                root_tol=1e-4)
-    
+                                              thetaE, piS,
+                                              piE_E, piE_N,
+                                              xS0_E, xS0_N,
+                                              muS_E, muS_N,
+                                              q, sep, alpha,
+                                              b_sff, mag_src,
+                                              raL=raL, decL=decL,
+                                              root_tol=1e-4)
+
     t_obs = np.arange(56000.0, 58000.0, 3)
 
     plot_PSBL_compare(psbl_n, 'No Parallax', psbl_p, 'Parallax', t_obs)
@@ -1969,14 +1968,16 @@ def test_PSBL_PhotAstrom_Par_Param2():
     # is caustic crossing.
     phot1 = psbl_n.get_photometry(t_obs)
     phot2 = psbl_p.get_photometry(t_obs)
-    
+
     assert phot1.min() < 16
     assert phot2.min() < 16
 
     print('Sep (in thetaE, no par): ', psbl_n.sep / psbl_n.thetaE_amp)
     print('Sep (in thetaE, with par): ', psbl_p.sep / psbl_p.thetaE_amp)
-    print('m1 (in thetaE**2, not mass): ', psbl_n.m1 / (psbl_n.thetaE_amp*1e-3)**2, psbl_p.m1 / (psbl_p.thetaE_amp*1e-3)**2)
-    print('m2 (in thetaE**2, not mass): ', psbl_n.m2 / (psbl_n.thetaE_amp*1e-3)**2, psbl_p.m2 / (psbl_p.thetaE_amp*1e-3)**2)
+    print('m1 (in thetaE**2, not mass): ', psbl_n.m1 / (psbl_n.thetaE_amp * 1e-3) ** 2,
+          psbl_p.m1 / (psbl_p.thetaE_amp * 1e-3) ** 2)
+    print('m2 (in thetaE**2, not mass): ', psbl_n.m2 / (psbl_n.thetaE_amp * 1e-3) ** 2,
+          psbl_p.m2 / (psbl_p.thetaE_amp * 1e-3) ** 2)
 
     ##########
     # Recalculate u calculation from complex_pos() to debug.
@@ -1989,51 +1990,52 @@ def test_PSBL_PhotAstrom_Par_Param2():
     # Distance along u0 direction -- always constant with time.
     u0 = psbl_p.u0.reshape(1, len(psbl_p.u0))
     thetaE_hat = psbl_p.thetaE_hat.reshape(1, len(psbl_p.thetaE_hat))
-    
+
     # Total distance
     u = u0 + tau * thetaE_hat
-    
+
     # Incorporate parallax
     parallax_vec = model.parallax_in_direction(psbl_p.raL, psbl_p.decL, t_obs)
-    u -= psbl_p.piE_amp * parallax_vec    
+    u -= psbl_p.piE_amp * parallax_vec
 
     t0dx = np.argmin(np.abs(tau))
     print('u = ')
-    print(u[t0dx-5:t0dx+5, :])
+    print(u[t0dx - 5:t0dx + 5, :])
 
     w, z1, z2 = psbl_p.get_complex_pos(t_obs)
     comp = psbl_p.get_complex_pos(t_obs)
     images_p, amps_p = psbl_p.get_all_arrays(t_obs)
     amp_arr_msk = np.ma.masked_invalid(amps_p)
     amp = np.sum(amp_arr_msk, axis=1)
-    
-    #print(images_p[t0dx-5:t0dx+5])
+
+    # print(images_p[t0dx-5:t0dx+5])
     # print(amps_p[t0dx-5:t0dx+5])
 
     # Get the astrometry in the lens rest frame in units of thetaE
-    xL = psbl_p.get_lens_astrometry(t_obs) # in arcsec
-    xL1, xL2 = psbl_p.get_resolved_lens_astrometry(t_obs) # in arcsec
+    xL = psbl_p.get_lens_astrometry(t_obs)  # in arcsec
+    xL1, xL2 = psbl_p.get_resolved_lens_astrometry(t_obs)  # in arcsec
     xS_u = psbl_p.get_astrometry_unlensed(t_obs)  # in arcsec
     u2 = (xS_u - xL) / (psbl_p.thetaE_amp * 1e-3)  # -- this should basically be u
 
     w_new = u2
     z1_new = (xL1 - xL) / (psbl_p.thetaE_amp * 1e-3)
     z2_new = (xL2 - xL) / (psbl_p.thetaE_amp * 1e-3)
-    
+
     print('w: ')
-    print(w[t0dx-5:t0dx+5] / (psbl_p.thetaE_amp * 1e-3))
-    print(w_new[t0dx-5:t0dx+5])
+    print(w[t0dx - 5:t0dx + 5] / (psbl_p.thetaE_amp * 1e-3))
+    print(w_new[t0dx - 5:t0dx + 5])
     print('z1: ')
-    print(z1[t0dx-5:t0dx+5] / (psbl_p.thetaE_amp * 1e-3))
-    print(z1_new[t0dx-5:t0dx+5])
+    print(z1[t0dx - 5:t0dx + 5] / (psbl_p.thetaE_amp * 1e-3))
+    print(z1_new[t0dx - 5:t0dx + 5])
     print('z12 ')
-    print(z2[t0dx-5:t0dx+5] / (psbl_p.thetaE_amp * 1e-3))
-    print(z2_new[t0dx-5:t0dx+5])
+    print(z2[t0dx - 5:t0dx + 5] / (psbl_p.thetaE_amp * 1e-3))
+    print(z2_new[t0dx - 5:t0dx + 5])
 
     print('u2 = ')
-    print(u2[t0dx-5:t0dx+5])
+    print(u2[t0dx - 5:t0dx + 5])
 
     return
+
 
 def test_PSBL_Phot_Par_Param1():
     """
@@ -2050,27 +2052,27 @@ def test_PSBL_Phot_Par_Param1():
     piE_N = -0.01
     b_sff = np.array([1.0])
     mag_src = np.array([18])
-    q = 0.8    # M2 / M1
-    sep = 1.0 # in Einstein radii
-    alpha = 135.0   # PA of binary on the sky
-    phi_piE = np.degrees(np.arctan2(piE_N, piE_E))   # PA of muRel on the sky
+    q = 0.8  # M2 / M1
+    sep = 1.0  # in Einstein radii
+    alpha = 135.0  # PA of binary on the sky
+    phi_piE = np.degrees(np.arctan2(piE_N, piE_E))  # PA of muRel on the sky
     phi = alpha - phi_piE  # relative angle between binary and muRel.
     print('alpha = ', alpha, ' deg')
     print('phi_piE = ', phi_piE, ' deg')
     print('phi = ', phi, ' deg')
 
     psbl_n = model.PSBL_Phot_noPar_Param1(t0, u0, tE,
-                                piE_E, piE_N, 
-                                q, sep, phi,
-                                b_sff, mag_src,
-                                raL=raL, decL=decL, 
-                                root_tol=1e-4)
+                                          piE_E, piE_N,
+                                          q, sep, phi,
+                                          b_sff, mag_src,
+                                          raL=raL, decL=decL,
+                                          root_tol=1e-4)
     psbl_p = model.PSBL_Phot_Par_Param1(t0, u0, tE,
-                                piE_E, piE_N, 
-                                q, sep, phi,
-                                b_sff, mag_src,
-                                raL=raL, decL=decL, 
-                                root_tol=1e-4)
+                                        piE_E, piE_N,
+                                        q, sep, phi,
+                                        b_sff, mag_src,
+                                        raL=raL, decL=decL,
+                                        root_tol=1e-4)
 
     t_obs = np.arange(56000.0, 58000.0, 3)
 
@@ -2080,7 +2082,7 @@ def test_PSBL_Phot_Par_Param1():
     # is caustic crossing.
     phot1 = psbl_n.get_photometry(t_obs)
     phot2 = psbl_p.get_photometry(t_obs)
-    
+
     assert phot1.min() < 16
     assert phot2.min() < 16
 
@@ -2100,32 +2102,32 @@ def test_PSBL_Phot_Par_Param1():
     # Distance along u0 direction -- always constant with time.
     u0 = psbl_p.u0.reshape(1, len(psbl_p.u0))
     thetaE_hat = psbl_p.thetaE_hat.reshape(1, len(psbl_p.thetaE_hat))
-    
+
     # Total distance
     u = u0 + tau * thetaE_hat
-    
+
     # Incorporate parallax
     parallax_vec = model.parallax_in_direction(psbl_p.raL, psbl_p.decL, t_obs)
-    u -= psbl_p.piE_amp * parallax_vec    
+    u -= psbl_p.piE_amp * parallax_vec
 
     t0dx = np.argmin(np.abs(tau))
     print('u = ')
-    print(u[t0dx-5:t0dx+5, :])
-    
+    print(u[t0dx - 5:t0dx + 5, :])
+
     w, z1, z2 = psbl_p.get_complex_pos(t_obs)
     images_p, amps_p = psbl_p.get_all_arrays(t_obs)
     amp_arr_msk = np.ma.masked_invalid(amps_p)
     amp = np.sum(amp_arr_msk, axis=1)
-    
-    print('w: ')
-    print(w[t0dx-5:t0dx+5])
-    print('z1: ')
-    print(z1[t0dx-5:t0dx+5])
-    print('z2: ')
-    print(z2[t0dx-5:t0dx+5])
 
-    
+    print('w: ')
+    print(w[t0dx - 5:t0dx + 5])
+    print('z1: ')
+    print(z1[t0dx - 5:t0dx + 5])
+    print('z2: ')
+    print(z2[t0dx - 5:t0dx + 5])
+
     return
+
 
 def test_PSBL_phot_vs_pyLIMA():
     from pyLIMA import microlmodels
@@ -2195,8 +2197,9 @@ def test_PSBL_phot_vs_pyLIMA():
     res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q_new, sep, phi)
     t_mjd, mag_pyl, mag_our, max_delta = res
     assert max_delta < 1e-6
-    
+
     return
+
 
 def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1, piEN=0.1):
     """All input values are our model definitions.
@@ -2208,7 +2211,7 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     from pyLIMA import telescopes
     from pyLIMA import microltoolbox
     from pyLIMA import microlmodels
-    
+
     phi_rad = np.radians(phi)
 
     # These are arbitrary in the Phot-noParallax model.
@@ -2217,14 +2220,14 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
 
     # Our --> PyLIMA  conversions
     pylima_q = 1.0 / q
-    
+
     q_prime = (1.0 - q) / (2.0 * (1 + q))
 
     pylima_u0 = u0_amp + q_prime * sep * np.sin(phi_rad)
     pylima_t0 = t0 + q_prime * sep * tE * np.cos(phi_rad)
 
     # Note that pylima_phi = phi
-    
+
     log_q = np.log10(pylima_q)
     log_s = np.log10(sep)
 
@@ -2233,16 +2236,16 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     pylima_data[:, 1] = 1e5
     time_jd = pylima_data[:, 0]
     time_mjd = time_jd - 2400000.5
-    
+
     pylima_tel = telescopes.Telescope(name='OGLE', camera_filter='I', light_curve_flux=pylima_data)
     pylima_ev = event.Event()
     pylima_ev.name = 'Fubar'
     pylima_ev.telescopes.append(pylima_tel)
-    
+
     pylima_mod = microlmodels.create_model('PSBL', pylima_ev)
     pylima_mod.define_model_parameters()
     pylima_mod.blend_flux_ratio = False
-    
+
     tmp_params = [pylima_t0 + 2400000.5, pylima_u0, tE, log_s, log_q, phi_rad]
     pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
     pylima_par.fs_OGLE = microltoolbox.magnitude_to_flux(mag_src)
@@ -2264,7 +2267,7 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     f2 = plt.gcf().add_axes([0.4, 0.15, 0.57, 0.2])
     f1.get_shared_x_axes().join(f1, f2)
     f1.set_xticklabels([])
-    
+
     f1.plot(time_mjd, pylima_lcurve_mag, 'ko', label='pyLIMA')
     f1.plot(time_mjd, our_mag, 'r.', label='Ours')
     f1.invert_yaxis()
@@ -2280,17 +2283,17 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     ttop = 0.7
     ttstep = 0.05
     fig = plt.gcf()
-    fig.text(tleft, ttop - 0*ttstep, 't0 = {0:.1f} (MJD)'.format(t0), fontsize=12)
-    fig.text(tleft, ttop - 1*ttstep, 't0_pyL = {0:.1f} (MJD)'.format(pylima_t0), fontsize=12)
-    fig.text(tleft, ttop - 2*ttstep, 'u0 = {0:.3f}'.format(u0_amp), fontsize=12)
-    fig.text(tleft, ttop - 3*ttstep, 'u0_pyL = {0:.3f}'.format(pylima_u0), fontsize=12)
-    fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f} (day)'.format(tE), fontsize=12)
-    fig.text(tleft, ttop - 5*ttstep, 'q  = {0:.5f}'.format(q), fontsize=12)
-    fig.text(tleft, ttop - 6*ttstep, 'q_pyL  = {0:.5f}'.format(pylima_q), fontsize=12)
-    fig.text(tleft, ttop - 7*ttstep, 'sep  = {0:.5f}'.format(sep), fontsize=12)
-    fig.text(tleft, ttop - 8*ttstep, 'phi  = {0:.1f}'.format(phi), fontsize=12)
-    fig.text(tleft, ttop - 9*ttstep, 'b_sff  = {0:.2f}'.format(b_sff), fontsize=12)
-    fig.text(tleft, ttop - 10*ttstep, 'mag_src  = {0:.1f}'.format(mag_src), fontsize=12)
+    fig.text(tleft, ttop - 0 * ttstep, 't0 = {0:.1f} (MJD)'.format(t0), fontsize=12)
+    fig.text(tleft, ttop - 1 * ttstep, 't0_pyL = {0:.1f} (MJD)'.format(pylima_t0), fontsize=12)
+    fig.text(tleft, ttop - 2 * ttstep, 'u0 = {0:.3f}'.format(u0_amp), fontsize=12)
+    fig.text(tleft, ttop - 3 * ttstep, 'u0_pyL = {0:.3f}'.format(pylima_u0), fontsize=12)
+    fig.text(tleft, ttop - 4 * ttstep, 'tE = {0:.1f} (day)'.format(tE), fontsize=12)
+    fig.text(tleft, ttop - 5 * ttstep, 'q  = {0:.5f}'.format(q), fontsize=12)
+    fig.text(tleft, ttop - 6 * ttstep, 'q_pyL  = {0:.5f}'.format(pylima_q), fontsize=12)
+    fig.text(tleft, ttop - 7 * ttstep, 'sep  = {0:.5f}'.format(sep), fontsize=12)
+    fig.text(tleft, ttop - 8 * ttstep, 'phi  = {0:.1f}'.format(phi), fontsize=12)
+    fig.text(tleft, ttop - 9 * ttstep, 'b_sff  = {0:.2f}'.format(b_sff), fontsize=12)
+    fig.text(tleft, ttop - 10 * ttstep, 'mag_src  = {0:.1f}'.format(mag_src), fontsize=12)
 
     max_delta = np.max(np.abs(pylima_lcurve_mag - our_mag))
 
@@ -2298,8 +2301,9 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
         fig.text(tleft, 0.05, '!!BAD!!', fontsize=16, color='red')
 
     plt.savefig('PSBL_phot_vs_pyLIMA.png')
-        
+
     return (time_mjd, pylima_lcurve_mag, our_mag, max_delta)
+
 
 def test_PSPL_phot_vs_pyLIMA():
     from pyLIMA import microlmodels
@@ -2307,7 +2311,7 @@ def test_PSPL_phot_vs_pyLIMA():
     from pyLIMA import telescopes
     from pyLIMA import microltoolbox
     from pyLIMA import microlmodels
-    
+
     # Parameters -- common to ours and pyLIMA
     ra = 267.4640833333333
     dec = -34.62555555555556
@@ -2326,8 +2330,9 @@ def test_PSPL_phot_vs_pyLIMA():
     res = plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_sff, parallax=True)
     t_mjd, mag_pyl, mag_our, max_delta = res
     assert max_delta < 1e-6
-    
+
     return
+
 
 def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_sff, parallax=True):
     """
@@ -2340,13 +2345,13 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     from pyLIMA import telescopes
     from pyLIMA import microltoolbox
     from pyLIMA import microlmodels
-    
+
     # To convert between pyLIMA (geocentric) and Ours (heliocentric), we will
     # need some info about the Sun's position and velocity.
     # First define the reference time: We will use our t0 as the reference time.
-    t0_par = t0 + 2400000.5   # JD
+    t0_par = t0 + 2400000.5  # JD
     t0_ref = t0_par
-    #t0_ref += 10.0
+    # t0_ref += 10.0
 
     ####
     # Full Astropy Version
@@ -2368,7 +2373,6 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     # print('targ = ', targ)
     # print('foo = ', foo)
     # Above is useless because it includes the whole velocity on the sky. 
-    
 
     # Get the position and velocity of the Earth in the barycentric frame.
     # with solar_system_ephemeris.set('jpl'):
@@ -2378,7 +2382,7 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
 
     print('Earth pos (bary) = ', Earth_pos_t0_par[0])
     print('Earth vel (bary) = ', Earth_pos_t0_par[1])
-    
+
     # This is the position of the Sun w.r.t. to the Earth at time t0 (in geocentric frame)
     Sun_pos_t0_par = -Earth_pos_t0_par[0]
     Sun_vel_t0_par = -Earth_pos_t0_par[1]
@@ -2394,8 +2398,8 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
          np.sin(target_angles_in_the_sky[1])])
 
     East = np.array([-np.sin(target_angles_in_the_sky[0]),
-                      np.cos(target_angles_in_the_sky[0]),
-                      0.0])
+                     np.cos(target_angles_in_the_sky[0]),
+                     0.0])
     North = np.cross(Target, East)
     print('East (geo) = ', East)
     print('North (geo) = ', North)
@@ -2405,13 +2409,12 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     print('Earth vel (EN projected, AU/day) = ', Earth_vel_t0_par_proj)
     au_day_to_km_s = 1731.45683
     print('Earth vel (EN projected, km/s) = ', Earth_vel_t0_par_proj * au_day_to_km_s)
-    
 
     # Unit vector pointing towards the Sun (projected onto the sky):
     Sun_pos_t0_par_proj = np.array([np.dot(Sun_pos_t0_par.xyz.to('AU').value, East),
                                     np.dot(Sun_pos_t0_par.xyz.to('AU').value, North)])
-    Sun_pos_t0_par_proj_unit = Sun_pos_t0_par_proj / np.linalg.norm( Sun_pos_t0_par_proj )
-    
+    Sun_pos_t0_par_proj_unit = Sun_pos_t0_par_proj / np.linalg.norm(Sun_pos_t0_par_proj)
+
     # Project velocity from RA and Dec into geocentric equatorial rectangular coordinates.
     # Note units will be in AU / day.
     Sun_vel_t0_par_proj = np.array([np.dot(Sun_vel_t0_par.xyz.to('AU/day').value, East),
@@ -2429,7 +2432,6 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     print('Sun vel (geo, EN projected (AU/day)) = ', Sun_vel_t0_par_proj)
     print('Sun vel (geo, EN projected (km/s))   = ', Sun_vel_t0_par_proj * au_day_to_km_s)
 
-
     #####
     # Load up some artificial data for pyLIMA... need this for time array definition.
     #####
@@ -2437,23 +2439,23 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     pylima_data[:, 1] = 1e5
     time_jd = pylima_data[:, 0]
     time_mjd = time_jd - 2400000.5
-    
+
     #####
     # Compute our model
     #####
     print('Making our model')
     if parallax:
-        pspl = model.PSPL_Phot_Par_Param1(t0, u0_amp, tE, piEE, piEN, 
+        pspl = model.PSPL_Phot_Par_Param1(t0, u0_amp, tE, piEE, piEN,
                                           [b_sff], [mag_src], raL=ra, decL=dec)
     else:
-        pspl = model.PSPL_Phot_noPar_Param1(t0, u0_amp, tE, piEE, piEN, 
-                                          [b_sff], [mag_src], raL=ra, decL=dec)
+        pspl = model.PSPL_Phot_noPar_Param1(t0, u0_amp, tE, piEE, piEN,
+                                            [b_sff], [mag_src], raL=ra, decL=dec)
 
     our_mag = pspl.get_photometry(time_mjd)
     # our_xL = pspl.get_lens_astrometry(time_mjd)
     # our_xS = pspl.get_astrometry_unlensed(time_mjd)
     # our_u = our_xS - our_xL
-    
+
     #####
     # Compute pyLIMA model
     #####
@@ -2464,7 +2466,7 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     #    Sun_vel_t0_par_proj [AU / day] * tE [days] * piE^2 / 1 AU
     # tmpEE_geo = piEE - (Sun_vel_t0_par_proj[0] * tE * piE**2)   # unitless.
     # tmpEN_geo = piEN - (Sun_vel_t0_par_proj[1] * tE * piE**2)
-    tmpEE_geo = piEE - (Sun_vel_t0_par_proj[0] * tE * piE)   # unitless.
+    tmpEE_geo = piEE - (Sun_vel_t0_par_proj[0] * tE * piE)  # unitless.
     tmpEN_geo = piEN - (Sun_vel_t0_par_proj[1] * tE * piE)
     tmp_geo = np.hypot(tmpEE_geo, tmpEN_geo)
     print('tmp_geo = ', tmp_geo)
@@ -2474,18 +2476,16 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     piEN_geo = tmpEN_geo * piE / tmp_geo
     print('piE_vec helio = ', piEE, piEN)
     print('piE_vec geo   = ', piEE_geo, piEN_geo)
-    
+
     tE_geo = tE * piE / tmp_geo
 
     print()
     # u0_vec_geo = pspl.u0 + (((t0_ref - t0_par)/tE)*pspl.thetaE_hat) - (piE * par_vec)
-    u0_vec_geo = pspl.u0 + (((t0_ref - t0_par)/tE)*pspl.thetaE_hat) - (piE * Sun_pos_t0_par_proj_unit)
+    u0_vec_geo = pspl.u0 + (((t0_ref - t0_par) / tE) * pspl.thetaE_hat) - (piE * Sun_pos_t0_par_proj_unit)
     u0_geo = np.linalg.norm(u0_vec_geo)
     print('u0_vec_geo = ', u0_vec_geo)
     print('pspl.u0 = ', pspl.u0)
     print('u0_geo = ', u0_geo)
-
-
 
     print('Making pyLIMA model')
     pylima_u0 = u0_geo
@@ -2493,7 +2493,7 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     pylima_piEE = -piEE_geo
     pylima_piEN = -piEN_geo
     pylima_tE = tE_geo
-    
+
     pylima_tel = telescopes.Telescope(name='OGLE', camera_filter='I', light_curve_flux=pylima_data)
     pylima_ev = event.Event()
     pylima_ev.name = 'Fubar'
@@ -2502,21 +2502,21 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     pylima_ev.dec = dec
 
     if parallax:
-        pylima_mod = microlmodels.create_model('PSPL', pylima_ev, parallax=['Annual', pylima_t0 ])
+        pylima_mod = microlmodels.create_model('PSPL', pylima_ev, parallax=['Annual', pylima_t0])
         tmp_params = [pylima_t0, pylima_u0, pylima_tE, pylima_piEN, pylima_piEE]
     else:
         pylima_mod = microlmodels.create_model('PSPL', pylima_ev)
-        tmp_params = [pylima_t0, pylima_u0, pylima_tE] 
-       
+        tmp_params = [pylima_t0, pylima_u0, pylima_tE]
+
     pylima_mod.define_model_parameters()
     pylima_mod.blend_flux_ratio = False
-    
+
     pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
     pylima_par.fs_OGLE = microltoolbox.magnitude_to_flux(mag_src)
     pylima_par.fb_OGLE = pylima_par.fs_OGLE * (1.0 - b_sff) / b_sff
     print('piEE: pylima = ', pylima_par.piEE, ' ours = ', piEE)
     print('piEN: pylima = ', pylima_par.piEN, ' ours = ', piEN)
-    
+
     pylima_amp = pylima_mod.model_magnification(pylima_tel, pylima_par)
     pylima_lcurve, sf, bf = pylima_mod.compute_the_microlensing_model(pylima_tel, pylima_par)
     pylima_lcurve_mag = microltoolbox.flux_to_magnitude(pylima_lcurve)
@@ -2532,7 +2532,7 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     f2 = plt.gcf().add_axes([0.4, 0.15, 0.57, 0.2])
     f1.get_shared_x_axes().join(f1, f2)
     f1.set_xticklabels([])
-    
+
     f1.plot(time_mjd, pylima_lcurve_mag, 'ko', label='pyLIMA')
     f1.plot(time_mjd, our_mag, 'r.', label='Ours')
     f1.invert_yaxis()
@@ -2548,19 +2548,19 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     ttop = 0.8
     ttstep = 0.05
     fig = plt.gcf()
-    fig.text(tleft, ttop - 0*ttstep, 'raL = {0:.2f} (deg)'.format(ra), fontsize=12)
-    fig.text(tleft, ttop - 1*ttstep, 'decL = {0:.2f} (deg)'.format(dec), fontsize=12)
-    fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f} (MJD)'.format(t0), fontsize=12)
-    fig.text(tleft, ttop - 3*ttstep, 'u0     = {0:.3f}'.format(u0_amp), fontsize=12)
-    fig.text(tleft, ttop - 4*ttstep, 'u0_pyL = {0:.3f}'.format(pylima_u0), fontsize=12)
-    fig.text(tleft, ttop - 5*ttstep, 'tE = {0:.1f} (day)'.format(tE), fontsize=12)
-    fig.text(tleft, ttop - 6*ttstep, 'tE_pyL = {0:.1f} (day)'.format(pylima_tE), fontsize=12)
-    fig.text(tleft, ttop - 7*ttstep, 'piEE (S-L) = {0:.4f}'.format(piEE), fontsize=12)
-    fig.text(tleft, ttop - 8*ttstep, 'piEE_pyL (L-S) = {0:.4f}'.format(pylima_piEE), fontsize=12)
-    fig.text(tleft, ttop - 9*ttstep, 'piEN (S-L) = {0:.4f}'.format(piEN), fontsize=12)
-    fig.text(tleft, ttop - 10*ttstep, 'piEN_pyL (L-S) = {0:.4f}'.format(pylima_piEN), fontsize=12)
-    fig.text(tleft, ttop - 11*ttstep, 'b_sff = {0:.2f}'.format(b_sff), fontsize=12)
-    fig.text(tleft, ttop - 12*ttstep, 'mag_src = {0:.1f}'.format(mag_src), fontsize=12)
+    fig.text(tleft, ttop - 0 * ttstep, 'raL = {0:.2f} (deg)'.format(ra), fontsize=12)
+    fig.text(tleft, ttop - 1 * ttstep, 'decL = {0:.2f} (deg)'.format(dec), fontsize=12)
+    fig.text(tleft, ttop - 2 * ttstep, 't0 = {0:.1f} (MJD)'.format(t0), fontsize=12)
+    fig.text(tleft, ttop - 3 * ttstep, 'u0     = {0:.3f}'.format(u0_amp), fontsize=12)
+    fig.text(tleft, ttop - 4 * ttstep, 'u0_pyL = {0:.3f}'.format(pylima_u0), fontsize=12)
+    fig.text(tleft, ttop - 5 * ttstep, 'tE = {0:.1f} (day)'.format(tE), fontsize=12)
+    fig.text(tleft, ttop - 6 * ttstep, 'tE_pyL = {0:.1f} (day)'.format(pylima_tE), fontsize=12)
+    fig.text(tleft, ttop - 7 * ttstep, 'piEE (S-L) = {0:.4f}'.format(piEE), fontsize=12)
+    fig.text(tleft, ttop - 8 * ttstep, 'piEE_pyL (L-S) = {0:.4f}'.format(pylima_piEE), fontsize=12)
+    fig.text(tleft, ttop - 9 * ttstep, 'piEN (S-L) = {0:.4f}'.format(piEN), fontsize=12)
+    fig.text(tleft, ttop - 10 * ttstep, 'piEN_pyL (L-S) = {0:.4f}'.format(pylima_piEN), fontsize=12)
+    fig.text(tleft, ttop - 11 * ttstep, 'b_sff = {0:.2f}'.format(b_sff), fontsize=12)
+    fig.text(tleft, ttop - 12 * ttstep, 'mag_src = {0:.1f}'.format(mag_src), fontsize=12)
 
     max_delta = np.max(np.abs(pylima_lcurve_mag - our_mag))
 
@@ -2580,7 +2580,6 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     # f4.plot(time_mjd, pylima_y, 'ko', label='pyLIMA')
     # f4.plot(time_mjd, our_u[:, 1], 'r.', label='Ours')
 
-        
     return (time_mjd, pylima_lcurve_mag, our_mag, max_delta)
 
 
@@ -2598,15 +2597,15 @@ def test_bagle_self_conversion():
     mag_src = 18
     t0par = 56050
 
-    t_obs = np.arange(t0 - 5*tE, t0 + 5*tE, 0.1)
+    t_obs = np.arange(t0 - 5 * tE, t0 + 5 * tE, 0.1)
 
-    pspl_h = model.PSPL_Phot_Par_Param1(t0, u0_amp, tE, 
+    pspl_h = model.PSPL_Phot_Par_Param1(t0, u0_amp, tE,
                                         piE_E, piE_N, b_sff, mag_src,
                                         raL, decL)
 
     t0_g, u0_amp_g, tE_g, piE_E_g, piE_N_g = pspl_h.get_geoproj_params(t0par)
 
-    pspl_g = model.PSPL_Phot_Par_Param1_geoproj(t0_g, u0_amp_g, tE_g, 
+    pspl_g = model.PSPL_Phot_Par_Param1_geoproj(t0_g, u0_amp_g, tE_g,
                                                 piE_E_g, piE_N_g, b_sff, mag_src,
                                                 t0par,
                                                 raL, decL)
@@ -2643,7 +2642,7 @@ def test_bagle_self_conversion():
 
     t0_h, u0_amp_h, tE_h, piE_E_h, piE_N_h = pspl_g.get_helio_params()
 
-    pspl_h_from_g = model.PSPL_Phot_Par_Param1(t0_h, u0_amp_h, tE_h, 
+    pspl_h_from_g = model.PSPL_Phot_Par_Param1(t0_h, u0_amp_h, tE_h,
                                                piE_E_h, piE_N_h, b_sff, mag_src,
                                                raL, decL)
 
@@ -2652,6 +2651,7 @@ def test_bagle_self_conversion():
     amp_h_from_g = pspl_h_from_g.get_amplification(t_obs)
 
     print(np.abs(mag_h - mag_h_from_g).max())
+
 
 def test_PSPL_Phot_Par_Param1_geoproj():
     t0par = 56000
@@ -2666,9 +2666,9 @@ def test_PSPL_Phot_Par_Param1_geoproj():
     raL = (17.0 + (49.0 / 60.) + (51.38 / 3600.0)) * 15.0  # degrees
     decL = -35 + (22.0 / 60.0) + (28.0 / 3600.0)
 
-    run_test_PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE, 
+    run_test_PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE,
                                           piE_E, piE_N, b_sff, mag_src,
-                                          t0par, 
+                                          t0par,
                                           raL, decL, outdir='')
 
 
@@ -2714,6 +2714,7 @@ def test_geoproj_mm():
     diff = compare_geoproj_mm(260, -30, 56000, 56050, 0.02, 135, 0.058, 0.01)
     assert np.abs(diff).max() < 1e-10
 
+
 def compare_geoproj_mm(raL, decL, t0par, t0, u0_amp, tE, piE_E, piE_N, show=False):
     """
     Compare BAGLE's geocentric projected formalism implementation against
@@ -2728,7 +2729,7 @@ def compare_geoproj_mm(raL, decL, t0par, t0, u0_amp, tE, piE_E, piE_N, show=Fals
 
     coords = SkyCoord(raL, decL, unit=(u.deg, u.deg))
 
-    t_mjd = np.arange(t0 - 5*tE, t0 + 5*tE, 0.1)
+    t_mjd = np.arange(t0 - 5 * tE, t0 + 5 * tE, 0.1)
     t_hjd = t_mjd + 2400000.5
 
     params = {}
@@ -2746,7 +2747,7 @@ def compare_geoproj_mm(raL, decL, t0par, t0, u0_amp, tE, piE_E, piE_N, show=Fals
     b_sff = 1
     mag_src = 18
 
-    pspl = model.PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE, 
+    pspl = model.PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE,
                                               piE_E, piE_N, b_sff, mag_src,
                                               t0par,
                                               raL, decL)
@@ -2766,7 +2767,7 @@ def compare_geoproj_mm(raL, decL, t0par, t0, u0_amp, tE, piE_E, piE_N, show=Fals
         ax[0].legend()
         plt.show()
 
-    return (A_b - A_mm)/A_mm
+    return (A_b - A_mm) / A_mm
 
 
 def run_test_PSPL_PhotAstrom_Par_Param4_geoproj(t0, u0_amp, tE, thetaE, piS,
@@ -2807,7 +2808,7 @@ def run_test_PSPL_PhotAstrom_Par_Param4_geoproj(t0, u0_amp, tE, thetaE, piS,
     # Plot the position
     plt.figure(2)
     plt.clf()
-    plt.plot(pos[:,0], pos[:,1], 'k.')
+    plt.plot(pos[:, 0], pos[:, 1], 'k.')
     plt.xlabel('RA (arcsec)')
     plt.ylabel('Dec (arcsec)')
     plt.savefig(outdir + 'pos.png')
@@ -2816,23 +2817,23 @@ def run_test_PSPL_PhotAstrom_Par_Param4_geoproj(t0, u0_amp, tE, thetaE, piS,
     # Plot the shift
     plt.figure(3)
     plt.clf()
-    plt.plot(shift[:,0], shift[:,1], 'k.')
+    plt.plot(shift[:, 0], shift[:, 1], 'k.')
     plt.xlabel('RA (mas)')
     plt.ylabel('Dec (mas)')
     plt.savefig(outdir + 'shift.png')
     plt.show()
 
 
-def run_test_PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE, 
+def run_test_PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE,
                                           piE_E, piE_N, b_sff, mag_src,
-                                          t0par, 
+                                          t0par,
                                           raL, decL, outdir=''):
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
 
-    pspl = model.PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE, 
+    pspl = model.PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE,
                                               piE_E, piE_N, b_sff, mag_src,
-                                              t0par, 
+                                              t0par,
                                               raL, decL)
 
     t = np.arange(t0 - 500, t0 + 500, 1)
@@ -2849,6 +2850,7 @@ def run_test_PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE,
     plt.savefig(outdir + 'amp_v_time.png')
     plt.show()
 
+
 def test_u0_hat_thetaE_hat():
     """
     Tests for:
@@ -2862,29 +2864,29 @@ def test_u0_hat_thetaE_hat():
     #    beta > 0 means u0_E > 0
     #    u0_amp > 0 mean u0_E > 0
     #
-    
+
     E_hat = np.array([1.0, 0.0])
     N_hat = np.array([0.0, 1.0])
-    
+
     ##########
     # Test 1:
     #   u0 sign:     +, +
     #   muRel sign:  +, -
     ##########
     u0_hatE_in = 0.3
-    u0_hatN_in = (1.0 - u0_hatE_in**2)**0.5
+    u0_hatN_in = (1.0 - u0_hatE_in ** 2) ** 0.5
     u0_hat_in = np.array([u0_hatE_in, u0_hatN_in])
 
     # direction of relative proper motion vector
     # Same as thetaE_hat
-    muRel_hatE_in = (1.0 - u0_hatE_in**2)**0.5
+    muRel_hatE_in = (1.0 - u0_hatE_in ** 2) ** 0.5
     muRel_hatN_in = -0.3
     muRel_hat_in = np.array([muRel_hatE_in, muRel_hatN_in])
 
     # Should be positive.
     # in units of thetaE, opposite sign as beta???? NOT SURE ANYMORE.
     u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * np.cross(u0_hat_in, N_hat) * 1.0
-    
+
     # Test
     u0_hat = model.u0_hat_from_thetaE_hat(muRel_hat_in, u0amp_in)
 
@@ -2898,12 +2900,12 @@ def test_u0_hat_thetaE_hat():
     #   muRel sign:  +, +
     ##########
     u0_hatE_in = -0.3
-    u0_hatN_in = (1.0 - u0_hatE_in**2)**0.5
+    u0_hatN_in = (1.0 - u0_hatE_in ** 2) ** 0.5
     u0_hat_in = np.array([u0_hatE_in, u0_hatN_in])
 
     # direction of relative proper motion vector
     # Same as thetaE_hat
-    muRel_hatE_in = (1.0 - u0_hatE_in**2)**0.5
+    muRel_hatE_in = (1.0 - u0_hatE_in ** 2) ** 0.5
     muRel_hatN_in = 0.3
     muRel_hat_in = np.array([muRel_hatE_in, muRel_hatN_in])
 
@@ -2923,12 +2925,12 @@ def test_u0_hat_thetaE_hat():
     #   muRel sign:  -, +
     ##########
     u0_hatE_in = -0.3
-    u0_hatN_in = -(1.0 - u0_hatE_in**2)**0.5
+    u0_hatN_in = -(1.0 - u0_hatE_in ** 2) ** 0.5
     u0_hat_in = np.array([u0_hatE_in, u0_hatN_in])
 
     # direction of relative proper motion vector
     # Same as thetaE_hat
-    muRel_hatE_in = -(1.0 - u0_hatE_in**2)**0.5
+    muRel_hatE_in = -(1.0 - u0_hatE_in ** 2) ** 0.5
     muRel_hatN_in = 0.3
     muRel_hat_in = np.array([muRel_hatE_in, muRel_hatN_in])
 
@@ -2942,19 +2944,18 @@ def test_u0_hat_thetaE_hat():
     assert u0_hat[1] == u0_hat_in[1]
     assert np.sign(u0_hat[0]) == np.sign(u0amp_in)
 
-
     ##########
     # Test 4
     #   u0 sign:     +, -
     #   muRel sign:  +, +
     ##########
     u0_hatE_in = 0.3
-    u0_hatN_in = -(1.0 - u0_hatE_in**2)**0.5
+    u0_hatN_in = -(1.0 - u0_hatE_in ** 2) ** 0.5
     u0_hat_in = np.array([u0_hatE_in, u0_hatN_in])
 
     # direction of relative proper motion vector
     # Same as thetaE_hat
-    muRel_hatE_in = (1.0 - u0_hatE_in**2)**0.5
+    muRel_hatE_in = (1.0 - u0_hatE_in ** 2) ** 0.5
     muRel_hatN_in = 0.3
     muRel_hat_in = np.array([muRel_hatE_in, muRel_hatN_in])
 
@@ -2969,7 +2970,6 @@ def test_u0_hat_thetaE_hat():
     assert np.sign(u0_hat[0]) == np.sign(u0amp_in)
 
     return
-
 
 
 def test_PSBL_get_photometry_nans():
@@ -2991,14 +2991,14 @@ def test_PSBL_get_photometry_nans():
     b_sff = 0.0005696291
 
     psbl = model.PSBL_PhotAstrom_Par_Param1(mL1, mL2, t0, xS0[0], xS0[1],
-                                   beta, muL[0], muL[1], muS[0], muS[1], dL, dS,
-                                   sep, alpha, [b_sff], [mag_src],
-                                   raL=raL, decL=decL, root_tol=1e-8)
+                                            beta, muL[0], muL[1], muS[0], muS[1], dL, dS,
+                                            sep, alpha, [b_sff], [mag_src],
+                                            raL=raL, decL=decL, root_tol=1e-8)
 
     print(f't0 = {psbl.t0:.1f} MJD')
     print(f'tE = {psbl.tE:.1f} days')
 
-    duration = 100 # tE
+    duration = 100  # tE
     time_steps = 5000
     tmin = psbl.t0 - ((duration / 2.0) * psbl.tE)
     tmax = psbl.t0 + ((duration / 2.0) * psbl.tE)
@@ -3033,6 +3033,7 @@ def test_PSBL_get_photometry_nans():
 
     return
 
+
 def test_PSBL_too_many_peaks3():
     raL = 267.9828892936
     decL = -26.4253612405
@@ -3051,9 +3052,9 @@ def test_PSBL_too_many_peaks3():
     b_sff = 0.2092014345
 
     psbl = model.PSBL_PhotAstrom_Par_Param1(mL1, mL2, t0, xS0[0], xS0[1],
-                                   beta, muL[0], muL[1], muS[0], muS[1], dL, dS,
-                                   sep, alpha, [b_sff], [mag_src],
-                                   raL=raL, decL=decL, root_tol=1e-8)
+                                            beta, muL[0], muL[1], muS[0], muS[1], dL, dS,
+                                            sep, alpha, [b_sff], [mag_src],
+                                            raL=raL, decL=decL, root_tol=1e-8)
 
     print(f't0 = {psbl.t0:.1f} MJD')
     print(f'tE = {psbl.tE:.1f} days')
@@ -3065,7 +3066,7 @@ def test_PSBL_too_many_peaks3():
     print(f'phi = {phi} deg')
     print(f'alpha = {alpha} deg')
 
-    duration = 100 # tE
+    duration = 100  # tE
     time_steps = 5000
     tmin = psbl.t0 - 5000
     tmax = psbl.t0 + 5000
@@ -3082,6 +3083,7 @@ def test_PSBL_too_many_peaks3():
     ax.ticklabel_format(useOffset=False)
 
     return
+
 
 def test_PSBL_too_many_peaks_621():
     raL = 255.9785152922
@@ -3101,9 +3103,9 @@ def test_PSBL_too_many_peaks_621():
     b_sff = 0.0005696291
 
     psbl = model.PSBL_PhotAstrom_Par_Param1(mL1, mL2, t0, xS0[0], xS0[1],
-                                   beta, muL[0], muL[1], muS[0], muS[1], dL, dS,
-                                   sep, alpha, [b_sff], [mag_src],
-                                   raL=raL, decL=decL, root_tol=1e-8)
+                                            beta, muL[0], muL[1], muS[0], muS[1], dL, dS,
+                                            sep, alpha, [b_sff], [mag_src],
+                                            raL=raL, decL=decL, root_tol=1e-8)
 
     print(f't0 = {psbl.t0:.1f} MJD')
     print(f'tE = {psbl.tE:.1f} days')
@@ -3115,7 +3117,7 @@ def test_PSBL_too_many_peaks_621():
     print(f'phi = {phi} deg')
     print(f'alpha = {alpha} deg')
 
-    duration = 100 # tE
+    duration = 100  # tE
     time_steps = 100
     tmin = psbl.t0 - 2
     tmax = psbl.t0 + 2
@@ -3140,7 +3142,6 @@ def test_PSBL_too_many_peaks_621():
     return
 
 
-
 # Testing GP classes.
 def test_GP_classes(plot=False):
     """
@@ -3154,42 +3155,41 @@ def test_GP_classes(plot=False):
     b_sff = 0.9
     mag_src = 17.0
     gp_log_sigma = 0.1
-    gp_log_rho = 1.0 
+    gp_log_rho = 1.0
     gp_log_So = 0.1
     gp_log_omegao = 0.1
     raL = 17.30 * 15.
     decL = -29.0
 
-    gp_rho = 1.0 
+    gp_rho = 1.0
     gp_log_omegaofour_So = 0.1
 
     np.random.seed(42)
-    data_stuff = fake_correlated_data(t0 = t0, u0_amp = u0_amp, tE = tE,
-                             piE_E = piE_E, piE_N = piE_N,
-                             b_sff = b_sff, mag_src = mag_src,
-                             gp_log_sigma = gp_log_sigma, gp_log_rho = gp_log_rho,
-                             gp_log_So = gp_log_So, gp_log_omegao = gp_log_omegao,
-                             raL = raL, decL = decL)
+    data_stuff = fake_correlated_data(t0=t0, u0_amp=u0_amp, tE=tE,
+                                      piE_E=piE_E, piE_N=piE_N,
+                                      b_sff=b_sff, mag_src=mag_src,
+                                      gp_log_sigma=gp_log_sigma, gp_log_rho=gp_log_rho,
+                                      gp_log_So=gp_log_So, gp_log_omegao=gp_log_omegao,
+                                      raL=raL, decL=decL)
     pspl_model_in = data_stuff[0]
     data23_uncorr = data_stuff[1]
     data23 = data_stuff[2]
     params = data_stuff[3]
 
-    model2 = model.PSPL_Phot_Par_GP_Param1(t0, u0_amp, tE, 
+    model2 = model.PSPL_Phot_Par_GP_Param1(t0, u0_amp, tE,
                                            piE_E, piE_N, b_sff, mag_src,
-                                           gp_log_sigma, gp_log_rho, 
-                                           gp_log_So, gp_log_omegao, 
+                                           gp_log_sigma, gp_log_rho,
+                                           gp_log_So, gp_log_omegao,
                                            raL=raL, decL=decL)
 
-    model3 = model.PSPL_Phot_noPar_GP_Param1(t0, u0_amp, tE, 
+    model3 = model.PSPL_Phot_noPar_GP_Param1(t0, u0_amp, tE,
                                              piE_E, piE_N, b_sff, mag_src,
-                                             gp_log_sigma, gp_log_rho, 
-                                             gp_log_So, gp_log_omegao, 
+                                             gp_log_sigma, gp_log_rho,
+                                             gp_log_So, gp_log_omegao,
                                              raL=raL, decL=decL)
 
     # Put in some assert statements to make sure things don't break in the future.
     times = np.arange(56000, 58000, 100)
-
 
     ##########
     # Note: Model 2 should match data (both with parallax) within errors.
@@ -3202,10 +3202,9 @@ def test_GP_classes(plot=False):
     mod2_phot_out = model2.get_photometry(times)
     np.testing.assert_allclose(mod2_phot_out, mod2_phot_good, rtol=1e-5)
 
-
     # Test the model 2 GP photometry... seed is fixed so this should remain identical. But I loosened tolerance
     mod2_gpphot_good = np.array([16.88473035, 17.08646751, 16.74805916, 16.68253705, 16.87984509, 16.96989977,
-                                 16.6386355,  16.83498515, 16.85998419, 16.51997825, 16.12006682, 16.43088797,
+                                 16.6386355, 16.83498515, 16.85998419, 16.51997825, 16.12006682, 16.43088797,
                                  16.61076884, 16.70502475, 16.93342688, 16.87410206, 16.87479723, 16.94838136,
                                  16.88345499, 17.01714564])
     mod2_gpphot_out, mod2_gpphot_std_out = model2.get_photometry_with_gp(data23['t_phot1'],
@@ -3228,7 +3227,6 @@ def test_GP_classes(plot=False):
         plt.legend()
         plt.title('test_GP: model2')
 
-
     ##########
     # Note: Model 3 should NOT match data (model without parallax, data with parallax)
     ##########
@@ -3240,18 +3238,16 @@ def test_GP_classes(plot=False):
     mod3_phot_out = model3.get_photometry(times)
     np.testing.assert_allclose(mod3_phot_out, mod3_phot_good, rtol=1e-5)
 
-
     # Test the model 2 GP photometry... seed is fixed so this should remain identical. But I loosened tolerance
     mod3_gpphot_good = np.array([16.88470908, 17.08646752, 16.74805921, 16.68253668, 16.87970122, 16.96989985,
                                  16.63863561, 16.83268396, 16.85998404, 16.51997894, 16.12006319, 16.48738257,
-                                 16.61076444, 16.70502078, 16.93406828, 16.87452817, 16.874797,   16.94838128,
+                                 16.61076444, 16.70502078, 16.93406828, 16.87452817, 16.874797, 16.94838128,
                                  16.88352731, 17.01714565])
     mod3_gpphot_out, mod3_gpphot_std_out = model3.get_photometry_with_gp(data23['t_phot1'],
                                                                          data23['mag1'], data23['mag_err1'],
                                                                          t_pred=times)
     np.testing.assert_allclose(mod3_phot_out, mod3_phot_good, rtol=1e-5)
 
-        
     return
 
 
@@ -3277,7 +3273,7 @@ def test_FSPL_classes(plot=False):
     decL = -29.0
 
     # Array of times we will sample on.
-    time_arr = np.linspace(t0-1000, t0+1000, 1000)
+    time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
 
     def test_fspl_once(r_in, n_in, phot_arr_good, mod='FSPL'):
         # Make the model
@@ -3285,20 +3281,19 @@ def test_FSPL_classes(plot=False):
 
         if mod == 'FSPL':
             tmp_mod = model.FSPL_PhotAstrom_Par_Param1(mL, t0, beta, dL, dS,
-                                                    xS0_E, xS0_N,
-                                                    muL_E, muL_N,
-                                                    muS_E, muS_N,
-                                                    r_in,
-                                                    b_sff, mag_src, n_in,
-                                                    raL=raL, decL=decL)
+                                                       xS0_E, xS0_N,
+                                                       muL_E, muL_N,
+                                                       muS_E, muS_N,
+                                                       r_in,
+                                                       b_sff, mag_src, n_in,
+                                                       raL=raL, decL=decL)
         else:
-            tmp_mod = model.PSPL_PhotAstrom_Par_Param1(mL, t0, beta, dL, dL/dS,
-                                                xS0_E, xS0_N,
-                                                muL_E, muL_N,
-                                                muS_E, muS_N,
-                                                b_sff, mag_src,
-                                                raL=raL, decL=decL)
-
+            tmp_mod = model.PSPL_PhotAstrom_Par_Param1(mL, t0, beta, dL, dL / dS,
+                                                       xS0_E, xS0_N,
+                                                       muL_E, muL_N,
+                                                       muS_E, muS_N,
+                                                       b_sff, mag_src,
+                                                       raL=raL, decL=decL)
 
         # Generate photometry
         phot_arr = tmp_mod.get_photometry(time_arr)
@@ -3316,41 +3311,38 @@ def test_FSPL_classes(plot=False):
 
         return phot_arr
 
-        
     ##########
     # FSPL n=10, r=0.001
     ##########
-    fspl_arr_n10_good = np.array([18.95006166, 18.94949701, 18.9472021 , 18.93811389, 18.85723805,
-                                  18.3424005 , 18.85941388, 18.93826845, 18.9472443 , 18.94950649])
+    fspl_arr_n10_good = np.array([18.95006166, 18.94949701, 18.9472021, 18.93811389, 18.85723805,
+                                  18.3424005, 18.85941388, 18.93826845, 18.9472443, 18.94950649])
     fspl_arr_n10 = test_fspl_once(radius, 10, fspl_arr_n10_good, mod='FSPL')
 
-    
     ##########
     # FSPL n=50, r=0.001
     ##########
     fspl_arr_n50_good = np.array([18.88768975, 18.88712136, 18.88481127, 18.87566324, 18.79427668,
-                                  18.27694883, 18.79646575, 18.87581881, 18.88485374, 18.8871309 ])
+                                  18.27694883, 18.79646575, 18.87581881, 18.88485374, 18.8871309])
     fspl_arr_n50 = test_fspl_once(radius, 50, fspl_arr_n50_good, mod='FSPL')
 
     ##########
     # FSPL n=100, r=0.001
     ##########
     fspl_arr_n100_good = np.array([18.88575986, 18.88519136, 18.88288081, 18.87373098, 18.79232908,
-                                   18.27492657, 18.79451856, 18.87388658, 18.88292329, 18.8852009 ])
+                                   18.27492657, 18.79451856, 18.87388658, 18.88292329, 18.8852009])
     fspl_arr_n100 = test_fspl_once(radius, 100, fspl_arr_n100_good, mod='FSPL')
-
 
     ##########
     # FSPL n=10, r=1
     ##########
-    fspl_arr_n10_r1_good = np.array([18.950062, 18.949497, 18.947202, 18.938114, 18.857238, 18.3424  ,
+    fspl_arr_n10_r1_good = np.array([18.950062, 18.949497, 18.947202, 18.938114, 18.857238, 18.3424,
                                      18.859414, 18.938268, 18.947244, 18.949506])
     fspl_arr_n10_r1 = test_fspl_once(1, 10, fspl_arr_n10_r1_good, mod='FSPL')
-    
+
     ##########
     # PSPL for run-time comparisons.
     ##########
-    pspl_arr_good = np.array([18.8851265 , 18.88452664, 18.88231504, 18.87282729, 18.79254205,
+    pspl_arr_good = np.array([18.8851265, 18.88452664, 18.88231504, 18.87282729, 18.79254205,
                               18.28992589, 18.79486318, 18.87299118, 18.88235892, 18.88453582])
     pspl_arr = test_fspl_once(-1, -1, pspl_arr_good, mod='PSPL')
 
@@ -3365,7 +3357,7 @@ def test_FSPL_classes(plot=False):
         plt.xlabel('Time (HJD)')
         plt.ylabel('Mag')
         plt.legend()
-        
+
         plt.figure(2)
         plt.clf()
         plt.plot(time_arr, fspl_arr_n100 - pspl_arr, '-', label='fspl, n=100')
@@ -3380,8 +3372,9 @@ def test_FSPL_classes(plot=False):
         plt.clf()
         plt.plot(time_arr, fspl_arr_n10_r1 - fspl_arr_n10, '.')
         plt.title('Different radii')
-        
+
     return
+
 
 def test_PSPL_PhotAstrom_LumLens_Par_Param1():
     """
@@ -3417,6 +3410,7 @@ def test_PSPL_PhotAstrom_LumLens_Par_Param1():
                                                    mag_src=[mag_src_in])
     return
 
+
 def test_PSPL_GP_MRO():
     """
     For the GP class, the PSPL_GP likelihood should be the one that's used.
@@ -3442,6 +3436,7 @@ def test_PSPL_GP_MRO():
 
     return
 
+
 def test_PSBL_GP_MRO():
     """
     For the GP class, the PSPL_GP likelihood should be the one that's used.
@@ -3461,6 +3456,7 @@ def test_PSBL_GP_MRO():
         np.testing.assert_array_equal(pspl_gp_idx, 1)
 
     return
+
 
 def test_ABC_MRO():
     classes_list = []
@@ -3493,7 +3489,6 @@ def test_ABC_MRO():
 
                 if ('PSPL' in mro_names):
                     data_classes.append(obj.__name__)
-            
 
     # All ModelClass objects should probably have "_Param" in their name.
     for pcls in model_classes:
@@ -3517,8 +3512,9 @@ def test_ABC_MRO():
                              'PSPL_noParallax', 'PSPL_noParallax_LumLens']
     for pcls in parallax_classes_good:
         assert pcls in parallax_classes
-        
+
     model_classes.sort()
     model_classes = model_classes[::-1]
     print(model_classes)
+
     return
