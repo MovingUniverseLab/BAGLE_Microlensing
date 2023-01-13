@@ -1002,8 +1002,13 @@ class PSPL_Solver(Solver):
         # Use Maximum Likelihood solution
         if def_best.lower() == 'maxl':
             best = np.argmax(tab['logLike'])
-            tab_best = tab[best][params]
+            _tab_best = tab[best][params]
 
+            # Turn the astropy table row into a dictionary.
+            tab_best = {}
+            for colname in _tab_best.colnames:
+                tab_best[colname] = _tab_best[colname]
+            
             return tab_best
 
         # Use MAP solution
@@ -1015,8 +1020,12 @@ class PSPL_Solver(Solver):
             
             # Recalculate ourselves. No dependence on smy.
             best = np.argmax(tab['weights'])
-            tab_best = tab[best][params]
+            _tab_best = tab[best][params]
 
+            # Turn the astropy table row into a dictionary.
+            tab_best = {}
+            for colname in _tab_best.colnames:
+                tab_best[colname] = _tab_best[colname]
             return tab_best
 
         # Use mean solution
