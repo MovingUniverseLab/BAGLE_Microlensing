@@ -1,5 +1,6 @@
-From our original installation of dynesty at /opt/anaconda3/lib/python3.7/site-packages/dynesty/
+The code in this directory has been taken from dynesty: https://dynesty.readthedocs.io/en/stable/
 
-https://dynesty.readthedocs.io/en/stable/
+This is an old version we have copied here in order to take advantage of plotting codes.
+
 
 
