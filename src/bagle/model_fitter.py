@@ -32,7 +32,7 @@ import pdb
 from datetime import date
 import yaml
 
-from dynesty import plotting as dyplot
+from bagle.dynesty import plotting as dyplot
 from six.moves import range
 import matplotlib.patches as mpatches
 
@@ -45,8 +45,8 @@ from scipy import spatial
 from scipy.ndimage import gaussian_filter as norm_kde
 from scipy.stats import gaussian_kde
 import warnings
-from dynesty.utils import resample_equal, unitcheck
-from dynesty.utils import quantile as _quantile
+from bagle.dynesty.utils import resample_equal, unitcheck
+from bagle.dynesty.utils import quantile as _quantile
 import re
 
 try:
