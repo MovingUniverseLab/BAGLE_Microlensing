@@ -21,6 +21,7 @@ import pylab as plt
 import scipy.stats
 import pymultinest
 import bagle.model as mmodel 
+import bagle.frame_convert as fconv
 from astropy.table import Table
 from astropy.table import Row
 from astropy import units
@@ -1395,6 +1396,93 @@ class PSPL_Solver(Solver):
 
         return
 
+
+    def plot_dynesty_style_hel_to_geo_phot(self, t0par, sim_vals=None, fit_vals=None,
+                                           remake_fits=False, dims=None,
+                                           traceplot=True, cornerplot=True, kde=True):
+        """
+        Parameters
+        ----------
+        sim_vals : dict
+            Dictionary of simulated input or comparison values to 
+            overplot on posteriors.
+
+        fit_vals : str
+            Choices are 'map' (maximum a posteriori), 'mean', or
+            'maxl' (maximum likelihood)
+
+        """
+        res = self.load_mnest_results_for_dynesty(remake_fits=remake_fits)
+        smy = self.load_mnest_summary(remake_fits=remake_fits)
+
+        # FIXME: NEED TO GENERALIZE THIS.
+        # THIS ASSUMES THE FIRST FIVE COLUMNS ARE t0, u0_amp, tE, piEE, piEN.
+        # SHOULD LOOK THROUGH THE FITTER PARAM NAMES.
+        _res = fconv.convert_helio_geo_phot(float(self.data['raL']), float(self.data['decL']),
+                                            res['samples'][:,0],
+                                            res['samples'][:,1],
+                                            res['samples'][:,2],
+                                            res['samples'][:,3],
+                                            res['samples'][:,4],
+                                            t0par, plot=False)
+        # Edit the results.
+        for ii in np.arange(5):
+            res['samples'][:,ii] = _res[ii]
+
+        truths = None
+
+        # Sort the parameters into the right order.
+        if sim_vals != None:
+            truths = []
+            for param in self.all_param_names:
+                if param in sim_vals:
+                    truths.append(sim_vals[param])
+                else:
+                    truths.append(None)
+
+        if fit_vals == 'map':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['MAP_' + param][0])  # global best fit.
+
+        if fit_vals == 'mean':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['Mean_' + param][0])  # global best fit.
+
+        if fit_vals == 'maxl':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['MaxLike_' + param][0])  # global best fit.
+
+        if dims is not None:
+            labels=[self.all_param_names[i] for i in dims]
+            truths=[truths[i] for i in dims]
+        else:
+            labels=self.all_param_names
+
+        if traceplot:
+            # dyplot.traceplot(res, labels=labels, dims=dims,
+            #                  show_titles=True, truths=truths, kde=kde)
+            traceplot_custom([res], labels=labels, dims=dims,
+                             show_titles=True, truths=truths, kde=kde)
+            plt.subplots_adjust(hspace=0.7)
+            plt.savefig(self.outputfiles_basename + 'dy_trace.png')
+            plt.close()
+
+        if cornerplot:
+            # dyplot.cornerplot(res, labels=labels, dims=dims,
+            #                   show_titles=True, truths=truths)
+            cornerplot_custom([res], labels=labels, dims=dims,
+                              show_titles=True, truths=truths)
+            ax = plt.gca()
+            ax.tick_params(axis='both', which='major', labelsize=10)
+            plt.savefig(self.outputfiles_basename + 'dy_corner.png')
+            plt.close()
+
+        return
+
+    
     def plot_model_and_data(self, model,
                             input_model=None, mnest_results=None, suffix='',
                             zoomx=None, zoomy=None, zoomy_res=None, fitter=None,
