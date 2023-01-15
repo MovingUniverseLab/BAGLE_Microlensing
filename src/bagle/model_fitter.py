@@ -49,6 +49,9 @@ from bagle.dynesty.utils import resample_equal, unitcheck
 from bagle.dynesty.utils import quantile as _quantile
 import re
 
+from matplotlib import logging
+logging.getLogger('matplotlib.font_manager').disabled = True
+
 try:
     str_type = types.StringTypes
     float_type = types.FloatType
