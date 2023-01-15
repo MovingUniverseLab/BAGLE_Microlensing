@@ -160,7 +160,7 @@ More details about each parameterization can be found in the Parameterization
 Class docstring.
 
 Making a New Model
---------------------
+------------------
 
 Each model is, as described above, constructed by combining inheriting from
 different parent classes that contain the desired features for the model. Each

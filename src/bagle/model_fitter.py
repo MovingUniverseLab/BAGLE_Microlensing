@@ -73,7 +73,7 @@ class PSPL_Solver(Solver):
     DESPITE THE NAME YOU CAN ALSO USE IT TO FIT PSBL! 
 
     Attributes
-    -----------
+    ----------
     data : dictionary
         Observational data used to fit a microlensing model. What the data must
         contain depends on what type of microlensing model you are solving for.
@@ -144,7 +144,7 @@ class PSPL_Solver(Solver):
             See pymultinest.run() for a description of all other parameters.
 
     Examples
-    -------------------
+    --------
 
     Assuming that a data dictionary has been instantiated with the above keys,
     and that a model has been loaded in from model.py, PSPL_Solver can be run
@@ -228,8 +228,8 @@ class PSPL_Solver(Solver):
         Note that prior distributions are defined upon initiatlization and
         can be modified on the object before running solve().
 
-	Parameters
-        ---------------
+        Parameters
+        ----------
 
         use_phot_optional_params : bool, or list of bools, optional
 	    optional photometry parameters
@@ -747,7 +747,7 @@ class PSPL_Solver(Solver):
     def log_likely(self, cube, verbose=False):
         """
         Parameters
-        --------------
+        ----------
         cube : list or dict
             The dictionary or cube of the model parameters.
         """
@@ -1079,7 +1079,7 @@ class PSPL_Solver(Solver):
         uncertainties.
 
         Returns
-        --------
+        -------
         Either a dicitonary or a tuple of length=2 holding 
         two dictionaries, one for values and one for uncertainty ranges. 
         See calc_best_fit() for details.
@@ -1100,7 +1100,7 @@ class PSPL_Solver(Solver):
         uncertainties.
 
         Returns
-        --------
+        -------
         Either a list of dicitonaries or a list where each entry is
         a tuple of length=2 holding two dictionaries, one for values
         and one for uncertainty ranges. 
@@ -1122,7 +1122,7 @@ class PSPL_Solver(Solver):
         """Identify best-fit model
 
         Parameters
-        -----------
+        ----------
         def_best : str
             Choices are 'map' (maximum a posteriori), 'median', or
             'maxl' (maximum likelihood)
@@ -1326,7 +1326,7 @@ class PSPL_Solver(Solver):
                            traceplot=True, cornerplot=True, kde=True):
         """
         Parameters
-        ------------
+        ----------
         sim_vals : dict
             Dictionary of simulated input or comparison values to 
             overplot on posteriors.
@@ -1666,7 +1666,7 @@ class PSPL_Solver(Solver):
     def print_likelihood(self, params='best', verbose=True):
         """
         Parameters
-        -----------
+        ----------
         model_params : str or dict, optional
             model_params = 'best' will load up the best solution and calculate
                 the chi^2 based on those values. Alternatively, pass in a dictionary
@@ -1686,7 +1686,7 @@ class PSPL_Solver(Solver):
     def calc_chi2(self, params='best', verbose=False):
         """
         Parameters
-        -----------
+        ----------
         params : str or dict, optional
             model_params = 'best' will load up the best solution and calculate
             the chi^2 based on those values. Alternatively, pass in a dictionary
@@ -1802,7 +1802,7 @@ class PSPL_Solver(Solver):
     def calc_chi2_manual(self, params='best', verbose=False):
         """
         Parameters
-        -----------
+        ----------
         params : str or dict, optional
             model_params = 'best' will load up the best solution and calculate
             the chi^2 based on those values. Alternatively, pass in a dictionary
@@ -2150,7 +2150,7 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
         Specifically, we are implementing Eq. 35.
 
         Parameters
-        -----------
+        ----------
         cube : list or dict
             The dictionary or cube of the model parameters.
         """
@@ -2382,7 +2382,7 @@ def make_log10norm_gen(mean_in_log10, std_in_log10):
     Note the mean and std should be in the log10() space already.
 
     Parameters
-    -------------
+    ----------
     mean:
         mean of the underlying log10 gaussian (i.e. a log10 quantity)
     std: 
@@ -2479,8 +2479,8 @@ def make_muS_EN_gen(t, pos, scale_factor=100.0):
     """Get an approximate muS search range by looking at the best fit
     straight line to the astrometry. Then allows lots of free space.
 
-    Inputs
-    ------
+    Parameters
+    ----------
     t: 
         array of times in days
     pos: 
@@ -2516,14 +2516,14 @@ def make_muS_EN_norm_gen(t, pos, n_use=None, scale_factor=10.0):
     straight line to the astrometry. Then allows lots of free space.
 
     Parameters
-    ------------
+    ----------
     t: 
         array of times in days
     pos: 
         array of positions in arcsec
 
     Returns
-    --------
+    -------
     gen:
         uniform generator for velocity in mas/yr
     """
@@ -2576,9 +2576,10 @@ def make_invgamma_gen(t_arr):
     """ADD DESCRIPTION
 
     Parameters
-    ------------   
+    ----------
     t_arr: 
         time array
+
     """
     a,b = compute_invgamma_params(t_arr)
 
@@ -2590,11 +2591,11 @@ def make_invgamma_gen(t_arr):
 
 
 def compute_invgamma_params(t_arr):
-    """
-    | Based on function of same name from 
-    Fran Bartolic's ``caustic`` package:
+    """Based on function of same name from  Fran Bartolic's ``caustic`` package:
+
     https://github.com/fbartolic/caustic
-    | Returns parameters of an inverse gamma distribution s.t.
+
+    Returns parameters of an inverse gamma distribution s.t.
      * 1% of total prob. mass is assigned to values of :math:`t < t_{min}` and
      * 1% of total prob. masss  to values greater than t_{tmax}.
  
@@ -2611,6 +2612,7 @@ def compute_invgamma_params(t_arr):
     -------
     invgamma_a, invgamma_b : float (?)
         The parameters a,b of the inverse gamma function.
+
     """
     def solve_for_params(params, x_min, x_max):
         lower_mass = 0.01
@@ -2660,8 +2662,7 @@ def weighted_quantile(values, quantiles, sample_weight=None,
     """ Very close to numplt.percentile, but supports weights.
     
     Parameters
-    _____________
-
+    ----------
     values: 
         numplt.array with data
     quantiles: 
@@ -2674,12 +2675,12 @@ def weighted_quantile(values, quantiles, sample_weight=None,
         if True, will correct output to be consistent with numplt.percentile.
    
     Returns
-    --------	
+    -------
     arr:
         numplt.array with computed quantiles.
 
     Notes 
-    -------
+    -----
 
     .. note:: quantiles should be in [0, 1]!
     """
@@ -2714,7 +2715,7 @@ def split_param_filter_index1(s):
     index, then return None for the second argument.
 
     Returns
-    ----------
+    -------
     param_name : str
         The name of the parameter.
     filt_index : int (or None)
@@ -2753,7 +2754,7 @@ def generate_params_dict(params, fitter_param_names):
         delivered, in order, in the output. 
 
     Returns
-    ----------
+    -------
     params_dict : dict
         Dictionary of the parameter names and values.
 

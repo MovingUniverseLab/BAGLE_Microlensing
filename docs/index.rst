@@ -20,7 +20,7 @@ only, astrometry only, or joint fitting of photometry and astrometry
 
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    installation
    getting_started
@@ -29,14 +29,5 @@ only, astrometry only, or joint fitting of photometry and astrometry
    new_models
    api_docs
    citation
-
-   ModelClass.rst
-   PSPL.rst
-   PSBL.rst
-   BSPL.rst
-   FSPL.rst
-   Gen_Use.rst
-
-
 
 
