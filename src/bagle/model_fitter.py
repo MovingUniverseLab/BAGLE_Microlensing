@@ -294,7 +294,7 @@ class PSPL_Solver(Solver):
         # Use "default" string to indicate default callback.
         # Otherwise, user specified and can be None for no dumping.
         # The latter is important for NERSC runs. 
-        if dump_callback is 'default':
+        if dump_callback == 'default':
             self.dump_callback = self.callback_plotter
         else:
             self.dump_callback = dump_callback

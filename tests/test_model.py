@@ -11,6 +11,7 @@ import os
 from bagle import model
 from bagle import model_fitter
 from bagle.fake_data import *
+from bagle import frame_convert
 import time
 import pdb
 import pytest
@@ -1318,9 +1319,8 @@ def test_parallax():
     ##########
     # Casey's conversion.
     ##########
-    from microlens.jlu import helio_geo_conversion as hgc
     print('!!! Casey conversions')
-    foo = hgc.convert_helio_to_geo_phot(raL_in, decL_in, t0_in, pspl.u0_amp, pspl.tE,
+    foo = frame_convert.convert_helio_to_geo_phot(raL_in, decL_in, t0_in, pspl.u0_amp, pspl.tE,
                                         pspl.piE[0], pspl.piE[1], t0_in)
     t0_geo_casey = foo[0]
     u0_geo_casey = foo[1]
@@ -3516,5 +3516,232 @@ def test_ABC_MRO():
     model_classes.sort()
     model_classes = model_classes[::-1]
     print(model_classes)
+
+    return
+
+def plot_BSBL(bsbl, t_obs):
+    """
+    Make some standard plots for PSBL.
+    """
+    images, amps = bsbl.get_all_arrays(t_obs, rescale=True)
+
+    ##########
+    # Photometry
+    ##########
+    phot = bsbl.get_photometry(t_obs, amp_arr=amps)
+
+    # Plot the photometry
+    plt.figure(1)
+    plt.clf()
+    plt.plot(t_obs, phot, 'r-')
+    plt.ylabel('Photometry (mag)')
+    plt.xlabel('Time (MJD)')
+    plt.gca().invert_yaxis()
+
+    ##########
+    # Astrometry
+    ##########
+    if bsbl.astrometryFlag:
+        # Find the points closest to t0
+        t0idx = np.argmin(np.abs(t_obs - bsbl.t0))
+
+        # Resolved astrometry - unlensed
+        xL1, xL2 = bsbl.get_resolved_lens_astrometry(t_obs)
+        xL1 *= 1e3
+        xL2 *= 1e3
+        xS_res_unlens = bsbl.get_resolved_astrometry_unlensed(t_obs) * 1e3
+        xS1 = xS_res_unlens[:, 0, :]
+        xS2 = xS_res_unlens[:, 1, :]
+
+        # Resolved astrometry - lensed
+        xS_res_lensed = bsbl.get_resolved_astrometry(t_obs,
+                                                     image_arr=images,
+                                                     amp_arr=amps) * 1e3
+
+        # Unresolved astrometry - lensed and unlensed
+        xS_unlens = bsbl.get_astrometry_unlensed(t_obs) * 1e3
+        xS_lensed = bsbl.get_astrometry(t_obs, image_arr=images, amp_arr=amps) * 1e3
+
+        dxS = (xS_lensed - xS_unlens)
+
+        # Resolved: Plot the positions of everything
+        plt.figure(2)
+        plt.clf()
+        plt.plot(xS1[:, 0], xS1[:, 1], ls='--', color='blue')
+        plt.plot(xS2[:, 0], xS2[:, 1], ls='--', color='darkblue')
+        plt.plot(xL1[:, 0], xL1[:, 1], ls='--', color='green')
+        plt.plot(xL2[:, 0], xL2[:, 1], ls='--', color='darkgreen')
+
+        plt.plot(xS1[t0idx, 0], xS1[t0idx, 1], 'b+', mfc='blue',
+                 mec='blue',
+                 label='S1')
+        plt.plot(xS2[t0idx, 0], xS2[t0idx, 1], 'bx', mfc='darkblue',
+                 mec='darkblue',
+                 label='S2')
+        plt.plot(xL1[t0idx, 0], xL1[t0idx, 1], 'gs', mfc='green',
+                 mec='green',
+                 label='L1')
+        plt.plot(xL2[t0idx, 0], xL2[t0idx, 1], 'gs', mfc='none',
+                 mec='green',
+                 label='L2')
+
+        colors = ['mediumvioletred', 'purple', 'indigo', 'deeppink', 'darkviolet']
+        for ii in range(xS_res_lensed.shape[2]):
+            label_S1  = ''
+            label_S2 = ''
+            if ii == 0:
+                label_S1 = 'S1_lensed images'
+                label_S2 = 'S2_lensed images'
+            plt.plot(xS_res_lensed[:, 0, ii, 0], xS_res_lensed[:, 0, ii, 1],
+                     ls='none', marker='.', ms=1, color=colors[0], alpha=0.7)
+            plt.plot(xS_res_lensed[:, 1, ii, 0], xS_res_lensed[:, 1, ii, 1],
+                     ls='none', marker='.', ms=1, color=colors[1], alpha=0.7)
+            plt.plot(xS_res_lensed[t0idx, 0, ii, 0], xS_res_lensed[t0idx, 0, ii, 1],
+                     ls='none', marker='+', color=colors[0], alpha=0.7,
+                     label=label_S1)
+            plt.plot(xS_res_lensed[t0idx, 1, ii, 0], xS_res_lensed[t0idx, 1, ii, 1],
+                     ls='none', marker='x', color=colors[1], alpha=0.7,
+                     label=label_S2)
+
+        plt.legend()
+        plt.gca().invert_xaxis()
+        plt.xlabel('R.A. (mas)')
+        plt.ylabel('Dec. (mas)')
+        plt.title('Resolved Astrometry')
+
+        # Unresolved: Plot the unresolved astrometry, both unlensed and lensed.
+        plt.figure(3)
+        plt.clf()
+        plt.plot(xS_unlens[:, 0], xS_unlens[:, 1], ls='--', color='blue',
+                 label='xS, unlensed')
+        plt.plot(xS_lensed[:, 0], xS_lensed[:, 1], ls='-', color='blue',
+                 label='xS, lensed')
+        plt.plot(xS_unlens[t0idx, 0], xS_unlens[t0idx, 1], 'bx',
+                 label='xS, unlensed')
+        plt.plot(xS_lensed[t0idx, 0], xS_lensed[t0idx, 1], 'bo',
+                 label='xS, lensed')
+
+        plt.legend()
+        plt.gca().invert_xaxis()
+        plt.xlabel('R.A. (mas)')
+        plt.ylabel('Dec. (mas)')
+        plt.title('Resolved Astrometry')
+
+        # Check just the astrometric shift part.
+        plt.figure(4)
+        plt.clf()
+        plt.plot(t_obs, dxS[:, 0], 'r--', label='R.A.')
+        plt.plot(t_obs, dxS[:, 1], 'b--', label='Dec.')
+        plt.legend(fontsize=10)
+        plt.ylabel('Astrometric Shift (mas)')
+        plt.xlabel('Time (MJD)')
+
+        plt.figure(5)
+        plt.clf()
+        plt.plot(dxS[:, 0], dxS[:, 1], 'r-')
+        plt.axhline(0, linestyle='--')
+        plt.axvline(0, linestyle='--')
+        plt.gca().invert_xaxis()
+        plt.xlabel('Shift RA (mas)')
+        plt.ylabel('Shift Dec (mas)')
+        plt.axis('equal')
+
+        print('Einstein radius: ', bsbl.thetaE_amp)
+        print('Einstein crossing time: ', bsbl.tE)
+
+    return
+
+def test_BSBL_PhotAstrom_Par_Param1():
+    """
+    General testing of BSBL... caustic crossings.
+    """
+
+    # NOTE this gives the same model as in test_BSBL_Phot_noPar_Param1()
+    raL = 259.5
+    decL = -28.5
+    mLp = 10.0
+    mLs = 3.0
+    t0 = 57000
+    xS0_E = 0.001 # mas
+    xS0_N = 0.0
+    beta = 1.0 # mas
+    muL_E = 0.0  # mas/yr
+    muL_N = 0.0  # mas/yr
+    muS_E = -3.0  # mas/yr
+    muS_N = 0.0  # mas/yr
+    dL = 4000 # pc
+    dS = 8000 # pc
+    sepL = 3.0  # in mas
+    alphaL = -35.0  # PA of binary on the sky
+    sepS = 0.5 # mas
+    alphaS = 0.0 # PA of source binary on the sky
+    mag_src_pri = np.array([18.0])
+    mag_src_sec = np.array([19.0])
+    b_sff = np.array([1.0])
+    
+    # phi_piE = np.degrees(np.arctan2(piE_N, piE_E))  # PA of muRel on the sky
+    # phi = alpha - phi_piE  # relative angle between binary and muRel.
+    # print('alpha = ', alpha, ' deg')
+    # print('phi_piE = ', phi_piE, ' deg')
+    # print('phi = ', phi, ' deg')
+    # 
+    bsbl_n = model.BSBL_PhotAstrom_noPar_Param1(mLp, mLs, t0, xS0_E, xS0_N,
+                                                beta, muL_E, muL_N, muS_E, muS_N,
+                                                dL, dS, sepL, alphaL, sepS, alphaS,
+                                                mag_src_pri, mag_src_sec, b_sff,
+                                                raL=raL, decL=decL,
+                                                root_tol=1e-4)
+    bsbl_p = model.BSBL_PhotAstrom_Par_Param1(mLp, mLs, t0, xS0_E, xS0_N,
+                                              beta, muL_E, muL_N, muS_E, muS_N,
+                                              dL, dS, sepL, alphaL, sepS, alphaS,
+                                              mag_src_pri, mag_src_sec, b_sff,
+                                              raL=raL, decL=decL,
+                                              root_tol=1e-4)
+    t_obs = np.arange(56000.0, 58000.0, 1)
+
+    plot_BSBL(bsbl_p, t_obs)
+
+    # Check that we have some extreme magnifications since this
+    # is caustic crossing.
+    phot1 = bsbl_n.get_photometry(t_obs)
+    phot2 = bsbl_p.get_photometry(t_obs)
+
+    assert phot1.min() < 18.1
+    assert phot2.min() < 18.1
+
+    ##########
+    # Recalculate u calculation from complex_pos() to debug.
+    ##########
+    # Calculate the position of the source w.r.t. lens (in Einstein radii)
+    # Distance along muRel direction
+    tau = (t_obs - bsbl_p.t0) / bsbl_p.tE
+    tau = tau.reshape(len(tau), 1)
+
+    # Distance along u0 direction -- always constant with time.
+    u0 = bsbl_p.u0.reshape(1, len(bsbl_p.u0))
+    thetaE_hat = bsbl_p.thetaE_hat.reshape(1, len(bsbl_p.thetaE_hat))
+
+    # Total distance
+    u = u0 + tau * thetaE_hat
+
+    # Incorporate parallax
+    parallax_vec = model.parallax_in_direction(bsbl_p.raL, bsbl_p.decL, t_obs)
+    u -= bsbl_p.piE_amp * parallax_vec
+
+    t0dx = np.argmin(np.abs(tau))
+    print('u = ')
+    print(u[t0dx - 5:t0dx + 5, :])
+
+    w, z1, z2 = bsbl_p.get_complex_pos(t_obs)
+    images_p, amps_p = bsbl_p.get_all_arrays(t_obs)
+    amp_arr_msk = np.ma.masked_invalid(amps_p)
+    amp = np.sum(amp_arr_msk, axis=1)
+
+    print('w: ')
+    print(w[t0dx - 5:t0dx + 5])
+    print('z1: ')
+    print(z1[t0dx - 5:t0dx + 5])
+    print('z2: ')
+    print(z2[t0dx - 5:t0dx + 5])
 
     return
