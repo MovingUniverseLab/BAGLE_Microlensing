@@ -1467,7 +1467,7 @@ class PSPL_Solver(Solver):
             traceplot_custom([res], labels=labels, dims=dims,
                              show_titles=True, truths=truths, kde=kde)
             plt.subplots_adjust(hspace=0.7)
-            plt.savefig(self.outputfiles_basename + 'dy_trace.png')
+            plt.savefig(self.outputfiles_basename + 'geo_{0}_dy_trace.png'.format(str(t0par)))
             plt.close()
 
         if cornerplot:
@@ -1477,7 +1477,7 @@ class PSPL_Solver(Solver):
                               show_titles=True, truths=truths)
             ax = plt.gca()
             ax.tick_params(axis='both', which='major', labelsize=10)
-            plt.savefig(self.outputfiles_basename + 'dy_corner.png')
+            plt.savefig(self.outputfiles_basename + 'geo_{0}_dy_corner.png'.format(str(t0par)))
             plt.close()
 
         return
