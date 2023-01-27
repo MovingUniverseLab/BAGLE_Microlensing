@@ -1,4 +1,5 @@
 from astropy.coordinates import SkyCoord
+from astropy.coordinates import Angle
 from astropy import units as u
 import numpy as np 
 from astropy.time import Time
@@ -21,7 +22,10 @@ def convert_helio_geo_ast(ra, dec,
     day_to_yr = 365.25
 
     # UNITS: I think this is 1/days, NOT 1/years.
-    # Need to convert, depending on input units. 
+    # Need to convert, depending on input units.   
+    if type(ra) == str:
+        ra = str(str(Angle(ra, unit = u.hourangle)))
+        
     par_t0par = model.parallax_in_direction(ra, dec, t0par)
     dp_dt_t0par = model.dparallax_dt_in_direction(ra, dec, t0par)
 
@@ -96,6 +100,10 @@ def convert_helio_geo_phot(ra, dec,
         Use fixed on-sky coordinate system (Lu) or right-handed
         system based on murel and minimum separation (Gould)
     """
+    
+    if type(ra) == str:
+        ra = str(str(Angle(ra, unit = u.hourangle)))
+        
     # Flip from LS to SL as needed (conversion equations assume SL)
     if murel_in=='LS':
         piEE_in *= -1
@@ -392,7 +400,7 @@ def v_Earth_proj(ra, dec, mjd):
     # Make this check dec too.
     if type(ra) == str:
         coord = SkyCoord(ra, dec, unit=(u.hourangle, u.deg))
-    if ((type(ra) == float) or (type(ra) == int)):
+    elif ((type(ra) == float) or (type(ra) == int)):
         coord = SkyCoord(ra, dec, unit=(u.deg, u.deg))
     else:
         raise Exception('ra and dec must be either strings or int/floats.')
