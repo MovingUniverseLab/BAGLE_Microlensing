@@ -332,7 +332,6 @@ import celerite
 from astropy.coordinates import get_body_barycentric, SkyCoord, solar_system_ephemeris, get_body_barycentric_posvel
 from astropy.coordinates.builtin_frames.utils import get_jd12
 import erfa
-import ephem
 from joblib import Memory
 import os
 from functools import lru_cache, wraps
@@ -955,6 +954,105 @@ class PSPL_PhotParam2(PSPL_Param):
 
         return
 
+class PSPL_PhotParam3(PSPL_Param):
+    """
+    Point source point lens model for microlensing photometry only.
+    Utilizes angle of muRel instead of piEE and pEN. Also
+    fits in log(piE) and log(tE).
+    
+    Attributes
+    ----------
+    t0: float
+        Heliocentric time of closest approach (u0) between source and lens in MJD (MJD.DDD)
+    u0_amp: float
+         Angular distance between the lens and source on the plane of the
+         sky at closest approach in units of thetaE. It can be
+         positive (u0_amp > 0 when u0_hat[0] > 0) or 
+         negative (u0_amp < 0 when u0_hat[0] < 0).
+    log_tE: float
+        Einstein crossing time in days.
+    log_piE : float
+        The log of the microlensing parallax amplitude. 
+    phi_muRel : float
+        The angle of the muRel vector, in degrees. Angle is measured in degrees
+        East of North (counter-clockwise on the sky from North). 
+    b_sff: numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base: numpy array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+        
+        
+    Notes
+    -----
+    
+    .. note:: Required parameters if calculating with parallax
+    
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+    """
+
+    fitter_param_names = ['t0', 'u0_amp', 'log_tE',
+                          'log_piE', 'phi_muRel']
+    phot_param_names = ['b_sff', 'mag_base']
+    additional_param_names = ['mag_src']
+
+    paramAstromFlag = False
+    paramPhotFlag = True
+
+    def __init__(self, t0, u0_amp, log_tE, log_piE, phi_muRel, b_sff, mag_base,
+                 raL=None, decL=None):
+        self.t0 = t0
+        self.u0_amp = u0_amp
+        self.log_tE = log_tE
+        self.log_piE = log_piE
+        self.phi_muRel = phi_muRel # degrees
+        self.b_sff = b_sff
+        self.mag_base = mag_base
+        self.raL = raL
+        self.decL = decL        
+
+        # Must call after setting parameters.
+        # This checks for proper parameter formatting.
+        super().__init__()
+
+        # Derived quantities
+        self.tE = 10**log_tE
+        self.piE_amp = 10**log_piE
+        self.phi_muRel_rad = np.deg2rad(phi_muRel) # radians
+        self.piE = self.piE_amp * np.array([np.sin(self.phi_muRel_rad),
+                                            np.cos(self.phi_muRel_rad)])
+        
+        self.mag_src = self.mag_base - 2.5 * np.log10(self.b_sff)
+
+        # Get thetaE_hat (same direction as piE
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+
+        # Comment on sign conventions:
+        # thetaS0 = xS0 - xL0
+        # (difference in positions on sky, heliocentric, at t0)
+        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
+        # if u0_E > 0 then the Source is to the East of the lens
+        # if u0_E < 0 then the source is to the West of the lens
+        # We adopt the following sign convention (same as Gould:2004):
+        #    u0_amp > 0 means u0_E > 0
+        #    u0_amp < 0 means u0_E < 0
+        # Note that we assume beta = u0_amp (with same signs).
+
+        # Calculate the closest approach vector. Define beta sign convention
+        # same as of Andy Gould does with beta > 0 means u0_E > 0
+        # (lens passes to the right of the source as seen from Earth or Sun).
+        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
+        # the sign of beta is always the same as the sign of u0_amp. Therefore this
+        # usage of the function with u0_amp works exactly the same.
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        return
+    
 class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
     """PSPL model for photometry only.
     Point source point lens model for microlensing photometry only.
@@ -1944,6 +2042,31 @@ class PSPL_GP_PhotParam2_2(PSPL_PhotParam2):
         self.gp_log_S0 = {}
         for key, val in self.gp_log_omega04_S0.items():
             self.gp_log_S0[key] = self.gp_log_omega04_S0[key] - 4 * self.gp_log_omega0[key]
+
+        # Setup a useful "use_phot_gp" flag.
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+
+        return
+
+class PSPL_GP_PhotParam3(PSPL_PhotParam3):
+    # Optional data-set specific parameters -- handled as dictionaries
+    # (with keys on the filter index). Not ever data-set needs these.
+    # User indicates which data-sets use these parameters by including or not
+    # in the dictionary. This is most useful for noise properties.
+    phot_optional_param_names = ['gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0']
+
+    def __init__(self, t0, u0_amp, log_tE, log_piE, phi_muRel, b_sff, mag_base,
+                 gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
+                 raL=None, decL=None):
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_log_rho = gp_log_rho
+        self.gp_log_S0 = gp_log_S0
+        self.gp_log_omega0 = gp_log_omega0
+
+        super().__init__(t0, u0_amp, log_tE, log_piE, phi_muRel, b_sff, mag_base,
+                         raL=raL, decL=decL)
 
         # Setup a useful "use_phot_gp" flag.
         self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
@@ -9943,7 +10066,6 @@ class PSPL_Phot_noPar_Param1(ModelClassABC,
         checkconflicts(self)
 
 
-# PSPL_phot
 @inheritdocstring
 class PSPL_Phot_noPar_Param2(ModelClassABC,
                              PSPL_Phot,
@@ -9954,6 +10076,16 @@ class PSPL_Phot_noPar_Param2(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+@inheritdocstring
+class PSPL_Phot_noPar_Param3(ModelClassABC,
+                             PSPL_Phot,
+                             PSPL_noParallax,
+                             PSPL_PhotParam3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        
 
 # PSPL_phot_parallax / PSPL_phot_multiphot_parallax
 @inheritdocstring
@@ -9987,6 +10119,16 @@ class PSPL_Phot_Par_Param2(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+@inheritdocstring
+class PSPL_Phot_Par_Param3(ModelClassABC,
+                           PSPL_Phot,
+                           PSPL_Parallax,
+                           PSPL_PhotParam3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        
 
 # PSPL Phot parallax with GP
 @inheritdocstring
@@ -10036,6 +10178,18 @@ class PSPL_Phot_Par_GP_Param2_2(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+@inheritdocstring
+class PSPL_Phot_Par_GP_Param3(ModelClassABC,
+                              PSPL_GP,
+                              PSPL_Phot,
+                              PSPL_Parallax,
+                              PSPL_GP_PhotParam3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        
 
 # PSPL Phot, no parallax with GP
 @inheritdocstring
@@ -10056,6 +10210,17 @@ class PSPL_Phot_noPar_GP_Param2(ModelClassABC,
                                 PSPL_Phot,
                                 PSPL_noParallax,
                                 PSPL_GP_PhotParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+@inheritdocstring
+class PSPL_Phot_noPar_GP_Param3(ModelClassABC,
+                                PSPL_GP,
+                                PSPL_Phot,
+                                PSPL_noParallax,
+                                PSPL_GP_PhotParam3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -10609,6 +10774,34 @@ kappa = kappa.to(units.mas / units.solMass)
 days_per_year = 365.25
 meter_per_AU = 1.496e11
 meter_per_Rsun = 6.96e8
+
+    
+def get_model(model_class, params, params_fixed):
+    """Helper function to get a BAGLE model based on the
+    model_class and input dictionaries for the
+    variable and the fixed parameters.
+
+    Parameters
+    ----------
+    model_class : a BAGLE model class
+        A BAGLE model class object uninstantiated.
+
+    params : dict
+        A dictionary of parameters for the input model
+        class. The returned BAGLE model instance will
+        be instantiated with these parameters.
+
+    params_fixed : dict or None
+        Input fixed model parameters such as raL, decL
+        (for parallax) in a model.
+    """
+
+    if model_class.fixed_param_names is not None:
+        mod = model_class(*params.values(), **params_fixed)
+    else:
+        mod = model_class(*params.values())
+
+    return mod
 
 
 def mag2flux(mag):
