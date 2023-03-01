@@ -6057,8 +6057,7 @@ class PSBL_PhotAstromParam5(PSPL_Param):
     Attributes
     ----------
     t0_prim : float
-        Time of photometric peak, as seen from Earth (MJD.DDD) 
-        FIXME: THIS IS NOT RIGHT
+        Time of closest approach between source and primary lens (MJD.DDD).
     u0_amp_prim : float
         Angular distance between the source and the PRIMARY lens
         on the plane of the sky at closest approach in units of thetaE. Can be
@@ -6072,8 +6071,8 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         Amplitude of the parallax (1AU/dS) of the source. (mas)
     piE_E : float
         The microlensing parallax in the East direction in units of thetaE
-    piE_N : float
-        The microlensing parallax in the North direction in units of thetaE
+    piEN_piEE : float
+        The ratio of piE_E / piE_N.
     xS0_E : float
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
@@ -6208,6 +6207,10 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         # usage of the function with u0_amp works exactly the same.
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        # IS THIS IT? DOES IT WORK?
+        
+        return
 
 
 class PSBL_PhotAstromParam6(PSPL_Param):
