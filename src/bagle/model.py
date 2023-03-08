@@ -2452,7 +2452,6 @@ class PSPL(ABC):
         bad = np.where(flux_model <= 0)[0]
         if len(bad) > 0:
             if print_warning:
-                pdb.set_trace()
                 print('!!! Warning: get_photometry: bad flux encountered.')
             flux_model[bad] = np.nan
 
@@ -6667,9 +6666,11 @@ class BSPL(PSPL):
 
         A1 = (u1 ** 2 + 2) / (u1 * np.sqrt(u1 ** 2 + 4))
         A2 = (u2 ** 2 + 2) / (u2 * np.sqrt(u2 ** 2 + 4))
-
-        f1 = mag2flux(self.mag_src_pri[filt_idx])
-        f2 = mag2flux(self.mag_src_sec[filt_idx])
+        
+        # mags to fluxes
+        # switch nan mags to 0 fluxes
+        f1 = np.nan_to_num(mag2flux(self.mag_src_pri[filt_idx]), nan = 0)
+        f2 = np.nan_to_num(mag2flux(self.mag_src_sec[filt_idx]), nan = 0)
 
         # Add linear source flux change. 
         if hasattr(self, 'fdfdt_pri'):
@@ -8489,9 +8490,11 @@ class BSBL(PSBL):
 
         # Mask invalid values from the amplification array.
         amp_arr_mskd = np.masked_invalid(amp_arr)
-
-        f1 = mag2flux(self.mag_src_pri[filt_idx])
-        f2 = mag2flux(self.mag_src_sec[filt_idx])
+        
+        # mags to fluxes
+        # switch nan mags to 0 fluxes
+        f1 = np.nan_to_num(mag2flux(self.mag_src_pri[filt_idx]), nan = 0)
+        f2 = np.nan_to_num(mag2flux(self.mag_src_sec[filt_idx]), nan = 0)
 
         flux_model = amp_arr_mskd
         flux_model[:, 0, :] *= f1
@@ -8547,9 +8550,11 @@ class BSBL(PSBL):
         amp = np.sum(amp_arr_msk, axis=2)
         A1 = amp[:, 0]
         A2 = amp[:, 1]
-
-        f1 = mag2flux(self.mag_src_pri[filt_idx])
-        f2 = mag2flux(self.mag_src_sec[filt_idx])
+        
+        # mags to fluxes
+        # switch nan mags to 0 fluxes
+        f1 = np.nan_to_num(mag2flux(self.mag_src_pri[filt_idx]), nan = 0)
+        f2 = np.nan_to_num(mag2flux(self.mag_src_sec[filt_idx]), nan = 0)
 
         f1_lensed = f1 * A1
         f2_lensed = f2 * A2
