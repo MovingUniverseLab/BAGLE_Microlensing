@@ -9237,7 +9237,7 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
     beta : float
-        Angular distance between the GEOMETRIC center of the sources
+        Angular distance between the source PRIMARY position
         and the GEOMETRIC center of the lenses on the plane of the sky (mas). 
         Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
