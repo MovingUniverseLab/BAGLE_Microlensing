@@ -1376,8 +1376,6 @@ class PSPL_Solver(Solver):
             labels=self.all_param_names
 
         if traceplot:
-            # dyplot.traceplot(res, labels=labels, dims=dims,
-            #                  show_titles=True, truths=truths, kde=kde)
             traceplot_custom([res], labels=labels, dims=dims,
                              show_titles=True, truths=truths, kde=kde)
             plt.subplots_adjust(hspace=0.7)
@@ -1385,12 +1383,12 @@ class PSPL_Solver(Solver):
             plt.close()
 
         if cornerplot:
-            # dyplot.cornerplot(res, labels=labels, dims=dims,
-            #                   show_titles=True, truths=truths)
             cornerplot_custom([res], labels=labels, dims=dims,
-                              show_titles=True, truths=truths)
-            ax = plt.gca()
-            ax.tick_params(axis='both', which='major', labelsize=10)
+                              show_titles=True, truths=truths,
+                              label_kwargs={'fontsize' : 14},
+                              title_kwargs={'fontsize' : 14},
+                              quantiles=None,
+                              number_fontsize=10, label_offset=-0.4)
             plt.savefig(self.outputfiles_basename + 'dy_corner.png')
             plt.close()
 
@@ -5483,13 +5481,14 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
 
 
 def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
-               color_list=['blue'], smooth=0.02, quantiles_2d=None, hist_kwargs=None,
-               hist2d_kwargs=None, labels=None, label_kwargs=None,
-               contour_labels_list=None,
-               show_titles=False, title_fmt=".2f", title_kwargs=None,
-               truths=None, truth_color='red', truth_kwargs=None,
-               max_n_ticks=5, top_ticks=False, use_math_text=False,
-               verbose=False, fig=None):
+                      color_list=['blue'], smooth=0.02, quantiles_2d=None, hist_kwargs=None,
+                      hist2d_kwargs=None, labels=None, label_kwargs=None,
+                      contour_labels_list=None,
+                      show_titles=False, title_fmt=".2f", title_kwargs=None,
+                      truths=None, truth_color='red', truth_kwargs=None,
+                      max_n_ticks=5, top_ticks=False, use_math_text=False,
+                      verbose=False, fig=None,
+                      number_fontsize=10, label_offset=-0.4):
     """
     Generate a corner plot of the 1-D and 2-D marginalized posteriors.
     Allows you to plot multiple corner plots on top of each other.
@@ -5647,7 +5646,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                 ax = axes
             else:
                 ax = axes[i, i]
-    
+
             # Plot the 1-D marginalized posteriors.
     
             # Setup axes
@@ -5655,6 +5654,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
             if max_n_ticks == 0:
                 ax.xaxis.set_major_locator(NullLocator())
                 ax.yaxis.set_major_locator(NullLocator())
+
             else:
                 ax.xaxis.set_major_locator(MaxNLocator(max_n_ticks,
                                                        prune="lower"))
@@ -5662,6 +5662,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
             # Label axes.
             sf = ScalarFormatter(useMathText=use_math_text)
             ax.xaxis.set_major_formatter(sf)
+            ax.tick_params(axis='both', which='major', labelsize=number_fontsize) 
             if i < ndim - 1:
                 if top_ticks:
                     ax.xaxis.set_ticks_position("top")
@@ -5671,7 +5672,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
             else:
                 [l.set_rotation(45) for l in ax.get_xticklabels()]
                 ax.set_xlabel(labels[i], **label_kwargs)
-                ax.xaxis.set_label_coords(0.5, -0.3)
+                ax.xaxis.set_label_coords(0.5, label_offset)
             # Generate distribution.
             sx = smooth[i]
             if isinstance(sx, int_type):
@@ -5748,18 +5749,19 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                 sf = ScalarFormatter(useMathText=use_math_text)
                 ax.xaxis.set_major_formatter(sf)
                 ax.yaxis.set_major_formatter(sf)
+                ax.tick_params(axis='both', which='major', labelsize=number_fontsize)
                 if i < ndim - 1:
                     ax.set_xticklabels([])
                 else:
                     [l.set_rotation(45) for l in ax.get_xticklabels()]
                     ax.set_xlabel(labels[j], **label_kwargs)
-                    ax.xaxis.set_label_coords(0.5, -0.3)
+                    ax.xaxis.set_label_coords(0.5, label_offset)
                 if j > 0:
                     ax.set_yticklabels([])
                 else:
                     [l.set_rotation(45) for l in ax.get_yticklabels()]
                     ax.set_ylabel(labels[i], **label_kwargs)
-                    ax.yaxis.set_label_coords(-0.3, 0.5)
+                    ax.yaxis.set_label_coords(label_offset, 0.5)
                 # Generate distribution.
                 sy = smooth[j]
                 check_ix = isinstance(sx, int_type)
