@@ -653,7 +653,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     ttop = 0.8
     ttstep = 0.05
 
-    fig.text(tleft, ttop - -1*ttstep, '$t_{{0,par}}$ = {0:.1f} MJD'.format(t0par), fontsize=12)
+    fig.text(tleft, ttop - -1*ttstep, '$t_r$ = {0:.1f} MJD'.format(t0par), fontsize=12)
 
     # Input and output are helio, Lu convention. So parameters are as reported.
     if in_frame == 'helio':
@@ -808,11 +808,11 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     ttop = 0.8
     ttstep = 0.05
 
-    fig.text(tleft, ttop - -1*ttstep, '$t_{{0,par}}$ = {0:.1f} MJD'.format(t0par), fontsize=12)
+    fig.text(tleft, ttop - -1*ttstep, '$t_r$ = {0:.1f} MJD'.format(t0par), fontsize=12)
 
     if in_frame == 'helio':
         fig.text(tleft, ttop - 1*ttstep, 'Helio', weight='bold', fontsize=14)
-        fig.text(tleft, ttop - 9*ttstep, 'Geo proj', weight='bold', fontsize=14)
+        fig.text(tleft, ttop - 9*ttstep, 'Geo $t_r$', weight='bold', fontsize=14)
 
         fig.text(tleft, ttop - 2*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_in), fontsize=12)
         # Input is Lu helio, so need to fix those to be in Gould geo.
@@ -839,7 +839,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
     
     if in_frame == 'geo':
-        fig.text(tleft, ttop - 1*ttstep, 'Geo proj', weight='bold', fontsize=14)
+        fig.text(tleft, ttop - 1*ttstep, 'Geo $t_r$', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
 
         fig.text(tleft, ttop - 2*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_in), fontsize=12)
