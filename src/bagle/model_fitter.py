@@ -32,6 +32,7 @@ import copy
 import pdb
 from datetime import date
 import yaml
+from scipy.stats import norm
 
 from bagle.dynesty import plotting as dyplot
 from six.moves import range
@@ -2031,7 +2032,109 @@ class PSPL_Solver(Solver):
         else:
             return
 
+    def plot_residual_cdf(self):
+        chi_x_list, chi_y_list, chi_m_list = self.get_residual(params='best')
 
+        sigma_axis = np.linspace(-5, 5, 100)
+        bins = np.linspace(-5, 5, 21)
+        
+        # chi_x_list, chi_y_list are the same length.
+
+        # Note: need to have some error handling for length 0 or 1.
+        for ii, _ in enumerate(chi_x_list):
+            plt.figure(1)
+            plt.clf()
+            plt.hist(chi_x_list[ii], bins=bins, histtype='step', label='X',
+                     density=True, cumulative=True)
+            plt.hist(chi_y_list[ii], bins=bins, histtype='step', label='Y',
+                     density=True, cumulative=True)
+            plt.plot(sigma_axis, norm.cdf(sigma_axis), color='k', label='Norm')
+            plt.legend()
+            plt.xlabel('Residual (sigma)')
+            plt.ylabel('CDF')
+            plt.savefig(self.outputfiles_basename + 'chi_xy_cdf_{0}.png'.format(ii))
+            plt.close()
+
+        for ii, _ in enumerate(chi_m_list):
+            plt.figure(1)
+            plt.clf()
+            plt.hist(chi_m_list[ii], bins=bins, histtype='step', label='M',
+                     density=True, cumulative=True)
+            plt.plot(sigma_axis, norm.cdf(sigma_axis), color='k', label='Norm')
+            plt.legend()
+            plt.xlabel('Residual (sigma)')
+            plt.ylabel('CDF')
+            plt.savefig(self.outputfiles_basename + 'chi_m_cdf_{0}.png'.format(ii))
+            plt.close()
+
+    def get_residual(self, params='best'):
+        """
+        This is basically copied from calc_chi2.
+        
+        Parameters
+        ----------
+        params : str or dict, optional
+            model_params = 'best' will load up the best solution and calculate
+            the chi^2 based on those values. Alternatively, pass in a dictionary
+            with the model parameters to use.
+        """
+        if params == 'best':
+            params = self.get_best_fit()
+
+        # Get model.
+        pspl = self.get_model(params)
+
+        # Calculate constants needed to subtract from lnL to calculate chi2.
+        if pspl.astrometryFlag:
+            
+            chi_x_list = []
+            chi_y_list = []
+
+            for nn in range(self.n_ast_sets):                        
+                t_ast = self.data['t_ast' + str(nn + 1)]
+                x_obs = self.data['xpos' + str(nn + 1)]
+                y_obs = self.data['ypos' + str(nn + 1)]
+                x_err_obs = self.data['xpos_err' + str(nn + 1)]
+                y_err_obs = self.data['ypos_err' + str(nn + 1)]
+
+                pos_model = pspl.get_astrometry(t_ast, ast_filt_idx=nn)
+                chi_x = (x_obs - pos_model[:, 0]) / x_err_obs
+                chi_y = (y_obs - pos_model[:, 1]) / y_err_obs
+
+                # Save to our lists
+                chi_x_list.append(chi_x)
+                chi_y_list.append(chi_y)
+
+        else:
+            chi_x_list = []
+            chi_y_list = []
+                
+        if pspl.photometryFlag:
+
+            chi_m_list = []
+            
+            for nn in range(self.n_phot_sets):
+                if hasattr(pspl, 'use_gp_phot'):
+                    if pspl.use_gp_phot[nn]:
+                        gp = True
+                    else:
+                        gp = False
+                else:
+                    gp = False
+                    
+                t_phot = self.data['t_phot' + str(nn + 1)]
+                mag_obs = self.data['mag' + str(nn + 1)]
+                mag_err_obs = self.get_modified_mag_err(params, nn)
+
+                mag_model = pspl.get_photometry(t_phot, filt_idx=nn)
+                chi_m = ((mag_obs - mag_model) / mag_err_obs)
+                
+                chi_m_list.append(chi_m)
+        else:
+            chi_m_list = []
+
+        return chi_x_list, chi_y_list, chi_m_list
+        
 class PSPL_Solver_weighted(PSPL_Solver):
     """
     Soliver where the likelihood function has each data
@@ -3326,7 +3429,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
             p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long)
 
     # Get trace models and positions if we will be plotting traces
-    if mnest_results == None:
+    if mnest_results is None:
         N_traces = 0
         print('No mnest_results supplied for traces')
 
