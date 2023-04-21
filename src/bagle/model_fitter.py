@@ -2039,33 +2039,33 @@ class PSPL_Solver(Solver):
         bins = np.linspace(-5, 5, 21)
         
         # chi_x_list, chi_y_list are the same length.
+        if len(chi_x_list) > 0:
+            for ii, _ in enumerate(chi_x_list):
+                plt.figure(1)
+                plt.clf()
+                plt.hist(chi_x_list[ii], bins=bins, histtype='step', label='X',
+                         density=True, cumulative=True)
+                plt.hist(chi_y_list[ii], bins=bins, histtype='step', label='Y',
+                         density=True, cumulative=True)
+                plt.plot(sigma_axis, norm.cdf(sigma_axis), color='k', label='Norm')
+                plt.legend()
+                plt.xlabel('Residual (sigma)')
+                plt.ylabel('CDF')
+                plt.savefig(self.outputfiles_basename + 'chi_xy_cdf_{0}.png'.format(ii))
+                plt.close()
 
-        # Note: need to have some error handling for length 0 or 1.
-        for ii, _ in enumerate(chi_x_list):
-            plt.figure(1)
-            plt.clf()
-            plt.hist(chi_x_list[ii], bins=bins, histtype='step', label='X',
-                     density=True, cumulative=True)
-            plt.hist(chi_y_list[ii], bins=bins, histtype='step', label='Y',
-                     density=True, cumulative=True)
-            plt.plot(sigma_axis, norm.cdf(sigma_axis), color='k', label='Norm')
-            plt.legend()
-            plt.xlabel('Residual (sigma)')
-            plt.ylabel('CDF')
-            plt.savefig(self.outputfiles_basename + 'chi_xy_cdf_{0}.png'.format(ii))
-            plt.close()
-
-        for ii, _ in enumerate(chi_m_list):
-            plt.figure(1)
-            plt.clf()
-            plt.hist(chi_m_list[ii], bins=bins, histtype='step', label='M',
-                     density=True, cumulative=True)
-            plt.plot(sigma_axis, norm.cdf(sigma_axis), color='k', label='Norm')
-            plt.legend()
-            plt.xlabel('Residual (sigma)')
-            plt.ylabel('CDF')
-            plt.savefig(self.outputfiles_basename + 'chi_m_cdf_{0}.png'.format(ii))
-            plt.close()
+        if len(chi_m_list) > 0:
+            for ii, _ in enumerate(chi_m_list):
+                plt.figure(1)
+                plt.clf()
+                plt.hist(chi_m_list[ii], bins=bins, histtype='step', label='M',
+                         density=True, cumulative=True)
+                plt.plot(sigma_axis, norm.cdf(sigma_axis), color='k', label='Norm')
+                plt.legend()
+                plt.xlabel('Residual (sigma)')
+                plt.ylabel('CDF')
+                plt.savefig(self.outputfiles_basename + 'chi_m_cdf_{0}.png'.format(ii))
+                plt.close()
 
     def get_residual(self, params='best'):
         """
