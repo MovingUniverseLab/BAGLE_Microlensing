@@ -3849,11 +3849,8 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
         qe, qn = self.geta(self.raL, self.decL, self.t0par, t)
 
         tau = (t - self.t0) / self.tE
-        # write this in terms of cross and dots?
         dtau = self.piE[1]*qn + self.piE[0]*qe
         dbeta = self.piE[1]*qe - self.piE[0]*qn
-        # I think this will give the other half of the Lu convention.
-#        dbeta = self.piE[0]*qn - self.piE[1]*qe
 
         taup = tau + dtau
         betap = self.u0_amp + dbeta
@@ -3939,11 +3936,8 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
         qe, qn = self.geta(self.raL, self.decL, self.t0par, t)
 
         tau = (t - self.t0) / self.tE
-        # write this in terms of cross and dots?
         dtau = self.piE[1]*qn + self.piE[0]*qe
         dbeta = self.piE[1]*qe - self.piE[0]*qn
-        # I think this will give the other half of the Lu convention.
-#        dbeta = self.piE[0]*qn - self.piE[1]*qe
 
         taup = tau + dtau
         betap = self.u0_amp + dbeta
@@ -3956,7 +3950,7 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
         delta_N = u_N / (u_amp**2 + 2.0)
         delta_E = u_E / (u_amp**2 + 2.0)
 
-        shift = np.vstack((delta_E, delta_N)).T
+        shift = self.thetaE_amp * np.vstack((delta_E, delta_N)).T
 
         return shift
 
