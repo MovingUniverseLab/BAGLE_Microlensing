@@ -3522,3 +3522,60 @@ def test_ABC_MRO():
     model_classes = model_classes[::-1]
     print(model_classes)
     return
+
+
+def test_PSPL_Phot_Param2_vs_Param3():
+    """
+    Compare models with parameters vs. log parameters. 
+    """
+    raL = (17.0 + (49.0 / 60.) + (51.38 / 3600.0)) * 15.0  # degrees
+    decL = -35 + (22.0 / 60.0) + (28.0 / 3600.0)
+    t0 = 56026.03
+    u0_amp = -0.222
+    tE = 135.0
+    log_tE = np.log10(tE)
+    piE_E = -0.058
+    piE_N = 0.11
+    piE_amp = np.linalg.norm([piE_E, piE_N])
+    log_piE = np.log10(piE_amp)
+    phi_muRel = np.rad2deg(np.arctan2(piE_E, piE_N))
+    b_sff = [1.1]
+    mag_base = [19.0]
+
+    t_mod = np.arange(t0 - 1000, t0 + 1000, 2)
+
+    ##########
+    # Compare two models with same properties
+    # recast in different parameters.
+    ##########
+    mod2 = model.PSPL_Phot_Par_Param2(t0,
+                                      u0_amp,
+                                      tE,
+                                      piE_E,
+                                      piE_N,
+                                      [1.0],
+                                      mag_base,
+                                      raL=raL, decL=decL)
+    mod3 = model.PSPL_Phot_Par_Param3(t0,
+                                      u0_amp,
+                                      log_tE,
+                                      log_piE,
+                                      phi_muRel,
+                                      [1.0],
+                                      mag_base,
+                                      raL=raL, decL=decL)
+    
+    I_mod2 = mod2.get_photometry(t_mod)
+    I_mod3 = mod3.get_photometry(t_mod)
+
+    plt.figure(1)
+    plt.clf()
+    plt.plot(t_mod, I_mod2, 'r-', label='Param2')
+    plt.plot(t_mod, I_mod3, 'b-', label='Param3')
+    plt.xlabel('Time (MJD)')
+    plt.ylabel('Mag')
+    plt.gca().invert_yaxis()
+    plt.legend()
+
+    return
+

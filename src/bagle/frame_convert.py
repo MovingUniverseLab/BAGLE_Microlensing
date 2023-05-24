@@ -1,4 +1,5 @@
 from astropy.coordinates import SkyCoord
+from astropy.coordinates import Angle
 from astropy import units as u
 import numpy as np 
 from astropy.time import Time
@@ -83,7 +84,10 @@ def convert_helio_geo_ast(ra, dec,
     day_to_yr = 365.25
 
     # UNITS: I think this is 1/days, NOT 1/years.
-    # Need to convert, depending on input units. 
+    # Need to convert, depending on input units.
+    if type(ra) == str:
+        ra = str(str(Angle(ra, unit = u.hourangle)))
+    
     par_t0par = model.parallax_in_direction(ra, dec, t0par)
     dp_dt_t0par = model.dparallax_dt_in_direction(ra, dec, t0par)
 
@@ -211,6 +215,9 @@ def convert_helio_geo_phot(ra, dec,
                                         murel_in, murel_out, 
                                         coord_in, coord_out,
                                         plot)
+    
+    if type(ra) == str:
+        ra = str(str(Angle(ra, unit = u.hourangle)))
 
     # Flip from LS to SL as needed (conversion equations assume SL)
     if murel_in=='LS':
