@@ -1547,12 +1547,13 @@ class PSPL_Solver(Solver):
                                 + 'phot_and_residuals_'
                                 + str(i + 1) + suffix + 'zoom.png')
                     plt.close()
-    
+
                 if gp:
                     fig = plot_photometry_gp(self.data, model, input_model=input_model,
                                              dense_time=True, residuals=True,
-                                             filt_index=i, mnest_results=mnest_results, gp=gp,
-                                             N_traces=N_traces)
+                                             filt_index=i, gp=gp)
+#                                             filt_index=i, mnest_results=mnest_results, gp=gp,
+#                                             N_traces=N_traces, fitter=fitter)
                     if fig is not None:
                         fig.savefig(self.outputfiles_basename
                                     + 'phot_and_residuals_gp_'
@@ -1579,13 +1580,12 @@ class PSPL_Solver(Solver):
                                                  dense_time=True, residuals=True,
                                                  filt_index=i, mnest_results=mnest_results,
                                                  zoomx=zoomxi, zoomy=zoomyi, zoomy_res=zoomy_resi, gp=gp,
-                                                 N_traces=N_traces)
+                                                 N_traces=N_traces, fitter=fitter)
                         if fig is not None:
                             fig.savefig(self.outputfiles_basename
                                         + 'phot_and_residuals_gp_'
                                         + str(i + 1) + suffix + 'zoom.png')
                             plt.close()
-        
         if model.astrometryFlag:
             for i in range(self.n_ast_sets):
                 # If no photometry
@@ -3239,6 +3239,7 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
         trace_times = []
         trace_magnitudes = []
         for idx in idx_arr:
+            print('Trace draw {0}.'.format(idx))
 #            # FIXME: This doesn't work if there are additional_param_names in the model
 #            # You will have extra arguments when passing in **params_dict into the model class.
 #            # FIXME 2: there needs to be a way to deal with multiples in additional_param_names
@@ -3255,17 +3256,23 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
                 trace_mag, trace_mag_std = trace_mod.get_photometry_with_gp(dat_t, dat_m, dat_me, filt_index, mod_t)
                 if trace_mag_std is None:
                     print('GP is not working at model times!')
-                continue
+                    continue
             else:
                 trace_mag = trace_mod.get_photometry(mod_t, filt_index)
 
             trace_times.append(mod_t)
             trace_magnitudes.append(trace_mag)
+#            f1.plot(mod_t, trace_mag,
+#                    color='c',
+#                    alpha=0.5,
+#                    linewidth=1,
+#                    zorder=-1)
             f1.plot(mod_t, trace_mag,
                     color='c',
                     alpha=0.5,
-                    linewidth=1,
-                    zorder=-1)
+                    linewidth=1)
+#            import pdb
+#            pdb.set_trace()
     #####
     # Residuals
     #####
@@ -3288,7 +3295,7 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
 
 def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals=True,
                     filt_index=0, zoomx=None, zoomy=None, zoomy_res=None, mnest_results=None,
-                    N_traces=50, gp=False):
+                       N_traces=50, gp=False, fitter=None):
 
     gs_kw = dict(height_ratios=[1,2,1])
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, sharex=True, 
@@ -3349,7 +3356,33 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
         ax3.invert_yaxis()
         ax3.set_xlabel('Time (HJD)')
         ax3.legend()
+
+        #####
+        # Traces
+        #####
+        if mnest_results is not None:
+            idx_arr = np.random.choice(np.arange(len(mnest_results['weights'])),
+                                       p=mnest_results['weights'],
+                                       size=N_traces)
+            trace_times = []
+            trace_magnitudes = []
+            for idx in idx_arr:
+                print('GP Trace draw {0}.'.format(idx))
+                
+                trace_mod = fitter.get_model(mnest_results[idx])
+
+                trace_mag, trace_mag_std = trace_mod.get_photometry_with_gp(dat_t, dat_m, dat_me, filt_index, mod_t)
+                if trace_mag_std is None:
+                    print('GP is not working at model times!')
+                    continue
     
+                trace_times.append(mod_t)
+                trace_magnitudes.append(trace_mag)
+                ax3.plot(mod_t, trace_mag - mod_m_out,
+                         color='c',
+                         alpha=0.8,
+                         linewidth=1)
+        
         if zoomx is not None:
             ax1.set_xlim(zoomx[0], zoomx[1])
             ax2.set_xlim(zoomx[0], zoomx[1])
