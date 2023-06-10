@@ -412,6 +412,60 @@ def test_bagle_helio_to_geo_phot(ra, dec, t_mjd,
     diff = (mag_bagle - mag_bagle_geoproj)/mag_bagle
     total_diff = np.sum(np.abs(diff))
     assert total_diff/len(t_mjd) < 1e-5
+    
+def test_convert_u0_t0_psbl():
+    """
+    Test converting u0 and t0 from primary center coordinate system
+    to geometric center coordinate frame. This is done via plugging parameters
+    into PSBL_PhotAstrom_Par_Param7, converting them mathematically, then
+    plugging them into PSBL_PhotAstrom_Par_Param1, then checking photometry
+    is equal.
+    """
+    mLp = 10
+    mLs = 10
+    xS0_E = 0 
+    xS0_N = 0 
+    muL_E = 0
+    muL_N = 0
+    muS_E = 0
+    muS_N = 2
+    dL = 4000
+    dS = 8000
+    sep = 0.1
+    alpha = 40
+    b_sff = 0.5
+    mag_src = 18
+    raL = 270
+    decL = -30
+    
+    t0_p = 0
+    beta_p = 0.5
+    psbl_model = model.PSBL_PhotAstrom_Par_Param7(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, 
+                                                  muL_E, muL_N, muS_E, muS_N, dL, dS,
+                                                  sep, alpha, [b_sff], [mag_src], 
+                                                  raL=raL, decL=decL, 
+                                                  root_tol = 0.00000001)
+    
+    # Conversions determined by specific geometry (can be checked in u0/t0 conversion overleaf)
+    # https://www.overleaf.com/read/qzvfpvkpxdqm
+    t0_geom = psbl_model.t0_p - psbl_model.tE*np.cos(np.deg2rad(psbl_model.phi))*(psbl_model.sep/(2*psbl_model.thetaE_amp))
+    beta_geom = (psbl_model.u0_amp_p - (-1)*(psbl_model.sep/(2*psbl_model.thetaE_amp))*np.sin(np.deg2rad(psbl_model.phi)))*psbl_model.thetaE_amp
+    
+    psbl_model_geom = model.PSBL_PhotAstrom_Par_Param1(mLp, mLs, t0_geom, xS0_E, xS0_N, beta_geom, 
+                                                       muL_E, muL_N, muS_E, muS_N, dL, dS,
+                                                       sep, alpha, [b_sff], [mag_src], 
+                                                       raL=raL, decL=decL, 
+                                                       root_tol = 0.00000001)
+    
+    
+    dt = np.linspace(-500, 500, 200)
+    img, amp = psbl_model.get_all_arrays(dt)
+    phot = psbl_model.get_photometry(dt, amp_arr=amp)
+    
+    img_geom, amp_geom = psbl_model_geom.get_all_arrays(dt)
+    phot_geom = psbl_model_geom.get_photometry(dt, amp_arr=amp_geom)
+    
+    assert(np.allclose(phot, phot_geom, rtol=1e-15))
 
 
 def test_bagle_to_mulens(ra, dec, t_mjd,
@@ -1005,6 +1059,8 @@ def test_bagle_helio_geo_set(plot_lc=False, plot_conv=False, verbose=False):
     test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 69900, **kwargs)
     test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 69900, **kwargs)
     test_bagle_geo_to_helio_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 69900, **kwargs)
+
+
 
 ################################################################################
 ###########  Stuff below is incomplete/wrong/not yet functional...  ############
