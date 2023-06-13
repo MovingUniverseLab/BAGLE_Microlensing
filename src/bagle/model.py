@@ -82,6 +82,7 @@ Point source, binary lens, photometry and astrometry
     - 'PSBL_PhotAstrom_Par_Param3'
     - 'PSBL_PhotAstrom_Par_Param4'
     - 'PSBL_PhotAstrom_Par_Param5'
+    - 'PSBL_PhotAstrom_Par_Param7'
     - 'PSBL_PhotAstrom_noPar_GP_Param1'
     - 'PSBL_PhotAstrom_noPar_GP_Param2'
     - 'PSBL_PhotAstrom_Par_GP_Param1'
@@ -106,6 +107,12 @@ Binary source, point lens, photometry and astrometry
     - 'BSPL_PhotAstrom_Par_GP_Param1'
     - 'BSPL_PhotAstrom_Par_GP_Param2'
     - 'BSPL_PhotAstrom_Par_GP_Param3'
+
+Binary source, binary lens, photometry and astrometry
+    - 'BSBL_PhotAstrom_noPar_Param1'
+    - 'BSBL_PhotAstrom_noPar_Param2'
+    - 'BSBL_PhotAstrom_Par_Param1'
+    - 'BSBL_PhotAstrom_Par_Param2'
 
 Finite source, point lens, photometry and astrometry (broken)
     - 'FSPL_PhotAstrom_Par_Param1'
