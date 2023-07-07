@@ -32,6 +32,7 @@ import copy
 import pdb
 from datetime import date
 import yaml
+from scipy.stats import norm
 
 from bagle.dynesty import plotting as dyplot
 from six.moves import range
@@ -1376,8 +1377,6 @@ class PSPL_Solver(Solver):
             labels=self.all_param_names
 
         if traceplot:
-            # dyplot.traceplot(res, labels=labels, dims=dims,
-            #                  show_titles=True, truths=truths, kde=kde)
             traceplot_custom([res], labels=labels, dims=dims,
                              show_titles=True, truths=truths, kde=kde)
             plt.subplots_adjust(hspace=0.7)
@@ -1385,12 +1384,12 @@ class PSPL_Solver(Solver):
             plt.close()
 
         if cornerplot:
-            # dyplot.cornerplot(res, labels=labels, dims=dims,
-            #                   show_titles=True, truths=truths)
             cornerplot_custom([res], labels=labels, dims=dims,
-                              show_titles=True, truths=truths)
-            ax = plt.gca()
-            ax.tick_params(axis='both', which='major', labelsize=10)
+                              show_titles=True, truths=truths,
+                              label_kwargs={'fontsize' : 14},
+                              title_kwargs={'fontsize' : 14},
+                              quantiles=None,
+                              number_fontsize=10, label_offset=-0.4)
             plt.savefig(self.outputfiles_basename + 'dy_corner.png')
             plt.close()
 
@@ -1548,12 +1547,13 @@ class PSPL_Solver(Solver):
                                 + 'phot_and_residuals_'
                                 + str(i + 1) + suffix + 'zoom.png')
                     plt.close()
-    
+
                 if gp:
                     fig = plot_photometry_gp(self.data, model, input_model=input_model,
                                              dense_time=True, residuals=True,
-                                             filt_index=i, mnest_results=mnest_results, gp=gp,
-                                             N_traces=N_traces)
+                                             filt_index=i, gp=gp)
+#                                             filt_index=i, mnest_results=mnest_results, gp=gp,
+#                                             N_traces=N_traces, fitter=fitter)
                     if fig is not None:
                         fig.savefig(self.outputfiles_basename
                                     + 'phot_and_residuals_gp_'
@@ -1580,13 +1580,12 @@ class PSPL_Solver(Solver):
                                                  dense_time=True, residuals=True,
                                                  filt_index=i, mnest_results=mnest_results,
                                                  zoomx=zoomxi, zoomy=zoomyi, zoomy_res=zoomy_resi, gp=gp,
-                                                 N_traces=N_traces)
+                                                 N_traces=N_traces, fitter=fitter)
                         if fig is not None:
                             fig.savefig(self.outputfiles_basename
                                         + 'phot_and_residuals_gp_'
                                         + str(i + 1) + suffix + 'zoom.png')
                             plt.close()
-        
         if model.astrometryFlag:
             for i in range(self.n_ast_sets):
                 # If no photometry
@@ -2033,7 +2032,109 @@ class PSPL_Solver(Solver):
         else:
             return
 
+    def plot_residual_cdf(self):
+        chi_x_list, chi_y_list, chi_m_list = self.get_residual(params='best')
 
+        sigma_axis = np.linspace(-5, 5, 100)
+        bins = np.linspace(-5, 5, 21)
+        
+        # chi_x_list, chi_y_list are the same length.
+        if len(chi_x_list) > 0:
+            for ii, _ in enumerate(chi_x_list):
+                plt.figure(1)
+                plt.clf()
+                plt.hist(chi_x_list[ii], bins=bins, histtype='step', label='X',
+                         density=True, cumulative=True)
+                plt.hist(chi_y_list[ii], bins=bins, histtype='step', label='Y',
+                         density=True, cumulative=True)
+                plt.plot(sigma_axis, norm.cdf(sigma_axis), color='k', label='Norm')
+                plt.legend()
+                plt.xlabel('Residual (sigma)')
+                plt.ylabel('CDF')
+                plt.savefig(self.outputfiles_basename + 'chi_xy_cdf_{0}.png'.format(ii))
+                plt.close()
+
+        if len(chi_m_list) > 0:
+            for ii, _ in enumerate(chi_m_list):
+                plt.figure(1)
+                plt.clf()
+                plt.hist(chi_m_list[ii], bins=bins, histtype='step', label='M',
+                         density=True, cumulative=True)
+                plt.plot(sigma_axis, norm.cdf(sigma_axis), color='k', label='Norm')
+                plt.legend()
+                plt.xlabel('Residual (sigma)')
+                plt.ylabel('CDF')
+                plt.savefig(self.outputfiles_basename + 'chi_m_cdf_{0}.png'.format(ii))
+                plt.close()
+
+    def get_residual(self, params='best'):
+        """
+        This is basically copied from calc_chi2.
+        
+        Parameters
+        ----------
+        params : str or dict, optional
+            model_params = 'best' will load up the best solution and calculate
+            the chi^2 based on those values. Alternatively, pass in a dictionary
+            with the model parameters to use.
+        """
+        if params == 'best':
+            params = self.get_best_fit()
+
+        # Get model.
+        pspl = self.get_model(params)
+
+        # Calculate constants needed to subtract from lnL to calculate chi2.
+        if pspl.astrometryFlag:
+            
+            chi_x_list = []
+            chi_y_list = []
+
+            for nn in range(self.n_ast_sets):                        
+                t_ast = self.data['t_ast' + str(nn + 1)]
+                x_obs = self.data['xpos' + str(nn + 1)]
+                y_obs = self.data['ypos' + str(nn + 1)]
+                x_err_obs = self.data['xpos_err' + str(nn + 1)]
+                y_err_obs = self.data['ypos_err' + str(nn + 1)]
+
+                pos_model = pspl.get_astrometry(t_ast, ast_filt_idx=nn)
+                chi_x = (x_obs - pos_model[:, 0]) / x_err_obs
+                chi_y = (y_obs - pos_model[:, 1]) / y_err_obs
+
+                # Save to our lists
+                chi_x_list.append(chi_x)
+                chi_y_list.append(chi_y)
+
+        else:
+            chi_x_list = []
+            chi_y_list = []
+                
+        if pspl.photometryFlag:
+
+            chi_m_list = []
+            
+            for nn in range(self.n_phot_sets):
+                if hasattr(pspl, 'use_gp_phot'):
+                    if pspl.use_gp_phot[nn]:
+                        gp = True
+                    else:
+                        gp = False
+                else:
+                    gp = False
+                    
+                t_phot = self.data['t_phot' + str(nn + 1)]
+                mag_obs = self.data['mag' + str(nn + 1)]
+                mag_err_obs = self.get_modified_mag_err(params, nn)
+
+                mag_model = pspl.get_photometry(t_phot, filt_idx=nn)
+                chi_m = ((mag_obs - mag_model) / mag_err_obs)
+                
+                chi_m_list.append(chi_m)
+        else:
+            chi_m_list = []
+
+        return chi_x_list, chi_y_list, chi_m_list
+        
 class PSPL_Solver_weighted(PSPL_Solver):
     """
     Soliver where the likelihood function has each data
@@ -3138,6 +3239,7 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
         trace_times = []
         trace_magnitudes = []
         for idx in idx_arr:
+            print('Trace draw {0}.'.format(idx))
 #            # FIXME: This doesn't work if there are additional_param_names in the model
 #            # You will have extra arguments when passing in **params_dict into the model class.
 #            # FIXME 2: there needs to be a way to deal with multiples in additional_param_names
@@ -3154,17 +3256,23 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
                 trace_mag, trace_mag_std = trace_mod.get_photometry_with_gp(dat_t, dat_m, dat_me, filt_index, mod_t)
                 if trace_mag_std is None:
                     print('GP is not working at model times!')
-                continue
+                    continue
             else:
                 trace_mag = trace_mod.get_photometry(mod_t, filt_index)
 
             trace_times.append(mod_t)
             trace_magnitudes.append(trace_mag)
+#            f1.plot(mod_t, trace_mag,
+#                    color='c',
+#                    alpha=0.5,
+#                    linewidth=1,
+#                    zorder=-1)
             f1.plot(mod_t, trace_mag,
                     color='c',
                     alpha=0.5,
-                    linewidth=1,
-                    zorder=-1)
+                    linewidth=1)
+#            import pdb
+#            pdb.set_trace()
     #####
     # Residuals
     #####
@@ -3187,7 +3295,7 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
 
 def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals=True,
                     filt_index=0, zoomx=None, zoomy=None, zoomy_res=None, mnest_results=None,
-                    N_traces=50, gp=False):
+                       N_traces=50, gp=False, fitter=None):
 
     gs_kw = dict(height_ratios=[1,2,1])
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, sharex=True, 
@@ -3248,7 +3356,33 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
         ax3.invert_yaxis()
         ax3.set_xlabel('Time (HJD)')
         ax3.legend()
+
+        #####
+        # Traces
+        #####
+        if mnest_results is not None:
+            idx_arr = np.random.choice(np.arange(len(mnest_results['weights'])),
+                                       p=mnest_results['weights'],
+                                       size=N_traces)
+            trace_times = []
+            trace_magnitudes = []
+            for idx in idx_arr:
+                print('GP Trace draw {0}.'.format(idx))
+                
+                trace_mod = fitter.get_model(mnest_results[idx])
+
+                trace_mag, trace_mag_std = trace_mod.get_photometry_with_gp(dat_t, dat_m, dat_me, filt_index, mod_t)
+                if trace_mag_std is None:
+                    print('GP is not working at model times!')
+                    continue
     
+                trace_times.append(mod_t)
+                trace_magnitudes.append(trace_mag)
+                ax3.plot(mod_t, trace_mag - mod_m_out,
+                         color='c',
+                         alpha=0.8,
+                         linewidth=1)
+        
         if zoomx is not None:
             ax1.set_xlim(zoomx[0], zoomx[1])
             ax2.set_xlim(zoomx[0], zoomx[1])
@@ -3328,7 +3462,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
             p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long)
 
     # Get trace models and positions if we will be plotting traces
-    if mnest_results == None:
+    if mnest_results is None:
         N_traces = 0
         print('No mnest_results supplied for traces')
 
@@ -5483,13 +5617,14 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
 
 
 def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
-               color_list=['blue'], smooth=0.02, quantiles_2d=None, hist_kwargs=None,
-               hist2d_kwargs=None, labels=None, label_kwargs=None,
-               contour_labels_list=None,
-               show_titles=False, title_fmt=".2f", title_kwargs=None,
-               truths=None, truth_color='red', truth_kwargs=None,
-               max_n_ticks=5, top_ticks=False, use_math_text=False,
-               verbose=False, fig=None):
+                      color_list=['blue'], smooth=0.02, quantiles_2d=None, hist_kwargs=None,
+                      hist2d_kwargs=None, labels=None, label_kwargs=None,
+                      contour_labels_list=None,
+                      show_titles=False, title_fmt=".2f", title_kwargs=None,
+                      truths=None, truth_color='red', truth_kwargs=None,
+                      max_n_ticks=5, top_ticks=False, use_math_text=False,
+                      verbose=False, fig=None,
+                      number_fontsize=10, label_offset=-0.4):
     """
     Generate a corner plot of the 1-D and 2-D marginalized posteriors.
     Allows you to plot multiple corner plots on top of each other.
@@ -5647,7 +5782,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                 ax = axes
             else:
                 ax = axes[i, i]
-    
+
             # Plot the 1-D marginalized posteriors.
     
             # Setup axes
@@ -5655,6 +5790,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
             if max_n_ticks == 0:
                 ax.xaxis.set_major_locator(NullLocator())
                 ax.yaxis.set_major_locator(NullLocator())
+
             else:
                 ax.xaxis.set_major_locator(MaxNLocator(max_n_ticks,
                                                        prune="lower"))
@@ -5662,6 +5798,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
             # Label axes.
             sf = ScalarFormatter(useMathText=use_math_text)
             ax.xaxis.set_major_formatter(sf)
+            ax.tick_params(axis='both', which='major', labelsize=number_fontsize) 
             if i < ndim - 1:
                 if top_ticks:
                     ax.xaxis.set_ticks_position("top")
@@ -5671,7 +5808,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
             else:
                 [l.set_rotation(45) for l in ax.get_xticklabels()]
                 ax.set_xlabel(labels[i], **label_kwargs)
-                ax.xaxis.set_label_coords(0.5, -0.3)
+                ax.xaxis.set_label_coords(0.5, label_offset)
             # Generate distribution.
             sx = smooth[i]
             if isinstance(sx, int_type):
@@ -5748,18 +5885,19 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                 sf = ScalarFormatter(useMathText=use_math_text)
                 ax.xaxis.set_major_formatter(sf)
                 ax.yaxis.set_major_formatter(sf)
+                ax.tick_params(axis='both', which='major', labelsize=number_fontsize)
                 if i < ndim - 1:
                     ax.set_xticklabels([])
                 else:
                     [l.set_rotation(45) for l in ax.get_xticklabels()]
                     ax.set_xlabel(labels[j], **label_kwargs)
-                    ax.xaxis.set_label_coords(0.5, -0.3)
+                    ax.xaxis.set_label_coords(0.5, label_offset)
                 if j > 0:
                     ax.set_yticklabels([])
                 else:
                     [l.set_rotation(45) for l in ax.get_yticklabels()]
                     ax.set_ylabel(labels[i], **label_kwargs)
-                    ax.yaxis.set_label_coords(-0.3, 0.5)
+                    ax.yaxis.set_label_coords(label_offset, 0.5)
                 # Generate distribution.
                 sy = smooth[j]
                 check_ix = isinstance(sx, int_type)

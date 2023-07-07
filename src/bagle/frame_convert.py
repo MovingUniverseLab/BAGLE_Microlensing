@@ -438,9 +438,13 @@ def convert_piEvec_tE(ra, dec, t0par,
                       piEE_in, piEN_in, tE_in, 
                       in_frame='helio'):     
     """
-    *** PROPER MOTIONS ARE DEFINED AS SOURCE - LENS ***
+    Convert the values of piE vector and tE between the
+    heliocentric and geoprojected frame.
+    
+    !!! NOTE: INPUT AND OUTPUT RELATIVE PROPER MOTION
+    (AND HENCE piE VECTOR) ARE DEFINED TO BE SOURCE - LENS !!!
 
-    If you want lens-source, flip piEE and piEN by -1.
+    If you want lens-source output, flip piEE and piEN by -1.
 
     Parameters
     ----------
@@ -591,13 +595,13 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     plt.subplots_adjust(left=0.15, right=0.7)
 
     if in_frame == 'helio':
-        label_in = 'Src Hel'
-        label_out = 'Src Geo'
+        label_in = 'Src (Hel)'
+        label_out = 'Src (Geo $t_r$)'
         color_in = 'red'
         color_out = 'blue'
     if in_frame == 'geo':
-        label_in = 'Src Geo'
-        label_out = 'Src Hel'
+        label_in = 'Src (Geo $t_r$)'
+        label_out = 'Src (Hel)'
         color_in = 'blue'
         color_out = 'red'
 
@@ -656,49 +660,49 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     ttop = 0.8
     ttstep = 0.05
 
-    fig.text(tleft, ttop - -1*ttstep, 't0par = {0:.1f}'.format(t0par), fontsize=12)
+    fig.text(tleft, ttop - -1*ttstep, '$t_r$ = {0:.1f} MJD'.format(t0par), fontsize=12)
 
     # Input and output are helio, Lu convention. So parameters are as reported.
     if in_frame == 'helio':
         fig.text(tleft, ttop - 1*ttstep, 'Helio', weight='bold', fontsize=14)
-        fig.text(tleft, ttop - 9*ttstep, 'Geo proj', weight='bold', fontsize=14)
+        fig.text(tleft, ttop - 9*ttstep, 'Geo $t_r$', weight='bold', fontsize=14)
 
-        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
-        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)
-        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
-        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(piEE_in), fontsize=12)
-        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 2*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_in), fontsize=12)
+        fig.text(tleft, ttop - 3*ttstep, '$u_0$ = {0:.2f}'.format(u0_in), fontsize=12)
+        fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
         
-        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
-        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(u0_out), fontsize=12)
-        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
-        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(piEE_out), fontsize=12)
-        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_out), fontsize=12)
+        fig.text(tleft, ttop - 11*ttstep, '$u_0$ = {0:.2f}'.format(u0_out), fontsize=12)
+        fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f} days'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
     if in_frame == 'geo':
-        fig.text(tleft, ttop - 1*ttstep, 'Geo proj', weight='bold', fontsize=14)
+        fig.text(tleft, ttop - 1*ttstep, 'Geo $t_r$', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
 
-        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+        fig.text(tleft, ttop - 2*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_in), fontsize=12)
         # Input is Gould geo, so need to fix those to play nice with our vectors in Lu helio. 
         if np.sign(u0_in * piEN_in) > 0:
-            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
+            fig.text(tleft, ttop - 3*ttstep, '$u_0$ = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
         else:
-            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
+            fig.text(tleft, ttop - 3*ttstep, '$u_0$ = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
 
-        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
-        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(piEE_in), fontsize=12)
-        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
         
-        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
-        fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(u0_out), fontsize=12)
-        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
-        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(piEE_out), fontsize=12)
-        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_out), fontsize=12)
+        fig.text(tleft, ttop - 11*ttstep, '$u_0$ = {0:.2f}'.format(u0_out), fontsize=12)
+        fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f} days'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
     plt.show()
     plt.pause(1)
@@ -714,13 +718,13 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     # FIXME: is the parallax vector supposed to be the same direction
     # in Gould frame or antiparallel to the one in Lu???
     if in_frame == 'helio':
-        label_in = 'Lens Hel'
-        label_out = 'Lens Geo'
+        label_in = 'Lens (Hel)'
+        label_out = 'Lens (Geo $t_r$)'
         color_in = 'red'
         color_out = 'blue'
     if in_frame == 'geo':
-        label_in = 'Lens Geo'
-        label_out = 'Lensc Hel'
+        label_in = 'Lens (Geo $t_r$)'
+        label_out = 'Lens (Hel)'
         color_in = 'blue'
         color_out = 'red'
 
@@ -811,57 +815,57 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     ttop = 0.8
     ttstep = 0.05
 
-    fig.text(tleft, ttop - -1*ttstep, 't0par = {0:.1f}'.format(t0par), fontsize=12)
+    fig.text(tleft, ttop - -1*ttstep, '$t_r$ = {0:.1f} MJD'.format(t0par), fontsize=12)
 
     if in_frame == 'helio':
         fig.text(tleft, ttop - 1*ttstep, 'Helio', weight='bold', fontsize=14)
-        fig.text(tleft, ttop - 9*ttstep, 'Geo proj', weight='bold', fontsize=14)
+        fig.text(tleft, ttop - 9*ttstep, 'Geo $t_r$', weight='bold', fontsize=14)
 
-        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
+        fig.text(tleft, ttop - 2*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_in), fontsize=12)
         # Input is Lu helio, so need to fix those to be in Gould geo.
         if np.sign(u0_in * piEN_in) > 0:
-            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
+            fig.text(tleft, ttop - 3*ttstep, '$u_0$ = {0:.2f}'.format(np.abs(u0_in)), fontsize=12)
         else:
-            fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
+            fig.text(tleft, ttop - 3*ttstep, '$u_0$ = {0:.2f}'.format(-np.abs(u0_in)), fontsize=12)
             
-        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
-        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(-piEE_in), fontsize=12)
-        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(-piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
         
-        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+        fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_out), fontsize=12)
         # Output is Lu helio, so need to fix those to be in Gould geo.
         if np.sign(u0_out * piEN_out) > 0:
-            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
+            fig.text(tleft, ttop - 11*ttstep, '$u_0$ = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
         else:
-            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
+            fig.text(tleft, ttop - 11*ttstep, '$u_0$ = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
 
-        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
-        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(-piEE_out), fontsize=12)
-        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(-piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f} days'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
     
     if in_frame == 'geo':
-        fig.text(tleft, ttop - 1*ttstep, 'Geo proj', weight='bold', fontsize=14)
+        fig.text(tleft, ttop - 1*ttstep, 'Geo $t_r$', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
 
-        fig.text(tleft, ttop - 2*ttstep, 't0 = {0:.1f}'.format(t0_in), fontsize=12)
-        fig.text(tleft, ttop - 3*ttstep, 'u0 = {0:.2f}'.format(u0_in), fontsize=12)           
-        fig.text(tleft, ttop - 4*ttstep, 'tE = {0:.1f}'.format(tE_in), fontsize=12)
-        fig.text(tleft, ttop - 5*ttstep, 'piEE = {0:.2f}'.format(-piEE_in), fontsize=12)
-        fig.text(tleft, ttop - 6*ttstep, 'piEN = {0:.2f}'.format(-piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, 'piEE_in/piEN = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 2*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_in), fontsize=12)
+        fig.text(tleft, ttop - 3*ttstep, '$u_0$ = {0:.2f}'.format(u0_in), fontsize=12)           
+        fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
+        fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_in), fontsize=12)
+        fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
         
-        fig.text(tleft, ttop - 10*ttstep, 't0 = {0:.1f}'.format(t0_out), fontsize=12)
+        fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f}'.format(t0_out), fontsize=12)
         # Output is Lu helio, so need to fix those to be in Gould geo.
         if np.sign(u0_out * piEN_out) > 0:
-            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
+            fig.text(tleft, ttop - 11*ttstep, '$u_0$ = {0:.2f}'.format(np.abs(u0_out)), fontsize=12)
         else:
-            fig.text(tleft, ttop - 11*ttstep, 'u0 = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
-        fig.text(tleft, ttop - 12*ttstep, 'tE = {0:.1f}'.format(tE_out), fontsize=12)
-        fig.text(tleft, ttop - 13*ttstep, 'piEE = {0:.2f}'.format(-piEE_out), fontsize=12)
-        fig.text(tleft, ttop - 14*ttstep, 'piEN = {0:.2f}'.format(-piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, 'piEE_out/piEN = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
+            fig.text(tleft, ttop - 11*ttstep, '$u_0$ = {0:.2f}'.format(-np.abs(u0_out)), fontsize=12)
+        fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f}'.format(tE_out), fontsize=12)
+        fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_out), fontsize=12)
+        fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_out), fontsize=12)
+        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
     plt.show()
     plt.pause(1)
