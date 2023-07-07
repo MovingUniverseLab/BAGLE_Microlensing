@@ -866,3 +866,138 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     plt.show()
     plt.pause(1)
 
+
+def convert_u0_t0_psbl(t0_in, u0_x_in, u0_y_in, tE, theta_E, 
+                       q, phi, sep, mu_rel_x, mu_rel_y,
+                       coords_in=None, coords_out=None, d_mas = None):
+    """
+    Converts time of closest approach (t0) and 
+    vector distance of closest approach (u0) for PSBL events.
+    The default coordinate system transformations supported are:
+    Geometric Midpoint <--> Primary Center
+    Geometric Midpoint <--> Center of Mass Center
+    
+    You can also specify your own transformation by inputing a distance
+    along binary axis d_mas. BE AWARE OF THE SIGN OF d_mas.
+    If output coord center is closer to primary than input d > 0.
+    If output coord center is closer to secondary than input d < 0.
+    
+    Parameters
+    -----------
+    t0_in : float
+        Time of closest approach between source and lens specified in coords_in in days.
+    u0_x_in : float
+        u0 in specified coordinate frame in coords_in in x direction.
+        x direction is coordinate independent, but standard is East.
+    u0_y_in : float
+        u0 in specified coordinate frame in coords_in in y direction.
+        y direction is coordinate independent, but standard is North.
+    tE : float
+        Characteristic timescale of microlensing event in days.
+    theta_E : float
+        Characterisitc lengthscale of microlensing event in mas.
+    q : float
+        Ratio between M_2/M_1.
+    phi : float
+        Angle between mu_rel and the binary axis in radians.
+    sep : float
+        Separation between primary and secondary of binary in mas.
+    mu_rel_x : float
+        Relative proper motion between lens and source in mas/yr in x direction.
+        x direction is coordinate independent, but standard is East.
+    mu_rel_y : float
+        Relative proper motion between lens and source in mas/yr in y direction.
+        y direction is coordinate independent, but standard is North.
+    
+    Optional Parameters
+    --------------------
+    coords_in : string or None
+        Input coordinate system. 
+        Must be 'geom_mid', 'prim_center', or 'COM'.
+        Default is None.
+    coords_out : string or None
+        Output coordinate system. 
+        Must be 'geom_mid', 'prim_center', or 'COM'.
+        Default is None.
+    d_mas : float or None
+        Distance along binary axis in units of mas.
+        BE AWARE OF SIGN! 
+        If output coord center is closer to primary than input d > 0.
+        If output coord center is closer to secondary than input d < 0.
+    
+    Outputs
+    ---------
+    u0_x_out : float
+        u0 in specified coordinate frame in coords_out.
+        x direction is coordinate independent, but standard is East.
+    u0_y_out : float
+        u0 in specified coordinate frame in coords_in.
+        y direction is coordinate independent, but standard is North.
+    t0_out : float
+        Time of closest approach between source and lens specified in coords_out in days.
+    """
+    
+    if d_mas is not None:
+        d = d_mas/theta_E
+        sign = 1
+    else:
+        d = None
+    
+    if coords_in is None and d is None:
+        raise Exception('Must specify coord system or distance along binary axis')
+    
+    if coords_in is not None and d is not None:
+        raise Exception('Can only specify default coordinate transform or distance along binary axis, not both')
+    
+    # Uses one of the default coord transforms if a distance is not specified
+    if d is None:
+        valid_coords = ['geom_mid', 'prim_center', 'COM']
+        if coords_in not in valid_coords or coords_out not in valid_coords:
+            raise Exception('coord_in and coord_out must be one of: {}'.format(valid_coords))
+    
+        q_prime = (1 - q)/(2*(1 + q))
+        if coords_in == 'geom_mid' and coords_out == 'prim_center':
+            d = sep/(2*theta_E)
+            sign = -1
+        elif coords_in == 'prim_center' and coords_out == 'geom_mid':
+            d = -sep/(2*theta_E)
+            sign = 1
+        elif coords_in == 'geom_mid' and coords_out == 'COM':
+            d = sep*q_prime/theta_E
+            sign = -1
+            # If q > 1, then COM is closer to secondary than primary
+            # so the transformation flips
+            if q > 1:
+                sign *= -1
+        elif coords_in == 'COM' and coords_out == 'geom_mid':
+            d = sep*q_prime/theta_E
+            sign = 1
+            # If q > 1, then COM is closer to secondary than primary
+            # so the transformation flips
+            if q > 1:
+                sign *= -1
+    
+    if u0_x_in == 0:
+        u0_x_in_hat = 0
+    else:
+        u0_x_in_hat = u0_x_in/np.abs(u0_x_in)
+    
+    if u0_y_in == 0:
+        u0_y_in_hat = 0
+    else:
+        u0_y_in_hat = u0_y_in/np.abs(u0_y_in)
+    
+    z = np.array([0, 0, 1])
+    mu_rel_arr = np.array([mu_rel_x, mu_rel_y, 0])
+    u0_in_arr = np.array([u0_x_in, u0_y_in, 0])
+    mu_rel_arr_hat = mu_rel_arr/np.sqrt(mu_rel_arr[0]**2 + mu_rel_arr[1]**2)
+    u0_in_arr_hat = u0_in_arr/np.sqrt(u0_in_arr[0]**2 + u0_in_arr[1]**2)
+    
+    C = np.dot(np.cross(mu_rel_arr_hat, u0_in_arr_hat), z)
+
+    u0_x_out = u0_x_in + sign*C*d*np.sin(phi)*u0_x_in_hat
+    u0_y_out = u0_y_in + sign*C*d*np.sin(phi)*u0_y_in_hat
+    
+    t0_out = t0_in + sign*tE*d*np.cos(phi)
+    
+    return u0_x_out, u0_y_out, t0_out
