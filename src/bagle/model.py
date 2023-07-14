@@ -353,7 +353,9 @@ solar_system_ephemeris.set('jpl')
 
 # Setup a parallax cache
 cache_dir = os.path.dirname(__file__) + '/parallax_cache/'
-cache_memory = Memory(cache_dir, verbose=0)
+cache_memory = Memory(cache_dir, verbose=0, bytes_limit='1G')
+# Default cache size is 1 GB
+cache_memory.reduce_size()
 
 
 ######################################################
