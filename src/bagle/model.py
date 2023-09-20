@@ -7206,7 +7206,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
     t0: float
         Time of photometric peak, as seen from Earth (MJD.DDD)
     beta: float
-        Angular distance between the lens and primary source on the
+        Angular distance between the PRIMARY source position and the lens
         plane of the sky (mas). Can be
             * positive (u0_amp > 0 when u0_hat[0] < 0) or
             * negative (u0_amp < 0 when u0_hat[0] > 0).
@@ -7411,7 +7411,7 @@ class BSPL_PhotAstromParam2(PSPL_Param):
     t0: float
         Time of photometric peak, as seen from Earth (MJD.DDD)
     u0_amp : float
-        Angular distance between the source and the GEOMETRIC center of the lenses
+        Angular distance between the PRIMARY source position and the lens
         on the plane of the sky at closest approach in units of thetaE. Can
           * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
@@ -7608,7 +7608,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
     t0: float
         Time of photometric peak, as seen from Earth (MJD.DDD)
     u0_amp : float
-        Angular distance between the source and the GEOMETRIC center of the lenses
+        Angular distance between the PRIMARY source and the lens
         on the plane of the sky at closest approach in units of thetaE. Can
           * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
