@@ -3802,3 +3802,176 @@ def test_PSPL_Phot_Param2_vs_Param3():
 
     return
 
+def test_jwst_parallax_bulge1():
+    # Scenario from Belokurov and Evans 2002 (Figure 1)
+    raL = 17.5 * 15.0  # in degrees
+    decL = -30.0
+    obsLocation = 'JWST'
+    mL = 10.0  # msun
+    t0 = 60218.0
+    xS0 = np.array([0.000, 0.000])
+    beta = 3.0  # mas
+    muS = np.array([-4.0, -4.0])
+    muL = np.array([-6.0, -10.0])
+    dL = 3000.0
+    dS = 6000.0
+    b_sff = 1.0
+    imag = 19.0
+
+    run_test_pspl_jwst_parallax(raL, decL, obsLocation,
+                                mL, t0, xS0, beta, muS, muL, dL, dS,
+                                b_sff, imag, outdir='tests/test_pspl_par_jwst_bulge1/')
+
+    return
+
+def run_test_pspl_jwst_parallax(raL, decL, obsLocation,
+                                     mL, t0, xS0, beta, muS, muL, dL, dS,
+                                     b_sff, mag_src, outdir=''):
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
+
+    # Earth parallax
+    pspl_e = model.PSPL_PhotAstrom_Par_Param1(mL,
+                                              t0,
+                                              beta,
+                                              dL,
+                                              dL / dS,
+                                              xS0[0],
+                                              xS0[1],
+                                              muL[0],
+                                              muL[1],
+                                              muS[0],
+                                              muS[1],
+                                              [b_sff],
+                                              [mag_src],
+                                              raL=raL,
+                                              decL=decL)
+    
+    print('pspl_e.u0', pspl_e.u0)
+    print('pspl_e.muS', pspl_e.muS)
+    print('pspl_e.u0_hat', pspl_e.u0_hat)
+    print('pspl_e.thetaE_hat', pspl_e.thetaE_hat)
+
+    # JWST parallax
+    obsLocation = 'JWST'
+    pspl_s = model.PSPL_PhotAstrom_Par_Param1(mL,
+                                              t0,
+                                              beta,
+                                              dL,
+                                              dL / dS,
+                                              xS0[0],
+                                              xS0[1],
+                                              muL[0],
+                                              muL[1],
+                                              muS[0],
+                                              muS[1],
+                                              [b_sff],
+                                              [mag_src],
+                                              raL=raL,
+                                              decL=decL,
+                                              obsLocation=obsLocation)
+
+    t = np.arange(t0 - 300, t0 + 300, 1)
+    dt = t - pspl_e.t0
+
+    A_e = pspl_e.get_amplification(t)
+    A_s = pspl_s.get_amplification(t)
+
+    xS_e = pspl_e.get_astrometry(t)
+    xS_s_unlens = pspl_s.get_astrometry_unlensed(t)
+    xS_s_lensed = pspl_s.get_astrometry(t)
+    xL_s = pspl_s.get_lens_astrometry(t)
+
+    # make sure the two light curves and trajectories are different.
+    assert np.abs(A_e - A_s).max() > 0.1  # mag
+    assert np.abs(xS_e - xS_s_lensed).max() > 0.001  # arcsec
+
+    # Plot the amplification
+    fig1 = plt.figure(1)
+    plt.clf()
+    f1_1 = fig1.add_axes((0.20, 0.3, 0.75, 0.6))
+    plt.plot(dt, 2.5 * np.log10(A_e), 'b-', label='Earth parallax')
+    plt.plot(dt, 2.5 * np.log10(A_s), 'r-', label='JWST parallax')
+    plt.legend(fontsize=10)
+    plt.ylabel('2.5 * log(A)')
+    f1_1.set_xticklabels([])
+
+    f2_1 = fig1.add_axes((0.20, 0.1, 0.75, 0.2))
+    plt.plot(dt, 2.5 * (np.log10(A_s) - np.log10(A_e)), 'k-',
+             label='Par - No par')
+    plt.axhline(0, linestyle='--', color='k')
+    plt.legend(fontsize=10)
+    plt.ylabel('Diff')
+    plt.xlabel('t - t0 (MJD)')
+
+    plt.savefig(outdir + 'amp_v_time.png')
+    print("save to " + outdir)
+
+    # Plot the positions of everything
+    fig2 = plt.figure(2)
+    plt.clf()
+    plt.plot(xS_e[:, 0] * 1e3, xS_e[:, 1] * 1e3, 'r--',
+             mfc='none', mec='red', label='Src, Earth parallax model')
+    plt.plot(xS_s_unlens[:, 0] * 1e3, xS_s_unlens[:, 1] * 1e3, 'b--',
+             mfc='none', mec='blue',
+             label='Src, JWST parallax model, unlensed')
+    plt.plot(xL_s[:, 0] * 1e3, xL_s[:, 1] * 1e3, 'k--',
+             mfc='none', mec='grey', label='Lens')
+    plt.plot(xS_s_lensed[:, 0] * 1e3, xS_s_lensed[:, 1] * 1e3, 'b-',
+             label='Src, JWST parallax model, lensed')
+    plt.legend(fontsize=10)
+    plt.gca().invert_xaxis()
+    plt.xlabel('R.A. (mas)')
+    plt.ylabel('Dec. (mas)')
+    plt.axis('equal')
+    lim = 20
+    print('LIM = ', lim)
+    # plt.xlim(lim, -lim) # arcsec
+    # plt.ylim(-lim, lim)
+    # plt.axis('tight')
+    # plt.xlim(0.7, -0.7)
+    # plt.ylim(-0.7, 0.7)
+    plt.savefig(outdir + 'on_sky.png')
+
+    # Check just the astrometric shift part.
+    shift_e = pspl_e.get_centroid_shift(t)  # mas
+    shift_s = (xS_s_lensed - xS_s_unlens) * 1e3  # mas
+    shift_e_amp = np.linalg.norm(shift_e, axis=1)
+    shift_s_amp = np.linalg.norm(shift_s, axis=1)
+
+    fig3 = plt.figure(3)
+    plt.clf()
+    f1_3 = fig3.add_axes((0.20, 0.3, 0.75, 0.6))
+    plt.plot(dt, shift_e_amp, 'r--', label='Earth parallax model')
+    plt.plot(dt, shift_s_amp, 'b--', label='JWST parallax model')
+    plt.ylabel('Astrometric Shift (mas)')
+    plt.legend(fontsize=10)
+    f1_3.set_xticklabels([])
+
+    f2_3 = fig3.add_axes((0.20, 0.1, 0.75, 0.2))
+    plt.plot(dt, shift_s_amp - shift_e_amp, 'k-', label='Par - No par')
+    plt.legend(fontsize=10)
+    plt.axhline(0, linestyle='--', color='k')
+    plt.ylabel('Diff (mas)')
+    plt.xlabel('t - t0 (MJD)')
+
+    plt.savefig(outdir + 'shift_amp_v_t.png')
+
+    fig4 = plt.figure(4)
+    plt.clf()
+    plt.plot(shift_e[:, 0], shift_e[:, 1], 'r-', label='Earth parallax')
+    plt.plot(shift_s[:, 0], shift_s[:, 1], 'b-', label='JWST parallax')
+    plt.axhline(0, linestyle='--')
+    plt.axvline(0, linestyle='--')
+    plt.gca().invert_xaxis()
+    plt.legend(fontsize=10)
+    plt.xlabel('Shift RA (mas)')
+    plt.ylabel('Shift Dec (mas)')
+    plt.axis('equal')
+    plt.savefig(outdir + 'shift_on_sky.png')
+
+    print('Einstein radius: ', pspl_e.thetaE_amp, pspl_s.thetaE_amp)
+    print('Einstein crossing time: ', pspl_e.tE, pspl_e.tE)
+
+    return
+

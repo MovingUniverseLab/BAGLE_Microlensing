@@ -334,9 +334,11 @@ import math
 from astropy import constants as const
 from astropy import units
 from astropy.time import Time
+from astropy import units as u
 import pdb
 import celerite
 from astropy.coordinates import get_body_barycentric, SkyCoord, solar_system_ephemeris, get_body_barycentric_posvel
+from astropy.coordinates.representation import CartesianRepresentation
 from astropy.coordinates.builtin_frames.utils import get_jd12
 import erfa
 from joblib import Memory
@@ -345,6 +347,7 @@ from functools import lru_cache, wraps
 import copy
 from bagle import frame_convert as fc
 from abc import ABC
+import importlib.resources
 
 au_day_to_km_s = 1731.45683
 
@@ -550,7 +553,7 @@ class PSPL_AstromParam4(PSPL_Param):
                  piE_E, piE_N,
                  xS0_E, xS0_N,
                  muS_E, muS_N,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -561,6 +564,7 @@ class PSPL_AstromParam4(PSPL_Param):
         self.piS = piS
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
@@ -694,7 +698,7 @@ class PSPL_AstromParam3(PSPL_Param):
                  piE_E, piE_N,
                  xS0_E, xS0_N,
                  muS_E, muS_N,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -705,6 +709,7 @@ class PSPL_AstromParam3(PSPL_Param):
         self.piS = piS
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
@@ -820,7 +825,7 @@ class PSPL_PhotParam1(PSPL_Param):
     paramPhotFlag = True
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_src,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -829,6 +834,7 @@ class PSPL_PhotParam1(PSPL_Param):
         self.mag_src = mag_src
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
@@ -917,7 +923,7 @@ class PSPL_PhotParam2(PSPL_Param):
     paramPhotFlag = True
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -926,6 +932,7 @@ class PSPL_PhotParam2(PSPL_Param):
         self.mag_base = mag_base
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
@@ -1012,7 +1019,7 @@ class PSPL_PhotParam3(PSPL_Param):
     paramPhotFlag = True
 
     def __init__(self, t0, u0_amp, log_tE, log_piE, phi_muRel, b_sff, mag_base,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.log_tE = log_tE
@@ -1022,6 +1029,7 @@ class PSPL_PhotParam3(PSPL_Param):
         self.mag_base = mag_base
         self.raL = raL
         self.decL = decL        
+        self.obsLocation = obsLocation
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
@@ -1102,7 +1110,7 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
     def __init__(self, t0, u0_amp, tE, 
                  piE_E, piE_N, b_sff, mag_src,
                  t0par,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0par = t0par
         self.t0 = t0
         self.u0_amp = u0_amp
@@ -1112,6 +1120,7 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
         self.mag_src = mag_src
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
@@ -1192,7 +1201,7 @@ class PSPL_PhotAstromParam1(PSPL_Param):
                  muL_E, muL_N,
                  muS_E, muS_N,
                  b_sff, mag_src,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.mL = mL
         self.xS0 = np.array([xS0_E, xS0_N])
@@ -1206,6 +1215,7 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         self.mag_src = mag_src
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
@@ -1346,7 +1356,7 @@ class PSPL_PhotAstromParam2(PSPL_Param):
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  b_sff, mag_src,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -1359,6 +1369,7 @@ class PSPL_PhotAstromParam2(PSPL_Param):
         self.mag_src = mag_src
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
@@ -1504,7 +1515,7 @@ class PSPL_PhotAstromParam3(PSPL_Param):
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  b_sff, mag_base,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -1519,6 +1530,7 @@ class PSPL_PhotAstromParam3(PSPL_Param):
         self.mag_base = mag_base
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
@@ -1662,7 +1674,7 @@ class PSPL_PhotAstromParam4(PSPL_Param):
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  b_sff, mag_base,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -1675,6 +1687,7 @@ class PSPL_PhotAstromParam4(PSPL_Param):
         self.mag_base = mag_base
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
@@ -1750,7 +1763,7 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
                  muS_E, muS_N,
                  b_sff, mag_base,
                  t0par,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
 
         self.t0par = t0par
         self.t0 = t0
@@ -1765,6 +1778,7 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
         self.mag_base = mag_base
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         super().__init__(t0, u0_amp, tE, thetaE, piS,
                          piE_E, piE_N,
@@ -1850,7 +1864,7 @@ class PSPL_PhotAstromParam5(PSPL_Param):
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  b_sff, mag_base,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -1867,6 +1881,7 @@ class PSPL_PhotAstromParam5(PSPL_Param):
         self.mag_base = mag_base
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
@@ -3560,6 +3575,9 @@ class PSPL_Parallax(ParallaxClassABC):
             raise RuntimeError(
                 "raL and decL must be provided when running parallax model.")
         # self.calc_piE_ecliptic()
+
+    def set_observer_location(self, obsLocation, ):
+        return
 
     def get_amplification(self, t):
         """
@@ -5486,7 +5504,7 @@ class PSBL_PhotAstromParam1(PSPL_Param):
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sep, alpha, b_sff, mag_src,
-                 raL=None, decL=None, root_tol=1e-8):
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0 = t0
@@ -5503,6 +5521,7 @@ class PSBL_PhotAstromParam1(PSPL_Param):
         self.mag_src = mag_src
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
         self.root_tol = root_tol
 
         # Super handles checking for properly formatted variables.
@@ -5646,7 +5665,7 @@ class PSBL_PhotAstromParam2(PSPL_Param):
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
                  b_sff, mag_src,
-                 raL=None, decL=None, root_tol=1e-8):
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -5663,6 +5682,7 @@ class PSBL_PhotAstromParam2(PSPL_Param):
         self.mag_src = mag_src
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
         self.root_tol = root_tol
 
         # Check variable formatting.
@@ -5812,7 +5832,7 @@ class PSBL_PhotAstromParam3(PSPL_Param):
                      piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                      q, sep, alpha,
                      b_sff, mag_base,
-                     raL=None, decL=None, root_tol=1e-8):
+                     raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -5831,6 +5851,7 @@ class PSBL_PhotAstromParam3(PSPL_Param):
         self.mag_base = mag_base
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
         self.root_tol = root_tol
 
         # Check variable formatting.
@@ -5975,7 +5996,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
                      piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                      q, sep, alpha,
                      b_sff, mag_src,
-                     raL=None, decL=None, root_tol=1e-8):
+                     raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_com = t0_com
         self.u0_amp_com = u0_amp_com
         self.tE = tE
@@ -5992,6 +6013,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         self.mag_src = mag_src
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
         self.root_tol = root_tol
 
         # Check variable formatting.
@@ -6142,7 +6164,7 @@ class PSBL_PhotAstromParam5(PSPL_Param):
                      piE_E, piEN_piEE, xS0_E, xS0_N, muS_E, muS_N,
                      q, sep, alpha,
                      b_sff, mag_base,
-                     raL=None, decL=None, root_tol=1e-8):
+                     raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_prim = t0_prim
         self.u0_amp_prim = u0_amp_prim
         self.tE = tE
@@ -6162,6 +6184,7 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         self.mag_base = mag_base
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
         self.root_tol = root_tol
 
         # Check variable formatting.
@@ -6308,7 +6331,7 @@ class PSBL_PhotAstromParam6(PSPL_Param):
                      piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                      q, sep, alpha,
                      b_sff, mag_src,
-                     raL=None, decL=None, root_tol=1e-8):
+                     raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_prim = t0_prim
         self.u0_amp_prim = u0_amp_prim
         self.tE = tE
@@ -6325,6 +6348,7 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         self.mag_src = mag_src
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
         self.root_tol = root_tol
 
         # Check variable formatting.
@@ -6463,7 +6487,7 @@ class PSBL_PhotAstromParam7(PSPL_Param):
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
                  beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sep, alpha, b_sff, mag_src,
-                 raL=None, decL=None, root_tol=1e-8):
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
@@ -6480,6 +6504,7 @@ class PSBL_PhotAstromParam7(PSPL_Param):
         self.mag_src = mag_src
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
         self.root_tol = root_tol
 
         # Super handles checking for properly formatted variables.
@@ -6634,7 +6659,7 @@ class PSBL_PhotParam1(PSPL_Param):
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep, phi,
                  b_sff, mag_src,
-                 raL=None, decL=None, root_tol=1e-8):
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -6650,6 +6675,7 @@ class PSBL_PhotParam1(PSPL_Param):
 
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
         self.root_tol = root_tol
 
         # Calculate the microlensing parallax amplitude
@@ -7419,7 +7445,7 @@ class BSPL_PhotParam1(PSPL_Param):
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N,
                  sep, phi, mag_src_pri, mag_src_sec,
                  b_sff,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0  # time of closest approach for system=primary pos
         self.u0_amp = u0_amp
         self.tE = tE
@@ -7427,6 +7453,7 @@ class BSPL_PhotParam1(PSPL_Param):
         self.b_sff = b_sff
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Binary source parameters.
         self.sep = sep  # mas
@@ -7577,7 +7604,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
                  sep, alpha,
                  mag_src_pri, mag_src_sec,
                  b_sff,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0  # time of closest approach for system=primary pos
         self.mL = mL
         self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
@@ -7590,6 +7617,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
         self.b_sff = np.array(b_sff)
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Binary source parameters.
         self.sep = sep  # mas
@@ -7784,7 +7812,7 @@ class BSPL_PhotAstromParam2(PSPL_Param):
                  muS_E, muS_N,
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0  # time of closest approach for system=primary pos
         self.u0_amp = u0_amp
         self.tE = tE
@@ -7797,6 +7825,7 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         self.b_sff = np.array(b_sff)
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Binary source parameters.
         self.sep = sep  # mas
@@ -7981,7 +8010,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
                  muS_E, muS_N,
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0  # time of closest approach for system=primary pos
         self.u0_amp = u0_amp
         self.tE = tE
@@ -7994,6 +8023,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         self.b_sff = np.array(b_sff)
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Binary source parameters.
         self.sep = sep  # mas
@@ -9437,7 +9467,7 @@ class BSBL_PhotParam1(PSPL_Param):
                  sep_SL, sep_S, phi_S, sep_L, phi_L,
                  mag_src_pri, mag_src_sec,
                  b_sff,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0  # time of closest approach for system=primary pos
         self.u0_amp = u0_amp
         self.tE = tE
@@ -9445,6 +9475,7 @@ class BSBL_PhotParam1(PSPL_Param):
         self.b_sff = b_sff
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Separation between source and lens
         self.sep_SL = sep # mas
@@ -9599,7 +9630,7 @@ class BSBL_PhotAstromParam1(PSPL_Param):
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sepL, alphaL, sepS, alphaS, 
                  mag_src_pri, mag_src_sec, b_sff,
-                 raL=None, decL=None, root_tol=1e-8):
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0 = t0
@@ -9620,6 +9651,7 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         self.b_sff = b_sff
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
         self.root_tol = root_tol
 
         # Super handles checking for properly formatted variables.
@@ -9809,7 +9841,7 @@ class BSBL_PhotAstromParam2(PSPL_Param):
                  beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sepL, alphaL, sepS, alphaS, 
                  mag_src_pri, mag_src_sec, b_sff,
-                 raL=None, decL=None, root_tol=1e-8):
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
@@ -9830,6 +9862,7 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         self.b_sff = b_sff
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
         self.root_tol = root_tol
 
         # Super handles checking for properly formatted variables.
@@ -10988,7 +11021,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
                  radius,
                  b_sff, mag_src,
                  n_outline=10,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         # Initialised variables
         self.t0 = t0
         self.mL = mL
@@ -11004,6 +11037,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         self.b_sff = b_sff
         self.raL = raL
         self.decL = decL
+        self.obsLocation = obsLocation
 
         # Check variable formatting.
         super().__init__()
@@ -11376,7 +11410,7 @@ class FSPL_Limb_Parallax(FSPL_Parallax):
 # FIXME: Use super here
 class FSPL_Limb_PhotAstromParam1(PSPL_Param):
     def __init__(self, lens_mass, t0, xS0, beta, muL, muS, dL, dS, n, radius,
-                 utilde, nr, mag_src):
+                 utilde, nr, mag_src, raL=None, decL=None, obsLocation='earth'):
         """
         DO NOT USE -- in progress
 
@@ -12552,7 +12586,7 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
 
 
 @cache_memory.cache()
-def parallax_in_direction(RA, Dec, mjd):
+def parallax_in_direction(RA, Dec, mjd, obsLocation='earth'):
     """
     | R.A. in degrees. (J2000)
     | Dec. in degrees. (J2000)
@@ -12570,8 +12604,13 @@ def parallax_in_direction(RA, Dec, mjd):
     north = np.array([0., 0., 1.])
     _east_projected = np.cross(north, direction) / np.linalg.norm(np.cross(north, direction))
     _north_projected = np.cross(direction, _east_projected) / np.linalg.norm(np.cross(direction, _east_projected))
-    sun_earth_pos = get_body_barycentric(body='sun', time=times) - get_body_barycentric(body='earth', time=times)
-    pos = sun_earth_pos.xyz.T.to(units.au)
+
+    obs_pos = get_observer_barycentric(obsLocation, times)
+    sun_pos = get_body_barycentric(body='sun', time=times)
+
+    sun_obs_pos = sun_pos - obs_pos
+
+    pos = sun_obs_pos.xyz.T.to(units.au)
 
     e = np.dot(pos, _east_projected)
     n = np.dot(pos, _north_projected)
@@ -12600,7 +12639,10 @@ def dparallax_dt_in_direction(RA, Dec, mjd):
     north = np.array([0., 0., 1.])
     _east_projected = np.cross(north, direction) / np.linalg.norm(np.cross(north, direction))
     _north_projected = np.cross(direction, _east_projected) / np.linalg.norm(np.cross(direction, _east_projected))
-    sun_earth_vel = get_body_barycentric_posvel('Sun', times)[1] - get_body_barycentric_posvel('Earth', times)[1]
+
+    obs_posvel = get_observer_barycentric(obsLocatoin, times, velocity=True)[1]
+    sun_posvel = get_body_barycentric_posvel('Sun', times)[1]
+    sun_obs_vel = sun_posvel - obs_posvel
     vel = sun_earth_vel.xyz.T.to(units.au / units.year)
 
     e = np.dot(vel, _east_projected)
@@ -12610,6 +12652,67 @@ def dparallax_dt_in_direction(RA, Dec, mjd):
 
     return dpvec_dt
 
+def get_observer_barycentric(body, times, min_ephem_step=1, velocity=False):
+    """
+    Get the barycentric position of a satellite or other Solar System body
+    using JPL emphemerides through the Horizon app.
+
+    Inputs
+    ------
+    body : str
+        The name of the Solar System body. Must use the JPL Horizon
+        naming scheme. 
+    
+    Return
+    ------
+    coord : astropy.coordinates.CartesianRepresentation
+        The xyz coordinates in the plane of the Solar System at the
+        input times. 
+    """
+    # Desired times.
+    t_obj = Time(times + 2400000.5, format='jd', scale='tdb')
+    
+    if body in solar_system_ephemeris.bodies:
+        obs_pos = get_body_barycentric(body=body, time=t_obj)
+    else:
+        # Figure out a cadence for the ephemerides, not smaller than 1 day.
+        dt = np.median(np.diff(t_obj)).jd
+        if dt > min_ephem_step:
+            dt = min_ephem_step
+
+        # Get the date range, add some padding on each side.
+        t_min = t_obj.min()
+        t_max = t_obj.max()
+        t_min.format = 'iso'
+        t_max.format = 'iso'
+        t_min = str(t_min - dt*u.day).split()[0]
+        t_max = str(t_max + dt*u.day).split()[0]
+        step = f'{dt:.0f}d'
+        print(t_min, t_max, step)
+
+        # Fetch the Horizons ephemeris. 
+        from astroquery.jplhorizons import Horizons
+        obj = Horizons(id=body, epochs={'start':t_min, 'stop':t_max, 'step':step})
+        obj_data = obj.vectors()
+
+        # Interpolate to the actual time array.
+        obj_x_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['x'].to('km')) * u.km
+        obj_y_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['y'].to('km')) * u.km
+        obj_z_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['z'].to('km')) * u.km
+
+        if velocity:
+            obj_vx_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['vx'].to('km/s')) * u.km / u.s
+            obj_vy_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['vy'].to('km/s')) * u.km / u.s
+            obj_vz_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['vz'].to('km/s')) * u.km / u.s
+
+            obs_vel = CartesianRepresentation(obj_vx_at_t, obj_vy_at_t, obj_vz_at_t)
+
+        obs_pos = CartesianRepresentation(obj_x_at_t, obj_y_at_t, obj_z_at_t)
+
+        if velocity:
+            return (obs_pos, obs_vel)
+        else:
+            return obs_pos
 
 def sun_position(mjd, radians=False):
     """
