@@ -3592,7 +3592,7 @@ class PSPL_Parallax(ParallaxClassABC):
         """
 
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t, obsLocation=self.obsLocation)
 
         tau = (t - self.t0) / self.tE
 
@@ -3628,7 +3628,7 @@ class PSPL_Parallax(ParallaxClassABC):
             Time (in MJD).
         """
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
 
         # Equation of motion for just the background source.
         dt_in_years = (t_obs - self.t0) / days_per_year
@@ -3658,7 +3658,7 @@ class PSPL_Parallax(ParallaxClassABC):
         dt_in_years = (t_obs - self.t0) / days_per_year
 
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
 
         # Equation of motion for just the background source.
         xS_unlensed = self.xS0 + np.outer(dt_in_years, self.muS) * 1e-3
@@ -3698,7 +3698,7 @@ class PSPL_Parallax(ParallaxClassABC):
         dt_in_years = (t - self.t0) / days_per_year
 
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t, obsLocation=self.obsLocation)
 
         # Equation of motion for the relative angular separation between the background source and lens.
         thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)  # mas
@@ -3730,7 +3730,7 @@ class PSPL_Parallax(ParallaxClassABC):
             The unlensed positions of the source in arcseconds.
         """ 
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
 
         # Equation of motion for just the background source.
         dt_in_years = (t_obs - self.t0) / days_per_year
@@ -3752,7 +3752,7 @@ class PSPL_Parallax(ParallaxClassABC):
             Array of times in MJD.DDD
         """
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t, obsLocation=self.obsLocation)
 
         # Equation of relative motion (angular on sky) Eq. 16 from Hog+ 1995
         dt_in_years = (t - self.t0) / days_per_year
@@ -3794,7 +3794,7 @@ class PSPL_Parallax(ParallaxClassABC):
 
         # Equation of motion for the relative angular separation between the
         # background source and lens.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
         thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)  # mas
         thetaS -= (self.piRel * parallax_vec)  # mas
 
@@ -3826,7 +3826,7 @@ class PSPL_Parallax(ParallaxClassABC):
         # Project the microlensing parallax into parallel and perpendicular
         # w.r.t. the ecliptic... useful quantities.
         parallax_vec_at_t0 = \
-            parallax_in_direction(self.raL, self.decL, np.array([self.t0]))[0]
+            parallax_in_direction(self.raL, self.decL, np.array([self.t0]), obsLocation=self.obsLocation)[0]
 
         # Unit vector parallel to the ecliptic
         par_hat = parallax_vec_at_t0 / np.linalg.norm(parallax_vec_at_t0)
@@ -4024,7 +4024,7 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
             Time (in MJD).
         """
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
 
         # Equation of motion for just the background source.
         dt_in_years = (t_obs - self.t0) / days_per_year
@@ -4054,7 +4054,7 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
         dt_in_years = (t_obs - self.t0) / days_per_year
 
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
 
         # Astrometric shift
         shift = self.get_centroid_shift(t_obs)
@@ -4122,7 +4122,7 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
             The unlensed positions of the source in arcseconds.
         """ 
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
 
         # Equation of motion for just the background source.
         dt_in_years = (t_obs - self.t0) / days_per_year
@@ -4145,7 +4145,7 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
             Array of times in MJD.DDD
         """
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t, obsLocation=self.obsLocation)
 
         # Equation of relative motion (angular on sky) Eq. 16 from Hog+ 1995
         dt_in_years = (t - self.t0) / days_per_year
@@ -4188,7 +4188,7 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
 
         # Equation of motion for the relative angular separation between the
         # background source and lens.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
         thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)  # mas
         thetaS -= (self.piRel * parallax_vec)  # mas
 
@@ -4220,7 +4220,7 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
         # Project the microlensing parallax into parallel and perpendicular
         # w.r.t. the ecliptic... useful quantities.
         parallax_vec_at_t0 = \
-            parallax_in_direction(self.raL, self.decL, np.array([self.t0]))[0]
+            parallax_in_direction(self.raL, self.decL, np.array([self.t0]), obsLocation=self.obsLocation)[0]
 
         # Unit vector parallel to the ecliptic
         par_hat = parallax_vec_at_t0 / np.linalg.norm(parallax_vec_at_t0)
@@ -4322,7 +4322,7 @@ class PSPL_Parallax_LumLens(PSPL_Parallax):
         dt_in_years = (t_obs - self.t0) / days_per_year
 
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
         # Equation of motion for just the background source.
         xS_unlensed = self.xS0 + np.outer(dt_in_years, self.muS) * 1e-3
         xS_unlensed += np.squeeze(self.piS * parallax_vec) * 1e-3  # arcsec
@@ -4373,7 +4373,7 @@ class PSPL_Parallax_LumLens(PSPL_Parallax):
         dt_in_years = (t - self.t0) / days_per_year
 
         # Get the parallax vector for each date.
-        parallax_vec = parallax_in_direction(self.raL, self.decL, t)
+        parallax_vec = parallax_in_direction(self.raL, self.decL, t, obsLocation=self.obsLocation)
 
         # Equation of motion for the relative angular separation between the background source and lens.
         thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)  # mas
@@ -5010,7 +5010,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
 
         # Incorporate parallax
         if self.parallaxFlag:
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
             u -= self.piE_amp * parallax_vec
 
         # Convert positions to complex coordinates
@@ -5074,7 +5074,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
 
         # Incorporate parallax
         if self.parallaxFlag:
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
             u -= self.piE_amp * parallax_vec
 
         return u
@@ -5302,7 +5302,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
             xS_unlensed += (self.piS * parallax_vec) * 1e-3  # arcsec
 
         return xS_unlensed
@@ -5324,7 +5324,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
             xL += (self.piL * parallax_vec) * 1e-3  # arcsec
 
         return xL
@@ -6854,7 +6854,7 @@ class BSPL(PSPL):
 
         # Incorporate parallax
         if self.parallaxFlag:
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t)
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t, obsLocation=self.obsLocation)
             u_pri -= self.piE_amp * parallax_vec
             u_sec -= self.piE_amp * parallax_vec
 
@@ -7214,7 +7214,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         xS_unlensed[:, 1, :] = xS2_unlens
 
         if self.parallaxFlag:
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t)  # mas
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t, obsLocation=self.obsLocation)  # mas
             xS_unlensed += (self.piS * parallax_vec[:, np.newaxis, :]) * 1e-3  # arcsec
 
         return xS_unlensed
@@ -8959,7 +8959,7 @@ class BSBL_Phot(BSBL, PSBL_Phot):
 
         # Incorporate parallax
         if self.parallaxFlag:
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
             u_pri -= self.piE_amp * parallax_vec
             u_sec -= self.piE_amp * parallax_vec
 
@@ -9028,7 +9028,7 @@ class BSBL_Phot(BSBL, PSBL_Phot):
 
         # Incorporate parallax
         if self.parallaxFlag:
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
             u -= self.piE_amp * parallax_vec
 
         return u
@@ -9187,7 +9187,7 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         xS_unlensed[:, 1, :] = xS2_unlens
 
         if self.parallaxFlag:
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t)  # mas
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t, obsLocation=self.obsLocation)  # mas
             xS_unlensed += (self.piS * parallax_vec[:, np.newaxis, :]) * 1e-3  # arcsec
 
         return xS_unlensed
@@ -9235,7 +9235,7 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t)
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t, obsLocation=self.obsLocation)
             xL += (self.piL * parallax_vec) * 1e-3  # arcsec
 
         return xL
@@ -10341,7 +10341,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)  # mas
 
         if self.parallaxFlag:
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
             thetaS -= (self.piRel * parallax_vec)  # mas
         
         u_vec = thetaS / self.thetaE_amp
@@ -11179,7 +11179,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs)
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
             xL += (self.piL * parallax_vec) * 1e-3  # arcsec
 
         return xL
@@ -12585,7 +12585,7 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
     return u0_hat
 
 
-@cache_memory.cache()
+#@cache_memory.cache()
 def parallax_in_direction(RA, Dec, mjd, obsLocation='earth'):
     """
     | R.A. in degrees. (J2000)
@@ -12657,11 +12657,29 @@ def get_observer_barycentric(body, times, min_ephem_step=1, velocity=False):
     Get the barycentric position of a satellite or other Solar System body
     using JPL emphemerides through the Horizon app.
 
+    The ephemeris is queried at a decimated time step set by min_ephem_step
+    (def=1 day) that must be 1 day or larger. The positions
+    (and optionally velocities) are then interpolated onto the desired
+    time array.
+
     Inputs
     ------
     body : str
         The name of the Solar System body. Must use the JPL Horizon
-        naming scheme. 
+        naming scheme.
+
+    times : astropy.time.Time array
+        Array of times (astropy.time.core.Time) objects at which to
+        fetch the position of the specified Solar System body.
+
+    Optional Inputs
+    ---------------
+    min_ephem_step : int
+        Minimum time step to query JPL in days. Must not be <1 and must
+        be in integer days.
+
+    veloctiy : bool
+        If true, return both position and velocity vectors over time. 
     
     Return
     ------
@@ -12669,50 +12687,52 @@ def get_observer_barycentric(body, times, min_ephem_step=1, velocity=False):
         The xyz coordinates in the plane of the Solar System at the
         input times. 
     """
-    # Desired times.
-    t_obj = Time(times + 2400000.5, format='jd', scale='tdb')
     
     if body in solar_system_ephemeris.bodies:
-        obs_pos = get_body_barycentric(body=body, time=t_obj)
+        if velocity:
+            obs_pos, obs_vel = get_body_barycentric_posvel(body=body, time=times)
+        else:
+            obs_pos = get_body_barycentric(body=body, time=times)
     else:
         # Figure out a cadence for the ephemerides, not smaller than 1 day.
-        dt = np.median(np.diff(t_obj)).jd
+        dt = np.median(np.diff(times)).jd
         if dt > min_ephem_step:
             dt = min_ephem_step
 
         # Get the date range, add some padding on each side.
-        t_min = t_obj.min()
-        t_max = t_obj.max()
+        t_min = times.min()
+        t_max = times.max()
         t_min.format = 'iso'
         t_max.format = 'iso'
         t_min = str(t_min - dt*u.day).split()[0]
         t_max = str(t_max + dt*u.day).split()[0]
         step = f'{dt:.0f}d'
-        print(t_min, t_max, step)
 
         # Fetch the Horizons ephemeris. 
         from astroquery.jplhorizons import Horizons
         obj = Horizons(id=body, epochs={'start':t_min, 'stop':t_max, 'step':step})
         obj_data = obj.vectors()
 
+        ephem_jd = obj_data['datetime_jd']
+
         # Interpolate to the actual time array.
-        obj_x_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['x'].to('km')) * u.km
-        obj_y_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['y'].to('km')) * u.km
-        obj_z_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['z'].to('km')) * u.km
+        obj_x_at_t = np.interp(times.jd, ephem_jd, obj_data['x'].to('km')) * u.km
+        obj_y_at_t = np.interp(times.jd, ephem_jd, obj_data['y'].to('km')) * u.km
+        obj_z_at_t = np.interp(times.jd, ephem_jd, obj_data['z'].to('km')) * u.km
 
         if velocity:
-            obj_vx_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['vx'].to('km/s')) * u.km / u.s
-            obj_vy_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['vy'].to('km/s')) * u.km / u.s
-            obj_vz_at_t = np.interp(t_obj.jd, obj_data['datetime_jd'], obj_data['vz'].to('km/s')) * u.km / u.s
+            obj_vx_at_t = np.interp(times.jd, ephem_jd, obj_data['vx'].to('km/s')) * u.km / u.s
+            obj_vy_at_t = np.interp(times.jd, ephem_jd, obj_data['vy'].to('km/s')) * u.km / u.s
+            obj_vz_at_t = np.interp(times.jd, ephem_jd, obj_data['vz'].to('km/s')) * u.km / u.s
 
             obs_vel = CartesianRepresentation(obj_vx_at_t, obj_vy_at_t, obj_vz_at_t)
 
         obs_pos = CartesianRepresentation(obj_x_at_t, obj_y_at_t, obj_z_at_t)
 
-        if velocity:
-            return (obs_pos, obs_vel)
-        else:
-            return obs_pos
+    if velocity:
+        return (obs_pos, obs_vel)
+    else:
+        return obs_pos
 
 def sun_position(mjd, radians=False):
     """
