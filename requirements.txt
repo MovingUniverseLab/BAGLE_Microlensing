@@ -9,3 +9,5 @@ Pyerfa
 dynesty
 joblib
 jplephem
+jax==0.4.16
+jaxlib==0.4.16
