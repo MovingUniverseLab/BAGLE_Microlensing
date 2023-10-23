@@ -3992,6 +3992,164 @@ class PSBL(PSPL):
 
         return z_arr
 
+
+    def get_image_pos_arr_optimized(self, w, z1, z2, check_sols=True):
+        """Gets image positions.
+
+        | Solve the fifth-order polynomial and get the image positions.
+        | See PSBL writeup for full equations.
+        | All angular distances are in arcsec.
+
+
+
+        Parameters
+        ----------
+        w : array_like
+            Complex position(s) of the source. Shape = [N_times, 1]
+
+        z1 : array_like
+            Complex position(s) of lens 1 (primary). Shape = [N_times, 1]
+
+        z2 : array_like
+            Complex position(s) of lens 2 (secondary). Shape = [N_times, 1]
+
+        check_sols : bool, optional
+            If True, calculated roots are checked against the lens equation,
+            and output will only contain those within self.root_tol.
+            If False, all calculated roots are returned.
+
+        Returns
+        -------
+        z_arr : array_like
+            Rank-1 array of polynomial roots, possibly complex.
+            If check_sols = True, only roots solving the lens
+            equation are returned.
+        """
+        assert (len(w) == len(z1)) & (len(w) == len(z2))
+
+        N_times = len(w)
+        z_arr = np.zeros((N_times, 5), dtype=np.complex_)
+
+        wbar = np.conj(w)
+        z1bar = np.conj(z1)
+        z2bar = np.conj(z2)
+
+        z1_z2 = z1 * z2
+        w_wbar = w * wbar
+        z2_wbar = z2 * wbar
+        z1_wbar = z1 * wbar
+        z1_z2_wbar = z1_z2 * wbar
+        w_z1_z2 = w * z1_z2
+        w_z1 = w * z1
+        w_z2 = w * z2
+
+        a5 = (wbar - z1bar) * (wbar - z2bar)
+        a4 = -((w + 2 * (z1 + z2)) * w_wbar) - self.m2 * z2bar - z1bar * (self.m1 + (w + 2 * (z1 + z2)) * z2bar) + wbar * (self.m1 + self.m2 + (w + 2 * (z1 + z2)) * (z1bar + z2bar))
+        a3 = z1**2 + 4 * z1_z2 + z2**2 + 2 * w * (z1 + z2) * w_wbar + (self.m1 * (w - z1) + self.m2 * (w + 2 * z1 + z2)) * z2bar + z1bar * (self.m2 * (w - z2) + self.m1 * (w + z1 + 2 * z2) + (z1**2 + 4 * z1_z2 + z2**2 + 2 * w * (z1 + z2)) * z2bar) - wbar * (2 * (self.m2 * (w + z1) + self.m1 * (w + z2)) + (z1**2 + 4 * z1_z2 + z2**2 + 2 * w * (z1 + z2)) * (z1bar + z2bar))
+
+        #####################################
+        # Solve the lens equation!!!!!
+        #####################################
+        # The lens equation is in the form
+        # f(z) = \sum_i a_i z^i = 0 for i = 0 to 5.
+        # Here are the coefficients:
+        # NIJAID's coeff - matches with Witt 1995 in their limits
+        coeffs = np.stack((a5, a4, a3), axis=-1)
+        z_arr = np.roots(coeffs)
+
+        if check_sols:
+            c1 = self.m1 / np.conj(z_arr - z1[:, np.newaxis])
+            c2 = self.m2 / np.conj(z_arr - z2[:, np.newaxis])
+            diff = w[:, np.newaxis] - (z_arr - c1 - c2)
+            bad_solutions = np.abs(diff) > self.root_tol
+            z_arr[bad_solutions] = np.nan
+
+            nim = (~np.isnan(z_arr)).sum(axis=1)
+            nim_good = (nim == 5).sum() + (nim == 3).sum()
+
+            if len(nim) != nim_good:
+                print('Not all solutions have 3 or 5 images-- something is wrong!')
+                images = []
+                for ii in range(6):
+                    idx = np.where(nim == ii)[0]
+                    images.append(idx)
+                    print(f'N images = {ii} : {(nim == ii).sum()}')
+
+            return z_arr, images
+        else:
+            return z_arr
+
+
+    def get_image_pos_arr(self, w, z1, z2, m1, m2, check_sols=True):
+        """Gets image positions.
+        | Solve the fifth-order polynomial and get the image positions.
+        | See PSBL writeup for full equations.
+        | All angular distances are in arcsec.
+
+        Parameters
+        ----------
+        w : array_like
+            Complex position(s) of the source. Shape = [N_times, 1]
+
+        z1 : array_like
+            Complex position(s) of lens 1 (primary). Shape = [N_times, 1]
+
+        z2 : array_like
+            Complex position(s) of lens 2 (secondary). Shape = [N_times, 1]
+
+        check_sols : bool, optional
+            If True, calculated roots are checked against the lens equation,
+            and output will only contain those within self.root_tol.
+            If False, all calculated roots are returned.
+
+        Returns
+        -------
+        z_arr : array_like
+            Rank-1 array of polynomial roots, possibly complex.
+            If check_sols = True, only roots solving the lens
+            equation are returned.
+        """
+        assert (len(w) == len(z1)) & (len(w) == len(z2))
+
+        N_times = len(w)
+        z_arr = np.zeros((N_times, 5), dtype=np.complex_)
+
+        wbar = np.conj(w)
+        z1bar = np.conj(z1)
+        z2bar = np.conj(z2)
+
+        a5 = (wbar - z1bar) * (wbar - z2bar)
+        a4 = -((w + 2 * (z1 + z2)) * wbar ** 2) - m2 * z2bar - z1bar * (m1 + (w + 2 * (z1 + z2)) * z2bar) + wbar * (m1 + m2 + (w + 2 * (z1 + z2)) * (z1bar + z2bar))
+        a3 = (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * wbar ** 2 + (m1 * (w - z1) + m2 * (w + 2 * z1 + z2)) * z2bar + z1bar * (m2 * (w - z2) + m1 * (w + z1 + 2 * z2) + (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * z2bar) - wbar * (2 * (m2 * (w + z1) + m1 * (w + z2)) + (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * (z1bar + z2bar))
+
+        # Compute a2, a1, a0 similarly
+
+        coeffs = np.stack((a5, a4, a3), axis=-1)  # Include all coefficients here
+        z_arr = np.roots(coeffs)
+
+        if check_sols:
+            c1 = m1 / np.conj(z_arr - z1[:, np.newaxis])
+            c2 = m2 / np.conj(z_arr - z2[:, np.newaxis])
+            diff = w[:, np.newaxis] - (z_arr - c1 - c2)
+            bad_solutions = np.abs(diff) > self.root_tol
+            z_arr[bad_solutions] = np.nan
+
+            nim = (~np.isnan(z_arr)).sum(axis=1)
+            nim_good = (nim == 5).sum() + (nim == 3).sum()
+
+            if len(nim) != nim_good:
+                print('Not all solutions have 3 or 5 images-- something is wrong!')
+                images = []
+                for ii in range(6):
+                    idx = np.where(nim == ii)[0]
+                    images.append(idx)
+                    print(f'N images = {ii} : {(nim == ii).sum()}')
+
+            return z_arr, images
+        else:
+            return z_arr
+
+
     def get_all_arrays(self, t_obs, check_sols=True, rescale=True):
         '''
         Obtain the image and amplitude arrays for each t_obs.
