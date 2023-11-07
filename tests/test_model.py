@@ -1611,7 +1611,6 @@ def testing_astropy_parallax():
 
     return
 
-
 def plot_PSBL(psbl, t_obs):
     """
     Make some standard plots for PSBL.
