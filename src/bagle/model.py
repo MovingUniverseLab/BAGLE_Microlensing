@@ -3824,7 +3824,6 @@ class PSBL(PSPL):
         else:
             return z_arr
 
-
     def get_image_pos_arr(self, w, z1, z2, m1, m2, check_sols=True):
         """Gets image positions.
 
@@ -3957,43 +3956,9 @@ class PSBL(PSPL):
                 bad_solutions = np.absolute(diff) > self.root_tol
                 z_arr[i][bad_solutions] = np.nan + np.nan * 0j
 
-#            nim = (~np.isnan(z_arr)).sum(axis=1)
-#            nim_good = (nim == 5).sum() + (nim == 3).sum()
-#
-#            fig, axes = plt.subplots(2, 3, figsize=(10,8), num=11)
-#            plt.clf()
-#            fig, axes = plt.subplots(2, 3, figsize=(10,8), num=11)
-#            plt.subplots_adjust(left=0.1, hspace=0.4, wspace=0.4)
-#            tstr = ['$a_5$', '$a_4$', '$a_3$', '$a_2$', '$a_1$', '$a_0$']
-#            cstr = ['blue', 'orange', 'red', 'green', 'purple', 'gray']
-#            for ii, ax in enumerate(axes.flat):
-#                for jj in np.arange(6):
-#                    idx = np.where(nim == jj)[0]
-#                    if len(idx) > 0:
-#                        ax.plot(ai_arr[idx,ii].real, ai_arr[idx,ii].imag, '.', 
-#                                markersize=1, alpha=0.8, label=str(jj), color=cstr[jj])
-#                    ax.set_xlabel('Re')
-#                    ax.set_ylabel('Im')
-#                ax.set_title(tstr[ii])
-#            leg = axes[0,0].legend()
-#            for kk in np.arange(len(np.unique(nim))):
-#                leg.legendHandles[kk]._legmarker.set_markersize(10)
-#            plt.suptitle('Coefficients $a_i$ to $f(x) = \sum x^i a_i$')
-#            plt.show()
-#            plt.pause(1)
-
-#            if len(nim) != nim_good:
-#                print(Not all solutions have 3 or 5 images-- something is wrong!')
-#                images = []
-#                for ii in np.arange(6):
-#                    idx = np.where(nim == ii)[0]
-#                    images.append(idx)
-#                    print('N images = {0} : {1}'.format(ii, (nim == ii).sum()))
-
         return z_arr
 
-
-    def get_image_pos_arr_optimized(self, w, z1, z2, check_sols=True):
+    def get_image_pos_arr_old_optimized(self, w, z1, z2, check_sols=True):
         """Gets image positions.
 
         | Solve the fifth-order polynomial and get the image positions.
@@ -4079,8 +4044,7 @@ class PSBL(PSPL):
         else:
             return z_arr
 
-
-    def get_image_pos_arr(self, w, z1, z2, m1, m2, check_sols=True):
+    def get_image_pos_arr_optimized(self, w, z1, z2, m1, m2, check_sols=True):
         """Gets image positions.
         | Solve the fifth-order polynomial and get the image positions.
         | See PSBL writeup for full equations.
@@ -4111,45 +4075,264 @@ class PSBL(PSPL):
         """
         assert (len(w) == len(z1)) & (len(w) == len(z2))
 
-        N_times = len(w)
-        z_arr = np.zeros((N_times, 5), dtype=np.complex_)
-
         wbar = np.conj(w)
         z1bar = np.conj(z1)
         z2bar = np.conj(z2)
 
+        #####################################
+        # Solve the lens equation!!!!!
+        #####################################
+        # The lens equation is in the form
+        # f(z) = \sum_i a_i z^i = 0 for i = 0 to 5.
+        # Here are the coefficients:
+        # NIJAID's coeff - matches with Witt 1995 in their limits
+        wbar2 = wbar ** 2
+        z1_sq = z1 ** 2
+        z2_sq = z2 ** 2
+        z1z2 = z1 * z2
+
+        # Precomputed sums
+        z1_plus_z2 = z1 + z2
+        z1bar_plus_z2bar = z1bar + z2bar
+        m1_plus_m2 = m1 + m2
+        w_plus_z1_plus_z2 = w + z1_plus_z2
+        w_plus_2z1_plus_z2 = w + 2 * z1 + z2
+        w_minus_z1 = w - z1
+        w_minus_z2 = w - z2
+
+        wz1 = w * z1
+        wz2 = w * z2
+
+        # Precomputed sums and differences
+        two_m1 = 2 * m1
+        two_m2 = 2 * m2
+        m1_sq = m1 ** 2
+        m2_sq = m2 ** 2
+
+        # Precomputed combined terms
+        z1_sq_plus_4z1z2_plus_z2_sq = z1_sq + 4 * z1z2 + z2_sq
+        wz1_plus_z2 = w * (z1_plus_z2)
+        two_wz1_plus_z2 = 2 * wz1_plus_z2
+
+
         a5 = (wbar - z1bar) * (wbar - z2bar)
-        a4 = -((w + 2 * (z1 + z2)) * wbar ** 2) - m2 * z2bar - z1bar * (m1 + (w + 2 * (z1 + z2)) * z2bar) + wbar * (m1 + m2 + (w + 2 * (z1 + z2)) * (z1bar + z2bar))
-        a3 = (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * wbar ** 2 + (m1 * (w - z1) + m2 * (w + 2 * z1 + z2)) * z2bar + z1bar * (m2 * (w - z2) + m1 * (w + z1 + 2 * z2) + (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * z2bar) - wbar * (2 * (m2 * (w + z1) + m1 * (w + z2)) + (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * (z1bar + z2bar))
+        a4 = -((w + 2 * (z1 + z2)) * wbar2) - m2 * z2bar - \
+             z1bar * (m1 + (w + 2 * (z1 + z2)) * z2bar) + \
+             wbar * (m1 + m2 + (w + 2 * (z1 + z2)) * (z1bar + z2bar))
+        a3 = (z1_sq + 4 * z1 * z2 + z2_sq + 2 * w * (
+                    z1 + z2)) * wbar2 + \
+             (m1 * (w - z1) + m2 * (w + 2 * z1 + z2)) * z2bar + \
+             z1bar * (m2 * (w - z2) + m1 * (w + z1 + 2 * z2) + \
+                      (z1_sq + 4 * z1 * z2 + z2_sq + 2 * w * (
+                                  z1 + z2)) * z2bar) - \
+             wbar * (2 * (m2 * (w + z1) + m1 * (w + z2)) + \
+                     (z1_sq + 4 * z1 * z2 + z2_sq + 2 * w * (z1 + z2)) * (
+                                 z1bar + z2bar))
+        a2 = -((m1 + m2) * (
+                    m1 * (w - z1) + m2 * (w - z2))) - \
+             (2 * z1 * z2 * (z1 + z2) + w * (
+                         z1_sq + 4 * z1 * z2 + z2_sq)) * wbar2 - \
+             (m2 * (w - z2) * (2 * z1 + z2) + m1 * (
+                         w * z1 + 2 * (w + z1) * z2 + z2_sq)) * z1bar - \
+             (m2 * w * (2 * z1 + z2) + m1 * (w - z1) * (
+                         z1 + 2 * z2) + m2 * z1 * (z1 + 2 * z2) + \
+              2 * z1 * z2 * (z1 + z2) * z1bar + w * (
+                          z1_sq + 4 * z1 * z2 + z2_sq) * z1bar) * \
+             z2bar + wbar * (z1 * (
+                    2 * m1 * w + 4 * m2 * w - m1 * z1 + m2 * z1) + \
+                             2 * (2 * m1 + m2) * w * z2 + (
+                                         m1 - m2) * z2_sq + \
+                             (2 * z1 * z2 * (z1 + z2) + w * (
+                                         z1_sq + 4 * z1 * z2 + z2_sq)) * (
+                                         z1bar + z2bar))
+        a1 = 2 * m1 ** 2 * w * z2 + 2 * m1 * m2 * w * z2 - m1 * m2 * z2_sq - 2 * m1 * w * z2_sq * wbar + \
+             m1 * w * z2_sq * z1bar + m1 * w * z2_sq * z2bar + \
+             z1_sq * (-(
+                    m1 * m2) - 2 * m2 * w * wbar + 2 * m1 * z2 * wbar + \
+                        2 * w * z2 * wbar2 + z2_sq * wbar2 + m2 * (
+                                    w - z2) * z1bar - \
+                        2 * w * z2 * wbar * z1bar - z2_sq * wbar * z1bar + \
+                        m2 * w * z2bar - 2 * m1 * z2 * z2bar + m2 * z2 * z2bar - \
+                        2 * w * z2 * wbar * z2bar - z2_sq * wbar * z2bar + \
+                        2 * w * z2 * z1bar * z2bar + z2_sq * z1bar * z2bar) + \
+             z1 * (2 * m1 * m2 * w + 2 * m2 ** 2 * (
+                    w - z2) - 2 * m1 ** 2 * z2 - 2 * m1 * m2 * z2 - \
+                   4 * m1 * w * z2 * wbar - 4 * m2 * w * z2 * wbar + 2 * m2 * z2_sq * wbar + \
+                   2 * w * z2_sq * wbar2 + 2 * m1 * w * z2 * z1bar + \
+                   2 * m2 * (
+                               w - z2) * z2 * z1bar + m1 * z2_sq * z1bar - \
+                   2 * w * z2_sq * wbar * z1bar + 2 * m1 * w * z2 * z2bar + \
+                   2 * m2 * w * z2 * z2bar - m1 * z2_sq * z2bar - \
+                   2 * w * z2_sq * wbar * z2bar + 2 * w * z2_sq * z1bar * z2bar)
+        a0 = (m2 * z1 + m1 * z2) * (
+                    m1 * (-w + z1) * z2 + m2 * z1 * (-w + z2)) + \
+             z1 * z2 * (-(w * z1 * z2 * wbar2) - (
+                    m2 * z1 * (w - z2) + m1 * w * z2) * z1bar - \
+                        (m2 * w * z1 + m1 * (
+                                    w - z1) * z2 + w * z1 * z2 * z1bar) * z2bar + \
+                        wbar * (2 * m2 * w * z1 + 2 * m1 * w * z2 - (
+                            m1 + m2) * z1 * z2 + \
+                                w * z1 * z2 * (z1bar + z2bar)))
 
-        # Compute a2, a1, a0 similarly
+        # Solve the lens equation and find all 5 roots.
+        # Loop through different time steps and solve each one.
+        N_times = len(w)
+        z_arr = np.zeros((N_times, 5), dtype=np.complex_)
+        ai_arr = np.zeros((N_times, 6), dtype=np.complex_)
+        for i in range(N_times):
+            ai_arr[i] = np.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
+            z_arr[i] = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
 
-        coeffs = np.stack((a5, a4, a3), axis=-1)  # Include all coefficients here
-        z_arr = np.roots(coeffs)
-
+        # Plug back into equation and see if those roots are actually solutions.
+        # There should either be 3 (outside caustic) or 5 (inside caustic).
+        # (for our regime, it should be 3)
         if check_sols:
-            c1 = m1 / np.conj(z_arr - z1[:, np.newaxis])
-            c2 = m2 / np.conj(z_arr - z2[:, np.newaxis])
-            diff = w[:, np.newaxis] - (z_arr - c1 - c2)
-            bad_solutions = np.abs(diff) > self.root_tol
-            z_arr[bad_solutions] = np.nan
+            for i in range(N_times):
+                if type(m1) == np.ndarray:
+                    m1_i = m1[i]
+                    m2_i = m2[i]
+                else:
+                    m1_i = m1
+                    m2_i = m2
 
-            nim = (~np.isnan(z_arr)).sum(axis=1)
-            nim_good = (nim == 5).sum() + (nim == 3).sum()
+                z = z_arr[i, :]
+                c1 = m1_i / np.conj(z - z1[i])
+                c2 = m2_i / np.conj(z - z2[i])
+                diff = w[i] - (z - c1 - c2)
+                bad_solutions = np.absolute(diff) > self.root_tol
+                z_arr[i][bad_solutions] = np.nan + np.nan * 0j
 
-            if len(nim) != nim_good:
-                print('Not all solutions have 3 or 5 images-- something is wrong!')
-                images = []
-                for ii in range(6):
-                    idx = np.where(nim == ii)[0]
-                    images.append(idx)
-                    print(f'N images = {ii} : {(nim == ii).sum()}')
+        return z_arr
 
-            return z_arr, images
+    def get_image_pos_arr_jaxified(self, w, z1, z2, m1, m2, check_sols=True):
+        """Gets image positions.
+
+        Solve the fifth-order polynomial and get the image positions.
+        See PSBL writeup for full equations.
+        All angular distances are in arcsec.
+
+        Parameters
+        ----------
+        w : array_like
+            Complex position(s) of the source. Shape = [N_times, 1]
+
+        z1 : array_like
+            Complex position(s) of lens 1 (primary). Shape = [N_times, 1]
+
+        z2 : array_like
+            Complex position(s) of lens 2 (secondary). Shape = [N_times, 1]
+
+        check_sols : bool, optional
+            If True, calculated roots are checked against the lens equation,
+            and output will only contain those within self.root_tol.
+            If False, all calculated roots are returned.
+
+        Returns
+        -------
+        z_arr : array_like
+            Rank-1 array of polynomial roots, possibly complex.
+            If check_sols = True, only roots solving the lens
+            equation are returned.
+        """
+        assert (len(w) == len(z1)) & (len(w) == len(z2))
+
+        wbar = jnp.conj(w)
+        z1bar = jnp.conj(z1)
+        z2bar = jnp.conj(z2)
+
+        #####################################
+        # Solve the lens equation!!!!!
+        #####################################
+        # The lens equation is in the form
+        # f(z) = \sum_i a_i z^i = 0 for i = 0 to 5.
+        # Here are the coefficients:
+        # NIJAID's coeff - matches with Witt 1995 in their limits
+        a5 = (wbar - z1bar) * (wbar - z2bar)
+        a4 = -((w + 2 * (z1 + z2)) * wbar ** 2) - m2 * z2bar - \
+             z1bar * (m1 + (w + 2 * (z1 + z2)) * z2bar) + \
+             wbar * (m1 + m2 + (w + 2 * (z1 + z2)) * (z1bar + z2bar))
+        a3 = (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
+                    z1 + z2)) * wbar ** 2 + \
+             (m1 * (w - z1) + m2 * (w + 2 * z1 + z2)) * z2bar + \
+             z1bar * (m2 * (w - z2) + m1 * (w + z1 + 2 * z2) + \
+                      (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
+                                  z1 + z2)) * z2bar) - \
+             wbar * (2 * (m2 * (w + z1) + m1 * (w + z2)) + \
+                     (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * (
+                                 z1bar + z2bar))
+        a2 = -((m1 + m2) * (
+                    m1 * (w - z1) + m2 * (w - z2))) - \
+             (2 * z1 * z2 * (z1 + z2) + w * (
+                         z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * wbar ** 2 - \
+             (m2 * (w - z2) * (2 * z1 + z2) + m1 * (
+                         w * z1 + 2 * (w + z1) * z2 + z2 ** 2)) * z1bar - \
+             (m2 * w * (2 * z1 + z2) + m1 * (w - z1) * (
+                         z1 + 2 * z2) + m2 * z1 * (z1 + 2 * z2) + \
+              2 * z1 * z2 * (z1 + z2) * z1bar + w * (
+                          z1 ** 2 + 4 * z1 * z2 + z2 ** 2) * z1bar) * \
+             z2bar + wbar * (z1 * (
+                    2 * m1 * w + 4 * m2 * w - m1 * z1 + m2 * z1) + \
+                             2 * (2 * m1 + m2) * w * z2 + (
+                                         m1 - m2) * z2 ** 2 + \
+                             (2 * z1 * z2 * (z1 + z2) + w * (
+                                         z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * (
+                                         z1bar + z2bar))
+        a1 = 2 * m1 ** 2 * w * z2 + 2 * m1 * m2 * w * z2 - m1 * m2 * z2 ** 2 - 2 * m1 * w * z2 ** 2 * wbar + \
+             m1 * w * z2 ** 2 * z1bar + m1 * w * z2 ** 2 * z2bar + \
+             z1 ** 2 * (-(
+                    m1 * m2) - 2 * m2 * w * wbar + 2 * m1 * z2 * wbar + \
+                        2 * w * z2 * wbar ** 2 + z2 ** 2 * wbar ** 2 + m2 * (
+                                    w - z2) * z1bar - \
+                        2 * w * z2 * wbar * z1bar - z2 ** 2 * wbar * z1bar + \
+                        m2 * w * z2bar - 2 * m1 * z2 * z2bar + m2 * z2 * z2bar - \
+                        2 * w * z2 * wbar * z2bar - z2 ** 2 * wbar * z2bar + \
+                        2 * w * z2 * z1bar * z2bar + z2 ** 2 * z1bar * z2bar) + \
+             z1 * (2 * m1 * m2 * w + 2 * m2 ** 2 * (
+                    w - z2) - 2 * m1 ** 2 * z2 - 2 * m1 * m2 * z2 - \
+                   4 * m1 * w * z2 * wbar - 4 * m2 * w * z2 * wbar + 2 * m2 * z2 ** 2 * wbar + \
+                   2 * w * z2 ** 2 * wbar ** 2 + 2 * m1 * w * z2 * z1bar + \
+                   2 * m2 * (
+                               w - z2) * z2 * z1bar + m1 * z2 ** 2 * z1bar - \
+                   2 * w * z2 ** 2 * wbar * z1bar + 2 * m1 * w * z2 * z2bar + \
+                   2 * m2 * w * z2 * z2bar - m1 * z2 ** 2 * z2bar - \
+                   2 * w * z2 ** 2 * wbar * z2bar + 2 * w * z2 ** 2 * z1bar * z2bar)
+        a0 = (m2 * z1 + m1 * z2) * (
+                    m1 * (-w + z1) * z2 + m2 * z1 * (-w + z2)) + \
+             z1 * z2 * (-(w * z1 * z2 * wbar ** 2) - (
+                    m2 * z1 * (w - z2) + m1 * w * z2) * z1bar - \
+                        (m2 * w * z1 + m1 * (
+                                    w - z1) * z2 + w * z1 * z2 * z1bar) * z2bar + \
+                        wbar * (2 * m2 * w * z1 + 2 * m1 * w * z2 - (
+                            m1 + m2) * z1 * z2 + \
+                                w * z1 * z2 * (z1bar + z2bar)))
+
+        # Now, let's solve the lens equation for all 5 roots using JAX.
+        # We can't loop over an array in JAX as we can in NumPy; instead, we use
+        # JAX's vectorized operations.
+        ai_arr = jnp.stack([a5, a4, a3, a2, a1, a0], axis=-1)
+        roots = jnp.stack([jnp.roots(ai) for ai in ai_arr])
+
+        # Check if the solutions are valid, if required
+        if check_sols:
+            def check_solution(i):
+                m1_i = m1[i] if m1.size > 1 else m1
+                m2_i = m2[i] if m2.size > 1 else m2
+
+                z = roots[i, :]
+                c1 = m1_i / jnp.conj(z - z1[i])
+                c2 = m2_i / jnp.conj(z - z2[i])
+                diff = w[i] - (z - c1 - c2)
+                bad_solutions = jnp.absolute(diff) > self.root_tol
+                # Use jnp.where to replace bad solutions with NaN
+                return jnp.where(bad_solutions, jnp.nan + jnp.nan * 1j, z)
+
+            # Vectorize the check_solution function and apply it across all times
+            z_arr = jnp.stack([check_solution(i) for i in range(len(w))])
         else:
-            return z_arr
+            z_arr = roots
 
-
+        return z_arr
+    
     def get_all_arrays(self, t_obs, check_sols=True, rescale=True):
         '''
         Obtain the image and amplitude arrays for each t_obs.
@@ -4191,6 +4374,51 @@ class PSBL(PSPL):
         else:
             comp = self.get_complex_pos(t_obs)
             images = self.get_image_pos_arr_old(*comp)
+            amps = self.get_amp_arr(images, *comp[1:])
+        
+        return images, amps
+
+    def get_all_arrays_optimized(self, t_obs, check_sols=True, rescale=True):
+        '''
+        Obtain the image and amplitude arrays for each t_obs.
+
+        Parameters
+        ----------
+        t_obs : array_like
+            Array of times to model.
+
+        Returns
+        -------
+        images : array_like
+            Array/tuple of complex positions of each images at each t_obs.
+        amp_arr : array_like
+            Array/tuple of amplification of each images at each t_obs.
+        '''
+        kwargs = {'check_sols' : check_sols}
+
+        if rescale:
+            # Get complex positions (no rescaling).
+            _comp = self.get_complex_pos(t_obs)
+            
+            # Deepcopy because for some reason in my test it would modify.
+            comp = copy.deepcopy(_comp)
+            
+            # Rescaled complex positions.
+            rcomp = self.rescale_complex_pos(*_comp)
+
+            # Image positions derived from rescale complex positions.
+            rimages = self.get_image_pos_arr_optimized(*rcomp[0:5], **kwargs)
+
+            # Take the image positions derived from the rescaled complex positions
+            # and rescale them to get the images back in the original scale.
+            images = (rimages/rcomp[5].reshape(len(rcomp[5]), 1)) + rcomp[6].reshape(len(rcomp[6]), 1)
+            
+            # Get amplifications.
+            amps = self.get_amp_arr(images, *comp[1:])
+
+        else:
+            comp = self.get_complex_pos(t_obs)
+            images = self.get_image_pos_arr_optimized(*comp)
             amps = self.get_amp_arr(images, *comp[1:])
         
         return images, amps
@@ -4319,7 +4547,70 @@ class PSBL(PSPL):
             mag_model.data[bad] = np.nan
 
         return mag_model
+    
+    def get_photometry_optimized(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
+        '''
+        Get the photometry for each of the lensed source images.
 
+        Parameters
+        ----------
+        t_obs : array_like
+            Array of times to model.
+
+        Optional
+        ----------
+        amp_arr : array_like
+            Amplifications of each individual image at each time,
+            i.e. ``amp_arr.shape = (len(t_obs)``, number of images at each t_obs).
+
+            This will over-ride t_obs; but is more efficient when calculating
+            both photometry and astrometry. If None, then just use t_obs.
+
+        Returns
+        -------
+        mag_model : array_like
+            Magnitude of the centroid at t_obs.
+        '''
+        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
+        flux_zp = 1.0
+
+        if amp_arr is None:
+            img_arr, amp_arr = self.get_all_arrays_optimized(t_obs)
+
+        # Mask invalid values from the amplification array.
+        amp_arr_msk = np.ma.masked_invalid(amp_arr)
+
+        # Sum up all the amplifications b/c surface brightness is conserved.
+        amp = np.sum(amp_arr_msk, axis=1)
+
+        flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
+        flux_model = flux_src * amp
+
+        # Account for blending, if necessary.
+        try:
+            # Adding flux of neighbors and lenses
+            # b_sff = fS / (fS + fN + fL)
+            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+        except AttributeError:
+            pass
+
+        # Catch the edge case where we exceed the zeropoint.
+        bad = np.where(flux_model <= 0)[0]
+        if len(bad) > 0:
+            if print_warning:
+                print('!!!!!!!!!! Warning: get_photometry: bad flux encountered.')
+                print('')
+#                pdb.set_trace()
+            flux_model[bad] = np.nan
+
+        mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
+
+        # Set the masked values (in the data array) to also be nan.
+        bad = np.where(flux_model.mask == True)
+        if len(bad) > 0:
+            mag_model.data[bad] = np.nan
+
+        return mag_model
 
 class PSBL_Phot(PSBL, PSPL_Phot):
     photometryFlag = True
