@@ -95,30 +95,30 @@ Binary source, point lens, photometry and only
     - 'BSPL_Phot_Par_GP_Param1'
 
 Binary source, point lens, photometry and astrometry
-    - 'BSPL_PhotAstrom_noPar_LinOrbs1'
-    - 'BSPL_PhotAstrom_noPar_LinOrbs2'
-    - 'BSPL_PhotAstrom_noPar_LinOrbs3'
+    - 'BSPL_PhotAstrom_noPar_LinOrbs_Param1'
+    - 'BSPL_PhotAstrom_noPar_LinOrbs_Param2'
+    - 'BSPL_PhotAstrom_noPar_LinOrbs_Param3'
     - 'BSPL_PhotAstrom_noPar_Param1'
     - 'BSPL_PhotAstrom_noPar_Param2'
     - 'BSPL_PhotAstrom_noPar_Param3'
     
-    - 'BSPL_PhotAstrom_Par_LinOrbs1'
-    - 'BSPL_PhotAstrom_Par_LinOrbs2'
-    - 'BSPL_PhotAstrom_Par_LinOrbs3'
+    - 'BSPL_PhotAstrom_Par_LinOrbs_Param1'
+    - 'BSPL_PhotAstrom_Par_LinOrbs_Param2'
+    - 'BSPL_PhotAstrom_Par_LinOrbs_Param3'
     - 'BSPL_PhotAstrom_Par_Param1'
     - 'BSPL_PhotAstrom_Par_Param2'
     - 'BSPL_PhotAstrom_Par_Param3'
 
-    - 'BSPL_PhotAstrom_noPar_GP_LinOrbs1'
-    - 'BSPL_PhotAstrom_noPar_GP_LinOrbs2'
-    - 'BSPL_PhotAstrom_noPar_GP_LinOrbs3'
+    - 'BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1'
+    - 'BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2'
+    - 'BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3'
     - 'BSPL_PhotAstrom_noPar_GP_Param1'
     - 'BSPL_PhotAstrom_noPar_GP_Param2'
     - 'BSPL_PhotAstrom_noPar_GP_Param3'
     
-    - 'BSPL_PhotAstrom_Par_GP_LinOrbs1'
-    - 'BSPL_PhotAstrom_Par_GP_LinOrbs2'
-    - 'BSPL_PhotAstrom_Par_GP_LinOrbs3'
+    - 'BSPL_PhotAstrom_Par_GP_LinOrbs_Param1'
+    - 'BSPL_PhotAstrom_Par_GP_LinOrbs_Param2'
+    - 'BSPL_PhotAstrom_Par_GP_LinOrbs_Param3'
     - 'BSPL_PhotAstrom_Par_GP_Param1'
     - 'BSPL_PhotAstrom_Par_GP_Param2'
     - 'BSPL_PhotAstrom_Par_GP_Param3'
@@ -8569,7 +8569,7 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
 
         return
 
-class BSPL_PhotAstromLinOrbs1(PSPL_Param):
+class BSPL_PhotAstrom_LinOrbs_Param1(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization - for linear orbits.
 
 A Binary Point Source Point Lens model for microlensing. This model uses a parameterization that depends on only physical quantities such as the proper motions of the lens, the primary source and the secondary source. This is a linear orbit model. 
@@ -8816,7 +8816,7 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
         return
                      
 
-class BSPL_PhotAstromLinOrbs2(PSPL_Param):
+class BSPL_PhotAstrom_LinOrbs_Param2(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
 
     A Binary point Source Point Lens model for microlensing. This model uses a
@@ -9040,7 +9040,7 @@ class BSPL_PhotAstromLinOrbs2(PSPL_Param):
 
         return
 
-class BSPL_PhotAstromLinOrbs3(PSPL_Param):
+class BSPL_PhotAstrom_LinOrbs_Param3(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
 
     A Binary point Source Point Lens model for microlensing. This model uses a
@@ -9262,7 +9262,7 @@ class BSPL_PhotAstromLinOrbs3(PSPL_Param):
 
         return
 
-class BSPL_GP_PhotAstromLinOrbs1(BSPL_PhotAstromLinOrbs1):
+class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
     A Binary point Source Point Lens model for microlensing. This model uses a
@@ -9386,7 +9386,7 @@ class BSPL_GP_PhotAstromLinOrbs1(BSPL_PhotAstromLinOrbs1):
         return
 
 
-class BSPL_GP_PhotAstromLinOrbs2(BSPL_PhotAstromLinOrbs2):
+class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
     A Binary point Source Point Lens model for microlensing. This model uses a
@@ -9508,7 +9508,7 @@ class BSPL_GP_PhotAstromLinOrbs2(BSPL_PhotAstromLinOrbs2):
             self.use_gp_phot[key] = True
         
         return
-class BSPL_GP_PhotAstromLinOrbs3(BSPL_PhotAstromLinOrbs3):
+class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
     """
     Point Source Point Lens with GP model for microlensing. This model includes
     proper motions of the source and the source position on the sky.
@@ -13386,10 +13386,10 @@ class BSPL_PhotAstrom_Par_Param3(ModelClassABC,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_PhotAstrom_Par_LinOrbs1(ModelClassABC,
+class BSPL_PhotAstrom_Par_LinOrbs_Param1(ModelClassABC,
                                  BSPL_PhotAstrom,
                                  BSPL_Parallax,
-                                 BSPL_PhotAstromLinOrbs1):
+                                 BSPL_PhotAstrom_LinOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -13398,10 +13398,10 @@ class BSPL_PhotAstrom_Par_LinOrbs1(ModelClassABC,
 
 # BSPL no parallax 
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_LinOrbs1(ModelClassABC,
+class BSPL_PhotAstrom_noPar_LinOrbs_Param1(ModelClassABC,
                                    BSPL_PhotAstrom,
                                    BSPL_noParallax,
-                                   BSPL_PhotAstromLinOrbs1):
+                                   BSPL_PhotAstrom_LinOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -13409,10 +13409,10 @@ class BSPL_PhotAstrom_noPar_LinOrbs1(ModelClassABC,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_PhotAstrom_Par_LinOrbs2(ModelClassABC,
+class BSPL_PhotAstrom_Par_LinOrbs_Param2(ModelClassABC,
                                  BSPL_PhotAstrom,
                                  BSPL_Parallax,
-                                 BSPL_PhotAstromLinOrbs2):
+                                 BSPL_PhotAstrom_LinOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -13421,10 +13421,10 @@ class BSPL_PhotAstrom_Par_LinOrbs2(ModelClassABC,
 
 # BSPL no parallax 
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_LinOrbs2(ModelClassABC,
+class BSPL_PhotAstrom_noPar_LinOrbs_Param2(ModelClassABC,
                                    BSPL_PhotAstrom,
                                    BSPL_noParallax,
-                                   BSPL_PhotAstromLinOrbs2):
+                                   BSPL_PhotAstrom_LinOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -13433,10 +13433,10 @@ class BSPL_PhotAstrom_noPar_LinOrbs2(ModelClassABC,
         
 # BSPL no parallax 
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_LinOrbs3(ModelClassABC,
+class BSPL_PhotAstrom_noPar_LinOrbs_Param3(ModelClassABC,
                                    BSPL_PhotAstrom,
                                    BSPL_noParallax,
-                                   BSPL_PhotAstromLinOrbs3):
+                                   BSPL_PhotAstrom_LinOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -13445,10 +13445,10 @@ class BSPL_PhotAstrom_noPar_LinOrbs3(ModelClassABC,
 
 # BSPL_parallax 
 @inheritdocstring
-class BSPL_PhotAstrom_Par_LinOrbs3(ModelClassABC,
+class BSPL_PhotAstrom_Par_LinOrbs_Param3(ModelClassABC,
                                  BSPL_PhotAstrom,
                                  BSPL_Parallax,
-                                 BSPL_PhotAstromLinOrbs3):
+                                 BSPL_PhotAstrom_LinOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -13459,11 +13459,11 @@ class BSPL_PhotAstrom_Par_LinOrbs3(ModelClassABC,
 
 # BSPL no parallax
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_GP_LinOrbs1(ModelClassABC,
+class BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1(ModelClassABC,
                                       PSPL_GP,
                                       BSPL_PhotAstrom,
                                       BSPL_noParallax,
-                                      BSPL_GP_PhotAstromLinOrbs1):
+                                      BSPL_GP_PhotAstrom_LinOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -13472,11 +13472,11 @@ class BSPL_PhotAstrom_noPar_GP_LinOrbs1(ModelClassABC,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_PhotAstrom_Par_GP_LinOrbs1(ModelClassABC,
+class BSPL_PhotAstrom_Par_GP_LinOrbs_Param1(ModelClassABC,
                                     PSPL_GP,
                                     BSPL_PhotAstrom,
                                     BSPL_Parallax,
-                                    BSPL_GP_PhotAstromLinOrbs1):
+                                    BSPL_GP_PhotAstrom_LinOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -13485,11 +13485,11 @@ class BSPL_PhotAstrom_Par_GP_LinOrbs1(ModelClassABC,
 
 # BSPL no parallax
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_GP_LinOrbs2(ModelClassABC,
+class BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2(ModelClassABC,
                                       PSPL_GP,
                                       BSPL_PhotAstrom,
                                       BSPL_noParallax,
-                                      BSPL_GP_PhotAstromLinOrbs2):
+                                      BSPL_GP_PhotAstrom_LinOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -13498,11 +13498,11 @@ class BSPL_PhotAstrom_noPar_GP_LinOrbs2(ModelClassABC,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_PhotAstrom_Par_GP_LinOrbs2(ModelClassABC,
+class BSPL_PhotAstrom_Par_GP_LinOrbs_Param2(ModelClassABC,
                                     PSPL_GP,
                                     BSPL_PhotAstrom,
                                     BSPL_Parallax,
-                                    BSPL_GP_PhotAstromLinOrbs2):
+                                    BSPL_GP_PhotAstrom_LinOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -13511,11 +13511,11 @@ class BSPL_PhotAstrom_Par_GP_LinOrbs2(ModelClassABC,
         
 # BSPL no parallax
 @inheritdocstring
-class BSPL_PhotAstrom_noPar_GP_LinOrbs3(ModelClassABC,
+class BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3(ModelClassABC,
                                       PSPL_GP,
                                       BSPL_PhotAstrom,
                                       BSPL_noParallax,
-                                      BSPL_GP_PhotAstromLinOrbs3):
+                                      BSPL_GP_PhotAstrom_LinOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -13524,11 +13524,11 @@ class BSPL_PhotAstrom_noPar_GP_LinOrbs3(ModelClassABC,
 
 # BSPL_parallax
 @inheritdocstring
-class BSPL_PhotAstrom_Par_GP_LinOrbs3(ModelClassABC,
+class BSPL_PhotAstrom_Par_GP_LinOrbs_Param3(ModelClassABC,
                                     PSPL_GP,
                                     BSPL_PhotAstrom,
                                     BSPL_Parallax,
-                                    BSPL_GP_PhotAstromLinOrbs3):
+                                    BSPL_GP_PhotAstrom_LinOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
