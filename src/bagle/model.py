@@ -8569,7 +8569,7 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
 
         return
 
-class BSPL_PhotAstrom_LinOrbs_Param1(PSPL_Param):
+class BSPL_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstromParam1):
     """BSPL model for astrometry and photometry - physical parameterization - for linear orbits.
 
 A Binary Point Source Point Lens model for microlensing. This model uses a parameterization that depends on only physical quantities such as the proper motions of the lens, the primary source and the secondary source. This is a linear orbit model. 
@@ -8665,158 +8665,27 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
                  mag_src_pri, mag_src_sec,
                  b_sff,
                  raL=None, decL=None):
-        t = 5860.00 #dummy variable in mjd
-        self.t0 = t0  # time of closest approach for system=primary pos
-        self.mL = mL
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
-        self.beta = beta
-        self.muL = np.array([muL_E, muL_N])
-        self.muS = np.array([muS_E, muS_N]) #muS is muS_prim
+
+        super().__init__(mL, t0, beta, dL, dL_dS,
+                 xS0_E, xS0_N,
+                 muL_E, muL_N,
+                 muS_E, muS_N,
+                 sep, alpha,
+                 mag_src_pri, mag_src_sec,
+                 b_sff,
+                 raL=raL, decL=decL)
+
         self.muS_sec = np.array([muS_sec_E, muS_sec_N])
-        self.dL = dL
-        self.dL_dS = dL_dS
-        self.dS = self.dL / self.dL_dS
-        self.b_sff = np.array(b_sff)
-        self.raL = raL
-        self.decL = decL
+        self.muS_sec_E, self.muS_sec_N = self.muS_sec
 
-        # Binary source parameters.
-        self.sep = sep  # mas
-        self.alpha = alpha
-        self.alpha_rad = self.alpha * np.pi / 180.0
-        self.mag_src_pri = np.array(mag_src_pri)
-        self.mag_src_sec = np.array(mag_src_sec)
-        self.fratio_bin = 10.0 ** ((self.mag_src_sec - self.mag_src_pri) / -2.5)
-
-        # Must call after setting parameters.
-        # This checks for proper parameter formatting.
-        super().__init__()
-
-        flux_pri = mag2flux(self.mag_src_pri)
-        flux_sec = mag2flux(self.mag_src_sec)
-        self.mag_base = flux2mag(flux_pri + flux_sec) + 2.5 * np.log10(self.b_sff)
-
-        # Calculate the relative parallax
-        inv_dist_diff = (1.0 / (self.dL * units.pc)) - (1.0 / (self.dS * units.pc))
-        piRel = units.rad * units.au * inv_dist_diff
-        self.piRel = piRel.to('mas').value
-
-        # Calculate the individual parallax
-        piS = (1.0 / self.dS) * (units.rad * units.au / units.pc)
-        piL = (1.0 / self.dL) * (units.rad * units.au / units.pc)
-        self.piS = piS.to('mas').value
-        self.piL = piL.to('mas').value
-
-        # Calculate the relative proper motion vector.
-        # Note that this will be in the direction of theta_hat
-        
-        #Two muRels - one for the primary and the other for the secondary. muRel is muRel for the primary. Leaving notation unchanged for consistency
-        self.muRel = self.muS - self.muL
-        self.muRel_E, self.muRel_N = self.muRel
-        self.muRel_amp = np.linalg.norm(self.muRel)  # mas/yr
-
-        
         self.muRel_sec = self.muS + self.muS_sec - self.muL 
-        #muRel_sec -add or subtract?
         self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
         self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
         self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
 
-                     
-        self.muS_E, self.muS_N = self.muS
-        self.muS_sec_E, self.muS_sec_N = self.muS_sec
-        self.muL_E, self.muL_N = self.muL
-
-        # Calculate the Einstein radius
-        thetaE = units.rad * np.sqrt(
-            (4.0 * const.G * mL * units.M_sun / const.c ** 2) * (inv_dist_diff))
-        self.inv_dist_diff = inv_dist_diff
-        self.thetaE_amp = thetaE.to('mas').value  # mas
-        self.thetaE_hat = self.muRel / self.muRel_amp
-        self.muRel_hat = self.thetaE_hat
-        self.thetaE = self.thetaE_amp * self.thetaE_hat
-        self.thetaE_E, self.thetaE_N = self.thetaE
-
-        # Comment on sign conventions:
-        # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
-        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
-        # if u0_E > 0 then the Source is to the East of the lens
-        # if u0_E < 0 then the source is to the West of the lens
-        # We adopt the following sign convention (same as Gould:2004):
-        #    u0_amp > 0 means u0_E > 0
-        #    u0_amp < 0 means u0_E < 0
-        # Note that we assume beta = u0_amp (with same signs).
-
-        # Calculate the closest approach vector. Define beta sign convention
-        # same as of Andy Gould does with beta > 0 means u0_E > 0
-        # (lens passes to the right of the source as seen from Earth or Sun).
-        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
-        # the sign of beta is always the same as the sign of u0_amp. Therefore this
-        # usage of the function with u0_amp works exactly the same.
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0_amp = self.beta / self.thetaE_amp  # in Einstein units
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
-
-        # Angular separation vector between source and lens
-        # (vector from lens to source)
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
-
-        # Calculate the position of the lens on the sky at time, t0
-        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-
-        # Calculate the microlensing parallax
-        self.piE_amp = self.piRel / self.thetaE_amp
-        self.piE = self.piE_amp * self.thetaE_hat
-        self.piE_E, self.piE_N = self.piE
-
-        # Calculate the Einstein crossing time. (days)
-        self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
-
-        #####
-        # Derived binary source parameters.
-        #####
-        # Primary -- at origin
-        self.t0_pri = self.t0
-        self.xS0_pri = self.xS0
-        self.u0_amp_pri = self.u0_amp
-        self.u0_pri = self.u0
-
-        # Secondary
-        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
-                                       np.cos(self.alpha_rad)))  # mas
-        self.sep_vec = sep_vec
-        self.xS0_sec=sep_vec
-        self.xS0_sec_E = sep_vec[0]
-        self.xS0_sec_N = sep_vec[1]
-
-
-
-        #time difference
-        t_diff = t-self.t0_pri#Difference is in days
-        t_diff_years = t_diff/365.25 #365 days in a year)
-        
-        # separation vector as a function of time
-        
-        
-        #Speration vector seperated into components
-
-        # Closest approach time
-        #What sep vector to use here? Initial or time-changing one?
-
-                     
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(self.sep_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
-        s_murelhat = np.dot(self.sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
-        self.xS0_sec = self.xS0_pri + (self.sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
-
-        
-        
         return
-                     
 
-class BSPL_PhotAstrom_LinOrbs_Param2(PSPL_Param):
+class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
     """BSPL model for astrometry and photometry - physical parameterization.
 
     A Binary point Source Point Lens model for microlensing. This model uses a
@@ -8914,133 +8783,28 @@ class BSPL_PhotAstrom_LinOrbs_Param2(PSPL_Param):
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
                  raL=None, decL=None):
-        self.t0 = t0  # time of closest approach for system=primary pos
-        self.u0_amp = u0_amp
-        self.tE = tE
-        self.thetaE_amp = thetaE
-        self.piS = piS
-        self.piE = np.array([piE_E, piE_N])
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
-        self.muS = np.array([muS_E, muS_N])
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 sep, alpha, fratio_bin,
+                 mag_base, b_sff,
+                 raL=raL, decL=decL)
+                     
         self.muS_sec = np.array([muS_sec_E, muS_sec_N])
         self.muS_sec_E = muS_sec_E
         self.muS_sec_N = muS_sec_N
-
-
-
-        self.mag_base = np.array(mag_base)
-        self.b_sff = np.array(b_sff)
-        self.raL = raL
-        self.decL = decL
-
-        # Binary source parameters.
-        self.sep = sep  # mas
-        self.alpha = alpha
-        self.fratio_bin = np.array(fratio_bin)
-        self.alpha_rad = self.alpha * np.pi / 180.0
-        self.mag_src_pri = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fratio_bin)
-        self.mag_src_sec = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + (1.0 / fratio_bin))
-
-        # Must call after setting parameters.
-        # This checks for proper parameter formatting.
-        super().__init__()
-
-        # Derived quantities
-        self.beta = self.u0_amp * self.thetaE_amp
-        self.piE_amp = np.linalg.norm(self.piE)
-        self.piRel = self.piE_amp * self.thetaE_amp
-        self.muRel_amp = self.thetaE_amp / (self.tE / days_per_year)
-        self.piL = self.piRel + self.piS
-
-        kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
-        kappa = kappa_tmp.to(units.mas / units.Msun,
-                             equivalencies=units.dimensionless_angles()).value
-        self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
-
-        # Calculate the distance to source and lens.
-        dL = (self.piL * units.mas).to(units.parsec,
-                                       equivalencies=units.parallax())
-        dS = (self.piS * units.mas).to(units.parsec,
-                                       equivalencies=units.parallax())
-        self.dL = dL.to('pc').value
-        self.dS = dS.to('pc').value
-
-        # Get the directional vectors.
-        self.thetaE_hat = self.piE / self.piE_amp
-        self.muRel_hat = self.thetaE_hat
-        self.thetaE = self.thetaE_amp * self.thetaE_hat
-                     
-        # Calculate the relative proper motion vector.
-        # Note that this will be in the direction of theta_hat
-        self.muRel = self.muRel_amp * self.thetaE_hat
-        self.muRel_E, self.muRel_N = self.muRel
-        self.muL = self.muS - self.muRel
-        self.muL_E, self.muL_N = self.muL
 
         self.muRel_sec = self.muS + self.muS_sec - self.muL
         self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
         self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
         self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
 
-
-        
-                     
-        # Comment on sign conventions:
-        # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
-        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
-        # if u0_E > 0 then the Source is to the East of the lens
-        # if u0_E < 0 then the source is to the West of the lens
-        # We adopt the following sign convention (same as Gould:2004):
-        #    u0_amp > 0 means u0_E > 0
-        #    u0_amp < 0 means u0_E < 0
-        # Note that we assume beta = u0_amp (with same signs).
-
-        # Calculate the closest approach vector. Define beta sign convention
-        # same as of Andy Gould does with beta > 0 means u0_E > 0
-        # (lens passes to the right of the source as seen from Earth or Sun).
-        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
-        # the sign of beta is always the same as the sign of u0_amp. Therefore this
-        # usage of the function with u0_amp works exactly the same.
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
-
-        # Angular separation vector between source and lens
-        # (vector from lens to source)
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
-
-        # Calculate the position of the lens on the sky at time, t0
-        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-
-        #####
-        # Derived binary source parameters.
-        #####
-        # Primary -- at origin
-        self.t0_pri = self.t0
-        self.xS0_pri = self.xS0
-        self.u0_amp_pri = self.u0_amp
-        self.u0_pri = self.u0
-
-        # Secondary
-        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
-                                       np.cos(self.alpha_rad)))  # mas
-
-        self.sep_vec = sep_vec
-        self.xS0_sec=sep_vec
-        self.xS0_sec_E = sep_vec[0]
-        self.xS0_sec_N = sep_vec[1]
-        
-
-        # Closest approach time and distance
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
-
         return
 
-class BSPL_PhotAstrom_LinOrbs_Param3(PSPL_Param):
+
+class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
     """BSPL model for astrometry and photometry - physical parameterization.
 
     A Binary point Source Point Lens model for microlensing. This model uses a
@@ -9137,131 +8901,27 @@ class BSPL_PhotAstrom_LinOrbs_Param3(PSPL_Param):
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
                  raL=None, decL=None):
-        self.t0 = t0  # time of closest approach for system=primary pos
-        self.u0_amp = u0_amp
-        self.tE = tE
-        self.thetaE_amp = 10 ** log10_thetaE
-        self.piS = piS
-        self.piE = np.array([piE_E, piE_N])
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
-        self.muS = np.array([muS_E, muS_N])
+
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 sep, alpha, fratio_bin,
+                 mag_base, b_sff,
+                 raL=raL, decL=decL
+        )
         self.muS_sec = np.array([muS_sec_E, muS_sec_N])
         self.muS_sec_E = muS_sec_E
         self.muS_sec_N = muS_sec_N
-        self.mag_base = np.array(mag_base)
-        self.b_sff = np.array(b_sff)
-        self.raL = raL
-        self.decL = decL
-
-        # Binary source parameters.
-        self.sep = sep  # mas
-        self.alpha = alpha
-        self.fratio_bin = np.array(fratio_bin)
-        self.alpha_rad = self.alpha * np.pi / 180.0
-
-        self.mag_src_pri = self.mag_base \
-                           - 2.5 * np.log10(self.b_sff) \
-                           + 2.5 * np.log10(1.0 + self.fratio_bin)
-        self.mag_src_sec = self.mag_base \
-                           - 2.5 * np.log10(self.b_sff) \
-                           + 2.5 * np.log10(1.0 + (1.0 / self.fratio_bin))
-
-        # Must call after setting parameters.
-        # This checks for proper parameter formatting.
-        super().__init__()
-
-        # Derived quantities
-        self.beta = self.u0_amp * self.thetaE_amp
-        self.piE_amp = np.linalg.norm(self.piE)
-        self.piRel = self.piE_amp * self.thetaE_amp
-        self.muRel_amp = self.thetaE_amp / (self.tE / days_per_year)
-        self.piL = self.piRel + self.piS
-
-        kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
-        kappa = kappa_tmp.to(units.mas / units.Msun,
-                             equivalencies=units.dimensionless_angles()).value
-        self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
-
-        # Calculate the distance to source and lens.
-        dL = (self.piL * units.mas).to(units.parsec,
-                                       equivalencies=units.parallax())
-        dS = (self.piS * units.mas).to(units.parsec,
-                                       equivalencies=units.parallax())
-        self.dL = dL.to('pc').value
-        self.dS = dS.to('pc').value
-
-        # Get the directional vectors.
-        self.thetaE_hat = self.piE / self.piE_amp
-        self.muRel_hat = self.thetaE_hat
-        self.thetaE = self.thetaE_amp * self.thetaE_hat
-
-        # Calculate the relative proper motion vector.
-        # Note that this will be in the direction of theta_hat
-        self.muRel = self.muRel_amp * self.thetaE_hat
-        self.muRel_E, self.muRel_N = self.muRel
-        self.muL = self.muS - self.muRel
-        self.muL_E, self.muL_N = self.muL
-
+        
         self.muRel_sec = self.muRel + self.muS_sec
         self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
         self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
         self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
 
 
-        # Comment on sign conventions:
-        # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
-        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
-        # if u0_E > 0 then the Source is to the East of the lens
-        # if u0_E < 0 then the source is to the West of the lens
-        # We adopt the following sign convention (same as Gould:2004):
-        #    u0_amp > 0 means u0_E > 0
-        #    u0_amp < 0 means u0_E < 0
-        # Note that we assume beta = u0_amp (with same signs).
-
-        # Calculate the closest approach vector. Define beta sign convention
-        # same as of Andy Gould does with beta > 0 means u0_E > 0
-        # (lens passes to the right of the source as seen from Earth or Sun).
-        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
-        # the sign of beta is always the same as the sign of u0_amp. Therefore this
-        # usage of the function with u0_amp works exactly the same.
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
-
-        # Angular separation vector between source and lens
-        # (vector from lens to source)
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
-
-        # Calculate the position of the lens on the sky at time, t0
-        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-
-        #####
-        # Derived binary source parameters.
-        #####
-        # Primary -- at origin
-        self.t0_pri = self.t0
-        self.xS0_pri = self.xS0
-        self.u0_amp_pri = self.u0_amp
-        self.u0_pri = self.u0
-
-        # Secondary
-        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
-                                       np.cos(self.alpha_rad)))  # mas
-
-        self.sep_vec = sep_vec
-        self.xS0_sec=sep_vec
-        self.xS0_sec_E = sep_vec[0]
-        self.xS0_sec_N = sep_vec[1]
-                     
-        # Closest approach time and distance
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
-
         return
-
+                     
 class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
