@@ -3801,3 +3801,513 @@ def test_PSPL_Phot_Param2_vs_Param3():
 
     return
 
+def bspl_linorbs_check_differences():
+    #Checks difference between BSPL_PhotAstrom_noPar_LinOrbs_Param# and BSPL_PhotAstrom_noPar_Param#
+    def linorbs1(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #muS in mas/yr
+        mL = 1
+        t0 = 5760.00
+        beta = 0.5
+        dL = 3000 #parsecs
+        dL_dS = 0.6
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        muL_E = 5.0 #mas/yr
+        muL_N = 5.0 #mas/yr
+        sep = 3 #mas
+        alpha = 50
+        mag_src_pri = 16
+        mag_src_sec = 20
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+        bsplnormal = model.BSPL_PhotAstrom_noPar_Param1(
+            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+            muS_E, muS_N, sep, alpha,
+            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
+        )
+    
+        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param1(
+            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+            muS_E, muS_N, muS_sec_E, muS_sec_N, sep, alpha,
+            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
+        )
+    
+    
+        alpha_rad = alpha * np.pi / 180.0
+        sep_vec_test = sep * np.array((np.sin(alpha_rad), np.cos(alpha_rad)))  # mas
+
+        #Parameter checks
+        assert bsplorbits.dL < bsplorbits.dS
+        assert bsplorbits.t0 == t0
+        assert bsplorbits.beta == beta
+        assert bsplorbits.dL == dL
+        assert bsplorbits.muS_sec_E == muS_sec_E
+        assert bsplorbits.muS_sec_N == muS_sec_N
+        assert bsplorbits.b_sff[0] == b_sff
+        assert bsplorbits.mag_src_pri == mag_src_pri
+        assert bsplorbits.xS0_sec_E == sep_vec_test[0]
+        assert bsplorbits.xS0_sec_N == sep_vec_test[1]
+
+        if muS_sec_E!=0 and muS_sec_N!=0:
+            for i in range(0, len(bsplorbits.muS)):
+                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
+                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
+                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
+                assert bsplorbits.muRel_sec_hat[i]!=bsplorbits.muRel_hat[i] #Diff muRel for primary and secondary source motion within the same orbits model
+                assert bsplorbits.muRel_sec_hat[i]!=bsplnormal.muRel_hat[i] #Diff muRel for primary and secondary source motion within the two diff orbits model
+        else: 
+            #if no muS_sec, it will follow primary
+            for i in range(0, len(bsplorbits.muS)):
+                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
+                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
+                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Same secondary source motion
+                assert bsplorbits.muRel_sec_hat[i]==bsplorbits.muRel_hat[i] #Same muRel for primary and secondary source motion within the same orbits model
+                assert bsplorbits.muRel_sec_hat[i]==bsplnormal.muRel_hat[i] #Same muRel for primary and secondary source motion within the two diff orbits model
+            
+        #separations
+        t = np.arange(t0- 5000, t0+5000, 1)
+        u_bspl = bsplorbits.get_u(t) 
+        u_normal = bsplnormal.get_u(t)
+        u_sec_normal = np.linalg.norm(u_normal[:,1,:], axis=1)
+        u_sec_bspl = np.linalg.norm(u_bspl[:,1,:], axis=1)
+        u_pri_normal = np.linalg.norm(u_normal[:,0,:], axis=1)
+        u_pri_bspl = np.linalg.norm(u_bspl[:,0,:], axis=1)
+
+        if muS_sec_E!=0 and muS_sec_N!=0:
+            for i in range(0, len(u_sec_bspl)):
+                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
+                assert u_sec_normal[i] != u_sec_bspl[i] #Diff secondary separations
+        else:
+            for i in range(0, len(u_sec_bspl)):
+                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
+                assert u_sec_normal[i] == u_sec_bspl[i] #Diff secondary separations
+                
+    def linorbs2(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #muS in mas/yr
+        t0 = 5760.00
+        u0_amp = 6
+        tE = 154
+        thetaE = 5 
+        piS = 0.6
+        piE_E = 1
+        piE_N = 1
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        sep = 3 #mas
+        alpha = 50
+        fratio_bin = 1.5
+        mag_base = 19
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+
+        
+        
+        bsplnormal = model.BSPL_PhotAstrom_noPar_Param2(
+            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+
+        
+        
+        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param2(
+            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+        
+    
+    
+        alpha_rad = alpha * np.pi / 180.0
+        sep_vec_test = sep * np.array((np.sin(alpha_rad), np.cos(alpha_rad)))  # mas
+
+        #Parameter checks
+        assert bsplorbits.dL < bsplorbits.dS
+        assert bsplorbits.t0 == t0
+        assert bsplorbits.muS_sec_E == muS_sec_E
+        assert bsplorbits.muS_sec_N == muS_sec_N
+        assert bsplorbits.xS0_sec_E == sep_vec_test[0]
+        assert bsplorbits.xS0_sec_N == sep_vec_test[1]
+
+        
+        if muS_sec_E!=0 and muS_sec_N!=0:
+            for i in range(0, len(bsplorbits.muS)):
+                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
+                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
+                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
+                assert bsplorbits.muRel_sec_hat[i]!=bsplorbits.muRel_hat[i] #Diff muRel for primary and secondary source motion within the same orbits model
+                assert bsplorbits.muRel_sec_hat[i]!=bsplnormal.muRel_hat[i] #Diff muRel for primary and secondary source motion within the two diff orbits model
+        else: 
+            for i in range(0, len(bsplorbits.muS)):
+                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
+                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
+                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Same secondary source motion
+                assert bsplorbits.muRel_sec_hat[i]==bsplorbits.muRel_hat[i] #Same muRel for primary and secondary source motion within the same orbits model
+                assert bsplorbits.muRel_sec_hat[i]==bsplnormal.muRel_hat[i] #Same muRel for primary and secondary source motion within the two diff orbits model
+            
+        
+    
+        #Seperations
+        t = np.arange(t0- 5000, t0+5000, 1)
+        u_bspl = bsplorbits.get_u(t) 
+        u_normal = bsplnormal.get_u(t)
+        u_sec_normal = np.linalg.norm(u_normal[:,1,:], axis=1)
+        u_sec_bspl = np.linalg.norm(u_bspl[:,1,:], axis=1)
+        u_pri_normal = np.linalg.norm(u_normal[:,0,:], axis=1)
+        u_pri_bspl = np.linalg.norm(u_bspl[:,0,:], axis=1)
+
+
+        if muS_sec_E!=0 and muS_sec_N!=0:
+            for i in range(0, len(u_sec_bspl)):
+                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
+                assert u_sec_normal[i] != u_sec_bspl[i] #Diff secondary separations
+        else:
+            for i in range(0, len(u_sec_bspl)):
+                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
+                assert u_sec_normal[i] == u_sec_bspl[i] #Diff secondary separations
+        
+    def linorbs3(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #with linorbs3 there will be a rounding error due to the way murel is calculated. 
+        #muS in mas/yr
+        t0 = 5760.00
+        u0_amp = 6
+        tE = 154
+        log_thetaE = np.log(5)
+        piS = 0.6
+        piE_E = 1
+        piE_N = 1
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        sep = 3 #mas
+        alpha = 50
+        fratio_bin = 1.5
+        mag_base = 19
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+
+        
+        
+        
+        bsplnormal = model.BSPL_PhotAstrom_noPar_Param3(
+            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+
+        
+        
+        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param3(
+            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N, muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+        
+    
+    
+        alpha_rad = alpha * np.pi / 180.0
+        sep_vec_test = sep * np.array((np.sin(alpha_rad), np.cos(alpha_rad)))  # mas
+
+        #Parameter checks
+        assert bsplorbits.dL < bsplorbits.dS
+        assert bsplorbits.t0 == t0
+        assert bsplorbits.muS_sec_E == muS_sec_E
+        assert bsplorbits.muS_sec_N == muS_sec_N
+        assert bsplorbits.xS0_sec_E == sep_vec_test[0]
+        assert bsplorbits.xS0_sec_N == sep_vec_test[1]
+
+        
+    
+        
+        if muS_sec_E!=0 and muS_sec_N!=0:
+
+            for i in range(0, len(bsplorbits.muS)):
+                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
+                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
+                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
+                assert bsplorbits.muRel_sec_hat[i]!=bsplorbits.muRel_hat[i] #Diff muRel for primary and secondary source motion within the same orbits model
+        else: 
+            for i in range(0, len(bsplorbits.muS)):    
+                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
+                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
+                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Same secondary source motion
+                assert np.round(bsplorbits.muRel_sec_hat[i],7)==np.round(bsplorbits.muRel_hat[i],7) #Same muRel for primary and secondary source motion within the same orbits model
+            
+        
+    
+        #Separations
+        t = np.arange(t0- 5000, t0+5000, 1)
+        u_bspl = bsplorbits.get_u(t) 
+        u_normal = bsplnormal.get_u(t)
+        u_sec_normal = np.linalg.norm(u_normal[:,1,:], axis=1)
+        u_sec_bspl = np.linalg.norm(u_bspl[:,1,:], axis=1)
+        u_pri_normal = np.linalg.norm(u_normal[:,0,:], axis=1)
+        u_pri_bspl = np.linalg.norm(u_bspl[:,0,:], axis=1)
+
+
+        if muS_sec_E!=0 and muS_sec_N!=0:
+            for i in range(0, len(u_sec_bspl)):
+                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
+                assert u_sec_normal[i] != u_sec_bspl[i] #Diff secondary separations
+        else:
+            for i in range(0, len(u_sec_bspl)):
+                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
+                assert np.round(u_sec_normal[i],7) == np.round(u_sec_bspl[i],7) #Same secondary separations
+            
+            
+#fratio_bin will not pass as a float. Has to be passed in as an array! Otherwise will fail the test.
+    linorbs1(8,3,1,4)
+    linorbs1(3,8,0,0)    
+    linorbs2(8,3,1,4)
+    linorbs2(3,8,0,0)    
+    linorbs3(8,3,1,4)
+    linorbs3(3,8,0,0)    
+
+
+def ra_dec_plots_plus_sign_changes_linorbs1():
+    def linorbs1(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #muS in mas/yr
+        mL = 1
+        t0 = 2000.00
+        beta = 0.5
+        dL = 3000 #parsecs
+        dL_dS = 0.6
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        muL_E = 5.0 #mas/yr
+        muL_N = 5.0 #mas/yr
+        sep = 4#mas
+        alpha = 50
+        mag_src_pri = 16
+        mag_src_sec = 20
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+    
+        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param1(
+            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+            muS_E, muS_N, muS_sec_E, muS_sec_N, sep, alpha,
+            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
+        )
+    
+        #separations
+        t = np.arange(t0-2000, t0+2000, 1) 
+        dt=t-bsplorbits.t0
+        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muS) * 1e-3
+        srce_pos_secondary = srce_pos_primary + bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muS_sec) * 1e-3
+
+
+
+        #Sign Change check to see if the two lines crossed each other. If the first element in sign_ra and sign_dec is 1, the sign of array changed.
+        difference = srce_pos_primary-srce_pos_secondary
+        difference_ra=difference[:,0]
+        difference_dec=difference[:,1]
+        #The sign function returns -1 if x < 0, 0 if x==0, 1 if x > 0
+
+
+        if bsplorbits.muS_sec_E !=0 and bsplorbits.muS_sec_N  !=0:
+            np.sign(difference_ra[0])!=np.sign(difference_ra[-1]) and np.sign(difference_ra[0])!=np.sign(difference_ra[-1])
+
+        else:
+            np.sign(difference_ra[0])==np.sign(difference_ra[-1]) and np.sign(difference_ra[0])==np.sign(difference_ra[-1])
+            
+
+        
+            
+        return srce_pos_primary[:, 0], srce_pos_primary[:, 1], srce_pos_secondary[:, 0], srce_pos_secondary[:, 1], [muS_E, muS_N], [muS_sec_E, muS_sec_N]
+            
+    fig, ax = plt.subplots(2, 3, figsize=(20,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
+    tests=[linorbs1(8,3,1,4),
+           linorbs1(6,3,1,7),
+           linorbs1(3,8,9,1),
+           linorbs1(4,7,7,9),
+           linorbs1(4,7,9,7),
+           linorbs1(1,6,0,0)]   
+
+    count=0
+    for i in range(0,2):
+        for j in range(0,3):
+            srce_pos_primary_ra, srce_pos_primary_dec, srce_pos_secondary_ra, srce_pos_secondary_dec, muS, muS_sec= tests[count]
+
+            lim = 0.02
+            ax[i][j].set_xlim(lim, -lim)  # arcsec
+            ax[i][j].set_ylim(-lim, lim)
+            ax[i][j].plot(srce_pos_secondary_ra, srce_pos_secondary_dec, label='src_pos_sec_nopar_linorbs_Param1')
+            ax[i][j].plot(srce_pos_primary_ra, srce_pos_primary_dec, label='src_pos_pri_nopar_linorbs_Param1')
+            ax[i][j].set_xlabel('dRA (arcsec)')
+            ax[i][j].set_ylabel('dDec (arcsec)')
+            ax[i][j].set_title(f'Zoomed-out drA vs dDec with muS {muS} and muS_sec{muS_sec}')
+            ax[i][j].legend(loc="best")
+            count+=1
+
+#no parallax source positions
+def ra_dec_plots_plus_sign_changes_linorbs2():
+    def linorbs2(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #muS in mas/yr
+        t0 = 5760.00
+        u0_amp = 6
+        tE = 154
+        thetaE = 5 
+        piS = 0.6
+        piE_E = 1
+        piE_N = 1
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        sep = 3 #mas
+        alpha = 50
+        fratio_bin = 1.5
+        mag_base = 19
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+
+        
+        
+        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param2(
+            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+
+        #Seperations
+        t = np.arange(t0-2000, t0+2000, 1) 
+        dt=t-bsplorbits.t0
+        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muS) * 1e-3
+        srce_pos_secondary = srce_pos_primary+bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muS_sec) * 1e-3
+
+
+
+        #Sign Change check to see if the two lines crossed each other. If the first element in sign_ra and sign_dec is 1, the sign of array changed.
+        difference = srce_pos_primary-srce_pos_secondary
+        difference_ra=difference[:,0]
+        difference_dec=difference[:,1]
+        #The sign function returns -1 if x < 0, 0 if x==0, 1 if x > 0
+
+
+        if bsplorbits.muS_sec_E !=0 and bsplorbits.muS_sec_N  !=0:
+            np.sign(difference_ra[0])!=np.sign(difference_ra[-1]) and np.sign(difference_ra[0])!=np.sign(difference_ra[-1])
+
+        else:
+            np.sign(difference_ra[0])==np.sign(difference_ra[-1]) and np.sign(difference_ra[0])==np.sign(difference_ra[-1])
+            
+
+            
+        return srce_pos_primary[:, 0], srce_pos_primary[:, 1], srce_pos_secondary[:, 0], srce_pos_secondary[:, 1], [muS_E, muS_N], [muS_sec_E, muS_sec_N]
+            
+    fig, ax = plt.subplots(2, 3, figsize=(20,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
+    tests=[linorbs2(8,3,-1,4),
+           linorbs2(-6,-3,1,-7),
+           linorbs2(3,8,9,1),
+           linorbs2(4,7,7,19),
+           linorbs2(-4,7,0,7),
+           linorbs2(1,6,0,0)]   
+
+
+
+    count=0
+    for i in range(0,2):
+        for j in range(0,3):
+            srce_pos_primary_ra, srce_pos_primary_dec, srce_pos_secondary_ra, srce_pos_secondary_dec, muS, muS_sec= tests[count]
+
+            lim = 0.02
+            ax[i][j].set_xlim(lim, -lim)  # arcsec
+            ax[i][j].set_ylim(-lim, lim)
+            ax[i][j].plot(srce_pos_secondary_ra, srce_pos_secondary_dec, label='sec_pos_nopar_linorbs_param2')
+            ax[i][j].plot(srce_pos_primary_ra, srce_pos_primary_dec, label='pri_pos_nopar_linorbs_param2')
+            ax[i][j].set_xlabel('dRA (arcsec)')
+            ax[i][j].set_ylabel('dDec (arcsec)')
+            ax[i][j].set_title(f'Zoomed-out drA vs dDec with muS {muS} and muS_sec{muS_sec}')
+            ax[i][j].legend(loc="best")
+            count+=1
+
+
+#no parallax source positions
+def ra_dec_plots_plus_sign_changes_linorbs3():
+    def linorbs3(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #muS in mas/yr
+        t0 = 5760.00
+        u0_amp = 6
+        tE = 154
+        log_thetaE = np.log(5)
+        piS = 0.6
+        piE_E = 1
+        piE_N = 1
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        sep = 3 #mas
+        alpha = 50
+        fratio_bin = 1.5
+        mag_base = 19
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+
+        
+        
+        
+        bsplnormal = model.BSPL_PhotAstrom_noPar_Param3(
+            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+
+        
+        
+        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param3(
+            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+        
+    
+        #Seperations
+        t = np.arange(t0-2000, t0+2000, 1) 
+        dt=t-bsplorbits.t0
+        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muS) * 1e-3
+        srce_pos_secondary = srce_pos_primary+bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muS_sec) * 1e-3
+
+        
+
+        #Sign Change check to see if the two lines crossed each other. If the first element in sign_ra and sign_dec is 1, the sign of array changed.
+        difference = srce_pos_primary-srce_pos_secondary
+        difference_ra=difference[:,0]
+        difference_dec=difference[:,1]
+        #The sign function returns -1 if x < 0, 0 if x==0, 1 if x > 0
+
+
+        if bsplorbits.muS_sec_E !=0 and bsplorbits.muS_sec_N  !=0:
+            np.sign(difference_ra[0])!=np.sign(difference_ra[-1]) and np.sign(difference_ra[0])!=np.sign(difference_ra[-1])
+
+        else:
+            np.sign(difference_ra[0])==np.sign(difference_ra[-1]) and np.sign(difference_ra[0])==np.sign(difference_ra[-1])
+            
+
+        return srce_pos_primary[:, 0], srce_pos_primary[:, 1], srce_pos_secondary[:, 0], srce_pos_secondary[:, 1], [muS_E, muS_N], [muS_sec_E, muS_sec_N]
+            
+    fig, ax = plt.subplots(2, 3, figsize=(20,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
+    tests=[linorbs3(8,3,-1,4),
+           linorbs3(-6,-3,1,-7),
+           linorbs3(3,8,9,1),
+           linorbs3(4,7,7,19),
+           linorbs3(-4,7,0,7),
+           linorbs3(1,6,0,0)]   
+
+
+
+    count=0
+    for i in range(0,2):
+        for j in range(0,3):
+            srce_pos_primary_ra, srce_pos_primary_dec, srce_pos_secondary_ra, srce_pos_secondary_dec, muS, muS_sec= tests[count]
+
+            lim = 0.005
+            ax[i][j].set_xlim(lim, -lim)  # arcsec
+            ax[i][j].set_ylim(-lim, lim)
+            ax[i][j].plot(srce_pos_secondary_ra, srce_pos_secondary_dec, label='u_sec_nopar_linorbs_param3')
+            ax[i][j].plot(srce_pos_primary_ra, srce_pos_primary_dec, label='u_pri_nopar_linorbs_param3')
+            ax[i][j].set_xlabel('dRA (arcsec)')
+            ax[i][j].set_ylabel('dDec (arcsec)')
+            ax[i][j].set_title(f'Zoomed-in drA vs dDec with muS {muS} and muS_sec{muS_sec}')
+            ax[i][j].legend(loc="best")
+            count+=1
