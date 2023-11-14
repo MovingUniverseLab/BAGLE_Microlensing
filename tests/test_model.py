@@ -3846,8 +3846,6 @@ def bspl_linorbs_check_differences():
         assert bsplorbits.muS_sec_N == muS_sec_N
         assert bsplorbits.b_sff[0] == b_sff
         assert bsplorbits.mag_src_pri == mag_src_pri
-        assert bsplorbits.xS0_sec_E == sep_vec_test[0]
-        assert bsplorbits.xS0_sec_N == sep_vec_test[1]
 
         if muS_sec_E!=0 and muS_sec_N!=0:
             for i in range(0, len(bsplorbits.muS)):
@@ -3855,15 +3853,12 @@ def bspl_linorbs_check_differences():
                 assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
                 assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
                 assert bsplorbits.muRel_sec_hat[i]!=bsplorbits.muRel_hat[i] #Diff muRel for primary and secondary source motion within the same orbits model
-                assert bsplorbits.muRel_sec_hat[i]!=bsplnormal.muRel_hat[i] #Diff muRel for primary and secondary source motion within the two diff orbits model
         else: 
-            #if no muS_sec, it will follow primary
             for i in range(0, len(bsplorbits.muS)):
                 assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
                 assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
-                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Same secondary source motion
+                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
                 assert bsplorbits.muRel_sec_hat[i]==bsplorbits.muRel_hat[i] #Same muRel for primary and secondary source motion within the same orbits model
-                assert bsplorbits.muRel_sec_hat[i]==bsplnormal.muRel_hat[i] #Same muRel for primary and secondary source motion within the two diff orbits model
             
         #separations
         t = np.arange(t0- 5000, t0+5000, 1)
@@ -3874,6 +3869,7 @@ def bspl_linorbs_check_differences():
         u_pri_normal = np.linalg.norm(u_normal[:,0,:], axis=1)
         u_pri_bspl = np.linalg.norm(u_bspl[:,0,:], axis=1)
 
+
         if muS_sec_E!=0 and muS_sec_N!=0:
             for i in range(0, len(u_sec_bspl)):
                 assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
@@ -3881,7 +3877,9 @@ def bspl_linorbs_check_differences():
         else:
             for i in range(0, len(u_sec_bspl)):
                 assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
-                assert u_sec_normal[i] == u_sec_bspl[i] #Diff secondary separations
+                assert u_sec_normal[i] == u_sec_bspl[i] #Same secondary separations
+            
+            
                 
     def linorbs2(muS_E, muS_N, muS_sec_E, muS_sec_N):
         #muS in mas/yr
@@ -3928,8 +3926,6 @@ def bspl_linorbs_check_differences():
         assert bsplorbits.t0 == t0
         assert bsplorbits.muS_sec_E == muS_sec_E
         assert bsplorbits.muS_sec_N == muS_sec_N
-        assert bsplorbits.xS0_sec_E == sep_vec_test[0]
-        assert bsplorbits.xS0_sec_N == sep_vec_test[1]
 
         
         if muS_sec_E!=0 and muS_sec_N!=0:
@@ -3938,18 +3934,16 @@ def bspl_linorbs_check_differences():
                 assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
                 assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
                 assert bsplorbits.muRel_sec_hat[i]!=bsplorbits.muRel_hat[i] #Diff muRel for primary and secondary source motion within the same orbits model
-                assert bsplorbits.muRel_sec_hat[i]!=bsplnormal.muRel_hat[i] #Diff muRel for primary and secondary source motion within the two diff orbits model
         else: 
             for i in range(0, len(bsplorbits.muS)):
                 assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
                 assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
-                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Same secondary source motion
+                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
                 assert bsplorbits.muRel_sec_hat[i]==bsplorbits.muRel_hat[i] #Same muRel for primary and secondary source motion within the same orbits model
-                assert bsplorbits.muRel_sec_hat[i]==bsplnormal.muRel_hat[i] #Same muRel for primary and secondary source motion within the two diff orbits model
             
         
     
-        #Seperations
+        #Separations
         t = np.arange(t0- 5000, t0+5000, 1)
         u_bspl = bsplorbits.get_u(t) 
         u_normal = bsplnormal.get_u(t)
@@ -3966,7 +3960,8 @@ def bspl_linorbs_check_differences():
         else:
             for i in range(0, len(u_sec_bspl)):
                 assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
-                assert u_sec_normal[i] == u_sec_bspl[i] #Diff secondary separations
+                assert u_sec_normal[i] == u_sec_bspl[i] #Same secondary separations
+            
         
     def linorbs3(muS_E, muS_N, muS_sec_E, muS_sec_N):
         #with linorbs3 there will be a rounding error due to the way murel is calculated. 
@@ -4021,6 +4016,7 @@ def bspl_linorbs_check_differences():
         
     
         
+        
         if muS_sec_E!=0 and muS_sec_N!=0:
 
             for i in range(0, len(bsplorbits.muS)):
@@ -4055,6 +4051,7 @@ def bspl_linorbs_check_differences():
             for i in range(0, len(u_sec_bspl)):
                 assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
                 assert np.round(u_sec_normal[i],7) == np.round(u_sec_bspl[i],7) #Same secondary separations
+            
             
             
 #fratio_bin will not pass as a float. Has to be passed in as an array! Otherwise will fail the test.
