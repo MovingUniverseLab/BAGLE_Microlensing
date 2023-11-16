@@ -4434,7 +4434,6 @@ def test_centroid_shift_Par_Param1_compar():
            test_plots(1,6,0,0)] 
 
 
-
     count=0
     for i in range(0,2):
         for j in range(0,3):
