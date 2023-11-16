@@ -4308,3 +4308,446 @@ def ra_dec_plots_plus_sign_changes_linorbs3():
             ax[i][j].set_title(f'Zoomed-in drA vs dDec with muS {muS} and muS_sec{muS_sec}')
             ax[i][j].legend(loc="best")
             count+=1
+def test_centroid_shift_noPar_Param1_compar():
+    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #muS in mas/yr
+        mL=1   
+        t0 = 58600.00
+        beta = 0.1
+        dL = 150 #parsecs
+        dL_dS = 0.1
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        muL_E = 10.0 #mas/yr
+        muL_N = 24.0 #mas/yr
+        sep = 1 #mas
+        alpha = 100
+        mag_src_pri = 15
+        mag_src_sec = 16
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+
+        
+        bsplnormal = model.BSPL_PhotAstrom_noPar_Param1(
+            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+            muS_E, muS_N, sep, alpha,
+            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
+        )
+        
+        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param1(
+            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+            muS_E, muS_N, muS_sec_E, muS_sec_N, sep, alpha,
+            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
+        )
+
+    
+        #separations1
+        t = np.arange(t0-10000, t0+10000, 1) 
+        shift_orbit = bsplorbits.get_centroid_shift(t)
+        shift_normal = bsplnormal.get_centroid_shift(t)
+
+
+
+
+
+        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal
+            
+    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
+    tests=[test_plots(8,3,1,4),
+           test_plots(6,3,1,7),
+           test_plots(3,8,9,1),
+           test_plots(4,7,7,9),
+           test_plots(4,7,9,7),
+           test_plots(1,6,0,0)] 
+
+
+
+    count=0
+    for i in range(0,2):
+        for j in range(0,3):
+            muS, muS_sec, shift_orbit, shift_normal = tests[count]
+            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label = 'BSPL_PhotAstrom_noPar_LinOrbs_Param1')
+            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_noPar_Param1')
+
+            ax[i][j].invert_xaxis  # arcsec
+
+            ax[i][j].set_xlabel('RA (arcsec)')
+            ax[i][j].set_ylabel('Dec (arcsec)')
+            ax[i][j].legend(loc='best')
+            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs1 with muS {muS} and muS_sec {muS_sec}' )
+            
+            ax[i][j].axis('equal')
+            count+=1
+
+def test_centroid_shift_Par_Param1_compar():
+    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #muS in mas/yr
+        mL=1   
+        t0 = 58600.00
+        beta = 0.1
+        dL = 150 #parsecs
+        dL_dS = 0.1
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        muL_E = 10.0 #mas/yr
+        muL_N = 24.0 #mas/yr
+        sep = 1 #mas
+        alpha = 100
+        mag_src_pri = 15
+        mag_src_sec = 16
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+
+        
+        bsplnormal = model.BSPL_PhotAstrom_Par_Param1(
+            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+            muS_E, muS_N, sep, alpha,
+            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
+        )
+        
+        bsplorbits = model.BSPL_PhotAstrom_Par_LinOrbs_Param1(
+            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+            muS_E, muS_N, muS_sec_E, muS_sec_N, sep, alpha,
+            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
+        )
+
+    
+        #separations1
+        t = np.arange(t0-10000, t0+10000, 1) 
+        shift_orbit = bsplorbits.get_centroid_shift(t)
+        shift_normal = bsplnormal.get_centroid_shift(t)
+
+
+
+
+
+        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal
+            
+    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
+    tests=[test_plots(8,3,1,4),
+           test_plots(6,3,1,7),
+           test_plots(3,8,9,1),
+           test_plots(4,7,7,9),
+           test_plots(4,7,9,7),
+           test_plots(1,6,0,0)] 
+
+
+
+    count=0
+    for i in range(0,2):
+        for j in range(0,3):
+            muS, muS_sec, shift_orbit, shift_normal = tests[count]
+            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label = 'BSPL_PhotAstrom_Par_LinOrbs_Param1')
+            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_Par_Param1')
+
+            ax[i][j].invert_xaxis  # arcsec
+
+            ax[i][j].set_xlabel('RA (arcsec)')
+            ax[i][j].set_ylabel('Dec (arcsec)')
+            ax[i][j].legend(loc='best')
+            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs1 with muS {muS} and muS_sec {muS_sec}' )
+            
+            ax[i][j].axis('equal')
+            count+=1
+            
+            
+
+
+def test_centroid_shift_noPar_LinOrbs_Param2_compar():
+    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #muS in mas/yr
+        t0 = 57600.00
+        u0_amp = 6
+        tE = 154
+        thetaE = 5 
+        piS = 0.6
+        piE_E = 1
+        piE_N = 1
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        sep = 1 #mas
+        alpha = 10
+        fratio_bin = 1.5
+        mag_base = 19
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+
+
+        #If you want to see a beyblade, try this
+        #sep = 100 #mas
+        #alpha = 50
+        
+        
+        
+        
+        bsplnormal = model.BSPL_PhotAstrom_noPar_Param2(
+            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+
+        
+        
+        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param2(
+            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+
+    
+        #Seperations1
+        t = np.arange(t0-10000, t0+10000, 1) 
+        shift_orbit = bsplorbits.get_centroid_shift(t)
+        shift_normal = bsplnormal.get_centroid_shift(t)
+
+
+
+
+        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal
+            
+    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
+    tests=[test_plots(8,3,1,4),
+           test_plots(6,3,1,7),
+           test_plots(3,8,9,1),
+           test_plots(4,7,7,9),
+           test_plots(4,7,9,7),
+           test_plots(1,6,0,0)] 
+
+
+
+    count=0
+    for i in range(0,2):
+        for j in range(0,3):
+            muS, muS_sec, shift_orbit, shift_normal = tests[count]
+            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label='BSPL_PhotAstrom_Par_LinOrbs_Param2')
+            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_Par_Param2')
+
+            ax[i][j].invert_xaxis  # arcsec
+
+            ax[i][j].set_xlabel('RA (arcsec)')
+            ax[i][j].set_ylabel('Dec (arcsec)')
+            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs2 with muS {muS} and muS_sec {muS_sec}' )
+            ax[i][j].legend(loc='best')
+            
+            ax[i][j].axis('equal')
+            count+=1
+
+def test_centroid_shift_Par_LinOrbs_Param2_compar():
+    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #muS in mas/yr
+        t0 = 57600.00
+        u0_amp = 6
+        tE = 154
+        thetaE = 5 
+        piS = 0.6
+        piE_E = 1
+        piE_N = 1
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        sep = 1 #mas
+        alpha = 10
+        fratio_bin = 1.5
+        mag_base = 19
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+
+        
+        
+        
+        
+        
+        bsplnormal = model.BSPL_PhotAstrom_Par_Param2(
+            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+
+        
+        
+        bsplorbits = model.BSPL_PhotAstrom_Par_LinOrbs_Param2(
+            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+
+    
+        #Seperations1
+        t = np.arange(t0-10000, t0+10000, 1) 
+        shift_orbit = bsplorbits.get_centroid_shift(t)
+        shift_normal = bsplnormal.get_centroid_shift(t)
+
+
+
+
+        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal
+            
+    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
+    tests=[test_plots(8,3,1,4),
+           test_plots(6,3,1,7),
+           test_plots(3,8,9,1),
+           test_plots(4,7,7,9),
+           test_plots(4,7,9,7),
+           test_plots(1,6,0,0)] 
+
+
+
+    count=0
+    for i in range(0,2):
+        for j in range(0,3):
+            muS, muS_sec, shift_orbit, shift_normal = tests[count]
+            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label='BSPL_PhotAstrom_Par_LinOrbs_Param2')
+            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_Par_Param2')
+
+            ax[i][j].invert_xaxis  # arcsec
+
+            ax[i][j].set_xlabel('RA (arcsec)')
+            ax[i][j].set_ylabel('Dec (arcsec)')
+            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs2 with muS {muS} and muS_sec {muS_sec}' )
+            ax[i][j].legend(loc='best')
+            
+            ax[i][j].axis('equal')
+            count+=1
+
+def test_centroid_shift_noPar_LinOrbs_Param3_compar():
+    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #muS in mas/yr
+        t0 = 57600.00
+        u0_amp = 6
+        tE = 78
+        log_thetaE = np.log(2)
+        piS = 0.6
+        piE_E = 1
+        piE_N = 1
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        sep = 1 #mas
+        alpha = 10
+        fratio_bin = 1.5
+        mag_base = 19
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+
+
+        
+        bsplnormal = model.BSPL_PhotAstrom_noPar_Param3(
+            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+
+        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param3(
+            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+    
+    
+        #Seperations
+        t = np.arange(t0-10000, t0+10000, 1) 
+        shift_orbit = bsplorbits.get_centroid_shift(t)
+        shift_normal = bsplnormal.get_centroid_shift(t)
+        
+        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal 
+            
+    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
+    tests=[test_plots(8,3,1,4),
+           test_plots(6,3,1,7),
+           test_plots(3,8,9,1),
+           test_plots(4,7,7,9),
+           test_plots(4,7,9,7),
+           test_plots(1,6,0,0)] 
+
+
+
+    count=0
+    for i in range(0,2):
+        for j in range(0,3):
+            muS, muS_sec, shift_orbit, shift_normal = tests[count]
+            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label='BSPL_PhotAstrom_Par_LinOrbs_Param3')
+            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_Par_Param3')
+            ax[i][j].invert_xaxis  # arcsec
+
+            ax[i][j].set_xlabel('RA (arcsec)')
+            ax[i][j].set_ylabel('Dec (arcsec)')
+            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs3 with muS {muS} and muS_sec {muS_sec}' )
+            ax[i][j].legend(loc='best')
+            ax[i][j].axis('equal')
+
+            count+=1
+
+
+def test_centroid_shift_Par_LinOrbs_Param3_compar():
+    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
+        #muS in mas/yr
+        t0 = 57600.00
+        u0_amp = 6
+        tE = 78
+        log_thetaE = np.log(2)
+        piS = 0.6
+        piE_E = 1
+        piE_N = 1
+        xS0_E = 0.0 #ra
+        xS0_N = 0.0 #dec
+        sep = 1 #mas
+        alpha = 10
+        fratio_bin = 1.5
+        mag_base = 19
+        b_sff = 1
+        ra_L = 30
+        dec_L = 20
+
+
+        
+        bsplnormal = model.BSPL_PhotAstrom_Par_Param3(
+            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+
+        bsplorbits = model.BSPL_PhotAstrom_Par_LinOrbs_Param3(
+            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L
+        )
+    
+    
+        #Seperations
+        t = np.arange(t0-10000, t0+10000, 1) 
+        shift_orbit = bsplorbits.get_centroid_shift(t)
+        shift_normal = bsplnormal.get_centroid_shift(t)
+        
+        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal 
+            
+    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
+    tests=[test_plots(8,3,1,4),
+           test_plots(6,3,1,7),
+           test_plots(3,8,9,1),
+           test_plots(4,7,7,9),
+           test_plots(4,7,9,7),
+           test_plots(1,6,0,0)] 
+
+
+
+    count=0
+    for i in range(0,2):
+        for j in range(0,3):
+            muS, muS_sec, shift_orbit, shift_normal = tests[count]
+            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label='BSPL_PhotAstrom_Par_LinOrbs_Param3')
+            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_Par_Param3')
+            ax[i][j].invert_xaxis  # arcsec
+
+            ax[i][j].set_xlabel('RA (arcsec)')
+            ax[i][j].set_ylabel('Dec (arcsec)')
+            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs3 with muS {muS} and muS_sec {muS_sec}' )
+            ax[i][j].legend(loc='best')
+            ax[i][j].axis('equal')
+
+
+            count+=1
+
+

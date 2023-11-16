@@ -7347,7 +7347,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         return xS_lensed
 
     def get_centroid_shift(self, t, ast_filt_idx=0):
-        """Parallax: Get the centroid shift (in mas) for a list of
+        """Parallax: Get the centroid shift (in arcsec) for a list of
         observation times (in MJD).
 
         Returns the flux-weighted centroid of all the sources lensed images. 
@@ -7596,7 +7596,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'nonlinear'
+    orbitFlag = 'none'
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
@@ -7814,7 +7814,7 @@ class BSPL_PhotAstromParam2(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'nonlinear'
+    orbitFlag = 'none'
 
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
@@ -8014,7 +8014,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'nonlinear'
+    orbitFlag = 'none'
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
                  xS0_E, xS0_N,
@@ -8922,7 +8922,7 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
 
         return
                      
-class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
+class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
     A Binary point Source Point Lens model for microlensing. This model uses a
@@ -9002,6 +9002,7 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
         Declination of the lens in decimal degrees.
     """
 
+    orbitFlag='linear'
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
@@ -9015,38 +9016,30 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                  raL=None, decL=None):
 
-        self.gp_log_sigma = gp_log_sigma
-        self.gp_rho = gp_rho
-        self.gp_log_omega04_S0 = gp_log_omega04_S0
-        self.gp_log_omega0 = gp_log_omega0
-        
         super().__init__(mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
                  muL_E, muL_N,
                  muS_E, muS_N,
-                 muS_sec_E, muS_sec_N,
                  sep, alpha,
                  mag_src_pri, mag_src_sec,
                  b_sff,
+                 gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                  raL=raL, decL=decL)
         
-        self.gp_log_rho = {}
-        for key, val in self.gp_rho.items():
-            self.gp_log_rho[key] = np.log(val)
-
-        self.gp_log_S0 = {}
-        for key, val in self.gp_log_omega04_S0.items():
-            self.gp_log_S0[key] = self.gp_log_omega04_S0[key] - 4 * self.gp_log_omega0[key]
-
-        # Setup a useful "use_phot_gp" flag.
-        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
-        for key in self.gp_log_sigma.keys():
-            self.use_gp_phot[key] = True
+        
+        self.muS_sec = np.array([muS_sec_E, muS_sec_N])
+        self.muS_sec_E = muS_sec_E
+        self.muS_sec_N = muS_sec_N
+        
+        self.muRel_sec = self.muRel + self.muS_sec
+        self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
+        self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
+        self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
 
         return
 
 
-class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
+class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
     A Binary point Source Point Lens model for microlensing. This model uses a
@@ -9128,6 +9121,7 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
     decL: float, optional
         Declination of the lens in decimal degrees.
     """
+    orbitFlag = 'linear'
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
@@ -9139,36 +9133,28 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
                  mag_base, b_sff,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                  raL=None, decL=None):
-        
-        self.gp_log_sigma = gp_log_sigma
-        self.gp_rho = gp_rho
-        self.gp_log_omega04_S0 = gp_log_omega04_S0
-        self.gp_log_omega0 = gp_log_omega0
 
         super().__init__(t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
                  xS0_E, xS0_N,
                  muS_E, muS_N,
-                 muS_sec_E, muS_sec_N,
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
+                 gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                  raL=raL, decL=decL)
 
-        self.gp_log_rho = {}
-        for key, val in self.gp_rho.items():
-            self.gp_log_rho[key] = np.log(val)
-
-        self.gp_log_S0 = {}
-        for key, val in self.gp_log_omega04_S0.items():
-            self.gp_log_S0[key] = self.gp_log_omega04_S0[key] - 4 * self.gp_log_omega0[key]
-
-        # Setup a useful "use_phot_gp" flag.
-        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
-        for key in self.gp_log_sigma.keys():
-            self.use_gp_phot[key] = True
         
+        self.muS_sec = np.array([muS_sec_E, muS_sec_N])
+        self.muS_sec_E = muS_sec_E
+        self.muS_sec_N = muS_sec_N
+        
+        self.muRel_sec = self.muRel + self.muS_sec
+        self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
+        self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
+        self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
+
         return
-class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
+class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
     """
     Point Source Point Lens with GP model for microlensing. This model includes
     proper motions of the source and the source position on the sky.
@@ -9243,6 +9229,7 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
     decL: float, optional
         Declination of the lens in decimal degrees.
     """
+    orbitFlag='linear'
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
@@ -9255,32 +9242,26 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                  raL=None, decL=None):
 
-        self.gp_log_sigma = gp_log_sigma
-        self.gp_rho = gp_rho
-        self.gp_log_omega04_S0 = gp_log_omega04_S0
-        self.gp_log_omega0 = gp_log_omega0
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
-                         piE_E, piE_N,
-                         xS0_E, xS0_N,
-                         muS_E, muS_N,
-                         muS_sec_E, muS_sec_N,
-                         sep, alpha, fratio_bin,
-                         mag_base, b_sff,
-                         raL=raL, decL=decL)
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 sep, alpha, fratio_bin,
+                 mag_base, b_sff,
+                 gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
+                 raL=raL, decL=decL)
 
-        self.gp_log_rho = {}
-        for key, val in self.gp_rho.items():
-            self.gp_log_rho[key] = np.log(val)
-
-        self.gp_log_S0 = {}
-        for key, val in self.gp_log_omega04_S0.items():
-            self.gp_log_S0[key] = self.gp_log_omega04_S0[key] - 4 * self.gp_log_omega0[key]
-
-        # Setup a useful "use_phot_gp" flag.
-        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
-        for key in self.gp_log_sigma.keys():
-            self.use_gp_phot[key] = True
-
+        
+        
+        self.muS_sec = np.array([muS_sec_E, muS_sec_N])
+        self.muS_sec_E = muS_sec_E
+        self.muS_sec_N = muS_sec_N
+        
+        self.muRel_sec = self.muRel + self.muS_sec
+        self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
+        self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
+        self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
+                     
         return
                      
 ######################################################
