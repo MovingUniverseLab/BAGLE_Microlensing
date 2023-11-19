@@ -4092,8 +4092,8 @@ def ra_dec_plots_plus_sign_changes_linorbs1():
         #separations
         t = np.arange(t0-2000, t0+2000, 1) 
         dt=t-bsplorbits.t0
-        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muS) * 1e-3
-        srce_pos_secondary = srce_pos_primary + bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muS_sec) * 1e-3
+        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muRel) * 1e-3
+        srce_pos_secondary = bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muRel_sec) * 1e-3
 
 
 
@@ -4171,8 +4171,8 @@ def ra_dec_plots_plus_sign_changes_linorbs2():
         #Seperations
         t = np.arange(t0-2000, t0+2000, 1) 
         dt=t-bsplorbits.t0
-        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muS) * 1e-3
-        srce_pos_secondary = srce_pos_primary+bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muS_sec) * 1e-3
+        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muRel) * 1e-3
+        srce_pos_secondary = bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muRel_sec) * 1e-3
 
 
 
@@ -4262,8 +4262,8 @@ def ra_dec_plots_plus_sign_changes_linorbs3():
         #Seperations
         t = np.arange(t0-2000, t0+2000, 1) 
         dt=t-bsplorbits.t0
-        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muS) * 1e-3
-        srce_pos_secondary = srce_pos_primary+bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muS_sec) * 1e-3
+        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muRel) * 1e-3
+        srce_pos_secondary = bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muRel_sec) * 1e-3
 
         
 
