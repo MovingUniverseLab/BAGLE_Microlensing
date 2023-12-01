@@ -498,7 +498,10 @@ class PSPL_AstromParam4(PSPL_Param):
     ----------
     
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float
         Angular distance between the lens and source on the 
         plane of the sky at closest approach in units of thetaE. Can be
@@ -534,6 +537,7 @@ class PSPL_AstromParam4(PSPL_Param):
     
         * raL: Right ascension of the lens in decimal degrees.
         * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location (def='earth') such as 'jwst' or 'spitzer'. 
         
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
@@ -645,7 +649,10 @@ class PSPL_AstromParam3(PSPL_Param):
     ----------
     
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float
         Angular distance between the lens and source on the 
         plane of the sky at closest approach in units of thetaE. Can be
@@ -681,6 +688,7 @@ class PSPL_AstromParam3(PSPL_Param):
     
         * raL: Right ascension of the lens in decimal degrees.
         * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location (def='earth') such as 'jwst' or 'spitzer'. 
         
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
@@ -791,7 +799,10 @@ class PSPL_PhotParam1(PSPL_Param):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float
          Angular distance between the lens and source on the plane of the
          sky at closest approach in units of thetaE. It can be
@@ -814,7 +825,8 @@ class PSPL_PhotParam1(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
-
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE',
@@ -884,7 +896,10 @@ class PSPL_PhotParam2(PSPL_Param):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float
          Angular distance between the lens and source on the plane of the
          sky at closest approach in units of thetaE. It can be
@@ -912,6 +927,7 @@ class PSPL_PhotParam2(PSPL_Param):
     
         * raL: Right ascension of the lens in decimal degrees.
         * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE',
@@ -1008,6 +1024,7 @@ class PSPL_PhotParam3(PSPL_Param):
     
         * raL: Right ascension of the lens in decimal degrees.
         * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'log_tE',
@@ -1072,24 +1089,30 @@ class PSPL_PhotParam3(PSPL_Param):
     
 class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
     """PSPL model for photometry only.
-    Point source point lens model for microlensing photometry only.
+    
+    Point source point lens model for microlensing photometry only
+    in geocentric-projected coordinates.
     This model includes the relative proper motion between the lens
     and the source. Parameters are reduced with the use of piRel
     (rather than dL and dS) and muRel (rather than muL and muS).
+
     Note the attributes, RA (raL) and Dec (decL) are required 
     if you are calculating a model with parallax. 
 
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in geocentric coordinates. This should be well aligned with the
+        photometric peak. 
     u0_amp: float
          Angular distance between the lens and source on the plane of the
          sky at closest approach in units of thetaE. It can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
           * negative (u0_amp < 0 when u0_hat[0] < 0).
+         Note, this is the geocentric-projected u0.
     tE: float
-        Einstein crossing time in days.
+        Einstein crossing time in days in the geocentric-projected frame.
     piE_E: float
         The microlensing parallax in the East direction in units of thetaE.
     piE_N: float
@@ -1101,11 +1124,15 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
     mag_src: numpy array or list
         Photometric magnitude of the source. This must be passed in as a
         list or array, with one entry for each photometric filter.
+    t0par: float
+        The reference time (MJD.DDD) used to establish the geocentric-projected
+        frame.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
-
+    obsLocation: str, optional
+        The observers location (def=earth). 
     """
     def __init__(self, t0, u0_amp, tE, 
                  piE_E, piE_N, b_sff, mag_src,
@@ -1126,7 +1153,7 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
         # This checks for proper parameter formatting.
         super().__init__(t0, u0_amp, tE, 
                          piE_E, piE_N, b_sff, mag_src,
-                         raL, decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         return
 
@@ -1146,7 +1173,10 @@ class PSPL_PhotAstromParam1(PSPL_Param):
     mL: float
         Mass of the lens (Msun)
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     beta: float
         Angular distance between the lens and source on the plane of the sky (mas). Can be
 
@@ -1181,6 +1211,8 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
 
     fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
@@ -1300,7 +1332,10 @@ class PSPL_PhotAstromParam2(PSPL_Param):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float 
         Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. Can be
@@ -1337,6 +1372,8 @@ class PSPL_PhotAstromParam2(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
@@ -1496,6 +1533,7 @@ class PSPL_PhotAstromParam3(PSPL_Param):
     
         * raL: Right ascension of the lens in decimal degrees.
         * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
@@ -1655,6 +1693,7 @@ class PSPL_PhotAstromParam4(PSPL_Param):
     
         * raL: Right ascension of the lens in decimal degrees.
         * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
@@ -1757,6 +1796,67 @@ class PSPL_PhotAstromParam4(PSPL_Param):
 
 
 class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
+    """
+    Point Source Point Lens model for microlensing in the
+    geocentric-projected reference frame. This model includes
+    proper motions of the source and the source position on the sky.
+    It is the same as PSPL_PhotAstromParam2 except it fits for baseline instead
+    of source magnitude.
+
+    Parameters
+    ----------
+
+    t0 : float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in geocentric coordinates. This should be well aligned with the
+        photometric peak. 
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can be
+
+           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+           * negative (u0_amp < 0 when u0_hat[0] < 0).
+    
+         Note, this is the geocentric-projected u0.
+    tE : float
+        Einstein crossing time in days in the geocentric-projected frame.
+    thetaE: 
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+           :math:`b_sff = f_S / (f_S + f_L + f_N)`. 
+        This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base : numpy array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+
+    Notes
+    -----
+    
+    .. note:: Required parameters if calculating with parallax
+    
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location (def='earth') such as 'jwst' or 'spitzer'. 
+    """
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
                  xS0_E, xS0_N,
@@ -1785,7 +1885,7 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
                          xS0_E, xS0_N,
                          muS_E, muS_N,
                          b_sff, mag_base,
-                         raL, decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         return
 
@@ -1845,6 +1945,7 @@ class PSPL_PhotAstromParam5(PSPL_Param):
     
         * raL: Right ascension of the lens in decimal degrees.
         * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piEN_piEE', 'piE_E',
@@ -1958,14 +2059,14 @@ class PSPL_GP_PhotParam1(PSPL_PhotParam1):
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_src,
                  gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.gp_log_sigma = gp_log_sigma
         self.gp_log_rho = gp_log_rho
         self.gp_log_S0 = gp_log_S0
         self.gp_log_omega0 = gp_log_omega0
 
         super().__init__(t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_src,
-                         raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         # Setup a useful "use_phot_gp" flag.
         self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
@@ -1984,7 +2085,7 @@ class PSPL_GP_PhotParam1_2(PSPL_PhotParam1):
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_src,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
 
         self.gp_log_sigma = gp_log_sigma
         self.gp_rho = gp_rho
@@ -1992,7 +2093,7 @@ class PSPL_GP_PhotParam1_2(PSPL_PhotParam1):
         self.gp_log_omega0 = gp_log_omega0
 
         super().__init__(t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_src,
-                         raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -2019,14 +2120,14 @@ class PSPL_GP_PhotParam2(PSPL_PhotParam2):
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
                  gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.gp_log_sigma = gp_log_sigma
         self.gp_log_rho = gp_log_rho
         self.gp_log_S0 = gp_log_S0
         self.gp_log_omega0 = gp_log_omega0
 
         super().__init__(t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
-                         raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         # Setup a useful "use_phot_gp" flag.
         self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
@@ -2049,7 +2150,7 @@ class PSPL_GP_PhotParam2_2(PSPL_PhotParam2):
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
 
         self.gp_log_sigma = gp_log_sigma
         self.gp_rho = gp_rho
@@ -2057,7 +2158,7 @@ class PSPL_GP_PhotParam2_2(PSPL_PhotParam2):
         self.gp_log_omega0 = gp_log_omega0
 
         super().__init__(t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
-                         raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -2083,14 +2184,14 @@ class PSPL_GP_PhotParam3(PSPL_PhotParam3):
 
     def __init__(self, t0, u0_amp, log_tE, log_piE, phi_muRel, b_sff, mag_base,
                  gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         self.gp_log_sigma = gp_log_sigma
         self.gp_log_rho = gp_log_rho
         self.gp_log_S0 = gp_log_S0
         self.gp_log_omega0 = gp_log_omega0
 
         super().__init__(t0, u0_amp, log_tE, log_piE, phi_muRel, b_sff, mag_base,
-                         raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         # Setup a useful "use_phot_gp" flag.
         self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
@@ -2109,7 +2210,7 @@ class PSPL_GP_PhotAstromParam1(PSPL_PhotAstromParam1):
                  muS_E, muS_N,
                  b_sff, mag_src,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
 
         self.gp_log_sigma = gp_log_sigma
         self.gp_rho = gp_rho
@@ -2121,7 +2222,7 @@ class PSPL_GP_PhotAstromParam1(PSPL_PhotAstromParam1):
                          muL_E, muL_N,
                          muS_E, muS_N,
                          b_sff, mag_src,
-                         raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -2148,7 +2249,7 @@ class PSPL_GP_PhotAstromParam2(PSPL_PhotAstromParam2):
                  muS_E, muS_N,
                  b_sff, mag_src,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
 
         self.gp_log_sigma = gp_log_sigma
         self.gp_rho = gp_rho
@@ -2160,7 +2261,7 @@ class PSPL_GP_PhotAstromParam2(PSPL_PhotAstromParam2):
                          xS0_E, xS0_N,
                          muS_E, muS_N,
                          b_sff, mag_src,
-                         raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -2189,7 +2290,10 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
     ----------
 
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float
         Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. Can be
@@ -2232,6 +2336,8 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
 
     Notes
     -----
@@ -2246,7 +2352,7 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
                  muS_E, muS_N,
                  b_sff, mag_base,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
 
         self.gp_log_sigma = gp_log_sigma
         self.gp_rho = gp_rho
@@ -2258,7 +2364,7 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
                          xS0_E, xS0_N,
                          muS_E, muS_N,
                          b_sff, mag_base,
-                         raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -2286,8 +2392,10 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float
         Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. Can be
@@ -2331,6 +2439,8 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
 
 
     Notes
@@ -2348,7 +2458,7 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
                  muS_E, muS_N,
                  b_sff, mag_base,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
 
         self.gp_log_sigma = gp_log_sigma
         self.gp_rho = gp_rho
@@ -2360,7 +2470,7 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
                          xS0_E, xS0_N,
                          muS_E, muS_N,
                          b_sff, mag_base,
-                         raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -3568,7 +3678,7 @@ class PSPL_noParallax(ParallaxClassABC):
     
 class PSPL_Parallax(ParallaxClassABC):
     parallaxFlag = True
-    fixed_param_names = ['raL', 'decL']
+    fixed_param_names = ['raL', 'decL', 'obsLocation']
 
     def start(self):
         if self.raL is None or self.decL is None:
@@ -3944,11 +4054,8 @@ class PSPL_Parallax(ParallaxClassABC):
 # This is following the geocentric projected formalism
 # e.g. P Mroz's code, MulensModel, ...
 # Based on P Mroz's code which is based on MulensModel.
-# FIGURE OUT: do the functions that are just lens or source
-# (not relative to each other) need to be changed?
-# I don't think so but I'm not 100% sure...
 class PSPL_Parallax_geoproj(PSPL_Parallax):
-    fixed_param_names = ['raL', 'decL', 't0par']
+    fixed_param_names = ['raL', 'decL', 'obsLocation', 't0par']
 
     def geta(self, ra, dec, t0par, t):
         """
@@ -6610,7 +6717,10 @@ class PSBL_PhotParam1(PSPL_Param):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth [MJD]
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float
         Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. It can be
@@ -6646,6 +6756,8 @@ class PSBL_PhotParam1(PSPL_Param):
     decL: float
         Declination of the lens in decimal degrees.
         Required if calculating with parallax
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     root_tol: float
         | Tolerance in comparing the polynomial roots to the physical solutions. 
         | Default = 0.0
@@ -7396,7 +7508,10 @@ class BSPL_PhotParam1(PSPL_Param):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float
         Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. It can be
@@ -7432,6 +7547,8 @@ class BSPL_PhotParam1(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
 
     """
 
@@ -7530,7 +7647,10 @@ class BSPL_PhotAstromParam1(PSPL_Param):
     mL: float
         Mass of the lens (Msun)
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     beta: float
         Angular distance between the lens and primary source on the
         plane of the sky (mas). Can be
@@ -7581,6 +7701,8 @@ class BSPL_PhotAstromParam1(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
 
     fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
@@ -7736,7 +7858,10 @@ class BSPL_PhotAstromParam2(PSPL_Param):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -7791,6 +7916,8 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
@@ -7934,7 +8061,10 @@ class BSPL_PhotAstromParam3(PSPL_Param):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -7989,6 +8119,8 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
@@ -8134,7 +8266,10 @@ class BSPL_GP_PhotParam1(BSPL_PhotParam1):
     Parameters
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float
         Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. It can be
@@ -8179,6 +8314,8 @@ class BSPL_GP_PhotParam1(BSPL_PhotParam1):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
 
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
@@ -8187,7 +8324,7 @@ class BSPL_GP_PhotParam1(BSPL_PhotParam1):
                  sep, phi, mag_src_pri, mag_src_sec,
                  b_sff,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
 
         self.gp_log_sigma = gp_log_sigma
         self.gp_rho = gp_rho
@@ -8195,9 +8332,9 @@ class BSPL_GP_PhotParam1(BSPL_PhotParam1):
         self.gp_log_omega0 = gp_log_omega0
 
         super().__init__(t0, u0_amp, tE, piE_E, piE_N,
-                 sep, phi, mag_src_pri, mag_src_sec,
-                 b_sff,
-                 raL=raL, decL=decL)
+                         sep, phi, mag_src_pri, mag_src_sec,
+                         b_sff,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
         
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -8230,7 +8367,10 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
     mL: float
         Mass of the lens (Msun)
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     beta: float
         Angular distance between the lens and primary source on the
         plane of the sky (mas). Can be
@@ -8289,6 +8429,8 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
 
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
@@ -8301,7 +8443,7 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
                  mag_src_pri, mag_src_sec,
                  b_sff,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
 
         self.gp_log_sigma = gp_log_sigma
         self.gp_rho = gp_rho
@@ -8315,7 +8457,7 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
                  sep, alpha,
                  mag_src_pri, mag_src_sec,
                  b_sff,
-                 raL=raL, decL=decL)
+                 raL=raL, decL=decL, obsLocation=obsLocation)
         
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -8346,7 +8488,10 @@ class BSPL_GP_PhotAstromParam2(BSPL_PhotAstromParam2):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can be
@@ -8409,6 +8554,8 @@ class BSPL_GP_PhotAstromParam2(BSPL_PhotAstromParam2):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
@@ -8419,7 +8566,7 @@ class BSPL_GP_PhotAstromParam2(BSPL_PhotAstromParam2):
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
         
         self.gp_log_sigma = gp_log_sigma
         self.gp_rho = gp_rho
@@ -8432,7 +8579,7 @@ class BSPL_GP_PhotAstromParam2(BSPL_PhotAstromParam2):
                  muS_E, muS_N,
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
-                 raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -8459,7 +8606,10 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float
         Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. Can be
@@ -8519,6 +8669,8 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
@@ -8529,7 +8681,7 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
-                 raL=None, decL=None):
+                 raL=None, decL=None, obsLocation='earth'):
 
         self.gp_log_sigma = gp_log_sigma
         self.gp_rho = gp_rho
@@ -8542,7 +8694,7 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
                          muS_E, muS_N,
                          sep, alpha, fratio_bin,
                          mag_base, b_sff,
-                         raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -9406,7 +9558,10 @@ class BSBL_PhotParam1(PSPL_Param):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     u0_amp: float
         Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. It can be
@@ -9453,6 +9608,8 @@ class BSBL_PhotParam1(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
 
     """
 
@@ -9617,6 +9774,8 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
@@ -9828,6 +9987,8 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
                           'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
@@ -10023,13 +10184,13 @@ class FSPL(PSPL):
 
 
 
-    def get_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
+    def get_photometry(self, t, filt_idx=0, amp_arr=None, print_warning=True):
         '''
         Get the photometry for each of the lensed source images.
 
         Parameters
         ----------
-        t_obs : array_like
+        t : array_like
             Array of times to model.
         filt_idx : int, optional
             Index of the photometric filter or data set.
@@ -10038,10 +10199,10 @@ class FSPL(PSPL):
         ----------------
         amp_arr : array_like
             Amplifications of each individual image at each time,
-            i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
+            i.e. amp_arr.shape = (len(t), number of images at each t).
 
-            This will over-ride t_obs; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t_obs.
+            This will over-ride t; but is more efficient when calculating
+            both photometry and astrometry. If None, then just use t.
         print_warning : bool, optional
             Print a warning in the rare case that the magnitude exceeds a 
             zeropoint of 30 and conversions result in NaN returned.
@@ -10056,7 +10217,7 @@ class FSPL(PSPL):
         flux_zp = 1.0
 
         if amp_arr is None:
-            amp_arr, img_arr = self.get_centroids(t_obs, self.radius)
+            amp_arr, img_arr = self.get_centroids(t, self.radius)
             amp = amp_arr
 
             # CHECK THIS STUFF
@@ -10966,7 +11127,10 @@ class FSPL_PhotAstromParam1(PSPL_Param):
     mL: float
         Mass of the lens (Msun)
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite. 
     beta: float
         Angular distance between the lens and source on the plane of the sky (mas). Can be
         
@@ -11006,6 +11170,8 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
     """
     fitter_param_names = ['mL', 't0', 'xS0_E', 'xS0_N', 'beta', 'muL_N', 'muL_E',
                           'muS_N', 'muS_E', 'dL', 'dS', 'radius']
@@ -11162,7 +11328,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         if parallax model
     decL:
         if parallax model
-
+    obsLocation: str, optional
+        The observers location (def='earth') such as 'jwst' or 'spitzer'. 
 
     """
     photometryFlag = True
@@ -12696,7 +12863,7 @@ def get_observer_barycentric(body, times, min_ephem_step=1, velocity=False):
     else:
         # Figure out a cadence for the ephemerides, not smaller than 1 day.
         dt = np.median(np.diff(times)).jd
-        if dt > min_ephem_step:
+        if dt < min_ephem_step:
             dt = min_ephem_step
 
         # Get the date range, add some padding on each side.

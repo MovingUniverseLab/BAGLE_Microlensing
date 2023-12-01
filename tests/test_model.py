@@ -10,6 +10,7 @@ from astropy.table import Table
 import os
 from bagle import model
 from bagle import model_fitter
+from bagle import frame_convert as fc
 from bagle.fake_data import *
 from bagle import frame_convert
 import time
@@ -3993,6 +3994,263 @@ def run_test_pspl_satellite_parallax(raL, decL, obsLocation,
 
     print('Einstein radius: ', pspl_e.thetaE_amp, pspl_s.thetaE_amp)
     print('Einstein crossing time: ', pspl_e.tE, pspl_e.tE)
+
+    return
+
+def test_spitzer_zang2020():
+    # Scenario from Zang et al. 2020
+    # Target: OB171254: 0,+ solution (see Table 1)
+    raL = (17. + 57./60.)  * 15.0  # in degrees
+    decL = -(27. + 13./60.)
+    obsLocation = 'spitzer'
+    t0_geotr = 57952.2519
+    u0_geotr = 0.0003
+    tE_geotr = 15.43
+    piEN_geotr = 0.0203
+    piEE_geotr = 0.0368
+    t0par = t0_geotr
+    
+    mag_src = 18.53
+    mag_blend = 21.32
+
+    f_src = 10**(mag_src / -2.5)
+    f_blend = 10**(mag_blend / -2.5)
+    f_base = f_src + f_blend
+    
+    b_sff = f_src / f_base
+    mag_base = -2.5 * np.log10(f_base)
+
+    out = fc.convert_helio_geo_phot(raL, decL,
+                                    t0_geotr, u0_geotr, tE_geotr,
+                                    piEE_geotr, piEN_geotr, t0par,
+                                    in_frame='geo',
+                                    murel_in='LS', murel_out='SL',
+                                    coord_in='tb', coord_out='EN',
+                                    plot=False)
+
+    t0_helio = out[0]
+    u0_helio = out[1]
+    tE_helio = out[2]
+    piEE_helio = out[3]
+    piEN_helio = out[4]
+
+    outdir = 'tests/test_pspl_par_spitzer_zang2020/'
+
+    # Make Earth and Spitzer observations and make plots.
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
+
+    # Earth parallax
+    pspl_e = model.PSPL_Phot_Par_Param1(t0_helio,
+                                        u0_helio,
+                                        tE_helio,
+                                        piEE_helio,
+                                        piEN_helio,
+                                        [b_sff],
+                                        [mag_src],
+                                        raL=raL,
+                                        decL=decL,
+                                        obsLocation='earth')
+    # Satellite parallax
+    pspl_s = model.PSPL_Phot_Par_Param1(t0_helio,
+                                        u0_helio,
+                                        tE_helio,
+                                        piEE_helio,
+                                        piEN_helio,
+                                        [b_sff],
+                                        [mag_src],
+                                        raL=raL,
+                                        decL=decL,
+                                        obsLocation=obsLocation)
+
+    t = np.arange(t0_geotr - 30, t0_geotr + 30, 0.5)
+    dt = t - pspl_e.t0
+
+    A_e = pspl_e.get_amplification(t)
+    A_s = pspl_s.get_amplification(t)
+
+    m_e = pspl_e.get_photometry(t)
+    m_s = pspl_s.get_photometry(t)
+
+    # make sure the two light curves and trajectories are different.
+    # assert np.abs(A_e - A_s).max() > 0.1  # mag
+    # assert np.abs(xS_e - xS_s_lensed).max() > 0.001  # arcsec
+
+    # Plot the amplification
+    fig1 = plt.figure(1)
+    plt.clf()
+    f1_1 = fig1.add_axes((0.20, 0.3, 0.75, 0.6))
+    plt.plot(dt, 2.5 * np.log10(A_e), 'b-', label='Earth parallax')
+    plt.plot(dt, 2.5 * np.log10(A_s), 'r-', label=f'{obsLocation} parallax')
+    plt.legend(fontsize=10)
+    plt.ylabel('2.5 * log(A)')
+    f1_1.set_xticklabels([])
+
+    f2_1 = fig1.add_axes((0.20, 0.1, 0.75, 0.2))
+    plt.plot(dt, 2.5 * (np.log10(A_s) - np.log10(A_e)), 'k-',
+             label='Par - No par')
+    plt.axhline(0, linestyle='--', color='k')
+    plt.legend(fontsize=10)
+    plt.ylabel('Diff')
+    plt.xlabel('t - t0 (MJD)')
+
+    plt.savefig(outdir + 'amp_v_time.png')
+
+    # Plot the magnitude
+    fig2 = plt.figure(2)
+    plt.clf()
+    f2_1 = fig2.add_axes((0.20, 0.3, 0.75, 0.6))
+    plt.plot(dt, m_e, 'b-', label='Earth parallax')
+    plt.plot(dt, m_s, 'r-', label=f'{obsLocation} parallax')
+    plt.legend(fontsize=10)
+    plt.ylabel('mag')
+    plt.gca().invert_yaxis()
+    f2_1.set_xticklabels([])
+
+    f2_2 = fig2.add_axes((0.20, 0.1, 0.75, 0.2))
+    plt.plot(dt, m_s - m_e, 'k-',
+             label=f'Earth - {obsLocation}')
+    plt.axhline(0, linestyle='--', color='k')
+    plt.legend(fontsize=10)
+    plt.ylabel('Diff')
+    plt.xlabel('t - t0 (MJD)')
+    plt.gca().invert_yaxis()
+
+    plt.savefig(outdir + 'mag_v_time.png')
+
+
+    print("save to " + outdir)
+
+    return
+
+
+def test_spitzer_shvartzvald2019():
+    # Scenario from Shvartzvald et al. 2019
+    # Target: OB170896: +,+ solution (see Table 1)
+    raL = (17. + 57./60.)  * 15.0  # in degrees
+    decL = -(27. + 13./60.)
+    obsLocation = 'spitzer'
+    t0_geotr = 57911.05582
+    u0_geotr = 0.0039
+    tE_geotr = 14.883
+    piEN_geotr = -0.779
+    piEE_geotr = -0.615
+    t0par = t0_geotr
+
+    # Guessed these values -- not reported in table.
+    mag_src = 17.9
+    mag_blend = 21.0
+
+    # Compare to Figure 1
+    f_src = 10**(mag_src / -2.5)
+    f_blend = 10**(mag_blend / -2.5)
+    f_base = f_src + f_blend
+    
+    b_sff = f_src / f_base
+    mag_base = -2.5 * np.log10(f_base)
+
+    out = fc.convert_helio_geo_phot(raL, decL,
+                                    t0_geotr, u0_geotr, tE_geotr,
+                                    piEE_geotr, piEN_geotr, t0par,
+                                    in_frame='geo',
+                                    murel_in='LS', murel_out='SL',
+                                    coord_in='tb', coord_out='EN',
+                                    plot=False)
+
+    t0_helio = out[0]
+    u0_helio = out[1]
+    tE_helio = out[2]
+    piEE_helio = out[3]
+    piEN_helio = out[4]
+
+    outdir = 'tests/test_pspl_par_spitzer_shvartzvald2019/'
+
+    # Make Earth and Spitzer observations and make plots.
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
+
+    # Earth parallax
+    pspl_e = model.PSPL_Phot_Par_Param1(t0_helio,
+                                        u0_helio,
+                                        tE_helio,
+                                        piEE_helio,
+                                        piEN_helio,
+                                        [b_sff],
+                                        [mag_src],
+                                        raL=raL,
+                                        decL=decL,
+                                        obsLocation='earth')
+    # Satellite parallax
+    pspl_s = model.PSPL_Phot_Par_Param1(t0_helio,
+                                        u0_helio,
+                                        tE_helio,
+                                        piEE_helio,
+                                        piEN_helio,
+                                        [b_sff],
+                                        [mag_src],
+                                        raL=raL,
+                                        decL=decL,
+                                        obsLocation=obsLocation)
+
+    t = np.arange(t0_geotr - 30, t0_geotr + 30, 0.5)
+    dt = t - pspl_e.t0
+
+    A_e = pspl_e.get_amplification(t)
+    A_s = pspl_s.get_amplification(t)
+
+    m_e = pspl_e.get_photometry(t)
+    m_s = pspl_s.get_photometry(t)
+
+    pdb.set_trace()
+
+    # make sure the two light curves and trajectories are different.
+    # assert np.abs(A_e - A_s).max() > 0.1  # mag
+    # assert np.abs(xS_e - xS_s_lensed).max() > 0.001  # arcsec
+
+    # Plot the amplification
+    fig1 = plt.figure(1)
+    plt.clf()
+    f1_1 = fig1.add_axes((0.20, 0.3, 0.75, 0.6))
+    plt.plot(dt, 2.5 * np.log10(A_e), 'b-', label='Earth1 parallax')
+    plt.plot(dt, 2.5 * np.log10(A_s), 'r-', label=f'{obsLocation} parallax')
+    plt.legend(fontsize=10)
+    plt.ylabel('2.5 * log(A)')
+    f1_1.set_xticklabels([])
+
+    f2_1 = fig1.add_axes((0.20, 0.1, 0.75, 0.2))
+    plt.plot(dt, 2.5 * (np.log10(A_s) - np.log10(A_e)), 'k-',
+             label='Par - No par')
+    plt.axhline(0, linestyle='--', color='k')
+    plt.legend(fontsize=10)
+    plt.ylabel('Diff')
+    plt.xlabel('t - t0 (MJD)')
+
+    plt.savefig(outdir + 'amp_v_time.png')
+
+    # Plot the magnitude
+    fig2 = plt.figure(2)
+    plt.clf()
+    f2_1 = fig2.add_axes((0.20, 0.3, 0.75, 0.6))
+    plt.plot(dt, m_e, 'b-', label='Earth1 parallax')
+    plt.plot(dt, m_s, 'r-', label=f'{obsLocation} parallax')
+    plt.legend(fontsize=10)
+    plt.ylabel('mag')
+    plt.gca().invert_yaxis()
+    f2_1.set_xticklabels([])
+
+    f2_2 = fig2.add_axes((0.20, 0.1, 0.75, 0.2))
+    plt.plot(dt, m_s - m_e, 'k-',
+             label=f'Earth - {obsLocation}')
+    plt.axhline(0, linestyle='--', color='k')
+    plt.legend(fontsize=10)
+    plt.ylabel('Diff')
+    plt.xlabel('t - t0 (MJD)')
+    plt.gca().invert_yaxis()
+
+    plt.savefig(outdir + 'mag_v_time.png')
+
+
+    print("save to " + outdir)
 
     return
 

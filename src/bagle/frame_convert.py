@@ -13,7 +13,7 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
                                    t0_in, u0_in, tE_in, 
                                    piEE_in, piEN_in, t0par,
                                    q_in, alpha_in, sep,
-                                   mod_in='bagle'):
+                                   mod_in='bagle', plot=True):
     """
     alpha_in : degrees.
 
@@ -27,14 +27,16 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
                                         tE_in, piEE_in, piEN_in,
                                         t0par, in_frame='helio',
                                         murel_in='SL', murel_out='LS',
-                                        coord_in='EN', coord_out='tb')
+                                        coord_in='EN', coord_out='tb',
+                                        plot=plot)
 
     elif mod_in == 'mulens':
         output = convert_helio_geo_phot(ra, dec, t0_in, u0_in,
                                         tE_in, piEE_in, piEN_in,
                                         t0par, in_frame='geo',
                                         murel_in='LS', murel_out='SL',
-                                        coord_in='tb', coord_out='EN')
+                                        coord_in='tb', coord_out='EN',
+                                        plot=plot)
         
     else:
         raise Exception("mod_in must be 'bagle' or 'mulens'")
@@ -77,7 +79,7 @@ def convert_helio_geo_ast(ra, dec,
                           piEE_in, piEN_in, t0par,
                           in_frame='helio',
                           murel_in='SL', murel_out='LS', 
-                          coord_in='EN', coord_out='tb'):
+                          coord_in='EN', coord_out='tb', plot=True):
     """
     NOTE: THIS IS NOT YET TESTED
     """
@@ -96,7 +98,8 @@ def convert_helio_geo_ast(ra, dec,
                                                 piEE_in, piEN_in, t0par,
                                                 in_frame,
                                                 murel_in, murel_out, 
-                                                coord_in, coord_out)
+                                                coord_in, coord_out,
+                                                plot=plot)
 
     if in_frame=='helio':
         muSE_out = muSE_in + piS * dp_dt_t0par[0] * day_to_yr
@@ -854,7 +857,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
         
         fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f}'.format(t0_out), fontsize=12)
         # Output is Lu helio, so need to fix those to be in Gould geo.
