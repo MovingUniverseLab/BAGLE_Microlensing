@@ -8749,8 +8749,6 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
     xS0_N: float
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    acc_E:
-    acc_N:
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -8760,9 +8758,13 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
     muS_N: float
         Dec Source proper motion (mas/yr) for primary source.
     delta_muS_sec_E: float
-        RA Source proper motion (mas/yr) for secondary source.
+        RA secondary source proper motion with respect to the primary source (mas/yr)
     delta_muS_sec_N: float
-        Dec Source proper motion (mas/yr) for secondary source.
+        Dec secondary source proper motion with respect to the primary source (mas/yr)
+    acc_E: 
+        Acceleration of the secondary source in the direction of RA (mas/yr^2)
+    acc_N: 
+        Acceleration of the secondary source in the direction of DEC (mas/yr^2)
     sep: float
         Angular separation of the source scondary from the
         source primary (mas).
@@ -8879,9 +8881,9 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
         Dec Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
     delta_muS_sec_E: float
-        RA Source proper motion (mas/yr) for secondary source.
+        RA secondary source proper motion with respect to the primary source (mas/yr)
     delta_muS_sec_N: float
-        Dec Source proper motion (mas/yr) for secondary source.
+        Dec secondary source proper motion with respect to the primary source (mas/yr)
     sep: float
         Angular separation of the source scondary from the
         source primary (mas).
@@ -8992,8 +8994,8 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
     xS0_N: float
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    acc_E:
-    acc_N:
+    acc_E: Acceleration of the secondary source in the direction of RA (mas/yr^2)
+    acc_N: Acceleration of the secondary source in the direction of DEC (mas/yr^2)
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -9003,9 +9005,13 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
     muS_N: float
         Dec Source proper motion (mas/yr) for primary source.
     delta_muS_sec_E: float
-        RA Source proper motion (mas/yr) for secondary source.
+        RA secondary source proper motion with respect to the primary source (mas/yr)
     delta_muS_sec_N: float
-        Dec Source proper motion (mas/yr) for secondary source.
+        Dec secondary source proper motion with respect to the primary source (mas/yr)
+    acc_E: 
+        Acceleration of the secondary source in the direction of RA (mas/yr^2)
+    acc_N: 
+        Acceleration of the secondary source in the direction of DEC (mas/yr^2)
     sep: float
         Angular separation of the source scondary from the
         source primary (mas).
@@ -9122,9 +9128,9 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
         Dec Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
     delta_muS_sec_E: float
-        RA Source proper motion (mas/yr) for secondary source.
+        RA secondary source proper motion with respect to the primary source (mas/yr)
     delta_muS_sec_N: float
-        Dec Source proper motion (mas/yr) for secondary source.
+        Dec secondary source proper motion with respect to the primary source (mas/yr)
     sep: float
         Angular separation of the source scondary from the
         source primary (mas).
@@ -9242,9 +9248,13 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
         Dec Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
     delta_muS_sec_E: float
-        RA Source proper motion (mas/yr) for secondary source.
+        RA secondary source proper motion with respect to the primary source (mas/yr)
     delta_muS_sec_N: float
-        Dec Source proper motion (mas/yr) for secondary source.
+        Dec secondary source proper motion with respect to the primary source (mas/yr)
+    acc_E: 
+        Acceleration of the secondary source in the direction of RA (mas/yr^2)
+    acc_N: 
+        Acceleration of the secondary source in the direction of DEC (mas/yr^2)
     sep: float
         Angular separation of the source scondary from the
         source primary (mas).
