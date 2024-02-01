@@ -256,6 +256,7 @@ def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
                                  plot_conv=False,
                                  plot_lc=False,
                                  verbose=False):
+
     """
     Test conversion from geocentric projected frame
     (using lens-source tau-beta convention) to
@@ -321,7 +322,7 @@ def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
         ax[1].set_ylabel('Geo proj - Helio')
         ax[1].set_xlabel('MJD')
         plt.show()
-#        plt.pause(0.5)
+        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
@@ -546,7 +547,7 @@ def test_bagle_to_mulens(ra, dec, t_mjd,
         ax[1].set_ylabel('Mulens - BAGLE')
         ax[1].set_xlabel('MJD')
         plt.show()
-#        plt.pause(0.5)
+        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
@@ -634,7 +635,7 @@ def test_mulens_to_bagle(ra, dec, t_mjd,
         ax[1].set_ylabel('Mulens - BAGLE')
         ax[1].set_xlabel('MJD')
         plt.show()
-#        plt.pause(0.5)
+        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
