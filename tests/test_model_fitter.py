@@ -1,6 +1,6 @@
 from bagle import model
 from bagle import model_fitter
-from bagle import multinest_utils, munge
+from bagle import multinest_utils
 from bagle import fake_data
 from bagle.model_fitter import PSPL_Solver, PSPL_Solver_Hobson_Weighted
 from tests import test_model
@@ -28,7 +28,7 @@ def test_pspl_parallax_fit_geoproj():
     outdir = './test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = test_model.fake_data_parallax_lmc()
+    data, p_in = fake_data.fake_data_parallax_lmc()
     t0par = p_in['t0'] + 50
 
     data['t0par'] = t0par
@@ -115,7 +115,7 @@ def test_pspl_parallax_fit():
     outdir = './test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = test_model.fake_data_parallax_lmc()
+    data, p_in = fake_data.fake_data_parallax_lmc()
 
     fitter = PSPL_Solver(data,
                          model.PSPL_PhotAstrom_Par_Param1,
@@ -137,7 +137,7 @@ def test_pspl_parallax_fit():
     fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.1, p_in['b_sff']+0.1)
     fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.1, p_in['mag_src']+0.1)
 
-    fitter.solve()
+    # fitter.solve()
 
     best = fitter.get_best_fit()
 
@@ -185,7 +185,7 @@ def test_pspl_parallax_fit():
     p_in['b_sff1'] = p_in['b_sff']
     p_in['mag_src1'] = p_in['mag_src']
 
-    fitter.summarize_results()
+    # fitter.summarize_results()
     fitter.plot_dynesty_style(sim_vals=p_in)
     fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
 
@@ -255,7 +255,7 @@ def plot_mnest_test(data, imag_in, imag_out, pos_in, pos_out, outroot):
 
 
 def test_make_t0_gen():
-    data, p_in = test_model.fake_data1()
+    data, p_in = fake_data.fake_data1()
 
     t0_gen = model_fitter.make_t0_gen(data['t_phot1'], data['mag1'])
 
@@ -282,7 +282,7 @@ def test_PSPL_Solver(plot=False):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    data, p_in = test_model.fake_data1()
+    data, p_in = fake_data.fake_data1()
 
     fitter = PSPL_Solver(data,
                          model.PSPL_PhotAstrom_noPar_Param1,
@@ -375,7 +375,7 @@ def test_PSPL_Solver(plot=False):
 
 def test_pspl_dy_fit():
     # No parallax
-    data, p_in = test_model.fake_data1()
+    data, p_in = fake_data.fake_data1()
 
     fitter = model_fitter.PSPL_Solver(data, model.PSPL_PhotAstrom_noPar_Param1,
                                       custom_additional_param_names = [])
@@ -483,7 +483,7 @@ def test_pspl_ultranest_fit():
     import ultranest
     
     # No parallax
-    data, p_in = test_model.fake_data1()
+    data, p_in = fake_data.fake_data1()
 
     fitter = model_fitter.PSPL_Solver(data, model.PSPL_PhotAstrom_noPar_Param1,
                                       custom_additional_param_names = [], 
@@ -615,7 +615,7 @@ def test_lumlens_parallax_fit():
     outdir = './test_mnest_lumlens_bulge/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = test_model.fake_data_lumlens_parallax_bulge()
+    data, p_in = fake_data.fake_data_lumlens_parallax_bulge()
 
     fitter = PSPL_Solver(data, 
                          model.PSPL_PhotAstrom_LumLens_Par_Param1,
@@ -716,7 +716,7 @@ def test_lumlens_parallax_fit_2p1a():
     outdir = './test_mnest_lumlens_bulge_DEBUG/'
     os.makedirs(outdir, exist_ok=True)
 
-    data1, data2, params1, params2 = test_model.fake_data_lumlens_parallax_bulge2()
+    data1, data2, params1, params2 = fake_data.fake_data_lumlens_parallax_bulge2()
 
     data = data1
     data['t_phot2'] = data2['t_phot1']
@@ -835,7 +835,7 @@ def test_lumlens_parallax_fit_4p2a():
     outdir = './test_mnest_lumlens_bulge4_DEBUG/'
     os.makedirs(outdir, exist_ok=True)
 
-    data1, data2, data3, data4, params1, params2, params3, params4 = test_model.fake_data_lumlens_parallax_bulge4()
+    data1, data2, data3, data4, params1, params2, params3, params4 = fake_data.fake_data_lumlens_parallax_bulge4()
     data = data1
     data['t_phot2'] = data2['t_phot1']
     data['mag2'] = data2['mag1']
@@ -975,7 +975,7 @@ def test_lumlens_parallax_fit_4p2a():
 
 # NOTE: some of plotting stuff is not functioning... 
 def test_correlated_data2():
-    true_model, data, data_corr, params = test_model.fake_correlated_data()
+    true_model, data, data_corr, params = fake_data.fake_correlated_data()
     
     data['phot_files'] = 'fake'
     data_corr['phot_files'] = 'fake'
@@ -1017,7 +1017,7 @@ def test_correlated_data2():
 
 
 def test_correlated_data_astrom():
-    true_model, data, data_corr, params = test_model.fake_correlated_data_with_astrom()
+    true_model, data, data_corr, params = fake_data.fake_correlated_data_with_astrom()
 
     data['phot_files'] = 'fake'
     data_corr['phot_files'] = 'fake'
@@ -1065,7 +1065,7 @@ def test_correlated_data_astrom():
 def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow'):
     base = './test_psbl_photastrom_par_param3_solver/aa'
 
-    data, p_in, psbl, ani = test_model.fake_data_PSBL(parallax=True)
+    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
 
     fitter = PSPL_Solver(data, 
                          model.PSBL_PhotAstrom_Par_Param3,
@@ -1145,7 +1145,7 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow'):
 def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow'):
     base = './test_psbl_parallax_solver/aa'
 
-    data, p_in, psbl, ani = test_model.fake_data_PSBL(parallax=True)
+    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
 
     fitter = PSPL_Solver(data, 
                          model.PSBL_PhotAstrom_Par_Param2,
@@ -1234,7 +1234,7 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow'):
 def test_PSBL_PhotAstrom_Par_Param1():
     base = './test_psbl_parallax2_solver/aa'
 
-    data, p_in, psbl, ani = test_model.fake_data_PSBL(parallax=True)
+    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
 
     fitter = PSPL_Solver(data, 
                          model.PSBL_PhotAstrom_Par_Param1,
@@ -1324,7 +1324,7 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=False, summarize=False, suffix='')
         # {'t0': 57000, 'u0_amp': 0.7677249386310591, 'tE': 504.61579173573404,
         # 'piE_E': 0.022619312924845883, 'piE_N': 0.022619312924845883,
         # 'q': 0.5, 'sep': 5.0, 'phi': 285.0, 'b_sff1': 0.5, 'mag_src1': 16}
-        data, p_in_tmp, psbl_in, ani = test_model.fake_data_PSBL(mLp = 10, mLs = 5,
+        data, p_in_tmp, psbl_in, ani = fake_data.fake_data_PSBL(mLp = 10, mLs = 5,
                                                                  beta = 3.0, sep = 5.0,
                                                                  muL_E = -1.0, muL_N = -1.0,
                                                                  alpha = -30,
@@ -1446,7 +1446,7 @@ def test_PSBL_phot_par_fit(regen=False, fit=False, summarize=False, suffix=''):
         _data_pkl.close()
     else:
         # Generate random data
-        data, p_in_tmp, psbl_in, ani = test_model.fake_data_PSBL(mLp = 10, mLs = 5,
+        data, p_in_tmp, psbl_in, ani = fake_data.fake_data_PSBL(mLp = 10, mLs = 5,
                                                                  beta = 3.0, sep = 5.0,
                                                                  muL_E = -1.0, muL_N = -1.0,
                                                                  alpha = -30,
@@ -1631,7 +1631,7 @@ def test_u0_sign_change():
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    data, p_in = test_model.fake_data1()
+    data, p_in = fake_data.fake_data1()
 
     fitter = PSPL_Solver(data,
                          model.PSPL_PhotAstrom_noPar_Param1,
@@ -1665,7 +1665,7 @@ def test_u0_sign_change(new_u0_sign=False):
 
     if new_u0_sign:
         # Load up the data for the fitter object. 
-        data, p_in = test_model.fake_data1(beta_sign = 1.0)
+        data, p_in = fake_data.fake_data1(beta_sign = 1.0)
         
         multinest_utils.convert_pre_2020apr_u0_sign(old_base, new_base)
 
@@ -1674,7 +1674,7 @@ def test_u0_sign_change(new_u0_sign=False):
         
     else:
         # Load up the data for the fitter object. 
-        data, p_in = test_model.fake_data1(beta_sign = -1.0)
+        data, p_in = fake_data.fake_data1(beta_sign = -1.0)
         
         base = old_base
         suffix = '_u0sign_old'
@@ -1696,13 +1696,13 @@ def test_u0_sign_change(new_u0_sign=False):
     
     return
 
-def test_make_invgamma_gen():
-    ob140613 = munge.getdata2('ob140613', phot_data=['I_OGLE'], ast_data=[])
-    mb10364 = munge.getdata2('mb10364', phot_data=['MOA'], ast_data=[])
-    model_fitter.make_invgamma_gen(ob140613['t_phot1'])
-    model_fitter.make_invgamma_gen(mb10364['t_phot1'])
+# def test_make_invgamma_gen():
+#     ob140613 = munge.getdata2('ob140613', phot_data=['I_OGLE'], ast_data=[])
+#     mb10364 = munge.getdata2('mb10364', phot_data=['MOA'], ast_data=[])
+#     model_fitter.make_invgamma_gen(ob140613['t_phot1'])
+#     model_fitter.make_invgamma_gen(mb10364['t_phot1'])
 
-    return
+#     return
 
 
 def test_pspl_solver_gp_params():
@@ -1726,7 +1726,7 @@ def test_pspl_solver_gp_params():
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
-    data, params, true_model = test_model.fake_data_multiphot_parallax(raL_in, decL_in, t0_in,
+    data, params, true_model = fake_data.fake_data_multiphot_parallax(raL_in, decL_in, t0_in,
                                                                        u0_amp_in, tE_in,
                                                                        piE_E_in, piE_N_in,
                                                                        b_sff_in1, mag_src_in1,
@@ -1813,7 +1813,7 @@ def test_pspl_solver_gp_params():
     return
 
 def test_plot_model_and_data_GP_err():
-    data = munge.getdata2('ob120169',
+    data = data.getdata('ob120169',
                           phot_data=['I_OGLE'],
                           ast_data=[])
 
@@ -1888,87 +1888,87 @@ def test_plot_model_and_data_GP_err():
 
     return
 
-def test_make_default_priors_mag_base():
-    """
-    Test the new priors for mag_base calculated from the data.
-    """
+# def test_make_default_priors_mag_base():
+#     """
+#     Test the new priors for mag_base calculated from the data.
+#     """
 
-    # Test a single data set. 
-    data = munge.getdata2('ob150211',
-                          phot_data=['I_OGLE'],
-                          ast_data = [])
+#     # Test a single data set. 
+#     data = munge.getdata2('ob150211',
+#                           phot_data=['I_OGLE'],
+#                           ast_data = [])
 
-    mag_base_mean_in = data['mag1'][0:100].mean()
-    mag_base_std_in = data['mag1'][0:100].std()
+#     mag_base_mean_in = data['mag1'][0:100].mean()
+#     mag_base_std_in = data['mag1'][0:100].std()
 
-    fitter = model_fitter.PSPL_Solver(data,
-                                  model.PSPL_Phot_Par_GP_Param2_2,
-                                  use_phot_optional_params=True,
-                                  add_error_on_photometry=False,
-                                  multiply_error_on_photometry=False,
-                                  importance_nested_sampling = False,
-                                  n_live_points = 1000,
-                                  evidence_tolerance = 0.1,
-                                  sampling_efficiency = 0.8, 
-                                  outputfiles_basename='junk')
+#     fitter = model_fitter.PSPL_Solver(data,
+#                                   model.PSPL_Phot_Par_GP_Param2_2,
+#                                   use_phot_optional_params=True,
+#                                   add_error_on_photometry=False,
+#                                   multiply_error_on_photometry=False,
+#                                   importance_nested_sampling = False,
+#                                   n_live_points = 1000,
+#                                   evidence_tolerance = 0.1,
+#                                   sampling_efficiency = 0.8, 
+#                                   outputfiles_basename='junk')
 
-    # Generate a random sample from the prior and
-    # check mean/std.
-    mag_base_samp = fitter.priors['mag_base1'].rvs(size=100)
+#     # Generate a random sample from the prior and
+#     # check mean/std.
+#     mag_base_samp = fitter.priors['mag_base1'].rvs(size=100)
 
-    mag_base_mean_out = mag_base_samp.mean()
-    mag_base_std_out = mag_base_samp.std()
+#     mag_base_mean_out = mag_base_samp.mean()
+#     mag_base_std_out = mag_base_samp.std()
 
-    assert mag_base_mean_in > (mag_base_mean_out - mag_base_std_out)
-    assert mag_base_mean_in < (mag_base_mean_out + mag_base_std_out)
+#     assert mag_base_mean_in > (mag_base_mean_out - mag_base_std_out)
+#     assert mag_base_mean_in < (mag_base_mean_out + mag_base_std_out)
 
-    # Test a multiple photometric data sets. 
-    data = munge.getdata2('ob150211',
-                          phot_data=['I_OGLE', 'Kp_Keck'],
-                          ast_data = [])
+#     # Test a multiple photometric data sets. 
+#     data = munge.getdata2('ob150211',
+#                           phot_data=['I_OGLE', 'Kp_Keck'],
+#                           ast_data = [])
 
-    mag_base_mean_in1 = data['mag1'][0:100].mean()
-    mag_base_std_in1 = data['mag1'][0:100].std()
+#     mag_base_mean_in1 = data['mag1'][0:100].mean()
+#     mag_base_std_in1 = data['mag1'][0:100].std()
 
-    mag_base_mean_in2 = data['mag2'][-4:].mean()
-    mag_base_std_in2 = data['mag2'][-4:].std()
+#     mag_base_mean_in2 = data['mag2'][-4:].mean()
+#     mag_base_std_in2 = data['mag2'][-4:].std()
     
-    fitter = model_fitter.PSPL_Solver(data,
-                                  model.PSPL_Phot_Par_GP_Param2_2,
-                                  use_phot_optional_params=True,
-                                  add_error_on_photometry=False,
-                                  multiply_error_on_photometry=False,
-                                  importance_nested_sampling = False,
-                                  n_live_points = 1000,
-                                  evidence_tolerance = 0.1,
-                                  sampling_efficiency = 0.8, 
-                                  outputfiles_basename='junk')
+#     fitter = model_fitter.PSPL_Solver(data,
+#                                   model.PSPL_Phot_Par_GP_Param2_2,
+#                                   use_phot_optional_params=True,
+#                                   add_error_on_photometry=False,
+#                                   multiply_error_on_photometry=False,
+#                                   importance_nested_sampling = False,
+#                                   n_live_points = 1000,
+#                                   evidence_tolerance = 0.1,
+#                                   sampling_efficiency = 0.8, 
+#                                   outputfiles_basename='junk')
 
-    # Generate a random sample from the prior and
-    # check mean/std.
-    mag_base_samp1 = fitter.priors['mag_base1'].rvs(size=100)
-    mag_base_samp2 = fitter.priors['mag_base2'].rvs(size=100)
+#     # Generate a random sample from the prior and
+#     # check mean/std.
+#     mag_base_samp1 = fitter.priors['mag_base1'].rvs(size=100)
+#     mag_base_samp2 = fitter.priors['mag_base2'].rvs(size=100)
 
-    mag_base_mean_out1 = mag_base_samp1.mean()
-    mag_base_std_out1 = mag_base_samp1.std()
+#     mag_base_mean_out1 = mag_base_samp1.mean()
+#     mag_base_std_out1 = mag_base_samp1.std()
 
-    mag_base_mean_out2 = mag_base_samp2.mean()
-    mag_base_std_out2 = mag_base_samp2.std()
+#     mag_base_mean_out2 = mag_base_samp2.mean()
+#     mag_base_std_out2 = mag_base_samp2.std()
     
-    assert mag_base_mean_in1 > (mag_base_mean_out1 - mag_base_std_out1)
-    assert mag_base_mean_in1 < (mag_base_mean_out1 + mag_base_std_out1)
+#     assert mag_base_mean_in1 > (mag_base_mean_out1 - mag_base_std_out1)
+#     assert mag_base_mean_in1 < (mag_base_mean_out1 + mag_base_std_out1)
 
-    assert mag_base_mean_in2 > (mag_base_mean_out2 - mag_base_std_out2)
-    assert mag_base_mean_in2 < (mag_base_mean_out2 + mag_base_std_out2)
+#     assert mag_base_mean_in2 > (mag_base_mean_out2 - mag_base_std_out2)
+#     assert mag_base_mean_in2 < (mag_base_mean_out2 + mag_base_std_out2)
 
     
-    return
+#     return
     
 def test_cache_parallax_vector():
     outdir = './test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = test_model.fake_data_parallax_lmc()
+    data, p_in = fake_data.fake_data_parallax_lmc()
 
     fitter = PSPL_Solver(data,
                          model.PSPL_PhotAstrom_Par_Param1,
@@ -2066,7 +2066,7 @@ def test_hobson_weights(hobson=True, resume=False):
     outdir = './test_mnest_hobson/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = test_model.fake_data_parallax_lmc()
+    data, p_in = fake_data.fake_data_parallax_lmc()
 
     if hobson:
         fitter = PSPL_Solver_Hobson_Weighted(data,

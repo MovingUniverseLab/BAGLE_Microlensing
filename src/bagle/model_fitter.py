@@ -21,6 +21,7 @@ import pylab as plt
 import scipy.stats
 import pymultinest
 import bagle.model as mmodel 
+import bagle.frame_convert as fconv
 from astropy.table import Table
 from astropy.table import Row
 from astropy import units
@@ -31,8 +32,9 @@ import copy
 import pdb
 from datetime import date
 import yaml
+from scipy.stats import norm
 
-from dynesty import plotting as dyplot
+from bagle.dynesty import plotting as dyplot
 from six.moves import range
 import matplotlib.patches as mpatches
 
@@ -45,9 +47,12 @@ from scipy import spatial
 from scipy.ndimage import gaussian_filter as norm_kde
 from scipy.stats import gaussian_kde
 import warnings
-from dynesty.utils import resample_equal, unitcheck
-from dynesty.utils import quantile as _quantile
+from bagle.dynesty.utils import resample_equal, unitcheck
+from bagle.dynesty.utils import quantile as _quantile
 import re
+
+from matplotlib import logging
+logging.getLogger('matplotlib.font_manager').disabled = True
 
 try:
     str_type = types.StringTypes
@@ -73,7 +78,7 @@ class PSPL_Solver(Solver):
     DESPITE THE NAME YOU CAN ALSO USE IT TO FIT PSBL! 
 
     Attributes
-    -----------
+    ----------
     data : dictionary
         Observational data used to fit a microlensing model. What the data must
         contain depends on what type of microlensing model you are solving for.
@@ -144,7 +149,7 @@ class PSPL_Solver(Solver):
             See pymultinest.run() for a description of all other parameters.
 
     Examples
-    -------------------
+    --------
 
     Assuming that a data dictionary has been instantiated with the above keys,
     and that a model has been loaded in from model.py, PSPL_Solver can be run
@@ -161,6 +166,8 @@ class PSPL_Solver(Solver):
 
     default_priors = {
         'mL': ('make_gen', 0, 100),
+        'mLp': ('make_gen', 0, 100),
+        'mLs': ('make_gen', 0, 100),
         't0': ('make_t0_gen', None, None),
         't0_prim': ('make_t0_gen', None, None),
         'xS0_E': ('make_xS0_gen', None, None),
@@ -226,8 +233,8 @@ class PSPL_Solver(Solver):
         Note that prior distributions are defined upon initiatlization and
         can be modified on the object before running solve().
 
-	Parameters
-        ---------------
+        Parameters
+        ----------
 
         use_phot_optional_params : bool, or list of bools, optional
 	    optional photometry parameters
@@ -292,7 +299,7 @@ class PSPL_Solver(Solver):
         # Use "default" string to indicate default callback.
         # Otherwise, user specified and can be None for no dumping.
         # The latter is important for NERSC runs. 
-        if dump_callback is 'default':
+        if dump_callback == 'default':
             self.dump_callback = self.callback_plotter
         else:
             self.dump_callback = dump_callback
@@ -745,7 +752,7 @@ class PSPL_Solver(Solver):
     def log_likely(self, cube, verbose=False):
         """
         Parameters
-        --------------
+        ----------
         cube : list or dict
             The dictionary or cube of the model parameters.
         """
@@ -1000,8 +1007,13 @@ class PSPL_Solver(Solver):
         # Use Maximum Likelihood solution
         if def_best.lower() == 'maxl':
             best = np.argmax(tab['logLike'])
-            tab_best = tab[best][params]
+            _tab_best = tab[best][params]
 
+            # Turn the astropy table row into a dictionary.
+            tab_best = {}
+            for colname in _tab_best.colnames:
+                tab_best[colname] = _tab_best[colname]
+            
             return tab_best
 
         # Use MAP solution
@@ -1013,8 +1025,12 @@ class PSPL_Solver(Solver):
             
             # Recalculate ourselves. No dependence on smy.
             best = np.argmax(tab['weights'])
-            tab_best = tab[best][params]
+            _tab_best = tab[best][params]
 
+            # Turn the astropy table row into a dictionary.
+            tab_best = {}
+            for colname in _tab_best.colnames:
+                tab_best[colname] = _tab_best[colname]
             return tab_best
 
         # Use mean solution
@@ -1068,7 +1084,7 @@ class PSPL_Solver(Solver):
         uncertainties.
 
         Returns
-        --------
+        -------
         Either a dicitonary or a tuple of length=2 holding 
         two dictionaries, one for values and one for uncertainty ranges. 
         See calc_best_fit() for details.
@@ -1089,7 +1105,7 @@ class PSPL_Solver(Solver):
         uncertainties.
 
         Returns
-        --------
+        -------
         Either a list of dicitonaries or a list where each entry is
         a tuple of length=2 holding two dictionaries, one for values
         and one for uncertainty ranges. 
@@ -1111,7 +1127,7 @@ class PSPL_Solver(Solver):
         """Identify best-fit model
 
         Parameters
-        -----------
+        ----------
         def_best : str
             Choices are 'map' (maximum a posteriori), 'median', or
             'maxl' (maximum likelihood)
@@ -1267,8 +1283,11 @@ class PSPL_Solver(Solver):
         logZ = stats['logZ']
         logvol = np.log(weights) - loglike + logZ
         logvol = logvol - logvol.max()
+        # logwt = np.log(weights)
 
-        results = dict(samples=samples, weights=weights, logvol=logvol, loglike=loglike)
+        results = dict(samples=samples, weights=weights,
+                           logvol=logvol, loglike=loglike)
+                           #logwt=logwt, logz=logZ)
 
         return results
 
@@ -1312,7 +1331,7 @@ class PSPL_Solver(Solver):
                            traceplot=True, cornerplot=True, kde=True):
         """
         Parameters
-        ------------
+        ----------
         sim_vals : dict
             Dictionary of simulated input or comparison values to 
             overplot on posteriors.
@@ -1358,22 +1377,111 @@ class PSPL_Solver(Solver):
             labels=self.all_param_names
 
         if traceplot:
-            dyplot.traceplot(res, labels=labels, dims=dims,
+            traceplot_custom([res], labels=labels, dims=dims,
                              show_titles=True, truths=truths, kde=kde)
             plt.subplots_adjust(hspace=0.7)
             plt.savefig(self.outputfiles_basename + 'dy_trace.png')
             plt.close()
 
         if cornerplot:
-            dyplot.cornerplot(res, labels=labels, dims=dims,
-                              show_titles=True, truths=truths)
-            ax = plt.gca()
-            ax.tick_params(axis='both', which='major', labelsize=10)
+            cornerplot_custom([res], labels=labels, dims=dims,
+                              show_titles=True, truths=truths,
+                              label_kwargs={'fontsize' : 14},
+                              title_kwargs={'fontsize' : 14},
+                              quantiles=None,
+                              number_fontsize=10, label_offset=-0.4)
             plt.savefig(self.outputfiles_basename + 'dy_corner.png')
             plt.close()
 
         return
 
+
+    def plot_dynesty_style_hel_to_geo_phot(self, t0par, sim_vals=None, fit_vals=None,
+                                           remake_fits=False, dims=None,
+                                           traceplot=True, cornerplot=True, kde=True):
+        """
+        Parameters
+        ----------
+        sim_vals : dict
+            Dictionary of simulated input or comparison values to 
+            overplot on posteriors.
+
+        fit_vals : str
+            Choices are 'map' (maximum a posteriori), 'mean', or
+            'maxl' (maximum likelihood)
+
+        """
+        res = self.load_mnest_results_for_dynesty(remake_fits=remake_fits)
+        smy = self.load_mnest_summary(remake_fits=remake_fits)
+
+        # FIXME: NEED TO GENERALIZE THIS.
+        # THIS ASSUMES THE FIRST FIVE COLUMNS ARE t0, u0_amp, tE, piEE, piEN.
+        # SHOULD LOOK THROUGH THE FITTER PARAM NAMES.
+        _res = fconv.convert_helio_geo_phot(float(self.data['raL']), float(self.data['decL']),
+                                            res['samples'][:,0],
+                                            res['samples'][:,1],
+                                            res['samples'][:,2],
+                                            res['samples'][:,3],
+                                            res['samples'][:,4],
+                                            t0par, plot=False)
+        # Edit the results.
+        for ii in np.arange(5):
+            res['samples'][:,ii] = _res[ii]
+
+        truths = None
+
+        # Sort the parameters into the right order.
+        if sim_vals != None:
+            truths = []
+            for param in self.all_param_names:
+                if param in sim_vals:
+                    truths.append(sim_vals[param])
+                else:
+                    truths.append(None)
+
+        if fit_vals == 'map':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['MAP_' + param][0])  # global best fit.
+
+        if fit_vals == 'mean':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['Mean_' + param][0])  # global best fit.
+
+        if fit_vals == 'maxl':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['MaxLike_' + param][0])  # global best fit.
+
+        if dims is not None:
+            labels=[self.all_param_names[i] for i in dims]
+            truths=[truths[i] for i in dims]
+        else:
+            labels=self.all_param_names
+
+        if traceplot:
+            # dyplot.traceplot(res, labels=labels, dims=dims,
+            #                  show_titles=True, truths=truths, kde=kde)
+            traceplot_custom([res], labels=labels, dims=dims,
+                             show_titles=True, truths=truths, kde=kde)
+            plt.subplots_adjust(hspace=0.7)
+            plt.savefig(self.outputfiles_basename + 'geo_{0}_dy_trace.png'.format(str(t0par)))
+            plt.close()
+
+        if cornerplot:
+            # dyplot.cornerplot(res, labels=labels, dims=dims,
+            #                   show_titles=True, truths=truths)
+            cornerplot_custom([res], labels=labels, dims=dims,
+                              show_titles=True, truths=truths)
+            ax = plt.gca()
+            ax.tick_params(axis='both', which='major', labelsize=10)
+            plt.savefig(self.outputfiles_basename + 'geo_{0}_dy_corner.png'.format(str(t0par)))
+            plt.close()
+
+        return
+
+    
     def plot_model_and_data(self, model,
                             input_model=None, mnest_results=None, suffix='',
                             zoomx=None, zoomy=None, zoomy_res=None, fitter=None,
@@ -1439,12 +1547,13 @@ class PSPL_Solver(Solver):
                                 + 'phot_and_residuals_'
                                 + str(i + 1) + suffix + 'zoom.png')
                     plt.close()
-    
+
                 if gp:
                     fig = plot_photometry_gp(self.data, model, input_model=input_model,
                                              dense_time=True, residuals=True,
-                                             filt_index=i, mnest_results=mnest_results, gp=gp,
-                                             N_traces=N_traces)
+                                             filt_index=i, gp=gp)
+#                                             filt_index=i, mnest_results=mnest_results, gp=gp,
+#                                             N_traces=N_traces, fitter=fitter)
                     if fig is not None:
                         fig.savefig(self.outputfiles_basename
                                     + 'phot_and_residuals_gp_'
@@ -1471,13 +1580,12 @@ class PSPL_Solver(Solver):
                                                  dense_time=True, residuals=True,
                                                  filt_index=i, mnest_results=mnest_results,
                                                  zoomx=zoomxi, zoomy=zoomyi, zoomy_res=zoomy_resi, gp=gp,
-                                                 N_traces=N_traces)
+                                                 N_traces=N_traces, fitter=fitter)
                         if fig is not None:
                             fig.savefig(self.outputfiles_basename
                                         + 'phot_and_residuals_gp_'
                                         + str(i + 1) + suffix + 'zoom.png')
                             plt.close()
-        
         if model.astrometryFlag:
             for i in range(self.n_ast_sets):
                 # If no photometry
@@ -1648,7 +1756,7 @@ class PSPL_Solver(Solver):
     def print_likelihood(self, params='best', verbose=True):
         """
         Parameters
-        -----------
+        ----------
         model_params : str or dict, optional
             model_params = 'best' will load up the best solution and calculate
                 the chi^2 based on those values. Alternatively, pass in a dictionary
@@ -1668,7 +1776,7 @@ class PSPL_Solver(Solver):
     def calc_chi2(self, params='best', verbose=False):
         """
         Parameters
-        -----------
+        ----------
         params : str or dict, optional
             model_params = 'best' will load up the best solution and calculate
             the chi^2 based on those values. Alternatively, pass in a dictionary
@@ -1784,7 +1892,7 @@ class PSPL_Solver(Solver):
     def calc_chi2_manual(self, params='best', verbose=False):
         """
         Parameters
-        -----------
+        ----------
         params : str or dict, optional
             model_params = 'best' will load up the best solution and calculate
             the chi^2 based on those values. Alternatively, pass in a dictionary
@@ -1924,7 +2032,109 @@ class PSPL_Solver(Solver):
         else:
             return
 
+    def plot_residual_cdf(self):
+        chi_x_list, chi_y_list, chi_m_list = self.get_residual(params='best')
 
+        sigma_axis = np.linspace(-5, 5, 100)
+        bins = np.linspace(-5, 5, 21)
+        
+        # chi_x_list, chi_y_list are the same length.
+        if len(chi_x_list) > 0:
+            for ii, _ in enumerate(chi_x_list):
+                plt.figure(1)
+                plt.clf()
+                plt.hist(chi_x_list[ii], bins=bins, histtype='step', label='X',
+                         density=True, cumulative=True)
+                plt.hist(chi_y_list[ii], bins=bins, histtype='step', label='Y',
+                         density=True, cumulative=True)
+                plt.plot(sigma_axis, norm.cdf(sigma_axis), color='k', label='Norm')
+                plt.legend()
+                plt.xlabel('Residual (sigma)')
+                plt.ylabel('CDF')
+                plt.savefig(self.outputfiles_basename + 'chi_xy_cdf_{0}.png'.format(ii))
+                plt.close()
+
+        if len(chi_m_list) > 0:
+            for ii, _ in enumerate(chi_m_list):
+                plt.figure(1)
+                plt.clf()
+                plt.hist(chi_m_list[ii], bins=bins, histtype='step', label='M',
+                         density=True, cumulative=True)
+                plt.plot(sigma_axis, norm.cdf(sigma_axis), color='k', label='Norm')
+                plt.legend()
+                plt.xlabel('Residual (sigma)')
+                plt.ylabel('CDF')
+                plt.savefig(self.outputfiles_basename + 'chi_m_cdf_{0}.png'.format(ii))
+                plt.close()
+
+    def get_residual(self, params='best'):
+        """
+        This is basically copied from calc_chi2.
+        
+        Parameters
+        ----------
+        params : str or dict, optional
+            model_params = 'best' will load up the best solution and calculate
+            the chi^2 based on those values. Alternatively, pass in a dictionary
+            with the model parameters to use.
+        """
+        if params == 'best':
+            params = self.get_best_fit()
+
+        # Get model.
+        pspl = self.get_model(params)
+
+        # Calculate constants needed to subtract from lnL to calculate chi2.
+        if pspl.astrometryFlag:
+            
+            chi_x_list = []
+            chi_y_list = []
+
+            for nn in range(self.n_ast_sets):                        
+                t_ast = self.data['t_ast' + str(nn + 1)]
+                x_obs = self.data['xpos' + str(nn + 1)]
+                y_obs = self.data['ypos' + str(nn + 1)]
+                x_err_obs = self.data['xpos_err' + str(nn + 1)]
+                y_err_obs = self.data['ypos_err' + str(nn + 1)]
+
+                pos_model = pspl.get_astrometry(t_ast, ast_filt_idx=nn)
+                chi_x = (x_obs - pos_model[:, 0]) / x_err_obs
+                chi_y = (y_obs - pos_model[:, 1]) / y_err_obs
+
+                # Save to our lists
+                chi_x_list.append(chi_x)
+                chi_y_list.append(chi_y)
+
+        else:
+            chi_x_list = []
+            chi_y_list = []
+                
+        if pspl.photometryFlag:
+
+            chi_m_list = []
+            
+            for nn in range(self.n_phot_sets):
+                if hasattr(pspl, 'use_gp_phot'):
+                    if pspl.use_gp_phot[nn]:
+                        gp = True
+                    else:
+                        gp = False
+                else:
+                    gp = False
+                    
+                t_phot = self.data['t_phot' + str(nn + 1)]
+                mag_obs = self.data['mag' + str(nn + 1)]
+                mag_err_obs = self.get_modified_mag_err(params, nn)
+
+                mag_model = pspl.get_photometry(t_phot, filt_idx=nn)
+                chi_m = ((mag_obs - mag_model) / mag_err_obs)
+                
+                chi_m_list.append(chi_m)
+        else:
+            chi_m_list = []
+
+        return chi_x_list, chi_y_list, chi_m_list
+        
 class PSPL_Solver_weighted(PSPL_Solver):
     """
     Soliver where the likelihood function has each data
@@ -2132,7 +2342,7 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
         Specifically, we are implementing Eq. 35.
 
         Parameters
-        -----------
+        ----------
         cube : list or dict
             The dictionary or cube of the model parameters.
         """
@@ -2364,7 +2574,7 @@ def make_log10norm_gen(mean_in_log10, std_in_log10):
     Note the mean and std should be in the log10() space already.
 
     Parameters
-    -------------
+    ----------
     mean:
         mean of the underlying log10 gaussian (i.e. a log10 quantity)
     std: 
@@ -2461,8 +2671,8 @@ def make_muS_EN_gen(t, pos, scale_factor=100.0):
     """Get an approximate muS search range by looking at the best fit
     straight line to the astrometry. Then allows lots of free space.
 
-    Inputs
-    ------
+    Parameters
+    ----------
     t: 
         array of times in days
     pos: 
@@ -2498,14 +2708,14 @@ def make_muS_EN_norm_gen(t, pos, n_use=None, scale_factor=10.0):
     straight line to the astrometry. Then allows lots of free space.
 
     Parameters
-    ------------
+    ----------
     t: 
         array of times in days
     pos: 
         array of positions in arcsec
 
     Returns
-    --------
+    -------
     gen:
         uniform generator for velocity in mas/yr
     """
@@ -2558,9 +2768,10 @@ def make_invgamma_gen(t_arr):
     """ADD DESCRIPTION
 
     Parameters
-    ------------   
+    ----------
     t_arr: 
         time array
+
     """
     a,b = compute_invgamma_params(t_arr)
 
@@ -2572,11 +2783,11 @@ def make_invgamma_gen(t_arr):
 
 
 def compute_invgamma_params(t_arr):
-    """
-    | Based on function of same name from 
-    Fran Bartolic's ``caustic`` package:
+    """Based on function of same name from  Fran Bartolic's ``caustic`` package:
+
     https://github.com/fbartolic/caustic
-    | Returns parameters of an inverse gamma distribution s.t.
+
+    Returns parameters of an inverse gamma distribution s.t.
      * 1% of total prob. mass is assigned to values of :math:`t < t_{min}` and
      * 1% of total prob. masss  to values greater than t_{tmax}.
  
@@ -2593,6 +2804,7 @@ def compute_invgamma_params(t_arr):
     -------
     invgamma_a, invgamma_b : float (?)
         The parameters a,b of the inverse gamma function.
+
     """
     def solve_for_params(params, x_min, x_max):
         lower_mass = 0.01
@@ -2642,8 +2854,7 @@ def weighted_quantile(values, quantiles, sample_weight=None,
     """ Very close to numplt.percentile, but supports weights.
     
     Parameters
-    _____________
-
+    ----------
     values: 
         numplt.array with data
     quantiles: 
@@ -2656,12 +2867,12 @@ def weighted_quantile(values, quantiles, sample_weight=None,
         if True, will correct output to be consistent with numplt.percentile.
    
     Returns
-    --------	
+    -------
     arr:
         numplt.array with computed quantiles.
 
     Notes 
-    -------
+    -----
 
     .. note:: quantiles should be in [0, 1]!
     """
@@ -2696,7 +2907,7 @@ def split_param_filter_index1(s):
     index, then return None for the second argument.
 
     Returns
-    ----------
+    -------
     param_name : str
         The name of the parameter.
     filt_index : int (or None)
@@ -2735,7 +2946,7 @@ def generate_params_dict(params, fitter_param_names):
         delivered, in order, in the output. 
 
     Returns
-    ----------
+    -------
     params_dict : dict
         Dictionary of the parameter names and values.
 
@@ -2961,7 +3172,8 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
     # same times as the measurements.
     if dense_time:
         # 1 day sampling over whole range
-        mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1)
+        #mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1) #end model at last photometry data point
+        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #begin/end model +/-2000 days after last data point (for ongoing events)
     else:
         mod_t = dat_t
     if gp:
@@ -3028,6 +3240,7 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
         trace_times = []
         trace_magnitudes = []
         for idx in idx_arr:
+            print('Trace draw {0}.'.format(idx))
 #            # FIXME: This doesn't work if there are additional_param_names in the model
 #            # You will have extra arguments when passing in **params_dict into the model class.
 #            # FIXME 2: there needs to be a way to deal with multiples in additional_param_names
@@ -3044,17 +3257,23 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
                 trace_mag, trace_mag_std = trace_mod.get_photometry_with_gp(dat_t, dat_m, dat_me, filt_index, mod_t)
                 if trace_mag_std is None:
                     print('GP is not working at model times!')
-                continue
+                    continue
             else:
                 trace_mag = trace_mod.get_photometry(mod_t, filt_index)
 
             trace_times.append(mod_t)
             trace_magnitudes.append(trace_mag)
+#            f1.plot(mod_t, trace_mag,
+#                    color='c',
+#                    alpha=0.5,
+#                    linewidth=1,
+#                    zorder=-1)
             f1.plot(mod_t, trace_mag,
                     color='c',
                     alpha=0.5,
-                    linewidth=1,
-                    zorder=-1)
+                    linewidth=1)
+#            import pdb
+#            pdb.set_trace()
     #####
     # Residuals
     #####
@@ -3077,7 +3296,7 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
 
 def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals=True,
                     filt_index=0, zoomx=None, zoomy=None, zoomy_res=None, mnest_results=None,
-                    N_traces=50, gp=False):
+                       N_traces=50, gp=False, fitter=None):
 
     gs_kw = dict(height_ratios=[1,2,1])
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, sharex=True, 
@@ -3138,7 +3357,33 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
         ax3.invert_yaxis()
         ax3.set_xlabel('Time (HJD)')
         ax3.legend()
+
+        #####
+        # Traces
+        #####
+        if mnest_results is not None:
+            idx_arr = np.random.choice(np.arange(len(mnest_results['weights'])),
+                                       p=mnest_results['weights'],
+                                       size=N_traces)
+            trace_times = []
+            trace_magnitudes = []
+            for idx in idx_arr:
+                print('GP Trace draw {0}.'.format(idx))
+                
+                trace_mod = fitter.get_model(mnest_results[idx])
+
+                trace_mag, trace_mag_std = trace_mod.get_photometry_with_gp(dat_t, dat_m, dat_me, filt_index, mod_t)
+                if trace_mag_std is None:
+                    print('GP is not working at model times!')
+                    continue
     
+                trace_times.append(mod_t)
+                trace_magnitudes.append(trace_mag)
+                ax3.plot(mod_t, trace_mag - mod_m_out,
+                         color='c',
+                         alpha=0.8,
+                         linewidth=1)
+        
         if zoomx is not None:
             ax1.set_xlim(zoomx[0], zoomx[1])
             ax2.set_xlim(zoomx[0], zoomx[1])
@@ -3210,9 +3455,15 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     if input_model != None:
         p_in_lens_tmod = input_model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index)
         p_in_lens_tlon = input_model.get_astrometry(t_long, ast_filt_idx=ast_filt_index)
+        if str(model.__class__).startswith('BS'):
+            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod, ast_filt_idx=ast_filt_index)
+            p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long, ast_filt_idx=ast_filt_index)
+        else:
+            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod)
+            p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long)
 
     # Get trace models and positions if we will be plotting traces
-    if mnest_results == None:
+    if mnest_results is None:
         N_traces = 0
         print('No mnest_results supplied for traces')
 
@@ -4827,9 +5078,12 @@ def cornerplot_2truth(results, dims=None, span=None, quantiles=[0.025, 0.5, 0.97
                                                                fill_contours)
             hist2d_kwargs['plot_contours'] = hist2d_kwargs.get('plot_contours',
                                                                plot_contours)
-            dyplot._hist2d(y, x, ax=ax, span=[span[j], span[i]],
+            contour2d_alpha(y, x, ax=ax, span=[span[j], span[i]],
                     weights=weights, color=color, smooth=[sy, sx],
                     **hist2d_kwargs)
+            # dyplot._hist2d(y, x, ax=ax, span=[span[j], span[i]],
+            #         weights=weights, color=color, smooth=[sy, sx],
+            #         **hist2d_kwargs)
             # Add truth values for mode 1.
             if truths1 is not None:
                 if truths1[j] is not None:
@@ -5078,7 +5332,7 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
         sampling run. **Compatible with results derived from**
         `nestle <http://kylebarbary.com/nestle/>`_.
 
-    color_list : list of length the same as results_list
+    post_color_list : list of length the same as results_list
         List of `~matplotlib`-style colors.
     
     contour_labels_list : list of length the same as results_list
@@ -5219,7 +5473,7 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
 
     # Setting up default plot layout.
     if fig is None:
-        fig, axes = pl.subplots(ndim, 2, figsize=(12, 3*ndim))
+        fig, axes = plt.subplots(ndim, 2, figsize=(12, 3*ndim))
     else:
         fig, axes = fig
         try:
@@ -5231,12 +5485,14 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
     # Plotting.
     for j, samples in enumerate(samples_list):
         weights = weights_list[j]
-        color = color_list[j]
+        color = post_color_list[j]
         if contour_labels_list is not None:
             contour_label = contour_labels_list[j]
         for i, x in enumerate(samples):
-    
+
+            #
             # Plot trace.
+            #
     
             # Establish axes.
             if np.shape(samples)[0] == 1:
@@ -5248,13 +5504,13 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
                 if isinstance(trace_color, str_type):
                     color = trace_color
                 else:
-                    color = trace_color[i]
+                    color = trace_color[j]
             else:
                 color = wts[::thin]
             if isinstance(trace_cmap, str_type):
                 cmap = trace_cmap
             else:
-                cmap = trace_cmap[i]
+                cmap = trace_cmap[j]
             # Setup axes.
             ax.set_xlim([0., -min(logvol)])
             ax.set_ylim([min(x), max(x)])
@@ -5294,10 +5550,10 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
             else:
                 ax = axes[i, 1]
             # Set color(s).
-            if isinstance(post_color, str_type):
-                color = post_color
+            if isinstance(post_color_list, str_type):
+                color = post_color_list
             else:
-                color = post_color[i]
+                color = post_color_list[j]
             # Setup axes
             ax.set_xlim(span[i])
             if max_n_ticks == 0:
@@ -5362,13 +5618,14 @@ def traceplot_custom(results_list, quantiles=[0.025, 0.5, 0.975],
 
 
 def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
-               color_list=['blue'], smooth=0.02, quantiles_2d=None, hist_kwargs=None,
-               hist2d_kwargs=None, labels=None, label_kwargs=None,
-               contour_labels_list=None,
-               show_titles=False, title_fmt=".2f", title_kwargs=None,
-               truths=None, truth_color='red', truth_kwargs=None,
-               max_n_ticks=5, top_ticks=False, use_math_text=False,
-               verbose=False, fig=None):
+                      color_list=['blue'], smooth=0.02, quantiles_2d=None, hist_kwargs=None,
+                      hist2d_kwargs=None, labels=None, label_kwargs=None,
+                      contour_labels_list=None,
+                      show_titles=False, title_fmt=".2f", title_kwargs=None,
+                      truths=None, truth_color='red', truth_kwargs=None,
+                      max_n_ticks=5, top_ticks=False, use_math_text=False,
+                      verbose=False, fig=None,
+                      number_fontsize=10, label_offset=-0.4):
     """
     Generate a corner plot of the 1-D and 2-D marginalized posteriors.
     Allows you to plot multiple corner plots on top of each other.
@@ -5526,7 +5783,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                 ax = axes
             else:
                 ax = axes[i, i]
-    
+
             # Plot the 1-D marginalized posteriors.
     
             # Setup axes
@@ -5534,6 +5791,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
             if max_n_ticks == 0:
                 ax.xaxis.set_major_locator(NullLocator())
                 ax.yaxis.set_major_locator(NullLocator())
+
             else:
                 ax.xaxis.set_major_locator(MaxNLocator(max_n_ticks,
                                                        prune="lower"))
@@ -5541,6 +5799,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
             # Label axes.
             sf = ScalarFormatter(useMathText=use_math_text)
             ax.xaxis.set_major_formatter(sf)
+            ax.tick_params(axis='both', which='major', labelsize=number_fontsize) 
             if i < ndim - 1:
                 if top_ticks:
                     ax.xaxis.set_ticks_position("top")
@@ -5550,7 +5809,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
             else:
                 [l.set_rotation(45) for l in ax.get_xticklabels()]
                 ax.set_xlabel(labels[i], **label_kwargs)
-                ax.xaxis.set_label_coords(0.5, -0.3)
+                ax.xaxis.set_label_coords(0.5, label_offset)
             # Generate distribution.
             sx = smooth[i]
             if isinstance(sx, int_type):
@@ -5627,18 +5886,19 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                 sf = ScalarFormatter(useMathText=use_math_text)
                 ax.xaxis.set_major_formatter(sf)
                 ax.yaxis.set_major_formatter(sf)
+                ax.tick_params(axis='both', which='major', labelsize=number_fontsize)
                 if i < ndim - 1:
                     ax.set_xticklabels([])
                 else:
                     [l.set_rotation(45) for l in ax.get_xticklabels()]
                     ax.set_xlabel(labels[j], **label_kwargs)
-                    ax.xaxis.set_label_coords(0.5, -0.3)
+                    ax.xaxis.set_label_coords(0.5, label_offset)
                 if j > 0:
                     ax.set_yticklabels([])
                 else:
                     [l.set_rotation(45) for l in ax.get_yticklabels()]
                     ax.set_ylabel(labels[i], **label_kwargs)
-                    ax.yaxis.set_label_coords(-0.3, 0.5)
+                    ax.yaxis.set_label_coords(label_offset, 0.5)
                 # Generate distribution.
                 sy = smooth[j]
                 check_ix = isinstance(sx, int_type)
@@ -5656,9 +5916,12 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                 hist_kwargs['alpha'] = hist_kwargs.get('alpha', 0.6)
 #                hist2d_kwargs['label'] = hist_kwargs.get('label', contour_label)
 
-                dyplot._hist2d(y, x, ax=ax, span=[span[j], span[i]],
-                               weights=weights, color=color, smooth=[sy, sx],
-                               **hist2d_kwargs)
+                contour2d_alpha(y, x, ax=ax, span=[span[j], span[i]],
+                                weights=weights, color=color, smooth=[sy, sx],
+                                **hist2d_kwargs)
+                # dyplot._hist2d(y, x, ax=ax, span=[span[j], span[i]],
+                #                weights=weights, color=color, smooth=[sy, sx],
+                #                **hist2d_kwargs)
                 # Add truth values
                 if truths is not None:
                     if truths[j] is not None:
