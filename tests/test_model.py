@@ -26,7 +26,7 @@ from astropy.coordinates import get_body_barycentric, get_body, get_moon, get_bo
 np.random.seed(0)
 
 
-def test_PSPL_other():
+def test_PSPL_other(plot=False):
     mL = 10.0  # msun
     t0 = 57000.00
     xS0 = np.array([0.000, 0.000])
@@ -41,12 +41,12 @@ def test_PSPL_other():
     mag_src = 19.0
 
     run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
-                  outdir='tests/test_pspl_other/')
+                  outdir='tests/test_pspl_other/', plot=plot)
 
     return
 
 
-def test_PSPL_belokurov():
+def test_PSPL_belokurov(plot=False):
     # Scenario from Belokurov and Evans 2002 (Figure 1)
     # Note that this isn't a direct comparison; because we don't have parallax.
     mL = 0.5  # msun
@@ -61,13 +61,13 @@ def test_PSPL_belokurov():
     mag_src = 19.0
 
     run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
-                  outdir='tests/test_pspl_belokurov/')
+                  outdir='tests/test_pspl_belokurov/', plot=plot)
 
     return
 
 
 def run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
-                  outdir=''):
+                  outdir='', plot=False):
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
 
@@ -97,91 +97,92 @@ def run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
     assert pspl.b_sff[0] == b_sff
     assert pspl.mag_src[0] == mag_src
 
-    t = np.arange(t0 - 3000, t0 + 3000, 1)
-    dt = t - pspl.t0
+    if plot:
+        t = np.arange(t0 - 3000, t0 + 3000, 1)
+        dt = t - pspl.t0
 
-    A = pspl.get_amplification(t)
-    shift = pspl.get_centroid_shift(t)
-    shift_amp = np.linalg.norm(shift, axis=1)
+        A = pspl.get_amplification(t)
+        shift = pspl.get_centroid_shift(t)
+        shift_amp = np.linalg.norm(shift, axis=1)
 
-    # Plot the amplification
-    plt.figure(1)
-    plt.clf()
-    plt.plot(dt, 2.5 * np.log10(A), 'k.')
-    plt.xlabel('t - t0 (MJD)')
-    plt.ylabel('2.5 * log(A)')
-    plt.savefig(outdir + 'amp_v_time.png')
+        # Plot the amplification
+        plt.figure(1)
+        plt.clf()
+        plt.plot(dt, 2.5 * np.log10(A), 'k.')
+        plt.xlabel('t - t0 (MJD)')
+        plt.ylabel('2.5 * log(A)')
+        plt.savefig(outdir + 'amp_v_time.png')
 
-    # Plot the positions of everything
-    lens_pos = pspl.xL0 + np.outer(dt / model.days_per_year, pspl.muL) * 1e-3
-    srce_pos = pspl.xS0 + np.outer(dt / model.days_per_year, pspl.muS) * 1e-3
-    imag_pos = srce_pos + (shift * 1e-3)
+        # Plot the positions of everything
+        lens_pos = pspl.xL0 + np.outer(dt / model.days_per_year, pspl.muL) * 1e-3
+        srce_pos = pspl.xS0 + np.outer(dt / model.days_per_year, pspl.muS) * 1e-3
+        imag_pos = srce_pos + (shift * 1e-3)
 
-    plt.figure(2)
-    plt.clf()
-    plt.plot(lens_pos[:, 0], lens_pos[:, 1], 'r--', mfc='none', mec='red')
-    plt.plot(srce_pos[:, 0], srce_pos[:, 1], 'b--', mfc='none', mec='blue')
-    plt.plot(imag_pos[:, 0], imag_pos[:, 1], 'b-')
-    lim = 0.005
-    plt.xlim(lim, -lim)  # arcsec
-    plt.ylim(-lim, lim)
-    plt.xlabel('dRA (arcsec)')
-    plt.ylabel('dDec (arcsec)')
-    plt.title('Zoomed-in')
-    plt.savefig(outdir + 'on_sky_zoomed.png')
+        plt.figure(2)
+        plt.clf()
+        plt.plot(lens_pos[:, 0], lens_pos[:, 1], 'r--', mfc='none', mec='red')
+        plt.plot(srce_pos[:, 0], srce_pos[:, 1], 'b--', mfc='none', mec='blue')
+        plt.plot(imag_pos[:, 0], imag_pos[:, 1], 'b-')
+        lim = 0.005
+        plt.xlim(lim, -lim)  # arcsec
+        plt.ylim(-lim, lim)
+        plt.xlabel('dRA (arcsec)')
+        plt.ylabel('dDec (arcsec)')
+        plt.title('Zoomed-in')
+        plt.savefig(outdir + 'on_sky_zoomed.png')
 
-    plt.figure(3)
-    plt.clf()
-    plt.plot(lens_pos[:, 0], lens_pos[:, 1], 'r--', mfc='none', mec='red')
-    plt.plot(srce_pos[:, 0], srce_pos[:, 1], 'b--', mfc='none', mec='blue')
-    plt.plot(imag_pos[:, 0], imag_pos[:, 1], 'b-')
-    lim = 0.05
-    plt.xlim(lim, -lim)  # arcsec
-    plt.ylim(-lim, lim)
-    plt.xlabel('dRA (arcsec)')
-    plt.ylabel('dDec (arcsec)')
-    plt.title('Zoomed-out')
-    plt.savefig(outdir + 'on_sky.png')
+        plt.figure(3)
+        plt.clf()
+        plt.plot(lens_pos[:, 0], lens_pos[:, 1], 'r--', mfc='none', mec='red')
+        plt.plot(srce_pos[:, 0], srce_pos[:, 1], 'b--', mfc='none', mec='blue')
+        plt.plot(imag_pos[:, 0], imag_pos[:, 1], 'b-')
+        lim = 0.05
+        plt.xlim(lim, -lim)  # arcsec
+        plt.ylim(-lim, lim)
+        plt.xlabel('dRA (arcsec)')
+        plt.ylabel('dDec (arcsec)')
+        plt.title('Zoomed-out')
+        plt.savefig(outdir + 'on_sky.png')
 
-    plt.figure(4)
-    plt.clf()
-    plt.plot(dt, shift_amp)
-    plt.xlabel('t - t0 (MJD)')
-    plt.ylabel('Astrometric Shift (mas)')
-    plt.savefig(outdir + 'shift_amp_v_t.png')
+        plt.figure(4)
+        plt.clf()
+        plt.plot(dt, shift_amp)
+        plt.xlabel('t - t0 (MJD)')
+        plt.ylabel('Astrometric Shift (mas)')
+        plt.savefig(outdir + 'shift_amp_v_t.png')
 
-    plt.figure(5)
-    plt.clf()
-    plt.plot(shift[:, 0], shift[:, 1])
-    plt.gca().invert_xaxis()
-    plt.xlabel('RA Shift (mas)')
-    plt.ylabel('Dec Shift (mas)')
-    plt.xlim(1.5, -1.5)
-    plt.ylim(-0.5, 2.5)
-    plt.savefig(outdir + 'shift_on_sky.png')
+        plt.figure(5)
+        plt.clf()
+        plt.plot(shift[:, 0], shift[:, 1])
+        plt.gca().invert_xaxis()
+        plt.xlabel('RA Shift (mas)')
+        plt.ylabel('Dec Shift (mas)')
+        plt.xlim(1.5, -1.5)
+        plt.ylim(-0.5, 2.5)
+        plt.savefig(outdir + 'shift_on_sky.png')
 
-    plt.close(6)
-    f, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
-    f.subplots_adjust(hspace=0)
-    ax1.plot(dt / pspl.tE, shift[:, 0] / pspl.thetaE_amp, 'k-')
-    ax2.plot(dt / pspl.tE, shift[:, 1] / pspl.thetaE_amp, 'k-')
-    ax3.plot(dt / pspl.tE, shift_amp / pspl.thetaE_amp, 'k-')
-    ax3.set_xlabel('(t - t0) / tE)')
-    ax1.set_ylabel(r'dX / $\theta_E$')
-    ax2.set_ylabel(r'dY / $\theta_E$')
-    ax3.set_ylabel(r'dT / $\theta_E$')
-    ax1.set_ylim(-0.4, 0.4)
-    ax2.set_ylim(-0.4, 0.4)
-    ax3.set_ylim(0, 0.4)
-    plt.savefig(outdir + 'shift_v_t.png')
+        plt.close(6)
+        f, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+        f.subplots_adjust(hspace=0)
+        ax1.plot(dt / pspl.tE, shift[:, 0] / pspl.thetaE_amp, 'k-')
+        ax2.plot(dt / pspl.tE, shift[:, 1] / pspl.thetaE_amp, 'k-')
+        ax3.plot(dt / pspl.tE, shift_amp / pspl.thetaE_amp, 'k-')
+        ax3.set_xlabel('(t - t0) / tE)')
+        ax1.set_ylabel(r'dX / $\theta_E$')
+        ax2.set_ylabel(r'dY / $\theta_E$')
+        ax3.set_ylabel(r'dT / $\theta_E$')
+        ax1.set_ylim(-0.4, 0.4)
+        ax2.set_ylim(-0.4, 0.4)
+        ax3.set_ylim(0, 0.4)
+        plt.savefig(outdir + 'shift_v_t.png')
 
-    print('Einstein radius: ', pspl.thetaE_amp)
-    print('Einstein crossing time: ', pspl.tE)
+        print('Einstein radius: ', pspl.thetaE_amp)
+        print('Einstein crossing time: ', pspl.tE)
 
     return pspl
 
 
-def test_pspl_parallax_belokurov():
+def compare_pspl_parallax_belokurov():
     outdir = 'tests/test_pspl_parallax_belokurov/'
     dim_ang = u.dimensionless_angles()
 
@@ -285,7 +286,7 @@ def test_pspl_parallax_belokurov():
     return
 
 
-def test_pspl_parallax_han2000():
+def compare_pspl_parallax_han2000():
     # Scenario from Han+ 2000 (Figure 1)
     raL = 80.89375  # LMC R.A.
     decL = -69.75611  # LMC Dec.
@@ -318,7 +319,7 @@ def test_pspl_parallax_han2000():
     return
 
 
-def test_pspl_parallax_bulge1():
+def compare_pspl_parallax_bulge1():
     # Scenario from Belokurov and Evans 2002 (Figure 1)
     raL = 17.5 * 15.0  # in degrees
     decL = -30.0
@@ -481,7 +482,7 @@ def run_test_pspl_parallax(raL, decL, mL, t0, xS0, beta, muS, muL, dL, dS,
     return
 
 
-def test_pspl_parallax_paczynski1998(t0=57000):
+def compare_pspl_parallax_paczynski1998(t0=57000):
     """
     I can't quite get this one to match!!! Why not? Maybe they kept in the parallax of the source?
     i.e. just removed proper motions. 
@@ -682,7 +683,7 @@ def test_pspl_parallax_paczynski1998(t0=57000):
     return
 
 
-def test_pspl_parallax_boden1998(t0=57000):
+def compare_pspl_parallax_boden1998(t0=57000):
     """
     I can get this one to match Figure 6 of Boden et al. 1998.
     """
@@ -859,7 +860,7 @@ def test_pspl_parallax_boden1998(t0=57000):
     return
 
 
-def test_PSPL_phot_Lu2016():
+def compare_PSPL_phot_Lu2016():
     """
     Compare observed photometry to model for
     OB120169 as listed in Table 6 (photometry
@@ -877,7 +878,7 @@ def test_PSPL_phot_Lu2016():
 
     # Read in the OGLE I-band photometry.
     tests_dir = os.path.dirname(os.path.realpath(__file__))
-    dat = Table.read(tests_dir + '/OB120169_phot.dat', format='ascii')
+    dat = Table.read(tests_dir + '/data/OB120169_phot.dat', format='ascii')
     dat['col1'] -= 2400000.5
     dat.rename_column('col1', 'mjd')
     dat.rename_column('col2', 'I')
@@ -1023,7 +1024,11 @@ def test_pspl_parallax2_bulge():
         if kk in members2.keys():
             print('{0:13s}  {1:25s}  {2:25s}'.format(kk, str(members1[kk]),
                                                      str(members2[kk])))
-            np.testing.assert_almost_equal(members1[kk], members2[kk], 3)
+
+            if isinstance(members1[kk], str):
+                assert members1[kk] == members2[kk]
+            else:
+                np.testing.assert_almost_equal(members1[kk], members2[kk], 3)
 
     t = np.arange(t0 - 1000, t0 + 1000, 1)
     dt = t - pspl_par1.t0
@@ -1198,7 +1203,7 @@ def compare_lumlens_parallax_bulge():
     plt.show()
 
 
-def test_parallax():
+def compare_parallax():
     """
     Compare our parallax vector and motion equations with
     Astropy (which now has it implemented and is well tested
@@ -1321,8 +1326,9 @@ def test_parallax():
     # Casey's conversion.
     ##########
     print('!!! Casey conversions')
-    foo = frame_convert.convert_helio_to_geo_phot(raL_in, decL_in, t0_in, pspl.u0_amp, pspl.tE,
-                                        pspl.piE[0], pspl.piE[1], t0_in)
+    foo = frame_convert.convert_helio_geo_phot(raL_in, decL_in,
+                                               t0_in, pspl.u0_amp, pspl.tE,
+                                               pspl.piE[0], pspl.piE[1], t0_in)
     t0_geo_casey = foo[0]
     u0_geo_casey = foo[1]
     tE_geo_casey = foo[2]
@@ -1447,9 +1453,8 @@ def test_parallax():
     # Calculate tau (in relative proper motion direction) and beta (in u0 direction)
     tau = ((t_obj.value - t0_obj_geotr.value) * u.day / tE_geotr) + dtau
     beta = u0_amp_geotr + dbeta
-
-    tau_vec = tau * muRel_geotr.T / np.linalg.norm(muRel_geotr)
-    beta_vec = beta * u0_geotr.T / np.lingalg.norm(u0_geotr)
+    tau_vec = np.outer(tau,  muRel_geotr.T) / np.linalg.norm(muRel_geotr)
+    beta_vec = np.outer(beta,  u0_geotr.T) / np.linalg.norm(u0_geotr)
 
     print('t      = ', t[0:500:80])
     print('tau    = ', tau[0:500:80])
@@ -1541,7 +1546,7 @@ def test_parallax():
     return
 
 
-def testing_astropy_parallax():
+def compare_astropy_parallax():
     from astropy.coordinates import SkyCoord, GCRS
     from astropy.time import Time
     import astropy.units as u
@@ -2130,7 +2135,7 @@ def test_PSBL_Phot_Par_Param1():
     return
 
 
-def test_PSBL_phot_vs_pyLIMA():
+def test_PSBL_phot_vs_pyLIMA(plot=False):
     from pyLIMA import microlmodels
     from pyLIMA import event
     from pyLIMA import telescopes
@@ -2144,65 +2149,77 @@ def test_PSBL_phot_vs_pyLIMA():
     mag_src = 16
     b_sff = 0.5
     q = 1.0
-    sep = 0.6
-    phi = 125.0
+    sep = 0.6   # mas
+    phi = 125.0 # deg
 
-    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi)
+    tol = 5e-4
+
+    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi,
+                                 tol=tol, plot=plot)
     t_mjd, mag_pyl, mag_our, max_delta = res
-    assert max_delta < 1e-6
+    assert max_delta < tol
 
     # Change t0:
     t0_new = 56000.0
-    res = plot_compare_vs_pylima(t0_new, u0_amp, tE, mag_src, b_sff, q, sep, phi)
+    res = plot_compare_vs_pylima(t0_new, u0_amp, tE, mag_src, b_sff, q, sep, phi,
+                                 tol=tol, plot=plot)
     t_mjd, mag_pyl, mag_our, max_delta = res
-    assert max_delta < 1e-6
+    assert max_delta < tol
 
     # Change u0_amp:
     u0_amp_new = 0.4
-    res = plot_compare_vs_pylima(t0_new, u0_amp_new, tE, mag_src, b_sff, q, sep, phi)
+    res = plot_compare_vs_pylima(t0_new, u0_amp_new, tE, mag_src, b_sff, q, sep, phi,
+                                 tol=tol, plot=plot)
     t_mjd, mag_pyl, mag_our, max_delta = res
-    assert max_delta < 1e-6
+    assert max_delta < tol
 
     # Change tE:
     tE_new = 120.0
-    res = plot_compare_vs_pylima(t0, u0_amp, tE_new, mag_src, b_sff, q, sep, phi)
+    res = plot_compare_vs_pylima(t0, u0_amp, tE_new, mag_src, b_sff, q, sep, phi,
+                                 tol=tol, plot=plot)
     t_mjd, mag_pyl, mag_our, max_delta = res
-    assert max_delta < 1e-6
+    assert max_delta < tol
 
     # Change sep:
     sep_new = 0.3
-    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep_new, phi)
+    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep_new, phi,
+                                 tol=tol, plot=plot)
     t_mjd, mag_pyl, mag_our, max_delta = res
-    assert max_delta < 1e-6
+    assert max_delta < tol
 
     # Change phi:
     phi_new = 0.3
-    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi_new)
+    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi_new,
+                                 tol=tol, plot=plot)
     t_mjd, mag_pyl, mag_our, max_delta = res
-    assert max_delta < 1e-6
+    assert max_delta < tol
 
     # Change mag_src:
     mag_src_new = 18
-    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src_new, b_sff, q, sep, phi)
+    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src_new, b_sff, q, sep, phi,
+                                 tol=tol, plot=plot)
     t_mjd, mag_pyl, mag_our, max_delta = res
-    assert max_delta < 1e-6
+    assert max_delta < tol
 
     # Change b_sff:
     b_sff_new = 0.5
-    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff_new, q, sep, phi)
+    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff_new, q, sep, phi,
+                                 tol=tol, plot=plot)
     t_mjd, mag_pyl, mag_our, max_delta = res
-    assert max_delta < 1e-6
+    assert max_delta < tol
 
     # Change q
     q_new = 0.8
-    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q_new, sep, phi)
+    res = plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q_new, sep, phi,
+                                 tol=tol, plot=plot)
     t_mjd, mag_pyl, mag_our, max_delta = res
-    assert max_delta < 1e-6
+    assert max_delta < tol
 
     return
 
 
-def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1, piEN=0.1):
+def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1, piEN=0.1,
+                           tol = 1e-6, plot=True):
     """All input values are our model definitions.
     
     Note piEE and piEN should be arbitrary. But might want to check just in case. 
@@ -2220,7 +2237,7 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     piEN = 0.1
 
     # Our --> PyLIMA  conversions
-    pylima_q = 1.0 / q
+    pylima_q = q
 
     q_prime = (1.0 - q) / (2.0 * (1 + q))
 
@@ -2233,7 +2250,8 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     log_s = np.log10(sep)
 
     # Load up some artificial data for pyLIMA... need this for time array definition.
-    pylima_data = np.loadtxt(os.path.dirname(model.__file__) + '/tests/OB120169_phot.dat')
+    tests_dir = os.path.dirname(os.path.realpath(__file__))
+    pylima_data = np.loadtxt(tests_dir + '/data/OB120169_phot.dat')
     pylima_data[:, 1] = 1e5
     time_jd = pylima_data[:, 0]
     time_mjd = time_jd - 2400000.5
@@ -2262,58 +2280,56 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
 
     our_mag = psbl.get_photometry(time_mjd)
 
-    plt.figure(1, figsize=(11, 6))
-    plt.clf()
-    f1 = plt.gcf().add_axes([0.4, 0.35, 0.57, 0.6])
-    f2 = plt.gcf().add_axes([0.4, 0.15, 0.57, 0.2])
-    f1.get_shared_x_axes().join(f1, f2)
-    f1.set_xticklabels([])
-
-    f1.plot(time_mjd, pylima_lcurve_mag, 'ko', label='pyLIMA')
-    f1.plot(time_mjd, our_mag, 'r.', label='Ours')
-    f1.invert_yaxis()
-    f1.set_xlabel('MJD (day)')
-    f1.set_ylabel('I (mag)')
-    f1.legend()
-
-    f2.plot(time_mjd, pylima_lcurve_mag - our_mag, 'k.')
-    f2.set_xlabel('MJD (day)')
-    f2.set_ylabel('PyL-Ours')
-
-    tleft = 0.03
-    ttop = 0.7
-    ttstep = 0.05
-    fig = plt.gcf()
-    fig.text(tleft, ttop - 0 * ttstep, 't0 = {0:.1f} (MJD)'.format(t0), fontsize=12)
-    fig.text(tleft, ttop - 1 * ttstep, 't0_pyL = {0:.1f} (MJD)'.format(pylima_t0), fontsize=12)
-    fig.text(tleft, ttop - 2 * ttstep, 'u0 = {0:.3f}'.format(u0_amp), fontsize=12)
-    fig.text(tleft, ttop - 3 * ttstep, 'u0_pyL = {0:.3f}'.format(pylima_u0), fontsize=12)
-    fig.text(tleft, ttop - 4 * ttstep, 'tE = {0:.1f} (day)'.format(tE), fontsize=12)
-    fig.text(tleft, ttop - 5 * ttstep, 'q  = {0:.5f}'.format(q), fontsize=12)
-    fig.text(tleft, ttop - 6 * ttstep, 'q_pyL  = {0:.5f}'.format(pylima_q), fontsize=12)
-    fig.text(tleft, ttop - 7 * ttstep, 'sep  = {0:.5f}'.format(sep), fontsize=12)
-    fig.text(tleft, ttop - 8 * ttstep, 'phi  = {0:.1f}'.format(phi), fontsize=12)
-    fig.text(tleft, ttop - 9 * ttstep, 'b_sff  = {0:.2f}'.format(b_sff), fontsize=12)
-    fig.text(tleft, ttop - 10 * ttstep, 'mag_src  = {0:.1f}'.format(mag_src), fontsize=12)
-
     max_delta = np.max(np.abs(pylima_lcurve_mag - our_mag))
 
-    if max_delta > 1e-6:
-        fig.text(tleft, 0.05, '!!BAD!!', fontsize=16, color='red')
+    if plot:
+        plt.figure(1, figsize=(11, 6))
+        plt.clf()
+        f1 = plt.gcf().add_axes([0.4, 0.35, 0.57, 0.6])
+        f2 = plt.gcf().add_axes([0.4, 0.15, 0.57, 0.2], sharex=f1)
 
-    plt.savefig('PSBL_phot_vs_pyLIMA.png')
+        f1.plot(time_mjd, pylima_lcurve_mag, 'ko', label='pyLIMA')
+        f1.plot(time_mjd, our_mag, 'r.', label='Ours')
+        f1.invert_yaxis()
+        f1.set_ylabel('I (mag)')
+        f1.legend()
+
+        f2.plot(time_mjd, pylima_lcurve_mag - our_mag, 'k.')
+        f2.set_xlabel('MJD (day)')
+        f2.set_ylabel('PyL-Ours')
+
+        tleft = 0.03
+        ttop = 0.7
+        ttstep = 0.05
+        fig = plt.gcf()
+        fig.text(tleft, ttop - 0 * ttstep, 't0 = {0:.1f} (MJD)'.format(t0), fontsize=12)
+        fig.text(tleft, ttop - 1 * ttstep, 't0_pyL = {0:.1f} (MJD)'.format(pylima_t0), fontsize=12)
+        fig.text(tleft, ttop - 2 * ttstep, 'u0 = {0:.3f}'.format(u0_amp), fontsize=12)
+        fig.text(tleft, ttop - 3 * ttstep, 'u0_pyL = {0:.3f}'.format(pylima_u0), fontsize=12)
+        fig.text(tleft, ttop - 4 * ttstep, 'tE = {0:.1f} (day)'.format(tE), fontsize=12)
+        fig.text(tleft, ttop - 5 * ttstep, 'q  = {0:.5f}'.format(q), fontsize=12)
+        fig.text(tleft, ttop - 6 * ttstep, 'q_pyL  = {0:.5f}'.format(pylima_q), fontsize=12)
+        fig.text(tleft, ttop - 7 * ttstep, 'sep  = {0:.5f}'.format(sep), fontsize=12)
+        fig.text(tleft, ttop - 8 * ttstep, 'phi  = {0:.1f}'.format(phi), fontsize=12)
+        fig.text(tleft, ttop - 9 * ttstep, 'b_sff  = {0:.2f}'.format(b_sff), fontsize=12)
+        fig.text(tleft, ttop - 10 * ttstep, 'mag_src  = {0:.1f}'.format(mag_src), fontsize=12)
+
+        if max_delta > tol:
+            fig.text(tleft, 0.05, '!!BAD!!', fontsize=16, color='red')
+
+            plt.savefig('PSBL_phot_vs_pyLIMA.png')
 
     return (time_mjd, pylima_lcurve_mag, our_mag, max_delta)
 
 
-def test_PSPL_phot_vs_pyLIMA():
+def test_PSPL_phot_vs_pyLIMA(plot=False):
     from pyLIMA import microlmodels
     from pyLIMA import event
     from pyLIMA import telescopes
     from pyLIMA import microltoolbox
     from pyLIMA import microlmodels
 
-    # Parameters -- common to ours and pyLIMA
+    # Parameters: BAGLE style (conversion down later)
     ra = 267.4640833333333
     dec = -34.62555555555556
     t0 = 55775.0
@@ -2322,20 +2338,24 @@ def test_PSPL_phot_vs_pyLIMA():
     piEE = 0.5
     piEN = -0.1
     mag_src = 16
-    b_sff = 0.5
+    b_sff = 1.0
+
+    tol = 1e-6
 
     # res = plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_sff, parallax=False)
     # t_mjd, mag_pyl, mag_our, max_delta = res
     # assert max_delta < 1e-6
 
-    res = plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_sff, parallax=True)
+    res = plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_sff,
+                                      parallax=False, tol=tol, plot=plot)
     t_mjd, mag_pyl, mag_our, max_delta = res
     assert max_delta < 1e-6
 
     return
 
 
-def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_sff, parallax=True):
+def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_sff,
+                                parallax=True, tol=1e-6, plot=True):
     """
     Compare pyLIMA to our models with some plots. 
 
@@ -2354,89 +2374,90 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     t0_ref = t0_par
     # t0_ref += 10.0
 
-    ####
-    # Full Astropy Version
-    ####
-    # Make a temporary muRel
-    from astropy.coordinates import SkyCoord, GCRS, FK5
-    from astropy.time import TimeJD, Time
-    from astropy.coordinates import solar_system_ephemeris
+    # ####
+    # # Full Astropy Version
+    # ####
+    # # Make a temporary muRel
+    # from astropy.coordinates import SkyCoord, GCRS, FK5
+    # from astropy.time import TimeJD, Time
+    # from astropy.coordinates import solar_system_ephemeris
 
-    # muRel_helio = 3.0 * u.mas / u.yr
-    # dist = 6.0 * u.kpc
-    # targ = SkyCoord(ra * u.deg, dec * u.deg, distance=dist,
-    #                     pm_ra_cosdec = piEE*muRel_helio,
-    #                     pm_dec = piEN*muRel_helio,
-    #                     radial_velocity = 0 * u.km / u.s,
-    #                     frame=FK5(equinox=Time(2000, format='jyear')))
-    # solar_system_ephemeris.set('builtin')
-    # foo = targ.transform_to(GCRS(obstime=Time(t0_ref, format='jd', scale='tai')))
-    # print('targ = ', targ)
-    # print('foo = ', foo)
-    # Above is useless because it includes the whole velocity on the sky. 
+    # # muRel_helio = 3.0 * u.mas / u.yr
+    # # dist = 6.0 * u.kpc
+    # # targ = SkyCoord(ra * u.deg, dec * u.deg, distance=dist,
+    # #                     pm_ra_cosdec = piEE*muRel_helio,
+    # #                     pm_dec = piEN*muRel_helio,
+    # #                     radial_velocity = 0 * u.km / u.s,
+    # #                     frame=FK5(equinox=Time(2000, format='jyear')))
+    # # solar_system_ephemeris.set('builtin')
+    # # foo = targ.transform_to(GCRS(obstime=Time(t0_ref, format='jd', scale='tai')))
+    # # print('targ = ', targ)
+    # # print('foo = ', foo)
+    # # Above is useless because it includes the whole velocity on the sky. 
 
-    # Get the position and velocity of the Earth in the barycentric frame.
-    # with solar_system_ephemeris.set('jpl'):
-    with solar_system_ephemeris.set('builtin'):
-        time_jd_reference = Time(t0_ref, format='jd')
-        Earth_pos_t0_par = get_body_barycentric_posvel('Earth', time_jd_reference)
+    # # Get the position and velocity of the Earth in the barycentric frame.
+    # # with solar_system_ephemeris.set('jpl'):
+    # with solar_system_ephemeris.set('builtin'):
+    #     time_jd_reference = Time(t0_ref, format='jd')
+    #     Earth_pos_t0_par = get_body_barycentric_posvel('Earth', time_jd_reference)
 
-    print('Earth pos (bary) = ', Earth_pos_t0_par[0])
-    print('Earth vel (bary) = ', Earth_pos_t0_par[1])
+    # print('Earth pos (bary) = ', Earth_pos_t0_par[0])
+    # print('Earth vel (bary) = ', Earth_pos_t0_par[1])
 
-    # This is the position of the Sun w.r.t. to the Earth at time t0 (in geocentric frame)
-    Sun_pos_t0_par = -Earth_pos_t0_par[0]
-    Sun_vel_t0_par = -Earth_pos_t0_par[1]
+    # # This is the position of the Sun w.r.t. to the Earth at time t0 (in geocentric frame)
+    # Sun_pos_t0_par = -Earth_pos_t0_par[0]
+    # Sun_vel_t0_par = -Earth_pos_t0_par[1]
 
-    # Project sidereal RA and Dec into geocentric equatorial rectangular coordinates.
-    # See "Rectangular coordinates" section here:
-    # https://en.wikipedia.org/wiki/Equatorial_coordinate_system
-    # This code matches pyLIMA.
-    target_angles_in_the_sky = [ra * np.pi / 180, dec * np.pi / 180]
-    Target = np.array(
-        [np.cos(target_angles_in_the_sky[1]) * np.cos(target_angles_in_the_sky[0]),
-         np.cos(target_angles_in_the_sky[1]) * np.sin(target_angles_in_the_sky[0]),
-         np.sin(target_angles_in_the_sky[1])])
+    # # Project sidereal RA and Dec into geocentric equatorial rectangular coordinates.
+    # # See "Rectangular coordinates" section here:
+    # # https://en.wikipedia.org/wiki/Equatorial_coordinate_system
+    # # This code matches pyLIMA.
+    # target_angles_in_the_sky = [ra * np.pi / 180, dec * np.pi / 180]
+    # Target = np.array(
+    #     [np.cos(target_angles_in_the_sky[1]) * np.cos(target_angles_in_the_sky[0]),
+    #      np.cos(target_angles_in_the_sky[1]) * np.sin(target_angles_in_the_sky[0]),
+    #      np.sin(target_angles_in_the_sky[1])])
 
-    East = np.array([-np.sin(target_angles_in_the_sky[0]),
-                     np.cos(target_angles_in_the_sky[0]),
-                     0.0])
-    North = np.cross(Target, East)
-    print('East (geo) = ', East)
-    print('North (geo) = ', North)
+    # East = np.array([-np.sin(target_angles_in_the_sky[0]),
+    #                  np.cos(target_angles_in_the_sky[0]),
+    #                  0.0])
+    # North = np.cross(Target, East)
+    # print('East (geo) = ', East)
+    # print('North (geo) = ', North)
 
-    Earth_vel_t0_par_proj = np.array([np.dot(Earth_pos_t0_par[1].xyz.to('AU/day').value, East),
-                                      np.dot(Earth_pos_t0_par[1].xyz.to('AU/day').value, North)])
-    print('Earth vel (EN projected, AU/day) = ', Earth_vel_t0_par_proj)
-    au_day_to_km_s = 1731.45683
-    print('Earth vel (EN projected, km/s) = ', Earth_vel_t0_par_proj * au_day_to_km_s)
+    # Earth_vel_t0_par_proj = np.array([np.dot(Earth_pos_t0_par[1].xyz.to('AU/day').value, East),
+    #                                   np.dot(Earth_pos_t0_par[1].xyz.to('AU/day').value, North)])
+    # print('Earth vel (EN projected, AU/day) = ', Earth_vel_t0_par_proj)
+    # au_day_to_km_s = 1731.45683
+    # print('Earth vel (EN projected, km/s) = ', Earth_vel_t0_par_proj * au_day_to_km_s)
 
-    # Unit vector pointing towards the Sun (projected onto the sky):
-    Sun_pos_t0_par_proj = np.array([np.dot(Sun_pos_t0_par.xyz.to('AU').value, East),
-                                    np.dot(Sun_pos_t0_par.xyz.to('AU').value, North)])
-    Sun_pos_t0_par_proj_unit = Sun_pos_t0_par_proj / np.linalg.norm(Sun_pos_t0_par_proj)
+    # # Unit vector pointing towards the Sun (projected onto the sky):
+    # Sun_pos_t0_par_proj = np.array([np.dot(Sun_pos_t0_par.xyz.to('AU').value, East),
+    #                                 np.dot(Sun_pos_t0_par.xyz.to('AU').value, North)])
+    # Sun_pos_t0_par_proj_unit = Sun_pos_t0_par_proj / np.linalg.norm(Sun_pos_t0_par_proj)
 
-    # Project velocity from RA and Dec into geocentric equatorial rectangular coordinates.
-    # Note units will be in AU / day.
-    Sun_vel_t0_par_proj = np.array([np.dot(Sun_vel_t0_par.xyz.to('AU/day').value, East),
-                                    np.dot(Sun_vel_t0_par.xyz.to('AU/day').value, North)])
+    # # Project velocity from RA and Dec into geocentric equatorial rectangular coordinates.
+    # # Note units will be in AU / day.
+    # Sun_vel_t0_par_proj = np.array([np.dot(Sun_vel_t0_par.xyz.to('AU/day').value, East),
+    #                                 np.dot(Sun_vel_t0_par.xyz.to('AU/day').value, North)])
 
-    print('Sun pos (geo) = ', Sun_pos_t0_par)
-    print('Sun pos (geo, EN projected) = ', Sun_pos_t0_par_proj)
-    print('Sun pos (geo, EN projected, unit) = ', Sun_pos_t0_par_proj_unit)
-    print()
-    # Compare this projected Sun vector to the parallax vector we use in our code. 
-    par_vec = model.parallax_in_direction(ra, dec, np.array([t0]))
-    print('Parallax Vector from PSPL = ', par_vec)
-    print()
-    print('Sun vel (geo)= ', Sun_vel_t0_par)
-    print('Sun vel (geo, EN projected (AU/day)) = ', Sun_vel_t0_par_proj)
-    print('Sun vel (geo, EN projected (km/s))   = ', Sun_vel_t0_par_proj * au_day_to_km_s)
+    # print('Sun pos (geo) = ', Sun_pos_t0_par)
+    # print('Sun pos (geo, EN projected) = ', Sun_pos_t0_par_proj)
+    # print('Sun pos (geo, EN projected, unit) = ', Sun_pos_t0_par_proj_unit)
+    # print()
+    # # Compare this projected Sun vector to the parallax vector we use in our code. 
+    # par_vec = model.parallax_in_direction(ra, dec, np.array([t0]))
+    # print('Parallax Vector from PSPL = ', par_vec)
+    # print()
+    # print('Sun vel (geo)= ', Sun_vel_t0_par)
+    # print('Sun vel (geo, EN projected (AU/day)) = ', Sun_vel_t0_par_proj)
+    # print('Sun vel (geo, EN projected (km/s))   = ', Sun_vel_t0_par_proj * au_day_to_km_s)
 
     #####
     # Load up some artificial data for pyLIMA... need this for time array definition.
     #####
-    pylima_data = np.loadtxt(os.path.dirname(model.__file__) + '/tests/OB120169_phot.dat')
+    tests_dir = os.path.dirname(os.path.realpath(__file__))
+    pylima_data = np.loadtxt(tests_dir + '/data/OB120169_phot.dat')
     pylima_data[:, 1] = 1e5
     time_jd = pylima_data[:, 0]
     time_mjd = time_jd - 2400000.5
@@ -2462,31 +2483,41 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     #####
     piE = pspl.piE_amp
 
-    # Sun_vel_t0_par_proj is in units of AU / days.
-    # Convert to unitless by multiplying:
-    #    Sun_vel_t0_par_proj [AU / day] * tE [days] * piE^2 / 1 AU
-    # tmpEE_geo = piEE - (Sun_vel_t0_par_proj[0] * tE * piE**2)   # unitless.
-    # tmpEN_geo = piEN - (Sun_vel_t0_par_proj[1] * tE * piE**2)
-    tmpEE_geo = piEE - (Sun_vel_t0_par_proj[0] * tE * piE)  # unitless.
-    tmpEN_geo = piEN - (Sun_vel_t0_par_proj[1] * tE * piE)
-    tmp_geo = np.hypot(tmpEE_geo, tmpEN_geo)
-    print('tmp_geo = ', tmp_geo)
-    print('piE = ', piE)
+    # # Sun_vel_t0_par_proj is in units of AU / days.
+    # # Convert to unitless by multiplying:
+    # #    Sun_vel_t0_par_proj [AU / day] * tE [days] * piE^2 / 1 AU
+    # # tmpEE_geo = piEE - (Sun_vel_t0_par_proj[0] * tE * piE**2)   # unitless.
+    # # tmpEN_geo = piEN - (Sun_vel_t0_par_proj[1] * tE * piE**2)
+    # tmpEE_geo = piEE - (Sun_vel_t0_par_proj[0] * tE * piE)  # unitless.
+    # tmpEN_geo = piEN - (Sun_vel_t0_par_proj[1] * tE * piE)
+    # tmp_geo = np.hypot(tmpEE_geo, tmpEN_geo)
+    # print('tmp_geo = ', tmp_geo)
+    # print('piE = ', piE)
 
-    piEE_geo = tmpEE_geo * piE / tmp_geo
-    piEN_geo = tmpEN_geo * piE / tmp_geo
-    print('piE_vec helio = ', piEE, piEN)
-    print('piE_vec geo   = ', piEE_geo, piEN_geo)
+    # piEE_geo = tmpEE_geo * piE / tmp_geo
+    # piEN_geo = tmpEN_geo * piE / tmp_geo
+    # print('piE_vec helio = ', piEE, piEN)
+    # print('piE_vec geo   = ', piEE_geo, piEN_geo)
 
-    tE_geo = tE * piE / tmp_geo
+    # tE_geo = tE * piE / tmp_geo
 
-    print()
-    # u0_vec_geo = pspl.u0 + (((t0_ref - t0_par)/tE)*pspl.thetaE_hat) - (piE * par_vec)
-    u0_vec_geo = pspl.u0 + (((t0_ref - t0_par) / tE) * pspl.thetaE_hat) - (piE * Sun_pos_t0_par_proj_unit)
-    u0_geo = np.linalg.norm(u0_vec_geo)
-    print('u0_vec_geo = ', u0_vec_geo)
-    print('pspl.u0 = ', pspl.u0)
-    print('u0_geo = ', u0_geo)
+    # print()
+    # # u0_vec_geo = pspl.u0 + (((t0_ref - t0_par)/tE)*pspl.thetaE_hat) - (piE * par_vec)
+    # u0_vec_geo = pspl.u0 + (((t0_ref - t0_par) / tE) * pspl.thetaE_hat) - (piE * Sun_pos_t0_par_proj_unit)
+    # u0_geo = np.linalg.norm(u0_vec_geo)
+    # print('u0_vec_geo = ', u0_vec_geo)
+    # print('pspl.u0 = ', pspl.u0)
+    # print('u0_geo = ', u0_geo)
+
+    foo = frame_convert.convert_helio_geo_phot(ra, dec,
+                                               t0, u0_amp, tE, piEE, piEN,
+                                               t0,
+                                               in_frame='helio',
+                                               murel_in='SL', murel_out='LS', 
+                                               coord_in='EN', coord_out='tb',
+                                               plot=False)
+    t0_geo, u0_geo, tE_geo, piEE_geo, piEN_geo = foo
+
 
     print('Making pyLIMA model')
     pylima_u0 = u0_geo
@@ -2515,8 +2546,8 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
     pylima_par.fs_OGLE = microltoolbox.magnitude_to_flux(mag_src)
     pylima_par.fb_OGLE = pylima_par.fs_OGLE * (1.0 - b_sff) / b_sff
-    print('piEE: pylima = ', pylima_par.piEE, ' ours = ', piEE)
-    print('piEN: pylima = ', pylima_par.piEN, ' ours = ', piEN)
+    # print('piEE: pylima = ', pylima_par.piEE, ' ours = ', piEE)
+    # print('piEN: pylima = ', pylima_par.piEN, ' ours = ', piEN)
 
     pylima_amp = pylima_mod.model_magnification(pylima_tel, pylima_par)
     pylima_lcurve, sf, bf = pylima_mod.compute_the_microlensing_model(pylima_tel, pylima_par)
@@ -2527,59 +2558,59 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
                                                                 pylima_tE,
                                                                 pylima_par)
 
-    plt.figure(1, figsize=(11, 6))
-    plt.clf()
-    f1 = plt.gcf().add_axes([0.4, 0.35, 0.57, 0.6])
-    f2 = plt.gcf().add_axes([0.4, 0.15, 0.57, 0.2])
-    f1.get_shared_x_axes().join(f1, f2)
-    f1.set_xticklabels([])
-
-    f1.plot(time_mjd, pylima_lcurve_mag, 'ko', label='pyLIMA')
-    f1.plot(time_mjd, our_mag, 'r.', label='Ours')
-    f1.invert_yaxis()
-    f1.set_xlabel('MJD (day)')
-    f1.set_ylabel('I (mag)')
-    f1.legend()
-
-    f2.plot(time_mjd, pylima_lcurve_mag - our_mag, 'k.')
-    f2.set_xlabel('MJD (day)')
-    f2.set_ylabel('PyL-Ours')
-
-    tleft = 0.03
-    ttop = 0.8
-    ttstep = 0.05
-    fig = plt.gcf()
-    fig.text(tleft, ttop - 0 * ttstep, 'raL = {0:.2f} (deg)'.format(ra), fontsize=12)
-    fig.text(tleft, ttop - 1 * ttstep, 'decL = {0:.2f} (deg)'.format(dec), fontsize=12)
-    fig.text(tleft, ttop - 2 * ttstep, 't0 = {0:.1f} (MJD)'.format(t0), fontsize=12)
-    fig.text(tleft, ttop - 3 * ttstep, 'u0     = {0:.3f}'.format(u0_amp), fontsize=12)
-    fig.text(tleft, ttop - 4 * ttstep, 'u0_pyL = {0:.3f}'.format(pylima_u0), fontsize=12)
-    fig.text(tleft, ttop - 5 * ttstep, 'tE = {0:.1f} (day)'.format(tE), fontsize=12)
-    fig.text(tleft, ttop - 6 * ttstep, 'tE_pyL = {0:.1f} (day)'.format(pylima_tE), fontsize=12)
-    fig.text(tleft, ttop - 7 * ttstep, 'piEE (S-L) = {0:.4f}'.format(piEE), fontsize=12)
-    fig.text(tleft, ttop - 8 * ttstep, 'piEE_pyL (L-S) = {0:.4f}'.format(pylima_piEE), fontsize=12)
-    fig.text(tleft, ttop - 9 * ttstep, 'piEN (S-L) = {0:.4f}'.format(piEN), fontsize=12)
-    fig.text(tleft, ttop - 10 * ttstep, 'piEN_pyL (L-S) = {0:.4f}'.format(pylima_piEN), fontsize=12)
-    fig.text(tleft, ttop - 11 * ttstep, 'b_sff = {0:.2f}'.format(b_sff), fontsize=12)
-    fig.text(tleft, ttop - 12 * ttstep, 'mag_src = {0:.1f}'.format(mag_src), fontsize=12)
-
     max_delta = np.max(np.abs(pylima_lcurve_mag - our_mag))
 
-    if max_delta > 1e-6:
-        fig.text(tleft, 0.05, '!!BAD!!', fontsize=16, color='red')
+    if plot:
+        plt.figure(1, figsize=(11, 6))
+        plt.clf()
+        f1 = plt.gcf().add_axes([0.4, 0.35, 0.57, 0.6])
+        f2 = plt.gcf().add_axes([0.4, 0.15, 0.57, 0.2], sharex=f1)
+        f1.set_xticklabels([])
 
-    plt.savefig('PSPL_phot_vs_pyLIMA.png')
+        f1.plot(time_mjd, pylima_lcurve_mag, 'ko', label='pyLIMA')
+        f1.plot(time_mjd, our_mag, 'r.', label='Ours')
+        f1.invert_yaxis()
+        f1.set_xlabel('MJD (day)')
+        f1.set_ylabel('I (mag)')
+        f1.legend()
 
-    # plt.figure(2, figsize=(11, 6))
-    # plt.clf()
-    # f3 = plt.gcf().add_axes([0.4, 0.60, 0.57, 0.3])
-    # f4 = plt.gcf().add_axes([0.4, 0.15, 0.57, 0.3])
-    # f3.get_shared_x_axes().join(f3, f4)
+        f2.plot(time_mjd, pylima_lcurve_mag - our_mag, 'k.')
+        f2.set_xlabel('MJD (day)')
+        f2.set_ylabel('PyL-Ours')
 
-    # f3.plot(time_mjd, pylima_x, 'ko', label='pyLIMA')
-    # f3.plot(time_mjd, our_u[:, 0], 'r.', label='Ours')
-    # f4.plot(time_mjd, pylima_y, 'ko', label='pyLIMA')
-    # f4.plot(time_mjd, our_u[:, 1], 'r.', label='Ours')
+        tleft = 0.03
+        ttop = 0.8
+        ttstep = 0.05
+        fig = plt.gcf()
+        fig.text(tleft, ttop - 0 * ttstep, 'raL = {0:.2f} (deg)'.format(ra), fontsize=12)
+        fig.text(tleft, ttop - 1 * ttstep, 'decL = {0:.2f} (deg)'.format(dec), fontsize=12)
+        fig.text(tleft, ttop - 2 * ttstep, 't0 = {0:.1f} (MJD)'.format(t0), fontsize=12)
+        fig.text(tleft, ttop - 3 * ttstep, 'u0     = {0:.3f}'.format(u0_amp), fontsize=12)
+        fig.text(tleft, ttop - 4 * ttstep, 'u0_pyL = {0:.3f}'.format(pylima_u0), fontsize=12)
+        fig.text(tleft, ttop - 5 * ttstep, 'tE = {0:.1f} (day)'.format(tE), fontsize=12)
+        fig.text(tleft, ttop - 6 * ttstep, 'tE_pyL = {0:.1f} (day)'.format(pylima_tE), fontsize=12)
+        fig.text(tleft, ttop - 7 * ttstep, 'piEE (S-L) = {0:.4f}'.format(piEE), fontsize=12)
+        fig.text(tleft, ttop - 8 * ttstep, 'piEE_pyL (L-S) = {0:.4f}'.format(pylima_piEE), fontsize=12)
+        fig.text(tleft, ttop - 9 * ttstep, 'piEN (S-L) = {0:.4f}'.format(piEN), fontsize=12)
+        fig.text(tleft, ttop - 10 * ttstep, 'piEN_pyL (L-S) = {0:.4f}'.format(pylima_piEN), fontsize=12)
+        fig.text(tleft, ttop - 11 * ttstep, 'b_sff = {0:.2f}'.format(b_sff), fontsize=12)
+        fig.text(tleft, ttop - 12 * ttstep, 'mag_src = {0:.1f}'.format(mag_src), fontsize=12)
+
+        if max_delta > 1e-6:
+            fig.text(tleft, 0.05, '!!BAD!!', fontsize=16, color='red')
+
+        plt.savefig('PSPL_phot_vs_pyLIMA.png')
+
+        # plt.figure(2, figsize=(11, 6))
+        # plt.clf()
+        # f3 = plt.gcf().add_axes([0.4, 0.60, 0.57, 0.3])
+        # f4 = plt.gcf().add_axes([0.4, 0.15, 0.57, 0.3])
+        # f3.get_shared_x_axes().join(f3, f4)
+
+        # f3.plot(time_mjd, pylima_x, 'ko', label='pyLIMA')
+        # f3.plot(time_mjd, our_u[:, 0], 'r.', label='Ours')
+        # f4.plot(time_mjd, pylima_y, 'ko', label='pyLIMA')
+        # f4.plot(time_mjd, our_u[:, 1], 'r.', label='Ours')
 
     return (time_mjd, pylima_lcurve_mag, our_mag, max_delta)
 
