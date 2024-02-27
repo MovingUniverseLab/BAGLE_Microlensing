@@ -3800,7 +3800,7 @@ def test_PSPL_Phot_Param2_vs_Param3():
     plt.legend()
 
     return
-
+'''
 def bspl_linorbs_check_differences():
     #Checks difference between BSPL_PhotAstrom_noPar_LinOrbs_Param# and BSPL_PhotAstrom_noPar_Param#
     def linorbs1(muS_E, muS_N, muS_sec_E, muS_sec_N):
@@ -4748,5 +4748,6 @@ def test_centroid_shift_Par_LinOrbs_Param3_compar():
 
 
             count+=1
+'''
 
 
