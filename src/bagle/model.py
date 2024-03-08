@@ -6838,72 +6838,26 @@ class BSPL(PSPL):
 
         # Calculate the elapsed time, in units of tE. 
         # This gives the linear motion offset due to muRel in the muRel_hat direction.
-        tau_pri = (t - self.t0_pri) / self.tE
-        xS1_unlens = self.xS0_pri + np.outer(tau_pri, self.muS) * 1e-3
-        xS2_unlens = self.xS0_sec + np.outer(tau_pri, self.muS) * 1e-3
 
+        xS_unlensed = self.get_resolved_astrometry_unlensed(t)
         
-        if self.orbitFlag == 'linear':
-            xS2_unlens = self.xS0_sec + np.outer(tau_pri, self.muS_sec) * 1e-3
+        xS1_unlens = xS_unlensed[:, 0, :] 
+        xS2_unlens = xS_unlensed[:, 1, :] 
 
-        if self.orbitFlag == 'accelerated':
-            xS2_unlens = self.xS0_sec + np.outer(tau_pri, self.muS_sec) * 1e-3 + np.outer((0.5*tau_pri**2), self.acc) * 1e-3
+        xL = self.get_lens_astrometry(t)
 
-        
-        xL = self.xL0 + np.outer (tau_pri, self.muL) * 1e-3
-            
         thetaE = self.thetaE * 1e-3
+        
         u_pri = (xS1_unlens-xL)/thetaE        
         u_sec = (xS2_unlens-xL)/thetaE
-        
-        #tau_sec = (t - self.t0_pri) / self.tE
-
-        # Calculate u due to linear motion of the system.
-        #u_pri = self.u0_pri[np.newaxis, :] + tau_pri[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
-        #u_sec = self.u0_sec[np.newaxis, :] + tau_sec[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
-
-        # Some day: implement orbital motion
-        # if self.orbitFlag == 'full':
-        #     add orbital motion
-
-        
-
-        #Orbital Motion Flag (Linear Motion)
-        #if self.orbitFlag == 'linear':
-         #   tau_sec = (t - self.t0_sec) / self.tE_sec
-          #  u_pri = self.u0_pri[np.newaxis, :] + tau_pri[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
-           # u_sec = self.u0_sec[np.newaxis, :] + tau_sec[:, np.newaxis] * self.muRel_sec_hat[np.newaxis, :]
-
-#        if self.orbitFlag == 'accelerated':
- #           acc_rename = self.acc_amp/self.thetaE_amp
-   #         tau_sec = (t - self.t0_sec) / self.tE_sec
-    #        ta_sec_acc=(t - self.t0_sec)
-     #       u_pri = self.u0_pri[np.newaxis, :] + tau_pri[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
-      #      u_sec = self.u0_sec[np.newaxis, :] + tau_sec[:, np.newaxis] * self.muRel_sec_hat[np.newaxis, :] + 0.5*(tau_sec[:, np.newaxis])**2*acc_rename*self.acc_hat
-
-       # if self.orbitFlag == 'test':
-         #   dt1_in_years = (t) / days_per_year
-          #  xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-           # xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.delta_muS_sec) * 1e-3
-            #xL = self.xL0 + np.outer (dt1_in_years, self.muL) * 1e-3
-            
-            #thetaE = self.thetaE * 1e-3
-
-            #u_pri = (xS2_unlens-xL)/thetaE
-            
-            #u_sec = (xS1_unlens-xL)/thetaE
-        #srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muRel) * 1e-3
-        #srce_pos_secondary = bsplorbits.xS0_sec + np.outer(1/2*(dt / model.days_per_year)**2, bsplorbits.acc) * 1e-3 + np.outer(dt / model.days_per_year, bsplorbits.muRel_sec) * 1e-3
-        
-        #lens_pos = bsplorbits.xL0 + np.outer(dt / model.days_per_year, bsplorbits.muL) 
-        
 
         # Incorporate parallax
+        '''
         if self.parallaxFlag:
             parallax_vec = parallax_in_direction(self.raL, self.decL, t)
-            u_pri -= self.piE_amp * parallax_vec
-            u_sec -= self.piE_amp * parallax_vec
-
+            u_pri -= (self.piE_amp * parallax_vec) * 1e-3
+            u_sec -= (self.piE_amp * parallax_vec) * 1e-3
+'''
         u = np.zeros((len(t), 2, 2), dtype=float)
         u[:, 0, :] = u_pri
         u[:, 1, :] = u_sec
@@ -7260,7 +7214,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
             
         if self.orbitFlag == 'accelerated':
-            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3 + np.outer((0.5*dt1_in_years**2), self.acc) * 1e-3
+            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3 + np.outer((0.5*(dt1_in_years**2)), self.acc) * 1e-3
 
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
@@ -7650,7 +7604,11 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         tau = tE * times / (-times[0])
         t = self.t0 + (tau * self.tE)
 
+
         l = self.get_lens_astrometry(t)
+
+
+                    
         xS_unlensed = self.get_resolved_astrometry_unlensed(t)
         source1 =xS_unlensed[:, 0, :]
         source2 = xS_unlensed[:, 1, :]  
@@ -7671,14 +7629,17 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
         s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='salmon', linewidth=2)
         s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='salmon', linewidth=2)
+                    
         i1_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Plus Primary Source ", color='purple', linewidth=2)
         i1_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='purple', linewidth=2)
         i1_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Minus Primary Source ", color='purple', linewidth=2)
         i1_minus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='purple', linewidth=2)
+                    
         i2_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Plus Secondary Source ", color='salmon', linewidth=2)
         i2_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='salmon', linewidth=2)
         i2_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Minus Secondary Source ", color='salmon', linewidth=2)
         i2_minus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='salmon', linewidth=2)
+                    
         l_line1, = ax1.plot([], '.', markersize=size[0] * 0.7, label="Lens", color='black', linewidth=2)
         l_line2, = ax1.plot([], '-', markersize=size[0] * 0.2, color='black', linewidth=2)
 
@@ -8205,7 +8166,7 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         # This checks for proper parameter formatting.
         super().__init__()
 
-        # Derived quantities
+        # Derived quantities 
         self.beta = self.u0_amp * self.thetaE_amp
         self.piE_amp = np.linalg.norm(self.piE)
         self.piRel = self.piE_amp * self.thetaE_amp
