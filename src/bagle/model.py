@@ -3957,7 +3957,7 @@ class PSPL_Parallax(ParallaxClassABC):
         return
 
     # Label this as phot?
-    def get_geoproj_params(self, t0par):
+    def get_geoproj_params(self, t0par, plot=False):
         """
         Get the photometric microlensing model parameters in the geocentric-projected
         coordinate system, which just applies a rectalinear position and 
@@ -4001,12 +4001,13 @@ class PSPL_Parallax(ParallaxClassABC):
                                                                      self.tE, self.piE[0], self.piE[1],
                                                                      t0par, in_frame='helio',
                                                                      murel_in='SL', murel_out='LS',
-                                                                     coord_in='EN', coord_out='tb')
+                                                                     coord_in='EN', coord_out='tb',
+                                                                     plot=plot)
 
         return t0_g, u0_g, tE_g, piEE_g, piEN_g
 
     # Make sure this method fails for phot only parametrizations.
-    def get_geoproj_ast_params(self, t0par):
+    def get_geoproj_ast_params(self, t0par, plot=False):
         """
         Get the astrometric microlensing model parameters in the geocentric-projected
         coordinate system, which just applies a rectalinear position and 
@@ -4046,7 +4047,8 @@ class PSPL_Parallax(ParallaxClassABC):
                                                                t0par,
                                                                in_frame='helio',
                                                                murel_in='SL', murel_out='LS',
-                                                               coord_in='EN', coord_out='tb')
+                                                               coord_in='EN', coord_out='tb',
+                                                               plot=plot)
 
         return xS0E_g, xS0N_g, muSE_g, muSN_g
 
@@ -4347,13 +4349,14 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
 
         return
 
-    def get_helio_params(self):
+    def get_helio_params(self, plot=False):
         t0_h, u0_h, tE_h, piEE_h, piEN_h = fc.convert_helio_geo_phot(self.raL, self.decL,
                                                                      self.t0, self.u0_amp,
                                                                      self.tE, self.piE[0], self.piE[1],
                                                                      self.t0par, in_frame='geo',
                                                                      murel_in='LS', murel_out='SL',
-                                                                     coord_in='tb', coord_out='EN')
+                                                                     coord_in='tb', coord_out='EN',
+                                                                     plot=plot)
 
         return t0_h, u0_h, tE_h, piEE_h, piEN_h
 
@@ -4544,9 +4547,6 @@ class PSBL(PSPL):
         amp_arr : array_like
             BLEH
         """
-
-
-
         N_times = z1.shape[0]
 
         dwbardz = self.m1 / (z_arr - z1.reshape((N_times, 1))) ** 2
@@ -4621,113 +4621,10 @@ class PSBL(PSPL):
             If check_sols = True, only roots solving the lens
             equation are returned.
         """
-        assert (len(w) == len(z1)) & (len(w) == len(z2))
 
-        wbar = np.conj(w)
-        z1bar = np.conj(z1)
-        z2bar = np.conj(z2)
-
-        #####################################
-        # Solve the lens equation!!!!!
-        #####################################
-        # The lens equation is in the form
-        # f(z) = \sum_i a_i z^i = 0 for i = 0 to 5.
-        # Here are the coefficients:
-        # NIJAID's coeff - matches with Witt 1995 in their limits
-        a5 = (wbar - z1bar) * (wbar - z2bar)
-        a4 = -((w + 2 * (z1 + z2)) * wbar ** 2) - self.m2 * z2bar - \
-             z1bar * (self.m1 + (w + 2 * (z1 + z2)) * z2bar) + \
-             wbar * (self.m1 + self.m2 + (w + 2 * (z1 + z2)) * (z1bar + z2bar))
-        a3 = (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
-                z1 + z2)) * wbar ** 2 + \
-             (self.m1 * (w - z1) + self.m2 * (w + 2 * z1 + z2)) * z2bar + \
-             z1bar * (self.m2 * (w - z2) + self.m1 * (w + z1 + 2 * z2) + \
-                      (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
-                              z1 + z2)) * z2bar) - \
-             wbar * (2 * (self.m2 * (w + z1) + self.m1 * (w + z2)) + \
-                     (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * (
-                             z1bar + z2bar))
-        a2 = -((self.m1 + self.m2) * (
-                self.m1 * (w - z1) + self.m2 * (w - z2))) - \
-             (2 * z1 * z2 * (z1 + z2) + w * (
-                     z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * wbar ** 2 - \
-             (self.m2 * (w - z2) * (2 * z1 + z2) + self.m1 * (
-                     w * z1 + 2 * (w + z1) * z2 + z2 ** 2)) * z1bar - \
-             (self.m2 * w * (2 * z1 + z2) + self.m1 * (w - z1) * (
-                     z1 + 2 * z2) + self.m2 * z1 * (z1 + 2 * z2) + \
-              2 * z1 * z2 * (z1 + z2) * z1bar + w * (
-                      z1 ** 2 + 4 * z1 * z2 + z2 ** 2) * z1bar) * \
-             z2bar + wbar * (z1 * (
-                2 * self.m1 * w + 4 * self.m2 * w - self.m1 * z1 + self.m2 * z1) + \
-                             2 * (2 * self.m1 + self.m2) * w * z2 + (
-                                     self.m1 - self.m2) * z2 ** 2 + \
-                             (2 * z1 * z2 * (z1 + z2) + w * (
-                                     z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * (
-                                     z1bar + z2bar))
-        a1 = 2 * self.m1 ** 2 * w * z2 + 2 * self.m1 * self.m2 * w * z2 - self.m1 * self.m2 * z2 ** 2 - 2 * self.m1 * w * z2 ** 2 * wbar + \
-             self.m1 * w * z2 ** 2 * z1bar + self.m1 * w * z2 ** 2 * z2bar + \
-             z1 ** 2 * (-(
-                self.m1 * self.m2) - 2 * self.m2 * w * wbar + 2 * self.m1 * z2 * wbar + \
-                        2 * w * z2 * wbar ** 2 + z2 ** 2 * wbar ** 2 + self.m2 * (
-                                w - z2) * z1bar - \
-                        2 * w * z2 * wbar * z1bar - z2 ** 2 * wbar * z1bar + \
-                        self.m2 * w * z2bar - 2 * self.m1 * z2 * z2bar + self.m2 * z2 * z2bar - \
-                        2 * w * z2 * wbar * z2bar - z2 ** 2 * wbar * z2bar + \
-                        2 * w * z2 * z1bar * z2bar + z2 ** 2 * z1bar * z2bar) + \
-             z1 * (2 * self.m1 * self.m2 * w + 2 * self.m2 ** 2 * (
-                w - z2) - 2 * self.m1 ** 2 * z2 - 2 * self.m1 * self.m2 * z2 - \
-                   4 * self.m1 * w * z2 * wbar - 4 * self.m2 * w * z2 * wbar + 2 * self.m2 * z2 ** 2 * wbar + \
-                   2 * w * z2 ** 2 * wbar ** 2 + 2 * self.m1 * w * z2 * z1bar + \
-                   2 * self.m2 * (
-                           w - z2) * z2 * z1bar + self.m1 * z2 ** 2 * z1bar - \
-                   2 * w * z2 ** 2 * wbar * z1bar + 2 * self.m1 * w * z2 * z2bar + \
-                   2 * self.m2 * w * z2 * z2bar - self.m1 * z2 ** 2 * z2bar - \
-                   2 * w * z2 ** 2 * wbar * z2bar + 2 * w * z2 ** 2 * z1bar * z2bar)
-        a0 = (self.m2 * z1 + self.m1 * z2) * (
-                self.m1 * (-w + z1) * z2 + self.m2 * z1 * (-w + z2)) + \
-             z1 * z2 * (-(w * z1 * z2 * wbar ** 2) - (
-                self.m2 * z1 * (w - z2) + self.m1 * w * z2) * z1bar - \
-                        (self.m2 * w * z1 + self.m1 * (
-                                w - z1) * z2 + w * z1 * z2 * z1bar) * z2bar + \
-                        wbar * (2 * self.m2 * w * z1 + 2 * self.m1 * w * z2 - (
-                        self.m1 + self.m2) * z1 * z2 + \
-                                w * z1 * z2 * (z1bar + z2bar)))
-
-        # Solve the quintic equation and find all 5 roots.
-        # Loop through different time steps and solve each one.
-        N_times = len(w)
-        z_arr = np.zeros((N_times, 5), dtype=np.complex_)
-        for i in range(N_times):
-            z_arr[i] = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
-
-        # Plug the solutions from the quintic equation back into the lens equation 
-        # and see if those roots are actually solutions.
-        # There should either be 3 (outside caustic) or 5 (inside caustic).
-        # (for our regime, it should be 3)
-        if check_sols:
-            for i in range(N_times):
-                z = z_arr[i, :]
-                c1 = self.m1 / np.conj(z - z1[i])
-                c2 = self.m2 / np.conj(z - z2[i])
-                diff = w[i] - (z - c1 - c2)
-                bad_solutions = np.absolute(diff) > self.root_tol
-                z_arr[i][bad_solutions] = np.nan + np.nan * 0j
-
-            # nim = (~np.isnan(z_arr)).sum(axis=1)
-            # nim_good = (nim == 5).sum() + (nim == 3).sum()
-            #
-            # if len(nim) != nim_good:
-            #     print('Not all solutions have 3 or 5 images-- something is wrong!')
-            #     images = []
-            #     for ii in np.arange(6):
-            #         idx = np.where(nim == ii)[0]
-            #         images.append(idx)
-            #         print('N images = {0} : {1}'.format(ii, (nim == ii).sum()))
-            #
-            #     return z_arr, images
-
-        else:
-            return z_arr
+        z_arr = self.get_image_pos_arr(w, z1, z2, self.m1, self.m2,
+                                       check_sols=check_sols)
+        return z_arr
 
 
     def get_image_pos_arr(self, w, z1, z2, m1, m2, check_sols=True):
@@ -4842,9 +4739,9 @@ class PSBL(PSPL):
         # Loop through different time steps and solve each one.
         N_times = len(w)
         z_arr = np.zeros((N_times, 5), dtype=np.complex_)
-        ai_arr = np.zeros((N_times, 6), dtype=np.complex_)
+        #ai_arr = np.zeros((N_times, 6), dtype=np.complex_)
         for i in range(N_times):
-            ai_arr[i] = np.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
+            #ai_arr[i] = np.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
             z_arr[i] = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
 
         # Plug back into equation and see if those roots are actually solutions.
@@ -4859,11 +4756,16 @@ class PSBL(PSPL):
                     m1_i = m1
                     m2_i = m2
 
+                if type(self.root_tol) == np.ndarray:
+                    root_tol = self.root_tol[i]
+                else:
+                    root_tol = self.root_tol
+
                 z = z_arr[i, :]
                 c1 = m1_i / np.conj(z - z1[i])
                 c2 = m2_i / np.conj(z - z2[i])
                 diff = w[i] - (z - c1 - c2)
-                bad_solutions = np.absolute(diff) > self.root_tol
+                bad_solutions = np.absolute(diff) > root_tol
                 z_arr[i][bad_solutions] = np.nan + np.nan * 0j
 
             # nim = (~np.isnan(z_arr)).sum(axis=1)
@@ -4927,8 +4829,15 @@ class PSBL(PSPL):
             # Rescaled complex positions.
             rcomp = self.rescale_complex_pos(*_comp)
 
+            # Temporarily rescale the root tolerance.
+            # Extremeley un-threadsafe
+            orig_root_tol = self.root_tol
+            self.root_tol *= rcomp[5]
+
             # Image positions derived from rescale complex positions.
             rimages = self.get_image_pos_arr(*rcomp[0:5], **kwargs)
+
+            self.root_tol = orig_root_tol
 
             # Take the image positions derived from the rescaled complex positions
             # and rescale them to get the images back in the original scale.
@@ -4936,7 +4845,7 @@ class PSBL(PSPL):
             
             # Get amplifications.
             amps = self.get_amp_arr(images, *comp[1:])
-
+            
         else:
             comp = self.get_complex_pos(t_obs)
             images = self.get_image_pos_arr_old(*comp)
@@ -5056,6 +4965,8 @@ class PSBL(PSPL):
         except AttributeError:
             pass
 
+        #print('flux_model = ', flux_model)
+
         # Catch the edge case where we exceed the zeropoint.
         bad = np.where(flux_model <= 0)[0]
         if len(bad) > 0:
@@ -5072,6 +4983,9 @@ class PSBL(PSPL):
         if len(bad) > 0:
             mag_model.data[bad] = np.nan
 
+        #pdb.set_trace()
+        #print('mag_model = ', mag_model)
+        
         return mag_model
 
 
@@ -5117,7 +5031,8 @@ class PSBL_Phot(PSBL, PSPL_Phot):
 
         # Incorporate parallax
         if self.parallaxFlag:
-            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs, obsLocation=self.obsLocation)
+            parallax_vec = parallax_in_direction(self.raL, self.decL, t_obs,
+                                                 obsLocation=self.obsLocation)
             u -= self.piE_amp * parallax_vec
 
         # Convert positions to complex coordinates
@@ -8840,7 +8755,8 @@ class BSBL(PSBL):
         for ss in range(N_sources):
             w_ss = w[:, ss]
 
-            z_arr[:, ss, :] = PSBL.get_image_pos_arr_old(self, w_ss, z1, z2, check_sols=check_sols)
+            z_arr[:, ss, :] = PSBL.get_image_pos_arr_old(self, w_ss, z1, z2,
+                                                         check_sols=check_sols)
 
         return z_arr
 
@@ -8861,6 +8777,18 @@ class BSBL(PSBL):
 
         z2 : array_like
             Complex position(s) of lens 2 (secondary). Shape = [N_times]
+
+        m1 : float
+            If rescaling was used, then pass in m2 such that 
+                m1 = self.m1 * scale ** 2
+            otherwise, m1 = self.m1.
+            The scale parameter is ooutput from rescale_complex_pos()
+
+        m2 : float
+            If rescaling was used, then pass in m2 such that 
+                m2 = self.m2 * scale ** 2
+            otherwise, m1 = self.m1.
+            The scale parameter is ooutput from rescale_complex_pos()
 
         check_sols : bool, optional
             If True, calculated roots are checked against the lens equation,
@@ -10789,18 +10717,16 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         # img_pos_minus = np.array([(1 / (2 * Aminus)) * Cminus1,  (-1 / (2 * Aminus)) * Cminus2])
 
 
-        print('imag_pos_plus.shape = ', img_pos_plus.shape)
-        print('Aplus.shape = ', Aplus.shape)
-        print('plus.shape = ', plus.shape)
+        # print('imag_pos_plus.shape = ', img_pos_plus.shape)
+        # print('Aplus.shape = ', Aplus.shape)
+        # print('plus.shape = ', plus.shape)
 
         images = np.array((img_pos_plus, img_pos_minus)).T  # arcsec
         amps = np.array((amp_plus, amp_minus)).T  # amplifications
 
-        print(amp_plus[:5])
-        print(amp_minus[:5])
-        print(amps[:5].sum(axis=1))
-        
-        pdb.set_trace()
+        # print(amp_plus[:5])
+        # print(amp_minus[:5])
+        # print(amps[:5].sum(axis=1))
         
         return images, amps
 
@@ -12761,7 +12687,7 @@ def parallax_in_direction(RA, Dec, mjd, obsLocation='earth'):
     
     Equations following MulensModel.
     """
-    print('parallax_in_direction: len(t) = ', len(mjd))
+    #print('parallax_in_direction: len(t) = ', len(mjd))
 
     # Munge inputs into astropy format.
     times = Time(mjd + 2400000.5, format='jd', scale='tdb')
@@ -12797,7 +12723,7 @@ def dparallax_dt_in_direction(RA, Dec, mjd):
     Time derivative --> units are yr^-1
     
     """
-    print('parallax_in_direction: len(t) = ', len(mjd))
+    # print('parallax_in_direction: len(t) = ', len(mjd))
     # Munge inputs into astropy format.
     times = Time(mjd + 2400000.5, format='jd', scale='tdb')
     coord = SkyCoord(RA, Dec, unit=(units.deg, units.deg))
