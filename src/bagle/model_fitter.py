@@ -299,7 +299,7 @@ class PSPL_Solver(Solver):
         # Use "default" string to indicate default callback.
         # Otherwise, user specified and can be None for no dumping.
         # The latter is important for NERSC runs. 
-        if dump_callback is 'default':
+        if dump_callback == 'default':
             self.dump_callback = self.callback_plotter
         else:
             self.dump_callback = dump_callback
@@ -3172,7 +3172,8 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
     # same times as the measurements.
     if dense_time:
         # 1 day sampling over whole range
-        mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1)
+        #mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1) #end model at last photometry data point
+        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #begin/end model +/-2000 days after last data point (for ongoing events)
     else:
         mod_t = dat_t
     if gp:
