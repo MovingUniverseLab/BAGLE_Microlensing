@@ -3610,22 +3610,6 @@ class PSPL_Parallax_LumLens(PSPL_Parallax):
 #
 # --------------------------------------------------
 
-def process_time_step(args):
-    i, a5, a4, a3, a2, a1, a0, z1, z2, m1, m2 = args
-
-    # Compute the roots for the given time step
-    z = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
-
-    # Check the solutions
-    c1 = m1 / np.conj(z - z1[i])
-    c2 = m2 / np.conj(z - z2[i])
-    diff = w[i] - (z - c1 - c2)
-    bad_solutions = np.absolute(diff) > self.root_tol
-    z[bad_solutions] = np.nan + np.nan * 0j
-
-    return z
-
-
 class PSBL(PSPL):
     """
     Contains methods for model a PSBL photometry + astrometry.
@@ -3840,141 +3824,142 @@ class PSBL(PSPL):
         else:
             return z_arr
 
+    # def get_image_pos_arr(self, w, z1, z2, m1, m2, check_sols=True):
+    #     """Gets image positions.
+
+    #     | Solve the fifth-order polynomial and get the image positions.
+    #     | See PSBL writeup for full equations.
+    #     | All angular distances are in arcsec.
+
+
+
+    #     Parameters
+    #     ----------
+    #     w : array_like
+    #         Complex position(s) of the source. Shape = [N_times, 1]
+
+    #     z1 : array_like
+    #         Complex position(s) of lens 1 (primary). Shape = [N_times, 1]
+
+    #     z2 : array_like
+    #         Complex position(s) of lens 2 (secondary). Shape = [N_times, 1]
+
+    #     check_sols : bool, optional
+    #         If True, calculated roots are checked against the lens equation,
+    #         and output will only contain those within self.root_tol.
+    #         If False, all calculated roots are returned.
+
+    #     Returns
+    #     -------
+    #     z_arr : array_like
+    #         Rank-1 array of polynomial roots, possibly complex.
+    #         If check_sols = True, only roots solving the lens
+    #         equation are returned.
+    #     """
+    #     assert (len(w) == len(z1)) & (len(w) == len(z2))
+
+    #     wbar = np.conj(w)
+    #     z1bar = np.conj(z1)
+    #     z2bar = np.conj(z2)
+
+    #     #####################################
+    #     # Solve the lens equation!!!!!
+    #     #####################################
+    #     # The lens equation is in the form
+    #     # f(z) = \sum_i a_i z^i = 0 for i = 0 to 5.
+    #     # Here are the coefficients:
+    #     # NIJAID's coeff - matches with Witt 1995 in their limits
+    #     a5 = (wbar - z1bar) * (wbar - z2bar)
+    #     a4 = -((w + 2 * (z1 + z2)) * wbar ** 2) - m2 * z2bar - \
+    #          z1bar * (m1 + (w + 2 * (z1 + z2)) * z2bar) + \
+    #          wbar * (m1 + m2 + (w + 2 * (z1 + z2)) * (z1bar + z2bar))
+    #     a3 = (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
+    #                 z1 + z2)) * wbar ** 2 + \
+    #          (m1 * (w - z1) + m2 * (w + 2 * z1 + z2)) * z2bar + \
+    #          z1bar * (m2 * (w - z2) + m1 * (w + z1 + 2 * z2) + \
+    #                   (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
+    #                               z1 + z2)) * z2bar) - \
+    #          wbar * (2 * (m2 * (w + z1) + m1 * (w + z2)) + \
+    #                  (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * (
+    #                              z1bar + z2bar))
+    #     a2 = -((m1 + m2) * (
+    #                 m1 * (w - z1) + m2 * (w - z2))) - \
+    #          (2 * z1 * z2 * (z1 + z2) + w * (
+    #                      z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * wbar ** 2 - \
+    #          (m2 * (w - z2) * (2 * z1 + z2) + m1 * (
+    #                      w * z1 + 2 * (w + z1) * z2 + z2 ** 2)) * z1bar - \
+    #          (m2 * w * (2 * z1 + z2) + m1 * (w - z1) * (
+    #                      z1 + 2 * z2) + m2 * z1 * (z1 + 2 * z2) + \
+    #           2 * z1 * z2 * (z1 + z2) * z1bar + w * (
+    #                       z1 ** 2 + 4 * z1 * z2 + z2 ** 2) * z1bar) * \
+    #          z2bar + wbar * (z1 * (
+    #                 2 * m1 * w + 4 * m2 * w - m1 * z1 + m2 * z1) + \
+    #                          2 * (2 * m1 + m2) * w * z2 + (
+    #                                      m1 - m2) * z2 ** 2 + \
+    #                          (2 * z1 * z2 * (z1 + z2) + w * (
+    #                                      z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * (
+    #                                      z1bar + z2bar))
+    #     a1 = 2 * m1 ** 2 * w * z2 + 2 * m1 * m2 * w * z2 - m1 * m2 * z2 ** 2 - 2 * m1 * w * z2 ** 2 * wbar + \
+    #          m1 * w * z2 ** 2 * z1bar + m1 * w * z2 ** 2 * z2bar + \
+    #          z1 ** 2 * (-(
+    #                 m1 * m2) - 2 * m2 * w * wbar + 2 * m1 * z2 * wbar + \
+    #                     2 * w * z2 * wbar ** 2 + z2 ** 2 * wbar ** 2 + m2 * (
+    #                                 w - z2) * z1bar - \
+    #                     2 * w * z2 * wbar * z1bar - z2 ** 2 * wbar * z1bar + \
+    #                     m2 * w * z2bar - 2 * m1 * z2 * z2bar + m2 * z2 * z2bar - \
+    #                     2 * w * z2 * wbar * z2bar - z2 ** 2 * wbar * z2bar + \
+    #                     2 * w * z2 * z1bar * z2bar + z2 ** 2 * z1bar * z2bar) + \
+    #          z1 * (2 * m1 * m2 * w + 2 * m2 ** 2 * (
+    #                 w - z2) - 2 * m1 ** 2 * z2 - 2 * m1 * m2 * z2 - \
+    #                4 * m1 * w * z2 * wbar - 4 * m2 * w * z2 * wbar + 2 * m2 * z2 ** 2 * wbar + \
+    #                2 * w * z2 ** 2 * wbar ** 2 + 2 * m1 * w * z2 * z1bar + \
+    #                2 * m2 * (
+    #                            w - z2) * z2 * z1bar + m1 * z2 ** 2 * z1bar - \
+    #                2 * w * z2 ** 2 * wbar * z1bar + 2 * m1 * w * z2 * z2bar + \
+    #                2 * m2 * w * z2 * z2bar - m1 * z2 ** 2 * z2bar - \
+    #                2 * w * z2 ** 2 * wbar * z2bar + 2 * w * z2 ** 2 * z1bar * z2bar)
+    #     a0 = (m2 * z1 + m1 * z2) * (
+    #                 m1 * (-w + z1) * z2 + m2 * z1 * (-w + z2)) + \
+    #          z1 * z2 * (-(w * z1 * z2 * wbar ** 2) - (
+    #                 m2 * z1 * (w - z2) + m1 * w * z2) * z1bar - \
+    #                     (m2 * w * z1 + m1 * (
+    #                                 w - z1) * z2 + w * z1 * z2 * z1bar) * z2bar + \
+    #                     wbar * (2 * m2 * w * z1 + 2 * m1 * w * z2 - (
+    #                         m1 + m2) * z1 * z2 + \
+    #                             w * z1 * z2 * (z1bar + z2bar)))
+
+    #     # Solve the lens equation and find all 5 roots.
+    #     # Loop through different time steps and solve each one.
+    #     N_times = len(w)
+    #     z_arr = np.zeros((N_times, 5), dtype=np.complex_)
+    #     ai_arr = np.zeros((N_times, 6), dtype=np.complex_)
+    #     for i in range(N_times):
+    #         ai_arr[i] = np.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
+    #         z_arr[i] = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
+
+    #     # Plug back into equation and see if those roots are actually solutions.
+    #     # There should either be 3 (outside caustic) or 5 (inside caustic).
+    #     # (for our regime, it should be 3)
+    #     if check_sols:
+    #         for i in range(N_times):
+    #             if type(m1) == np.ndarray:
+    #                 m1_i = m1[i]
+    #                 m2_i = m2[i]
+    #             else:
+    #                 m1_i = m1
+    #                 m2_i = m2
+
+    #             z = z_arr[i, :]
+    #             c1 = m1_i / np.conj(z - z1[i])
+    #             c2 = m2_i / np.conj(z - z2[i])
+    #             diff = w[i] - (z - c1 - c2)
+    #             bad_solutions = np.absolute(diff) > self.root_tol
+    #             z_arr[i][bad_solutions] = np.nan + np.nan * 0j
+
+    #     return z_arr
+
+    # New optimized version:
     def get_image_pos_arr(self, w, z1, z2, m1, m2, check_sols=True):
-        """Gets image positions.
-
-        | Solve the fifth-order polynomial and get the image positions.
-        | See PSBL writeup for full equations.
-        | All angular distances are in arcsec.
-
-
-
-        Parameters
-        ----------
-        w : array_like
-            Complex position(s) of the source. Shape = [N_times, 1]
-
-        z1 : array_like
-            Complex position(s) of lens 1 (primary). Shape = [N_times, 1]
-
-        z2 : array_like
-            Complex position(s) of lens 2 (secondary). Shape = [N_times, 1]
-
-        check_sols : bool, optional
-            If True, calculated roots are checked against the lens equation,
-            and output will only contain those within self.root_tol.
-            If False, all calculated roots are returned.
-
-        Returns
-        -------
-        z_arr : array_like
-            Rank-1 array of polynomial roots, possibly complex.
-            If check_sols = True, only roots solving the lens
-            equation are returned.
-        """
-        assert (len(w) == len(z1)) & (len(w) == len(z2))
-
-        wbar = np.conj(w)
-        z1bar = np.conj(z1)
-        z2bar = np.conj(z2)
-
-        #####################################
-        # Solve the lens equation!!!!!
-        #####################################
-        # The lens equation is in the form
-        # f(z) = \sum_i a_i z^i = 0 for i = 0 to 5.
-        # Here are the coefficients:
-        # NIJAID's coeff - matches with Witt 1995 in their limits
-        a5 = (wbar - z1bar) * (wbar - z2bar)
-        a4 = -((w + 2 * (z1 + z2)) * wbar ** 2) - m2 * z2bar - \
-             z1bar * (m1 + (w + 2 * (z1 + z2)) * z2bar) + \
-             wbar * (m1 + m2 + (w + 2 * (z1 + z2)) * (z1bar + z2bar))
-        a3 = (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
-                    z1 + z2)) * wbar ** 2 + \
-             (m1 * (w - z1) + m2 * (w + 2 * z1 + z2)) * z2bar + \
-             z1bar * (m2 * (w - z2) + m1 * (w + z1 + 2 * z2) + \
-                      (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
-                                  z1 + z2)) * z2bar) - \
-             wbar * (2 * (m2 * (w + z1) + m1 * (w + z2)) + \
-                     (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * (
-                                 z1bar + z2bar))
-        a2 = -((m1 + m2) * (
-                    m1 * (w - z1) + m2 * (w - z2))) - \
-             (2 * z1 * z2 * (z1 + z2) + w * (
-                         z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * wbar ** 2 - \
-             (m2 * (w - z2) * (2 * z1 + z2) + m1 * (
-                         w * z1 + 2 * (w + z1) * z2 + z2 ** 2)) * z1bar - \
-             (m2 * w * (2 * z1 + z2) + m1 * (w - z1) * (
-                         z1 + 2 * z2) + m2 * z1 * (z1 + 2 * z2) + \
-              2 * z1 * z2 * (z1 + z2) * z1bar + w * (
-                          z1 ** 2 + 4 * z1 * z2 + z2 ** 2) * z1bar) * \
-             z2bar + wbar * (z1 * (
-                    2 * m1 * w + 4 * m2 * w - m1 * z1 + m2 * z1) + \
-                             2 * (2 * m1 + m2) * w * z2 + (
-                                         m1 - m2) * z2 ** 2 + \
-                             (2 * z1 * z2 * (z1 + z2) + w * (
-                                         z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * (
-                                         z1bar + z2bar))
-        a1 = 2 * m1 ** 2 * w * z2 + 2 * m1 * m2 * w * z2 - m1 * m2 * z2 ** 2 - 2 * m1 * w * z2 ** 2 * wbar + \
-             m1 * w * z2 ** 2 * z1bar + m1 * w * z2 ** 2 * z2bar + \
-             z1 ** 2 * (-(
-                    m1 * m2) - 2 * m2 * w * wbar + 2 * m1 * z2 * wbar + \
-                        2 * w * z2 * wbar ** 2 + z2 ** 2 * wbar ** 2 + m2 * (
-                                    w - z2) * z1bar - \
-                        2 * w * z2 * wbar * z1bar - z2 ** 2 * wbar * z1bar + \
-                        m2 * w * z2bar - 2 * m1 * z2 * z2bar + m2 * z2 * z2bar - \
-                        2 * w * z2 * wbar * z2bar - z2 ** 2 * wbar * z2bar + \
-                        2 * w * z2 * z1bar * z2bar + z2 ** 2 * z1bar * z2bar) + \
-             z1 * (2 * m1 * m2 * w + 2 * m2 ** 2 * (
-                    w - z2) - 2 * m1 ** 2 * z2 - 2 * m1 * m2 * z2 - \
-                   4 * m1 * w * z2 * wbar - 4 * m2 * w * z2 * wbar + 2 * m2 * z2 ** 2 * wbar + \
-                   2 * w * z2 ** 2 * wbar ** 2 + 2 * m1 * w * z2 * z1bar + \
-                   2 * m2 * (
-                               w - z2) * z2 * z1bar + m1 * z2 ** 2 * z1bar - \
-                   2 * w * z2 ** 2 * wbar * z1bar + 2 * m1 * w * z2 * z2bar + \
-                   2 * m2 * w * z2 * z2bar - m1 * z2 ** 2 * z2bar - \
-                   2 * w * z2 ** 2 * wbar * z2bar + 2 * w * z2 ** 2 * z1bar * z2bar)
-        a0 = (m2 * z1 + m1 * z2) * (
-                    m1 * (-w + z1) * z2 + m2 * z1 * (-w + z2)) + \
-             z1 * z2 * (-(w * z1 * z2 * wbar ** 2) - (
-                    m2 * z1 * (w - z2) + m1 * w * z2) * z1bar - \
-                        (m2 * w * z1 + m1 * (
-                                    w - z1) * z2 + w * z1 * z2 * z1bar) * z2bar + \
-                        wbar * (2 * m2 * w * z1 + 2 * m1 * w * z2 - (
-                            m1 + m2) * z1 * z2 + \
-                                w * z1 * z2 * (z1bar + z2bar)))
-
-        # Solve the lens equation and find all 5 roots.
-        # Loop through different time steps and solve each one.
-        N_times = len(w)
-        z_arr = np.zeros((N_times, 5), dtype=np.complex_)
-        ai_arr = np.zeros((N_times, 6), dtype=np.complex_)
-        for i in range(N_times):
-            ai_arr[i] = np.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
-            z_arr[i] = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
-
-        # Plug back into equation and see if those roots are actually solutions.
-        # There should either be 3 (outside caustic) or 5 (inside caustic).
-        # (for our regime, it should be 3)
-        if check_sols:
-            for i in range(N_times):
-                if type(m1) == np.ndarray:
-                    m1_i = m1[i]
-                    m2_i = m2[i]
-                else:
-                    m1_i = m1
-                    m2_i = m2
-
-                z = z_arr[i, :]
-                c1 = m1_i / np.conj(z - z1[i])
-                c2 = m2_i / np.conj(z - z2[i])
-                diff = w[i] - (z - c1 - c2)
-                bad_solutions = np.absolute(diff) > self.root_tol
-                z_arr[i][bad_solutions] = np.nan + np.nan * 0j
-
-        return z_arr
-
-    def get_image_pos_arr_optimized(self, w, z1, z2, m1, m2, check_sols=True):
         """Gets image positions.
         | Solve the fifth-order polynomial and get the image positions.
         | See PSBL writeup for full equations.
