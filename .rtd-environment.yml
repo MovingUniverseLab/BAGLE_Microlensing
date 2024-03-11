@@ -20,6 +20,7 @@ dependencies:
     - dynesty
     - pytest
     - mpi4py
+    - sphinx_rtd_theme
     - pip:
         - sphinxcontrib-video
 
