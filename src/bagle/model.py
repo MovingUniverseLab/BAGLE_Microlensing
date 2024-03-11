@@ -88,7 +88,7 @@ Point source, binary lens, photometry and astrometry
     - 'PSBL_PhotAstrom_Par_GP_Param1'
     - 'PSBL_PhotAstrom_Par_GP_Param2'
 
-Binary source, point lens, photometry and only
+Binary source, point lens, photometry only
     - 'BSPL_Phot_noPar_Param1'
     - 'BSPL_Phot_Par_Param1'
     - 'BSPL_Phot_noPar_GP_Param1'
