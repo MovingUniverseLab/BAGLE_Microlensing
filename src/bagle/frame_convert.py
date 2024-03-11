@@ -16,9 +16,52 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
                                    q_in, alpha_in, sep,
                                    mod_in='bagle', plot=True):
     """
-    alpha_in : degrees.
+    Convert between the native fit parameters of BAGLE and MulensModel
+    for a point source binary lens photometry model.
 
-    mod_in = 'bagle' or 'mulens'
+    Parameters
+    ----------
+    t0_in, u0_in, tE_in, piEE_in, piEN_in, q_in, alpha_in, sep can be either be
+    floats or arrays. If they are arrays, they must be the same length.
+    
+    ra, dec : str, float, or int
+        Equatorial coordinates of the microlensing event.
+        
+        If string, needs to be of the form 
+        'HH:MM:SS.SSSS', 'DD:MM:SS.SSSS'
+
+    t0_in : float or array (MJD)
+        Time at which minimum source-lens projected separation in the rectilinear
+        frame occurs.
+
+    u0_in : float or array (thetaE)
+        Minimum source-lens projected separation in the rectilinear frame,
+        in units of the Einstein radius.
+    
+    tE_in : float or array (days)
+        Einstein crossing time.
+    
+    piEE_in : float or array
+        Microlensing parallax, East component.
+
+    piEN_in : float or array
+        Microlensing parallax, North component.
+
+    q_in : float or array
+        Binary lens mass ratio.
+    
+    alpha_in : float or array (deg)
+        Angle between relative proper motion vector and the binary axis.
+    
+    sep : float or array (thetaE)
+        Separation between the binary lens components.
+    
+    mod_in : str
+        'bagle' if converting from BAGLE to MulensModel parameters
+        'mulens' if converting from MulensModel to BAGLE paramters
+
+    plot : bool
+        Plot the conversion figures if true.
     """
     ##########
     # Convert between helio and geo projected.
@@ -51,7 +94,7 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
     ##########
     murel_in = np.rad2deg(np.arctan2(piEN_in, piEE_in))
     murel_out = np.rad2deg(np.arctan2(piEN_out, piEE_out))
-    # The 180 is because one is source-lens and the other is lens-source.
+    # The +180 in delta_alpha is because one is source-lens and the other is lens-source.
     if mod_in == 'bagle':
         delta_alpha = murel_out - murel_in + 180
         alpha_out = alpha_in - delta_alpha
@@ -125,6 +168,14 @@ def _check_input_convert_helio_geo_phot(ra, dec,
                                         murel_in, murel_out, 
                                         coord_in, coord_out,
                                         plot):
+    """
+    Check the inputs to convert_helio_geo_phot.
+    This is an internal code and not to be called except by convert_helio_geo_phot.
+
+    Parameters
+    ----------
+    See the docstring in convert_helio_geo_phot, as all parameters are the same.
+    """
 
     var_str = ['ra', 'dec']
     for vv, var in enumerate([ra, dec]):
@@ -180,36 +231,54 @@ def convert_helio_geo_phot(ra, dec,
     coordinate convention.
 
     ra, dec : str, float, or int
-        Equatorial coordinates.
+        Equatorial coordinates of the microlensing event.
         
         If string, needs to be of the form 
         'HH:MM:SS.SSSS', 'DD:MM:SS.SSSS'
 
-    t0_in : float (MJD)
+    t0_in : float or array (MJD)
+        Time at which minimum source-lens projected separation in the rectilinear
+        frame occurs.
 
-    tE_in : float (days)
+    u0_in : float or array (thetaE)
+        Minimum source-lens projected separation in the rectilinear frame,
+        in units of the Einstein radius.
+    
+    tE_in : float or array (days)
+        Einstein crossing time.
+    
+    piEE_in : float or array
+        Microlensing parallax, East component.
 
-    piEE_in, piEN_in : float
+    piEN_in : float or array
+        Microlensing parallax, North component.
 
     t0par : float (MJD)
+        Reference time for the geocentric projected coordinate system.
 
-    in_frame : 'helio' or 'geo'
-        'helio' if we're converting from helio to geo.
-        'geo' if we're converting from geo to helio.
+    in_frame : str
+        'helio' if converting from heliocentric to geocentric projected frame.
+        'geo' if converting from geocentric projected to heliocentric frame.
 
-    murel_in : 'SL' or 'LS'
-        source-lens or lens-source for relative frame.
+    murel_in : str
+        Definition of "relative" for the input relative proper motion.
+        'SL' if relative proper motion in the input parameters is defined as source-lens.
+        'LS' if relative proper motion in the input parameters is defined as lens-source.
 
-    murel_out : 'SL' or 'LS'
-        source-lens or lens-source for relative frame.
+    murel_out : str
+        Definition of "relative" for the output relative proper motion.
+        'SL' if relative proper motion in the output parameters is defined as source-lens.
+        'LS' if relative proper motion in the output parameters is defined as lens-source.
+    
+    coord_in : str
+        Definition of coordinate system used to define input parameters.
+        'EN' if using fixed on-sky East-North coordinate system (Lu)
+        'tb' if using right-handed tau-beta system based on murel and minimum separation (Gould)
 
-    coord_in : 'EN' or 'tb'
-        Use fixed on-sky coordinate system (Lu) or right-handed
-        system based on murel and minimum separation (Gould)
-
-    coord_out : 'EN' or 'tb'
-        Use fixed on-sky coordinate system (Lu) or right-handed
-        system based on murel and minimum separation (Gould)
+    coord_out : str
+        Definition of coordinate system used to define output parameters.
+        'EN' if using fixed on-sky East-North coordinate system (Lu)
+        'tb' if using right-handed tau-beta system based on murel and minimum separation (Gould)
     """
     # Check inputs.
     _check_input_convert_helio_geo_phot(ra, dec, 
