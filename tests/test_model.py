@@ -8,6 +8,8 @@ from astropy.coordinates import SkyCoord, GCRS
 from astropy.time import Time
 from astropy.table import Table
 import os
+
+import parallax
 from bagle import model
 from bagle import model_fitter
 from bagle import frame_convert as fc
@@ -4173,7 +4175,7 @@ def test_BSBL_PhotAstrom_Par_Param1():
     u = u0 + tau * thetaE_hat
 
     # Incorporate parallax
-    parallax_vec = model.parallax_in_direction(bsbl_p.raL, bsbl_p.decL, t_obs)
+    parallax_vec = parallax.parallax_in_direction(bsbl_p.raL, bsbl_p.decL, t_obs)
     u -= bsbl_p.piE_amp * parallax_vec
 
     t0dx = np.argmin(np.abs(tau))

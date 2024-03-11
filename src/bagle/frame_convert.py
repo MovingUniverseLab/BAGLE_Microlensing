@@ -6,7 +6,8 @@ from astropy.time import Time
 from astropy.coordinates.builtin_frames.utils import get_jd12
 import erfa
 import matplotlib.pyplot as plt
-from bagle import model
+
+from bagle import parallax
 from matplotlib.ticker import MaxNLocator
 
 def convert_bagle_mulens_psbl_phot(ra, dec, 
@@ -90,8 +91,8 @@ def convert_helio_geo_ast(ra, dec,
     if type(ra) == str:
         ra = str(str(Angle(ra, unit = u.hourangle)))
     
-    par_t0par = model.parallax_in_direction(ra, dec, t0par)
-    dp_dt_t0par = model.dparallax_dt_in_direction(ra, dec, t0par)
+    par_t0par = parallax.parallax_in_direction(ra, dec, t0par)
+    dp_dt_t0par = parallax.dparallax_dt_in_direction(ra, dec, t0par)
 
     t0_out, _, _, _, _ = convert_helio_geo_phot(ra, dec, 
                                                 t0_in, u0_in, tE_in, 
@@ -308,7 +309,7 @@ def convert_helio_geo_phot(ra, dec,
         # Plot conversion diagrams. 
         #####
         # Parallax vector (Sun-Earth projected separation vector in AU) at t0par.
-        par_t0par = model.parallax_in_direction(ra, dec, np.array([t0par])).reshape(2,)
+        par_t0par = parallax.parallax_in_direction(ra, dec, np.array([t0par])).reshape(2, )
         
         tau_in = (t0par - t0_in)/tE_in
         tau_out = (t0par - t0_out)/tE_out
@@ -369,11 +370,11 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
     """
     # Parallax vector (Sun-Earth projected separation vector in AU) at t0par.
     # Get dp_dt_t0par in 1/days.
-    par_t0par = model.parallax_in_direction(ra, dec, np.array([t0par])).reshape(2,)
+    par_t0par = parallax.parallax_in_direction(ra, dec, np.array([t0par])).reshape(2, )
 
     # NOTE: dp_dt_t0par doesn't seem quite as good as calculating it from tauhat/tE/piE...
     # not sure why this is....
-    # dp_dt_t0par = model.dparallax_dt_in_direction(ra, dec, np.array([t0par])).reshape(2,)/365.25
+    # dp_dt_t0par = parallax.dparallax_dt_in_direction(ra, dec, np.array([t0par])).reshape(2,)/365.25
         
     # Calculate a bunch of values we need to get u0 and t0.
     tau_in = (t0par - t0_in)/tE_in
