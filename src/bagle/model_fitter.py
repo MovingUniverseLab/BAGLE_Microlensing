@@ -13,7 +13,6 @@ Note: all times must be given in MJD.
 
 from pymultinest.solve import Solver
 import os
-from astropy.table.row import Row
 import glob
 import math
 import numpy as np
@@ -33,9 +32,6 @@ import pdb
 from datetime import date
 import yaml
 from scipy.stats import norm
-
-from bagle.dynesty import plotting as dyplot
-from six.moves import range
 import matplotlib.patches as mpatches
 
 import logging

@@ -171,7 +171,7 @@ def convert_helio_geo_phot(ra, dec,
                            coord_in='EN', coord_out='tb',
                            plot=True):
     """
-    Convert between heliocentric and geocentric projected parameters.
+    Convert between heliocentric and geocentric-projected parameters.
     This converts only the subset of parameters in photometry fits
     (t0, u0, tE, piEE, piEN).
 
@@ -463,7 +463,7 @@ def convert_piEvec_tE(ra, dec, t0par,
         'HH:MM:SS.SSSS', 'DD:MM:SS.SSSS'
 
     t0par : float
-        Reference time for the geocentric frame value in MJD.
+        Reference time for the geocentric-projected frame value in MJD.
 
     piEE_in, piEN_in, tE_in : float
         piEE, piEN, and tE of the event in the frame passed 
