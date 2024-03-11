@@ -3322,6 +3322,12 @@ def test_FSPL_source_astrometry(plot=False):
     raL = 17.30 * 15.
     decL = -29.0
 
+    tests_dir = os.path.dirname(os.path.realpath(__file__))
+    outdir = tests_dir + '/test_FSPL_source_astrometry/'
+
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
+
     # Array of times we will sample on.
     time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
 
@@ -3365,7 +3371,7 @@ def test_FSPL_source_astrometry(plot=False):
         ax[1].set_xlabel('Time (MJD)')
         ax[0].set_ylabel('X (")')
         ax[1].set_ylabel('Y (")')
-        fig.show()
+        plt.savefig(outdir + 'test_unlensed_source_astrometry.png')
 
     #####
     # Check the unlensed, resolved source astrometry.
@@ -3399,7 +3405,7 @@ def test_FSPL_source_astrometry(plot=False):
         plt.xlabel('X (")')
         plt.ylabel('Y (")')
         plt.legend()
-        fig.show()
+        plt.savefig(outdir + 'test_unlensed_resolved_source_astrometry.png')
 
     #####
     # Check the lensed, resolved source astrometry.
@@ -3447,7 +3453,7 @@ def test_FSPL_source_astrometry(plot=False):
         plt.xlabel('X (mas)')
         plt.ylabel('Y (mas)')
         plt.legend(fontsize=12, loc='lower right')
-        fig.show()
+        plt.savefig(outdir + 'test_lensed_resolved_source_astrometry.png')
 
     #####
     # Check the lensed, unresolved source astrometry.
@@ -3500,7 +3506,7 @@ def test_FSPL_source_astrometry(plot=False):
         plt.xlabel('X (mas)')
         plt.ylabel('Y (mas)')
         plt.legend(fontsize=12)
-        fig.show()
+        plt.savefig(outdir + 'test_lensed_source_astrometry.png')
 
     return
 
@@ -3568,7 +3574,7 @@ def test_FSPL_PhotAstrom_classes(plot=False):
         ax[1].set_ylabel('X (")')
         fig.show()
 @pytest.mark.skip(reason="broken")
-def test_FSPL_PhotAstrom_classes(plot=False):
+def test_FSPL_PhotAstrom_classes2(plot=False):
     """
     Make sure we can instantiate.
     """

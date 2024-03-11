@@ -345,6 +345,8 @@ from joblib import Memory
 import os
 from functools import lru_cache, wraps
 import copy
+
+import frame_convert
 from bagle import frame_convert as fc
 from abc import ABC
 import importlib.resources
@@ -4039,7 +4041,7 @@ class PSPL_Parallax(ParallaxClassABC):
             in the geocentric-projected frame.
 
         """
-        xS0E_g, xS0N_g, muSE_g, muSN_g = convert_helio_geo_ast(self.raL, self.decL,
+        xS0E_g, xS0N_g, muSE_g, muSN_g = frame_convert.convert_helio_geo_ast(self.raL, self.decL,
                                                                self.piS, self.xS0[0], self.xS0[1],
                                                                self.muS[0], self.muS[1],
                                                                self.t0, self.u0_amp,
@@ -10430,7 +10432,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         -------
         images : array_like
             Array/tuple of positions of each lensed image at each t_obs.
-            Shape = [len(t_obs), n_images=2, 2]
+            Shape = [len(t_obs), n_images=2, [E,N]]
             The last axis contains East and North positions on the sky
             in arcseconds.
 
@@ -10506,8 +10508,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Cplus_x =  (1. / 8.0) * np.sum( b2_plus[:, :, 0]**2 * d1_plus[:, :, 1], axis=1 )
         Cplus_y = -(1. / 8.0) * np.sum( b2_plus[:, :, 1]**2 * d1_plus[:, :, 0], axis=1 )
 
-        Cminus_x =  (1. / 8.0) * np.sum( b2_minus[:, :, 0]**2 * d1_minus[:, :, 1], axis=1 )
-        Cminus_y = -(1. / 8.0) * np.sum( b2_minus[:, :, 1]**2 * d1_minus[:, :, 0], axis=1 )
+        Cminus_x = -(1. / 8.0) * np.sum( b2_minus[:, :, 0]**2 * d1_minus[:, :, 1], axis=1 )
+        Cminus_y =  (1. / 8.0) * np.sum( b2_minus[:, :, 1]**2 * d1_minus[:, :, 0], axis=1 )
 
         # Parabolic Correction
         #Cplus_x +=  (1. / 24.) * np.sum((d1_plus[:, :, 0]**2 * d1_plus[:, :, 1]
@@ -10758,7 +10760,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         # image_arr shape = [N_times, N_images, 2]
 
-        xS_lensed = np.sum(image_arr * amp_arr[:, np.newaxis, :], axis=1)
+        xS_lensed = np.sum(image_arr * amp_arr[:, :, np.newaxis], axis=1)
         xS_lensed /= np.sum(amp_arr, axis=1)[:, np.newaxis]
 
         return xS_lensed
