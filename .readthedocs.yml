@@ -1,6 +1,5 @@
 conda:
-  file: .rtd-environment.yml
-  environment: bagle
+  environment: .rtd-environment.yml
 
 build:
   os: ubuntu-22.04
