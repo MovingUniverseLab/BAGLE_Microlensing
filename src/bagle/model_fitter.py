@@ -208,7 +208,9 @@ class PSPL_Solver(Solver):
         'gp_log_sigma': ('make_norm_gen', 0, 5), 
         'gp_rho':('make_invgamma_gen', None, None),
         'gp_log_omega04_S0':('make_norm_gen', 0, 5), # FIX... get from data
-        'gp_log_omega0':('make_norm_gen', 0, 5)
+        'gp_log_omega0':('make_norm_gen', 0, 5),
+        'delta_muS_sec_E':('make_gen', None, None), #I made this value up
+        'delta_muS_sec_N':('make_gen', None, None) #I made this value up
     }
 
     def __init__(self, data, model_class,
