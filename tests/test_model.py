@@ -3575,7 +3575,6 @@ def test_FSPL_PhotAstrom_classes(plot=False):
         ax[1].set_ylabel('X (")')
         fig.show()
         
-#@pytest.mark.skip(reason="broken")
 def test_FSPL_PhotAstrom_classes2(plot=False):
     """
     Make sure we can instantiate.
