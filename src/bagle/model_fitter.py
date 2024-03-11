@@ -16,9 +16,7 @@ import os
 from astropy.table.row import Row
 import glob
 import math
-import jax
-import jax.numpy as np
-# import numpy as np
+import numpy as np
 import pylab as plt
 import scipy.stats
 import pymultinest
@@ -316,7 +314,6 @@ class PSPL_Solver(Solver):
 
         return
 
-    @jax.jit
     def check_data(self):
         if 't_ast1' in self.data.keys():
             if not self.model_class.paramAstromFlag or \
@@ -340,7 +337,6 @@ class PSPL_Solver(Solver):
                 raise RuntimeError('Photometry data required to '
                                    'run %s' % str(self.model_class))
 
-    @jax.jit
     def setup_params(self):
         # Number of photometry sets
         n_phot_sets = 0
@@ -896,7 +892,6 @@ class PSPL_Solver(Solver):
         
         return
 
-    @jax.jit
     def solve(self):
         """
         Run a MultiNest fit to find the optimal parameters (and their
@@ -945,7 +940,6 @@ class PSPL_Solver(Solver):
 
         return
 
-    @jax.jit
     def separate_modes(self):
         """
         Reads in the fits for the different modes (post_separate.dat)
