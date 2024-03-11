@@ -9,7 +9,7 @@ from astropy.time import Time
 from astropy.table import Table
 import os
 
-import parallax
+from bagle import parallax
 from bagle import model
 from bagle import model_fitter
 from bagle import frame_convert as fc
@@ -3325,7 +3325,7 @@ def test_FSPL_source_astrometry(plot=False):
     decL = -29.0
 
     tests_dir = os.path.dirname(os.path.realpath(__file__))
-    outdir = tests_dir + '/test_FSPL_source_astrometry/'
+    outdir = tests_dir + '/test_fspl_source_astrometry/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
@@ -3537,6 +3537,12 @@ def test_FSPL_PhotAstrom_classes(plot=False):
     # Array of times we will sample on.
     time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
 
+    tests_dir = os.path.dirname(os.path.realpath(__file__))
+    outdir = tests_dir + '/test_fspl_photastrom_classes/'
+
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
+
     ##########
     # Test 1: Compare FSPL and PSPL lens astrometry.
     ##########
@@ -3574,7 +3580,7 @@ def test_FSPL_PhotAstrom_classes(plot=False):
         ax[1].set_xlabel('Time (MJD)')
         ax[0].set_ylabel('X (")')
         ax[1].set_ylabel('X (")')
-        fig.show()
+        plt.savefig(outdir + 'test_pspl_vs_fspl_astrom.png')
 @pytest.mark.skip(reason="broken")
 def test_FSPL_PhotAstrom_classes2(plot=False):
     """
@@ -3599,6 +3605,12 @@ def test_FSPL_PhotAstrom_classes2(plot=False):
 
     # Array of times we will sample on.
     time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
+
+    tests_dir = os.path.dirname(os.path.realpath(__file__))
+    outdir = tests_dir + '/test_fspl_photastrom_classes2/'
+
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
 
     def test_fspl_once(r_in, n_in, phot_arr_good, mod='FSPL', tol=1e-3):
         # Make the model
@@ -3682,6 +3694,7 @@ def test_FSPL_PhotAstrom_classes2(plot=False):
         plt.xlabel('Time (HJD)')
         plt.ylabel('Mag')
         plt.legend()
+        plt.savefig(outdir + 'test_fspl_outlines_phot.png')
 
         plt.figure(2)
         plt.clf()
@@ -3692,13 +3705,13 @@ def test_FSPL_PhotAstrom_classes2(plot=False):
         plt.xlabel('Time (HJD)')
         plt.ylabel('FSPL-PSPL (Mag)')
         plt.legend()
+        plt.savefig(outdir + 'test_fspl_outlines_phot_resid.png')
 
         plt.figure(3)
         plt.clf()
         plt.plot(time_arr, fspl_arr_n10_r1 - fspl_arr_n10, '.')
         plt.title('Different radii')
-
-
+        plt.savefig(outdir + 'test_fspl_n10_diff_radii.png')
 
     return
 
@@ -3720,6 +3733,13 @@ def test_FSPL_Phot_classes(plot=False):
     
     # Array of times we will sample on.
     time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
+
+    tests_dir = os.path.dirname(os.path.realpath(__file__))
+    outdir = tests_dir + '/test_fspl_phot_classes/'
+
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
+
 
     def test_fspl_phot_once(r_in, n_in, phot_arr_good, mod='FSPL', tol=1e-3):
         # Make the model
@@ -3807,6 +3827,7 @@ def test_FSPL_Phot_classes(plot=False):
         plt.xlabel('Time (HJD)')
         plt.ylabel('Mag')
         plt.legend()
+        plt.savefig(outdir + 'test_fspl_phot.png')
 
         plt.figure(2)
         plt.clf()
@@ -3817,11 +3838,13 @@ def test_FSPL_Phot_classes(plot=False):
         plt.xlabel('Time (HJD)')
         plt.ylabel('FSPL-PSPL (Mag)')
         plt.legend()
+        plt.savefig(outdir + 'test_fspl_phot_resid.png')
 
         plt.figure(3)
         plt.clf()
         plt.plot(time_arr, fspl_arr_n10_r1 - fspl_arr_n10, '.')
         plt.title('Different radii')
+        plt.savefig(outdir + 'test_fspl_phot_n10_diff_radii.png')
 
     return
 
