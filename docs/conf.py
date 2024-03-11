@@ -48,8 +48,13 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
+<<<<<<< HEAD
 #exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
  #                       'FSPL*.rst', 'PSPL*.rst', 'Gen*.rst', 'PSBL*.rst', 'model.rst']
+=======
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+#                        'BSPL*.rst', 'FSPL*.rst', 'PSPL*.rst', 'Gen*.rst', 'PSBL*.rst', 'model.rst']
+>>>>>>> 1cefda023371380a592150e92ba85b8e1b8c1d16
 html_static_path = ['_static']
 
 # -- Options for HTML output -------------------------------------------------
