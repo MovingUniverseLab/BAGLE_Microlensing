@@ -6,7 +6,7 @@ channels:
     - defaults
 
 dependencies:
-    - python
+    - python=3.11
     - astropy
     - numpydoc 
     - matplotlib
