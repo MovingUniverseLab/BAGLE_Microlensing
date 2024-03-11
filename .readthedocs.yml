@@ -1,6 +1,11 @@
 conda:
   file: .rtd-environment.yml
 
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.11"
+
 python:
    setup_py_install: true
    install:
