@@ -38,7 +38,7 @@ extensions = [
     'sphinx.ext.graphviz','sphinx.ext.inheritance_diagram',
     'sphinx.ext.autodoc', 'sphinx.ext.mathjax',
     'numpydoc', 'sphinxcontrib.video',
-]
+    'sphinx_rtd_theme']
 
 #'sphinx_automodapi.automodapi',
 
@@ -50,17 +50,12 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #                        'BSPL*.rst', 'FSPL*.rst', 'PSPL*.rst', 'Gen*.rst', 'PSBL*.rst', 'model.rst']
-html_static_path = ['_static']
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-
-# html_theme = 'pydata_sphinx_theme'
-
-import sphinx_rtd_theme
 html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
