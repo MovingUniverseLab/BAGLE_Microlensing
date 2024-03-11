@@ -10505,13 +10505,13 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Cplus_x =  (1. / 8.0) * np.sum( d1_plus[:, :, 1] * b2_plus[:, :, 0]**2, axis=1 )
         Cplus_y = -(1. / 8.0) * np.sum( d1_plus[:, :, 0] * b2_plus[:, :, 1]**2, axis=1 )
 
-        Cminus_x = -(1. / 8.0) * np.sum( d1_minus[:, :, 1] * b2_minus[:, :, 0]**2, axis=1 )
-        Cminus_y =  (1. / 8.0) * np.sum( d1_minus[:, :, 0] * b2_minus[:, :, 1]**2, axis=1 )
+        Cminus_x =  (1. / 8.0) * np.sum( d1_minus[:, :, 1] * b2_minus[:, :, 0]**2, axis=1 )
+        Cminus_y = -(1. / 8.0) * np.sum( d1_minus[:, :, 0] * b2_minus[:, :, 1]**2, axis=1 )
 
         # Parabolic Correction
-        Cplus_x +=  (1. / 24.) * np.sum((d1_plus[:, :, 0]**2 * d1_plus[:, :, 1]
-                                        +d1_plus[:, :, 0] * wp_d1_d2_i_plus) + \
-                                        (d1_plus[:, :])
+        #Cplus_x +=  (1. / 24.) * np.sum((d1_plus[:, :, 0]**2 * d1_plus[:, :, 1]
+        #                                +d1_plus[:, :, 0] * wp_d1_d2_i_plus) + \
+        #                                (d1_plus[:, :])
 
         amp_plus  = np.abs(Aplus)  / (np.pi * (self.radiusS * 1e-3)**2)
         amp_minus = np.abs(Aminus) / (np.pi * (self.radiusS * 1e-3)**2)
@@ -10554,8 +10554,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         # Finaly shape = [N_times, [+, -], [E, N]]
         images = np.zeros((len(t_obs), 2, 2), dtype=float)
-        images[:, 0, :] = -img_pos_plus.T
-        images[:, 1, :] = -img_pos_minus.T
+        images[:, 0, :] = img_pos_plus.T
+        images[:, 1, :] = img_pos_minus.T
 
         amps = np.array((amp_plus, amp_minus)).T  # amplifications
 

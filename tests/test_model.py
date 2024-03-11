@@ -3477,23 +3477,23 @@ def test_FSPL_source_astrometry(plot=False):
 
             # lens position
             plt.plot(fspl_xyL_unlens[tt, 0], fspl_xyL_unlens[tt, 1],
-                     ls='None', marker='*', mec=colors[tt], mfc='none', ms=10, label=lab_lens)
+                     ls='None', marker='*', mec=colors[tt], mfc='none', ms=15, label=lab_lens)
 
             # source position, unlensed
             plt.plot(fspl_xyS_unlens[tt, 0], fspl_xyS_unlens[tt, 1],
-                     ls='None', marker='.', color=colors[tt], alpha=0.2, ms=5, label=lab_src)
+                     ls='None', marker='.', color=colors[tt], alpha=0.2, ms=10, label=lab_src)
 
             # lensed image, unresolved
             plt.plot(fspl_xyS_lensed[tt, 0], fspl_xyS_lensed[tt, 1],
-                     ls='None', marker='o', color=colors[tt], ms=5, label=lab_src_lensed)
+                     ls='None', marker='o', color=colors[tt], ms=10, label=lab_src_lensed)
 
             # lensed image, resolved plus
             plt.plot(fspl_xyS_lensed_res[tt, 0, 0], fspl_xyS_lensed_res[tt, 0, 1],
-                     ls='None', marker='x', color=colors[tt], ms=5, label=lab_src_p)
+                     ls='None', marker='x', color=colors[tt], ms=10, label=lab_src_p)
 
             # lensed image, resolved minus
             plt.plot(fspl_xyS_lensed_res[tt, 1, 0], fspl_xyS_lensed_res[tt, 1, 1],
-                     ls='None', marker='+', color=colors[tt], ms=5, label=lab_src_m)
+                     ls='None', marker='+', color=colors[tt], ms=10, label=lab_src_m)
 
 
         plt.axis('equal')
