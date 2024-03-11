@@ -10502,11 +10502,12 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Aplus  +=  (1. / 24) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus), axis=1)
         Aminus += -(1. / 24) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus), axis=1)
 
-        Cplus_x =  (1. / 8.0) * np.sum( d1_plus[:, :, 1] * b2_plus[:, :, 0]**2, axis=1 )
-        Cplus_y = -(1. / 8.0) * np.sum( d1_plus[:, :, 0] * b2_plus[:, :, 1]**2, axis=1 )
+        # Centroid equations (Eq. 19)
+        Cplus_x =  (1. / 8.0) * np.sum( b2_plus[:, :, 0]**2 * d1_plus[:, :, 1], axis=1 )
+        Cplus_y = -(1. / 8.0) * np.sum( b2_plus[:, :, 1]**2 * d1_plus[:, :, 0], axis=1 )
 
-        Cminus_x =  (1. / 8.0) * np.sum( d1_minus[:, :, 1] * b2_minus[:, :, 0]**2, axis=1 )
-        Cminus_y = -(1. / 8.0) * np.sum( d1_minus[:, :, 0] * b2_minus[:, :, 1]**2, axis=1 )
+        Cminus_x =  (1. / 8.0) * np.sum( b2_minus[:, :, 0]**2 * d1_minus[:, :, 1], axis=1 )
+        Cminus_y = -(1. / 8.0) * np.sum( b2_minus[:, :, 1]**2 * d1_minus[:, :, 0], axis=1 )
 
         # Parabolic Correction
         #Cplus_x +=  (1. / 24.) * np.sum((d1_plus[:, :, 0]**2 * d1_plus[:, :, 1]
