@@ -365,6 +365,7 @@ import os
 from functools import lru_cache, wraps
 import copy
 from bagle import frame_convert as fc
+from bagle import orbits as orbits
 from abc import ABC
 
 au_day_to_km_s = 1731.45683
@@ -5925,7 +5926,162 @@ class PSBL_PhotAstromParam3(PSPL_Param):
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         return
+
+class BSPL_PhotAstrom_Circ_Param1(PSPL_Param):
+    """BSPL model for astrometry and photometry - physical parameterization.
+
+    A Binary point Source Point Lens model for microlensing. This model uses a
+    parameterization that depends on only physical quantities such as the
+    lens mass and positions and proper motions of both the lens and source.
+
+    Note the attributes, RA (raL) and Dec (decL) are required
+    if you are calculating a model with parallax.
+
+    Attributes
+    ----------
+    t0_com: float
+        Time of photometric peak, as seen from Earth (MJD.DDD) in CoM coordinates. 
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+        Note, since this is a binary source, we are expressing the
+        nominal source position as that of the primary star in the source
+        binary system.
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    alpha: float
+        Angle made between the binary source axis and North;
+        measured in degrees East of North.
+    fratio_bin: float
+        Flux ratio of secondary flux / primary flux.
+    mag_base : array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+        Note that
+            :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
+        such that
+            :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+    b_sff: array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
+        This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    """
+
+    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N',
+                          'alpha', 'omega', 'big_omega', 'i', 'e',
+                          'p', 'tp', 'aleph', 'aleph2', 'muS_system_E', 'muS_system_N',
+                          'x0_system_E', 'x0_system_N']
     
+    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'circular'
+
+
+    def __init__(self, t0_com, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N,
+                 alpha, omega,
+                 big_omega, i,
+                 e, p, tp,
+                 aleph, aleph2,
+                 muS_system_E, muS_system_N,
+                 x0_system_E, x0_system_N,
+                 fratio_bin,
+                 mag_base, b_sff,
+                 raL=None, decL=None):
+                     
+        self.t0 = t0_com #Makes get_lens_astrometry easier. t0 is t0_com     
+        self.t0_com = t0_com
+        self.u0_amp = u0_amp
+        self.tE = tE 
+        self.thetaE_amp = thetaE        
+        self.piS = piS
+        self.piE = np.array([piE_E, piE_N])
+        self.xS0 = np.array([x0_system_E, x0_system_N])
+        self.muS_E = muS_system_E *1e3
+        self.muS_N = muS_system_N * 1e3
+        self.muS = np.array([muS_system_E, muS_system_N])
+        self.mag_base = np.array(mag_base)
+        self.b_sff = np.array(b_sff)      
+        self.raL = raL
+        self.decL = decL
+        self.w = omega
+        self.o = big_omega
+        self.i = i
+        self.e = 0
+        self.p = p
+        self.tp = tp
+        self.aleph = aleph *1e-3
+        self.aleph2 = aleph2 *1e-3
+        self.vx = muS_system_E *1e-3
+        self.vy = muS_system_N * 1e-3
+        self.x0 = x0_system_E
+        self.y0 = x0_system_N
+        self.alpha = alpha
+        self.fratio_bin = np.array(fratio_bin)
+        self.alpha_rad = self.alpha * np.pi / 180.0
+        self.mag_src_pri = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fratio_bin)
+        self.mag_src_sec = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + (1.0 / fratio_bin))
+
+        # Derived quantities 
+        self.beta = self.u0_amp * self.thetaE_amp
+        self.piE_amp = np.linalg.norm(self.piE)
+        self.piRel = self.piE_amp * self.thetaE_amp
+        self.muRel_amp = self.thetaE_amp / (self.tE / days_per_year)
+        self.piL = self.piRel + self.piS
+
+        kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
+        kappa = kappa_tmp.to(units.mas / units.Msun,
+                             equivalencies=units.dimensionless_angles()).value
+        self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
+
+        dL = (self.piL * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        dS = (self.piS * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        self.dL = dL.to('pc').value
+        self.dS = dS.to('pc').value
+
+        # Get the directional vectors.
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+        self.thetaE = self.thetaE_amp * self.thetaE_hat
+
+        self.muRel = self.muRel_amp * self.thetaE_hat
+        self.muRel_E, self.muRel_N = self.muRel
+        self.muL = self.muS - self.muRel
+        self.muL_E, self.muL_N = self.muL
+
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
+
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+        return 
+
+
     
 class PSBL_PhotAstromParam4(PSPL_Param):
     """
@@ -5997,6 +6153,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
                      q, sep, alpha,
                      b_sff, mag_src,
                      raL=None, decL=None, root_tol=1e-8):
+        
         self.t0_com = t0_com
         self.u0_amp_com = u0_amp_com
         self.tE = tE
@@ -6846,11 +7003,11 @@ class BSPL(PSPL):
 
         xL = self.get_lens_astrometry(t)
 
-        thetaE = self.thetaE * 1e-3
-        
-        u_pri = (xS1_unlens-xL)/thetaE        
-        u_sec = (xS2_unlens-xL)/thetaE
-
+        thetaE_amp = self.thetaE_amp * 1e-3
+        u_pri = (xS1_unlens-xL)/thetaE_amp        
+        u_sec = (xS2_unlens-xL)/thetaE_amp
+        #import pdb
+        #pdb.set_trace()
         # Incorporate parallax
         '''
         if self.parallaxFlag:
@@ -7200,22 +7357,56 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             second source at the first time.
         """
         # Equation of motion for just the background source.
-        dt1_in_years = (t - self.t0_pri) / days_per_year
+        if self.orbitFlag == 'circular':
+            dt1_in_years = (t - self.t0_com) / days_per_year
+        else:
+            dt1_in_years = (t - self.t0_pri) / days_per_year
         #dt2_in_years = (t - self.t0_sec) / days_per_year
         #Test. call function. two position vectors on the sky calculated. Subtract the two and make sure that the separation stays the same in the no orbits case. 
 
 
         # Calculate position vs. time in arcsec
-        xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-        xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS) * 1e-3
 
         
         if self.orbitFlag=='linear':
+            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
             
-        if self.orbitFlag == 'accelerated':
+        elif self.orbitFlag == 'accelerated':
+            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3 + np.outer((0.5*(dt1_in_years**2)), self.acc) * 1e-3
 
+        elif self.orbitFlag == 'circular':
+
+            xS1_unlens = np.zeros((len(t), 2), dtype=float)
+            xS2_unlens = np.zeros((len(t), 2), dtype=float)
+            orb = orbits.Orbit()
+            orb.w = self.w
+            orb.o = self.o
+            orb.i = self.i
+            orb.e = self.e
+            orb.p = self.p
+            orb.tp = self.tp
+            orb.aleph = self.aleph
+            orb.aleph2 = self.aleph2
+            orb.vx = self.vx
+            orb.vy = self.vy
+            orb.x0 = self.x0
+            orb.y0 = self.y0
+            (x, y, x2, y2) = orb.oal2xy(t, self.t0_com)
+            xS1_unlens[:, 0] = x
+            xS1_unlens[:, 1] = y
+            xS2_unlens[:, 0] = x2
+            xS2_unlens[:, 1] = y2
+        else: 
+            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS) * 1e-3
+
+            
+            
+
+
+    
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
 
@@ -7380,6 +7571,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
         u1 = np.linalg.norm(u_vec1, axis=1)
         u2 = np.linalg.norm(u_vec2, axis=1)
+ 
 
         # Calculate the shifts for each source.
         thetaS1 = u_vec1 * self.thetaE_amp
@@ -7388,8 +7580,8 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         shift1 = thetaS1 / (u1[:, np.newaxis] ** 2 + 2.0)
         shift2 = thetaS2 / (u2[:, np.newaxis] ** 2 + 2.0)
 
-        xS1_lensed = xS1_unlens + (shift1 * 1e-3)
-        xS2_lensed = xS2_unlens + (shift2 * 1e-3)
+        xS1_lensed = xS1_unlens + (shift1 *1e-3)
+        xS2_lensed = xS2_unlens + (shift2 *1e-3)
 
         
         N_sources = 2
@@ -7454,6 +7646,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         t = self.t0 + (tau * self.tE)
 
         l = self.get_lens_astrometry(t)
+                    
         xS_unlensed = self.get_resolved_astrometry_unlensed(t)
         source1 =xS_unlensed[:, 0, :]
         source2 = xS_unlensed[:, 1, :]  
@@ -7462,6 +7655,13 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         xS_lensed = self.get_astrometry_shift(t)
         image1 = xS_lensed[:, 0, :]
         image2 =  xS_lensed[:, 1, :]
+                    
+    
+        xSL = self.get_resolved_astrometry(t)
+        xSL1_plus = xSL[:, 0, 0, :] 
+        xSL1_minu = xSL[:, 0, 1, :] 
+        xSL2_plus = xSL[:, 1, 0, :]
+        xSL2_minu = xSL[:, 1, 1, :]
 
         
 
@@ -7470,17 +7670,19 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         ax1 = fig.add_subplot(2, 1, 1)
         fig.subplots_adjust(hspace=.5)
 
-        if type == 'unlensed':
+        if type == 'resolved_unlensed':
             s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='purple', linewidth=2)
             s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
             s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='salmon', linewidth=2)
             s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='salmon', linewidth=2)
-        elif type == 'lensed':
+            
+        elif type == 'unresolved_lensed':
             s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Lensed Primary Source ", color='purple', linewidth=2)
             s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
             s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Lensed Secondary Source ", color='salmon', linewidth=2)
             s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='salmon', linewidth=2)
-        elif type == 'both':
+            
+        elif type == 'resolved_unlensed_unresolved_lensed':
             s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='purple', linewidth=2)
             s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
             s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='salmon', linewidth=2)
@@ -7489,9 +7691,27 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             i1_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='purple', linewidth=2)
             i2_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Secondary Source ", color='salmon', linewidth=2)
             i2_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='salmon', linewidth=2)
+            
+        elif type == 'resolved_unlensed_resolved_lensed':    
+            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='purple', linewidth=2)
+            s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
+            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='salmon', linewidth=2)
+            s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='salmon', linewidth=2)
+                        
+            i1_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Primary Source Major Image ", color='purple', linewidth=2)
+            i1_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='purple', linewidth=2)
+            i1_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Primary Source Minor Image", color='purple', linewidth=2)
+            i1_minus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='purple', linewidth=2)
+                        
+            i2_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Secondary Source Major Image ", color='salmon', linewidth=2)
+            i2_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='salmon', linewidth=2)
+            i2_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Secondary Source Minor Image ", color='salmon', linewidth=2)
+            i2_minus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='salmon', linewidth=2)    
+    
 
-        l_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Lens", color='black', linewidth=2)
-        l_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='black', linewidth=2)
+
+        l_line1, = ax1.plot([], '.', markersize=size[0] * 0.7, label="Lens", color='black', linewidth=2)
+        l_line2, = ax1.plot([], '-', markersize=size[0] * 0.2, color='black', linewidth=2)
 
 
 
@@ -7500,7 +7720,26 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         ax1.set_ylabel('Dec (")')
         ax1.set_xlim(zoom, -zoom)
         ax1.set_ylim(-zoom, zoom)
+
+        
+        #ax1.set_xlim(zoom, -zoom)
+        #ax1.set_ylim(-zoom, zoom)
+
+        ax1.set_xlim(1.5, 0.25)
+        ax1.set_ylim(0.1, 1.5)
+
+        
+        ax1.set_xlim(1.1, 0.9)
+        ax1.set_ylim(0.6, 1.5)
+        #plt.gca().set_xlim(1.1, 0.9)
+        #plt.gca().set_ylim(0.75, 1.3)
+
         ax1.legend(fontsize=12, loc='upper right')
+
+                    
+                        
+            
+
 
                     
         if astrometry == "yes":
@@ -7514,7 +7753,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
                     line[4].set_data(lens[i, 0], lens[i, 1])
                     line[5].set_data(lens[:i + 1, 0], lens[:i + 1, 1])
                     return line
-            if type == 'unlensed':
+            if type == 'resolved_unlensed':
     
                 """
                 FuncAnimation takes in the following arguments
@@ -7541,7 +7780,8 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
                                                      line],
                                               blit=True, interval=frame_time)
                 ani.save("%s.mp4" % name, writer="ffmpeg")
-            elif type == 'lensed': 
+                
+            elif type == 'unresolved_lensed': 
                
                 ani = animation.FuncAnimation(fig, update, len(tau),
                                               fargs=[image1, image2, l, tau,
@@ -7549,7 +7789,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
                                               blit=True, interval=frame_time)
                 ani.save("%s.mp4" % name, writer="ffmpeg")
                 
-            elif type == 'both':
+            elif type == 'resolved_unlensed_unresolved_lensed':
                 line = [s1_line1, s1_line2, s2_line1, s2_line2,i1_line1, i1_line2, i2_line1, i2_line2, l_line1, l_line2]
                 def update(i, source1, source2, image1, image2, lens, tau, line):
                     # print(str(i) + ", ", end='', flush=True)
@@ -7567,124 +7807,35 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
                 ani = animation.FuncAnimation(fig, update, len(tau), fargs=[source1, source2,image1, image2, l, tau, line],
                                               blit=True, interval=frame_time)
                 ani.save("%s.mp4" % name, writer="ffmpeg")
-
-               
+                
+            elif type == 'resolved_unlensed_resolved_lensed':
+                line = [s1_line1, s1_line2, s2_line1, s2_line2, i1_plus_line1, i1_plus_line2, i1_minus_line1, i1_minus_line2, i2_plus_line1, i2_plus_line2, 
+                        i2_minus_line1,  i2_minus_line2, l_line1, l_line2]
+                def update(i, source1, source2, xSL1_plus, xSL1_minu, xSL2_plus, xSL2_minu, lens, tau, line):
+                    # print(str(i) + ", ", end='', flush=True)
+                    line[0].set_data(source1[i, 0], source1[i, 1])
+                    line[1].set_data(source1[:i + 1, 0], source1[:i + 1, 1])
+                    line[2].set_data(source2[i, 0], source2[i, 1])
+                    line[3].set_data(source2[:i + 1, 0], source2[:i + 1, 1])
+                    line[4].set_data(xSL1_plus[i, 0], xSL1_plus[i, 1])
+                    line[5].set_data(xSL1_plus[:i + 1, 0], xSL1_plus[:i + 1, 1])
+                    line[6].set_data(xSL1_minu[i, 0], xSL1_minu[i, 1])
+                    line[7].set_data(xSL1_minu[:i + 1, 0], xSL1_minu[:i + 1, 1])
+                    line[8].set_data(xSL2_plus[i, 0], xSL2_plus[i, 1])
+                    line[9].set_data(xSL2_plus[:i + 1, 0], xSL2_plus[:i + 1, 1])
+                    line[10].set_data(xSL2_minu[i, 0], xSL2_minu[i, 1])
+                    line[11].set_data(xSL2_minu[:i + 1, 0], xSL2_minu[:i + 1, 1])
+                    line[12].set_data(lens[i, 0], lens[i, 1])
+                    line[13].set_data(lens[:i + 1, 0], lens[:i + 1, 1])
+                    return line
+                ani = animation.FuncAnimation(fig, update, len(tau), fargs=[source1, source2,xSL1_plus, xSL1_minu, xSL2_plus, xSL2_minu, l, tau, line],
+                                              blit=True, interval=frame_time)
+                ani.save("%s.mp4" % name, writer="ffmpeg")   
         else:
             print("Only astrometry for now")
 
         return ani
-
-
-
-
-    def dexanimate2(self, tE, time_steps, frame_time, name, size, zoom,
-                astrometry, type):
-        """ Produces animation of microlensing event. 
-        This function takes the PSPL and makes an animation, the input variables are as follows
-
-        Parameters
-        ----------
-
-        tE: 
-            number of einstein crossings times before/after the peak you want the animation to plot
-                e.g tE = 2 => graph will go from -2 tE to 2 tE
-        time_steps:
-            number of time steps before/after peak, so total number of time steps will 
-            be 2 times this value
-        frame_time:
-            times in ms of each frame in the animation
-        name: string
-            the animation will be saved as name.html
-        size: list
-            [horizontal, vertical] cm's
-        zoom:
-            # of einstein radii plotted in vertical direction
-        """
-        times = np.array(range(-time_steps, time_steps + 1, 1))
-        tau = tE * times / (-times[0])
-        t = self.t0 + (tau * self.tE)
-
-
-        l = self.get_lens_astrometry(t)
-
-
-                    
-        xS_unlensed = self.get_resolved_astrometry_unlensed(t)
-        source1 =xS_unlensed[:, 0, :]
-        source2 = xS_unlensed[:, 1, :]  
-
-
-        xSL = self.get_resolved_astrometry(t)
-        xSL1_plus = xSL[:, 0, 0, :] 
-        xSL1_minu = xSL[:, 0, 1, :] 
-        xSL2_plus = xSL[:, 1, 0, :]
-        xSL2_minu = xSL[:, 1, 1, :]
-
-
-        fig = plt.figure(figsize=[size[0], size[1] + 0.5])  # sets up the figure
-        ax1 = fig.add_subplot(2, 1, 1)
-        fig.subplots_adjust(hspace=.5)
-
-        s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='purple', linewidth=2)
-        s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
-        s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='salmon', linewidth=2)
-        s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='salmon', linewidth=2)
-                    
-        i1_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Plus Primary Source ", color='purple', linewidth=2)
-        i1_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='purple', linewidth=2)
-        i1_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Minus Primary Source ", color='purple', linewidth=2)
-        i1_minus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='purple', linewidth=2)
-                    
-        i2_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Plus Secondary Source ", color='salmon', linewidth=2)
-        i2_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='salmon', linewidth=2)
-        i2_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Minus Secondary Source ", color='salmon', linewidth=2)
-        i2_minus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='salmon', linewidth=2)
-                    
-        l_line1, = ax1.plot([], '.', markersize=size[0] * 0.7, label="Lens", color='black', linewidth=2)
-        l_line2, = ax1.plot([], '-', markersize=size[0] * 0.2, color='black', linewidth=2)
-
-
-
-
-        ax1.set_xlabel('RA (")')
-        ax1.set_ylabel('Dec (")')
-        ax1.set_xlim(zoom, -zoom)
-        ax1.set_ylim(-zoom, zoom)
-        ax1.legend(fontsize=12, loc='upper right')
-
-                    
-        if astrometry == "yes":
-        
-            line = [s1_line1, s1_line2, s2_line1, s2_line2, i1_plus_line1, i1_plus_line2, i1_minus_line1, i1_minus_line2, i2_plus_line1, i2_plus_line2, 
-                    i2_minus_line1,  i2_minus_line2, l_line1, l_line2]
-
-                    
-            def update(i, source1, source2, xSL1_plus, xSL1_minu, xSL2_plus, xSL2_minu, lens, tau, line):
-                # print(str(i) + ", ", end='', flush=True)
-                line[0].set_data(source1[i, 0], source1[i, 1])
-                line[1].set_data(source1[:i + 1, 0], source1[:i + 1, 1])
-                line[2].set_data(source2[i, 0], source2[i, 1])
-                line[3].set_data(source2[:i + 1, 0], source2[:i + 1, 1])
-                line[4].set_data(xSL1_plus[i, 0], xSL1_plus[i, 1])
-                line[5].set_data(xSL1_plus[:i + 1, 0], xSL1_plus[:i + 1, 1])
-                line[6].set_data(xSL1_minu[i, 0], xSL1_minu[i, 1])
-                line[7].set_data(xSL1_minu[:i + 1, 0], xSL1_minu[:i + 1, 1])
-                line[8].set_data(xSL2_plus[i, 0], xSL2_plus[i, 1])
-                line[9].set_data(xSL2_plus[:i + 1, 0], xSL2_plus[:i + 1, 1])
-                line[10].set_data(xSL2_minu[i, 0], xSL2_minu[i, 1])
-                line[11].set_data(xSL2_minu[:i + 1, 0], xSL2_minu[:i + 1, 1])
-                line[12].set_data(lens[i, 0], lens[i, 1])
-                line[13].set_data(lens[:i + 1, 0], lens[:i + 1, 1])
-                return line
-            ani = animation.FuncAnimation(fig, update, len(tau), fargs=[source1, source2,xSL1_plus, xSL1_minu, xSL2_plus, xSL2_minu, l, tau, line],
-                                          blit=True, interval=frame_time)
-            ani.save("%s.mp4" % name, writer="ffmpeg")   
-        else:
-            print("Only astrometry for now")
-
-        return ani
-
-
+                
 
 class BSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
@@ -13851,6 +14002,9 @@ class PSBL_PhotAstrom_Par_Param4(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+
+
+
 @inheritdocstring
 class PSBL_PhotAstrom_Par_Param5(ModelClassABC,
                                  PSBL_PhotAstrom,
@@ -14385,6 +14539,20 @@ class BSPL_PhotAstrom_Par_GP_LinOrbs_Param3(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
+
+
+
+class BSPL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
+                                   BSPL_PhotAstrom,
+                                   BSPL_noParallax,
+                                   BSPL_PhotAstrom_Circ_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
 
         
         
