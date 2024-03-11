@@ -10,9 +10,19 @@ BAGLE is a python package used to model gravitational microlensing
 events both photometrically and astrometrically. Supported
 microlensing models include:
 
-* PSPL: point-source, point-lens with parallax
+* PSPL: point-source, point-lens
 * PSBL: point-source, binary-lens
-* FSPL: finite-source, point-lens (currently testing further)
+    * static lens secondary
+* BSPL: binary-source, point lens
+    * static source secondary
+    * source secondary moving with linear motion
+    * source secondary moving with accelerating motion
+    * source secondary moving on circular orbit
+    * source secondary moving on elliptical orbit
+* BSBL: binary-source, binary lens
+    * static lens and source secondary
+* FSPL: finite-source, point-lens
+* Parallax for all of the above
 
 All models support fitting data with single or multi-band photometry
 only, astrometry only, or joint fitting of photometry and astrometry

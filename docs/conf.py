@@ -37,8 +37,7 @@ release = '0.1'
 extensions = [
     'sphinx.ext.graphviz','sphinx.ext.inheritance_diagram',
     'sphinx.ext.autodoc', 'sphinx.ext.mathjax',
-    'numpydoc', 'sphinxcontrib.video',
-]
+    'numpydoc', 'sphinxcontrib.video']
 
 #'sphinx_automodapi.automodapi',
 
@@ -48,18 +47,14 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store',
-                        'BSPL*.rst', 'FSPL*.rst', 'PSPL*.rst', 'Gen*.rst', 'PSBL*.rst', 'model.rst']
-html_static_path = ['_static']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+#                        'BSPL*.rst', 'FSPL*.rst', 'PSPL*.rst', 'Gen*.rst', 'PSBL*.rst', 'model.rst']
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-
-# html_theme = 'pydata_sphinx_theme'
-
 import sphinx_rtd_theme
 html_theme = 'sphinx_rtd_theme'
 

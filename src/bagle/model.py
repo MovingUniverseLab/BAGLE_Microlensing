@@ -10763,6 +10763,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
     def animate(self, crossings, time_steps, frame_time, name, size, zoom,
                 astrometry):
+        # BROKEN
         # creates the animation html, given an instance of the Uniformly_bright class and a list of times
 
         times = np.array(range(-time_steps, time_steps + 1, 1))
