@@ -7,6 +7,9 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.table import Table
 
+from matplotlib import logging
+logging.getLogger('matplotlib.font_manager').disabled = True
+
 def blah():
     t = Table.read('/u/jlu/work/microlens/OB110462/a_2022_03_01/model_fits/pspl/ogle_hst_phot_gp/base_b/b0_post_equal_weights.dat', format='ascii')
     t = Table.read('/u/jlu/work/microlens/OB110462/a_2021_12_20/model_fits/ogle_hst_phot/base_a/a0_post_equal_weights.dat', format='ascii')

@@ -854,7 +854,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
         
         fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f}'.format(t0_out), fontsize=12)
         # Output is Lu helio, so need to fix those to be in Gould geo.
