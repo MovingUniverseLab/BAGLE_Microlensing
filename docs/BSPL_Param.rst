@@ -25,6 +25,41 @@ BSPL Models
     :show-inheritance:
 
 
+.. autoclass:: model.BSPL_PhotAstrom_LinOrbs_Param1 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
+.. autoclass:: model.BSPL_PhotAstrom_LinOrbs_Param2 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
+.. autoclass:: model.BSPL_PhotAstrom_LinOrbs_Param3 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
+.. autoclass:: model.BSPL_PhotAstrom_AccOrbs_Param1 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
+.. autoclass:: model.BSPL_PhotAstrom_AccOrbs_Param2 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
+.. autoclass:: model.BSPL_PhotAstrom_AccOrbs_Param3 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
 GP Models
 --------------
 
@@ -47,3 +82,41 @@ GP Models
     :members:
     :inherited-members:
     :show-inheritance:
+
+
+
+.. autoclass:: model.BSPL_GP_PhotAstrom_LinOrbs_Param1 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
+.. autoclass:: model.BSPL_GP_PhotAstrom_LinOrbs_Param2 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
+.. autoclass:: model.BSPL_GP_PhotAstrom_LinOrbs_Param3 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
+.. autoclass:: model.BSPL_PhotAstrom_AccOrbs_Param1 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
+.. autoclass:: model.BSPL_GP_PhotAstrom_AccOrbs_Param2 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
+.. autoclass:: model.BSPL_GP_PhotAstrom_AccOrbs_Param3 
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
