@@ -229,8 +229,8 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie.gif'):
     fmt10 = r'mag$_S$ = {0:.2f} mag'
     fmt11 = r'b$_{{sff}}$ = {0:.3f}'
     dy = 0.05
-    plt.figtext(0.805, 0.75-0*dy, fmt0.format(psbl.mL1), fontsize=12)
-    plt.figtext(0.805, 0.75-1*dy, fmt1.format(psbl.mL2), fontsize=12)
+    plt.figtext(0.805, 0.75-0*dy, fmt0.format(psbl.mLp), fontsize=12)
+    plt.figtext(0.805, 0.75-1*dy, fmt1.format(psbl.mLs), fontsize=12)
     plt.figtext(0.805, 0.75-2*dy, fmt2.format(psbl.sep), fontsize=12)
     plt.figtext(0.805, 0.75-3*dy, fmt3.format(psbl.alpha), fontsize=12)
     plt.figtext(0.805, 0.75-4*dy, fmt4.format(psbl.beta), fontsize=12)
@@ -532,8 +532,8 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     # Print out all of the parameters.
     plt.figtext(0.802, 0.8, 'PSBL Model')
 
-    fmt_dict = {'mL1': r'M$_{{L1}}$ = {0:.2f} M$_\odot$',
-                'mL2': r'M$_{{L2}}$ = {0:.2f} M$_\odot$',
+    fmt_dict = {'mLp': r'M$_{{L1}}$ = {0:.2f} M$_\odot$',
+                'mLs': r'M$_{{L2}}$ = {0:.2f} M$_\odot$',
                 'sep': r'sep = {0:.4f} arcsec or $\theta_E$',
                 'alpha': r'$\alpha$ = {0:.2f} deg',
                 'beta': r'$\beta$ = {0:.1f} mas',
@@ -552,7 +552,7 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
                 }
 
     if psbl.astrometryFlag:
-        print_vars = ['mL1', 'mL2', 'sep', 'alpha', 'beta',
+        print_vars = ['mLp', 'mLs', 'sep', 'alpha', 'beta',
                       'xS0', 'muL', 'muS', 'dL', 'dS',
                       'mag_src', 'b_sff']
     else:
