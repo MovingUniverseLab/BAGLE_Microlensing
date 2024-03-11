@@ -32,26 +32,26 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
 
     t0_in : float or array (MJD)
         Time at which minimum source-lens projected separation in the rectilinear
-        frame occurs.
+        frame occurs, in input frame.
 
     u0_in : float or array (thetaE)
         Minimum source-lens projected separation in the rectilinear frame,
-        in units of the Einstein radius.
+        in units of the Einstein radius, in input frame.
     
     tE_in : float or array (days)
-        Einstein crossing time.
+        Einstein crossing time, in input frame.
     
     piEE_in : float or array
-        Microlensing parallax, East component.
+        Microlensing parallax, East component, in input frame.
 
     piEN_in : float or array
-        Microlensing parallax, North component.
+        Microlensing parallax, North component, in input frame.
 
     q_in : float or array
         Binary lens mass ratio.
     
     alpha_in : float or array (deg)
-        Angle between relative proper motion vector and the binary axis.
+        Angle between relative proper motion vector and the binary axis, in input frame.
     
     sep : float or array (thetaE)
         Separation between the binary lens components.
@@ -238,20 +238,20 @@ def convert_helio_geo_phot(ra, dec,
 
     t0_in : float or array (MJD)
         Time at which minimum source-lens projected separation in the rectilinear
-        frame occurs.
+        frame occurs, in input frame.
 
     u0_in : float or array (thetaE)
         Minimum source-lens projected separation in the rectilinear frame,
-        in units of the Einstein radius.
+        in units of the Einstein radius, in input frame.
     
     tE_in : float or array (days)
-        Einstein crossing time.
+        Einstein crossing time, in input frame.
     
     piEE_in : float or array
-        Microlensing parallax, East component.
+        Microlensing parallax, East component, in input frame.
 
     piEN_in : float or array
-        Microlensing parallax, North component.
+        Microlensing parallax, North component, in input frame.
 
     t0par : float (MJD)
         Reference time for the geocentric projected coordinate system.
@@ -428,13 +428,55 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
     # FIXME: Fix the broadcasting stuff using the check above for the lenght
     # don't hardcode as t0_in.
     """
+    Convert the values of u0 vector and t0 between the heliocentric and geocentric projected frames.
+
+    Note: 
     *** PROPER MOTIONS ARE DEFINED AS SOURCE - LENS ***
-    *** COORDINATE SYSTEM IS ON-SKY (NOT TAU-BETA) ***
+    *** COORDINATE SYSTEM IS EAST-NORTH ON-SKY (NOT TAU-BETA) ***
+    *** VECTORS ARE ARRAYS DEFINED AS [E, N] ***
 
-    tauhat_in, tauhat_out. 
-    u0hat_in, u0hat_out.
+    ra, dec : str, float, or int
+        Equatorial coordinates of the microlensing event.
+        
+        If string, needs to be of the form 
+        'HH:MM:SS.SSSS', 'DD:MM:SS.SSSS'
 
-    VECTORS ARE ARRAYS DEFINED AS [E, N].
+    t0par : float (MJD)
+        Reference time for the geocentric projected coordinate system.
+
+    t0_in : float or array (MJD)
+        Time at which minimum source-lens projected separation in the rectilinear
+        frame occurs, in input frame.
+
+    u0_in : float or array (thetaE)
+        Minimum source-lens projected separation in the rectilinear frame,
+        in units of the Einstein radius, in input frame.
+    
+    tE_in : float or array (days)
+        Einstein crossing time, in input frame.
+
+    tE_out : float or array (days)
+        Einstein crossing time, in output frame.
+
+    piE : float or array
+        Microlensing parallax.
+        Note that this is the same in both the input and output frame (invariant).
+    
+    in_frame : str
+        'helio' if converting from heliocentric to geocentric projected frame.
+        'geo' if converting from geocentric projected to heliocentric frame.
+
+    tauhat_in : float or array
+        Unit vector in the direction of the source-lens proper motion in the input frame.
+
+    tauhat_out : float or array
+        Unit vector in the direction of the source-lens proper motion in the output frame.
+
+    u0hat_in : float or array
+        Unit vector in the direction of the source-lens separation vector in the input frame.
+
+    u0hat_out : float or array
+        Unit vector in the direction of the source-lens separation vector in the output frame.
 
     """
     # Parallax vector (Sun-Earth projected separation vector in AU) at t0par.
