@@ -24,14 +24,14 @@ To instantiate a model:
 
    from bagle import model
 
-   mL = 10.0  # msun
-   t0 = 57000.00
-   xS0 = np.array([0.000, 0.000])
+   mL = 10.0     # msun
+   t0 = 57000.00 # MJD
+   xS0 = np.array([0.000, 0.000])  # arcsec
    beta = 1.4  # mas
-   muS = np.array([8.0, 0.0])
-   muL = np.array([0.00, 0.00])
-   dL = 4000.0
-   dS = 8000.0
+   muS = np.array([8.0, 0.0])   # mas/yr
+   muL = np.array([0.00, 0.00]) # mas/yr
+   dL = 4000.0 # pc
+   dS = 8000.0 # pc
    b_sff = [1.0]    # one for each filter
    mag_src = [19.0] # one for each filter
 
@@ -46,27 +46,27 @@ To instantiate a model:
                  event1.t0 + 3000, 1)
    dt = t - event1.t0
 
-   # Quanties you can print
+   # Quantities you can print
    A = event1.get_amplification(t)
    shift = event1.get_centroid_shift(t)
    shift_amp = np.linalg.norm(shift, axis=1)
 
-Note, each model class has a name that typically has a structure of 
+
+List of Available Models
+========================
+
+Note, each model class has a name that typically has a structure of
 
     <ModelDataType>_<Parallax>_<GP>_<Parameterization>
 
 For example, `PSPL_Phot_noPar_Param2` has a data and model class type of PSPL_Phot,
 which contains a point-source, point-lens event with photometry only. The model
-has no parallax, no GP and uses parameterization #2.
+has no parallax, no Guassian Process noise and uses parameterization #2.
 
-List of Available Models
-========================
-
-The complete list of instantiable model classes is below. Click to see
-a description of the input parameters for each class.
+The complete list of instantiable model classes is below.
 
 Point source, point lens, photometry only:
-See :ref:`PSPL Details` for details.
+    - See :ref:`PSPL Details` for details.
     - :class:`PSPL_Phot_noPar_Param1` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_src
     - :class:`PSPL_Phot_noPar_Param2`-- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_base
     - :class:`PSPL_Phot_Par_Param1` -- same as above with parallax
@@ -5397,8 +5397,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         t_obs : array_like
             Time (in MJD).
 
-        Return
-        ------
+        Returns
+        -------
         xL1 : array_like, shape = [N_times, 2 directions]
             Position of the lens primary
         xL2 : array_like, shape = [N_times, 2 directions]
@@ -9366,8 +9366,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         t : array_like
             Time (in MJD).
 
-        Return
-        ------
+        Returns
+        -------
         xL1 : array_like, shape = [N_times, 2 directions]
             Position of the lens primary
         xL2 : array_like, shape = [N_times, 2 directions]

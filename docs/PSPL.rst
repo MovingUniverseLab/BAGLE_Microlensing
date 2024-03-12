@@ -65,6 +65,21 @@ Parameter                  Units             Description
 :math:`log \omega_{0,GP}`
 =========================  ================  ========================================================
 
+Photometry and Astrometry
+=========================
+
+Fill in. Include orientation conventions on the sky.
+
+:math:`u_0` Orientation Conventions
+-----------------------------------
+
+Fill in.
+
+Gaussian Process Noise
+======================
+
+Fill in.
+
 NEEDS FIXING BELOW HERE
 =======================
 .. toctree::
