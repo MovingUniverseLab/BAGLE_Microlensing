@@ -15,10 +15,7 @@ microlensing models include:
     * static lens secondary
 * BSPL: binary-source, point lens
     * static source secondary
-    * source secondary moving with linear motion
-    * source secondary moving with accelerating motion
-    * source secondary moving on circular orbit
-    * source secondary moving on elliptical orbit
+    * moving secondary sources with linear, accelerating, and circular or elliptical orbits.
 * BSBL: binary-source, binary lens
     * static lens and source secondary
 * FSPL: finite-source, point-lens
