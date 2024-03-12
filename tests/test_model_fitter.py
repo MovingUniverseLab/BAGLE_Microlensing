@@ -2,6 +2,7 @@ from bagle import model
 from bagle import model_fitter
 from bagle import multinest_utils
 from bagle import fake_data
+from bagle import data as data_mod
 from bagle.model_fitter import PSPL_Solver, PSPL_Solver_Hobson_Weighted
 #from tests import test_model
 import numpy as np
@@ -1240,8 +1241,7 @@ def test_PSBL_PhotAstrom_Par_Param1():
                          model.PSBL_PhotAstrom_Par_Param1,
                          n_live_points=100,
                          outputfiles_basename=base,
-                         resume=False,
-                         verbose=True)
+                         resume=False)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['mLp'] = model_fitter.make_gen(p_in['mLp']-0.1, p_in['mLp']+0.1)
@@ -1814,7 +1814,10 @@ def test_pspl_solver_gp_params():
     return
 
 def test_plot_model_and_data_GP_err():
-    data = data.getdata('ob120169',
+    # SKIP
+
+    # REPLACE THIS TO USE THE OB120169 photometry data file. 
+    data = data_mod.getdata('ob120169',
                           phot_data=['I_OGLE'],
                           ast_data=[])
 
