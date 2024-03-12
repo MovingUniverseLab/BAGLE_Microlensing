@@ -3,7 +3,7 @@ from bagle import model_fitter
 from bagle import multinest_utils
 from bagle import fake_data
 from bagle.model_fitter import PSPL_Solver, PSPL_Solver_Hobson_Weighted
-from tests import test_model
+#from tests import test_model
 import numpy as np
 import pylab as plt
 import os

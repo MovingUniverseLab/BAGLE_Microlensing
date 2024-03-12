@@ -69,9 +69,9 @@ multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
 
 class PSPL_Solver(Solver):
     """
-    A PyMultiNest solver to find the optimal PSPL parameters, given data and
+    A PyMultiNest solver to find the optimal parameters, given data and
     a microlensing model from model.py.
-    DESPITE THE NAME YOU CAN ALSO USE IT TO FIT PSBL! 
+    DESPITE THE NAME YOU CAN ALSO USE IT TO FIT ANY WORKING MODELS IN MODEL.PY!
 
     Attributes
     ----------
@@ -118,9 +118,11 @@ class PSPL_Solver(Solver):
         along with extensive documentation as to their content and
         construction in the file's docstring. The model can support either
 
-        1.  photometric data or photometric and astrometric data,
-        2.  parallax or no parallax, and
-        3. different parameterizations of the model.
+        1.  PSPL, PSBL, BSPL, BSBL, or FSPL (FSPL implementation in-progress);
+        2.  photometric data only, photometric and astrometric data, or
+            astrometric data only;
+        3.  parallax or no parallax; and
+        4.  different parameterizations of the model.
 
         For example, a model with accepts both astrometric and photometric
         data, uses parallax, and uses a parameterization that includes the
@@ -130,9 +132,10 @@ class PSPL_Solver(Solver):
         If provided, the fitter will override the default
         `additional_param_names` of the model_class. These are the parameters,
         besides those that are being fitted for, that are written out to disk
-        for posterior plotting after the fit has completed. To see the default
+        for posterior plotting after the fit has completed. They must exist
+        as a variable in the model object. To see the default
         additional_param_names run:
-            `print(model_class.additional _param_names)`
+            `print(model_class.additional_param_names)`
     add_error_on_photometry : boolean, optional
         If set to True, the fitter will fit for an additive error to the
         photometric magnitudes in the fitting process. This error will have
@@ -199,6 +202,7 @@ class PSPL_Solver(Solver):
         'radius': ('make_gen', 1E-4, 1E-2),
         'fratio_bin': ('make_gen', 0, 1),
         # We really need to make some normal distributions. All these are junk right now.
+        # TODO: I don't think the above comment is accurate any more
         'gp_log_rho': ('make_norm_gen', 0, 5),
         'gp_log_S0': ('make_norm_gen', 0, 5),
         'gp_log_sigma': ('make_norm_gen', 0, 5), 
@@ -2995,7 +2999,11 @@ def generate_params_dict(params, fitter_param_names):
 
 def generate_fixed_params_dict(data, fixed_param_names):
     param_dict = {}
-    for param in fixed_param_names:
+    if ('obsLocation' in fixed_param_names) and ('obsLocation' not in data.keys()):
+        use_fixed_param_names = [item for item in fixed_param_names if not item=='obsLocation']
+    else:
+        use_fixed_param_names = fixed_param_names
+    for param in use_fixed_param_names:
         param_dict[param] = data[param]
 
     return param_dict

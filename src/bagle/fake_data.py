@@ -176,7 +176,8 @@ def fake_data_parallax_lmc(outdir='test_mnest_lmc/'):
 
 def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
                        muS_in, muL_in, dL_in, dS_in, b_sff_in, mag_src_in,
-                       outdir='', target='Unknown', noise=True):
+                       outdir='', target='Unknown', noise=True,
+                       obsLocation='earth'):
     pspl_par_in = model.PSPL_PhotAstrom_Par_Param1(mL_in,
                                                    t0_in,
                                                    beta_in,
@@ -255,6 +256,7 @@ def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     
     data['raL'] = raL_in
     data['decL'] = decL_in
+    data['obsLocation'] = obsLocation
     data['target'] = target
     data['phot_data'] = 'sim'
     data['ast_data'] = 'sim'
@@ -262,6 +264,7 @@ def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     params = {}
     params['raL'] = raL_in
     params['decL'] = decL_in
+    params['obsLocation'] = obsLocation
     params['mL'] = mL_in
     params['t0'] = t0_in
     params['xS0_E'] = xS0_in[0]
