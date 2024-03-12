@@ -1240,7 +1240,8 @@ def test_PSBL_PhotAstrom_Par_Param1():
                          model.PSBL_PhotAstrom_Par_Param1,
                          n_live_points=100,
                          outputfiles_basename=base,
-                         resume=False)
+                         resume=False,
+                         verbose=True)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['mLp'] = model_fitter.make_gen(p_in['mLp']-0.1, p_in['mLp']+0.1)
