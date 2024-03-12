@@ -7,122 +7,164 @@
 #.. moduleauthor:: Casey Lam <casey_lam@berkeley.edu>
 #.. moduleauthor:: Edward Broadberry
 """
-=========================
-Overview
+Overview of bagle.model
 =========================
 
-This set of classes and functions allows the user to construct microlensing
-models. The available classes for instantiating a microlensing event are shown
-in the list below. See the API documentation for each class for details.
+The ``bagle.model`` module contains a collection of classes and functions that
+allow the user to construct microlensing models. The available classes for
+instantiating a microlensing event are shown in the list below.
+See the API documentation for each class for details.
 
-Note, each model class has a name that typically has a structure of 
+Example: A Microlens Model Event
+================================
+
+To instantiate a model:
+
+.. code-block:: python
+
+   from bagle import model
+
+   mL = 10.0     # msun
+   t0 = 57000.00 # MJD
+   xS0 = np.array([0.000, 0.000])  # arcsec
+   beta = 1.4  # mas
+   muS = np.array([8.0, 0.0])   # mas/yr
+   muL = np.array([0.00, 0.00]) # mas/yr
+   dL = 4000.0 # pc
+   dS = 8000.0 # pc
+   b_sff = [1.0]    # one for each filter
+   mag_src = [19.0] # one for each filter
+
+   event1 = model.PSPL_PhotAstrom_noPar_Param1(mL,
+                          t0, beta, dL, dL / dS,
+                          xS0[0], xS0[1], muL[0], muL[1],
+                          muS[0], muS[1],
+                          b_sff, mag_src)
+
+   # Get time range for event
+   t = np.arange(event1.t0 - 3000,
+                 event1.t0 + 3000, 1)
+   dt = t - event1.t0
+
+   # Quantities you can print
+   A = event1.get_amplification(t)
+   shift = event1.get_centroid_shift(t)
+   shift_amp = np.linalg.norm(shift, axis=1)
+
+
+List of Available Models
+========================
+
+Note, each model class has a name that typically has a structure of
 
     <ModelDataType>_<Parallax>_<GP>_<Parameterization>
 
 For example, `PSPL_Phot_noPar_Param2` has a data and model class type of PSPL_Phot,
 which contains a point-source, point-lens event with photometry only. The model
-has no parallax, no GP and uses parameterization #2.
+has no parallax, no Guassian Process noise and uses parameterization #2.
 
-The complete list of instantiable model classes is: 
+The complete list of instantiable model classes is below.
 
 Point source, point lens, photometry only:
-    - 'PSPL_Phot_noPar_Param1'
-    - 'PSPL_Phot_noPar_Param2'
-    - 'PSPL_Phot_Par_Param1'
-    - 'PSPL_Phot_Par_Param2'
-    - 'PSPL_Phot_Par_Param1_geoproj'
-    - 'PSPL_Phot_noPar_GP_Param1'
-    - 'PSPL_Phot_noPar_GP_Param2'
-    - 'PSPL_Phot_Par_GP_Param1'
-    - 'PSPL_Phot_Par_GP_Param1_2'
-    - 'PSPL_Phot_Par_GP_Param2'
-    - 'PSPL_Phot_Par_GP_Param2_2'
+    - See :ref:`PSPL Details` for details.
+    - :class:`PSPL_Phot_noPar_Param1` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_src
+    - :class:`PSPL_Phot_noPar_Param2`-- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_base
+    - :class:`PSPL_Phot_Par_Param1` -- same as above with parallax
+    - :class:`PSPL_Phot_Par_Param2` -- same as above with parallax
+    - :class:`PSPL_Phot_Par_Param1_geoproj` -- parameters in geo-projected rather than helio frame
+    - :class:`PSPL_Phot_noPar_GP_Param1` -- same as above but with additional Gaussian Process noise kernel.
+    - :class:`PSPL_Phot_noPar_GP_Param2`
+    - :class:`PSPL_Phot_Par_GP_Param1`
+    - :class:`PSPL_Phot_Par_GP_Param1_2`
+    - :class:`PSPL_Phot_Par_GP_Param2`
+    - :class:`PSPL_Phot_Par_GP_Param2_2`
 
 Point source, point lens, photometry and astrometry:
-    - 'PSPL_PhotAstrom_noPar_Param1'
-    - 'PSPL_PhotAstrom_noPar_Param2'
-    - 'PSPL_PhotAstrom_noPar_Param3'
-    - 'PSPL_PhotAstrom_noPar_Param4'
-    - 'PSPL_PhotAstrom_Par_Param4_geoproj'
-    - 'PSPL_PhotAstrom_Par_Param1'
-    - 'PSPL_PhotAstrom_Par_Param2'
-    - 'PSPL_PhotAstrom_Par_Param3'
-    - 'PSPL_PhotAstrom_Par_Param4'
-    - 'PSPL_PhotAstrom_Par_Param5'
-    - 'PSPL_PhotAstrom_LumLens_Par_Param1'
-    - 'PSPL_PhotAstrom_LumLens_Par_Param2'
-    - 'PSPL_PhotAstrom_LumLens_Par_Param4'
-    - 'PSPL_PhotAstrom_noPar_GP_Param1'
-    - 'PSPL_PhotAstrom_noPar_GP_Param2'
-    - 'PSPL_PhotAstrom_Par_GP_Param1'
-    - 'PSPL_PhotAstrom_Par_GP_Param2'
-    - 'PSPL_PhotAstrom_Par_GP_Param3'
-    - 'PSPL_PhotAstrom_Par_GP_Param4'
-    - 'PSPL_PhotAstrom_Par_LumLens_GP_Param1'
-    - 'PSPL_PhotAstrom_Par_LumLens_GP_Param2'
-    - 'PSPL_PhotAstrom_Par_LumLens_GP_Param3'
-    - 'PSPL_PhotAstrom_Par_LumLens_GP_Param4'
+    - :class:`PSPL_PhotAstrom_noPar_Param1`
+    - :class:`PSPL_PhotAstrom_noPar_Param2`
+    - :class:`PSPL_PhotAstrom_noPar_Param3`
+    - :class:`PSPL_PhotAstrom_noPar_Param4`
+    - :class:`PSPL_PhotAstrom_Par_Param4_geoproj`
+    - :class:`PSPL_PhotAstrom_Par_Param1`
+    - :class:`PSPL_PhotAstrom_Par_Param2`
+    - :class:`PSPL_PhotAstrom_Par_Param3`
+    - :class:`PSPL_PhotAstrom_Par_Param4`
+    - :class:`PSPL_PhotAstrom_Par_Param5`
+    - :class:`PSPL_PhotAstrom_LumLens_Par_Param1`
+    - :class:`PSPL_PhotAstrom_LumLens_Par_Param2`
+    - :class:`PSPL_PhotAstrom_LumLens_Par_Param4`
+    - :class:`PSPL_PhotAstrom_noPar_GP_Param1`
+    - :class:`PSPL_PhotAstrom_noPar_GP_Param2`
+    - :class:`PSPL_PhotAstrom_Par_GP_Param1`
+    - :class:`PSPL_PhotAstrom_Par_GP_Param2`
+    - :class:`PSPL_PhotAstrom_Par_GP_Param3`
+    - :class:`PSPL_PhotAstrom_Par_GP_Param4`
+    - :class:`PSPL_PhotAstrom_Par_LumLens_GP_Param1`
+    - :class:`PSPL_PhotAstrom_Par_LumLens_GP_Param2`
+    - :class:`PSPL_PhotAstrom_Par_LumLens_GP_Param3`
+    - :class:`PSPL_PhotAstrom_Par_LumLens_GP_Param4`
 
 Point source, point lens, astrometry only
-    - 'PSPL_Astrom_Par_Param4'
-    - 'PSPL_Astrom_Par_Param3'
+    - :class:`PSPL_Astrom_Par_Param4`
+    - :class:`PSPL_Astrom_Par_Param3`
 
 Point soruce, binary lens, photometry only
-    - 'PSBL_Phot_noPar_Param1'
-    - 'PSBL_Phot_Par_Param1'
-    - 'PSBL_Phot_noPar_GP_Param1'
-    - 'PSBL_Phot_Par_GP_Param1'
+    - :class:`PSBL_Phot_noPar_Param1`
+    - :class:`PSBL_Phot_Par_Param1`
+    - :class:`PSBL_Phot_noPar_GP_Param1`
+    - :class:`PSBL_Phot_Par_GP_Param1`
 
 Point source, binary lens, photometry and astrometry
-    - 'PSBL_PhotAstrom_noPar_Param1'
-    - 'PSBL_PhotAstrom_noPar_Param2'
-    - 'PSBL_PhotAstrom_noPar_Param3'
-    - 'PSBL_PhotAstrom_Par_Param1'
-    - 'PSBL_PhotAstrom_Par_Param2'
-    - 'PSBL_PhotAstrom_Par_Param3'
-    - 'PSBL_PhotAstrom_Par_Param4'
-    - 'PSBL_PhotAstrom_Par_Param5'
-    - 'PSBL_PhotAstrom_Par_Param7'
-    - 'PSBL_PhotAstrom_noPar_GP_Param1'
-    - 'PSBL_PhotAstrom_noPar_GP_Param2'
-    - 'PSBL_PhotAstrom_Par_GP_Param1'
-    - 'PSBL_PhotAstrom_Par_GP_Param2'
+    - :class:`PSBL_PhotAstrom_noPar_Param1`
+    - :class:`PSBL_PhotAstrom_noPar_Param2`
+    - :class:`PSBL_PhotAstrom_noPar_Param3`
+    - :class:`PSBL_PhotAstrom_Par_Param1`
+    - :class:`PSBL_PhotAstrom_Par_Param2`
+    - :class:`PSBL_PhotAstrom_Par_Param3`
+    - :class:`PSBL_PhotAstrom_Par_Param4`
+    - :class:`PSBL_PhotAstrom_Par_Param5`
+    - :class:`PSBL_PhotAstrom_Par_Param7`
+    - :class:`PSBL_PhotAstrom_noPar_GP_Param1`
+    - :class:`PSBL_PhotAstrom_noPar_GP_Param2`
+    - :class:`PSBL_PhotAstrom_Par_GP_Param1`
+    - :class:`PSBL_PhotAstrom_Par_GP_Param2`
 
 Binary source, point lens, photometry and only
-    - 'BSPL_Phot_noPar_Param1'
-    - 'BSPL_Phot_Par_Param1'
-    - 'BSPL_Phot_noPar_GP_Param1'
-    - 'BSPL_Phot_Par_GP_Param1'
+    - :class:`BSPL_Phot_noPar_Param1`
+    - :class:`BSPL_Phot_Par_Param1`
+    - :class:`BSPL_Phot_noPar_GP_Param1`
+    - :class:`BSPL_Phot_Par_GP_Param1`
 
 Binary source, point lens, photometry and astrometry
-    - 'BSPL_PhotAstrom_noPar_Param1'
-    - 'BSPL_PhotAstrom_noPar_Param2'
-    - 'BSPL_PhotAstrom_noPar_Param3'
-    - 'BSPL_PhotAstrom_Par_Param1'
-    - 'BSPL_PhotAstrom_Par_Param2'
-    - 'BSPL_PhotAstrom_Par_Param3'
-    - 'BSPL_PhotAstrom_noPar_GP_Param1'
-    - 'BSPL_PhotAstrom_noPar_GP_Param2'
-    - 'BSPL_PhotAstrom_noPar_GP_Param3'
-    - 'BSPL_PhotAstrom_Par_GP_Param1'
-    - 'BSPL_PhotAstrom_Par_GP_Param2'
-    - 'BSPL_PhotAstrom_Par_GP_Param3'
+    - :class:`BSPL_PhotAstrom_noPar_Param1`
+    - :class:`BSPL_PhotAstrom_noPar_Param2`
+    - :class:`BSPL_PhotAstrom_noPar_Param3`
+    - :class:`BSPL_PhotAstrom_Par_Param1`
+    - :class:`BSPL_PhotAstrom_Par_Param2`
+    - :class:`BSPL_PhotAstrom_Par_Param3`
+    - :class:`BSPL_PhotAstrom_noPar_GP_Param1`
+    - :class:`BSPL_PhotAstrom_noPar_GP_Param2`
+    - :class:`BSPL_PhotAstrom_noPar_GP_Param3`
+    - :class:`BSPL_PhotAstrom_Par_GP_Param1`
+    - :class:`BSPL_PhotAstrom_Par_GP_Param2`
+    - :class:`BSPL_PhotAstrom_Par_GP_Param3`
 
 Binary source, binary lens, photometry and astrometry
-    - 'BSBL_PhotAstrom_noPar_Param1'
-    - 'BSBL_PhotAstrom_noPar_Param2'
-    - 'BSBL_PhotAstrom_Par_Param1'
-    - 'BSBL_PhotAstrom_Par_Param2'
+    - :class:`BSBL_PhotAstrom_noPar_Param1`
+    - :class:`BSBL_PhotAstrom_noPar_Param2`
+    - :class:`BSBL_PhotAstrom_Par_Param1`
+    - :class:`BSBL_PhotAstrom_Par_Param2`
 
 Finite source, point lens, photometry and astrometry (broken)
-    - 'FSPL_PhotAstrom_Par_Param1'
+    - :class:`FSPL_Phot_Par_Param1`
+    - :class:`FSPL_PhotAstrom_Par_Param1`
 
 
-=========================
+
 Developers
 =========================
 
-Each model class i built up from a menu of different features
+Each model class is built up from a menu of different features
 by inheriting from multiple base classes, each from a different 'family' of
 related classes.
 
@@ -786,10 +828,8 @@ class PSPL_AstromParam3(PSPL_Param):
 class PSPL_PhotParam1(PSPL_Param):
     """PSPL model for photometry only.
 
-    Point source point lens model for microlensing photometry only.
-    This model includes the relative proper motion between the lens
-    and the source. Parameters are reduced with the use of piRel
-    (rather than dL and dS) and muRel (rather than muL and muS).
+    Point-source point-lens model for microlensing events with
+    photometry only.
 
     Note the attributes, RA (raL) and Dec (decL) are required 
     if you are calculating a model with parallax. 
@@ -5357,8 +5397,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         t_obs : array_like
             Time (in MJD).
 
-        Return
-        ------
+        Returns
+        -------
         xL1 : array_like, shape = [N_times, 2 directions]
             Position of the lens primary
         xL2 : array_like, shape = [N_times, 2 directions]
@@ -9326,8 +9366,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         t : array_like
             Time (in MJD).
 
-        Return
-        ------
+        Returns
+        -------
         xL1 : array_like, shape = [N_times, 2 directions]
             Position of the lens primary
         xL2 : array_like, shape = [N_times, 2 directions]
@@ -10290,12 +10330,12 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         source - lens separation vector on the plane of the sky 
         in units of \theta_E.
 
-        Input Parameters
-        ----------------
+        Parameters
+        ----------
         t_obs : array, float
             Times in MJD at which to evaluate the separation.
 
-        Return
+        Returns
         -------
         u : array, float, shape = [len(t_obs), 2]
             Separation vector in East, North on the sky in units of \theta_E.
@@ -10316,12 +10356,12 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         source - lens separation vector for each point of the source 
         outline. Positions are  on the plane of the sky in units of \theta_E.
 
-        Input Parameters
-        ----------------
+        Parameters
+        ----------
         t_obs : array, float
             Times in MJD at which to evaluate the separation.
 
-        Return
+        Returns
         -------
         u : array, float, shape = [len(t_obs), 2]
             Separation vector in East, North on the sky in units of \theta_E.
@@ -10348,7 +10388,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     def get_astrometry_outline_unlensed(self, t_obs):
         """Get the astrometry of the source outline if the lens didn't exist.
 
-        Return
+        Returns
         -------
         xS_unlensed : numpy array, dtype=float, shape = [len(t_obs), self.n_outline, 2]
             The unlensed positions of the source outline points in arcseconds.
@@ -10596,7 +10636,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         """Get the photometric amplification term at a set of times, t for both the
         plus and minus images.
 
-        Inputs
+        Parameters
         ----------
         t: Array of times in MJD.DDD
         """
