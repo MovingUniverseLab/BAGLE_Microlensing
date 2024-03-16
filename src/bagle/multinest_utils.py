@@ -21,37 +21,6 @@ from scipy.stats import gaussian_kde
 import glob
 import astropy.constants as const
 
-def get_data_and_fitter(mnest_base):
-    info_file = open(mnest_base + 'params.yaml', 'r')
-    info = yaml.full_load(info_file)
-
-    pho_dsets = info['phot_data']
-    if 'astrom_data' in info.keys():
-        ast_dsets = info['astrom_data']
-    else:
-        ast_dsets = []
-    
-    my_model = getattr(model, info['model'])
-    my_data = data.getdata(info['target'].lower(), 
-                             phot_data=pho_dsets,
-                             ast_data=ast_dsets)
-
-    # Need this for backwards compatability.
-    if 'use_phot_optional_params' in info:
-        use_phot_opt = info['use_phot_optional_params']
-    else:
-        use_phot_opt = False
-
-    # Load up the first fitter object to get the parameter names.
-    fitter = model_fitter.PSPL_Solver(my_data, my_model,
-                                      add_error_on_photometry = info['add_error_on_photometry'],
-                                      multiply_error_on_photometry = info['multiply_error_on_photometry'],
-                                      use_phot_optional_params=info['use_phot_optional_params'],
-                                      outputfiles_basename = mnest_base)
-
-    return fitter, my_data
-
-
 def check_priors(fitter, target, posterior=True):
     # This is specifically for photometry + astrometry.
 
