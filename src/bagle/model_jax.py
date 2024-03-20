@@ -327,7 +327,7 @@ All times must be reported in MJD.
                 - DONE: PSPL_Phot
                 - DONE: PSPL_noParallax,
                 - DONE: PSPL_PhotParam1
-                - TODO: Tests
+                - TODO: Write Tests
         - PSBL
             - Most methods in PSBL base class itself, but 
                 specific parameterizations and astronmetry classes are TODO
@@ -349,10 +349,8 @@ import celerite
 from astropy.coordinates import get_body_barycentric, SkyCoord, solar_system_ephemeris, get_body_barycentric_posvel
 from astropy.coordinates.builtin_frames.utils import get_jd12
 import erfa
-import ephem
 from joblib import Memory
 import os
-from functools import lru_cache, wraps
 import copy
 from bagle import frame_convert as fc
 from abc import ABC
@@ -454,6 +452,7 @@ class PSPL_Param(ABC):
                                        "Should be a dictionary with keys matched to the filter indices.")
                 setattr(self, param, new_param_var)
 
+''' Jaxified? TODO: check units class '''
 class PSPL_AstromParam4(PSPL_Param):
     """
     Point Source Point Lens model for microlensing. This model includes
@@ -524,10 +523,10 @@ class PSPL_AstromParam4(PSPL_Param):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
-        self.piE = np.array([piE_E, piE_N])
+        self.piE = jnp.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
-        self.muS = np.array([muS_E, muS_N])
+        self.xS0 = jnp.array([xS0_E, xS0_N])
+        self.muS = jnp.array([muS_E, muS_N])
         self.piS = piS
         self.raL = raL
         self.decL = decL
@@ -538,7 +537,7 @@ class PSPL_AstromParam4(PSPL_Param):
 
         # Derived quantities
         self.beta = self.u0_amp * self.thetaE_amp
-        self.piE_amp = np.linalg.norm(self.piE)
+        self.piE_amp = jnp.linalg.norm(self.piE)
         self.piRel = self.piE_amp * self.thetaE_amp
         self.muRel_amp = self.thetaE_amp / (self.tE / days_per_year)
 
@@ -587,7 +586,7 @@ class PSPL_AstromParam4(PSPL_Param):
         # the sign of beta is always the same as the sign of u0_amp. Therefore this
         # usage of the function with u0_amp works exactly the same.
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+        self.u0 = jnp.abs(self.u0_amp) * self.u0_hat
 
         # Angular separation vector between source and lens (vector from lens to source)
         self.thetaS0 = self.u0 * self.thetaE_amp  # mas
@@ -598,6 +597,7 @@ class PSPL_AstromParam4(PSPL_Param):
 
         return
 
+''' Jaxified? TODO: check units class '''
 class PSPL_AstromParam3(PSPL_Param):
     """
     DESCRIPTION:
@@ -668,10 +668,10 @@ class PSPL_AstromParam3(PSPL_Param):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
-        self.piE = np.array([piE_E, piE_N])
+        self.piE = jnp.array([piE_E, piE_N])
         self.thetaE_amp = 10 ** log10_thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
-        self.muS = np.array([muS_E, muS_N])
+        self.xS0 =jnp.array([xS0_E, xS0_N])
+        self.muS = jnp.array([muS_E, muS_N])
         self.piS = piS
         self.raL = raL
         self.decL = decL
@@ -682,7 +682,7 @@ class PSPL_AstromParam3(PSPL_Param):
 
         # Derived quantities
         self.beta = self.u0_amp * self.thetaE_amp
-        self.piE_amp = np.linalg.norm(self.piE)
+        self.piE_amp = jnp.linalg.norm(self.piE)
         self.piRel = self.piE_amp * self.thetaE_amp
         self.muRel_amp = self.thetaE_amp / (self.tE / days_per_year)
 
@@ -731,7 +731,7 @@ class PSPL_AstromParam3(PSPL_Param):
         # the sign of beta is always the same as the sign of u0_amp. Therefore this
         # usage of the function with u0_amp works exactly the same.
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+        self.u0 = jnp.abs(self.u0_amp) * self.u0_hat
 
         # Angular separation vector between source and lens (vector from lens to source)
         self.thetaS0 = self.u0 * self.thetaE_amp  # mas
@@ -835,6 +835,7 @@ class PSPL_PhotParam1(PSPL_Param):
 
         return
 
+''' Jaxified '''
 class PSPL_PhotParam2(PSPL_Param):
     """
     DESCRIPTION:
@@ -891,7 +892,7 @@ class PSPL_PhotParam2(PSPL_Param):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
-        self.piE = np.array([piE_E, piE_N])
+        self.piE = jnp.array([piE_E, piE_N])
         self.b_sff = b_sff
         self.mag_base = mag_base
         self.raL = raL
@@ -902,10 +903,10 @@ class PSPL_PhotParam2(PSPL_Param):
         super().__init__()
 
         # Derived quantities
-        self.mag_src = self.mag_base - 2.5 * np.log10(self.b_sff)
+        self.mag_src = self.mag_base - 2.5 * jnp.log10(self.b_sff)
 
         # Calculate the microlensing parallax amplitude
-        self.piE_amp = np.linalg.norm(self.piE)
+        self.piE_amp = jnp.linalg.norm(self.piE)
 
         # Get thetaE_hat (same direction as piE
         self.thetaE_hat = self.piE / self.piE_amp
@@ -929,10 +930,11 @@ class PSPL_PhotParam2(PSPL_Param):
         # the sign of beta is always the same as the sign of u0_amp. Therefore this
         # usage of the function with u0_amp works exactly the same.
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+        self.u0 = jnp.abs(self.u0_amp) * self.u0_hat
 
         return
 
+''' Jaxified '''
 class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
     """PSPL model for photometry only.
     Point source point lens model for microlensing photometry only.
@@ -976,7 +978,7 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
-        self.piE = np.array([piE_E, piE_N])
+        self.piE = jnp.array([piE_E, piE_N])
         self.b_sff = b_sff
         self.mag_src = mag_src
         self.raL = raL
@@ -990,6 +992,7 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
 
         return
 
+''' Jaxified '''
 class PSPL_PhotAstromParam1(PSPL_Param):
     """PSPL model for astrometry and photometry - physical parameterization.
 
@@ -1063,10 +1066,10 @@ class PSPL_PhotAstromParam1(PSPL_Param):
                  raL=None, decL=None):
         self.t0 = t0
         self.mL = mL
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0 = jnp.array([xS0_E, xS0_N])
         self.beta = beta
-        self.muL = np.array([muL_E, muL_N])
-        self.muS = np.array([muS_E, muS_N])
+        self.muL = jnp.array([muL_E, muL_N])
+        self.muS = jnp.array([muS_E, muS_N])
         self.dL = dL
         self.dL_dS = dL_dS
         self.dS = self.dL / self.dL_dS
@@ -1079,7 +1082,7 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         # This checks for proper parameter formatting.
         super().__init__()
 
-        self.mag_base = self.mag_src + 2.5 * np.log10(self.b_sff)
+        self.mag_base = self.mag_src + 2.5 * jnp.log10(self.b_sff)
 
         # Calculate the relative parallax
         inv_dist_diff = (1.0 / (self.dL * units.pc)) - (1.0 / (self.dS * units.pc))
@@ -1096,13 +1099,13 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         # Note that this will be in the direction of theta_hat
         self.muRel = self.muS - self.muL
         self.muRel_E, self.muRel_N = self.muRel
-        self.muRel_amp = np.linalg.norm(self.muRel)  # mas/yr
+        self.muRel_amp = jnp.linalg.norm(self.muRel)  # mas/yr
 
         self.muS_E, self.muS_N = self.muS
         self.muL_E, self.muL_N = self.muL
 
         # Calculate the Einstein radius
-        thetaE = units.rad * np.sqrt(
+        thetaE = units.rad * jnp.sqrt(
             (4.0 * const.G * mL * units.M_sun / const.c ** 2) * inv_dist_diff)
         self.thetaE_amp = thetaE.to('mas').value  # mas
         self.thetaE_hat = self.muRel / self.muRel_amp
@@ -1129,7 +1132,7 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         # usage of the function with u0_amp works exactly the same.
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
         self.u0_amp = self.beta / self.thetaE_amp  # in Einstein units
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+        self.u0 = jnp.abs(self.u0_amp) * self.u0_hat
 
         # Angular separation vector between source and lens
         # (vector from lens to source)
@@ -2663,6 +2666,7 @@ class PSPL_Astrom(PSPL):
             "Photometry is not supported on this object: " +
             str(self.__class__))
 
+
 # --------------------------------------------------
 #
 # GP Class Family
@@ -2805,7 +2809,6 @@ class PSPL_GP(ABC):
             lnL = self.log_likely_photometry_each(t_obs, mag_obs, mag_err_obs, filt_index=filt_index)
 
             return lnL.sum()
-
 
 
 # --------------------------------------------------
@@ -3506,21 +3509,6 @@ class PSPL_Parallax_LumLens(PSPL_Parallax):
 #
 # --------------------------------------------------
 
-def process_time_step(args):
-    i, a5, a4, a3, a2, a1, a0, z1, z2, m1, m2 = args
-
-    # Compute the roots for the given time step
-    z = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
-
-    # Check the solutions
-    c1 = m1 / np.conj(z - z1[i])
-    c2 = m2 / np.conj(z - z2[i])
-    diff = w[i] - (z - c1 - c2)
-    bad_solutions = np.absolute(diff) > self.root_tol
-    z[bad_solutions] = np.nan + np.nan * 0j
-
-    return z
-
 class PSBL(PSPL):
     """
     Contains methods for model a PSBL photometry + astrometry.
@@ -3734,141 +3722,6 @@ class PSBL(PSPL):
 
         else:
             return z_arr
-
-    #  Old method before optimize
-    #  def get_image_pos_arr(self, w, z1, z2, m1, m2, check_sols=True):
-    #     """Gets image positions.
-
-    #     | Solve the fifth-order polynomial and get the image positions.
-    #     | See PSBL writeup for full equations.
-    #     | All angular distances are in arcsec.
-
-
-
-    #     Parameters
-    #     ----------
-    #     w : array_like
-    #         Complex position(s) of the source. Shape = [N_times, 1]
-
-    #     z1 : array_like
-    #         Complex position(s) of lens 1 (primary). Shape = [N_times, 1]
-
-    #     z2 : array_like
-    #         Complex position(s) of lens 2 (secondary). Shape = [N_times, 1]
-
-    #     check_sols : bool, optional
-    #         If True, calculated roots are checked against the lens equation,
-    #         and output will only contain those within self.root_tol.
-    #         If False, all calculated roots are returned.
-
-    #     Returns
-    #     -------
-    #     z_arr : array_like
-    #         Rank-1 array of polynomial roots, possibly complex.
-    #         If check_sols = True, only roots solving the lens
-    #         equation are returned.
-    #     """
-    #     assert (len(w) == len(z1)) & (len(w) == len(z2))
-
-    #     wbar = np.conj(w)
-    #     z1bar = np.conj(z1)
-    #     z2bar = np.conj(z2)
-
-    #     #####################################
-    #     # Solve the lens equation!!!!!
-    #     #####################################
-    #     # The lens equation is in the form
-    #     # f(z) = \sum_i a_i z^i = 0 for i = 0 to 5.
-    #     # Here are the coefficients:
-    #     # NIJAID's coeff - matches with Witt 1995 in their limits
-    #     a5 = (wbar - z1bar) * (wbar - z2bar)
-    #     a4 = -((w + 2 * (z1 + z2)) * wbar ** 2) - m2 * z2bar - \
-    #          z1bar * (m1 + (w + 2 * (z1 + z2)) * z2bar) + \
-    #          wbar * (m1 + m2 + (w + 2 * (z1 + z2)) * (z1bar + z2bar))
-    #     a3 = (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
-    #                 z1 + z2)) * wbar ** 2 + \
-    #          (m1 * (w - z1) + m2 * (w + 2 * z1 + z2)) * z2bar + \
-    #          z1bar * (m2 * (w - z2) + m1 * (w + z1 + 2 * z2) + \
-    #                   (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
-    #                               z1 + z2)) * z2bar) - \
-    #          wbar * (2 * (m2 * (w + z1) + m1 * (w + z2)) + \
-    #                  (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * (
-    #                              z1bar + z2bar))
-    #     a2 = -((m1 + m2) * (
-    #                 m1 * (w - z1) + m2 * (w - z2))) - \
-    #          (2 * z1 * z2 * (z1 + z2) + w * (
-    #                      z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * wbar ** 2 - \
-    #          (m2 * (w - z2) * (2 * z1 + z2) + m1 * (
-    #                      w * z1 + 2 * (w + z1) * z2 + z2 ** 2)) * z1bar - \
-    #          (m2 * w * (2 * z1 + z2) + m1 * (w - z1) * (
-    #                      z1 + 2 * z2) + m2 * z1 * (z1 + 2 * z2) + \
-    #           2 * z1 * z2 * (z1 + z2) * z1bar + w * (
-    #                       z1 ** 2 + 4 * z1 * z2 + z2 ** 2) * z1bar) * \
-    #          z2bar + wbar * (z1 * (
-    #                 2 * m1 * w + 4 * m2 * w - m1 * z1 + m2 * z1) + \
-    #                          2 * (2 * m1 + m2) * w * z2 + (
-    #                                      m1 - m2) * z2 ** 2 + \
-    #                          (2 * z1 * z2 * (z1 + z2) + w * (
-    #                                      z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * (
-    #                                      z1bar + z2bar))
-    #     a1 = 2 * m1 ** 2 * w * z2 + 2 * m1 * m2 * w * z2 - m1 * m2 * z2 ** 2 - 2 * m1 * w * z2 ** 2 * wbar + \
-    #          m1 * w * z2 ** 2 * z1bar + m1 * w * z2 ** 2 * z2bar + \
-    #          z1 ** 2 * (-(
-    #                 m1 * m2) - 2 * m2 * w * wbar + 2 * m1 * z2 * wbar + \
-    #                     2 * w * z2 * wbar ** 2 + z2 ** 2 * wbar ** 2 + m2 * (
-    #                                 w - z2) * z1bar - \
-    #                     2 * w * z2 * wbar * z1bar - z2 ** 2 * wbar * z1bar + \
-    #                     m2 * w * z2bar - 2 * m1 * z2 * z2bar + m2 * z2 * z2bar - \
-    #                     2 * w * z2 * wbar * z2bar - z2 ** 2 * wbar * z2bar + \
-    #                     2 * w * z2 * z1bar * z2bar + z2 ** 2 * z1bar * z2bar) + \
-    #          z1 * (2 * m1 * m2 * w + 2 * m2 ** 2 * (
-    #                 w - z2) - 2 * m1 ** 2 * z2 - 2 * m1 * m2 * z2 - \
-    #                4 * m1 * w * z2 * wbar - 4 * m2 * w * z2 * wbar + 2 * m2 * z2 ** 2 * wbar + \
-    #                2 * w * z2 ** 2 * wbar ** 2 + 2 * m1 * w * z2 * z1bar + \
-    #                2 * m2 * (
-    #                            w - z2) * z2 * z1bar + m1 * z2 ** 2 * z1bar - \
-    #                2 * w * z2 ** 2 * wbar * z1bar + 2 * m1 * w * z2 * z2bar + \
-    #                2 * m2 * w * z2 * z2bar - m1 * z2 ** 2 * z2bar - \
-    #                2 * w * z2 ** 2 * wbar * z2bar + 2 * w * z2 ** 2 * z1bar * z2bar)
-    #     a0 = (m2 * z1 + m1 * z2) * (
-    #                 m1 * (-w + z1) * z2 + m2 * z1 * (-w + z2)) + \
-    #          z1 * z2 * (-(w * z1 * z2 * wbar ** 2) - (
-    #                 m2 * z1 * (w - z2) + m1 * w * z2) * z1bar - \
-    #                     (m2 * w * z1 + m1 * (
-    #                                 w - z1) * z2 + w * z1 * z2 * z1bar) * z2bar + \
-    #                     wbar * (2 * m2 * w * z1 + 2 * m1 * w * z2 - (
-    #                         m1 + m2) * z1 * z2 + \
-    #                             w * z1 * z2 * (z1bar + z2bar)))
-
-    #     # Solve the lens equation and find all 5 roots.
-    #     # Loop through different time steps and solve each one.
-    #     N_times = len(w)
-    #     z_arr = np.zeros((N_times, 5), dtype=np.complex_)
-    #     ai_arr = np.zeros((N_times, 6), dtype=np.complex_)
-    #     for i in range(N_times):
-    #         ai_arr[i] = np.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
-    #         z_arr[i] = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
-
-    #     # Plug back into equation and see if those roots are actually solutions.
-    #     # There should either be 3 (outside caustic) or 5 (inside caustic).
-    #     # (for our regime, it should be 3)
-    #     if check_sols:
-    #         for i in range(N_times):
-    #             if type(m1) == np.ndarray:
-    #                 m1_i = m1[i]
-    #                 m2_i = m2[i]
-    #             else:
-    #                 m1_i = m1
-    #                 m2_i = m2
-
-    #             z = z_arr[i, :]
-    #             c1 = m1_i / np.conj(z - z1[i])
-    #             c2 = m2_i / np.conj(z - z2[i])
-    #             diff = w[i] - (z - c1 - c2)
-    #             bad_solutions = np.absolute(diff) > self.root_tol
-    #             z_arr[i][bad_solutions] = np.nan + np.nan * 0j
-
-    #     return z_arr
 
     def get_image_pos_arr(self, w, z1, z2, m1, m2, check_sols=True):
         """Gets image positions.
@@ -4282,7 +4135,7 @@ class PSBL(PSPL):
         
         return images, amps
 
-    def get_all_arrays_optimized(self, t_obs, check_sols=True, rescale=True):
+    def get_all_arrays_jax(self, t_obs, check_sols=True, rescale=True):
         '''
         Obtain the image and amplitude arrays for each t_obs.
 
@@ -4479,7 +4332,7 @@ class PSBL(PSPL):
         flux_zp = 1.0
 
         if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays_optimized(t_obs)
+            img_arr, amp_arr = self.get_all_arrays_jax(t_obs)
 
         # Mask invalid values from the amplification array.
         amp_arr_msk = np.ma.masked_invalid(amp_arr)
@@ -8812,9 +8665,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         ani.save("%s.mp4" % name, writer="ffmpeg", dpi=600)
         
         return ani
-
-    
-    
+   
 
 class FSPL_Phot(FSPL):
     pass
@@ -10276,16 +10127,16 @@ def mag2flux(mag):
 
     return flux
 
-
+''' Jaxified '''
 def flux2mag(flux):
     mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
     flux_zp = 1.0
 
-    mag = -2.5 * np.log10(flux / flux_zp) + mag_zp
+    mag = -2.5 * jnp.log10(flux / flux_zp) + mag_zp
 
     return mag
 
-
+''' Jaxified '''
 def u0_hat_from_thetaE_hat(thetaE_hat, beta):
     """
     Calculate the closest approach vector direction. Define the beta sign convention
@@ -10307,21 +10158,21 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
 
     which is what we use.
     """
-    u0_hat = np.zeros(2, dtype=float)
+    u0_hat = jnp.zeros(2, dtype=float)
     if beta > 0:
-        u0_hat[0] = np.abs(thetaE_hat[1])
+        u0_hat.at[0].set(jnp.abs(thetaE_hat[1]))
 
-        if np.sign(thetaE_hat).prod() > 0:
-            u0_hat[1] = -np.abs(thetaE_hat[0])
+        if jnp.sign(thetaE_hat).prod() > 0:
+            u0_hat.at[1].set(-jnp.abs(thetaE_hat[0]))
         else:
-            u0_hat[1] = np.abs(thetaE_hat[0])
+            u0_hat.at[1].set(jnp.abs(thetaE_hat[0]))
     else:
-        u0_hat[0] = -np.abs(thetaE_hat[1])
+        u0_hat.at[0].set(-jnp.abs(thetaE_hat[1]))
 
-        if np.sign(thetaE_hat).prod() > 0:
-            u0_hat[1] = np.abs(thetaE_hat[0])
+        if jnp.sign(thetaE_hat).prod() > 0:
+            u0_hat.at[1].set(jnp.abs(thetaE_hat[0]))
         else:
-            u0_hat[1] = -np.abs(thetaE_hat[0])
+            u0_hat[1].set(-jnp.abs(thetaE_hat[0]))
 
     return u0_hat
 
