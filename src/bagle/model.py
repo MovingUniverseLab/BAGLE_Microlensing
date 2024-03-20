@@ -378,28 +378,14 @@ from astropy import units
 from astropy.time import Time
 import pdb
 import celerite
-from astropy.coordinates import get_body_barycentric, SkyCoord, solar_system_ephemeris
+from astropy.coordinates import get_body_barycentric, SkyCoord
 from astropy.coordinates.builtin_frames.utils import get_jd12
 import erfa
-from joblib import Memory
-import os
 import copy
 
 from bagle import frame_convert as fc
 from bagle import parallax
 from abc import ABC
-
-au_day_to_km_s = 1731.45683
-
-# Use the JPL ephemerides.
-solar_system_ephemeris.set('jpl')
-
-# Setup a parallax cache
-cache_dir = os.path.dirname(__file__) + '/parallax_cache/'
-cache_memory = Memory(cache_dir, verbose=0, bytes_limit='1G')
-# Default cache size is 1 GB
-cache_memory.reduce_size()
-
 
 ######################################################
 ### POINT SOURCE POINT LENS (PSPL) CLASSES ###
@@ -854,7 +840,7 @@ class PSPL_PhotParam1(PSPL_Param):
         The microlensing parallax in the North direction in units of thetaE
     b_sff: numpy array or list
         The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        :math:`b_{sff} = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
         array, with one entry for each photometric filter.
     mag_src: numpy array or list
         Photometric magnitude of the source. This must be passed in as a
@@ -8931,6 +8917,9 @@ class BSBL(PSBL):
             Magnitude of each lensed image centroid at t_obs.
             Shape = [5, len(t_obs)]
         '''
+        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
+        flux_zp = 1.0
+
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t_obs)
 
@@ -9601,7 +9590,7 @@ class BSBL_PhotParam1(PSPL_Param):
         self.obsLocation = obsLocation
 
         # Separation between source and lens
-        self.sep_SL = sep # mas
+        self.sep_SL = sep_SL # mas
 
         # Binary source parameters.
         self.sep_S = sep_S  # mas
@@ -12691,9 +12680,6 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
             u0_hat[1] = -np.abs(thetaE_hat[0])
 
     return u0_hat
-
-
-#@cache_memory.cache()
 
 
 def get_angular_einstein_radius(m, d1, d2):

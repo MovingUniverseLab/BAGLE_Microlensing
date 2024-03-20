@@ -2,6 +2,7 @@ from bagle import model
 from bagle import model_fitter
 from bagle import multinest_utils
 from bagle import fake_data
+from bagle import data as data_mod
 from bagle.model_fitter import PSPL_Solver, PSPL_Solver_Hobson_Weighted
 #from tests import test_model
 import numpy as np
@@ -1820,19 +1821,12 @@ def test_pspl_solver_gp_params():
 
 @pytest.mark.skip(reason="broken")
 def test_plot_model_and_data_GP_err():
-    # Read in the OGLE I-band photometry.
-    tests_dir = os.path.dirname(os.path.realpath(__file__))
-    data = Table.read(tests_dir + '/data/OB120169_phot.dat', format='ascii')
-    data['col1'] -= 2400000.5
-    data.rename_column('col1', 't_phot1')
-    data.rename_column('col2', 'mag1')
-    data.rename_column('col3', 'mag_err1')
-    
-    ra,dec ='17:49:51.38','-35:22:28.0'
-    target_coords = SkyCoord(ra, dec,
-                    unit = (units.hourangle, units.deg), frame = 'icrs')
-    data['raL'] = target_coords.ra.degree
-    data['decL'] = target_coords.dec.degree
+    # SKIP
+
+    # REPLACE THIS TO USE THE OB120169 photometry data file. 
+    data = data_mod.getdata('ob120169',
+                          phot_data=['I_OGLE'],
+                          ast_data=[])
 
     outdir = '/u/jlu/work/microlens/OB120169/a_2020_08_18/model_fits/201_phot_ogle_gp/base_a/'
     outbase = 'a1_'
