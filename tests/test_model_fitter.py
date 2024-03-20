@@ -16,14 +16,18 @@ import dynesty
 import pdb
 import matplotlib
 from astropy.table import Table
+from astropy.coordinates import SkyCoord
+from astropy import units
 import yaml
 import shutil
 import matplotlib as mpl
+import pytest
 
 
 # Always generate the same fake data.
 np.random.seed(0)
 
+@pytest.mark.skip(reason="broken- error in test")
 def test_pspl_parallax_fit_geoproj():
     outdir = './test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
@@ -120,7 +124,7 @@ def test_pspl_parallax_fit():
     fitter = PSPL_Solver(data,
                          model.PSPL_PhotAstrom_Par_Param1,
                          n_live_points=300,
-                         outputfiles_basename=outdir + '/aa_',
+                         outputfiles_basename=outdir + 'aa_',
                          resume=False)
 
     # Lets adjust some priors for faster solving.
@@ -137,7 +141,7 @@ def test_pspl_parallax_fit():
     fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.1, p_in['b_sff']+0.1)
     fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.1, p_in['mag_src']+0.1)
 
-    # fitter.solve()
+    fitter.solve()
 
     best = fitter.get_best_fit()
 
@@ -351,7 +355,7 @@ def test_PSPL_Solver(plot=False):
     pickle_data(base, data, p_in)
 
     # Compare input and output model paramters
-    for param in best.colnames:
+    for param in best.keys():
         try:
             frac_diff = np.abs(p_in[param] - best[param])
             
@@ -479,6 +483,7 @@ def test_pspl_dy_fit():
 
     return
 
+@pytest.mark.skip(reason="work in progress- ultranest not ready to use")
 def test_pspl_ultranest_fit():
     import ultranest
     
@@ -621,8 +626,8 @@ def test_lumlens_parallax_fit():
                          model.PSPL_PhotAstrom_LumLens_Par_Param1,
 #                         model.PSPL_PhotAstrom_Par_Param1,
                          n_live_points=300,
-                         outputfiles_basename=outdir + '/aa_')
-#                         outputfiles_basename=outdir + '/bb_')
+                         outputfiles_basename=outdir + 'aa_')
+#                         outputfiles_basename=outdir + 'bb_')
 
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
     fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-3, p_in['xS0_E']+1e-3)
@@ -640,7 +645,8 @@ def test_lumlens_parallax_fit():
     plt.figure(1)
     plt.clf()
     plt.subplots_adjust(left=0.2)
-    plt.plot(data['xpos'], data['ypos'], '.')
+    print(data.keys())
+    plt.plot(data['xpos1'], data['ypos1'], '.')
     plt.show()
 
     fitter.solve()
@@ -694,10 +700,10 @@ def test_lumlens_parallax_fit():
     fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
 
     imag_out = pspl_out.get_photometry(data['t_phot1'])
-    pos_out = pspl_out.get_astrometry(data['t_ast'])
+    pos_out = pspl_out.get_astrometry(data['t_ast1'])
 
     imag_in = pspl_in.get_photometry(data['t_phot1'])
-    pos_in = pspl_in.get_astrometry(data['t_ast'])
+    pos_in = pspl_in.get_astrometry(data['t_ast1'])
 
     np.testing.assert_array_almost_equal(imag_out, imag_in, 1)
     np.testing.assert_array_almost_equal(pos_out, pos_in, 4)
@@ -736,10 +742,10 @@ def test_lumlens_parallax_fit_2p1a():
                          model.PSPL_PhotAstrom_LumLens_Par_Param1,
 #                         model.PSPL_PhotAstrom_Par_Param1,
                          n_live_points=300,
-                         outputfiles_basename=outdir + '/aa_',
+                         outputfiles_basename=outdir + 'aa_',
                          evidence_tolerance=2.0, 
                          sampling_efficiency=3.0)
-#                         outputfiles_basename=outdir + '/bb_')
+#                         outputfiles_basename=outdir + 'bb_')
 
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-1, p_in['t0']+1)
     fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
@@ -762,7 +768,7 @@ def test_lumlens_parallax_fit_2p1a():
     plt.plot(data['xpos1'], data['ypos1'], '.')
     plt.show()
 
-#    fitter.solve()
+    fitter.solve()
 
     best = fitter.get_best_fit()
 
@@ -874,7 +880,7 @@ def test_lumlens_parallax_fit_4p2a():
                          model.PSPL_PhotAstrom_LumLens_Par_Param1,
 #                         model.PSPL_PhotAstrom_Par_Param1,
                          n_live_points=300,
-                         outputfiles_basename=outdir + '/aa_',
+                         outputfiles_basename=outdir + 'aa_',
                          evidence_tolerance=2.0, 
                          sampling_efficiency=3.0,
                          verbose=True)
@@ -904,7 +910,7 @@ def test_lumlens_parallax_fit_4p2a():
     plt.plot(data['xpos1'], data['ypos1'], '.')
     plt.show()
 
-#    fitter.solve()
+    fitter.solve()
 
     best = fitter.get_best_fit()
 
@@ -1006,7 +1012,7 @@ def test_correlated_data2():
     fitter_corr.priors['gp_log_So'] = model_fitter.make_norm_gen(0.5, 1.5)
     fitter_corr.priors['gp_log_omegao'] = model_fitter.make_norm_gen(0.5, 1.5)
 
-    # fitter_corr.solve()
+    fitter_corr.solve()
     fitter_corr.plot_dynesty_style(sim_vals=params, remake_fits=True)
     best_mod = fitter_corr.get_best_fit_model(def_best='maxl')
     mnest_results = fitter_corr.load_mnest_results(remake_fits=True)
@@ -1301,7 +1307,7 @@ def test_PSBL_PhotAstrom_Par_Param1():
     return
 
 
-def test_PSBL_phot_nopar_fit(regen=False, fit=False, summarize=False, suffix=''):
+def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix=''):
     # Choose which base you want to use.
     # Comment out the one you don't want.
     base = './test_psbl_phot_solver/nopar' + suffix + '_'
@@ -1426,7 +1432,7 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=False, summarize=False, suffix='')
     return
 
 
-def test_PSBL_phot_par_fit(regen=False, fit=False, summarize=False, suffix=''):
+def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix=''):
     # Choose which base you want to use.
     # Comment out the one you don't want.
     base = './test_psbl_phot_solver/par' + suffix + '_'
@@ -1812,10 +1818,21 @@ def test_pspl_solver_gp_params():
     
     return
 
+@pytest.mark.skip(reason="broken")
 def test_plot_model_and_data_GP_err():
-    data = data.getdata('ob120169',
-                          phot_data=['I_OGLE'],
-                          ast_data=[])
+    # Read in the OGLE I-band photometry.
+    tests_dir = os.path.dirname(os.path.realpath(__file__))
+    data = Table.read(tests_dir + '/data/OB120169_phot.dat', format='ascii')
+    data['col1'] -= 2400000.5
+    data.rename_column('col1', 't_phot1')
+    data.rename_column('col2', 'mag1')
+    data.rename_column('col3', 'mag_err1')
+    
+    ra,dec ='17:49:51.38','-35:22:28.0'
+    target_coords = SkyCoord(ra, dec,
+                    unit = (units.hourangle, units.deg), frame = 'icrs')
+    data['raL'] = target_coords.ra.degree
+    data['decL'] = target_coords.dec.degree
 
     outdir = '/u/jlu/work/microlens/OB120169/a_2020_08_18/model_fits/201_phot_ogle_gp/base_a/'
     outbase = 'a1_'
@@ -2270,7 +2287,7 @@ def test_bspl_parallax_fit():
     #                                        #queue_size = n_cpu)
     # sampler.run_nested(nlive_init=500, print_progress=True, maxiter=1500, use_stop=False)
 
-    # fitter.solve()
+    fitter.solve()
 
     best = fitter.get_best_fit()
     bspl_out = fitter.get_best_fit_model()

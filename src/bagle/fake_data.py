@@ -1966,6 +1966,8 @@ def fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     data['target'] = target
     data['phot_data'] = 'sim'
     data['ast_data'] = 'sim'
+    data['phot_files'] = ['fake_data_lumlens_parallax_phot1']
+    data['ast_files'] = ['fake_data_lumlens_parallax_ast1']
 
     params = {}
     params['raL'] = raL_in
