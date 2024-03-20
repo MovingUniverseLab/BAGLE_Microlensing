@@ -5,7 +5,7 @@ import copy
 
 def fisher_cov_matrix_phot_astrom(t, mag_err, ast_err,
                   model_class, params, params_fixed,
-                  num_deriv_frac=0.01):
+                  num_deriv_frac=0.01, param_delta=None):
     """
     Calculate the covariance matrix from the fisher matrix for an
     arbitrary photometric + astrometric BAGLE microlens model.
@@ -35,7 +35,14 @@ def fisher_cov_matrix_phot_astrom(t, mag_err, ast_err,
         Fisher matrix is calculated with a numerical derivative. This
         sets the step size used to calculate the numerical derivative.
         This must be carefully tuned for high-magnification events or for
-        binary events. 
+        binary events.
+    param_delta : dict
+        Dictionary of perturbations to make for each parameter when calculating
+        the numerical derivative. If param_delta is set, then it overrides
+        the num_deriv_frac. This is paritcularly useful to use as many of
+        the parameters in PhotAstrom methods have very different scales.
+        Setting param_delta helps to have a properly conditioned fisher
+        matrix for inversion.
     """
     mod_par = model.get_model(model_class, params, params_fixed)
     
@@ -44,21 +51,12 @@ def fisher_cov_matrix_phot_astrom(t, mag_err, ast_err,
 
     derivs_phot = {}
     derivs_astr = {}
-    
-    for i in params.keys():
-        # Estimate the grid step for calculating the derivative.
-        # try:
-        #     dp = params[i] * num_deriv_frac   # Step size for differentiation will be 1%
-        # except TypeError:
-        #     dp = params[i][0] * num_deriv_frac
-        #
-        # # For array-like photometry params, use only the first one.
-        # try:
-        #     dp = dp[0]
-        # except (TypeError, IndexError):
-        #     pass
 
-        dp = params[i] * num_deriv_frac  # Step size for differentiation will be 1%
+    for i in params.keys():
+        if param_delta is not None:
+            dp = param_delta[i]
+        else:
+            dp = params[i] * num_deriv_frac  # Step size for differentiation will be 1%
 
         params_lo = copy.deepcopy(params)
         params_hi = copy.deepcopy(params)
@@ -78,11 +76,10 @@ def fisher_cov_matrix_phot_astrom(t, mag_err, ast_err,
         derivs_phot[i] = (m_hi - m_lo) / (2.0 * dp)
         derivs_astr[i] = (p_hi - p_lo) / (2.0 * dp)
 
-        # if ((derivs_phot[i][0] == 0) and
-        #         (derivs_astr[i][0][0] == 0) and (derivs_astr[i][0][1] == 0)):
-        #     print('Zero derivative:')
-        #     print(i, params_lo[i], params_hi[i], dp, m_hi[0:3], m_lo[0:3])
-        #     print(i, params_lo[i], params_hi[i], dp, p_hi[0:3], p_lo[0:3])
+        mid = int(len(m_hi) / 2.0)
+        with np.printoptions(precision=5):
+            print(f'{i} {params_lo[i]:.3f} {params_hi[i]:.3f} {dp:.3f} {m_hi[mid]:.5f} {m_lo[mid]:.5f}')
+            print(f'{i} {params_lo[i]:.3f} {params_hi[i]:.3f} {dp:.3f} {p_hi[mid]} {p_lo[mid]}')
 
     # Make the Fisher matrix.
     fish_mat = np.zeros((n_params, n_params), dtype=float)
@@ -95,10 +92,13 @@ def fisher_cov_matrix_phot_astrom(t, mag_err, ast_err,
             jkey = param_names[j]
             fish_mat[i, j] =  np.sum(derivs_phot[ikey] * derivs_phot[jkey] / mag_err**2)
             fish_mat[i, j] += np.sum(derivs_astr[ikey] * derivs_astr[jkey] / ast_err**2)
-            if fish_mat[i, j] == 0 and i == j:
-                print(i, j, fish_mat[i, j], ikey,  '=', derivs_phot[ikey][0:3], jkey, '=', derivs_phot[jkey][0:3])
-                print(i, j, fish_mat[i, j], ikey,  '=', derivs_astr[ikey][0:3], jkey, '=', derivs_astr[jkey][0:3])
+            #if fish_mat[i, j] == 0 and i == j:
+            # with np.printoptions(precision=2):
+            #     print(i, j, 'phot', fish_mat[i, j], ikey,  '=', derivs_phot[ikey][0:1], jkey, '=', derivs_phot[jkey][0:1])
+            #     print(i, j, 'astr', fish_mat[i, j], ikey,  '=', derivs_astr[ikey][0:1], jkey, '=', derivs_astr[jkey][0:1])
 
+    # with np.printoptions(precision=2):
+    #     print(fish_mat)
     cov_mat = np.linalg.inv(fish_mat)
     # with np.printoptions(precision=3):
     #     print(fish_mat)
@@ -109,7 +109,8 @@ def fisher_cov_matrix_phot_astrom(t, mag_err, ast_err,
 
 def fisher_matrix(t, merr,
                   model_class, params, params_fixed,
-                  num_deriv_frac=0.01):
+                  num_deriv_frac=0.01, param_delta=None,
+                  verbose=False):
     """
     Calculate the fisher matrix for an arbitrary BAGLE microlens model.
     The order of the parameters in the fisher matrix will be that
@@ -137,6 +138,13 @@ def fisher_matrix(t, merr,
         sets the step size used to calculate the numerical derivative.
         This must be carefully tuned for high-magnification events or for
         binary events.
+    param_delta : dict
+        Dictionary of perturbations to make for each parameter when calculating
+        the numerical derivative. If param_delta is set, then it overrides
+        the num_deriv_frac. This is paritcularly useful to use as many of
+        the parameters in PhotAstrom methods have very different scales.
+        Setting param_delta helps to have a properly conditioned fisher
+        matrix for inversion.
     """
     mod_par = model.get_model(model_class, params, params_fixed)
 
@@ -146,19 +154,10 @@ def fisher_matrix(t, merr,
     derivs = {}
 
     for i in params.keys():
-        # Estimate the grid step for calculating the derivative.
-        # try:
-        #     dp = params[i] * num_deriv_frac   # Step size for differentiation will be 1%
-        # except TypeError:
-        #     dp = params[i][0] * num_deriv_frac
-        #
-        # # For array-like photometry params, use only the first one.
-        # try:
-        #     dp = dp[0]
-        # except (TypeError, IndexError):
-        #     pass
-
-        dp = params[i] * num_deriv_frac  # Step size for differentiation will be 1%
+        if param_delta is not None:
+            dp = param_delta[i]
+        else:
+            dp = params[i] * num_deriv_frac  # Step size for differentiation will be 1%
 
         params_lo = copy.deepcopy(params)
         params_hi = copy.deepcopy(params)
@@ -174,8 +173,10 @@ def fisher_matrix(t, merr,
 
         derivs[i] = (m_hi - m_lo) / (2.0 * dp)
 
-        if derivs[i][0] == 0:
-            print(i, params_lo[i], params_hi[i], dp, m_hi[0:3], m_lo[0:3])
+        if verbose:
+            mid = int(len(m_hi) / 2.0)
+            with np.printoptions(precision=5):
+                print(f'{i} {params_lo[i]:.3f} {params_hi[i]:.3f} {dp:.3f} {m_hi[mid]:.5f} {m_lo[mid]:.5f} {derivs[i][mid]:.3e}')
 
     # Make the Fisher matrix.
     fish_mat = np.zeros((n_params, n_params), dtype=float)
@@ -187,8 +188,11 @@ def fisher_matrix(t, merr,
             ikey = param_names[i]
             jkey = param_names[j]
             fish_mat[i, j] = np.sum(derivs[ikey] * derivs[jkey] / merr ** 2)
-            if fish_mat[i, j] == 0:
-                print(i, j, fish_mat[i, j], ikey, '=', derivs[ikey][0:3], jkey, '=', derivs[jkey][0:3])
+
+            if fish_mat[i, j] == 0 and verbose:
+                print(f'{i} {j} fish = {fish_mat[i, j]:.2e} ' +
+                      f'{ikey} = {derivs[ikey][mid]:.3e} ' +
+                      f'{jkey} = {derivs[jkey][mid]:.3e}')
 
     cov_mat = np.linalg.inv(fish_mat)
 

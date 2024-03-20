@@ -1,12 +1,23 @@
 import math
 
 import numpy as np
+from joblib import Memory
+import os
 from astropy import units, units as u
 from astropy.coordinates import SkyCoord, get_body_barycentric, get_body_barycentric_posvel, solar_system_ephemeris, \
     CartesianRepresentation
 from astropy.time import Time
 
+# Use the JPL ephemerides.
+solar_system_ephemeris.set('jpl')
 
+# Setup a parallax cache
+cache_dir = os.path.dirname(__file__) + '/parallax_cache/'
+cache_memory = Memory(cache_dir, verbose=0, bytes_limit='1G')
+# Default cache size is 1 GB
+cache_memory.reduce_size()
+
+@cache_memory.cache()
 def parallax_in_direction(RA, Dec, mjd, obsLocation='earth'):
     """
     | R.A. in degrees. (J2000)
