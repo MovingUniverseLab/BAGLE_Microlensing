@@ -1106,7 +1106,7 @@ class PSPL_PhotAstromParam1(PSPL_Param):
 
         # Calculate the Einstein radius
         thetaE = units.rad * jnp.sqrt(
-            (4.0 * const.G * mL * units.M_sun / const.c ** 2) * inv_dist_diff)
+            ((4.0 * const.G * mL * units.M_sun / const.c ** 2) * inv_dist_diff).decompose())
         self.thetaE_amp = thetaE.to('mas').value  # mas
         self.thetaE_hat = self.muRel / self.muRel_amp
         self.muRel_hat = self.thetaE_hat
