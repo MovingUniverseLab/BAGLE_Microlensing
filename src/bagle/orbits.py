@@ -7,10 +7,11 @@ from astropy import units as u
 from copy import deepcopy
 from random import choice
 
+days_per_year = 365.25
 
 class Orbit(object):
 
-    def oal2xy(self, epochs, t0_com, mass=None, dist=None, accel=False):
+    def oal2xy(self, t, t0_com, mass=None, dist=None, accel=False):
         """
         This is for binaris orbiting each other and moving linearly together.
         Given a Orbit And a Linear motion, get the 2D position (x,y) at time epochs.
@@ -31,8 +32,8 @@ class Orbit(object):
         orb.i = incl            # degree (Inclination angle of the system)
         
         orb.e = e_mag           # Eccentricity of the Keplerian Orbit
-        orb.p = p               # year (Orbital Period of the system)
-        orb.tp = tp             # the time of the periastron passage
+        orb.p = p               # Days (Orbital Period of the system)
+        orb.tp = tp             # the time of the periastron passage in days
         orb.aleph = aleph       # semi-major axis of primary in arcsec
         orb.aleph2 = aleph      # semi-major axis of secondary in arcsec
         orb.vx = vx             # arcsec/yr  - Proper motion of the system in RA
@@ -50,29 +51,12 @@ class Orbit(object):
         
         if self.e <0 or self.e>1:
             return(-1e8, -1e8)
-       # cc = objects.Constants()
-
-        #if (mass != None):
-         #   cc.mass = mass
-        #if (dist != None):
-         #   cc.dist = dist
-          #  cc.asy_to_kms = cc.dist * cc.cm_in_au / (1.0e5 * cc.sec_in_yr)
-
-        #GM = cc.mass * cc.msun * cc.G #cm^3/s^2
-        #GM = c.g * c.G.to("cm3/(Msun s2)")
-        ecnt = len(epochs)
-
-        # meanMotion in radians per year
         meanMotion = 2.0 * math.pi / self.p
-        
-        #----------
-        # Now for each epoch we compute the x and y positions from model
-        #----------
 
         ecc_sqrt = np.sqrt(1.0 - self.e**2)
 
         # Mean anomaly
-        M = meanMotion * (epochs - self.tp)
+        M = meanMotion * (t - self.tp)
         
         # Eccentric anomaly
         E = self.eccen_anomaly(M, self.e)
@@ -110,7 +94,7 @@ class Orbit(object):
 
         
         #----------
-        # Calculate Thiele-Innes Constants for the Primary
+        # Calculate Thiele-Innes Constants for the Secondary
         #----------
         
         cos_om2 = np.cos(math.radians(self.w+180))
@@ -126,21 +110,13 @@ class Orbit(object):
         self.conH2 = self.aleph2 * (cos_om2 * sin_i)
 
 
-        # fiducial time 
-        tf = 1990
-
-        self.t0_com = t0_com
 
         # calculate x and y
-        if accel:
-            x = (self.conB * X) + (self.conG * Y) + self.ax * (epochs-self.t0_com )**2 + self.vx * (epochs-tf) + self.x0 
-            y = (self.conA * X) + (self.conF * Y) + self.ay * (epochs-self.t0_com )**2 + self.vy * (epochs-tf) + self.y0
-        else:
-            x = (self.conB * X) + (self.conG * Y) + self.vx * (epochs-self.t0_com) + self.x0 
-            y = (self.conA * X) + (self.conF * Y) + self.vy * (epochs-self.t0_com) + self.y0
-            
-            x2 = (self.conB2 * X) + (self.conG2 * Y) + self.vx * (epochs-self.t0_com) + (self.x0)
-            y2 = (self.conA2 * X) + (self.conF2 * Y) + self.vy * (epochs-self.t0_com) + (self.y0)
+        #Unit conversions. Get rid of accel.
+        x = (self.conB * X) + (self.conG * Y) + self.vx * (t-t0_com)/days_per_year + self.x0 
+        y = (self.conA * X) + (self.conF * Y) + self.vy * (t-t0_com)/days_per_year + self.y0
+        x2 = (self.conB2 * X) + (self.conG2 * Y) + self.vx * (t-t0_com)/days_per_year + (self.x0)
+        y2 = (self.conA2 * X) + (self.conF2 * Y) + self.vy * (t-t0_com)/days_per_year + (self.y0)
             #self.K1 = 3
             #self.gamma = 2
             #rv = self.K1 * (np.cos(math.radians(self.w)) + eta) + self.e * np.cos(math.radians(self.w)) + self.gamma

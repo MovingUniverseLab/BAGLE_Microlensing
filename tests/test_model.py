@@ -3800,954 +3800,635 @@ def test_PSPL_Phot_Param2_vs_Param3():
     plt.legend()
 
     return
-'''
-def bspl_linorbs_check_differences():
-    #Checks difference between BSPL_PhotAstrom_noPar_LinOrbs_Param# and BSPL_PhotAstrom_noPar_Param#
-    def linorbs1(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #muS in mas/yr
-        mL = 1
-        t0 = 5760.00
-        beta = 0.5
-        dL = 3000 #parsecs
+
+def elliptical_orbits_tests():
+    def test_elliptical_orbits_lensing_effects():
+        mL = 0.6
+        t0_com = 58000.00
+        u0_amp = 5
+        beta = 2
+        dL = 300 #parsecs
         dL_dS = 0.6
-        xS0_E = 0.0 #ra
-        xS0_N = 0.0 #dec
-        muL_E = 5.0 #mas/yr
-        muL_N = 5.0 #mas/yr
-        sep = 3 #mas
-        alpha = 50
-        mag_src_pri = 16
-        mag_src_sec = 20
+        tE = 154
+        thetaE = 4
+        log10_thetaE = np.log(2)
+        piS = 0.8
+        piE_E = 1
+        piE_N = 1
+        alpha = 80
+        muS_system_E = 8
+        muS_system_N  = 3
+        omega = 30
+        big_omega = 10 
+        i = 90
+        e = 0.5
+        p = 400
+        tp = 30
+        aleph = 2 
+        aleph2 = 3
+        x0_system_E = 0 
+        x0_system_N = 0
+        ra_L = 30
+        dec_L = 20
+        fratio_bin = 1.5
+        mag_base = 19
+        b_sff = 1
+        muL_E = 1.0 #mas/yr
+        muL_N = 1.0 #mas/yr
+        mag_src_pri = 20
+        mag_src_sec = 19.5
         b_sff = 1
         ra_L = 30
         dec_L = 20
-        bsplnormal = model.BSPL_PhotAstrom_noPar_Param1(
-            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
-            muS_E, muS_N, sep, alpha,
-            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
-        )
-    
-        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param1(
-            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
-            muS_E, muS_N, muS_sec_E, muS_sec_N, sep, alpha,
-            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
-        )
     
     
-        alpha_rad = alpha * np.pi / 180.0
-        sep_vec_test = sep * np.array((np.sin(alpha_rad), np.cos(alpha_rad)))  # mas
+        bsplorbits_nopar1 = model.BSPL_PhotAstrom_noPar_EllOrbs_Param1(mL, t0_com, beta, dL, dL_dS, x0_system_E, x0_system_N, muL_E, muL_N, muS_system_E, muS_system_N,
+        alpha, omega, big_omega, i, e, p, tp, aleph, aleph2, [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L)
+        
+        
+        bsplorbits_nopar2 = model.BSPL_PhotAstrom_noPar_EllOrbs_Param2(t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, alpha, omega, big_omega, i, e, p, tp, aleph, 
+        aleph2, muS_system_E, muS_system_N, x0_system_E, x0_system_N, np.array([fratio_bin]), [mag_base], [b_sff], ra_L, dec_L)
 
-        #Parameter checks
-        assert bsplorbits.dL < bsplorbits.dS
-        assert bsplorbits.t0 == t0
-        assert bsplorbits.beta == beta
-        assert bsplorbits.dL == dL
-        assert bsplorbits.muS_sec_E == muS_sec_E
-        assert bsplorbits.muS_sec_N == muS_sec_N
-        assert bsplorbits.b_sff[0] == b_sff
-        assert bsplorbits.mag_src_pri == mag_src_pri
+        bsplorbits_par2 = model.BSPL_PhotAstrom_Par_EllOrbs_Param2(t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, alpha, omega, big_omega, i, e, p, tp, aleph, 
+        aleph2, muS_system_E, muS_system_N, x0_system_E, x0_system_N, np.array([fratio_bin]), [mag_base], [b_sff], ra_L, dec_L)
 
-        if muS_sec_E!=0 and muS_sec_N!=0:
-            for i in range(0, len(bsplorbits.muS)):
-                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
-                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
-                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
-                assert bsplorbits.muRel_sec_hat[i]!=bsplorbits.muRel_hat[i] #Diff muRel for primary and secondary source motion within the same orbits model
-        else: 
-            for i in range(0, len(bsplorbits.muS)):
-                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
-                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
-                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
-                assert bsplorbits.muRel_sec_hat[i]==bsplorbits.muRel_hat[i] #Same muRel for primary and secondary source motion within the same orbits model
+        bsplorbits_nopar3 = model.BSPL_PhotAstrom_noPar_EllOrbs_Param3(t0_com, u0_amp, tE, log10_thetaE, piS,
+        piE_E, piE_N, alpha, omega, big_omega, i, e, p, tp, aleph, aleph2, muS_system_E, muS_system_N, x0_system_E, x0_system_N, np.array([fratio_bin]), [mag_base],
+        [b_sff], ra_L, dec_L)
+        
+        t = np.arange(t0_com-10000, t0_com+10000, 1) 
+        xS_unlensed1 = bsplorbits_nopar1.get_resolved_astrometry_unlensed(t)
+        xS_lensed1 = bsplorbits_nopar1.get_astrometry_shift(t)
+        xS_unlensed2 = bsplorbits_nopar2.get_resolved_astrometry_unlensed(t)
+        xS_lensed2 = bsplorbits_nopar2.get_astrometry_shift(t)
+        xS_unlensed3 = bsplorbits_nopar3.get_resolved_astrometry_unlensed(t)
+        xS_lensed3 = bsplorbits_nopar3.get_astrometry_shift(t)
+        
+        assert np.subtract(xS_unlensed1, xS_lensed1).any()!=None
+        assert np.subtract(xS_unlensed2, xS_lensed2).any()!=None
+        assert np.subtract(xS_unlensed3, xS_lensed3).any()!=None
+
+
+        '''EllOrbs2 centroid shift tests'''
+        fig, ax = plt.subplots(2, 1, figsize=(20,20))
+        
+        ax[0].plot(bsplorbits_nopar2.get_centroid_shift(t)[:,0], bsplorbits_nopar2.get_centroid_shift(t)[:,1], color = 'purple')
+        ax[0].set_xlabel('RA (arcsec)')
+        ax[0].set_ylabel('Dec (arcsec)')
+        ax[0].set_title('Centroid Shift (No Parallax)')
+        ax[0].axis('equal')
+        
+        ax[1].plot(bsplorbits_par2.get_centroid_shift(t)[:,0], bsplorbits_par2.get_centroid_shift(t)[:,1], color = 'purple')
+        ax[1].set_xlabel('RA (arcsec)')
+        ax[1].set_ylabel('Dec (arcsec)')
+        ax[1].set_title('Centroid Shift (Parallax)')
+        ax[1].axis('equal')
+        plt.savefig('Centroid_shift_test_ellorbs2.png')
+
+    def period_test_elliptical_orbits():
+        '''Check that long periods behave like linear orbits'''
+        plt.rcParams.update({'font.size':15})
+        def plots(p):
+            t0_com = 58000.00
+            u0_amp = 5
+            tE = 154
+            thetaE = 4
+            piS = 0.8
+            piE_E = 1
+            piE_N = 1
+            alpha = 80
+            muS_system_E = 8
+            muS_system_N  = 3
+            omega = 30
+            big_omega = 10 
+            i = 90
+            e = 0
+            tp = 30
+            aleph = 2 
+            aleph2 = 3
+            x0_system_E = 0 
+            x0_system_N = 0
+            ra_L = 30
+            dec_L = 20
+            fratio_bin = 1.5
+            mag_base = 19
+            b_sff = 1
             
-        #separations
-        t = np.arange(t0- 5000, t0+5000, 1)
-        u_bspl = bsplorbits.get_u(t) 
-        u_normal = bsplnormal.get_u(t)
-        u_sec_normal = np.linalg.norm(u_normal[:,1,:], axis=1)
-        u_sec_bspl = np.linalg.norm(u_bspl[:,1,:], axis=1)
-        u_pri_normal = np.linalg.norm(u_normal[:,0,:], axis=1)
-        u_pri_bspl = np.linalg.norm(u_bspl[:,0,:], axis=1)
-
-
-        if muS_sec_E!=0 and muS_sec_N!=0:
-            for i in range(0, len(u_sec_bspl)):
-                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
-                assert u_sec_normal[i] != u_sec_bspl[i] #Diff secondary separations
-        else:
-            for i in range(0, len(u_sec_bspl)):
-                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
-                assert u_sec_normal[i] == u_sec_bspl[i] #Same secondary separations
+            bsplorbits_nopar = model.BSPL_PhotAstrom_noPar_EllOrbs_Param2(
+            t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, alpha, omega, big_omega, i, e, p, tp, aleph, aleph2, 
+            muS_system_E, muS_system_N, x0_system_E, x0_system_N,  np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L)
             
             
+            t = np.arange(t0_com-30000, t0_com+30000, 1) 
+            
+            xS_unlensed = bsplorbits_nopar.get_resolved_astrometry_unlensed(t)
+            
+            xL = bsplorbits_nopar.get_lens_astrometry(t)
+            
+            
+            srce_pos_primary =xS_unlensed[:, 0, :]
+            srce_pos_secondary = xS_unlensed[:, 1, :] 
+            
+            
+            x = srce_pos_primary[:, 0]
+            y = srce_pos_primary[:, 1]
+            x2 = srce_pos_secondary[:, 0]
+            y2 = srce_pos_secondary[:, 1]
+            
+            lens_pos = bsplorbits_nopar.get_lens_astrometry(t)
+            xS_lensed = bsplorbits_nopar.get_astrometry_shift(t)
+            
+            image_primary =xS_lensed[:, 0, :]
+            image_secondary = xS_lensed[:, 1, :] 
+            
+            
+            ix1 = image_primary[:, 0]
+            iy1 = image_primary[:, 1]
+            
+            ix2 = image_secondary[:, 0]
+            iy2 = image_secondary[:, 1]
+        
+            return x, y, x2, y2, lens_pos, ix1, ix2, iy1, iy2,p
+        
+        
+        fig, ax = plt.subplots(2, 2, figsize=(25,18))
+        
+        tests=[plots(40), 
+              plots(400), 
+              plots(4000), 
+              plots(40000)]   
+        count=0
+        for i in range(0,2):
+            for j in range(0,2):
+                x, y, x2, y2, lens_pos, ix1, ix2, iy1, iy2,p = tests[count]
+                lim = 0.08
+                ax[i][j].set_xlim(lim, -lim)  # arcsec
+                ax[i][j].set_ylim(-lim, lim)
+                ax[i][j].plot(x, y, label = 'Primary Source Position', color='grey')
+                ax[i][j].plot(x2, y2, label = 'Secondary Source Position', color = 'purple')
+                ax[i][j].plot(lens_pos[:, 0], lens_pos[:, 1], label = 'Lens Position', color = 'k')
+                ax[i][j].plot(ix1, iy1, label = 'Primary Image Position', color = 'grey', linestyle ='--')
+                ax[i][j].plot(ix2, iy2, label = 'Secondary Image Position', color = 'purple', linestyle ='--')
+                ax[i][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                ax[i][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                ax[i][j].set_title(f'Elliptical Orbits Source Motions with period {p} days')
+                ax[i][j].legend(loc="best")
+                count +=1
+        plt.savefig('periods_test.png')
+        
+    def e_test_elliptical_orbits():
+        plt.rcParams.update({'font.size':15})
+        def plots(e):
+            t0_com = 58000.00
+            u0_amp = 5
+            tE = 154
+            thetaE = 4
+            piS = 0.8
+            piE_E = 1
+            piE_N = 1
+            alpha = 80
+            muS_system_E = 8
+            muS_system_N  = 3
+            big_omega = 10 
+            i=90
+            p=400
+            tp = 30
+            aleph = 2 
+            aleph2 = 3
+            x0_system_E = 0 
+            x0_system_N = 0
+            ra_L = 30
+            dec_L = 20
+            fratio_bin = 1.5
+            mag_base = 19
+            b_sff = 1
+            bsplorbits_nopar = model.BSPL_PhotAstrom_noPar_EllOrbs_Param2(
+            t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, alpha, omega, big_omega, i, e, p, tp, aleph, aleph2, 
+            muS_system_E, muS_system_N, x0_system_E, x0_system_N,  np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L)
+            
+            
+            t = np.arange(t0_com-30000, t0_com+30000, 1) 
+            
+            xS_unlensed = bsplorbits_nopar.get_resolved_astrometry_unlensed(t)
+            
+            xL = bsplorbits_nopar.get_lens_astrometry(t)
+            
+            
+            srce_pos_primary =xS_unlensed[:, 0, :]
+            srce_pos_secondary = xS_unlensed[:, 1, :] 
+            
+            
+            x = srce_pos_primary[:, 0]
+            y = srce_pos_primary[:, 1]
+            x2 = srce_pos_secondary[:, 0]
+            y2 = srce_pos_secondary[:, 1]
+            
+            lens_pos = bsplorbits_nopar.get_lens_astrometry(t)
+            xS_lensed = bsplorbits_nopar.get_astrometry_shift(t)
+            
+            image_primary =xS_lensed[:, 0, :]
+            image_secondary = xS_lensed[:, 1, :] 
+            
+            
+            ix1 = image_primary[:, 0]
+            iy1 = image_primary[:, 1]
+            
+            ix2 = image_secondary[:, 0]
+            iy2 = image_secondary[:, 1]
+        
+            return x, y, x2, y2, lens_pos, ix1, ix2, iy1, iy2,e
+    
+    
+        
+        
+        fig, ax = plt.subplots(2, 2, figsize=(25,18))
+        
+        tests=[plots(0), 
+              plots(0.3), 
+              plots(0.8), 
+              plots(0.99)]   
+        count=0
+        for k in range(0,2):
+            for j in range(0,2):
+                x, y, x2, y2, lens_pos, ix1, ix2, iy1, iy2,e = tests[count]
+    
+                lim = 0.08
                 
-    def linorbs2(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #muS in mas/yr
-        t0 = 5760.00
-        u0_amp = 6
+                ax[k][j].set_xlim(lim, -lim)  # arcsec
+                ax[k][j].set_ylim(-lim, lim)
+                ax[k][j].plot(x, y, label = 'Primary Source Position', color='grey')
+                ax[k][j].plot(x2, y2, label = 'Secondary Source Position', color = 'purple')
+                ax[k][j].plot(lens_pos[:, 0], lens_pos[:, 1], label = 'Lens Position', color = 'k')
+                ax[k][j].plot(ix1, iy1, label = 'Primary Image Position', color = 'grey', linestyle ='--')
+                ax[k][j].plot(ix2, iy2, label = 'Secondary Image Position', color = 'purple', linestyle ='--')
+                ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
+                ax[k][j].legend(loc="best")
+                count +=1
+        plt.savefig('Eccentricity_test.png')
+        
+    def inclination_test():
+        plt.rcParams.update({'font.size':15})
+        def plots(i):
+            t0_com = 58000.00
+            u0_amp = 5
+            tE = 154
+            thetaE = 4
+            piS = 0.8
+            piE_E = 1
+            piE_N = 1
+            alpha = 80
+            muS_system_E = 8
+            muS_system_N  = 3
+            omega = 30
+            big_omega = 10 
+            e = 0
+            p=400
+            tp = 30
+            aleph = 2 
+            aleph2 = 3
+            x0_system_E = 0 
+            x0_system_N = 0
+            ra_L = 30
+            dec_L = 20
+            fratio_bin = 1.5
+            mag_base = 19
+            b_sff = 1
+            bsplorbits_nopar = model.BSPL_PhotAstrom_noPar_EllOrbs_Param2(
+            t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, alpha, omega, big_omega, i, e, p, tp, aleph, aleph2, 
+            muS_system_E, muS_system_N, x0_system_E, x0_system_N,  np.array([fratio_bin]), [mag_base],
+            [b_sff], ra_L, dec_L)
+            
+            
+            t = np.arange(t0_com-30000, t0_com+30000, 1) 
+            
+            xS_unlensed = bsplorbits_nopar.get_resolved_astrometry_unlensed(t)
+            
+            xL = bsplorbits_nopar.get_lens_astrometry(t)
+            
+            
+            srce_pos_primary =xS_unlensed[:, 0, :]
+            srce_pos_secondary = xS_unlensed[:, 1, :] 
+            
+            
+            x = srce_pos_primary[:, 0]
+            y = srce_pos_primary[:, 1]
+            x2 = srce_pos_secondary[:, 0]
+            y2 = srce_pos_secondary[:, 1]
+            
+            lens_pos = bsplorbits_nopar.get_lens_astrometry(t)
+            xS_lensed = bsplorbits_nopar.get_astrometry_shift(t)
+            
+            image_primary =xS_lensed[:, 0, :]
+            image_secondary = xS_lensed[:, 1, :] 
+            
+            
+            ix1 = image_primary[:, 0]
+            iy1 = image_primary[:, 1]
+            
+            ix2 = image_secondary[:, 0]
+            iy2 = image_secondary[:, 1]
+        
+            return x, y, x2, y2, lens_pos, ix1, ix2, iy1, iy2,i
+    
+    
+        
+        
+        fig, ax = plt.subplots(2, 2, figsize=(25,18))
+        
+        tests=[plots(0), 
+              plots(30), 
+              plots(60), 
+              plots(90)]   
+        count=0
+        for k in range(0,2):
+            for j in range(0,2):
+                x, y, x2, y2, lens_pos, ix1, ix2, iy1, iy2,i = tests[count]
+    
+                lim = 0.08
+                
+                ax[k][j].set_xlim(lim, -lim)  # arcsec
+                ax[k][j].set_ylim(-lim, lim)
+                ax[k][j].plot(x, y, label = 'Primary Source Position', color='grey')
+                ax[k][j].plot(x2, y2, label = 'Secondary Source Position', color = 'purple')
+                ax[k][j].plot(lens_pos[:, 0], lens_pos[:, 1], label = 'Lens Position', color = 'k')
+                ax[k][j].plot(ix1, iy1, label = 'Primary Image Position', color = 'grey', linestyle ='--')
+                ax[k][j].plot(ix2, iy2, label = 'Secondary Image Position', color = 'purple', linestyle ='--')
+                ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                ax[k][j].set_title(f'Elliptical Orbits Source Motions with inclination {i} degrees')
+                ax[k][j].legend(loc="best")
+                count +=1
+        plt.savefig('inclination_test.png')
+    test_elliptical_orbits_lensing_effects()
+    inclination_test()
+    e_test_elliptical_orbits()
+    period_test_elliptical_orbits()
+
+def linear_and_accelerated_motions_tests():
+    def centroid_shift_test():
+        t0 = 57600.0
+        u0_amp = 2
         tE = 154
-        thetaE = 5 
-        piS = 0.6
+        thetaE = 7
+        piS = 0.8
         piE_E = 1
         piE_N = 1
         xS0_E = 0.0 #ra
         xS0_N = 0.0 #dec
         sep = 3 #mas
-        alpha = 50
+        alpha = 80
         fratio_bin = 1.5
         mag_base = 19
         b_sff = 1
         ra_L = 30
         dec_L = 20
-
         
+        muS_E = 28
+        muS_N = 3
+        delta_muS_sec_E = 1
+        delta_muS_sec_N = 14
         
-        bsplnormal = model.BSPL_PhotAstrom_noPar_Param2(
-            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
-        )
-
-        
-        
-        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param2(
-            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
-        )
-        
-    
-    
-        alpha_rad = alpha * np.pi / 180.0
-        sep_vec_test = sep * np.array((np.sin(alpha_rad), np.cos(alpha_rad)))  # mas
-
-        #Parameter checks
-        assert bsplorbits.dL < bsplorbits.dS
-        assert bsplorbits.t0 == t0
-        assert bsplorbits.muS_sec_E == muS_sec_E
-        assert bsplorbits.muS_sec_N == muS_sec_N
-
-        
-        if muS_sec_E!=0 and muS_sec_N!=0:
-            for i in range(0, len(bsplorbits.muS)):
-                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
-                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
-                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
-                assert bsplorbits.muRel_sec_hat[i]!=bsplorbits.muRel_hat[i] #Diff muRel for primary and secondary source motion within the same orbits model
-        else: 
-            for i in range(0, len(bsplorbits.muS)):
-                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
-                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
-                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
-                assert bsplorbits.muRel_sec_hat[i]==bsplorbits.muRel_hat[i] #Same muRel for primary and secondary source motion within the same orbits model
-            
-        
-    
-        #Separations
-        t = np.arange(t0- 5000, t0+5000, 1)
-        u_bspl = bsplorbits.get_u(t) 
-        u_normal = bsplnormal.get_u(t)
-        u_sec_normal = np.linalg.norm(u_normal[:,1,:], axis=1)
-        u_sec_bspl = np.linalg.norm(u_bspl[:,1,:], axis=1)
-        u_pri_normal = np.linalg.norm(u_normal[:,0,:], axis=1)
-        u_pri_bspl = np.linalg.norm(u_bspl[:,0,:], axis=1)
-
-
-        if muS_sec_E!=0 and muS_sec_N!=0:
-            for i in range(0, len(u_sec_bspl)):
-                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
-                assert u_sec_normal[i] != u_sec_bspl[i] #Diff secondary separations
-        else:
-            for i in range(0, len(u_sec_bspl)):
-                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
-                assert u_sec_normal[i] == u_sec_bspl[i] #Same secondary separations
-            
-        
-    def linorbs3(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #with linorbs3 there will be a rounding error due to the way murel is calculated. 
-        #muS in mas/yr
-        t0 = 5760.00
-        u0_amp = 6
-        tE = 154
-        log_thetaE = np.log(5)
-        piS = 0.6
-        piE_E = 1
-        piE_N = 1
-        xS0_E = 0.0 #ra
-        xS0_N = 0.0 #dec
-        sep = 3 #mas
-        alpha = 50
-        fratio_bin = 1.5
-        mag_base = 19
-        b_sff = 1
-        ra_L = 30
-        dec_L = 20
-
-        
-        
-        
-        bsplnormal = model.BSPL_PhotAstrom_noPar_Param3(
-            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
-        )
-
-        
-        
-        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param3(
-            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N, muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
-        )
-        
-    
-    
-        alpha_rad = alpha * np.pi / 180.0
-        sep_vec_test = sep * np.array((np.sin(alpha_rad), np.cos(alpha_rad)))  # mas
-
-        #Parameter checks
-        assert bsplorbits.dL < bsplorbits.dS
-        assert bsplorbits.t0 == t0
-        assert bsplorbits.muS_sec_E == muS_sec_E
-        assert bsplorbits.muS_sec_N == muS_sec_N
-        assert bsplorbits.xS0_sec_E == sep_vec_test[0]
-        assert bsplorbits.xS0_sec_N == sep_vec_test[1]
-
-        
-    
-        
-        
-        if muS_sec_E!=0 and muS_sec_N!=0:
-
-            for i in range(0, len(bsplorbits.muS)):
-                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
-                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
-                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Different secondary source motion
-                assert bsplorbits.muRel_sec_hat[i]!=bsplorbits.muRel_hat[i] #Diff muRel for primary and secondary source motion within the same orbits model
-        else: 
-            for i in range(0, len(bsplorbits.muS)):    
-                assert bsplorbits.muS[i] == bsplnormal.muS[i] #Same primary source motion
-                assert bsplorbits.muRel[i] == bsplnormal.muRel[i] #Same muRel for primary source motion
-                assert bsplorbits.muS_sec[i] != bsplnormal.muS[i] #Same secondary source motion
-                assert np.round(bsplorbits.muRel_sec_hat[i],7)==np.round(bsplorbits.muRel_hat[i],7) #Same muRel for primary and secondary source motion within the same orbits model
-            
-        
-    
-        #Separations
-        t = np.arange(t0- 5000, t0+5000, 1)
-        u_bspl = bsplorbits.get_u(t) 
-        u_normal = bsplnormal.get_u(t)
-        u_sec_normal = np.linalg.norm(u_normal[:,1,:], axis=1)
-        u_sec_bspl = np.linalg.norm(u_bspl[:,1,:], axis=1)
-        u_pri_normal = np.linalg.norm(u_normal[:,0,:], axis=1)
-        u_pri_bspl = np.linalg.norm(u_bspl[:,0,:], axis=1)
-
-
-        if muS_sec_E!=0 and muS_sec_N!=0:
-            for i in range(0, len(u_sec_bspl)):
-                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
-                assert u_sec_normal[i] != u_sec_bspl[i] #Diff secondary separations
-        else:
-            for i in range(0, len(u_sec_bspl)):
-                assert u_pri_normal[i] == u_pri_bspl[i] #Same Primary separations
-                assert np.round(u_sec_normal[i],7) == np.round(u_sec_bspl[i],7) #Same secondary separations
-            
-            
-            
-#fratio_bin will not pass as a float. Has to be passed in as an array! Otherwise will fail the test.
-    linorbs1(8,3,1,4)
-    linorbs1(3,8,0,0)    
-    linorbs2(8,3,1,4)
-    linorbs2(3,8,0,0)    
-    linorbs3(8,3,1,4)
-    linorbs3(3,8,0,0)    
-
-
-def ra_dec_plots_plus_sign_changes_linorbs1():
-    def linorbs1(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #muS in mas/yr
-        mL = 1
-        t0 = 2000.00
-        beta = 0.5
-        dL = 3000 #parsecs
-        dL_dS = 0.6
-        xS0_E = 0.0 #ra
-        xS0_N = 0.0 #dec
-        muL_E = 5.0 #mas/yr
-        muL_N = 5.0 #mas/yr
-        sep = 4#mas
-        alpha = 50
-        mag_src_pri = 16
-        mag_src_sec = 20
-        b_sff = 1
-        ra_L = 30
-        dec_L = 20
-    
-        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param1(
-            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
-            muS_E, muS_N, muS_sec_E, muS_sec_N, sep, alpha,
-            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
-        )
-    
-        #separations
-        t = np.arange(t0-2000, t0+2000, 1) 
-        dt=t-bsplorbits.t0
-        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muRel) * 1e-3
-        srce_pos_secondary = bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muRel_sec) * 1e-3
-
-
-
-        #Sign Change check to see if the two lines crossed each other. If the first element in sign_ra and sign_dec is 1, the sign of array changed.
-        difference = srce_pos_primary-srce_pos_secondary
-        difference_ra=difference[:,0]
-        difference_dec=difference[:,1]
-        #The sign function returns -1 if x < 0, 0 if x==0, 1 if x > 0
-
-
-        if bsplorbits.muS_sec_E !=0 and bsplorbits.muS_sec_N  !=0:
-            np.sign(difference_ra[0])!=np.sign(difference_ra[-1]) and np.sign(difference_ra[0])!=np.sign(difference_ra[-1])
-
-        else:
-            np.sign(difference_ra[0])==np.sign(difference_ra[-1]) and np.sign(difference_ra[0])==np.sign(difference_ra[-1])
-            
-
-        
-            
-        return srce_pos_primary[:, 0], srce_pos_primary[:, 1], srce_pos_secondary[:, 0], srce_pos_secondary[:, 1], [muS_E, muS_N], [muS_sec_E, muS_sec_N]
-            
-    fig, ax = plt.subplots(2, 3, figsize=(20,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
-    tests=[linorbs1(8,3,1,4),
-           linorbs1(6,3,1,7),
-           linorbs1(3,8,9,1),
-           linorbs1(4,7,7,9),
-           linorbs1(4,7,9,7),
-           linorbs1(1,6,0,0)]   
-
-    count=0
-    for i in range(0,2):
-        for j in range(0,3):
-            srce_pos_primary_ra, srce_pos_primary_dec, srce_pos_secondary_ra, srce_pos_secondary_dec, muS, muS_sec= tests[count]
-
-            lim = 0.02
-            ax[i][j].set_xlim(lim, -lim)  # arcsec
-            ax[i][j].set_ylim(-lim, lim)
-            ax[i][j].plot(srce_pos_secondary_ra, srce_pos_secondary_dec, label='src_pos_sec_nopar_linorbs_Param1')
-            ax[i][j].plot(srce_pos_primary_ra, srce_pos_primary_dec, label='src_pos_pri_nopar_linorbs_Param1')
-            ax[i][j].set_xlabel('dRA (arcsec)')
-            ax[i][j].set_ylabel('dDec (arcsec)')
-            ax[i][j].set_title(f'Zoomed-out drA vs dDec with muS {muS} and muS_sec{muS_sec}')
-            ax[i][j].legend(loc="best")
-            count+=1
-
-#no parallax source positions
-def ra_dec_plots_plus_sign_changes_linorbs2():
-    def linorbs2(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #muS in mas/yr
-        t0 = 5760.00
-        u0_amp = 6
-        tE = 154
-        thetaE = 5 
-        piS = 0.6
-        piE_E = 1
-        piE_N = 1
-        xS0_E = 0.0 #ra
-        xS0_N = 0.0 #dec
-        sep = 3 #mas
-        alpha = 50
-        fratio_bin = 1.5
-        mag_base = 19
-        b_sff = 1
-        ra_L = 30
-        dec_L = 20
-
-        
-        
-        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param2(
-            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
-        )
-
-        #Seperations
-        t = np.arange(t0-2000, t0+2000, 1) 
-        dt=t-bsplorbits.t0
-        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muRel) * 1e-3
-        srce_pos_secondary = bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muRel_sec) * 1e-3
-
-
-
-        #Sign Change check to see if the two lines crossed each other. If the first element in sign_ra and sign_dec is 1, the sign of array changed.
-        difference = srce_pos_primary-srce_pos_secondary
-        difference_ra=difference[:,0]
-        difference_dec=difference[:,1]
-        #The sign function returns -1 if x < 0, 0 if x==0, 1 if x > 0
-
-
-        if bsplorbits.muS_sec_E !=0 and bsplorbits.muS_sec_N  !=0:
-            np.sign(difference_ra[0])!=np.sign(difference_ra[-1]) and np.sign(difference_ra[0])!=np.sign(difference_ra[-1])
-
-        else:
-            np.sign(difference_ra[0])==np.sign(difference_ra[-1]) and np.sign(difference_ra[0])==np.sign(difference_ra[-1])
-            
-
-            
-        return srce_pos_primary[:, 0], srce_pos_primary[:, 1], srce_pos_secondary[:, 0], srce_pos_secondary[:, 1], [muS_E, muS_N], [muS_sec_E, muS_sec_N]
-            
-    fig, ax = plt.subplots(2, 3, figsize=(20,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
-    tests=[linorbs2(8,3,-1,4),
-           linorbs2(-6,-3,1,-7),
-           linorbs2(3,8,9,1),
-           linorbs2(4,7,7,19),
-           linorbs2(-4,7,0,7),
-           linorbs2(1,6,0,0)]   
-
-
-
-    count=0
-    for i in range(0,2):
-        for j in range(0,3):
-            srce_pos_primary_ra, srce_pos_primary_dec, srce_pos_secondary_ra, srce_pos_secondary_dec, muS, muS_sec= tests[count]
-
-            lim = 0.02
-            ax[i][j].set_xlim(lim, -lim)  # arcsec
-            ax[i][j].set_ylim(-lim, lim)
-            ax[i][j].plot(srce_pos_secondary_ra, srce_pos_secondary_dec, label='sec_pos_nopar_linorbs_param2')
-            ax[i][j].plot(srce_pos_primary_ra, srce_pos_primary_dec, label='pri_pos_nopar_linorbs_param2')
-            ax[i][j].set_xlabel('dRA (arcsec)')
-            ax[i][j].set_ylabel('dDec (arcsec)')
-            ax[i][j].set_title(f'Zoomed-out drA vs dDec with muS {muS} and muS_sec{muS_sec}')
-            ax[i][j].legend(loc="best")
-            count+=1
-
-
-#no parallax source positions
-def ra_dec_plots_plus_sign_changes_linorbs3():
-    def linorbs3(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #muS in mas/yr
-        t0 = 5760.00
-        u0_amp = 6
-        tE = 154
-        log_thetaE = np.log(5)
-        piS = 0.6
-        piE_E = 1
-        piE_N = 1
-        xS0_E = 0.0 #ra
-        xS0_N = 0.0 #dec
-        sep = 3 #mas
-        alpha = 50
-        fratio_bin = 1.5
-        mag_base = 19
-        b_sff = 1
-        ra_L = 30
-        dec_L = 20
-
-        
-        
-        
-        bsplnormal = model.BSPL_PhotAstrom_noPar_Param3(
-            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
-        )
-
-        
-        
-        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param3(
-            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
-        )
-        
-    
-        #Seperations
-        t = np.arange(t0-2000, t0+2000, 1) 
-        dt=t-bsplorbits.t0
-        srce_pos_primary = bsplorbits.xS0 + np.outer(dt / model.days_per_year, bsplorbits.muRel) * 1e-3
-        srce_pos_secondary = bsplorbits.xS0_sec + np.outer(dt / model.days_per_year, bsplorbits.muRel_sec) * 1e-3
-
-        
-
-        #Sign Change check to see if the two lines crossed each other. If the first element in sign_ra and sign_dec is 1, the sign of array changed.
-        difference = srce_pos_primary-srce_pos_secondary
-        difference_ra=difference[:,0]
-        difference_dec=difference[:,1]
-        #The sign function returns -1 if x < 0, 0 if x==0, 1 if x > 0
-
-
-        if bsplorbits.muS_sec_E !=0 and bsplorbits.muS_sec_N  !=0:
-            np.sign(difference_ra[0])!=np.sign(difference_ra[-1]) and np.sign(difference_ra[0])!=np.sign(difference_ra[-1])
-
-        else:
-            np.sign(difference_ra[0])==np.sign(difference_ra[-1]) and np.sign(difference_ra[0])==np.sign(difference_ra[-1])
-            
-
-        return srce_pos_primary[:, 0], srce_pos_primary[:, 1], srce_pos_secondary[:, 0], srce_pos_secondary[:, 1], [muS_E, muS_N], [muS_sec_E, muS_sec_N]
-            
-    fig, ax = plt.subplots(2, 3, figsize=(20,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
-    tests=[linorbs3(8,3,-1,4),
-           linorbs3(-6,-3,1,-7),
-           linorbs3(3,8,9,1),
-           linorbs3(4,7,7,19),
-           linorbs3(-4,7,0,7),
-           linorbs3(1,6,0,0)]   
-
-
-
-    count=0
-    for i in range(0,2):
-        for j in range(0,3):
-            srce_pos_primary_ra, srce_pos_primary_dec, srce_pos_secondary_ra, srce_pos_secondary_dec, muS, muS_sec= tests[count]
-
-            lim = 0.005
-            ax[i][j].set_xlim(lim, -lim)  # arcsec
-            ax[i][j].set_ylim(-lim, lim)
-            ax[i][j].plot(srce_pos_secondary_ra, srce_pos_secondary_dec, label='u_sec_nopar_linorbs_param3')
-            ax[i][j].plot(srce_pos_primary_ra, srce_pos_primary_dec, label='u_pri_nopar_linorbs_param3')
-            ax[i][j].set_xlabel('dRA (arcsec)')
-            ax[i][j].set_ylabel('dDec (arcsec)')
-            ax[i][j].set_title(f'Zoomed-in drA vs dDec with muS {muS} and muS_sec{muS_sec}')
-            ax[i][j].legend(loc="best")
-            count+=1
-def test_centroid_shift_noPar_Param1_compar():
-    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #muS in mas/yr
-        mL=1   
-        t0 = 58600.00
-        beta = 0.1
-        dL = 150 #parsecs
-        dL_dS = 0.1
-        xS0_E = 0.0 #ra
-        xS0_N = 0.0 #dec
-        muL_E = 10.0 #mas/yr
-        muL_N = 24.0 #mas/yr
-        sep = 1 #mas
-        alpha = 100
-        mag_src_pri = 15
-        mag_src_sec = 16
-        b_sff = 1
-        ra_L = 30
-        dec_L = 20
-
-        
-        bsplnormal = model.BSPL_PhotAstrom_noPar_Param1(
-            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
-            muS_E, muS_N, sep, alpha,
-            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
-        )
-        
-        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param1(
-            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
-            muS_E, muS_N, muS_sec_E, muS_sec_N, sep, alpha,
-            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
-        )
-
-    
-        #separations1
-        t = np.arange(t0-10000, t0+10000, 1) 
-        shift_orbit = bsplorbits.get_centroid_shift(t)
-        shift_normal = bsplnormal.get_centroid_shift(t)
-
-
-
-
-
-        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal
-            
-    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
-    tests=[test_plots(8,3,1,4),
-           test_plots(6,3,1,7),
-           test_plots(3,8,9,1),
-           test_plots(4,7,7,9),
-           test_plots(4,7,9,7),
-           test_plots(1,6,0,0)] 
-
-
-
-    count=0
-    for i in range(0,2):
-        for j in range(0,3):
-            muS, muS_sec, shift_orbit, shift_normal = tests[count]
-            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label = 'BSPL_PhotAstrom_noPar_LinOrbs_Param1')
-            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_noPar_Param1')
-
-            ax[i][j].invert_xaxis  # arcsec
-
-            ax[i][j].set_xlabel('RA (arcsec)')
-            ax[i][j].set_ylabel('Dec (arcsec)')
-            ax[i][j].legend(loc='best')
-            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs1 with muS {muS} and muS_sec {muS_sec}' )
-            
-            ax[i][j].axis('equal')
-            count+=1
-
-def test_centroid_shift_Par_Param1_compar():
-    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #muS in mas/yr
-        mL=1   
-        t0 = 58600.00
-        beta = 0.1
-        dL = 150 #parsecs
-        dL_dS = 0.1
-        xS0_E = 0.0 #ra
-        xS0_N = 0.0 #dec
-        muL_E = 10.0 #mas/yr
-        muL_N = 24.0 #mas/yr
-        sep = 1 #mas
-        alpha = 100
-        mag_src_pri = 15
-        mag_src_sec = 16
-        b_sff = 1
-        ra_L = 30
-        dec_L = 20
-
-        
-        bsplnormal = model.BSPL_PhotAstrom_Par_Param1(
-            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
-            muS_E, muS_N, sep, alpha,
-            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
-        )
-        
-        bsplorbits = model.BSPL_PhotAstrom_Par_LinOrbs_Param1(
-            mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
-            muS_E, muS_N, muS_sec_E, muS_sec_N, sep, alpha,
-            [mag_src_pri], [mag_src_sec], [b_sff], ra_L, dec_L
-        )
-
-    
-        #separations1
-        t = np.arange(t0-10000, t0+10000, 1) 
-        shift_orbit = bsplorbits.get_centroid_shift(t)
-        shift_normal = bsplnormal.get_centroid_shift(t)
-
-
-
-
-
-        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal
-            
-    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
-    tests=[test_plots(8,3,1,4),
-           test_plots(6,3,1,7),
-           test_plots(3,8,9,1),
-           test_plots(4,7,7,9),
-           test_plots(4,7,9,7),
-           test_plots(1,6,0,0)] 
-
-
-    count=0
-    for i in range(0,2):
-        for j in range(0,3):
-            muS, muS_sec, shift_orbit, shift_normal = tests[count]
-            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label = 'BSPL_PhotAstrom_Par_LinOrbs_Param1')
-            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_Par_Param1')
-
-            ax[i][j].invert_xaxis  # arcsec
-
-            ax[i][j].set_xlabel('RA (arcsec)')
-            ax[i][j].set_ylabel('Dec (arcsec)')
-            ax[i][j].legend(loc='best')
-            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs1 with muS {muS} and muS_sec {muS_sec}' )
-            
-            ax[i][j].axis('equal')
-            count+=1
-            
-            
-
-
-def test_centroid_shift_noPar_LinOrbs_Param2_compar():
-    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #muS in mas/yr
-        t0 = 57600.00
-        u0_amp = 6
-        tE = 154
-        thetaE = 5 
-        piS = 0.6
-        piE_E = 1
-        piE_N = 1
-        xS0_E = 0.0 #ra
-        xS0_N = 0.0 #dec
-        sep = 1 #mas
-        alpha = 10
-        fratio_bin = 1.5
-        mag_base = 19
-        b_sff = 1
-        ra_L = 30
-        dec_L = 20
-
-
-        #If you want to see a beyblade, try this
-        #sep = 100 #mas
-        #alpha = 50
-        
-        
-        
-        
-        bsplnormal = model.BSPL_PhotAstrom_noPar_Param2(
-            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
-        )
-
-        
-        
-        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param2(
-            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
-        )
-
-    
-        #Seperations1
-        t = np.arange(t0-10000, t0+10000, 1) 
-        shift_orbit = bsplorbits.get_centroid_shift(t)
-        shift_normal = bsplnormal.get_centroid_shift(t)
-
-
-
-
-        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal
-            
-    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
-    tests=[test_plots(8,3,1,4),
-           test_plots(6,3,1,7),
-           test_plots(3,8,9,1),
-           test_plots(4,7,7,9),
-           test_plots(4,7,9,7),
-           test_plots(1,6,0,0)] 
-
-
-
-    count=0
-    for i in range(0,2):
-        for j in range(0,3):
-            muS, muS_sec, shift_orbit, shift_normal = tests[count]
-            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label='BSPL_PhotAstrom_Par_LinOrbs_Param2')
-            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_Par_Param2')
-
-            ax[i][j].invert_xaxis  # arcsec
-
-            ax[i][j].set_xlabel('RA (arcsec)')
-            ax[i][j].set_ylabel('Dec (arcsec)')
-            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs2 with muS {muS} and muS_sec {muS_sec}' )
-            ax[i][j].legend(loc='best')
-            
-            ax[i][j].axis('equal')
-            count+=1
-
-def test_centroid_shift_Par_LinOrbs_Param2_compar():
-    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #muS in mas/yr
-        t0 = 57600.00
-        u0_amp = 6
-        tE = 154
-        thetaE = 5 
-        piS = 0.6
-        piE_E = 1
-        piE_N = 1
-        xS0_E = 0.0 #ra
-        xS0_N = 0.0 #dec
-        sep = 1 #mas
-        alpha = 10
-        fratio_bin = 1.5
-        mag_base = 19
-        b_sff = 1
-        ra_L = 30
-        dec_L = 20
-
-        
-        
-        
+        acc_E = 1 
+        acc_N = -7
         
         
         bsplnormal = model.BSPL_PhotAstrom_Par_Param2(
-            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
+        t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+        muS_E, muS_N,sep, alpha, np.array([fratio_bin]), [mag_base],
+        [b_sff], ra_L, dec_L
         )
-
         
-        
-        bsplorbits = model.BSPL_PhotAstrom_Par_LinOrbs_Param2(
-            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
+        bspllinorbs = model.BSPL_PhotAstrom_Par_LinOrbs_Param2(
+        t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+        muS_E, muS_N,delta_muS_sec_E, delta_muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+        [b_sff], ra_L, dec_L
         )
-
-    
-        #Seperations1
+        
+        bsplaccorbs = model.BSPL_PhotAstrom_Par_AccOrbs_Param2(
+        t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+        muS_E, muS_N,delta_muS_sec_E, delta_muS_sec_N, acc_E, acc_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+        [b_sff], ra_L, dec_L
+        )
+        
+        #separations1
         t = np.arange(t0-10000, t0+10000, 1) 
-        shift_orbit = bsplorbits.get_centroid_shift(t)
         shift_normal = bsplnormal.get_centroid_shift(t)
-
-
-
-
-        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal
-            
-    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
-    tests=[test_plots(8,3,1,4),
-           test_plots(6,3,1,7),
-           test_plots(3,8,9,1),
-           test_plots(4,7,7,9),
-           test_plots(4,7,9,7),
-           test_plots(1,6,0,0)] 
-
-
-
-    count=0
-    for i in range(0,2):
-        for j in range(0,3):
-            muS, muS_sec, shift_orbit, shift_normal = tests[count]
-            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label='BSPL_PhotAstrom_Par_LinOrbs_Param2')
-            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_Par_Param2')
-
-            ax[i][j].invert_xaxis  # arcsec
-
-            ax[i][j].set_xlabel('RA (arcsec)')
-            ax[i][j].set_ylabel('Dec (arcsec)')
-            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs2 with muS {muS} and muS_sec {muS_sec}' )
-            ax[i][j].legend(loc='best')
-            
-            ax[i][j].axis('equal')
-            count+=1
-
-def test_centroid_shift_noPar_LinOrbs_Param3_compar():
-    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #muS in mas/yr
-        t0 = 57600.00
-        u0_amp = 6
-        tE = 78
-        log_thetaE = np.log(2)
-        piS = 0.6
+        shift_lin_orbs = bspllinorbs.get_centroid_shift(t)
+        shift_acc_orbs = bsplaccorbs.get_centroid_shift(t)
+        
+        
+        shift_amp = np.linalg.norm(shift_normal, axis=1)
+        
+        
+        plt.figure(figsize=(25, 15))
+        
+        plt.rcParams.update({'font.size':25})
+        
+        plt.plot(shift_normal[:,0], shift_normal[:,1], label = 'No Orbits')
+        plt.plot(shift_lin_orbs[:,0], shift_lin_orbs[:,1], label = 'Linear Orbits')
+        plt.plot(shift_acc_orbs[:,0], shift_acc_orbs[:,1],  label = 'Accelerated Orbits')
+        plt.xlabel('RA (arcsec)')
+        plt.ylabel('Dec (arcsec)')
+        plt.title('Centroid Shift with Parallax')
+        plt.legend(loc='lower left')
+        plt.axis('equal')
+        plt.savefig('Centroid_shift_test.png')
+    def sky_plots_lin():
+        t0 = 57600.0
+        u0_amp = 2
+        tE = 154
+        thetaE = 7
+        piS = 0.8
         piE_E = 1
         piE_N = 1
         xS0_E = 0.0 #ra
         xS0_N = 0.0 #dec
-        sep = 1 #mas
-        alpha = 10
+        sep = 3 #mas
+        alpha = 80
         fratio_bin = 1.5
         mag_base = 19
         b_sff = 1
         ra_L = 30
         dec_L = 20
-
-
         
-        bsplnormal = model.BSPL_PhotAstrom_noPar_Param3(
-            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+        muS_E = 28
+        muS_N = 3
+        delta_muS_sec_E = 1
+        delta_muS_sec_N = 14
+        
+        acc_E = 1 
+        acc_N = -7
+        
+        
+        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param2(
+            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N,delta_muS_sec_E, delta_muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
             [b_sff], ra_L, dec_L
-        )
-
-        bsplorbits = model.BSPL_PhotAstrom_noPar_LinOrbs_Param3(
-            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
-        )
-    
-    
+        )                        
+        
         #Seperations
-        t = np.arange(t0-10000, t0+10000, 1) 
-        shift_orbit = bsplorbits.get_centroid_shift(t)
-        shift_normal = bsplnormal.get_centroid_shift(t)
         
-        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal 
-            
-    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
-    tests=[test_plots(8,3,1,4),
-           test_plots(6,3,1,7),
-           test_plots(3,8,9,1),
-           test_plots(4,7,7,9),
-           test_plots(4,7,9,7),
-           test_plots(1,6,0,0)] 
-
-
-
-    count=0
-    for i in range(0,2):
-        for j in range(0,3):
-            muS, muS_sec, shift_orbit, shift_normal = tests[count]
-            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label='BSPL_PhotAstrom_Par_LinOrbs_Param3')
-            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_Par_Param3')
-            ax[i][j].invert_xaxis  # arcsec
-
-            ax[i][j].set_xlabel('RA (arcsec)')
-            ax[i][j].set_ylabel('Dec (arcsec)')
-            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs3 with muS {muS} and muS_sec {muS_sec}' )
-            ax[i][j].legend(loc='best')
-            ax[i][j].axis('equal')
-
-            count+=1
-
-
-def test_centroid_shift_Par_LinOrbs_Param3_compar():
-    def test_plots(muS_E, muS_N, muS_sec_E, muS_sec_N):
-        #muS in mas/yr
-        t0 = 57600.00
-        u0_amp = 6
-        tE = 78
-        log_thetaE = np.log(2)
-        piS = 0.6
+        
+        
+        t = np.arange(t0-10000, t0+10000, 1) 
+        
+        dt=t-bsplorbits.t0
+        amplification = bsplorbits.get_amplification(t)
+        shift = bsplorbits.get_centroid_shift(t)
+        shift_amp = np.linalg.norm(shift, axis=1)
+        
+        xS_unlensed = bsplorbits.get_resolved_astrometry_unlensed(t)
+        
+        srce_pos_primary =xS_unlensed[:, 0, :]
+        srce_pos_secondary = xS_unlensed[:, 1, :] 
+        
+        
+        xS_lensed = bsplorbits.get_astrometry_shift(t)
+        
+        
+        
+        lens_pos = bsplorbits.get_lens_astrometry(t)
+        print(srce_pos_primary)
+        
+        
+        imag_pos_pri = xS_lensed[:, 0, :]
+        imag_pos_sec =  xS_lensed[:, 1, :]
+        
+        #imag_pos_pri = srce_pos_primary + (shift)
+        #imag_pos_sec2 = srce_pos_secondary + (shift)
+        
+        
+        srce_pos_primary_ra = srce_pos_primary[:, 0]
+        srce_pos_primary_dec = srce_pos_primary[:, 1]
+        srce_pos_secondary_ra = srce_pos_secondary[:, 0]
+        srce_pos_secondary_dec = srce_pos_secondary[:, 1]
+        
+        plt.figure(figsize=(25,13))
+        
+        lim = 0.06
+        
+        plt.gca().set_xlim(lim, -lim)
+        plt.gca().set_ylim(-lim, lim)
+        
+        plt.plot(lens_pos[:, 0], lens_pos[:, 1], 'k--', linewidth = 2, label='Lens Position')
+        plt.plot(srce_pos_primary_ra, srce_pos_primary_dec,'b--', linewidth = 2, label='Unlensed Primary Source Position')
+        plt.plot(imag_pos_pri[:, 0], imag_pos_pri[:, 1], 'b-', linewidth = 2,label='Lensed Primary Source Position')
+        ##plt.plot(imag_pos_pri1[:, 0], imag_pos_pri1[:, 1], '--', linewidth = 2,label='Lensed Primary Source Position')
+        #plt.plot(imag_pos_pri2[:, 0], imag_pos_pri2[:, 1], '--', linewidth = 2,label='Lensed Secondary Source Position Before')
+        
+        plt.plot(srce_pos_secondary_ra, srce_pos_secondary_dec,'--', linewidth = 2, color = 'red', label='Unlensed Secondary Source Position')
+        plt.plot(imag_pos_sec[:, 0], imag_pos_sec[:, 1], '-', linewidth = 2,color = 'red', label='Lensed Secondary Source Position Now')
+        #plt.plot([0, 0], marker='*', ls='none', label = 'Time of Closest Approach (Primary)', ms=20)
+        #plt.plot( np.max(shift_amp), np.max(shift_amp), marker='*', ls='none', color = 'blue', label = r'Position at ${t_{0, pri}}$', ms=20)
+        
+        #plt.plot(closest_approach_secondary[0], closest_approach_secondary[1], marker='*', ls='none', color = 'red', label = r'Position at ${t_{0, sec}}$', ms=20)
+        #plt.plot(bsplorbits.xL0[0], bsplorbits.xL0[1], marker='*', ls='none', color = 'blue', ms=20)
+        #plt.plot(lens_pos_closest_secondary[0], lens_pos_closest_secondary[1], marker='*', ls='none', color = 'red', ms=20)
+        
+        plt.xlabel(r'$\Delta$ RA (arcsec)')
+        
+        plt.ylabel(r'$\Delta$ Dec (arcsec)')
+        plt.title(f'Change in Primary and Secondary Source Position (Linear Orbits)')
+        
+        (plt.legend(loc='lower left')) 
+        plt.savefig('sky_plot_linorbs.png')
+        
+    def sky_plots_acc():
+        t0 = 57600.0
+        u0_amp = 2
+        tE = 154
+        thetaE = 7
+        piS = 0.8
         piE_E = 1
         piE_N = 1
         xS0_E = 0.0 #ra
         xS0_N = 0.0 #dec
-        sep = 1 #mas
-        alpha = 10
+        sep = 3 #mas
+        alpha = 80
         fratio_bin = 1.5
         mag_base = 19
         b_sff = 1
         ra_L = 30
         dec_L = 20
-
-
         
-        bsplnormal = model.BSPL_PhotAstrom_Par_Param3(
-            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N, sep, alpha, np.array([fratio_bin]), [mag_base],
+        muS_E = 28
+        muS_N = 3
+        delta_muS_sec_E = 1
+        delta_muS_sec_N = 14
+        
+        acc_E = 1 
+        acc_N = -7
+        
+        
+        
+        bsplorbits = model.BSPL_PhotAstrom_noPar_AccOrbs_Param2(
+            t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+            muS_E, muS_N,delta_muS_sec_E, delta_muS_sec_N, acc_E, acc_N, sep, alpha, np.array([fratio_bin]), [mag_base],
             [b_sff], ra_L, dec_L
-        )
-
-        bsplorbits = model.BSPL_PhotAstrom_Par_LinOrbs_Param3(
-            t0, u0_amp, tE, log_thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
-            muS_E, muS_N,muS_sec_E, muS_sec_N, sep, alpha, np.array([fratio_bin]), [mag_base],
-            [b_sff], ra_L, dec_L
-        )
-    
-    
+        )                        
+        
         #Seperations
         t = np.arange(t0-10000, t0+10000, 1) 
-        shift_orbit = bsplorbits.get_centroid_shift(t)
-        shift_normal = bsplnormal.get_centroid_shift(t)
         
-        return [muS_E, muS_N],[muS_sec_E, muS_sec_N], shift_orbit, shift_normal 
-            
-    fig, ax = plt.subplots(2, 3, figsize=(25,10)) # Gives you your figure, 3 axes and sets the figure size to 20x10
-    tests=[test_plots(8,3,1,4),
-           test_plots(6,3,1,7),
-           test_plots(3,8,9,1),
-           test_plots(4,7,7,9),
-           test_plots(4,7,9,7),
-           test_plots(1,6,0,0)] 
+        dt=t-bsplorbits.t0
+        amplification = bsplorbits.get_amplification(t)
+        shift = bsplorbits.get_centroid_shift(t)
+        shift_amp = np.linalg.norm(shift, axis=1)
+        xS_unlensed = bsplorbits.get_resolved_astrometry_unlensed(t)
+        
+        srce_pos_primary =xS_unlensed[:, 0, :]
+        srce_pos_secondary = xS_unlensed[:, 1, :] 
+        xS_lensed = bsplorbits.get_astrometry_shift(t)
+        
+        
+        
+        lens_pos = bsplorbits.get_lens_astrometry(t)
+        print(srce_pos_primary)
+        
+        
+        imag_pos_pri = xS_lensed[:, 0, :]
+        imag_pos_sec =  xS_lensed[:, 1, :]
+        
+        srce_pos_primary_ra = srce_pos_primary[:, 0]
+        srce_pos_primary_dec = srce_pos_primary[:, 1]
+        srce_pos_secondary_ra = srce_pos_secondary[:, 0]
+        srce_pos_secondary_dec = srce_pos_secondary[:, 1]
+        
+        plt.figure(figsize=(25,13))
+        
+        lim = 0.06
+        
+        plt.gca().set_xlim(lim, -lim)
+        plt.gca().set_ylim(-lim, lim)
+        
+        plt.plot(lens_pos[:, 0], lens_pos[:, 1], 'k--', linewidth = 2, label='Lens Position')
+        plt.plot(srce_pos_primary_ra, srce_pos_primary_dec,'b--', linewidth = 2, label='Unlensed Primary Source Position')
+        plt.plot(imag_pos_pri[:, 0], imag_pos_pri[:, 1], 'b-', linewidth = 2,label='Lensed Primary Source Position')
+        plt.plot(srce_pos_secondary_ra, srce_pos_secondary_dec,'--', linewidth = 2, color = 'red', label='Unlensed Secondary Source Position')
+        plt.plot(imag_pos_sec[:, 0], imag_pos_sec[:, 1], '-', linewidth = 2,color = 'red', label='Lensed Secondary Source Position')
+        #plt.plot([0, 0], marker='*', ls='none', label = 'Time of Closest Approach (Primary)', ms=20)
+        print(np.max(shift_amp))    
+        print(bsplorbits.xL0)
+        #plt.plot( np.max(shift_amp), np.max(shift_amp), marker='*', ls='none', color = 'blue', label = r'Position at ${t_{0, pri}}$', ms=20)
+        
+        #plt.plot(closest_approach_secondary[0], closest_approach_secondary[1], marker='*', ls='none', color = 'red', label = r'Position at ${t_{0, sec}}$', ms=20)
+        #plt.plot(bsplorbits.xL0[0], bsplorbits.xL0[1], marker='*', ls='none', color = 'blue', ms=20)
+        #plt.plot(lens_pos_closest_secondary[0], lens_pos_closest_secondary[1], marker='*', ls='none', color = 'red', ms=20)
+        
+        plt.xlabel(r'$\Delta$ RA (arcsec)')
+        
+        plt.ylabel(r'$\Delta$ Dec (arcsec)')
+        plt.title(f'Change in Primary and Secondary Source Position (Accelerated Orbits)')
+        
+        (plt.legend(loc='lower left')) 
+        plt.savefig('sky_plot_accorbs.png')
 
-
-
-    count=0
-    for i in range(0,2):
-        for j in range(0,3):
-            muS, muS_sec, shift_orbit, shift_normal = tests[count]
-            ax[i][j].plot(shift_orbit[:,0], shift_orbit[:,1], label='BSPL_PhotAstrom_Par_LinOrbs_Param3')
-            ax[i][j].plot(shift_normal[:,0], shift_normal[:,1], label = 'BSPL_PhotAstrom_Par_Param3')
-            ax[i][j].invert_xaxis  # arcsec
-
-            ax[i][j].set_xlabel('RA (arcsec)')
-            ax[i][j].set_ylabel('Dec (arcsec)')
-            ax[i][j].set_title(f'Centroid Shift (no parallax) LinOrbs3 with muS {muS} and muS_sec {muS_sec}' )
-            ax[i][j].legend(loc='best')
-            ax[i][j].axis('equal')
-
-
-            count+=1
-'''
+    centroid_shift_test()
+    sky_plots_lin()
+    sky_plots_acc()
 
 
