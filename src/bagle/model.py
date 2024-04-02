@@ -5985,9 +5985,9 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
     aleph2: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
-        The RA proper motion of the system in mas.
+        The RA proper motion of the system in mas/yr.
     muS_system_N: float
-        The Dec proper motion of the system in mas.
+        The Dec proper motion of the system in mas/yr.
     x0_system_E: float
         The initial center of mass coordinates (RA) of the system in mas.
     x0_system_N: float
@@ -6205,9 +6205,9 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
     aleph2: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
-        The RA proper motion of the system in mas.
+        The RA proper motion of the system in mas/yr.
     muS_system_N: float
-        The Dec proper motion of the system in mas.
+        The Dec proper motion of the system in mas/yr.
     x0_system_E: float
         The initial center of mass coordinates (RA) of the system in mas.
     x0_system_N: float
@@ -6388,9 +6388,9 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
     aleph2: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
-        The RA proper motion of the system in mas.
+        The RA proper motion of the system in mas/yr.
     muS_system_N: float
-        The Dec proper motion of the system in mas.
+        The Dec proper motion of the system in mas/yr.
     x0_system_E: float
         The initial center of mass coordinates (RA) of the system in mas.
     x0_system_N: float
@@ -6602,9 +6602,9 @@ class BSPL_PhotAstrom_Circ_Param1(PSPL_Param):
     aleph2: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
-        The RA proper motion of the system in mas.
+        The RA proper motion of the system in mas/yr.
     muS_system_N: float
-        The Dec proper motion of the system in mas.
+        The Dec proper motion of the system in mas/yr.
     x0_system_E: float
         The initial center of mass coordinates (RA) of the system in mas.
     x0_system_N: float
@@ -6825,9 +6825,9 @@ class BSPL_PhotAstrom_Circ_Param2(PSPL_Param):
     aleph2: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
-        The RA proper motion of the system in mas.
+        The RA proper motion of the system in mas/yr.
     muS_system_N: float
-        The Dec proper motion of the system in mas.
+        The Dec proper motion of the system in mas/yr.
     x0_system_E: float
         The initial center of mass coordinates (RA) of the system in mas.
     x0_system_N: float
@@ -7005,9 +7005,9 @@ class BSPL_PhotAstrom_Circ_Param3(PSPL_Param):
     aleph2: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
-        The RA proper motion of the system in mas.
+        The RA proper motion of the system in mas/yr.
     muS_system_N: float
-        The Dec proper motion of the system in mas.
+        The Dec proper motion of the system in mas/yr.
     x0_system_E: float
         The initial center of mass coordinates (RA) of the system in mas.
     x0_system_N: float
@@ -8695,7 +8695,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
     
     def dexanimate(self, tE, time_steps, frame_time, name, size, zoom,
-                astrometry, type):
+                astrometry, type, loc):
         """ Produces animation of microlensing event. 
         This function takes the PSPL and makes an animation, the input variables are as follows
 
@@ -8796,7 +8796,6 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         ax1.set_ylabel('Dec (")')
         ax1.set_xlim(zoom, -zoom)
         ax1.set_ylim(-zoom, zoom)
-
         
         #ax1.set_xlim(zoom, -zoom)
         #ax1.set_ylim(-zoom, zoom)
@@ -8810,7 +8809,8 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         #plt.gca().set_xlim(1.1, 0.9)
         #plt.gca().set_ylim(0.75, 1.3)
 
-        ax1.legend(fontsize=12, loc='upper right')
+        ax1.legend(fontsize=12, loc=loc)
+
 
                     
                         
