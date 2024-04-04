@@ -193,8 +193,10 @@ def fisher_matrix(t, merr,
                 print(f'{i} {j} fish = {fish_mat[i, j]:.2e} ' +
                       f'{ikey} = {derivs[ikey][mid]:.3e} ' +
                       f'{jkey} = {derivs[jkey][mid]:.3e}')
-
-    cov_mat = np.linalg.inv(fish_mat)
+    try:
+        cov_mat = np.linalg.inv(fish_mat)
+    except np.linalg.LinAlgError:
+        cov_mat = np.diag(np.ones(fish_mat.shape[0])) * np.inf
 
     return cov_mat
 
