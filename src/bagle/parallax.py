@@ -52,7 +52,7 @@ def parallax_in_direction(RA, Dec, mjd, obsLocation='earth'):
     return pvec
 
 
-def dparallax_dt_in_direction(RA, Dec, mjd):
+def dparallax_dt_in_direction(RA, Dec, mjd, obsLocation='earth'):
     """
     R.A. in degrees. (J2000)
     Dec. in degrees. (J2000)
@@ -72,10 +72,10 @@ def dparallax_dt_in_direction(RA, Dec, mjd):
     _east_projected = np.cross(north, direction) / np.linalg.norm(np.cross(north, direction))
     _north_projected = np.cross(direction, _east_projected) / np.linalg.norm(np.cross(direction, _east_projected))
 
-    obs_posvel = get_observer_barycentric(obsLocatoin, times, velocity=True)[1]
+    obs_posvel = get_observer_barycentric(obsLocation, times, velocity=True)[1]
     sun_posvel = get_body_barycentric_posvel('Sun', times)[1]
     sun_obs_vel = sun_posvel - obs_posvel
-    vel = sun_earth_vel.xyz.T.to(units.au / units.year)
+    vel = sun_obs_vel.xyz.T.to(units.au / units.year)
 
     e = np.dot(vel, _east_projected)
     n = np.dot(vel, _north_projected)
