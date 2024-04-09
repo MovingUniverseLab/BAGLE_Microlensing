@@ -1029,7 +1029,12 @@ def test_pspl_parallax2_bulge():
             if isinstance(members1[kk], str):
                 assert members1[kk] == members2[kk]
             else:
-                np.testing.assert_almost_equal(members1[kk], members2[kk], 3)
+                if isinstance(members1[kk], np.ndarray) and members1[kk].dtype.type in [np.string_, np.str_]:
+                    # Compare strings individually for exact matches.
+                    assert np.all(members1[kk] == members2[kk])
+                else:
+                    # Compare floats.
+                    np.testing.assert_almost_equal(members1[kk], members2[kk], 3)
 
     t = np.arange(t0 - 1000, t0 + 1000, 1)
     dt = t - pspl_par1.t0
@@ -2579,7 +2584,7 @@ def test_bagle_self_conversion(plot=False):
     Test whether our helio --> geotr converesions are
     self-consistent.
     """
-    model.solar_system_ephemeris.set('builtin')
+    model.parallax.solar_system_ephemeris.set('builtin')
 
     raL = 260.0
     decL = -30.0
@@ -2679,7 +2684,7 @@ def test_bagle_self_conversion(plot=False):
 
     assert np.abs(mag_h - mag_h_from_g).max() < 1e-9
 
-    model.solar_system_ephemeris.set('jpl')
+    model.parallax.solar_system_ephemeris.set('jpl')
 
     return
 
@@ -2830,6 +2835,7 @@ def run_test_PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE,
 
     return pspl
 
+@pytest.mark.skip(reason="package dependency")
 def test_geoproj_mm(plot=False):
     """
     Test making sure BAGLE's geocentric projected model gives the same
