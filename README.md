@@ -14,7 +14,7 @@ The documentation to the BAGLE code can be found [here](https://bagle.readthedoc
 
 ## Installation Instructions
 ### Clone the repo: 
-     git clone https://github.com/ninjab3381/BAGLE_Microlensing.git
+     git clone https://github.com/MovingUniverseLab/BAGLE_Microlensing.git
 
 ### Install required modules:
      Before you can execute the tests, you will need to install the following modules:
