@@ -5989,9 +5989,9 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
     muS_system_N: float
         The Dec proper motion of the system in mas/yr.
     x0_system_E: float
-        The initial center of mass coordinates (RA) of the system in mas.
+        The initial center of mass coordinates (RA) of the system in arcsec.
     x0_system_N: float
-        The initial center of mass coordinates (Dec) of the system in mas.
+        The initial center of mass coordinates (Dec) of the system in arcsec.
     alpha: float
         Angle made between the binary source axis and North;
         measured in degrees East of North.
@@ -6213,9 +6213,9 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
     muS_system_N: float
         The Dec proper motion of the system in mas/yr.
     x0_system_E: float
-        The initial center of mass coordinates (RA) of the system in mas.
+        The initial center of mass coordinates (RA) of the system in arcsec.
     x0_system_N: float
-        The initial center of mass coordinates (Dec) of the system in mas.
+        The initial center of mass coordinates (Dec) of the system in arcsec.
     alpha: float
         Angle made between the binary source axis and North;
         measured in degrees East of North.
@@ -6400,9 +6400,9 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
     muS_system_N: float
         The Dec proper motion of the system in mas/yr.
     x0_system_E: float
-        The initial center of mass coordinates (RA) of the system in mas.
+        The initial center of mass coordinates (RA) of the system in arcsec.
     x0_system_N: float
-        The initial center of mass coordinates (Dec) of the system in mas.
+        The initial center of mass coordinates (Dec) of the system in arcsec.
     alpha: float
         Angle made between the binary source axis and North;
         measured in degrees East of North.
@@ -6618,9 +6618,9 @@ class BSPL_PhotAstrom_Circ_Param1(PSPL_Param):
     muS_system_N: float
         The Dec proper motion of the system in mas/yr.
     x0_system_E: float
-        The initial center of mass coordinates (RA) of the system in mas.
+        The initial center of mass coordinates (RA) of the system in arcsec.
     x0_system_N: float
-        The initial center of mass coordinates (Dec) of the system in mas.
+        The initial center of mass coordinates (Dec) of the system in arcsec.
     alpha: float
         Angle made between the binary source axis and North;
         measured in degrees East of North.
@@ -6846,9 +6846,9 @@ class BSPL_PhotAstrom_Circ_Param2(PSPL_Param):
     muS_system_N: float
         The Dec proper motion of the system in mas/yr.
     x0_system_E: float
-        The initial center of mass coordinates (RA) of the system in mas.
+        The initial center of mass coordinates (RA) of the system in arcsec.
     x0_system_N: float
-        The initial center of mass coordinates (Dec) of the system in mas.
+        The initial center of mass coordinates (Dec) of the system in arcsec.
     fratio_bin: float
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
@@ -7030,9 +7030,9 @@ class BSPL_PhotAstrom_Circ_Param3(PSPL_Param):
     muS_system_N: float
         The Dec proper motion of the system in mas/yr.
     x0_system_E: float
-        The initial center of mass coordinates (RA) of the system in mas.
+        The initial center of mass coordinates (RA) of the system in arcsec.
     x0_system_N: float
-        The initial center of mass coordinates (Dec) of the system in mas.
+        The initial center of mass coordinates (Dec) of the system in arcsec.
     alpha: float
         Angle made between the binary source axis and North;
         measured in degrees East of North.
