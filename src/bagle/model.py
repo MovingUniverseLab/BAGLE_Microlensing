@@ -5982,7 +5982,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         This is the time of the periastron of the system in days.
     aleph: float
         This is the semi-major axis of the primary source in mas. 
-    aleph2: float
+    aleph_sec: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
         The RA proper motion of the system in mas/yr.
@@ -6018,7 +6018,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
                           'muS_system_E', 'muS_system_N',
                           'alpha',
                          'omega', 'big_omega', 'i', 'e',
-                          'p', 'tp', 'aleph', 'aleph2'
+                          'p', 'tp', 'aleph', 'aleph_sec'
                          ]
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
     additional_param_names = ['dS', 'tE', 'u0_amp',
@@ -6037,7 +6037,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
                  muL_E, muL_N,
                  muS_system_E, muS_system_N,
                  alpha, omega, big_omega, i,
-                 e, p, tp, aleph, aleph2,
+                 e, p, tp, aleph, aleph_sec,
                  mag_src_pri, mag_src_sec,
                  b_sff,
                  raL=None, decL=None):
@@ -6047,6 +6047,8 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_system_E, muS_system_N]) #mas
+        self.x0_system = self.xS0
+        self.muS_system = self.muS
         self.dL = dL
         self.dL_dS = dL_dS
         self.dS = self.dL / self.dL_dS
@@ -6055,12 +6057,14 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         self.decL = decL
         self.w = omega
         self.o = big_omega
+        self.omega = self.w
+        self.big_omega = self.o
         self.i = i
         self.e = e
         self.p = p
         self.tp = tp
-        self.aleph = aleph * 1e-3
-        self.aleph2 = aleph2 * 1e-3
+        self.aleph = aleph #mas
+        self.aleph_sec = aleph_sec #mas
         self.vx = muS_system_E * 1e-3
         self.vy = muS_system_N * 1e-3
         self.x0 = x0_system_E
@@ -6202,7 +6206,7 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
         This is the time of the periastron of the system in days.
     aleph: float
         This is the semi-major axis of the primary source in mas. 
-    aleph2: float
+    aleph_sec: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
         The RA proper motion of the system in mas/yr.
@@ -6238,7 +6242,7 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
     fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'alpha', 'omega', 'big_omega', 'i', 'e',
-                          'p', 'tp', 'aleph', 'aleph2', 'muS_system_E', 'muS_system_N',
+                          'p', 'tp', 'aleph', 'aleph_sec', 'muS_system_E', 'muS_system_N',
                           'x0_system_E', 'x0_system_N']
     
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
@@ -6257,7 +6261,7 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
                  alpha, omega,
                  big_omega, i,
                  e, p, tp,
-                 aleph, aleph2,
+                 aleph, aleph_sec,
                  muS_system_E, muS_system_N,
                  x0_system_E, x0_system_N,
                  fratio_bin,
@@ -6274,18 +6278,22 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
         self.muS_E = muS_system_E 
         self.muS_N = muS_system_N 
         self.muS = np.array([muS_system_E, muS_system_N]) #mas
+        self.x0_system = self.xS0
+        self.muS_system = self.muS
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)      
         self.raL = raL
         self.decL = decL
         self.w = omega
         self.o = big_omega
+        self.omega = self.w
+        self.big_omega = self.o
         self.i = i
         self.e = e
         self.p = p
         self.tp = tp
-        self.aleph = aleph * 1e-3
-        self.aleph2 = aleph2 * 1e-3
+        self.aleph = aleph  #mas
+        self.aleph_sec = aleph_sec #mas
         self.vx = muS_system_E * 1e-3
         self.vy = muS_system_N * 1e-3
         self.x0 = x0_system_E
@@ -6385,7 +6393,7 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
         This is the time of the periastron of the system in days.
     aleph: float
         This is the semi-major axis of the primary source in mas. 
-    aleph2: float
+    aleph_sec: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
         The RA proper motion of the system in mas/yr.
@@ -6421,7 +6429,7 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
     fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'alpha', 'omega', 'big_omega', 'i', 'e', 'p', 
-                          'tp', 'aleph', 'aleph2',
+                          'tp', 'aleph', 'aleph_sec',
                           'muS_system_E', 'muS_system_N',
                           'x0_system_E', 'x0_system_N',
                           'muS_E', 'muS_N',
@@ -6442,7 +6450,7 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
                  alpha, omega,
                  big_omega, i,
                  e, p, tp,
-                 aleph, aleph2,
+                 aleph, aleph_sec,
                  muS_system_E, muS_system_N,
                  x0_system_E, x0_system_N,
                  fratio_bin,
@@ -6459,18 +6467,22 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
         self.muS_E = muS_system_E 
         self.muS_N = muS_system_N 
         self.muS = np.array([muS_system_E, muS_system_N]) #mas
+        self.x0_system = self.xS0
+        self.muS_system = self.muS
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)      
         self.raL = raL
         self.decL = decL
         self.w = omega
         self.o = big_omega
+        self.omega = self.w
+        self.big_omega = self.o
         self.i = i
         self.e = e
         self.p = p
         self.tp = tp
-        self.aleph = aleph * 1e-3
-        self.aleph2 = aleph2 * 1e-3
+        self.aleph = aleph #mas
+        self.aleph_sec = aleph_sec  #mas
         self.vx = muS_system_E * 1e-3
         self.vy = muS_system_N * 1e-3
         self.x0 = x0_system_E
@@ -6599,7 +6611,7 @@ class BSPL_PhotAstrom_Circ_Param1(PSPL_Param):
         This is the time of the periastron of the system in days.
     aleph: float
         This is the semi-major axis of the primary source in mas. 
-    aleph2: float
+    aleph_sec: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
         The RA proper motion of the system in mas/yr.
@@ -6635,7 +6647,7 @@ class BSPL_PhotAstrom_Circ_Param1(PSPL_Param):
                           'muS_system_E', 'muS_system_N',
                           'alpha',
                          'omega', 'big_omega', 'i',
-                          'p', 'tp', 'aleph', 'aleph2'
+                          'p', 'tp', 'aleph', 'aleph_sec'
                          ]
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
     additional_param_names = ['dS', 'tE', 'u0_amp',
@@ -6654,16 +6666,19 @@ class BSPL_PhotAstrom_Circ_Param1(PSPL_Param):
                  muL_E, muL_N,
                 muS_system_E, muS_system_N,
                  alpha, omega, big_omega, i,
-                 p, tp, aleph, aleph2,
+                 p, tp, aleph, aleph_sec,
                  mag_src_pri, mag_src_sec,
                  b_sff,
                  raL=None, decL=None):
         self.t0 = t0_com  # time of closest approach for system=primary pos
+        self.t0_com = t0_com  # time of closest approach for system=primary pos
         self.mL = mL
         self.xS0 = np.array([x0_system_E, x0_system_N])  # position of source system=primary
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_system_E, muS_system_N]) #mas
+        self.x0_system = self.xS0
+        self.muS_system = self.muS
         self.dL = dL
         self.dL_dS = dL_dS
         self.dS = self.dL / self.dL_dS
@@ -6672,12 +6687,14 @@ class BSPL_PhotAstrom_Circ_Param1(PSPL_Param):
         self.decL = decL
         self.w = omega
         self.o = big_omega
+        self.omega = self.w
+        self.big_omega = self.o
         self.i = i
         self.e = 0
         self.p = p
         self.tp = tp
-        self.aleph = aleph * 1e-3
-        self.aleph2 = aleph2 * 1e-3
+        self.aleph = aleph #mas
+        self.aleph_sec = aleph_sec #mas
         self.vx = muS_system_E * 1e-3
         self.vy = muS_system_N * 1e-3
         self.x0 = x0_system_E
@@ -6822,7 +6839,7 @@ class BSPL_PhotAstrom_Circ_Param2(PSPL_Param):
         This is the time of the periastron of the system in days.
     aleph: float
         This is the semi-major axis of the primary source in mas. 
-    aleph2: float
+    aleph_sec: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
         The RA proper motion of the system in mas/yr.
@@ -6855,7 +6872,7 @@ class BSPL_PhotAstrom_Circ_Param2(PSPL_Param):
     fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'alpha', 'omega', 'big_omega', 'i',
-                          'p', 'tp', 'aleph', 'aleph2', 'muS_system_E', 'muS_system_N',
+                          'p', 'tp', 'aleph', 'aleph_sec', 'muS_system_E', 'muS_system_N',
                           'x0_system_E', 'x0_system_N']
     
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
@@ -6874,7 +6891,7 @@ class BSPL_PhotAstrom_Circ_Param2(PSPL_Param):
                  alpha, omega,
                  big_omega, i,
                  p, tp,
-                 aleph, aleph2,
+                 aleph, aleph_sec,
                  muS_system_E, muS_system_N,
                  x0_system_E, x0_system_N,
                  fratio_bin,
@@ -6891,18 +6908,22 @@ class BSPL_PhotAstrom_Circ_Param2(PSPL_Param):
         self.muS_E = muS_system_E 
         self.muS_N = muS_system_N 
         self.muS = np.array([muS_system_E, muS_system_N]) #mas
+        self.x0_system = self.xS0
+        self.muS_system = self.muS
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)      
         self.raL = raL
         self.decL = decL
         self.w = omega
         self.o = big_omega
+        self.omega = self.w
+        self.big_omega = self.o
         self.i = i
         self.e = 0
         self.p = p
         self.tp = tp
-        self.aleph = aleph * 1e-3
-        self.aleph2 = aleph2 * 1e-3
+        self.aleph = aleph #mas
+        self.aleph_sec = aleph_sec #mas
         self.vx = muS_system_E * 1e-3
         self.vy = muS_system_N * 1e-3
         self.x0 = x0_system_E
@@ -7002,7 +7023,7 @@ class BSPL_PhotAstrom_Circ_Param3(PSPL_Param):
         This is the time of the periastron of the system in days.
     aleph: float
         This is the semi-major axis of the primary source in mas. 
-    aleph2: float
+    aleph_sec: float
         This is the semi-major axis of the secondary source in mas. 
     muS_system_E: float
         The RA proper motion of the system in mas/yr.
@@ -7038,7 +7059,7 @@ class BSPL_PhotAstrom_Circ_Param3(PSPL_Param):
     fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'alpha', 'omega', 'big_omega', 'i', 'p', 
-                          'tp', 'aleph', 'aleph2',
+                          'tp', 'aleph', 'aleph_sec',
                           'muS_system_E', 'muS_system_N',
                           'x0_system_E', 'x0_system_N',
                           'muS_E', 'muS_N',
@@ -7059,7 +7080,7 @@ class BSPL_PhotAstrom_Circ_Param3(PSPL_Param):
                  alpha, omega,
                  big_omega, i,
                  p, tp,
-                 aleph, aleph2,
+                 aleph, aleph_sec,
                  muS_system_E, muS_system_N,
                  x0_system_E, x0_system_N,
                  fratio_bin,
@@ -7077,17 +7098,21 @@ class BSPL_PhotAstrom_Circ_Param3(PSPL_Param):
         self.muS_N = muS_system_N 
         self.muS = np.array([muS_system_E, muS_system_N]) #mas
         self.mag_base = np.array(mag_base)
+        self.x0_system = self.xS0
+        self.muS_system = self.muS
         self.b_sff = np.array(b_sff)      
         self.raL = raL
         self.decL = decL
         self.w = omega
         self.o = big_omega
+        self.omega = self.w
+        self.big_omega = self.o
         self.i = i
         self.e = 0
         self.p = p
         self.tp = tp
-        self.aleph = aleph * 1e-3
-        self.aleph2 = aleph2 * 1e-3
+        self.aleph = aleph #mas
+        self.aleph_sec = aleph_sec #mas
         self.vx = muS_system_E * 1e-3
         self.vy = muS_system_N * 1e-3
         self.x0 = x0_system_E
@@ -8464,8 +8489,8 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             orb.e = self.e
             orb.p = self.p
             orb.tp = self.tp
-            orb.aleph = self.aleph
-            orb.aleph2 = self.aleph2
+            orb.aleph = self.aleph *1e-3
+            orb.aleph2 = self.aleph_sec*1e-3
             orb.vx = self.vx
             orb.vy = self.vy
             orb.x0 = self.x0
@@ -8777,17 +8802,17 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             i1_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='grey', linewidth=2)
             i1_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Primary Source Major Image ", color='grey', linewidth=2)
             i1_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='grey', linewidth=2)
-            i1_minus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Primary Source Minor Image", color='grey', linewidth=2)
+            i1_minus_line2, = ax1.plot([], ':', markersize=size[0] * 0.2, label="Lensed Primary Source Minor Image", color='grey', linewidth=2)
                         
             i2_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='purple', linewidth=2)
             i2_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Secondary Source Major Image ", color='purple', linewidth=2)
             i2_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0,  color='purple', linewidth=2)
-            i2_minus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Secondary Source Minor Image ", color='purple', linewidth=2)    
+            i2_minus_line2, = ax1.plot([], ':', markersize=size[0] * 0.2, label="Lensed Secondary Source Minor Image ", color='purple', linewidth=2)    
     
 
 
-        l_line1, = ax1.plot([], '.', markersize=size[0] * 0.7,  color='black', linewidth=2)
-        l_line2, = ax1.plot([], '-', markersize=size[0] * 0.2, label="Lens", color='black', linewidth=2)
+        l_line1, = ax1.plot([], '.', markersize=size[0] * 0.7,  color='k', linewidth=2)
+        l_line2, = ax1.plot([], '-', markersize=size[0] * 0.2, label="Lens", color='k', linewidth=2)
 
 
 

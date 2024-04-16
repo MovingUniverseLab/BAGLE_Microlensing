@@ -2257,3 +2257,198 @@ def fake_data_BSPL(outdir='', outroot='bspl',
     #    np.savetxt('fake_data_PSBL_phot.dat', (data['t_phot1'], data['mag1'], data['mag_err1']))
 
     return data, params, bspl, ani
+
+
+def fake_dex_data_noPar_BSPL_3(outdir='', outroot='bspl',
+                   mL = 20, t0 = 57000.00, beta = 7.5,
+                    dL = 1000, dL_dS = 0.1, xS0_E = 0, xS0_N = 0,
+                    muL_E = 0, muL_N = 0, muS_E = 8, muS_N = 3,
+                    alpha = 70, 
+                    omega = 30, big_omega = 10, i = 0,
+                    p = 450, tp = 30, aleph = 2, 
+                    aleph2 = 2.5, mag_src_pri = 18, mag_src_sec = 20, b_sff = 1, raL=259.5, decL=-29.0, 
+                   target='BSPL', animate=False):
+
+
+
+
+    start = time.time()
+    bspl = model.BSPL_PhotAstrom_noPar_CircOrbs_Param1(mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, 
+                                                       muL_N, muS_E, muS_N,
+                                                     alpha, omega, big_omega, i, p, tp, aleph, aleph2, 
+                                                       [mag_src_pri], [mag_src_sec], np.array([b_sff]), raL, decL)
+
+    # Simulate
+    # photometric observations every 1 day and
+    # astrometric observations every 14 days
+    # for the bulge observing window. Observations missed
+    # for 125 days out of 365 days for photometry and missed
+    # for 245 days out of 365 days for astrometry.
+    t_pho = np.array([], dtype=float)
+    t_ast = np.array([], dtype=float)
+    for year_start in np.arange(54000, 60000, 365.25):
+        phot_win = 240.0
+        phot_start = (365.25 - phot_win) / 2.0
+        t_pho_new = np.arange(year_start + phot_start,
+                              year_start + phot_start + phot_win, 1)
+        t_pho = np.concatenate([t_pho, t_pho_new])
+
+        
+        ast_win = 120.0
+        ast_start = (365.25 - ast_win) / 2.0
+        t_ast_new = np.arange(year_start + ast_start,
+                              year_start + ast_start + ast_win, 28)
+        t_ast = np.concatenate([t_ast, t_ast_new])
+        
+    t_mod = np.arange(t_pho.min(), t_pho.max(), 1)
+    print(t_mod)
+    imag_pho = bspl.get_photometry(t_pho)
+    imag_mod = bspl.get_photometry(t_mod)
+
+    # Make the photometric observations.
+    # Assume 0.05 mag photoemtric errors at I=19.
+    # This means Signal = 400 e- at I=19.
+    flux0 = 400.0
+    imag0 = 19.0
+
+    flux_pho = flux0 * 10 ** ((imag_pho - imag0) / -2.5)
+    flux_pho_err = flux_pho ** 0.5
+    flux_pho += np.random.randn(len(t_pho)) * flux_pho_err
+    imag_pho = -2.5 * np.log10(flux_pho / flux0) + imag0
+    imag_pho_err = 1.087 / flux_pho_err
+
+    stop = time.time()
+
+    fmt = 'It took {0:.2f} seconds to evaluate the model at {1:d} time steps'
+    print(fmt.format(stop - start, len(t_mod) + len(t_ast) + len(t_pho)))
+
+    ##########
+    # Plot photometry
+    ##########
+    plt.figure(figsize=(20,10))
+    plt.clf()
+    plt.errorbar(t_pho, imag_pho, yerr=imag_pho_err, fmt='k.', label='Sim Obs',
+                 alpha=0.2)
+    plt.plot(t_mod, imag_mod, color='red', label='Model')
+    plt.gca().invert_yaxis()
+    plt.xlabel('Time (MJD)')
+    plt.ylabel('I (mag)')
+    plt.legend()
+
+    
+    # Make the astrometric observations.
+    # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
+    lens_pos = bspl.get_lens_astrometry(t_mod)
+    srce_pos = bspl.get_astrometry_unlensed(t_mod)
+    srce_pos_lensed_res = bspl.get_resolved_astrometry(t_mod)
+    srce_pos_lensed_unres = bspl.get_astrometry(t_mod)
+
+    srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
+
+    ##########
+    # Plot astrometry
+    ##########
+    plt.figure(figsize=(23, 10))
+    plt.clf()
+    plt.plot(lens_pos[:, 0], lens_pos[:, 1],
+             c='gray', marker='.', linestyle='none', alpha=0.2,
+             label='lens system')
+    plt.scatter(srce_pos[:, 0], srce_pos[:, 1],
+                c=t_mod, marker='.', s=2, alpha=0.2,
+                label='src unlensed')
+
+    colors = ['navy', 'blue', 'slateblue', 'darkslateblue', 'indigo']
+    for ii in range(srce_pos_lensed_res.shape[1]):
+        plt.plot(srce_pos_lensed_res[:, ii, 0], srce_pos_lensed_res[:, ii, 1],
+                 c=colors[ii], linestyle='none', marker='.', markersize=1,
+                 alpha=0.5,
+                 label='src lensed img{0:d}'.format(ii + 1))
+
+    plt.plot(srce_pos_lensed_unres[:, 0], srce_pos_lensed_unres[:, 1],
+             c='red', linestyle='-',
+             label='src lensed unres')
+
+    pos_ast_tmp = bspl.get_astrometry(t_ast)
+    pos_ast_err = np.ones((len(t_ast), 2), dtype=float) * 0.15 * 1e-3
+    pos_ast = pos_ast_tmp + pos_ast_err *  np.random.randn(len(t_ast), 2)
+
+    plt.errorbar(pos_ast[:, 0], pos_ast[:, 1],
+                 xerr=pos_ast_err[:, 0], yerr=pos_ast_err[:, 0],
+                 marker='.', color='black', alpha=0.2)
+
+    plt.gca().invert_xaxis()
+    plt.xlabel(r'$\Delta \alpha^*$ (mas)')
+    plt.ylabel(r'$\Delta \delta$ (mas)')
+    plt.legend(fontsize=8)
+    plt.subplots_adjust(left=0.25, top=0.8)
+
+    p2 = plt.gca().get_position().get_points().flatten()
+    ax_cbar = plt.gcf().add_axes([p2[0], 0.82, p2[2] - p2[0], 0.05])
+    plt.colorbar(cax=ax_cbar, orientation='horizontal', label='Time (MJD)',
+                 ticklocation='top')
+
+
+    
+    data = {}
+    data['target'] = target
+    data['phot_data'] = 'sim'
+    data['ast_data'] = 'sim'
+    data['phot_files'] = ['fake_data_parallax_phot1']
+    data['ast_files'] = ['fake_data_parallax_ast1']
+
+    data['t_phot1'] = t_pho
+    data['mag1'] = imag_pho
+    data['mag_err1'] = imag_pho_err
+
+    data['t_ast1'] = t_ast
+    data['xpos1'] = pos_ast[:, 0]
+    data['ypos1'] = pos_ast[:, 1]
+    data['xpos_err1'] = pos_ast_err[:, 0]
+    data['ypos_err1'] = pos_ast_err[:, 1]
+
+    data['raL'] = raL
+    data['decL'] = decL
+
+    params = {}
+    params['mL'] = mL
+    params['t0'] = t0
+    params['beta'] = beta
+    params['dL'] = dL
+    params['dL_dS'] = dL_dS
+    params['xS0_E'] = xS0_E
+    params['xS0_N'] = xS0_N
+    params['muL_E'] = muL_E
+    params['muL_N'] = muL_N
+
+    params['muS_E'] = muS_E
+    params['muS_N'] = muS_N
+
+    params['alpha'] = alpha
+    params['omega'] = omega
+    params['big_omega'] = big_omega
+
+    params['i'] = i
+    params['p'] = p
+    params['tp'] = tp
+
+    params['aleph'] = aleph
+    params['aleph2'] = aleph2
+
+    
+
+                       
+    params['b_sff'] = np.array([b_sff])
+    params['mag_src_pri'] = np.array([mag_src_pri])
+    params['mag_src_sec'] = np.array([mag_src_sec])
+
+
+    params['raL'] = raL
+    params['decL'] = decL
+
+    
+    if animate == True:
+        ani = bspl.dexanimate(20, 400, 2, 'fake_fit_deceptacon', [20, 20], 0.04, "yes", "resolved_unlensed_resolved_lensed",  loc ='upper right')
+    else:
+        ani = None
+    return data,  params, bspl, ani
+

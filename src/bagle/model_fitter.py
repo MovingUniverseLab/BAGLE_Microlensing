@@ -210,7 +210,22 @@ class PSPL_Solver(Solver):
         'gp_log_omega04_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega0':('make_norm_gen', 0, 5),
         'delta_muS_sec_E':('make_gen', -1, 1),
-        'delta_muS_sec_N':('make_gen', -1, 1)
+        'delta_muS_sec_N':('make_gen', -1, 1),
+        #dex new priors
+        't0_com': ('make_t0_gen', None, None),
+        'x0_system_E': ('make_gen', -10, 10),
+        'x0_system_N': ('make_gen', -10, 10),
+        'muS_system_E': ('make_gen', -10, 10),
+        'muS_system_N': ('make_gen', -10, 10),
+        'omega': ('make_gen', 0, 90),
+        'big_omega': ('make_gen', 0, 90),
+        'i':('make_gen', 0, 90),
+        'e':('make_gen', 0, 0.9),
+        'p': ('make_gen', 0, 500),
+        'tp': ('make_gen', 0, 100),
+        'aleph': ('make_gen', 1, 10),
+        'aleph_sec':('make_gen', 1, 10)
+
     }
 
     def __init__(self, data, model_class,
@@ -591,8 +606,8 @@ class PSPL_Solver(Solver):
 
         else:
             mod = self.model_class(*params_dict.values())
-
         # FIXME: Why are we updating params here???
+        
         if not isinstance(params, (dict, Row)):
 
             # FIXME: is there better way to do this.
@@ -2958,12 +2973,10 @@ def generate_params_dict(params, fitter_param_names):
     multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
     
     params_dict = {}
-    
     for i, param_name in enumerate(fitter_param_names):
         # Skip some parameters.
         if any([x in param_name for x in skip_list]):
             continue
-
         if isinstance(params, (dict, Row)):
             key = param_name
         else:
@@ -2986,7 +2999,6 @@ def generate_params_dict(params, fitter_param_names):
                     
                 # Add this filter to our list.
                 params_dict[filt_param].append(params[key])
-
             if filt_param in multi_dict:
                 # Handle the optional filter-dependent fit parameters (required params).  
                 # They need to be grouped as a dicionary for input into a model.
