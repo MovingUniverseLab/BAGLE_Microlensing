@@ -1105,13 +1105,16 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         self.muL_E, self.muL_N = self.muL
 
         # Calculate the Einstein radius
-        thetaE = units.rad * jnp.sqrt(
-            ((4.0 * const.G * mL * units.M_sun / const.c ** 2) * inv_dist_diff).decompose())
+        thetaE = units.rad * np.sqrt(
+            ((4.0 * const.G * mL * units.M_sun / const.c ** 2) * inv_dist_diff))
         self.thetaE_amp = thetaE.to('mas').value  # mas
         self.thetaE_hat = self.muRel / self.muRel_amp
         self.muRel_hat = self.thetaE_hat
         self.thetaE = self.thetaE_amp * self.thetaE_hat
         self.thetaE_E, self.thetaE_N = self.thetaE
+
+        # print("jax model: ", "thetaE: ", thetaE)
+
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
@@ -2835,6 +2838,16 @@ class PSPL_noParallax(ParallaxClassABC):
         u = u0 + tau * thetaE_hat
         u_amp = jnp.linalg.norm(u, axis=1)
         A = (u_amp ** 2 + 2) / (u_amp * jnp.sqrt(u_amp ** 2 + 4))
+
+        # printdir = {
+        #     "tau": tau,
+        #     "u0": self.u0,
+        #     "thetaE": self.thetaE_hat,
+        #     "u": u,
+        #     "u_amp": u_amp,
+        #     "A": A
+        # }
+        # print('model jax ', printdir)
         
         return A
 
@@ -10137,6 +10150,45 @@ def flux2mag(flux):
     return mag
 
 ''' Jaxified '''
+# def u0_hat_from_thetaE_hat(thetaE_hat, beta):
+#     """
+#     Calculate the closest approach vector direction. Define the beta sign convention
+#     as Andy Gould does with 
+    
+#         * beta > 0 means u0_E > 0
+#         * u0_amp > 0 mean u0_E > 0 
+
+#     See `Gould 2004, pg 320, bottom right`
+    
+#     u0 > 0 --> lens passes to the right side of the source as seen from Earth   
+
+#     :math:`thetaX0 = xS0 - xL0 =  u0 * thetaE`
+
+#     which implies that:
+
+#         * u0_E > 0 for u0 > 0
+#         * u0_E < 0 for u0 < 0
+
+#     which is what we use.
+#     """
+#     u0_hat = jnp.zeros(2, dtype=float)
+#     if beta > 0:
+#         u0_hat.at[0].set(jnp.abs(thetaE_hat[1]))
+
+#         if jnp.sign(thetaE_hat).prod() > 0:
+#             u0_hat.at[1].set(-jnp.abs(thetaE_hat[0]))
+#         else:
+#             u0_hat.at[1].set(jnp.abs(thetaE_hat[0]))
+#     else:
+#         u0_hat.at[0].set(-jnp.abs(thetaE_hat[1]))
+
+#         if jnp.sign(thetaE_hat).prod() > 0:
+#             u0_hat.at[1].set(jnp.abs(thetaE_hat[0]))
+#         else:
+#             u0_hat[1].set(-jnp.abs(thetaE_hat[0]))
+
+#     return u0_hat
+
 def u0_hat_from_thetaE_hat(thetaE_hat, beta):
     """
     Calculate the closest approach vector direction. Define the beta sign convention
@@ -10158,21 +10210,21 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
 
     which is what we use.
     """
-    u0_hat = jnp.zeros(2, dtype=float)
+    u0_hat = np.zeros(2, dtype=float)
     if beta > 0:
-        u0_hat.at[0].set(jnp.abs(thetaE_hat[1]))
+        u0_hat[0] = np.abs(thetaE_hat[1])
 
-        if jnp.sign(thetaE_hat).prod() > 0:
-            u0_hat.at[1].set(-jnp.abs(thetaE_hat[0]))
+        if np.sign(thetaE_hat).prod() > 0:
+            u0_hat[1] = -np.abs(thetaE_hat[0])
         else:
-            u0_hat.at[1].set(jnp.abs(thetaE_hat[0]))
+            u0_hat[1] = np.abs(thetaE_hat[0])
     else:
-        u0_hat.at[0].set(-jnp.abs(thetaE_hat[1]))
+        u0_hat[0] = -np.abs(thetaE_hat[1])
 
-        if jnp.sign(thetaE_hat).prod() > 0:
-            u0_hat.at[1].set(jnp.abs(thetaE_hat[0]))
+        if np.sign(thetaE_hat).prod() > 0:
+            u0_hat[1] = np.abs(thetaE_hat[0])
         else:
-            u0_hat[1].set(-jnp.abs(thetaE_hat[0]))
+            u0_hat[1] = -np.abs(thetaE_hat[0])
 
     return u0_hat
 
