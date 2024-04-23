@@ -359,6 +359,8 @@ from abc import ABC
 import jax.numpy as jnp
 import jax
 
+jax.config.update("jax_traceback_filtering", "off")
+
 au_day_to_km_s = 1731.45683
 
 # Use the JPL ephemerides.
