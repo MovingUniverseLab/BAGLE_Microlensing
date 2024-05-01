@@ -223,7 +223,7 @@ class PSPL_Solver(Solver):
                  n_live_points=300,
                  evidence_tolerance=0.5, sampling_efficiency=0.8,
                  n_iter_before_update=100, null_log_evidence=-1e90,
-                 max_modes=100, mode_tolerance=-1e90,
+                 max_modes=100, mode_tolerance=-1e90, single_gp=False,
                  outputfiles_basename="chains/1-", seed=-1, verbose=False,
                  resume=False, context=0, write_output=True, log_zero=-1e100,
                  max_iter=0, init_MPI=False, dump_callback='default'):
@@ -238,6 +238,10 @@ class PSPL_Solver(Solver):
 
         use_phot_optional_params : bool, or list of bools, optional
 	    optional photometry parameters
+     
+        single_gp: bool, optional
+        Set as true if there are multiple datasets but only a single set
+        of gp parameters.
         
         
         """
@@ -265,6 +269,7 @@ class PSPL_Solver(Solver):
         self.custom_additional_param_names = custom_additional_param_names
         self.n_phot_sets = None
         self.n_ast_sets = None
+        self.single_gp = single_gp
         self.fitter_param_names = None
         self.fixed_param_names = None
         self.additional_param_names = None
@@ -369,11 +374,17 @@ class PSPL_Solver(Solver):
                 for opt_phot_name in self.model_class.phot_optional_param_names:
                     if isinstance(self.use_phot_optional_params, (list, np.ndarray)):
                         if self.use_phot_optional_params[n_phot_sets-1]:
-                            phot_params.append(opt_phot_name + str(n_phot_sets))
+                            if self.single_gp is True and n_phot_sets > 1:
+                                continue
+                            else:
+                                phot_params.append(opt_phot_name + str(n_phot_sets))
                     # Case: single value -- set for all filters. 
                     else:
                         if self.use_phot_optional_params:
-                            phot_params.append(opt_phot_name + str(n_phot_sets))
+                            if self.single_gp is True and n_phot_sets > 1:
+                                continue
+                            else:
+                                phot_params.append(opt_phot_name + str(n_phot_sets))
                         else:
                             msg = 'WARNING: Your model supports optional photometric parameters; '
                             msg += 'but you have disabled them for all filters. '
@@ -428,7 +439,7 @@ class PSPL_Solver(Solver):
                 except ValueError:
                     print('*** CHECK YOUR INPUT! All astrometry data must have a corresponding photometry data set! ***')
                     raise
-
+                    
         self.n_phot_sets = n_phot_sets
         self.n_ast_sets = n_ast_sets
         self.map_phot_idx_to_ast_idx = map_phot_idx_to_ast_idx
@@ -447,6 +458,10 @@ class PSPL_Solver(Solver):
                     if param_name in self.gp_params:
                         if self.use_phot_optional_params is True:
                             for ff in range(n_phot_sets):
+                                # Only make one set of gp parameters if
+                                # multiple phot sets but one set of gp params
+                                if self.single_gp is True and ff > 1:
+                                    continue
                                 self.additional_param_names += [param_name + str(ff+1)]
                         elif self.use_phot_optional_params is False:
                             continue
@@ -465,7 +480,12 @@ class PSPL_Solver(Solver):
                     if param_name in self.gp_params:
                         if self.use_phot_optional_params is True:
                             for nn in range(self.n_phot_sets):
-                                self.additional_param_names += [param_name + str(nn+1)]
+                                # Only make one set of gp parameters if
+                                # multiple phot sets but one set of gp params
+                                if self.single_gp is True and nn > 0:
+                                    continue
+                                else:
+                                    self.additional_param_names += [param_name + str(nn+1)]
                         elif self.use_phot_optional_params is False:
                             continue
                         else:
@@ -474,7 +494,7 @@ class PSPL_Solver(Solver):
                                     self.additional_param_names += [param_name + str(ii+1)]
                 else:
                     self.additional_param_names += [param_name]
-
+        
         self.all_param_names = self.fitter_param_names + self.additional_param_names
 
         self.n_dims = len(self.fitter_param_names)
