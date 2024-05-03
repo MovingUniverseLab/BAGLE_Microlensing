@@ -3160,7 +3160,7 @@ def plot_params(model):
                         fontsize=10)
             nrow += 1
 
-    nrow = 0
+    #nrow = 0
 
     for ff in range(len(model.additional_param_names)):
         pname = model.additional_param_names[ff]
