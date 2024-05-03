@@ -10,16 +10,13 @@ from bagle import model
 from bagle import model_fitter
 from bagle import plot_models
 import time
-
 from astropy.time import Time
-from astropy.coordinates import solar_system_ephemeris, EarthLocation, spherical_to_cartesian, cartesian_to_spherical
-from astropy.coordinates import get_body_barycentric, get_body, get_moon, get_body_barycentric_posvel
 
 # Always generate the same fake data.
 np.random.seed(0)
 
 
-def fake_lightcurve_parallax_bulge(outdir='./casey_testing_stuff/'):
+def fake_lightcurve_parallax_bulge(outdir='./casey_testing_stuff/', target='unknown'):
     raL_in = 17.30 * 15.  # Bulge R.A.
     decL_in = -29.0
     mL_in = 1.0  # msun
@@ -220,22 +217,19 @@ def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     # This means Signal = 400 e- at I=19.
     flux0 = 4000.0
     imag0 = 19.0
+    ast_err0 = 0.01 * 1e-3  # arcsec error at 19th mag
     imag_obs = pspl_par_in.get_photometry(t_phot)
     imag_obs_err = np.zeros(len(t_phot))
     if noise:
-        flux_obs = flux0 * 10 ** ((imag_obs - imag0) / -2.5)
-        flux_obs_err = flux_obs ** 0.5
-        flux_obs += np.random.randn(len(t_phot)) * flux_obs_err
-        imag_obs = -2.5 * np.log10(flux_obs / flux0) + imag0
-        imag_obs_err = 1.087 / flux_obs_err
+        imag_obs, imag_obs_err = add_photometric_noise(flux0, imag0, imag_obs)
 
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs. 
     if noise:
         pos_obs_tmp = pspl_par_in.get_astrometry(t_ast)
-        pos_obs_err = np.ones((len(t_ast), 2), dtype=float) * 0.01 * 1e-3
-        pos_obs = pos_obs_tmp + pos_obs_err * np.random.randn(len(t_ast), 2)
-    else: 
+        mag_obs_tmp = pspl_par_in.get_photometry(t_ast)
+        pos_obs, pos_obs_err = add_astrometric_noise(flux0, imag0, ast_err0, mag_obs_tmp, pos_obs_tmp)
+    else:
         pos_obs = pspl_par_in.get_astrometry(t_ast)
         pos_obs_err = np.zeros((len(t_ast), 2))
     
@@ -276,8 +270,10 @@ def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     params['muL_N'] = muL_in[1]
     params['dL'] = dL_in
     params['dS'] = dS_in
-    params['b_sff'] = b_sff_in
-    params['mag_src'] = mag_src_in
+    params['b_sff'] = np.array([b_sff_in])
+    params['mag_src'] = np.array([mag_src_in])
+    params['b_sff1'] = b_sff_in
+    params['mag_sr1c'] = mag_src_in
 
     # Extra parameters
     params['dL_dS'] = params['dL'] / params['dS']
@@ -396,29 +392,20 @@ def fake_data1(beta_sign=-1, plot=False, verbose=False):
     # This means Signal = 400 e- at I=19.
     flux0 = 400.0
     imag0 = 19.0
-    # flux_in = flux0 * 10**((imag_in - imag0) / -2.5)
-    # flux_obs = flux_in * A
-    # flux_obs_err = flux_obs**0.5
-    # flux_obs += np.random.randn(len(t_phot)) * flux_obs_err
-    # imag_obs = -2.5 * np.log10(flux_obs / flux0) + imag0
-    # imag_obs_err = 1.087 / flux_obs_err
+    ast_err0 = 0.15 * 1e-3
 
     imag_mod = pspl_in.get_photometry(t_mod)
     imag_obs = pspl_in.get_photometry(t_phot)
-    flux_obs = flux0 * 10 ** ((imag_obs - imag0) / -2.5)
-    flux_obs_err = flux_obs ** 0.5
-    flux_obs += np.random.randn(len(t_phot)) * flux_obs_err
-    imag_obs = -2.5 * np.log10(flux_obs / flux0) + imag0
-    imag_obs_err = 1.087 / flux_obs_err
+    imag_obs, imag_obs_err = add_photometric_noise(flux0, imag0, imag_obs)
 
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs. 
     lens_pos_in = pspl_in.get_lens_astrometry(t_mod)
     srce_pos_in = pspl_in.get_astrometry_unlensed(t_mod)
     pos_mod = pspl_in.get_astrometry(t_mod)
-    pos_obs_tmp = pspl_in.get_astrometry(t_ast)  # srce_pos_in + (shift * 1e-3)
-    pos_obs_err = np.ones((len(t_ast), 2), dtype=float) * 0.15 * 1e-3
-    pos_obs = pos_obs_tmp + pos_obs_err * np.random.randn(len(t_ast), 2)
+    pos_obs = pspl_in.get_astrometry(t_ast)  # srce_pos_in + (shift * 1e-3)
+    mag_at_tast = pspl_in.get_photometry(t_ast)
+    pos_obs, pos_obs_err = add_astrometric_noise(flux0, imag0, ast_err0, mag_at_tast, pos_obs)
 
     data = {}
     data['target'] = 'NoPar'
@@ -452,29 +439,32 @@ def fake_data1(beta_sign=-1, plot=False, verbose=False):
     params['dL_dS'] = dL_in / dS_in
     params['b_sff1'] = b_sff_in
     params['mag_src1'] = mag_src_in
+    params['b_sff'] = np.array([b_sff_in])
+    params['mag_src'] = np.array([mag_src_in])
 
     if plot:
-        model_fitter.plot_photometry(data, pspl_in)
-        plt.figure(1)
-        plt.title('Input Data and Model')
+        phot_fig = model_fitter.plot_photometry(data, pspl_in)
+        phot_fig.axies[0].set_title('Input Data and Model')
 
-        model_fitter.plot_astrometry(data, pspl_in)
-        plt.figure(2)
-        plt.title('Input Data and Model')
-        plt.figure(3)
-        plt.title('Input Data and Model')
-        plt.figure(4)
-        plt.title('Input Data and Model')
+        ast_figs = model_fitter.plot_astrometry(data, pspl_in)
+        ast_figs[0].axes[0].set_title('Input Data and Model')
+        ast_figs[0].savefig(outdir + target + '_fake_data_ast.png')
+
+        ast_figs[1].axes[0].set_title('Input Data and Model')
+        ast_figs[1].savefig(outdir + target + '_fake_data_t_vs_E.png')
+
+        ast_figs[2].axes[0].set_title('Input Data and Model')
+        ast_figs[2].savefig(outdir + target + '_fake_data_t_vs_N.png')
 
     return data, params
 
-def fake_data_PSBL(outdir='', outroot='psbl',
+def fake_data_PSBL(outdir='', outroot='psbl_',
                    raL=259.5, decL=-29.0,
-                   mLp=10, mLs=10, t0=57000,
-                   xS0_E=0, xS0_N=0, beta=5.0,
-                   muL_E=0, muL_N=0, muS_E=1, muS_N=1,
-                   dL=4000, dS=8000, sep=5e-3, alpha=90,
-                   mag_src=18, b_sff=1, parallax=True,
+                   mLp=10, mLs=5, t0=57000,
+                   xS0_E=0, xS0_N=0, beta=2,
+                   muL_E=0, muL_N=0, muS_E=3, muS_N=0,
+                   dL=3000, dS=8000, sep=10, alpha=90,
+                   mag_src=14, b_sff=1, parallax=True,
                    target='PSBL', animate=False):
     """
     Optional Inputs
@@ -556,7 +546,7 @@ def fake_data_PSBL(outdir='', outroot='psbl',
         phot_win = 240.0
         phot_start = (365.25 - phot_win) / 2.0
         t_pho_new = np.arange(year_start + phot_start,
-                              year_start + phot_start + phot_win, 1)
+                              year_start + phot_start + phot_win, 10)
         t_pho = np.concatenate([t_pho, t_pho_new])
 
         ast_win = 120.0
@@ -578,13 +568,10 @@ def fake_data_PSBL(outdir='', outroot='psbl',
     # Assume 0.05 mag photoemtric errors at I=19.
     # This means Signal = 400 e- at I=19.
     flux0 = 400.0
-    imag0 = 19.0
+    imag0 = 19.
+    ast_err0 = 1.0 * 1e-3 # arcsec
 
-    flux_pho = flux0 * 10 ** ((imag_pho - imag0) / -2.5)
-    flux_pho_err = flux_pho ** 0.5
-    flux_pho += np.random.randn(len(t_pho)) * flux_pho_err
-    imag_pho = -2.5 * np.log10(flux_pho / flux0) + imag0
-    imag_pho_err = 1.087 / flux_pho_err
+    imag_pho, imag_pho_err = add_photometric_noise(flux0, imag0, imag_pho)
 
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
@@ -596,71 +583,14 @@ def fake_data_PSBL(outdir='', outroot='psbl',
 
     srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
 
+    pos_ast_tmp = psbl.get_astrometry(t_ast, image_arr=i_ast, amp_arr=A_ast)
+    mag_ast_tmp = psbl.get_photometry(t_ast, amp_arr=A_ast)
+    pos_ast, pos_ast_err = add_astrometric_noise(flux0, imag0, ast_err0, mag_ast_tmp, pos_ast_tmp)
+
     stop = time.time()
 
     fmt = 'It took {0:.2f} seconds to evaluate the model at {1:d} time steps'
     print(fmt.format(stop - start, len(t_mod) + len(t_ast) + len(t_pho)))
-
-    ##########
-    # Plot photometry
-    ##########
-    plt.figure(1)
-    plt.clf()
-    plt.errorbar(t_pho, imag_pho, yerr=imag_pho_err, fmt='k.', label='Sim Obs',
-                 alpha=0.2)
-    plt.plot(t_mod, imag_mod, color='red', label='Model')
-    plt.gca().invert_yaxis()
-    plt.xlabel('Time (MJD)')
-    plt.ylabel('I (mag)')
-    plt.legend()
-
-    ##########
-    # Plot astrometry
-    ##########
-    plt.figure(2)
-    plt.clf()
-    plt.plot(lens_pos[:, 0], lens_pos[:, 1],
-             c='gray', marker='.', linestyle='none', alpha=0.2,
-             label='lens system')
-    plt.plot(lens1_pos[:, 0], lens1_pos[:, 1],
-             c='black', linestyle='none', marker='o',
-             label='lens primary')
-    plt.plot(lens2_pos[:, 0], lens2_pos[:, 1],
-             c='black', linestyle='none', marker='o', mfc='none',
-             label='lens secondary')
-    plt.scatter(srce_pos[:, 0], srce_pos[:, 1],
-                c=t_mod, marker='.', s=2, alpha=0.2,
-                label='src unlensed')
-
-    colors = ['navy', 'blue', 'slateblue', 'darkslateblue', 'indigo']
-    for ii in range(srce_pos_lensed_res.shape[1]):
-        plt.plot(srce_pos_lensed_res[:, ii, 0], srce_pos_lensed_res[:, ii, 1],
-                 c=colors[ii], linestyle='none', marker='.', markersize=1,
-                 alpha=0.5,
-                 label='src lensed img{0:d}'.format(ii + 1))
-
-    plt.plot(srce_pos_lensed_unres[:, 0], srce_pos_lensed_unres[:, 1],
-             c='red', linestyle='-',
-             label='src lensed unres')
-
-    pos_ast_tmp = psbl.get_astrometry(t_ast, image_arr=i_ast, amp_arr=A_ast)
-    pos_ast_err = np.ones((len(t_ast), 2), dtype=float) * 0.15 * 1e-3
-    pos_ast = pos_ast_tmp + pos_ast_err * np.random.randn(len(t_ast), 2)
-
-    plt.errorbar(pos_ast[:, 0], pos_ast[:, 1],
-                 xerr=pos_ast_err[:, 0], yerr=pos_ast_err[:, 0],
-                 fmt='k.', color='black', alpha=0.2)
-
-    plt.gca().invert_xaxis()
-    plt.xlabel(r'$\Delta \alpha^*$ (mas)')
-    plt.ylabel(r'$\Delta \delta$ (mas)')
-    plt.legend(fontsize=8)
-    plt.subplots_adjust(left=0.25, top=0.8)
-
-    p2 = plt.gca().get_position().get_points().flatten()
-    ax_cbar = plt.gcf().add_axes([p2[0], 0.82, p2[2] - p2[0], 0.05])
-    plt.colorbar(cax=ax_cbar, orientation='horizontal', label='Time (MJD)',
-                 ticklocation='top')
 
     data = {}
     data['target'] = target
@@ -697,9 +627,15 @@ def fake_data_PSBL(outdir='', outroot='psbl',
     params['muL_N'] = muL_N
     params['dL'] = dL
     params['dS'] = dS
-    params['b_sff'] = b_sff
-    params['mag_src'] = mag_src
+    params['b_sff'] = [b_sff]
+    params['mag_src'] = [mag_src]
+    params['mag_base'] = [params['mag_src'] + 2.5 * np.log10(params['b_sff'])]
+    params['b_sff1'] = b_sff
+    params['mag_src1'] = mag_src
+    params['mag_base1'] = params['mag_base'][0]
     params['thetaE_amp'] = psbl.thetaE_amp
+    params['thetaE'] = psbl.thetaE_amp
+    params['log10_thetaE'] = np.log10(params['thetaE'])
     params['u0_amp'] = psbl.u0_amp
     params['tE'] = psbl.tE
     params['piS'] = psbl.piS
@@ -713,7 +649,19 @@ def fake_data_PSBL(outdir='', outroot='psbl',
     else:
         ani = None
 
-#    np.savetxt('fake_data_PSBL_phot.dat', (data['t_phot1'], data['mag1'], data['mag_err1']))
+    phot_fig = model_fitter.plot_photometry(data, psbl, dense_time=True)
+    phot_fig.axes[0].set_title('Input Data and Model')
+    phot_fig.savefig(outdir + outroot + '_fake_data_phot.png')
+
+    ast_figs = model_fitter.plot_astrometry(data, psbl, dense_time=True)
+    ast_figs[0].axes[0].set_title('Input Data and Model')
+    ast_figs[0].savefig(outdir + outroot + '_fake_data_ast.png')
+
+    ast_figs[1].axes[0].set_title('Input Data and Model')
+    ast_figs[1].savefig(outdir + outroot + '_fake_data_t_vs_E.png')
+
+    ast_figs[2].axes[0].set_title('Input Data and Model')
+    ast_figs[2].savefig(outdir + outroot + '_fake_data_t_vs_N.png')
 
     return data, params, psbl, ani
 
@@ -813,12 +761,8 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
     # This means Signal = 40000 e- at I=19.
     flux0 = 40000.0
     imag0 = 19.0
-
-    flux_pho = flux0 * 10 ** ((imag_pho - imag0) / -2.5)
-    flux_pho_err = flux_pho ** 0.5
-    flux_pho += np.random.randn(len(t_pho)) * flux_pho_err
-    imag_pho = -2.5 * np.log10(flux_pho / flux0) + imag0
-    imag_pho_err = 1.087 / flux_pho_err
+    ast_err0 = 0.15 * 1e-3
+    imag_pho, imag_pho_err = add_photometric_noise(flux0, imag0, imag_pho)
 
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
@@ -831,71 +775,16 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
 
     srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
 
+    pos_ast_tmp = psbl.get_astrometry(t_ast, image_arr=i_ast, amp_arr=A_ast)
+    mag_ast_tmp = psbl.get_photometry(t_ast, amp_arr=A_ast)
+    pos_ast, pos_ast_err = add_astrometric_noise(flux0, imag0, ast_err0, mag_ast_tmp, pos_ast_tmp)
+
+
     stop = time.time()
 
     fmt = 'It took {0:.2f} seconds to evaluate the model at {1:d} time steps'
     print(fmt.format(stop - start, len(t_mod) + len(t_ast) + len(t_pho)))
 
-    ##########
-    # Plot photometry
-    ##########
-    plt.figure(1)
-    plt.clf()
-    plt.errorbar(t_pho, imag_pho, yerr=imag_pho_err, fmt='k.', label='Sim Obs',
-                 alpha=0.2)
-    plt.plot(t_mod, imag_mod, color='red', label='Model')
-    plt.gca().invert_yaxis()
-    plt.xlabel('Time (MJD)')
-    plt.ylabel('I (mag)')
-    plt.legend()
-
-    ##########
-    # Plot astrometry
-    ##########
-    plt.figure(2)
-    plt.clf()
-    plt.plot(lens_pos[:, 0], lens_pos[:, 1],
-             c='gray', marker='.', linestyle='none', alpha=0.2,
-             label='lens system')
-    plt.plot(lens1_pos[:, 0], lens1_pos[:, 1],
-             c='black', linestyle='none', marker='o',
-             label='lens primary')
-    plt.plot(lens2_pos[:, 0], lens2_pos[:, 1],
-             c='black', linestyle='none', marker='o', mfc='none',
-             label='lens secondary')
-    plt.scatter(srce_pos[:, 0], srce_pos[:, 1],
-                c=t_mod, marker='.', s=2, alpha=0.2,
-                label='src unlensed')
-
-    colors = ['navy', 'blue', 'slateblue', 'darkslateblue', 'indigo']
-    for ii in range(srce_pos_lensed_res.shape[1]):
-        plt.plot(srce_pos_lensed_res[:, ii, 0], srce_pos_lensed_res[:, ii, 1],
-                 c=colors[ii], linestyle='none', marker='.', markersize=1,
-                 alpha=0.5,
-                 label='src lensed img{0:d}'.format(ii + 1))
-
-    plt.plot(srce_pos_lensed_unres[:, 0], srce_pos_lensed_unres[:, 1],
-             c='red', linestyle='-',
-             label='src lensed unres')
-
-    pos_ast_tmp = psbl.get_astrometry(t_ast, image_arr=i_ast, amp_arr=A_ast)
-    pos_ast_err = np.ones((len(t_ast), 2), dtype=float) * 0.15 * 1e-3
-    pos_ast = pos_ast_tmp + pos_ast_err * np.random.randn(len(t_ast), 2)
-
-    plt.errorbar(pos_ast[:, 0], pos_ast[:, 1],
-                 xerr=pos_ast_err[:, 0], yerr=pos_ast_err[:, 0],
-                 fmt='k.', color='black', alpha=0.2)
-
-    plt.gca().invert_xaxis()
-    plt.xlabel(r'$\Delta \alpha^*$ (mas)')
-    plt.ylabel(r'$\Delta \delta$ (mas)')
-    plt.legend(fontsize=8)
-    plt.subplots_adjust(left=0.25, top=0.8)
-
-    p2 = plt.gca().get_position().get_points().flatten()
-    ax_cbar = plt.gcf().add_axes([p2[0], 0.82, p2[2] - p2[0], 0.05])
-    plt.colorbar(cax=ax_cbar, orientation='horizontal', label='Time (MJD)',
-                 ticklocation='top')
 
     data = {}
     data['t_phot1'] = t_pho
@@ -931,14 +820,30 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
     params['muL_N'] = muL_N
     params['dL'] = dL
     params['dS'] = dS
-    params['b_sff'] = b_sff
-    params['mag_src'] = mag_src
+    params['b_sff'] = [b_sff]
+    params['mag_src'] = [mag_src]
+    params['b_sff1'] = b_sff
+    params['mag_src1'] = mag_src
 
     out_name = outdir + outroot + '_movie.gif'
     if animate:
         ani = plot_models.animate_PSBL(psbl, outfile=out_name)
     else:
         ani = None
+
+    phot_fig = model_fitter.plot_photometry(data, psbl, dense_time=True)
+    phot_fig.axes[0].set_title('Input Data and Model')
+    phot_fig.savefig(outdir + outroot + '_fake_data_phot.png')
+
+    ast_figs = model_fitter.plot_astrometry(data, psbl, dense_time=True)
+    ast_figs[0].axes[0].set_title('Input Data and Model')
+    ast_figs[0].savefig(outdir + outroot + '_fake_data_ast.png')
+
+    ast_figs[1].axes[0].set_title('Input Data and Model')
+    ast_figs[1].savefig(outdir + outroot + '_fake_data_t_vs_E.png')
+
+    ast_figs[2].axes[0].set_title('Input Data and Model')
+    ast_figs[2].savefig(outdir + outroot + '_fake_data_t_vs_N.png')
 
 #    np.savetxt('fake_data_continuous_tiny_err_PSBL_phot.dat', (data['t_phot1'], data['mag1'], data['mag_err1']))
 
@@ -1026,30 +931,12 @@ def fake_data_PSBL_phot(outdir='', outroot='psbl',
     # This means Signal = 400 e- at I=19.
     flux0 = 400.0
     imag0 = 19.0
-
-    flux_pho = flux0 * 10 ** ((imag_pho - imag0) / -2.5)
-    flux_pho_err = flux_pho ** 0.5
-    flux_pho += np.random.randn(len(t_pho)) * flux_pho_err
-    imag_pho = -2.5 * np.log10(flux_pho / flux0) + imag0
-    imag_pho_err = 1.087 / flux_pho_err
+    imag_pho, imag_pho_err = add_photometric_noise(flux0, imag0, imag_pho)
 
     stop = time.time()
 
     fmt = 'It took {0:.2f} seconds to evaluate the model at {1:d} time steps'
     print(fmt.format(stop - start, len(t_mod) + len(t_pho)))
-
-    ##########
-    # Plot photometry
-    ##########
-    plt.figure(1)
-    plt.clf()
-    plt.errorbar(t_pho, imag_pho, yerr=imag_pho_err, fmt='k.', label='Sim Obs',
-                 alpha=0.2)
-    plt.plot(t_mod, imag_mod, color='red', label='Model')
-    plt.gca().invert_yaxis()
-    plt.xlabel('Time (MJD)')
-    plt.ylabel('I (mag)')
-    plt.legend()
 
     data = {}
     data['t_phot1'] = t_pho
@@ -1073,14 +960,20 @@ def fake_data_PSBL_phot(outdir='', outroot='psbl',
     params['q'] = q
     params['sep'] = sep
     params['phi'] = phi
-    params['b_sff'] = b_sff1
-    params['mag_src'] = mag_src1
+    params['b_sff'] = [b_sff1]
+    params['mag_src'] = [mag_src1]
+    params['b_sff1'] = b_sff1
+    params['mag_src1'] = mag_src1
 
     out_name = outdir + outroot + '_movie.gif'
     if animate:
         ani = plot_models.animate_PSBL(psbl, outfile=out_name)
     else:
         ani = None
+
+    phot_fig = model_fitter.plot_photometry(data, psbl, dense_time=True)
+    phot_fig.axes[0].set_title('Input Data and Model')
+    phot_fig.savefig(outdir + outroot + '_fake_data_phot.png')
 
     return data, params, psbl, ani
 
@@ -1130,21 +1023,13 @@ def fake_data_multiphot_parallax(raL_in, decL_in, t0_in, u0_amp_in, tE_in, piE_E
     iflux0 = 4000.0
     imag0 = 19.0
     imag_obs1 = pspl_par_in.get_photometry(t_phot1, filt_idx=0)
-    flux_obs1 = iflux0 * 10 ** ((imag_obs1 - imag0) / -2.5)
-    flux_obs1_err = flux_obs1 ** 0.5
-    flux_obs1 += np.random.randn(len(t_phot1)) * flux_obs1_err
-    imag_obs1 = -2.5 * np.log10(flux_obs1 / iflux0) + imag0
-    imag_obs1_err = 1.087 / flux_obs1_err
+    imag_obs1, imag_obs1_err = add_photometric_noise(iflux0, imag0, imag_obs1)
 
     kflux0 = 4000.0
     kmag0 = 18.0
     kmag_obs2 = pspl_par_in.get_photometry(t_phot2, filt_idx=1)
-    flux_obs2 = kflux0 * 10 ** ((kmag_obs2 - kmag0) / -2.5)
-    flux_obs2_err = flux_obs2 ** 0.5
-    flux_obs2 += np.random.randn(len(t_phot2)) * flux_obs2_err
-    imag_obs2 = -2.5 * np.log10(flux_obs2 / kflux0) + kmag0
-    imag_obs2_err = 1.087 / flux_obs2_err
-    
+    imag_obs2, imag_obs2_err = add_photometric_noise(kflux0, kmag0, kmag_obs2)
+
 
     data = {}
     data['t_phot1'] = t_phot1
@@ -1171,6 +1056,8 @@ def fake_data_multiphot_parallax(raL_in, decL_in, t0_in, u0_amp_in, tE_in, piE_E
     params['tE'] = tE_in
     params['piE_E'] = piE_E_in
     params['piE_N'] = piE_N_in
+    params['b_sff'] = [b_sff_in1, b_sff_in2]
+    params['mag_src'] = [mag_src_in1, mag_src_in2]
     params['b_sff1'] = b_sff_in1
     params['mag_src1'] = mag_src_in1
     params['b_sff2'] = b_sff_in2
@@ -1248,11 +1135,7 @@ def fake_correlated_data_with_astrom():
     flux0 = 4000.0
     imag0 = 19.0
     imag_obs = our_model.get_photometry(t_phot)
-    flux_obs = flux0 * 10 ** ((imag_obs - imag0) / -2.5)
-    flux_obs_err = flux_obs ** 0.5
-    flux_obs += np.random.randn(len(t_phot)) * flux_obs_err
-    imag_obs_uncorr = -2.5 * np.log10(flux_obs / flux0) + imag0
-    imag_obs_err = 1.087 / flux_obs_err
+    imag_obs_uncorr, imag_obs_err = add_photometric_noise(flux0, imag0, imag_obs)
 
     K = 0.001*np.exp(-0.5*(t_phot[:, None] - t_phot[None, :])**2/1.5)
     K[np.diag_indices(len(t_phot))] += imag_obs_err**2
@@ -1332,6 +1215,8 @@ def fake_correlated_data_with_astrom():
     params['muS_N'] = muS_N
     params['b_sff1'] = b_sff
     params['mag_src1'] = mag_src
+    params['b_sff'] = [b_sff]
+    params['mag_src'] = [mag_src]
     params['raL'] = raL
     params['decL'] = decL
 
@@ -1378,11 +1263,7 @@ def fake_correlated_data_multiphot(t0 = 57000, u0_amp = 0.1, tE = 150,
     flux0 = 4000.0
     imag0 = 19.0
     imag_obs = our_model.get_photometry(t_phot)
-    flux_obs = flux0 * 10 ** ((imag_obs - imag0) / -2.5)
-    flux_obs_err = flux_obs ** 0.5
-    flux_obs += np.random.randn(len(t_phot)) * flux_obs_err
-    imag_obs_uncorr = -2.5 * np.log10(flux_obs / flux0) + imag0
-    imag_obs_err = 1.087 / flux_obs_err
+    imag_obs_uncorr, imag_obs_err = add_photometric_noise(flux0, imag0, imag_obs)
 
     K = 0.01*np.exp(-0.5*(t_phot[:, None] - t_phot[None, :])**2/1.5)
     K[np.diag_indices(len(t_phot))] += imag_obs_err**2
@@ -1429,6 +1310,8 @@ def fake_correlated_data_multiphot(t0 = 57000, u0_amp = 0.1, tE = 150,
     params['piE_N'] = 0.05
     params['b_sff1'] = 0.9
     params['mag_src1'] = 19.0
+    params['b_sff'] = [params['b_sff1']]
+    params['mag_src'] = [params['mag_src1']]
     params['gp_log_sigma'] = 1
     params['gp_log_rho'] = 0.1
     params['gp_log_So'] = 1
@@ -1480,11 +1363,7 @@ def fake_correlated_data(t0 = 57000, u0_amp = 0.1, tE = 150,
     flux0 = 4000.0
     imag0 = 19.0
     imag_obs = our_model.get_photometry(t_phot)
-    flux_obs = flux0 * 10 ** ((imag_obs - imag0) / -2.5)
-    flux_obs_err = flux_obs ** 0.5
-    flux_obs += np.random.randn(len(t_phot)) * flux_obs_err
-    imag_obs_uncorr = -2.5 * np.log10(flux_obs / flux0) + imag0
-    imag_obs_err = 1.087 / flux_obs_err
+    imag_obs_uncorr, imag_obs_err = add_photometric_noise(flux0, imag0, imag_obs)
 
     K = 0.01*np.exp(-0.5*(t_phot[:, None] - t_phot[None, :])**2/1.5)
     K[np.diag_indices(len(t_phot))] += imag_obs_err**2
@@ -1530,6 +1409,8 @@ def fake_correlated_data(t0 = 57000, u0_amp = 0.1, tE = 150,
     params['piE_N'] = 0.05
     params['b_sff1'] = 0.9
     params['mag_src1'] = 19.0
+    params['b_sff'] = [params['b_sff1']]
+    params['mag_src'] = [params['mag_src1']]
     params['gp_log_sigma1'] = 1
     params['gp_log_rho1'] = 0.1
     params['gp_log_So1'] = 1
@@ -1584,11 +1465,7 @@ def fake_correlated_data_lunch_talk():
     flux0 = 4000.0
     imag0 = 19.0
     imag_obs = our_model.get_photometry(t_phot)
-    flux_obs = flux0 * 10 ** ((imag_obs - imag0) / -2.5)
-    flux_obs_err = flux_obs ** 0.5
-    flux_obs += np.random.randn(len(t_phot)) * flux_obs_err
-    imag_obs_uncorr = -2.5 * np.log10(flux_obs / flux0) + imag0
-    imag_obs_err = 1.087 / flux_obs_err
+    imag_obs, imag_obs_err = add_photometric_noise(flux0, imag0, imag_obs)
 
     diff = t_phot[:, None] - t_phot[None, :]
     l1 = 1
@@ -1651,6 +1528,8 @@ def fake_correlated_data_lunch_talk():
     params['piE_N'] = piE_N
     params['b_sff1'] = b_sff
     params['mag_src1'] = mag_src
+    params['b_sff'] = [b_sff]
+    params['mag_src'] = [mag_src]
     params['raL'] = raL
     params['decL'] = decL
 
@@ -1785,17 +1664,18 @@ def fake_correlated_data_lunch_talk():
 #     params['mag_src'] = mag_src_in
 #     params['b_sff'] = b_sff_in
 
-#     model_fitter_reorg.plot_photometry(data, fsbl_in)
-#     plt.figure(1)
-#     plt.title('Input Data and Model')
-
-#     model_fitter_reorg.plot_astrometry(data, fsbl_in)
-#     plt.figure(2)
-#     plt.title('Input Data and Model')
-#     plt.figure(3)
-#     plt.title('Input Data and Model')
-#     plt.figure(4)
-#     plt.title('Input Data and Model')
+#     phot_fig = model_fitter.plot_photometry(data, fsbl_in)
+#     phot_fig.axies[0].set_title('Input Data and Model')
+#
+#     ast_figs = model_fitter.plot_astrometry(data, fsbl_in)
+#     ast_figs[0].axes[0].set_title('Input Data and Model')
+#     ast_figs[0].savefig(outdir + target + '_fake_data_ast.png')
+#
+#     ast_figs[1].axes[0].set_title('Input Data and Model')
+#     ast_figs[1].savefig(outdir + target + '_fake_data_t_vs_E.png')
+#
+#     ast_figs[2].axes[0].set_title('Input Data and Model')
+#     ast_figs[2].savefig(outdir + target + '_fake_data_t_vs_N.png')
 
 #     return data, params
 
@@ -1937,18 +1817,15 @@ def fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     # This means Signal = 400 e- at I=19.
     flux0 = 4000.0
     imag0 = 19.0
+    ast_err0 = 0.01 * 1e-3
     imag_obs = pspl_par_in.get_photometry(t_phot)
-    flux_obs = flux0 * 10 ** ((imag_obs - imag0) / -2.5)
-    flux_obs_err = flux_obs ** 0.5
-    flux_obs += np.random.randn(len(t_phot)) * flux_obs_err
-    imag_obs = -2.5 * np.log10(flux_obs / flux0) + imag0
-    imag_obs_err = 1.087 / flux_obs_err
+    imag_obs, imag_obs_err = add_photometric_noise(flux0, imag0, imag_obs)
 
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs. 
     pos_obs_tmp = pspl_par_in.get_astrometry(t_ast)
-    pos_obs_err = np.ones((len(t_ast), 2), dtype=float) * 0.01 * 1e-3
-    pos_obs = pos_obs_tmp + pos_obs_err * np.random.randn(len(t_ast), 2)
+    mag_obs_tmp = pspl_par_in.get_photometry(t_ast)
+    pos_obs, pos_obs_err = add_astrometric_noise(flux0, imag0, ast_err0, mag_obs_tmp, pos_obs_tmp)
 
     data = {}
     data['t_phot1'] = t_phot
@@ -1966,6 +1843,8 @@ def fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     data['target'] = target
     data['phot_data'] = 'sim'
     data['ast_data'] = 'sim'
+    data['phot_files'] = ['fake_data_lumlens_parallax_phot1']
+    data['ast_files'] = ['fake_data_lumlens_parallax_ast1']
 
     params = {}
     params['raL'] = raL_in
@@ -1983,6 +1862,8 @@ def fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     params['dS'] = dS_in
     params['b_sff1'] = b_sff_in
     params['mag_src1'] = mag_src_in
+    params['b_sff'] = [b_sff_in]
+    params['mag_src'] = [mag_src_in]
 
     # Extra parameters
     params['dL_dS'] = params['dL'] / params['dS']
@@ -1997,23 +1878,19 @@ def fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    model_fitter.plot_photometry(data, pspl_par_in, dense_time=True)
-    plt.figure(1)
-    plt.title('Input Data and Model')
-    plt.savefig(outdir + target + '_fake_data_phot.png')
+    phot_fig = model_fitter.plot_photometry(data, pspl_par_in, dense_time=True)
+    phot_fig.axes[0].set_title('Input Data and Model')
+    phot_fig.savefig(outdir + target + '_fake_data_phot.png')
 
-    model_fitter.plot_astrometry(data, pspl_par_in, dense_time=True)
-    plt.figure(2)
-    plt.title('Input Data and Model')
-    plt.savefig(outdir + target +  '_fake_data_ast.png')
+    ast_figs = model_fitter.plot_astrometry(data, pspl_par_in, dense_time=True)
+    ast_figs[0].axes[0].set_title('Input Data and Model')
+    ast_figs[0].savefig(outdir + target +  '_fake_data_ast.png')
 
-    plt.figure(3)
-    plt.title('Input Data and Model')
-    plt.savefig(outdir + target + '_fake_data_t_vs_E.png')
+    ast_figs[1].axes[0].set_title('Input Data and Model')
+    ast_figs[1].savefig(outdir + target + '_fake_data_t_vs_E.png')
 
-    plt.figure(4)
-    plt.title('Input Data and Model')
-    plt.savefig(outdir + target + '_fake_data_t_vs_N.png')
+    ast_figs[2].axes[0].set_title('Input Data and Model')
+    ast_figs[2].savefig(outdir + target + '_fake_data_t_vs_N.png')
 
     return data, params
 
@@ -2137,12 +2014,9 @@ def fake_data_BSPL(outdir='', outroot='bspl',
     # This means Signal = 400 e- at I=19.
     flux0 = 400.0
     imag0 = 19.0
+    ast_err0 = 0.15 * 1e-3
 
-    flux_pho = flux0 * 10 ** ((imag_pho - imag0) / -2.5)
-    flux_pho_err = flux_pho ** 0.5
-    flux_pho += np.random.randn(len(t_pho)) * flux_pho_err
-    imag_pho = -2.5 * np.log10(flux_pho / flux0) + imag0
-    imag_pho_err = 1.087 / flux_pho_err
+    imag_pho, imag_pho_err = add_photometric_noise(flux0, imag0, imag_pho)
 
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
@@ -2152,6 +2026,10 @@ def fake_data_BSPL(outdir='', outroot='bspl',
     srce_pos_lensed_unres = bspl.get_astrometry(t_mod)
 
     srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
+
+    pos_ast_tmp = bspl.get_astrometry(t_ast)
+    mag_ast_tmp = bspl.get_photometry(t_ast)
+    pos_ast, pos_ast_err = add_astrometric_noise(flux0, imag0, ast_err0, mag_ast_tmp, pos_ast_tmp)
 
     stop = time.time()
 
@@ -2193,10 +2071,6 @@ def fake_data_BSPL(outdir='', outroot='bspl',
     plt.plot(srce_pos_lensed_unres[:, 0], srce_pos_lensed_unres[:, 1],
              c='red', linestyle='-',
              label='src lensed unres')
-
-    pos_ast_tmp = bspl.get_astrometry(t_ast)
-    pos_ast_err = np.ones((len(t_ast), 2), dtype=float) * 0.15 * 1e-3
-    pos_ast = pos_ast_tmp + pos_ast_err *  np.random.randn(len(t_ast), 2)
 
     plt.errorbar(pos_ast[:, 0], pos_ast[:, 1],
                  xerr=pos_ast_err[:, 0], yerr=pos_ast_err[:, 0],
@@ -2247,9 +2121,12 @@ def fake_data_BSPL(outdir='', outroot='bspl',
     params['muL_N'] = muL_N
     params['dL'] = dL
     params['dS'] = dS
-    params['b_sff'] = np.array([b_sff])
-    params['mag_src_pri'] = np.array([mag_src_pri])
-    params['mag_src_sec'] = np.array([mag_src_sec])
+    params['b_sff'] = [b_sff]
+    params['mag_src_pri'] = [mag_src_pri]
+    params['mag_src_sec'] = [mag_src_sec]
+    params['b_sff1'] = b_sff
+    params['mag_src_pri1'] = mag_src_pri
+    params['mag_src_sec1'] = mag_src_sec
 
     out_name = outdir + outroot + '_movie.gif'
     if animate:
@@ -2260,3 +2137,203 @@ def fake_data_BSPL(outdir='', outroot='bspl',
     #    np.savetxt('fake_data_PSBL_phot.dat', (data['t_phot1'], data['mag1'], data['mag_err1']))
 
     return data, params, bspl, ani
+
+
+def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
+                                      xS0_in, beta_in, muS_in, muL_in,
+                                      dL_in, dS_in,
+                                      b_sff_in1, mag_src_in1, obsLocation1,
+                                      b_sff_in2, mag_src_in2, obsLocation2,
+                                      outdir='', target='Unknown', noise=True):
+    pspl_par_in = model.PSPL_PhotAstrom_Par_Param1(mL_in,
+                                                   t0_in,
+                                                   beta_in,
+                                                   dL_in,
+                                                   dL_in / dS_in,
+                                                   xS0_in[0],
+                                                   xS0_in[1],
+                                                   muL_in[0],
+                                                   muL_in[1],
+                                                   muS_in[0],
+                                                   muS_in[1],
+                                                   b_sff=[b_sff_in1, b_sff_in2],
+                                                   mag_src=[mag_src_in1, mag_src_in2],
+                                                   obsLocation=[obsLocation1, obsLocation2],
+                                                   raL=raL_in,
+                                                   decL=decL_in)
+
+    # Simulate
+    # photometric observations every 1 day and
+    # astrometric observations every 14 days
+    # for the bulge observing window. Observations missed
+    # for 125 days out of 365 days for photometry and missed
+    # for 245 days out of 365 days for astrometry.
+    t_phot = np.array([], dtype=float)
+    t_ast = np.array([], dtype=float)
+    for year_start in np.arange(56000, 58000, 365.25):
+        phot_win = 240.0
+        phot_start = (365.25 - phot_win) / 2.0
+        t_phot_new = np.arange(year_start + phot_start,
+                               year_start + phot_start + phot_win, 1)
+        t_phot = np.concatenate([t_phot, t_phot_new])
+
+        ast_win = 120.0
+        ast_start = (365.25 - ast_win) / 2.0
+        t_ast_new = np.arange(year_start + ast_start,
+                              year_start + ast_start + ast_win, 14)
+        t_ast = np.concatenate([t_ast, t_ast_new])
+
+    # Make the photometric observations.
+    # Assume 0.05 mag photoemtric errors at I=19.
+    # This means Signal = 400 e- at I=19.
+    flux0 = 4000.0
+    imag0 = 19.0
+
+    # First location observations - all times sampled
+    imag_obs1 = pspl_par_in.get_photometry(t_phot, filt_idx=0)
+
+    # Second location observations - decimated to every 3 point.
+    imag_obs2 = pspl_par_in.get_photometry(t_phot[::3], filt_idx=1)
+
+    if noise:
+        imag_obs1, imag_obs_err1 = add_photometric_noise(flux0, imag0, imag_obs1)
+        imag_obs2, imag_obs_err2 = add_photometric_noise(flux0, imag0, imag_obs2)
+    else:
+        imag_obs_err1 = np.zeros(len(imag_obs1))
+        imag_obs_err2 = np.zeros(len(imag_obs2))
+
+    # Make the astrometric observations. They go with dataset 1 (0 index).
+    # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
+    if noise:
+        pos_obs_tmp = pspl_par_in.get_astrometry(t_ast, filt_idx=0)
+        pos_obs_err = np.ones((len(t_ast), 2), dtype=float) * 0.01 * 1e-3
+        pos_obs = pos_obs_tmp + pos_obs_err * np.random.randn(len(t_ast), 2)
+    else:
+        pos_obs = pspl_par_in.get_astrometry(t_ast, filt_idx=0)
+        pos_obs_err = np.zeros((len(t_ast), 2))
+
+    data = {}
+    data['t_phot1'] = t_phot
+    data['mag1'] = imag_obs1
+    data['mag_err1'] = imag_obs_err1
+    data['t_phot2'] = t_phot[::3]
+    data['mag2'] = imag_obs2
+    data['mag_err2'] = imag_obs_err2
+
+    data['phot_files'] = ['fake_data_parallax_1', 'fake_data_parallax_2']
+    data['ast_files'] = ['fake_data_parallax_1']
+
+    data['t_ast1'] = t_ast
+    data['xpos1'] = pos_obs[:, 0]
+    data['ypos1'] = pos_obs[:, 1]
+    data['xpos_err1'] = pos_obs_err[:, 0]
+    data['ypos_err1'] = pos_obs_err[:, 1]
+
+    data['raL'] = raL_in
+    data['decL'] = decL_in
+    data['obsLocation'] = [obsLocation1, obsLocation2]
+    data['target'] = target
+    data['phot_data'] = 'sim'
+    data['ast_data'] = 'sim'
+
+    params = {}
+    params['raL'] = raL_in
+    params['decL'] = decL_in
+    params['obsLocation'] = [obsLocation1, obsLocation2]
+    params['mL'] = mL_in
+    params['t0'] = t0_in
+    params['xS0_E'] = xS0_in[0]
+    params['xS0_N'] = xS0_in[1]
+    params['beta'] = beta_in
+    params['muS_E'] = muS_in[0]
+    params['muS_N'] = muS_in[1]
+    params['muL_E'] = muL_in[0]
+    params['muL_N'] = muL_in[1]
+    params['dL'] = dL_in
+    params['dS'] = dS_in
+    params['b_sff'] = [b_sff_in1, b_sff_in2]
+    params['mag_src'] = [mag_src_in1, mag_src_in2]
+    params['b_sff1'] = b_sff_in1
+    params['b_sff2'] = b_sff_in2
+    params['mag_src1'] = mag_src_in1
+    params['mag_src2'] = mag_src_in2
+
+    # Extra parameters
+    params['dL_dS'] = params['dL'] / params['dS']
+    params['tE'] = pspl_par_in.tE
+    params['thetaE'] = pspl_par_in.thetaE_amp
+    params['piE_E'] = pspl_par_in.piE[0]
+    params['piE_N'] = pspl_par_in.piE[1]
+    params['u0_amp'] = pspl_par_in.u0_amp
+    params['muRel_E'] = pspl_par_in.muRel[0]
+    params['muRel_N'] = pspl_par_in.muRel[1]
+
+    phot_fig1 = model_fitter.plot_photometry(data, pspl_par_in, filt_index=0, dense_time=True)
+    phot_fig1.axes[0].set_title('Input Data and Model')
+    phot_fig1.savefig(outdir + target + '_fake_data_phot_1.png')
+
+    phot_fig2 = model_fitter.plot_photometry(data, pspl_par_in, filt_index=1, dense_time=True)
+    phot_fig2.axes[0].set_title('Input Data and Model')
+    phot_fig2.savefig(outdir + target + '_fake_data_phot_2.png')
+
+    ast_figs = model_fitter.plot_astrometry(data, pspl_par_in, filt_index=0, dense_time=True)
+    ast_figs[0].axes[0].set_title('Input Data and Model')
+    ast_figs[0].savefig(outdir + target +  '_fake_data_ast_1.png')
+
+    ast_figs[1].axes[0].set_title('Input Data and Model')
+    ast_figs[1].savefig(outdir + target + '_fake_data_t_vs_E_1.png')
+
+    ast_figs[2].axes[0].set_title('Input Data and Model')
+    ast_figs[2].savefig(outdir + target + '_fake_data_t_vs_N_1.png')
+
+    return data, params
+
+def fake_data_parallax_multi_location_bulge(outdir='test_mnest_bulge_multiLoc/', outroot='Bulge'):
+    raL_in = 17.30 * 15.  # Bulge R.A.
+    decL_in = -29.0
+    mL_in = 10.0  # msun
+    t0_in = 57000.0
+    xS0_in = np.array([0.000, 0.088e-3])  # arcsec
+    beta_in = 2.0  # mas  same as p=0.4
+    muS_in = np.array([-5.0, 0.0])
+    muL_in = np.array([0.0, 0.0])
+    dL_in = 4000.0  # pc
+    dS_in = 8000.0  # pc
+    b_sff1 = 1.0
+    imag_in1 = 19.0
+    obs_loc1 = 'earth'
+    b_sff2 = 1.0
+    imag_in2 = 18.0
+    obs_loc2 = 'spitzer'
+
+    data, params = fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in, xS0_in,
+                                                     beta_in,
+                                                     muS_in, muL_in, dL_in, dS_in,
+                                                     b_sff1, imag_in1, obs_loc1,
+                                                     b_sff2, imag_in2, obs_loc2,
+                                                     outdir=outdir, target=outroot, noise=True)
+
+    return data, params
+
+
+def add_photometric_noise(flux0, imag0, imag_obs):
+    flux_obs = flux0 * 10 ** ((imag_obs - imag0) / -2.5)
+    flux_obs_err = flux_obs ** 0.5
+    flux_obs += np.random.randn(len(imag_obs)) * flux_obs_err
+    imag_obs = -2.5 * np.log10(flux_obs / flux0) + imag0
+    imag_obs_err = 1.087 / flux_obs_err
+
+    return imag_obs, imag_obs_err
+
+
+def add_astrometric_noise(flux0, mag0, pos_err0, mag_obs, pos_obs):
+    """
+    pos_obs and pos_err0 must have the same units.
+    """
+    flux_obs = flux0 * 10 ** ((mag_obs - mag0) / -2.5)
+
+    pos_obs_err = np.tile(pos_err0 / (flux_obs / flux0)**0.5, (2, 1)).T
+
+    pos_obs_new = pos_obs + (pos_obs_err * np.random.randn(pos_obs.shape[0], pos_obs.shape[1]))
+
+    return pos_obs_new, pos_obs_err

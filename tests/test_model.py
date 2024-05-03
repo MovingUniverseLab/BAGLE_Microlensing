@@ -1029,7 +1029,12 @@ def test_pspl_parallax2_bulge():
             if isinstance(members1[kk], str):
                 assert members1[kk] == members2[kk]
             else:
-                np.testing.assert_almost_equal(members1[kk], members2[kk], 3)
+                if isinstance(members1[kk], np.ndarray) and members1[kk].dtype.type in [np.string_, np.str_]:
+                    # Compare strings individually for exact matches.
+                    assert np.all(members1[kk] == members2[kk])
+                else:
+                    # Compare floats.
+                    np.testing.assert_almost_equal(members1[kk], members2[kk], 3)
 
     t = np.arange(t0 - 1000, t0 + 1000, 1)
     dt = t - pspl_par1.t0
@@ -2579,7 +2584,7 @@ def test_bagle_self_conversion(plot=False):
     Test whether our helio --> geotr converesions are
     self-consistent.
     """
-    model.solar_system_ephemeris.set('builtin')
+    model.parallax.solar_system_ephemeris.set('builtin')
 
     raL = 260.0
     decL = -30.0
@@ -2679,7 +2684,7 @@ def test_bagle_self_conversion(plot=False):
 
     assert np.abs(mag_h - mag_h_from_g).max() < 1e-9
 
-    model.solar_system_ephemeris.set('jpl')
+    model.parallax.solar_system_ephemeris.set('jpl')
 
     return
 
@@ -2830,6 +2835,7 @@ def run_test_PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE,
 
     return pspl
 
+@pytest.mark.skip(reason="package dependency")
 def test_geoproj_mm(plot=False):
     """
     Test making sure BAGLE's geocentric projected model gives the same
@@ -4251,7 +4257,7 @@ def test_PSPL_Phot_Param2_vs_Param3():
 
     return
 
-def test_jwst_parallax_bulge1():
+def test_jwst_parallax_bulge1(plot=False, verbose=False):
     # Scenario from Belokurov and Evans 2002 (Figure 1)
     raL = 17.5 * 15.0  # in degrees
     decL = -30.0
@@ -4269,11 +4275,12 @@ def test_jwst_parallax_bulge1():
 
     run_test_pspl_satellite_parallax(raL, decL, obsLocation,
                                      mL, t0, xS0, beta, muS, muL, dL, dS,
-                                     b_sff, imag, outdir='tests/test_pspl_par_jwst_bulge1/')
+                                     b_sff, imag, outdir='tests/test_pspl_par_jwst_bulge1/',
+                                     plot=plot, verbose=verbose)
 
     return
 
-def test_spitzer_parallax_bulge1():
+def test_spitzer_parallax_bulge1(plot=False, verbose=False):
     # Scenario from Belokurov and Evans 2002 (Figure 1)
     raL = 17.5 * 15.0  # in degrees
     decL = -30.0
@@ -4291,13 +4298,15 @@ def test_spitzer_parallax_bulge1():
 
     run_test_pspl_satellite_parallax(raL, decL, obsLocation,
                                      mL, t0, xS0, beta, muS, muL, dL, dS,
-                                     b_sff, imag, outdir='tests/test_pspl_par_spitzer_bulge1/')
+                                     b_sff, imag, outdir='tests/test_pspl_par_spitzer_bulge1/',
+                                     plot=plot, verbose=verbose)
 
     return
 
 def run_test_pspl_satellite_parallax(raL, decL, obsLocation,
                                      mL, t0, xS0, beta, muS, muL, dL, dS,
-                                     b_sff, mag_src, outdir=''):
+                                     b_sff, mag_src, outdir='',
+                                     plot=False, verbose=False):
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
 
@@ -4317,11 +4326,12 @@ def run_test_pspl_satellite_parallax(raL, decL, obsLocation,
                                               [mag_src],
                                               raL=raL,
                                               decL=decL)
-    
-    print('pspl_e.u0', pspl_e.u0)
-    print('pspl_e.muS', pspl_e.muS)
-    print('pspl_e.u0_hat', pspl_e.u0_hat)
-    print('pspl_e.thetaE_hat', pspl_e.thetaE_hat)
+
+    if verbose:
+        print('pspl_e.u0', pspl_e.u0)
+        print('pspl_e.muS', pspl_e.muS)
+        print('pspl_e.u0_hat', pspl_e.u0_hat)
+        print('pspl_e.thetaE_hat', pspl_e.thetaE_hat)
 
     # Satellite parallax
     pspl_s = model.PSPL_PhotAstrom_Par_Param1(mL,
@@ -4352,114 +4362,122 @@ def run_test_pspl_satellite_parallax(raL, decL, obsLocation,
     xS_s_lensed = pspl_s.get_astrometry(t)
     xL_s = pspl_s.get_lens_astrometry(t)
 
+    if plot:
+        # Plot the amplification
+        fig1 = plt.figure(1)
+        plt.clf()
+        f1_1 = fig1.add_axes((0.20, 0.3, 0.75, 0.6))
+        plt.plot(dt, 2.5 * np.log10(A_e), 'b-', label='Earth parallax')
+        plt.plot(dt, 2.5 * np.log10(A_s), 'r-', label=f'{obsLocation} parallax')
+        plt.legend(fontsize=10)
+        plt.ylabel('2.5 * log(A)')
+        f1_1.set_xticklabels([])
+
+        f2_1 = fig1.add_axes((0.20, 0.1, 0.75, 0.2))
+        plt.plot(dt, 2.5 * (np.log10(A_s) - np.log10(A_e)), 'k-',
+                 label='Par - No par')
+        plt.axhline(0, linestyle='--', color='k')
+        plt.legend(fontsize=10)
+        plt.ylabel('Diff')
+        plt.xlabel('t - t0 (MJD)')
+
+        plt.savefig(outdir + 'amp_v_time.png')
+
+        if verbose:
+            print("save to " + outdir)
+
+        # Plot the positions of everything
+        fig2 = plt.figure(2)
+        plt.clf()
+        plt.plot(xS_e[:, 0] * 1e3, xS_e[:, 1] * 1e3, 'r--',
+                 mfc='none', mec='red', label='Src, Earth parallax model')
+        plt.plot(xS_s_unlens[:, 0] * 1e3, xS_s_unlens[:, 1] * 1e3, 'b--',
+                 mfc='none', mec='blue',
+                 label=f'Src, {obsLocation} parallax model, unlensed')
+        plt.plot(xL_s[:, 0] * 1e3, xL_s[:, 1] * 1e3, 'k--',
+                 mfc='none', mec='grey', label='Lens')
+        plt.plot(xS_s_lensed[:, 0] * 1e3, xS_s_lensed[:, 1] * 1e3, 'b-',
+                 label=f'Src, {obsLocation} parallax model, lensed')
+        plt.legend(fontsize=10)
+        plt.gca().invert_xaxis()
+        plt.xlabel('R.A. (mas)')
+        plt.ylabel('Dec. (mas)')
+        plt.axis('equal')
+        lim = 20
+
+        # plt.xlim(lim, -lim) # arcsec
+        # plt.ylim(-lim, lim)
+        # plt.axis('tight')
+        # plt.xlim(0.7, -0.7)
+        # plt.ylim(-0.7, 0.7)
+        plt.savefig(outdir + 'on_sky.png')
+
+        # Check just the astrometric shift part.
+        shift_e = pspl_e.get_centroid_shift(t)  # mas
+        shift_s = (xS_s_lensed - xS_s_unlens) * 1e3  # mas
+        shift_e_amp = np.linalg.norm(shift_e, axis=1)
+        shift_s_amp = np.linalg.norm(shift_s, axis=1)
+
+        fig3 = plt.figure(3)
+        plt.clf()
+        f1_3 = fig3.add_axes((0.20, 0.3, 0.75, 0.6))
+        plt.plot(dt, shift_e_amp, 'r--', label='Earth parallax model')
+        plt.plot(dt, shift_s_amp, 'b--', label=f'{obsLocation} parallax model')
+        plt.ylabel('Astrometric Shift (mas)')
+        plt.legend(fontsize=10)
+        f1_3.set_xticklabels([])
+
+        f2_3 = fig3.add_axes((0.20, 0.1, 0.75, 0.2))
+        plt.plot(dt, shift_s_amp - shift_e_amp, 'k-', label='Par - No par')
+        plt.legend(fontsize=10)
+        plt.axhline(0, linestyle='--', color='k')
+        plt.ylabel('Diff (mas)')
+        plt.xlabel('t - t0 (MJD)')
+
+        plt.savefig(outdir + 'shift_amp_v_t.png')
+
+        fig4 = plt.figure(4)
+        plt.clf()
+        plt.plot(shift_e[:, 0], shift_e[:, 1], 'r-', label='Earth parallax')
+        plt.plot(shift_s[:, 0], shift_s[:, 1], 'b-', label=f'{obsLocation} parallax')
+        plt.axhline(0, linestyle='--')
+        plt.axvline(0, linestyle='--')
+        plt.gca().invert_xaxis()
+        plt.legend(fontsize=10)
+        plt.xlabel('Shift RA (mas)')
+        plt.ylabel('Shift Dec (mas)')
+        plt.axis('equal')
+        plt.savefig(outdir + 'shift_on_sky.png')
+
+    if verbose:
+        print('Einstein radius: ', pspl_e.thetaE_amp, pspl_s.thetaE_amp)
+        print('Einstein crossing time: ', pspl_e.tE, pspl_e.tE)
+
     # make sure the two light curves and trajectories are different.
-    # assert np.abs(A_e - A_s).max() > 0.1  # mag
-    # assert np.abs(xS_e - xS_s_lensed).max() > 0.001  # arcsec
-
-    # Plot the amplification
-    fig1 = plt.figure(1)
-    plt.clf()
-    f1_1 = fig1.add_axes((0.20, 0.3, 0.75, 0.6))
-    plt.plot(dt, 2.5 * np.log10(A_e), 'b-', label='Earth parallax')
-    plt.plot(dt, 2.5 * np.log10(A_s), 'r-', label=f'{obsLocation} parallax')
-    plt.legend(fontsize=10)
-    plt.ylabel('2.5 * log(A)')
-    f1_1.set_xticklabels([])
-
-    f2_1 = fig1.add_axes((0.20, 0.1, 0.75, 0.2))
-    plt.plot(dt, 2.5 * (np.log10(A_s) - np.log10(A_e)), 'k-',
-             label='Par - No par')
-    plt.axhline(0, linestyle='--', color='k')
-    plt.legend(fontsize=10)
-    plt.ylabel('Diff')
-    plt.xlabel('t - t0 (MJD)')
-
-    plt.savefig(outdir + 'amp_v_time.png')
-    print("save to " + outdir)
-
-    # Plot the positions of everything
-    fig2 = plt.figure(2)
-    plt.clf()
-    plt.plot(xS_e[:, 0] * 1e3, xS_e[:, 1] * 1e3, 'r--',
-             mfc='none', mec='red', label='Src, Earth parallax model')
-    plt.plot(xS_s_unlens[:, 0] * 1e3, xS_s_unlens[:, 1] * 1e3, 'b--',
-             mfc='none', mec='blue',
-             label=f'Src, {obsLocation} parallax model, unlensed')
-    plt.plot(xL_s[:, 0] * 1e3, xL_s[:, 1] * 1e3, 'k--',
-             mfc='none', mec='grey', label='Lens')
-    plt.plot(xS_s_lensed[:, 0] * 1e3, xS_s_lensed[:, 1] * 1e3, 'b-',
-             label=f'Src, {obsLocation} parallax model, lensed')
-    plt.legend(fontsize=10)
-    plt.gca().invert_xaxis()
-    plt.xlabel('R.A. (mas)')
-    plt.ylabel('Dec. (mas)')
-    plt.axis('equal')
-    lim = 20
-    print('LIM = ', lim)
-    # plt.xlim(lim, -lim) # arcsec
-    # plt.ylim(-lim, lim)
-    # plt.axis('tight')
-    # plt.xlim(0.7, -0.7)
-    # plt.ylim(-0.7, 0.7)
-    plt.savefig(outdir + 'on_sky.png')
-
-    # Check just the astrometric shift part.
-    shift_e = pspl_e.get_centroid_shift(t)  # mas
-    shift_s = (xS_s_lensed - xS_s_unlens) * 1e3  # mas
-    shift_e_amp = np.linalg.norm(shift_e, axis=1)
-    shift_s_amp = np.linalg.norm(shift_s, axis=1)
-
-    fig3 = plt.figure(3)
-    plt.clf()
-    f1_3 = fig3.add_axes((0.20, 0.3, 0.75, 0.6))
-    plt.plot(dt, shift_e_amp, 'r--', label='Earth parallax model')
-    plt.plot(dt, shift_s_amp, 'b--', label=f'{obsLocation} parallax model')
-    plt.ylabel('Astrometric Shift (mas)')
-    plt.legend(fontsize=10)
-    f1_3.set_xticklabels([])
-
-    f2_3 = fig3.add_axes((0.20, 0.1, 0.75, 0.2))
-    plt.plot(dt, shift_s_amp - shift_e_amp, 'k-', label='Par - No par')
-    plt.legend(fontsize=10)
-    plt.axhline(0, linestyle='--', color='k')
-    plt.ylabel('Diff (mas)')
-    plt.xlabel('t - t0 (MJD)')
-
-    plt.savefig(outdir + 'shift_amp_v_t.png')
-
-    fig4 = plt.figure(4)
-    plt.clf()
-    plt.plot(shift_e[:, 0], shift_e[:, 1], 'r-', label='Earth parallax')
-    plt.plot(shift_s[:, 0], shift_s[:, 1], 'b-', label=f'{obsLocation} parallax')
-    plt.axhline(0, linestyle='--')
-    plt.axvline(0, linestyle='--')
-    plt.gca().invert_xaxis()
-    plt.legend(fontsize=10)
-    plt.xlabel('Shift RA (mas)')
-    plt.ylabel('Shift Dec (mas)')
-    plt.axis('equal')
-    plt.savefig(outdir + 'shift_on_sky.png')
-
-    print('Einstein radius: ', pspl_e.thetaE_amp, pspl_s.thetaE_amp)
-    print('Einstein crossing time: ', pspl_e.tE, pspl_e.tE)
+    assert np.abs(A_e - A_s).max() > 1e-3  # mag
+    assert np.abs(xS_e - xS_s_lensed).max() > 1e-6  # arcsec
 
     return
 
 def test_spitzer_zang2020(plot=False):
+    # This test is broken in that we don't reproduce Zang+ 2020 Figure 1.
+    # But Shvartzvald comparison works, so something must be up with the
+    # conversions.
     # Scenario from Zang et al. 2020
-    # Target: OB171254: 0,+ solution (see Table 1)
+    # Target: OB171254: 0,+ solution (see Table 1, right most column)
     raL = (17. + 57./60.)  * 15.0  # in degrees
     decL = -(27. + 13./60.)
     obsLocation = 'spitzer'
-    t0_geotr = 57952.2519
-    u0_geotr = 0.0003
-    tE_geotr = 15.43
-    piEN_geotr = 0.0203
-    piEE_geotr = 0.0368
+    t0_geotr = 58058.761
+    u0_geotr = -0.0841
+    tE_geotr = 27.8915
+    piEN_geotr = -0.43055
+    piEE_geotr = -0.18624
     t0par = t0_geotr
-    
-    mag_src = 18.53
-    mag_blend = 21.32
+
+    # V_CTIO
+    mag_src = 14.16
+    mag_blend = 17.55
 
     f_src = 10**(mag_src / -2.5)
     f_blend = 10**(mag_blend / -2.5)
@@ -4510,6 +4528,7 @@ def test_spitzer_zang2020(plot=False):
                                         raL=raL,
                                         decL=decL,
                                         obsLocation=obsLocation)
+
 
     t = np.arange(t0_geotr - 30, t0_geotr + 30, 0.5)
     dt = t - pspl_e.t0
@@ -4573,6 +4592,7 @@ def test_spitzer_zang2020(plot=False):
 
 
 def test_spitzer_shvartzvald2019(plot=False):
+    # WORKS!
     # Scenario from Shvartzvald et al. 2019
     # Target: OB170896: +,+ solution (see Table 1)
     raL = (17. + 57./60.)  * 15.0  # in degrees
@@ -4652,6 +4672,17 @@ def test_spitzer_shvartzvald2019(plot=False):
     # make sure the two light curves and trajectories are different.
     assert np.abs(A_e - A_s).max() > 0.1  # mag
     # assert np.abs(xS_e - xS_s_lensed).max() > 0.001  # arcsec
+
+    # Make sure some general shape parameters agree with Shvartzvald+ 2019 Figure 1
+    idx_e = A_e.argmax()
+    idx_s = A_s.argmax()
+    assert idx_s > idx_e
+    # peaks are 5 days apart, Spitzer peak is later.
+    assert (t[idx_s] - t[idx_e]) > 5
+
+    # ground peak is 4 mag higher than spitzer peak. Note that paper Figure 1 shows a lower
+    # peak difference due to finite source effects.
+    assert ( 2.5 * np.log10(A_e[idx_e] / A_s[idx_s]) ) > 4
 
     if plot:
 
