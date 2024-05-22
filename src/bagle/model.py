@@ -8283,6 +8283,8 @@ class BSPL_PhotAstrom_Circ_Param3(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+        
+        return 
 
 
 class BSPL_PhotAstrom_Circ_Param4(PSPL_Param):
@@ -8393,6 +8395,7 @@ class BSPL_PhotAstrom_Circ_Param4(PSPL_Param):
                  mag_src_pri, mag_src_sec,
                  b_sff,
                  raL=None, decL=None):
+                     
         self.t0 = t0_com  # time of closest approach for system=primary pos
         self.t0_com = t0_com  # time of closest approach for system=primary pos
         self.mL = mL
@@ -8508,9 +8511,8 @@ class BSPL_PhotAstrom_Circ_Param4(PSPL_Param):
 
         return
 
-
-
-class BSPL_PhotAstrom_Circ_Param5(PSPL_Param):
+'''
+class BSPL_PhotAstrom_Circ_Param5(BSPL_PhotAstromParam3):
     """BSPL model for astrometry and photometry - physical parameterization.
 
     A Binary point Source Point Lens model for microlensing. This model uses a
@@ -8612,7 +8614,7 @@ class BSPL_PhotAstrom_Circ_Param5(PSPL_Param):
 
     def __init__(self, t0_com, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
-                 alpha, omega,
+                 sep, alpha, omega,
                  big_omega, i,
                  p, tp,
                  aleph, aleph_sec,
@@ -8622,113 +8624,18 @@ class BSPL_PhotAstrom_Circ_Param5(PSPL_Param):
                  mag_base, b_sff,
                  raL=None, decL=None):
                      
-        self.t0 = t0_com  # time of closest approach for system=primary pos
-        self.t0_com = t0_com
-        self.u0_amp = u0_amp
-        self.tE = tE
-        self.thetaE_amp = 10 ** log10_thetaE
-        self.piS = piS
-        self.piE = np.array([piE_E, piE_N])
-        self.xS0 = np.array([x0_system_E, x0_system_N])
-        self.muS_E = muS_system_E 
-        self.muS_N = muS_system_N 
-        self.muS = np.array([muS_system_E, muS_system_N]) #mas
-        self.mag_base = np.array(mag_base)
-        self.x0_system = self.xS0
-        self.muS_system = self.muS
-        self.b_sff = np.array(b_sff)      
-        self.raL = raL
-        self.decL = decL
-        self.w = omega
-        self.o = big_omega
-        self.omega = self.w
-        self.big_omega = self.o
-        self.i = i
-        self.e = 0
-        self.p = p
-        self.tp = tp
-        self.aleph = aleph #mas
-        self.aleph_sec = aleph_sec #mas
-        self.vx = muS_system_E * 1e-3
-        self.vy = muS_system_N * 1e-3
-        self.x0 = x0_system_E
-        self.y0 = x0_system_N
-        self.alpha = alpha
-        self.fratio_bin = np.array(fratio_bin)
-        self.alpha_rad = self.alpha * np.pi / 180.0
+        super().__init__(t0_com, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N,
+                 x0_system_E, x0_system_N,
+                 muS_system_E, muS_system_N,
+                 sep, alpha, fratio_bin,
+                 mag_base, b_sff,
+                 raL=raL, decL=decL
+        )
+        
+        return 
 
-        self.mag_src_pri = self.mag_base \
-                           - 2.5 * np.log10(self.b_sff) \
-                           + 2.5 * np.log10(1.0 + self.fratio_bin)
-        self.mag_src_sec = self.mag_base \
-                           - 2.5 * np.log10(self.b_sff) \
-                           + 2.5 * np.log10(1.0 + (1.0 / self.fratio_bin))
-
-        # Must call after setting parameters.
-        # This checks for proper parameter formatting.
-        super().__init__()
-
-
-        # Derived quantities
-        self.beta = self.u0_amp * self.thetaE_amp
-        self.piE_amp = np.linalg.norm(self.piE)
-        self.piRel = self.piE_amp * self.thetaE_amp
-        self.muRel_amp = self.thetaE_amp / (self.tE / days_per_year)
-        self.piL = self.piRel + self.piS
-
-        kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
-        kappa = kappa_tmp.to(units.mas / units.Msun,
-                             equivalencies=units.dimensionless_angles()).value
-        self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
-
-        # Calculate the distance to source and lens.
-        dL = (self.piL * units.mas).to(units.parsec,
-                                       equivalencies=units.parallax())
-        dS = (self.piS * units.mas).to(units.parsec,
-                                       equivalencies=units.parallax())
-        self.dL = dL.to('pc').value
-        self.dS = dS.to('pc').value
-
-        # Get the directional vectors.
-        self.thetaE_hat = self.piE / self.piE_amp
-        self.muRel_hat = self.thetaE_hat
-        self.thetaE = self.thetaE_amp * self.thetaE_hat
-
-        # Calculate the relative proper motion vector.
-        # Note that this will be in the direction of theta_hat
-        self.muRel = self.muRel_amp * self.thetaE_hat
-        self.muRel_E, self.muRel_N = self.muRel
-        self.muL = self.muS - self.muRel
-        self.muL_E, self.muL_N = self.muL
-
-        # Comment on sign conventions:
-        # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
-        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
-        # if u0_E > 0 then the Source is to the East of the lens
-        # if u0_E < 0 then the source is to the West of the lens
-        # We adopt the following sign convention (same as Gould:2004):
-        #    u0_amp > 0 means u0_E > 0
-        #    u0_amp < 0 means u0_E < 0
-        # Note that we assume beta = u0_amp (with same signs).
-
-        # Calculate the closest approach vector. Define beta sign convention
-        # same as of Andy Gould does with beta > 0 means u0_E > 0
-        # (lens passes to the right of the source as seen from Earth or Sun).
-        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
-        # the sign of beta is always the same as the sign of u0_amp. Therefore this
-        # usage of the function with u0_amp works exactly the same.
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
-
-        # Angular separation vector between source and lens
-        # (vector from lens to source)
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
-
-        # Calculate the position of the lens on the sky at time, t0
-        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-
-
+'''
 
 class PSBL_PhotAstromParam4(PSPL_Param):
     """
@@ -11241,6 +11148,68 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
 
         return
+
+class BSPL_PhotAstrom_Circ_Param5(BSPL_PhotAstromParam3):
+        
+    
+    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+                          'piE_E', 'piE_N',
+                          'alpha', 'omega', 'big_omega', 'i', 'p', 
+                          'tp', 'aleph', 'aleph_sec',
+                          'muS_system_E', 'muS_system_N',
+                          'x0_system_E', 'x0_system_N'
+                          ]
+    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'circular'
+
+    
+
+    def __init__(self, t0_com, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N,
+                 sep, alpha, omega,
+                 big_omega, i,
+                 p, tp,
+                 aleph, aleph_sec,
+                 muS_system_E, muS_system_N,
+                 x0_system_E, x0_system_N,
+                 fratio_bin,
+                 mag_base, b_sff,
+                 raL=None, decL=None):
+                     
+        super().__init__(t0_com, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N,
+                 x0_system_E, x0_system_N,
+                 muS_system_E, muS_system_N,
+                 sep, alpha, fratio_bin,
+                 mag_base, b_sff,
+                 raL=raL, decL=decL
+        )
+        
+        self.w = omega
+        self.o = big_omega
+        self.omega = self.w
+        self.big_omega = self.o
+        self.i = i
+        self.e = 0
+        self.p = p
+        self.tp = tp
+        self.aleph = aleph #mas
+        self.aleph_sec = aleph_sec #mas
+        self.vx = muS_system_E * 1e-3
+        self.vy = muS_system_N * 1e-3
+        self.x0 = x0_system_E
+        self.y0 = x0_system_N
+                     
+        
+        return
+
+
 
 class BSPL_GP_PhotParam1(BSPL_PhotParam1):
     """BSPL model for photometry only, with GP.
@@ -17372,6 +17341,31 @@ class BSPL_PhotAstrom_noPar_CircOrbs_Param3(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
+
+
+
+
+class BSPL_PhotAstrom_Par_CircOrbs_Param5(ModelClassABC,
+                                   BSPL_PhotAstrom,
+                                   BSPL_Parallax,
+                                   BSPL_PhotAstrom_Circ_Param5):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+
+class BSPL_PhotAstrom_noPar_CircOrbs_Param5(ModelClassABC,
+                                   BSPL_PhotAstrom,
+                                   BSPL_noParallax,
+                                   BSPL_PhotAstrom_Circ_Param5):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
 
 
 
