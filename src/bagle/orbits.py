@@ -112,7 +112,7 @@ class Orbit(object):
 
 
         # calculate x and y
-        #Unit conversions. Get rid of accel.
+        #The x and y that come out are the delta position of the star which you would then need to add to the center of mass 
         x = (self.conB * X) + (self.conG * Y) + self.vx * (t-t0_com)/days_per_year + self.x0 
         y = (self.conA * X) + (self.conF * Y) + self.vy * (t-t0_com)/days_per_year + self.y0
         x2 = (self.conB2 * X) + (self.conG2 * Y) + self.vx * (t-t0_com)/days_per_year + (self.x0)
