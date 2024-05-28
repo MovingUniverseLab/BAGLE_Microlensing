@@ -341,3 +341,6 @@ def run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
     print('Einstein crossing time: ', pspl.tE)
 
     return pspl
+
+# test_PSPL_vs_JAX()
+test_PSPL_other()
