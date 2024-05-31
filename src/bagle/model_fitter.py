@@ -3197,7 +3197,8 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
     # same times as the measurements.
     if dense_time:
         # 1 day sampling over whole range
-        mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1)
+        #mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1)
+        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #+/-2000 days (for ongoing events)
     else:
         mod_t = dat_t
     if gp:
@@ -3340,7 +3341,7 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
     if dense_time:
         # 1 day sampling over whole range
         #mod_t = np.arange(dat_t.min(), dat_t.max(), 1)
-        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #begin/end model +/-2000 days after last data point (for ongoing events)
+        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #+/-2000 days (for ongoing events)
     else:
         mod_t = dat_t
 
