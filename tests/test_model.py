@@ -5142,3 +5142,935 @@ def caustics_magnification_checks_psbl():
     caustics_magnification_param1()
     caustics_magnification_param4()
     return
+def test_bsbl_noparallax():
+    def plots(iL, eL, pL, iS, eS, pS):
+            #Prepares plots
+            mLp = 10
+            mLs = 8
+            t0_com = 5700.00
+            xS0_E = 0
+            xS0_N = 0
+            beta_com = 6
+            muL_E = 8 #mas/yr
+            muL_N = 0 #mas/yr
+            muS_E = 0
+            muS_N = 10
+            dL = 1000 #parsecs
+            dS = 1200
+            alphaL = 90
+            alphaS = 90
+            omegaL = 0
+            big_omegaL = 0
+            iL = iL
+            eL = eL
+            pL = pL
+            tpL = 50
+            alephL = 3
+            aleph_secL = 7
+            omegaS = 0
+            big_omegaS = 90
+            iS = iS
+            eS = eS
+            pS = pS
+            tpS = 50
+            alephS = 6
+            aleph_secS = 7
+            mag_src_pri = 16
+            mag_src_sec = 20
+            b_sff = 1
+            bsbl = model.BSBL_PhotAstrom_noPar_EllOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
+                 beta_com, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                alphaL, alphaS, omegaL, big_omegaL, iL, eL, pL, tpL, alephL, aleph_secL, 
+                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, 
+                 mag_src_pri, mag_src_sec, b_sff,
+                 raL=None, decL=None, root_tol=1e-8)
+    
+            assert bsbl.t0_com == t0_com
+            assert bsbl.beta_com == beta_com
+            assert bsbl.mLp == mLp
+            assert bsbl.mLs == mLs
+            assert bsbl.muL[0] == muL_E
+            assert bsbl.muL[1] == muL_N
+            assert bsbl.iL == iL
+            assert bsbl.eL == eL
+            assert bsbl.pL == pL
+            assert bsbl.omegaL == omegaL
+            assert bsbl.big_omegaL == big_omegaL
+            assert bsbl.alephL == alephL
+            assert bsbl.aleph_secL == aleph_secL
+            assert bsbl.iS == iS
+            assert bsbl.eS == eS
+            assert bsbl.pS == pS
+            assert bsbl.omegaS == omegaS
+            assert bsbl.big_omegaS == big_omegaS
+            assert bsbl.alephS == alephS
+            assert bsbl.aleph_secS == aleph_secS
+    
+            time_setting = 1000
+            t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
+            img, amp = bsbl.get_all_arrays(t)
+            lens1, lens2 = bsbl.get_resolved_lens_astrometry(t)
+            source_unlensed = bsbl.get_resolved_astrometry_unlensed(t)
+            source_resolved = bsbl.get_resolved_astrometry(t, image_arr=img)
+
+
+        
+            #At the same time, the primary and secondary lenses are never in the same position.
+            #At the same time, the primary and secondary sources are never in the same position.
+            #This test function checks for that.
+        
+            difference_y = lens2[:, 1] - lens1[:, 1]
+            difference_x = lens2[:, 0] - lens1[:, 0]
+        
+            difference_x_s = source_unlensed[:, 0, :][:, 0] - source_unlensed[:, 0, :][:, 1]
+            difference_y_s = source_unlensed[:, 1, :] [:, 0] - source_unlensed[:, 1, :][:, 1]
+            assert difference_y.all() or difference_x.all() 
+            assert difference_y_s.all() or difference_x_s.all() 
+
+    
+            return lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS 
+
+    
+    def P_test_lens(): 
+                #At long periods, these orbits should behave linearly.
+                #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
+                #At short periods, the primary and secondary should have intersecting y-coordinates. 
+                #Use set elements and a precision of up to 14 decimal places to figure out intersecting sets at varying periods.
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(90, 0.3, 100, 90, 0, 1000), 
+                  plots(90, 0.3, 400, 90, 0, 1000), 
+                  plots(90, 0.3, 1000, 90, 0, 1000), 
+                  plots(90, 0.3, 3700, 90, 0, 1000)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):
+                    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    #The long period test, where there is no intersection in the y elements for longer periods.
+                    if pL==3700:
+                        assert bool(set(lens2[:, 1]) & set(lens1[:, 1])) !=True
+                    else:
+                        assert bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5))) ==True 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')                    
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with lens period {pL} days')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Period_test_lens_nopar.png')
+        
+
+    
+    def P_test_source(): 
+                #At long periods, these orbits should behave linearly.
+                #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
+                #At short periods, the primary and secondary should have intersecting y-coordinates. 
+                #Use set elements and a precision of up to 14 decimal places to figure out intersecting sets at varying periods.
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(90, 0, 1000, 90, 0.3, 100), 
+                  plots(90, 0, 1000, 90, 0.3, 400), 
+                  plots(90, 0, 1000, 90, 0.3, 1000), 
+                  plots(90, 0, 1000, 90, 0.3, 3700)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):
+                    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    #The long period test, where there is no intersection in the y elements for longer periods.
+                    pri = source_unlensed[:, 0, :]
+                    sec = source_unlensed[:, 1, :]
+                    if pS==3700:
+                        assert bool(set(sec[:, 0]) & set(pri[:, 0])) !=True
+                    else:
+                        assert bool(set(np.round(sec[:, 0], 4)) & set(np.round(pri[:, 0], 4))) ==True 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(source_unlensed[:, 0, :][:, 0], source_unlensed[:, 0, :][:, 1], label = 'Primary Source Position', linewidth = 4, color = '#21B1FF')
+                    ax[k][j].plot(source_unlensed[:, 1, :][:, 0], source_unlensed[:, 1, :][:, 1], label = 'Secondary Source Position', linewidth = 4, color='springgreen')
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with source period {pS} days')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Period_test_source_nopar.png')
+
+    def P_test_visual(): 
+                #At long periods, these orbits should behave linearly.
+                #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
+                #At short periods, the primary and secondary should have intersecting y-coordinates. 
+                #Use set elements and a precision of up to 14 decimal places to figure out intersecting sets at varying periods.
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(90, 0.3, 100, 90, 0.3, 100), 
+                  plots(90, 0.3, 400, 90, 0.3, 400 ), 
+                  plots(90, 0.3, 1000, 90, 0.3, 1000), 
+                  plots(90, 0.3, 3700, 90, 0.3, 3700)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):
+                    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')                    
+                    
+                    ax[k][j].plot(source_unlensed[:, 0, :][:, 0], source_unlensed[:, 0, :][:, 1], label = 'Primary Source Position', linewidth = 4, color = '#21B1FF')
+                    ax[k][j].plot(source_unlensed[:, 1, :][:, 0], source_unlensed[:, 1, :][:, 1], label = 'Secondary Source Position', linewidth = 4, color='springgreen')
+
+    
+                    for ii in range(5):
+                        if ii == 0:
+                            label_pri = 'Primary Image Position'
+                            label_sec = 'Secondary Image Position'
+                        else:
+                            label_pri = ''
+                            label_sec = ''
+                            ax[k][j].plot(img_pri[:, ii, 0], img_pri[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = '#21B1FF', label = label_pri)
+                            ax[k][j].plot(img_sec[:, ii, 0], img_sec[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = 'springgreen', label = label_sec)
+        
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with lens period {pL} days and source period {pS} days', fontsize=15)
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Period_test_vis_nopar.png')
+        
+
+
+    def e_test_lens(): 
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0, 500,  90, 0.3, 3700), 
+            plots(90, 0.3, 500, 90, 0.3, 3700), 
+            plots(90, 0.7, 500, 90, 0.3, 3700), 
+            plots(90, 0.85, 500, 90, 0.3, 3700)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+                    
+                    #Dec overlap
+                    assert(bool(set(np.round(lens2[:, 1], 5)) & set(np.round(lens1[:, 1], 5)))) 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with lens eccentricity {eL} ')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Eccentricity_test_lens_nopar.png')
+
+    def e_test_source(): 
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(90, 0.3, 3700, 0, 0, 500), 
+            plots(90, 0.3, 3700, 90, 0.3, 500), 
+            plots(90, 0.3, 3700, 90, 0.7, 500), 
+            plots(90, 0.3, 3700, 90, 0.85, 500)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    #Right Ascensions overlap
+                    assert(bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5)))) 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(source_unlensed[:, 0, :][:, 0], source_unlensed[:, 0, :][:, 1], label = 'Primary Source Position', linewidth = 4, color = '#21B1FF')
+                    ax[k][j].plot(source_unlensed[:, 1, :][:, 0], source_unlensed[:, 1, :][:, 1], label = 'Secondary Source Position', linewidth = 4, color='springgreen')
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits  with source eccentricity {eS} ')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Eccentricity_test_source_nopar.png')
+        
+    def e_test_vis(): 
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0, 3700, 0, 0, 3700), 
+            plots(90, 0.3, 3700, 90, 0.3, 3700), 
+            plots(90, 0.7, 3700, 90, 0.7, 3700), 
+            plots(90, 0.85, 3700, 90, 0.85, 3700)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')                    
+                    
+                    ax[k][j].plot(source_unlensed[:, 0, :][:, 0], source_unlensed[:, 0, :][:, 1], label = 'Primary Source Position', linewidth = 4, color = '#21B1FF')
+                    ax[k][j].plot(source_unlensed[:, 1, :][:, 0], source_unlensed[:, 1, :][:, 1], label = 'Secondary Source Position', linewidth = 4, color='springgreen')
+
+                    for ii in range(5):
+                        if ii == 0:
+                            label_pri = 'Primary Image Position'
+                            label_sec = 'Secondary Image Position'
+                        else:
+                            label_pri = ''
+                            label_sec = ''
+                            ax[k][j].plot(img_pri[:, ii, 0], img_pri[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = '#21B1FF', label = label_pri)
+                            ax[k][j].plot(img_sec[:, ii, 0], img_sec[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = 'springgreen', label = label_sec)
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with lens eccentricity {eL} and source eccentricity {eS}', fontsize = 15)
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Eccentricity_test_vis_nopar.png')
+    
+    def i_test_vis(): 
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0, 2000, 0, 0, 2000), 
+            plots(90, 0, 2000, 30, 0, 2000), 
+            plots(30, 0, 2000, 90, 0, 2000), 
+            plots(80, 0, 2000, 70, 0, 2000)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')                    
+                    
+                    ax[k][j].plot(source_unlensed[:, 0, :][:, 0], source_unlensed[:, 0, :][:, 1], label = 'Primary Source Position', linewidth = 4, color = '#21B1FF')
+                    ax[k][j].plot(source_unlensed[:, 1, :][:, 0], source_unlensed[:, 1, :][:, 1], label = 'Secondary Source Position', linewidth = 4, color='springgreen')
+
+                    for ii in range(5):
+                        if ii == 0:
+                            label_pri = 'Primary Image Position'
+                            label_sec = 'Secondary Image Position'
+                        else:
+                            label_pri = ''
+                            label_sec = ''
+                            ax[k][j].plot(img_pri[:, ii, 0], img_pri[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = '#21B1FF', label = label_pri)
+                            ax[k][j].plot(img_sec[:, ii, 0], img_sec[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = 'springgreen', label = label_sec)
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with lens eccentricity {eL} and source eccentricity {eS}', fontsize = 15)
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Inc_test_vis_nopar.png')
+        
+    P_test_lens()
+    P_test_source()
+    P_test_visual()
+
+    e_test_lens()
+    e_test_source()
+    e_test_vis()
+    i_test_vis()
+
+    return
+def test_bsbl_parallax():
+    def plots(iL, eL, pL, iS, eS, pS):
+            #Prepares plots
+            mLp = 10
+            mLs = 8
+            t0_com = 5700.00
+            xS0_E = 0
+            xS0_N = 0
+            beta_com = 6
+            muL_E = 8 #mas/yr
+            muL_N = 0 #mas/yr
+            muS_E = 0
+            muS_N = 10
+            dL = 1000 #parsecs
+            dS = 1200
+            alphaL = 90
+            alphaS = 90
+            omegaL = 0
+            big_omegaL = 0
+            iL = iL
+            eL = eL
+            pL = pL
+            tpL = 50
+            alephL = 3
+            aleph_secL = 7
+            omegaS = 0
+            big_omegaS = 90
+            iS = iS
+            eS = eS
+            pS = pS
+            tpS = 50
+            alephS = 6
+            aleph_secS = 7
+            mag_src_pri = 16
+            mag_src_sec = 20
+            b_sff = 1
+            bsbl = model.BSBL_PhotAstrom_noPar_EllOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
+                 beta_com, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                alphaL, alphaS, omegaL, big_omegaL, iL, eL, pL, tpL, alephL, aleph_secL, 
+                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, 
+                 mag_src_pri, mag_src_sec, b_sff,
+                 raL=None, decL=None, root_tol=1e-8)
+    
+            assert bsbl.t0_com == t0_com
+            assert bsbl.beta_com == beta_com
+            assert bsbl.mLp == mLp
+            assert bsbl.mLs == mLs
+            assert bsbl.muL[0] == muL_E
+            assert bsbl.muL[1] == muL_N
+            assert bsbl.iL == iL
+            assert bsbl.eL == eL
+            assert bsbl.pL == pL
+            assert bsbl.omegaL == omegaL
+            assert bsbl.big_omegaL == big_omegaL
+            assert bsbl.alephL == alephL
+            assert bsbl.aleph_secL == aleph_secL
+            assert bsbl.iS == iS
+            assert bsbl.eS == eS
+            assert bsbl.pS == pS
+            assert bsbl.omegaS == omegaS
+            assert bsbl.big_omegaS == big_omegaS
+            assert bsbl.alephS == alephS
+            assert bsbl.aleph_secS == aleph_secS
+    
+            time_setting = 1000
+            t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
+            img, amp = bsbl.get_all_arrays(t)
+            lens1, lens2 = bsbl.get_resolved_lens_astrometry(t)
+            source_unlensed = bsbl.get_resolved_astrometry_unlensed(t)
+            source_resolved = bsbl.get_resolved_astrometry(t, image_arr=img)
+
+
+        
+            #At the same time, the primary and secondary lenses are never in the same position.
+            #At the same time, the primary and secondary sources are never in the same position.
+            #This test function checks for that.
+        
+            difference_y = lens2[:, 1] - lens1[:, 1]
+            difference_x = lens2[:, 0] - lens1[:, 0]
+        
+            difference_x_s = source_unlensed[:, 0, :][:, 0] - source_unlensed[:, 0, :][:, 1]
+            difference_y_s = source_unlensed[:, 1, :] [:, 0] - source_unlensed[:, 1, :][:, 1]
+            assert difference_y.all() or difference_x.all() 
+            assert difference_y_s.all() or difference_x_s.all() 
+
+    
+            return lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS 
+
+    
+    def P_test_lens(): 
+                #At long periods, these orbits should behave linearly.
+                #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
+                #At short periods, the primary and secondary should have intersecting y-coordinates. 
+                #Use set elements and a precision of up to 14 decimal places to figure out intersecting sets at varying periods.
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(90, 0.3, 100, 90, 0, 1000), 
+                  plots(90, 0.3, 400, 90, 0, 1000), 
+                  plots(90, 0.3, 1000, 90, 0, 1000), 
+                  plots(90, 0.3, 3700, 90, 0, 1000)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):
+                    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    #The long period test, where there is no intersection in the y elements for longer periods.
+                    if pL==3700:
+                        assert bool(set(lens2[:, 1]) & set(lens1[:, 1])) !=True
+                    else:
+                        assert bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5))) ==True 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')                    
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with lens period {pL} days')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Period_test_lens_par.png')
+        
+
+    
+    def P_test_source(): 
+                #At long periods, these orbits should behave linearly.
+                #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
+                #At short periods, the primary and secondary should have intersecting y-coordinates. 
+                #Use set elements and a precision of up to 14 decimal places to figure out intersecting sets at varying periods.
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(90, 0, 1000, 90, 0.3, 100), 
+                  plots(90, 0, 1000, 90, 0.3, 400), 
+                  plots(90, 0, 1000, 90, 0.3, 1000), 
+                  plots(90, 0, 1000, 90, 0.3, 3700)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):
+                    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    #The long period test, where there is no intersection in the y elements for longer periods.
+                    pri = source_unlensed[:, 0, :]
+                    sec = source_unlensed[:, 1, :]
+                    if pS==3700:
+                        assert bool(set(sec[:, 0]) & set(pri[:, 0])) !=True
+                    else:
+                        assert bool(set(np.round(sec[:, 0], 4)) & set(np.round(pri[:, 0], 4))) ==True 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(source_unlensed[:, 0, :][:, 0], source_unlensed[:, 0, :][:, 1], label = 'Primary Source Position', linewidth = 4, color = '#21B1FF')
+                    ax[k][j].plot(source_unlensed[:, 1, :][:, 0], source_unlensed[:, 1, :][:, 1], label = 'Secondary Source Position', linewidth = 4, color='springgreen')
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with source period {pS} days')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Period_test_source_par.png')
+
+    def P_test_visual(): 
+                #At long periods, these orbits should behave linearly.
+                #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
+                #At short periods, the primary and secondary should have intersecting y-coordinates. 
+                #Use set elements and a precision of up to 14 decimal places to figure out intersecting sets at varying periods.
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(90, 0.3, 100, 90, 0.3, 100), 
+                  plots(90, 0.3, 400, 90, 0.3, 400 ), 
+                  plots(90, 0.3, 1000, 90, 0.3, 1000), 
+                  plots(90, 0.3, 3700, 90, 0.3, 3700)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):
+                    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')                    
+                    
+                    ax[k][j].plot(source_unlensed[:, 0, :][:, 0], source_unlensed[:, 0, :][:, 1], label = 'Primary Source Position', linewidth = 4, color = '#21B1FF')
+                    ax[k][j].plot(source_unlensed[:, 1, :][:, 0], source_unlensed[:, 1, :][:, 1], label = 'Secondary Source Position', linewidth = 4, color='springgreen')
+
+    
+                    for ii in range(5):
+                        if ii == 0:
+                            label_pri = 'Primary Image Position'
+                            label_sec = 'Secondary Image Position'
+                        else:
+                            label_pri = ''
+                            label_sec = ''
+                            ax[k][j].plot(img_pri[:, ii, 0], img_pri[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = '#21B1FF', label = label_pri)
+                            ax[k][j].plot(img_sec[:, ii, 0], img_sec[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = 'springgreen', label = label_sec)
+        
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with lens period {pL} days and source period {pS} days', fontsize=15)
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Period_test_vis_par.png')
+        
+
+
+    def e_test_lens(): 
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0, 500,  90, 0.3, 3700), 
+            plots(90, 0.3, 500, 90, 0.3, 3700), 
+            plots(90, 0.7, 500, 90, 0.3, 3700), 
+            plots(90, 0.85, 500, 90, 0.3, 3700)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+                    
+                    #Dec overlap
+                    assert(bool(set(np.round(lens2[:, 1], 5)) & set(np.round(lens1[:, 1], 5)))) 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with lens eccentricity {eL} ')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Eccentricity_test_lens_par.png')
+
+    def e_test_source(): 
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(90, 0.3, 3700, 0, 0, 500), 
+            plots(90, 0.3, 3700, 90, 0.3, 500), 
+            plots(90, 0.3, 3700, 90, 0.7, 500), 
+            plots(90, 0.3, 3700, 90, 0.85, 500)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    #Right Ascensions overlap
+                    assert(bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5)))) 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(source_unlensed[:, 0, :][:, 0], source_unlensed[:, 0, :][:, 1], label = 'Primary Source Position', linewidth = 4, color = '#21B1FF')
+                    ax[k][j].plot(source_unlensed[:, 1, :][:, 0], source_unlensed[:, 1, :][:, 1], label = 'Secondary Source Position', linewidth = 4, color='springgreen')
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits  with source eccentricity {eS} ')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Eccentricity_test_source_par.png')
+        
+    def e_test_vis(): 
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0, 3700, 0, 0, 3700), 
+            plots(90, 0.3, 3700, 90, 0.3, 3700), 
+            plots(90, 0.7, 3700, 90, 0.7, 3700), 
+            plots(90, 0.85, 3700, 90, 0.85, 3700)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')                    
+                    
+                    ax[k][j].plot(source_unlensed[:, 0, :][:, 0], source_unlensed[:, 0, :][:, 1], label = 'Primary Source Position', linewidth = 4, color = '#21B1FF')
+                    ax[k][j].plot(source_unlensed[:, 1, :][:, 0], source_unlensed[:, 1, :][:, 1], label = 'Secondary Source Position', linewidth = 4, color='springgreen')
+
+                    for ii in range(5):
+                        if ii == 0:
+                            label_pri = 'Primary Image Position'
+                            label_sec = 'Secondary Image Position'
+                        else:
+                            label_pri = ''
+                            label_sec = ''
+                            ax[k][j].plot(img_pri[:, ii, 0], img_pri[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = '#21B1FF', label = label_pri)
+                            ax[k][j].plot(img_sec[:, ii, 0], img_sec[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = 'springgreen', label = label_sec)
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with lens eccentricity {eL} and source eccentricity {eS}', fontsize = 15)
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Eccentricity_test_vis_par.png')
+    
+    def i_test_vis(): 
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0, 2000, 0, 0, 2000), 
+            plots(90, 0, 2000, 30, 0, 2000), 
+            plots(30, 0, 2000, 90, 0, 2000), 
+            plots(80, 0, 2000, 70, 0, 2000)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, iL, eL, pL, iS, eS, pS  = tests[count]
+                    img_pri = source_resolved[:, 0, :, :] 
+                    img_sec = source_resolved[:, 1, :, :] 
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')                    
+                    
+                    ax[k][j].plot(source_unlensed[:, 0, :][:, 0], source_unlensed[:, 0, :][:, 1], label = 'Primary Source Position', linewidth = 4, color = '#21B1FF')
+                    ax[k][j].plot(source_unlensed[:, 1, :][:, 0], source_unlensed[:, 1, :][:, 1], label = 'Secondary Source Position', linewidth = 4, color='springgreen')
+
+                    for ii in range(5):
+                        if ii == 0:
+                            label_pri = 'Primary Image Position'
+                            label_sec = 'Secondary Image Position'
+                        else:
+                            label_pri = ''
+                            label_sec = ''
+                            ax[k][j].plot(img_pri[:, ii, 0], img_pri[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = '#21B1FF', label = label_pri)
+                            ax[k][j].plot(img_sec[:, ii, 0], img_sec[:, ii, 1], '.', linewidth = 2, alpha = 0.5, color = 'springgreen', label = label_sec)
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits with lens eccentricity {eL} and source eccentricity {eS}', fontsize = 15)
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Inc_test_vis_par.png')
+        
+    P_test_lens()
+    P_test_source()
+    P_test_visual()
+
+    e_test_lens()
+    e_test_source()
+    e_test_vis()
+    i_test_vis()
+
+    return
+# Plot Some Magnification Maps
+def magnification_maps():
+    import matplotlib as mpl
+    def get_source_pos(z, m1, m2, z1, z2):
+        w = z - m1/np.conj(z - z1) - m2/np.conj(z - z2)
+        return w
+
+    def get_magnification_map_timedep(bsbl, time_choice=1000,grid_size = 0.0312, plot_radius = 0.0156, duration=1, time_steps=300, cmap = 'seismic', lim = 0.01, bins=6000):
+    
+    # An 8000 x 8000 grid takes a few seconds to run.
+
+    # Get lenses info
+
+        if cmap == 'pans':    
+            cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#21B1FF", "aqua","cyan","#FFD800", "#FF218C", "fuchsia"]) 
+        
+        def helper(t_obs, grid_size, plot_radius):
+            m1 = bsbl.m1
+            m2 = bsbl.m2
+            xL1_0, xL2_0 = bsbl.get_resolved_lens_astrometry(t_obs=np.array([t_obs]))
+            print(xL1_0)
+            z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
+            z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
+        
+            # Set up magnification map grid, centered on lens.
+            # zgrid are the image positions, where the shots end.
+            # We want to find where they start (source plane), i.e.
+            # inverse ray shooting
+            grid_center = bsbl.xL0
+            grid_size = grid_size # Probably a better way to do this...
+            plot_radius = plot_radius
+            print(grid_size)
+            print(plot_radius)
+        
+            xmin = grid_center[0] - grid_size
+            xmax = grid_center[0] + grid_size
+            ymin = grid_center[1] - grid_size
+            ymax = grid_center[1] + grid_size
+        
+            x = np.linspace(xmin, xmax, 8000)
+            y = np.linspace(ymin, ymax, 8000)
+            xgrid, ygrid = np.meshgrid(x,y)
+            zgrid = xgrid + 1j*ygrid
+        
+            # Get the source positions 
+            w_points = get_source_pos(zgrid, m1, m2, z1, z2)
+        
+            # There's a few points that get shot out far away
+            # This trims them out
+            dist2 = (w_points.real**2 + w_points.imag**2)
+        
+            # Separate into real and imaginary componenest for plotting
+            wreal = w_points[np.where(dist2 < plot_radius)].real
+            wimag = w_points[np.where(dist2 < plot_radius)].imag
+        
+            return z1, z2, wreal, wimag
+
+        fig, ax = plt.subplots(2, 2, figsize=(25, 20))
+        index = 0
+        time = bsbl.t0-time_choice
+        count=0
+        for i in range(0,2):
+            for j in range(0,2):
+                z1, z2, wreal, wimag = helper(time, grid_size, plot_radius)
+                val = ax[i][j].hist2d(wreal, wimag, bins=bins, norm = mpl.colors.LogNorm(), cmap = cmap)
+                ax[i][j].plot(z1.real, z1.imag, markersize = 20, color = 'green', marker = '.', label = 'Primary Lens')
+                ax[i][j].plot(z2.real, z2.imag, markersize = 20, color = 'darkslategrey', marker = '.', label = 'Secondary Lens')
+                ax[i][j].set_xlim(-lim, lim)
+                ax[i][j].set_ylim(-lim, lim)
+                ax[i][j].set_title(f'Time:{time}')
+                ax[i][j].set_ylabel('Dec')
+                ax[i][j].set_xlabel('RA')
+                ax[i][j].legend(markerscale = 1)
+                fig.colorbar(val[3])
+                time = time + 500
+        plt.savefig('mag_maps.png')
+    
+    mLp = 10
+    mLs = 8
+    t0_com = 5700.00
+    xS0_E = 0
+    xS0_N = 0
+    beta_com = 6
+    muL_E = 6 #mas/yr
+    muL_N = 0 #mas/yr
+    muS_E = 0
+    muS_N = 5
+    dL = 1000 #parsecs
+    dS = 1200
+    alphaL = 90
+    alphaS = 90
+    omegaL = 0
+    big_omegaL = 0
+    iL = 0
+    eL = 0 
+    pL = 430
+    tpL = 100
+    alephL = 3
+    aleph_secL = 5
+    omegaS = 0
+    big_omegaS = 90
+    iS = 0
+    eS = 0
+    pS = 400
+    tpS = 400
+    alephS = 6
+    aleph_secS = 10
+    mag_src_pri = 16
+    mag_src_sec = 20
+    b_sff = 1
+    raL = 30
+    decL = 20
+
+    
+    bsbl_nopar = model.BSBL_PhotAstrom_noPar_CircOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
+                 beta_com, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                alphaL, alphaS, omegaL, big_omegaL, iL, pL, tpL, alephL, aleph_secL, 
+                 omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS, 
+                 mag_src_pri, mag_src_sec, b_sff,
+                 raL=raL, decL=decL, root_tol=1e-8)
+    
+    get_magnification_map_timedep(bsbl_nopar,bins=8000, grid_size = 0.05, plot_radius = 0.04,lim = 0.025, cmap = 'pans')
+
+    return
+def caustics_magnification_checks():
+    def caustics_magnification_param1():
+        mLp = 10
+        mLs = 8
+        t0_com = 5700.00
+        xS0_E = 0
+        xS0_N = 0
+        beta_com = 6
+        muL_E = 8 #mas/yr
+        muL_N = 3 #mas/yr
+        muS_E = 5
+        muS_N = -10
+        dL = 1000 #parsecs
+        dS = 1200
+        alphaL = 90
+        alphaS = 90
+        omegaL = 0
+        big_omegaL = 0
+        iL = 90
+        eL = 0 
+        pL = 750
+        tpL = 50
+        alephL = 3
+        aleph_secL = 7
+        omegaS = 0
+        big_omegaS = 90
+        iS = 90
+        eS = 0
+        pS = 750
+        tpS = 50
+        alephS = 6
+        aleph_secS = 7
+        mag_src_pri = 16
+        mag_src_sec = 20
+        b_sff = 1
+        raL = 30
+        decL = 20
+        bsbl_nopar = model.BSBL_PhotAstrom_noPar_EllOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
+                         beta_com, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                        alphaL, alphaS, omegaL, big_omegaL, iL, eL, pL, tpL, alephL, aleph_secL, 
+                         omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, 
+                         mag_src_pri, mag_src_sec, b_sff,
+                         raL=raL, decL=decL, root_tol=1e-8)
+        duration = 100
+        time_steps = 50000
+        
+        tmin = bsbl_nopar.t0 - (duration/2 * bsbl_nopar.tE)
+        tmax = bsbl_nopar.t0 + (duration/2 * bsbl_nopar.tE)
+        t = np.linspace(tmin, tmax, time_steps)
+        photometry = bsbl_nopar.get_photometry(t)
+
+        assert photometry.min() < 12
+
+
+    def caustics_magnification_param2():    
+        t0_com = 57000.00
+        u0_amp_com = .4
+        tE = 154
+        thetaE= 6
+        piS = 3
+        piE_E = 0.1
+        piE_N = 0.1
+        q= 0.5
+        xS0_E = 0
+        xS0_N = 0
+        muS_E = 0
+        muS_N = 5
+        
+        alphaL = 90
+        alphaS = 90
+        omegaL = 0
+        big_omegaL = 0
+        iL = 0
+        eL = 0 
+        pL = 410
+        tpL = 100
+        alephL = 5
+        aleph_secL = 5
+        omegaS = 0
+        big_omegaS = 90
+        iS = 0
+        eS = 0
+        pS = 430
+        tpS = 400
+        alephS = 3
+        aleph_secS = 5
+        
+        fratio_bin = 1
+        b_sff = 1
+        mag_base = 16
+        raL = 30
+        decL = 20
+        bsbl_par = model.BSBL_PhotAstrom_Par_CircOrbs_Param2(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
+                alphaL, alphaS, omegaL, big_omegaL, iL, pL, tpL, alephL, aleph_secL, 
+                 omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff,
+                 raL=raL, decL=decL, root_tol=1e-8)
+
+
+        duration = 100
+        time_steps = 50000
+        
+        tmin = bsbl_par.t0 - (duration/2 * bsbl_par.tE)
+        tmax = bsbl_par.t0 + (duration/2 * bsbl_par.tE)
+        t = np.linspace(tmin, tmax, time_steps)
+        photometry = bsbl_par.get_photometry(t)
+        assert photometry.min() < 14
+        
+    caustics_magnification_param1()
+    caustics_magnification_param2()
+    return

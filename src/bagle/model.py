@@ -14371,6 +14371,132 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         shift = xS - xS_unlensed
 
         return shift
+    
+    def dexanimate(self, tE, time_steps, frame_time, name, size, zoom, astrometry, loc):
+            """ Produces animation of microlensing event. 
+            This function takes the PSPL and makes an animation, the input variables are as follows
+    
+            Parameters
+            ----------
+    
+            tE: 
+                number of einstein crossings times before/after the peak you want the animation to plot
+                    e.g tE = 2 => graph will go from -2 tE to 2 tE
+            time_steps:
+                number of time steps before/after peak, so total number of time steps will 
+                be 2 times this value
+            frame_time:
+                times in ms of each frame in the animation
+            name: string
+                the animation will be saved as name.html
+            size: list
+                [horizontal, vertical] cm's
+            zoom:
+                # of einstein radii plotted in vertical direction
+            """
+    
+            times = np.array(range(-time_steps, time_steps + 1, 1))
+            tau = tE * times / (-times[0])
+            t = self.t0 + (tau * self.tE)
+    
+            img, amp = self.get_all_arrays(t)
+    
+            xL1, xL2 = self.get_resolved_lens_astrometry(t)
+            source  = self.get_resolved_astrometry_unlensed(t) 
+            source_primary = source[:, 0, :]
+            source_secondary = source[:, 1, :]
+    
+            xS_resolved = self.get_resolved_astrometry(t, image_arr = img)
+            img_pri = xS_resolved[:, 0, :, :] 
+            img_sec = xS_resolved[:, 1, :, :] 
+    
+            fig = plt.figure(figsize=[size[0], size[1] + 0.5])  # sets up the figure
+            ax1 = fig.add_subplot(2, 1, 1)
+            fig.subplots_adjust(hspace=.5)
+    
+            markersize = 1
+            linewidth = 1
+            l1_line1, = ax1.plot([], '.', markersize = size[0] * 1.3, label="Primary Lens ", color='#FF8C00', linewidth=2)
+            l1_line2, = ax1.plot([], '-', markersize = size[0] * .3, color='#FF8C00', linewidth=2)
+            l2_line1, = ax1.plot([], '.', markersize = size[0] * 1.3, label="Secondary Lens ", color='#FF218C', linewidth=2)
+            l2_line2, = ax1.plot([], '-', markersize = size[0] * .3, color='#FF218C',linewidth=2 )
+        
+            s1_line1, = ax1.plot([], '.', markersize = size[0] * 1.3, label="Unlensed Primary Source", color='#21B1FF', linewidth=2)
+            s1_line2, = ax1.plot([], '-', markersize = size[0] * .3, color='#21B1FF', linewidth=2)
+        
+            s2_line1, = ax1.plot([], '.', markersize = size[0] * 1.3,label="Unlensed Secondary Source", color='springgreen', linewidth=2)
+            s2_line2, = ax1.plot([], '-', markersize = size[0] * .3, color='springgreen', linewidth=2)
+    
+    
+    
+        
+            i11_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, label="Lensed Primary Image", color='#21B1FF')
+            i11_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='#21B1FF')
+            i12_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='#21B1FF')
+            i12_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='#21B1FF')
+            i13_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='#21B1FF')
+            i13_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='#21B1FF')
+            i14_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='#21B1FF')
+            i14_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='#21B1FF')
+            i15_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='#21B1FF')
+            i15_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='#21B1FF')
+        
+            i21_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, label="Lensed Secondary Image", color='springgreen')
+            i21_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='springgreen')
+            i22_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='springgreen')
+            i22_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='springgreen')
+            i23_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='springgreen')
+            i23_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='springgreen')
+            i24_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='springgreen')
+            i24_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='springgreen')
+            i25_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='springgreen')
+            i25_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='springgreen')
+    
+        
+            
+            ax1.set_xlabel('RA (")')
+            ax1.set_ylabel('Dec (")')
+            ax1.set_xlim(zoom, -zoom)
+            ax1.set_ylim(-zoom, zoom)
+            ax1.legend(fontsize=12, loc=loc)
+    
+            line = [l1_line1, l1_line2, l2_line1, l2_line2, s1_line1, s1_line2, s2_line1, s2_line2, i11_line1, i11_line2, i12_line1, i12_line2, i13_line1, i13_line2, i14_line1, i14_line2, i15_line1, i15_line2,i21_line1, i21_line2, i22_line1, i22_line2, i23_line1, i23_line2, i24_line1, i24_line2, i25_line1, i25_line2]
+        
+            def update(i, lens1, lens2, source1, source2, image1, image2, image3, image4, image5,image6, image7, image8, image9, image10, tau, line):
+                    line[0].set_data(lens1[i, 0], lens1[i, 1])
+                    line[1].set_data(lens1[:i + 1, 0], lens1[:i + 1, 1])
+                    line[2].set_data(lens2[i, 0], lens2[i, 1])
+                    line[3].set_data(lens2[:i + 1, 0], lens2[:i + 1, 1])
+                    line[4].set_data(source1[i, 0], source1[i, 1])
+                    line[5].set_data(source1[:i + 1, 0], source1[:i + 1, 1])
+                    line[6].set_data(source2[i, 0], source2[i, 1])
+                    line[7].set_data(source2[:i + 1, 0], source2[:i + 1, 1])
+                
+                    line[8].set_data(image1[i, 0], image1[i, 1])
+                    line[9].set_data(image1[:i + 1, 0], image1[:i + 1, 1])
+                    line[10].set_data(image2[i, 0], image2[i, 1])
+                    line[11].set_data(image2[:i + 1, 0], image2[:i + 1, 1])
+                    line[12].set_data(image3[i, 0], image3[i, 1])
+                    line[13].set_data(image3[:i + 1, 0], image3[:i + 1, 1])
+                    line[14].set_data(image4[i, 0], image4[i, 1])
+                    line[15].set_data(image4[:i + 1, 0], image4[:i + 1, 1])
+                    line[16].set_data(image5[i, 0], image5[i, 1])
+                    line[17].set_data(image5[:i + 1, 0], image5[:i + 1, 1])
+                    line[18].set_data(image6[i, 0], image6[i, 1])
+                    line[19].set_data(image6[:i + 1, 0], image6[:i + 1, 1])
+                    line[20].set_data(image7[i, 0], image7[i, 1])
+                    line[21].set_data(image7[:i + 1, 0], image7[:i + 1, 1])
+                    line[22].set_data(image8[i, 0], image8[i, 1])
+                    line[23].set_data(image8[:i + 1, 0], image8[:i + 1, 1])
+                    line[24].set_data(image9[i, 0], image9[i, 1])
+                    line[25].set_data(image9[:i + 1, 0], image9[:i + 1, 1])
+                    line[26].set_data(image10[i, 0], image10[i, 1])
+                    line[27].set_data(image10[:i + 1, 0], image10[:i + 1, 1])
+                    return line
+            ani = animation.FuncAnimation(fig, update, len(tau), fargs=[xL1, xL2,source_primary, source_secondary, img_pri[:,0], img_pri[:,1], img_pri[:,2], img_pri[:,3], img_pri[:,4],img_sec[:,0], img_sec[:,1], img_sec[:,2], img_sec[:,3], img_sec[:,4], tau, line], blit=True, interval=frame_time)
+            ani.save("%s.mp4" % name, writer="ffmpeg")   
+        
+            return ani
 
 
 class BSBL_Parallax(PSPL_Parallax):
