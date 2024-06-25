@@ -218,9 +218,9 @@ class PSPL_Solver(Solver):
         'x0_system_N': ('make_gen', -10, 10),
         'muS_system_E': ('make_gen', -10, 10),
         'muS_system_N': ('make_gen', -10, 10),
-        'omega': ('make_gen', 0, 90),
-        'big_omega': ('make_gen', 0, 90),
-        'i':('make_gen', 0, 90),
+        'omega': ('make_gen', -180, 180),
+        'big_omega': ('make_gen', -180, 180),
+        'i':('make_gen', -90, 90),
         'e':('make_gen', 0, 0.9),
         'p': ('make_gen', 0, 10000),
         'tp': ('make_gen', 0, 10000),
@@ -2434,7 +2434,7 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
                 
                 # Equation 35 from Hobson
                 lnL_ast = lnL_const_standard.sum()
-                lnL_ast += -1.0 * nk21 * np.log(chi2_xy.sum() + 2)
+                lnL_ast += -1.0 * nk21 * np.log(chi2_xy.sum() + 2)#, where=chi2_xy.sum()>0)
                 lnL_ast += lnL_const_hobson
                 
                 lnL += lnL_ast
@@ -3198,7 +3198,8 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
     # same times as the measurements.
     if dense_time:
         # 1 day sampling over whole range
-        mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1)
+        #mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1)
+        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #+/-2000 days (for ongoing events)
     else:
         mod_t = dat_t
     if gp:
@@ -3340,7 +3341,8 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
     # same times as the measurements.
     if dense_time:
         # 1 day sampling over whole range
-        mod_t = np.arange(dat_t.min(), dat_t.max(), 1)
+        #mod_t = np.arange(dat_t.min(), dat_t.max(), 1)
+        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #+/-2000 days (for ongoing events)
     else:
         mod_t = dat_t
 
