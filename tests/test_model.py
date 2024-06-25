@@ -3801,7 +3801,6 @@ def test_PSPL_Phot_Param2_vs_Param3():
 
     return
 
-
 def test_bspl_noparallax():
     plt.rcParams.update({'font.size':15})
     def plots(i, e, p):
@@ -3837,19 +3836,19 @@ def test_bspl_noparallax():
         muS_system_E, muS_system_N, x0_system_E, x0_system_N,  np.array([fratio_bin]), [mag_base],
         [b_sff], ra_L, dec_L)
 
-        bsplorbits_nopar.t0 = t0_com
-        bsplorbits_nopar.u0_amp = u0_amp
-        bsplorbits_nopar.tE = tE
-        bsplorbits_nopar.thetaE = thetaE
-        bsplorbits_nopar.muS_E = muS_system_E
-        bsplorbits_nopar.muS_N = muS_system_N
-        bsplorbits_nopar.i = i
-        bsplorbits_nopar.e = e
-        bsplorbits_nopar.p = p
-        bsplorbits_nopar.omega = omega
-        bsplorbits_nopar.big_omega = big_omega
-        bsplorbits_nopar.aleph = aleph
-        bsplorbits_nopar.aleph_sec = aleph2
+        assert bsplorbits_nopar.t0 == t0_com
+        assert bsplorbits_nopar.u0_amp == u0_amp
+        assert bsplorbits_nopar.tE == tE
+        assert bsplorbits_nopar.thetaE_amp == thetaE
+        assert bsplorbits_nopar.muS_E == muS_system_E
+        assert bsplorbits_nopar.muS_N == muS_system_N
+        assert bsplorbits_nopar.i == i
+        assert bsplorbits_nopar.e == e
+        assert bsplorbits_nopar.p == p
+        assert bsplorbits_nopar.omega == omega
+        assert bsplorbits_nopar.big_omega == big_omega
+        assert bsplorbits_nopar.aleph == aleph
+        assert bsplorbits_nopar.aleph_sec == aleph2
         
         time_setting = 1000
         t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
@@ -3999,6 +3998,9 @@ def test_bspl_noparallax():
     P_test()
     e_test()
     i_test()
+    
+
+
 def test_bspl_parallax():
     plt.rcParams.update({'font.size':15})
     def plots(i, e, p):
@@ -4034,19 +4036,21 @@ def test_bspl_parallax():
         muS_system_E, muS_system_N, x0_system_E, x0_system_N,  np.array([fratio_bin]), [mag_base],
         [b_sff], ra_L, dec_L)
 
-        bsplorbits_nopar.t0 = t0_com
-        bsplorbits_nopar.u0_amp = u0_amp
-        bsplorbits_nopar.tE = tE
-        bsplorbits_nopar.thetaE = thetaE
-        bsplorbits_nopar.muS_E = muS_system_E
-        bsplorbits_nopar.muS_N = muS_system_N
-        bsplorbits_nopar.i = i
-        bsplorbits_nopar.e = e
-        bsplorbits_nopar.p = p
-        bsplorbits_nopar.omega = omega
-        bsplorbits_nopar.big_omega = big_omega
-        bsplorbits_nopar.aleph = aleph
-        bsplorbits_nopar.aleph_sec = aleph2
+        
+        assert bsplorbits_nopar.t0 == t0_com
+        assert bsplorbits_nopar.u0_amp == u0_amp
+        assert bsplorbits_nopar.tE == tE
+        assert bsplorbits_nopar.thetaE_amp == thetaE
+        assert bsplorbits_nopar.muS_E == muS_system_E
+        assert bsplorbits_nopar.muS_N == muS_system_N
+        assert bsplorbits_nopar.i == i
+        assert bsplorbits_nopar.e == e
+        assert bsplorbits_nopar.p == p
+        assert bsplorbits_nopar.omega == omega
+        assert bsplorbits_nopar.big_omega == big_omega
+        assert bsplorbits_nopar.aleph == aleph
+        assert bsplorbits_nopar.aleph_sec == aleph2
+        
         
         time_setting = 1000
         t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
@@ -4197,6 +4201,8 @@ def test_bspl_parallax():
     e_test()
     i_test()
     
+
+
 def test_bspl_no_proper_motion():
     plt.rcParams.update({'font.size':15})
     def plots(i, e, p):
@@ -4232,19 +4238,21 @@ def test_bspl_no_proper_motion():
         muS_system_E, muS_system_N, x0_system_E, x0_system_N,  np.array([fratio_bin]), [mag_base],
         [b_sff], ra_L, dec_L)
 
-        bsplorbits_nopar.t0 = t0_com
-        bsplorbits_nopar.u0_amp = u0_amp
-        bsplorbits_nopar.tE = tE
-        bsplorbits_nopar.thetaE = thetaE
-        bsplorbits_nopar.muS_E = muS_system_E
-        bsplorbits_nopar.muS_N = muS_system_N
-        bsplorbits_nopar.i = i
-        bsplorbits_nopar.e = e
-        bsplorbits_nopar.p = p
-        bsplorbits_nopar.omega = omega
-        bsplorbits_nopar.big_omega = big_omega
-        bsplorbits_nopar.aleph = aleph
-        bsplorbits_nopar.aleph_sec = aleph2
+        
+        assert bsplorbits_nopar.t0 == t0_com
+        assert bsplorbits_nopar.u0_amp == u0_amp
+        assert bsplorbits_nopar.tE == tE
+        assert bsplorbits_nopar.thetaE_amp == thetaE
+        assert bsplorbits_nopar.muS_E == muS_system_E
+        assert bsplorbits_nopar.muS_N == muS_system_N
+        assert bsplorbits_nopar.i == i
+        assert bsplorbits_nopar.e == e
+        assert bsplorbits_nopar.p == p
+        assert bsplorbits_nopar.omega == omega
+        assert bsplorbits_nopar.big_omega == big_omega
+        assert bsplorbits_nopar.aleph == aleph
+        assert bsplorbits_nopar.aleph_sec == aleph2
+        
         
         time_setting = 1000
         t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
@@ -4397,9 +4405,740 @@ def test_bspl_no_proper_motion():
     
 
 
+def test_psbl_noparallax():
+    def plots(i, e, p):
+            #Prepares plots
+            mLp = 5
+            mLs = 2
+            t0_com = 5700.00
+            xS0_E = 0
+            xS0_N = 0
+            beta_com = 1
+            muL_E = 0 #mas/yr
+            muL_N = 10 #mas/yr
+            muS_E = 4
+            muS_N = 0
+            i = i
+            e=e
+            p = p
+            omega = 0
+            big_omega = 90
+            aleph=5
+            aleph_sec = 8
+            tp = 30
+            dL = 3000 #parsecs
+            dS = 8000
+            mag_src = 20
+            b_sff = 1
+            ra_L = 260
+            dec_L = -29
+            alpha = 90
+            psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(
+                mLp, mLs, t0_com, xS0_E, xS0_N,
+                     beta_com, muL_E, muL_N, omega, big_omega, i, e, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
+                     alpha, b_sff, mag_src,
+                     raL=None, decL=None, root_tol=1e-8
+            )
     
+            assert psbl.t0_com == t0_com
+            assert psbl.beta_com == beta_com
+            assert psbl.mLp == mLp
+            assert psbl.mLs == mLs
+            assert psbl.muL[0] == muL_E
+            assert psbl.muL[1] == muL_N
+            assert psbl.i == i
+            assert psbl.e == e
+            assert psbl.p == p
+            assert psbl.omega == omega
+            assert psbl.big_omega == big_omega
+            assert psbl.aleph == aleph
+            assert psbl.aleph_sec == aleph_sec
+            
+    
+            time_setting = 1000
+            t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
+            img, amp = psbl.get_all_arrays(t)
+            lens1, lens2 = psbl.get_resolved_lens_astrometry(t)
+            source_unlensed = psbl.get_astrometry_unlensed(t)
+            source_resolved = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)
+    
+        
+            #At the same time, the primary and secondary sources are never in the same position.
+            #At the same time, the primary and secondary sources are never in the same position.
+            #This test function checks for that.
+        
+            difference_y = lens2[:, 1] - lens1[:, 1]
+            difference_x = lens2[:, 0] - lens1[:, 0]
+            assert difference_y.all() or difference_x.all() 
+    
+            return lens1, lens2, source_unlensed, source_resolved, i, e, p 
+    
+    def P_test(): 
+                #At long periods, these orbits should behave linearly.
+                #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
+                #At short periods, the primary and secondary should have intersecting y-coordinates. 
+                #Use set elements and a precision of up to 14 decimal places to figure out intersecting sets at varying periods.
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(90, 0.3, 100), 
+                  plots(90, 0.3, 400), 
+                  plots(90, 0.3, 1000), 
+                  plots(90, 0.3, 4000)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):
+                    
+                    lens1, lens2, source_unlensed, source_resolved, i, e, p  = tests[count]
+    
+                    #The long period test, where there is no intersection in the y elements for longer periods.
+                    if p==4000:
+                        assert bool(set(lens2[:, 0]) & set(lens1[:, 0])) !=True
+                    else:
+                        assert bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5))) ==True 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')
+                    ax[k][j].plot(source_unlensed[:, 0], source_unlensed[:, 1], linewidth =4, color='magenta', label = 'Source Position')
+                    for ii in range(5):
+                        if ii == 0:
+                            label = 'Image Position'
+                        else:
+                            label = ''
+                            ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+    
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits Source Motions with period {p} days')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Period_test_nopar.png')
+    
+        
+    def e_test(): 
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0, 500), 
+            plots(90, 0.3, 500), 
+            plots(90, 0.7, 500), 
+            plots(90, 0.85, 500)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, i, e, p  = tests[count]
+                    
+                    #Right Ascensions overlap
+                    assert(bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5)))) 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')
+                    ax[k][j].plot(source_unlensed[:, 0], source_unlensed[:, 1], linewidth =4, color='magenta', label = 'Source Position')
+                    for ii in range(5):
+                        if ii == 0:
+                            label = 'Image Position'
+                        else:
+                            label = ''
+                            ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+    
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Eccentricity_test_nopar.png')
+    
+    def i_test():
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0.3, 500), 
+            plots(30, 0.3, 500), 
+            plots(60, 0.3, 500), 
+            plots(90, 0.3, 500)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, i, e, p  = tests[count]
+                    
+                    #Right Ascensions overlap
+                    assert(bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5)))) 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')
+                    ax[k][j].plot(source_unlensed[:, 0], source_unlensed[:, 1], linewidth =4, color='magenta', label = 'Source Position')
+                    for ii in range(5):
+                        if ii == 0:
+                            label = 'Image Position'
+                        else:
+                            label = ''
+                            ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+    
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits Source Motions with inclination {i} degrees')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('inclination_test_nopar.png')
+    P_test()
+    e_test()
+    i_test()
+
+    return
+
+def test_psbl_parallax():
+    def plots(i, e, p):
+            #Prepares plots
+            mLp = 5
+            mLs = 2
+            t0_com = 5700.00
+            xS0_E = 0
+            xS0_N = 0
+            beta_com = 1
+            muL_E = 0 #mas/yr
+            muL_N = 10 #mas/yr
+            muS_E = 4
+            muS_N = 0
+            i = i
+            e=e
+            p = p
+            omega = 0
+            big_omega = 90
+            aleph=5
+            aleph_sec = 8
+            tp = 30
+            dL = 3000 #parsecs
+            dS = 8000
+            mag_src = 20
+            b_sff = 1
+            ra_L = 260
+            dec_L = -29
+            alpha = 90
+            psbl = model.PSBL_PhotAstrom_EllOrbs_Par_Param1(
+                mLp, mLs, t0_com, xS0_E, xS0_N,
+                     beta_com, muL_E, muL_N, omega, big_omega, i, e, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
+                     alpha, b_sff, mag_src,
+                     raL=ra_L, decL=dec_L, root_tol=1e-8
+            )
+    
+            assert psbl.t0_com == t0_com
+            assert psbl.beta_com == beta_com
+            assert psbl.mLp == mLp
+            assert psbl.mLs == mLs
+            assert psbl.muL[0] == muL_E
+            assert psbl.muL[1] == muL_N
+            assert psbl.i == i
+            assert psbl.e == e
+            assert psbl.p == p
+            assert psbl.omega == omega
+            assert psbl.big_omega == big_omega
+            assert psbl.aleph == aleph
+            assert psbl.aleph_sec == aleph_sec
+            
+    
+            time_setting = 1000
+            t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
+            img, amp = psbl.get_all_arrays(t)
+            lens1, lens2 = psbl.get_resolved_lens_astrometry(t)
+            source_unlensed = psbl.get_astrometry_unlensed(t)
+            source_resolved = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)
+    
+        
+            #At the same time, the primary and secondary sources are never in the same position.
+            #At the same time, the primary and secondary sources are never in the same position.
+            #This test function checks for that.
+        
+            difference_y = lens2[:, 1] - lens1[:, 1]
+            difference_x = lens2[:, 0] - lens1[:, 0]
+            assert difference_y.all() or difference_x.all() 
+    
+            return lens1, lens2, source_unlensed, source_resolved, i, e, p 
+    
+    def P_test(): 
+                #At long periods, these orbits should behave linearly.
+                #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
+                #At short periods, the primary and secondary should have intersecting y-coordinates. 
+                #Use set elements and a precision of up to 14 decimal places to figure out intersecting sets at varying periods.
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(90, 0.3, 100), 
+                  plots(90, 0.3, 400), 
+                  plots(90, 0.3, 1000), 
+                  plots(90, 0.3, 4000)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):
+                    
+                    lens1, lens2, source_unlensed, source_resolved, i, e, p  = tests[count]
+    
+                    #The long period test, where there is no intersection in the y elements for longer periods.
+                    if p==4000:
+                        assert bool(set(lens2[:, 0]) & set(lens1[:, 0])) !=True
+                    else:
+                        assert bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5))) ==True 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')
+                    ax[k][j].plot(source_unlensed[:, 0], source_unlensed[:, 1], linewidth =4, color='magenta', label = 'Source Position')
+                    for ii in range(5):
+                        if ii == 0:
+                            label = 'Image Position'
+                        else:
+                            label = ''
+                            ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+    
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits Source Motions with period {p} days')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Period_test_par.png')
+    
+        
+    def e_test(): 
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0, 500), 
+            plots(90, 0.3, 500), 
+            plots(90, 0.7, 500), 
+            plots(90, 0.85, 500)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, i, e, p  = tests[count]
+                    
+                    #Right Ascensions overlap
+                    assert(bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5)))) 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')
+                    ax[k][j].plot(source_unlensed[:, 0], source_unlensed[:, 1], linewidth =4, color='magenta', label = 'Source Position')
+                    for ii in range(5):
+                        if ii == 0:
+                            label = 'Image Position'
+                        else:
+                            label = ''
+                            ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+    
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Eccentricity_test_par.png')
+    
+    def i_test():
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0.3, 500), 
+            plots(30, 0.3, 500), 
+            plots(60, 0.3, 500), 
+            plots(90, 0.3, 500)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, i, e, p  = tests[count]
+                    
+                    #Right Ascensions overlap
+                    assert(bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5)))) 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')
+                    ax[k][j].plot(source_unlensed[:, 0], source_unlensed[:, 1], linewidth =4, color='magenta', label = 'Source Position')
+                    for ii in range(5):
+                        if ii == 0:
+                            label = 'Image Position'
+                        else:
+                            label = ''
+                            ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+    
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits Source Motions with inclination {i} degrees')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('inclination_test_par.png')
+    P_test()
+    e_test()
+    i_test()
+
+    return
+def test_psbl_nopropermotion():
+    def plots(i, e, p):
+            #Prepares plots
+            mLp = 5
+            mLs = 2
+            t0_com = 5700.00
+            xS0_E = 0
+            xS0_N = 0
+            beta_com = 1
+            muL_E = 0 #mas/yr
+            muL_N = 0 #mas/yr
+            muS_E = 4
+            muS_N = 0
+            i = i
+            e=e
+            p = p
+            omega = 0
+            big_omega = 90
+            aleph=5
+            aleph_sec = 8
+            tp = 30
+            dL = 3000 #parsecs
+            dS = 8000
+            mag_src = 20
+            b_sff = 1
+            ra_L = 260
+            dec_L = -29
+            alpha = 90
+            psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(
+                mLp, mLs, t0_com, xS0_E, xS0_N,
+                     beta_com, muL_E, muL_N, omega, big_omega, i, e, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
+                     alpha, b_sff, mag_src,
+                     raL=None, decL=None, root_tol=1e-8
+            )
+    
+            assert psbl.t0_com == t0_com
+            assert psbl.beta_com == beta_com
+            assert psbl.mLp == mLp
+            assert psbl.mLs == mLs
+            assert psbl.muL[0] == muL_E
+            assert psbl.muL[1] == muL_N
+            assert psbl.i == i
+            assert psbl.e == e
+            assert psbl.p == p
+            assert psbl.omega == omega
+            assert psbl.big_omega == big_omega
+            assert psbl.aleph == aleph
+            assert psbl.aleph_sec == aleph_sec
+            
+    
+            time_setting = 1000
+            t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
+            img, amp = psbl.get_all_arrays(t)
+            lens1, lens2 = psbl.get_resolved_lens_astrometry(t)
+            source_unlensed = psbl.get_astrometry_unlensed(t)
+            source_resolved = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)
+    
+        
+            #At the same time, the primary and secondary sources are never in the same position.
+            #At the same time, the primary and secondary sources are never in the same position.
+            #This test function checks for that.
+        
+            difference_y = lens2[:, 1] - lens1[:, 1]
+            difference_x = lens2[:, 0] - lens1[:, 0]
+            assert difference_y.all() or difference_x.all() 
+    
+            return lens1, lens2, source_unlensed, source_resolved, i, e, p 
+    
+    def P_test(): 
+                #At long periods, these orbits should behave linearly.
+                #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
+                #At short periods, the primary and secondary should have intersecting y-coordinates. 
+                #Use set elements and a precision of up to 14 decimal places to figure out intersecting sets at varying periods.
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0.3, 100), 
+                  plots(0, 0.3, 400), 
+                  plots(0, 0.3, 1000), 
+                  plots(0, 0.3, 4000)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):
+                    
+                    lens1, lens2, source_unlensed, source_resolved, i, e, p  = tests[count]
+    
+                    #The long period test, where there is no intersection in the y elements for longer periods.
+                    if p==4000:
+                        assert bool(set(lens2[:, 0]) & set(lens1[:, 0])) !=True
+                    else:
+                        assert bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5))) ==True 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')
+                    ax[k][j].plot(source_unlensed[:, 0], source_unlensed[:, 1], linewidth =4, color='magenta', label = 'Source Position')
+                    for ii in range(5):
+                        if ii == 0:
+                            label = 'Image Position'
+                        else:
+                            label = ''
+                            ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+    
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits Source Motions with period {p} days')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Period_test_nopropmo.png')
+    
+        
+    def e_test(): 
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0, 500), 
+            plots(0, 0.3, 500), 
+            plots(0, 0.7, 500), 
+            plots(0, 0.85, 500)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, i, e, p  = tests[count]
+                    
+                    #Right Ascensions overlap
+                    assert(bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5)))) 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')
+                    ax[k][j].plot(source_unlensed[:, 0], source_unlensed[:, 1], linewidth =4, color='magenta', label = 'Source Position')
+                    for ii in range(5):
+                        if ii == 0:
+                            label = 'Image Position'
+                        else:
+                            label = ''
+                            ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+    
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('Eccentricity_test_nopropmo.png')
+    
+    def i_test():
+            fig, ax = plt.subplots(2, 2, figsize=(25,18))
+            tests=[plots(0, 0.3, 500), 
+            plots(30, 0.3, 500), 
+            plots(60, 0.3, 500), 
+            plots(90, 0.3, 500)]   
+            count=0
+            for k in range(0,2):
+                for j in range(0,2):    
+                    lens1, lens2, source_unlensed, source_resolved, i, e, p  = tests[count]
+                    
+                    #Right Ascensions overlap
+                    assert(bool(set(np.round(lens2[:, 0], 5)) & set(np.round(lens1[:, 0], 5)))) 
+    
+                    lim = 0.04
+                    ax[k][j].set_xlim(lim, -lim)  # arcsec
+                    ax[k][j].set_ylim(-lim, lim)
+                    ax[k][j].plot(lens1[:, 0], lens1[:, 1], linewidth =4, label = 'Primary Lens Position', color='grey')
+                    ax[k][j].plot(lens2[:, 0], lens2[:, 1], linewidth =4, label = 'Secondary Lens Position', color = 'purple')
+                    ax[k][j].plot(source_unlensed[:, 0], source_unlensed[:, 1], linewidth =4, color='magenta', label = 'Source Position')
+                    for ii in range(5):
+                        if ii == 0:
+                            label = 'Image Position'
+                        else:
+                            label = ''
+                            ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+    
+                    ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
+                    ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
+                    ax[k][j].set_title(f'Elliptical Orbits Source Motions with inclination {i} degrees')
+                    ax[k][j].legend(loc="best")
+                    count +=1
+            plt.savefig('inclination_test_nopropmo.png')
+    P_test()
+    e_test()
+    i_test()
+
+    return 
+# Plot Some Magnification Maps
+def magnification_maps_psbl():
+    import matplotlib as mpl
+    def get_source_pos(z, m1, m2, z1, z2):
+        w = z - m1/np.conj(z - z1) - m2/np.conj(z - z2)
+        return w
+
+    def get_magnification_map_timedep(psbl, t_obs, grid_size = 0.0312, plot_radius = 0.0156, duration=1, time_steps=300, cmap = 'seismic', lim = 0.01, bins=6000):
+        if cmap == 'pans':
+            cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#21B1FF", "aqua","cyan","#FFD800", "#FF218C", "fuchsia"]) 
+        m1 = psbl.m1
+        m2 = psbl.m2
+        xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t_obs=np.array([t_obs]))
+        print(xL1_0)
+        z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
+        z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
+    
+        grid_center = psbl.xL0
+        grid_size = grid_size # Probably a better way to do this...
+        plot_radius = plot_radius
+        print(grid_size)
+        print(plot_radius)
+    
+        xmin = grid_center[0] - grid_size
+        xmax = grid_center[0] + grid_size
+        ymin = grid_center[1] - grid_size
+        ymax = grid_center[1] + grid_size
+    
+        x = np.linspace(xmin, xmax, 8000)
+        y = np.linspace(ymin, ymax, 8000)
+        xgrid, ygrid = np.meshgrid(x,y)
+        zgrid = xgrid + 1j*ygrid
+    
+        w_points = get_source_pos(zgrid, m1, m2, z1, z2)
+        dist2 = (w_points.real**2 + w_points.imag**2)
+    
+        wreal = w_points[np.where(dist2 < plot_radius)].real
+        wimag = w_points[np.where(dist2 < plot_radius)].imag
+    
+        return cmap, bins, lim, z1, z2, wreal, wimag
 
     
-
-
+    t0 = 5700.00
+    xS0_E = 0
+    xS0_N = 0
+    tE=376
+    thetaE=6
+    u0_amp = 1
+    piE_E = 0.1
+    piE_N = 0.1
+    piS = 3
+    muS_E = 0
+    muS_N = 5
+    i = 0
+    omega = 0
+    big_omega = 0
+    p = 2000
+    aleph=5
+    aleph_sec = 8
+    tp = 30
+    dL = 3000 #parsecs
+    dS = 8000
+    mag_src = 20
+    b_sff = 1
+    ra_L = 30
+    dec_L = -29
+    alpha = 90
+    beta = 1
+    q = 1
+    sep = 10
+    alpha = 90
+    b_sff = [1]
+    mag_src = [10]
+    root_tol = 1e-8
+    psbl_nopar = model.PSBL_PhotAstrom_CircOrbs_noPar_Param4(t0, u0_amp, tE, thetaE, piS,
+                     piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, p, tp, aleph, aleph_sec, muS_E, muS_N,
+                     q, alpha,
+                     b_sff, mag_src,
+                     raL=ra_L, decL=dec_L, root_tol=1e-8)
     
+    fig, ax = plt.subplots(2, 2, figsize=(25, 20))
+    index = 0
+    time = psbl_nopar.t0-1000
+    count=0
+    for i in range(0,2):
+        for j in range(0,2):
+            cmap, bins, lim,z1, z2, wreal, wimag = get_magnification_map_timedep(psbl_nopar, time, grid_size = 0.05, plot_radius = 0.04, bins=5000,lim = 0.02, cmap='pans')
+            val = ax[i][j].hist2d(wreal, wimag, bins=bins, norm = mpl.colors.LogNorm(), cmap = cmap)
+            ax[i][j].plot(z1.real, z1.imag, markersize = 20, color = 'green', marker = '.', label = 'Primary Lens')
+            ax[i][j].plot(z2.real, z2.imag, markersize = 20, color = 'darkslategrey', marker = '.', label = 'Secondary Lens')
+            ax[i][j].set_xlim(-lim, lim)
+            ax[i][j].set_ylim(-lim, lim)
+            ax[i][j].set_title(f'Time:{time}')
+            ax[i][j].set_ylabel('Dec')
+            ax[i][j].set_xlabel('RA')
+            ax[i][j].legend(markerscale = 1)
+            fig.colorbar(val[3])
+            time = time + 500
+    plt.savefig('mag_maps.png')
+
+    return
+    
+def caustics_magnification_checks_psbl():
+    def caustics_magnification_param1():
+        mLp = 10
+        mLs = 10
+        t0 = 5700.00
+        xS0_E = 0
+        xS0_N = 0
+        beta = 1
+        muL_E = 4 #mas/yr
+        muL_N = 0 #mas/yr
+        muS_E = 0
+        muS_N = 4
+        i = 90
+        omega = 0
+        big_omega = 0
+        p = 3000
+        aleph=5
+        aleph_sec = 8
+        tp = 30
+        dL = 3000 #parsecs
+        dS = 8000
+        mag_src = 20
+        b_sff = 1
+        ra_L = 260
+        dec_L = -29
+        alpha = 90
+        psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param1(
+                mLp, mLs, t0, xS0_E, xS0_N,
+                     beta, muL_E, muL_N, omega, big_omega, i, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
+                     alpha, b_sff, mag_src,
+                     raL=None, decL=None, root_tol=1e-8
+            )
+        duration = 500
+        time_steps = 50000
+        tmin = psbl.t0 - (duration/2 * psbl.tE)
+        tmax = psbl.t0 + (duration/2 * psbl.tE)
+        t = np.linspace(tmin, tmax, time_steps)
+        photometry = psbl.get_photometry(t)        
+        assert photometry.min() < 17
+    
+    def caustics_magnification_param4():    
+        t0 = 5700.00
+        xS0_E = 0
+        xS0_N = 0
+        tE=376
+        thetaE=6
+        u0_amp = 1
+        piE_E = 0.1
+        piE_N = 0.1
+        piS = 3
+        muS_E = 0
+        muS_N = 5
+        i = 0
+        omega = 0
+        big_omega = 0
+        p = 2000
+        aleph=5
+        aleph_sec = 8
+        tp = 30
+        dL = 3000 #parsecs
+        dS = 8000
+        ra_L = 30
+        dec_L = -29
+        alpha = 90
+        q = 1
+        alpha = 90
+        b_sff = [1]
+        mag_src = [10]
+        psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param4(t0, u0_amp, tE, thetaE, piS,
+                         piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, p, tp, aleph, aleph_sec, muS_E, muS_N,
+                         q, alpha,
+                         b_sff, mag_src,
+                         raL=ra_L, decL=dec_L, root_tol=1e-8)
+        duration = 100
+        time_steps = 50000
+        
+        tmin = psbl.t0 - (duration/2 * psbl.tE)
+        tmax = psbl.t0 + (duration/2 * psbl.tE)
+        t = np.linspace(tmin, tmax, time_steps)
+        photometry = psbl.get_photometry(t)
+        assert photometry.min() < 6.5
+        
+    caustics_magnification_param1()
+    caustics_magnification_param4()
+    return

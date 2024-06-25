@@ -601,7 +601,6 @@ class PSPL_Solver(Solver):
     def get_model(self, params):
         params_dict = generate_params_dict(params,
                                            self.fitter_param_names)
-
         if self.fixed_param_names is not None:
             fixed_params_dict = generate_fixed_params_dict(self.data, 
                                                            self.fixed_param_names)        
@@ -612,6 +611,7 @@ class PSPL_Solver(Solver):
             #print(self.fitter_param_names)
             #print(*params_dict.values())
             mod = self.model_class(*params_dict.values())
+
         # FIXME: Why are we updating params here???
         
         if not isinstance(params, (dict, Row)):
@@ -633,6 +633,7 @@ class PSPL_Solver(Solver):
         for i, param_name in enumerate(self.fitter_param_names):
             cube[i] = self.priors[param_name].ppf(cube[i])
         return cube
+
 
     def Prior_copy(self, cube):
         cube_copy = cube.copy()
