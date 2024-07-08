@@ -225,7 +225,25 @@ class PSPL_Solver(Solver):
         'p': ('make_gen', 0, 10000),
         'tp': ('make_gen', 0, 10000),
         'aleph': ('make_gen', 1, 10),
-        'aleph_sec':('make_gen', 1, 10)
+        'aleph_sec':('make_gen', 1, 10),
+        'alphaL': ('make_gen', 0, 360),
+        'alphaS': ('make_gen', 0, 360),
+        'omegaL': ('make_gen', -180, 180),
+        'big_omegaL': ('make_gen', -180, 180),
+        'iL':('make_gen', -90, 90),
+        'eL':('make_gen', 0, 0.9),
+        'pL': ('make_gen', 0, 10000),
+        'tpL': ('make_gen', 0, 10000),
+        'alephL': ('make_gen', 1, 10),
+        'aleph_secL':('make_gen', 1, 10),
+        'omegaS': ('make_gen', -180, 180),
+        'big_omegaS': ('make_gen', -180, 180),
+        'iS':('make_gen', -90, 90),
+        'eS':('make_gen', 0, 0.9),
+        'pS': ('make_gen', 0, 10000),
+        'tpS': ('make_gen', 0, 10000),
+        'alephS': ('make_gen', 1, 10),
+        'aleph_secS':('make_gen', 1, 10)
 
     }
 
