@@ -5413,8 +5413,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 orb.aleph2 = self.aleph_sec*1e-3
                 orb.vx = self.vx
                 orb.vy = self.vy
-                orb.x0 = self.xL0_E
-                orb.y0 = self.xL0_N
+                orb.x0 = self.xL0_sys_E
+                orb.y0 = self.xL0_sys_N
                 (x, y, x2, y2) = orb.oal2xy(t_obs, self.t0)
                 xL1[:, 0] = x
                 xL1[:, 1] = y
@@ -5850,7 +5850,10 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.xL0_E = self.xL0[0]
         self.xL0_N = self.xL0[1]
 
-            
+        thetaS0_com = self.u0_com * self.thetaE_amp
+        self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
+        self.xL0_sys_E = self.xL0[0]
+        self.xL0_sys_N = self.xL0[1]
 
         
 
@@ -6441,8 +6444,8 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
     ----------
     mL: float
         Mass of the lens (Msun)
-    t0_com: float
-        Time of closest approach between CoM of the source and the lens, as seen from Earth (MJD.DDD)
+    t0: float
+        Time of closest approach between primary source and the lens, as seen from Earth (MJD.DDD)
     beta: float
         Angular distance between the lens and primary source on the
         plane of the sky (mas). Can be
@@ -6512,7 +6515,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         Declination of the lens in decimal degrees.
     """
 
-    fitter_param_names = ['mL', 't0_com', 'beta', 'dL', 'dL_dS',
+    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
                           'x0_system_E', 'x0_system_N',
                           'muL_E', 'muL_N',
                           'muS_system_E', 'muS_system_N',
@@ -6532,7 +6535,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
 
 
 
-    def __init__(self, mL, t0_com, beta, dL, dL_dS,
+    def __init__(self, mL, t0, beta, dL, dL_dS,
                  x0_system_E, x0_system_N,
                  muL_E, muL_N,
                  muS_system_E, muS_system_N,
@@ -6541,7 +6544,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
                  mag_src_pri, mag_src_sec,
                  b_sff,
                  raL=None, decL=None):
-        self.t0_com = t0_com  # time of closest approach for system=primary pos
+        self.t0 = t0 # time of closest approach for system=primary pos
         self.mL = mL
         self.xS0 = np.array([x0_system_E, x0_system_N])  # position of source system=primary
         self.beta = beta
@@ -6667,11 +6670,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary #Msun
         q_source = self.mass_source_primary/self.mass_source_secondary
         qeff_source = (1-q_source)/(1+q_source)
-        self.t0_p = self.t0_com - (self.tE * np.cos(self.phi_rad) * self.sep/self.thetaE_amp)*(qeff_source - 1/2)
-        self.t0 = self.t0_p
-
-        
-                     
+        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep/self.thetaE_amp)*(qeff_source - 1/2)
                      
         return
 
@@ -6692,8 +6691,8 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
 
     Attributes
     ----------
-    t0_com: float
-        Time of closest approach between CoM of the source and the lens, as seen from Earth (MJD.DDD)
+    t0: float
+        Time of closest approach between primary source and the lens, as seen from Earth (MJD.DDD)
     u0_amp : float
         Angular distance between the primary source and the lens
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -6764,7 +6763,7 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
         Declination of the lens in decimal degrees.
     """
 
-    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'alpha', 'omega', 'big_omega', 'i', 'e',
                           'p', 'tp', 'aleph', 'aleph_sec', 'muS_system_E', 'muS_system_N',
@@ -6781,7 +6780,7 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
     orbitFlag = 'circular'
 
 
-    def __init__(self, t0_com, u0_amp, tE, thetaE, piS,
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
                  alpha, omega,
                  big_omega, i,
@@ -6793,7 +6792,7 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
                  mag_base, b_sff,
                  raL=None, decL=None):
                      
-        self.t0_com = t0_com #Makes get_lens_astrometry easier. t0 is t0_com     
+        self.t0 = t0 #Makes get_lens_astrometry easier. t0 is t0_com     
         self.u0_amp = u0_amp
         self.tE = tE 
         self.thetaE_amp = thetaE        
@@ -6883,8 +6882,7 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
         self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary #Msun
         q_source = self.mass_source_primary/self.mass_source_secondary
         qeff_source = (1-q_source)/(1+q_source)
-        self.t0_p = self.t0_com - (self.tE * np.cos(self.phi_rad) * self.sep/self.thetaE_amp)*(qeff_source - 1/2)
-        self.t0 = self.t0_p
+        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep/self.thetaE_amp)*(qeff_source - 1/2)
         return 
 
 
@@ -6902,8 +6900,8 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
 
     Attributes
     ----------
-    t0_com: float
-        Time of closest approach between CoM of the source and the lens, as seen from Earth (MJD.DDD)
+    t0: float
+        Time of closest approach between the primary source and the lens, as seen from Earth (MJD.DDD)
     u0_amp : float
         Angular distance between the primary source and the lens
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -6974,7 +6972,7 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
         Declination of the lens in decimal degrees.
     """
 
-    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'alpha', 'omega', 'big_omega', 'i', 'e', 'p', 
                           'tp', 'aleph', 'aleph_sec',
@@ -6993,7 +6991,7 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
 
     
 
-    def __init__(self, t0_com, u0_amp, tE, log10_thetaE, piS,
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
                  alpha, omega,
                  big_omega, i,
@@ -7005,7 +7003,7 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
                  mag_base, b_sff,
                  raL=None, decL=None):
                      
-        self.t0_com = t0_com  # time of closest approach for system=primary pos
+        self.t0 = t0  # time of closest approach for system=primary pos
         self.u0_amp = u0_amp
         self.tE = tE
         self.thetaE_amp = 10 ** log10_thetaE
@@ -7122,8 +7120,7 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
         self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary #Msun
         q_source = self.mass_source_primary/self.mass_source_secondary
         qeff_source = (1-q_source)/(1+q_source)
-        self.t0_p = self.t0_com - (self.tE * np.cos(self.phi_rad) * self.sep/self.thetaE_amp)*(qeff_source - 1/2)
-        self.t0 = self.t0_p
+        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep/self.thetaE_amp)*(qeff_source - 1/2)
 
         return
 
@@ -7758,7 +7755,7 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'p', 'tp', 'aleph', 
                           'aleph_sec', 'muS_E', 'muS_N',
                           'q', 'alpha']
@@ -7783,7 +7780,14 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
                      b_sff, mag_src,
                      raL=raL, decL=decL, root_tol=root_tol)
                          
-        #Orbital parameters
+        #Orbital parameters     
+        self.beta_com = self.u0_amp_com * self.thetaE_amp
+        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
+        self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
+        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
+        self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
+
+                         
         self.omega = omega
         self.big_omega = big_omega
         self.i = i
@@ -7791,8 +7795,7 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         self.tp = tp
         self.vx = self.muL_E * 1e-3
         self.vy = self.muL_N *1e-3
-        self.xL0_E, self.xL0_N = self.xL0
-
+        self.xL0_sys_E, self.xL0_sys_N = self.xL0_com
         
          # Calculate period, and semi-major axes
         self.sep = sep #mas
@@ -9003,7 +9006,15 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
                      q, sep, alpha,
                      b_sff, mag_src,
                      raL=raL, decL=raL, root_tol=root_tol)
+        
+        #Orbital parameters     
+        self.beta_com = self.u0_amp_com * self.thetaE_amp
+        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
+        self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
+        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
+        self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
 
+                         
         self.omega = omega
         self.big_omega = big_omega
         self.i = i
@@ -9011,7 +9022,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         self.tp = tp
         self.vx = self.muL_E * 1e-3
         self.vy = self.muL_N *1e-3
-        self.xL0_E, self.xL0_N = self.xL0
+        self.xL0_sys_E, self.xL0_sys_N = self.xL0_com
         
          # Calculate period, and semi-major axes
         self.sep = sep #mas
@@ -10207,10 +10218,34 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
 class BSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+    def get_amplification(t):
+        u_vec = self.get_u(t)
 
+        u_vec1 = u_vec[:, 0, :]
+        u_vec2 = u_vec[:, 1, :]
+
+        u1 = np.linalg.norm(u_vec1, axis=1)
+        u2 = np.linalg.norm(u_vec2, axis=1)
+
+        A1 = (u1 ** 2 + 2) / (u1 * np.sqrt(u1 ** 2 + 4))
+        A2 = (u2 ** 2 + 2) / (u2 * np.sqrt(u2 ** 2 + 4))
+        return A1+A2
 
 class BSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+    def get_amplification(t):
+        u_vec = self.get_u(t)
+
+        u_vec1 = u_vec[:, 0, :]
+        u_vec2 = u_vec[:, 1, :]
+
+        u1 = np.linalg.norm(u_vec1, axis=1)
+        u2 = np.linalg.norm(u_vec2, axis=1)
+
+        A1 = (u1 ** 2 + 2) / (u1 * np.sqrt(u1 ** 2 + 4))
+        A2 = (u2 ** 2 + 2) / (u2 * np.sqrt(u2 ** 2 + 4))
+        return A1+A2
+
 
 
 # --------------------------------------------------
@@ -13852,10 +13887,42 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
 
 class BSBL_Parallax(PSPL_Parallax):
     parallaxFlag = True
-
+    def get_amplification(self, t_obs, amp_arr=None):
+        """noParallax: Get the photometric amplification term at a set of times, t.
+        
+        Parameters
+        ----------
+        t: 
+            Array of times in MJD.DDD
+        """
+        if amp_arr is None:
+            img_arr, amp_arr = self.get_all_arrays(t_obs)
+        # Mask invalid values from the amplification array.
+        amp_arr_msk = np.ma.masked_invalid(amp_arr)
+        # Sum up all the amplifications b/c surface brightness is conserved.
+        amp = np.sum(amp_arr_msk, axis=2)
+        return amp[:, 0] + amp[:, 1] #Combined amplification of both sources
+        
 
 class BSBL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+    def get_amplification(self, t_obs, amp_arr=None):
+        """noParallax: Get the photometric amplification term at a set of times, t.
+        
+        Parameters
+        ----------
+        t: 
+            Array of times in MJD.DDD
+        """
+        if amp_arr is None:
+            img_arr, amp_arr = self.get_all_arrays(t_obs)
+        # Mask invalid values from the amplification array.
+        amp_arr_msk = np.ma.masked_invalid(amp_arr)
+        # Sum up all the amplifications b/c surface brightness is conserved.
+        amp = np.sum(amp_arr_msk, axis=2)
+        return amp[:, 0] + amp[:, 1] #Combined amplification of both sources
+        
+
 
 # --------------------------------------------------
 #
@@ -14093,6 +14160,7 @@ class BSBL_PhotAstromParam1(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    orbitFlag= False
 
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
@@ -14303,6 +14371,7 @@ class BSBL_PhotAstromParam2(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    orbitFlag=False
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
                  beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
@@ -14555,7 +14624,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     decL: float, optional
         Declination of the lens in decimal degrees.
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
+    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'alphaL', 'alphaS',  'omegaL', 'big_omegaL', 'iL', 'eL', 'pL', 'tpL', 'alephL', 'aleph_secL', 
                  'omegaS', 'big_omegaS', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
@@ -17556,6 +17625,18 @@ class PSBL_PhotAstrom_CircOrbs_Par_Param4(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_Param4(ModelClassABC,
+                                 PSBL_PhotAstrom,
+                                 PSBL_noParallax,
+                                 PSBL_PhotAstromParam4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
 
 
 
