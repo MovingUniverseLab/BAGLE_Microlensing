@@ -12464,7 +12464,7 @@ class PSBL_PhotAstrom_noPar_GP_Param1(ModelClassABC,
                                       PSPL_GP,
                                       PSBL_PhotAstrom,
                                       PSBL_noParallax,
-                                      PSBL_PhotAstromParam1):
+                                      PSBL_GP_PhotAstromParam1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -12477,7 +12477,7 @@ class PSBL_PhotAstrom_Par_GP_Param1(ModelClassABC,
                                     PSPL_GP,
                                     PSBL_PhotAstrom,
                                     PSBL_Parallax,
-                                    PSBL_PhotAstromParam1):
+                                    PSBL_GP_PhotAstromParam1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -12490,7 +12490,7 @@ class PSBL_PhotAstrom_noPar_GP_Param2(ModelClassABC,
                                       PSPL_GP,
                                       PSBL_PhotAstrom,
                                       PSBL_noParallax,
-                                      PSBL_PhotAstromParam2):
+                                      PSBL_GP_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -12503,7 +12503,7 @@ class PSBL_PhotAstrom_Par_GP_Param2(ModelClassABC,
                                     PSPL_GP,
                                     PSBL_PhotAstrom,
                                     PSBL_Parallax,
-                                    PSBL_PhotAstromParam2):
+                                    PSBL_GP_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -12516,7 +12516,7 @@ class PSBL_Phot_noPar_GP_Param1(ModelClassABC,
                                 PSPL_GP,
                                 PSBL_Phot,
                                 PSBL_noParallax,
-                                PSBL_PhotParam1):
+                                PSBL_GP_PhotParam1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -12529,7 +12529,7 @@ class PSBL_Phot_Par_GP_Param1(ModelClassABC,
                               PSPL_GP,
                               PSBL_Phot,
                               PSBL_Parallax,
-                              PSBL_PhotParam1):
+                              PSBL_GP_PhotParam1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
