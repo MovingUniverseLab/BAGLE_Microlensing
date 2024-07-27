@@ -208,7 +208,43 @@ class PSPL_Solver(Solver):
         'gp_log_sigma': ('make_norm_gen', 0, 5), 
         'gp_rho':('make_invgamma_gen', None, None),
         'gp_log_omega04_S0':('make_norm_gen', 0, 5), # FIX... get from data
-        'gp_log_omega0':('make_norm_gen', 0, 5)
+        'gp_log_omega0':('make_norm_gen', 0, 5),
+        'delta_muS_sec_E':('make_gen', -1, 1),
+        'delta_muS_sec_N':('make_gen', -1, 1),
+        #dex new priors
+        't0_com': ('make_t0_gen', None, None),
+        'thetaE_amp': ('make_lognorm_gen', 0, 1),
+        'x0_system_E': ('make_gen', -10, 10),
+        'x0_system_N': ('make_gen', -10, 10),
+        'muS_system_E': ('make_gen', -10, 10),
+        'muS_system_N': ('make_gen', -10, 10),
+        'omega': ('make_gen', -180, 180),
+        'big_omega': ('make_gen', -180, 180),
+        'i':('make_gen', -90, 90),
+        'e':('make_gen', 0, 0.9),
+        'p': ('make_gen', 0, 10000),
+        'tp': ('make_gen', 0, 10000),
+        'aleph': ('make_gen', 1, 10),
+        'aleph_sec':('make_gen', 1, 10),
+        'alphaL': ('make_gen', 0, 360),
+        'alphaS': ('make_gen', 0, 360),
+        'omegaL': ('make_gen', -180, 180),
+        'big_omegaL': ('make_gen', -180, 180),
+        'iL':('make_gen', -90, 90),
+        'eL':('make_gen', 0, 0.9),
+        'pL': ('make_gen', 0, 10000),
+        'tpL': ('make_gen', 0, 10000),
+        'alephL': ('make_gen', 1, 10),
+        'aleph_secL':('make_gen', 1, 10),
+        'omegaS': ('make_gen', -180, 180),
+        'big_omegaS': ('make_gen', -180, 180),
+        'iS':('make_gen', -90, 90),
+        'eS':('make_gen', 0, 0.9),
+        'pS': ('make_gen', 0, 10000),
+        'tpS': ('make_gen', 0, 10000),
+        'alephS': ('make_gen', 1, 10),
+        'aleph_secS':('make_gen', 1, 10)
+
     }
 
     def __init__(self, data, model_class,
@@ -443,6 +479,9 @@ class PSPL_Solver(Solver):
         self.n_phot_sets = n_phot_sets
         self.n_ast_sets = n_ast_sets
         self.map_phot_idx_to_ast_idx = map_phot_idx_to_ast_idx
+        #import pdb
+        #pdb.set_trace()
+#        print("Fitter new", self.model_class.fitter_param_names)
         self.fitter_param_names = self.model_class.fitter_param_names + \
                                   phot_params + ast_params
 
@@ -600,7 +639,6 @@ class PSPL_Solver(Solver):
     def get_model(self, params):
         params_dict = generate_params_dict(params,
                                            self.fitter_param_names)
-
         if self.fixed_param_names is not None:
             fixed_params_dict = generate_fixed_params_dict(self.data, 
                                                            self.fixed_param_names)        
@@ -608,9 +646,12 @@ class PSPL_Solver(Solver):
             mod = self.model_class(*params_dict.values(), **fixed_params_dict)
 
         else:
+            #print(self.fitter_param_names)
+            #print(*params_dict.values())
             mod = self.model_class(*params_dict.values())
 
         # FIXME: Why are we updating params here???
+        
         if not isinstance(params, (dict, Row)):
 
             # FIXME: is there better way to do this.
@@ -630,6 +671,7 @@ class PSPL_Solver(Solver):
         for i, param_name in enumerate(self.fitter_param_names):
             cube[i] = self.priors[param_name].ppf(cube[i])
         return cube
+
 
     def Prior_copy(self, cube):
         cube_copy = cube.copy()
@@ -2434,7 +2476,7 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
                 
                 # Equation 35 from Hobson
                 lnL_ast = lnL_const_standard.sum()
-                lnL_ast += -1.0 * nk21 * np.log(chi2_xy.sum() + 2)
+                lnL_ast += -1.0 * nk21 * np.log(chi2_xy.sum() + 2)#, where=chi2_xy.sum()>0)
                 lnL_ast += lnL_const_hobson
                 
                 lnL += lnL_ast
@@ -2980,12 +3022,10 @@ def generate_params_dict(params, fitter_param_names):
     multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
     
     params_dict = {}
-    
     for i, param_name in enumerate(fitter_param_names):
         # Skip some parameters.
         if any([x in param_name for x in skip_list]):
             continue
-
         if isinstance(params, (dict, Row)):
             key = param_name
         else:
@@ -3008,7 +3048,6 @@ def generate_params_dict(params, fitter_param_names):
                     
                 # Add this filter to our list.
                 params_dict[filt_param].append(params[key])
-
             if filt_param in multi_dict:
                 # Handle the optional filter-dependent fit parameters (required params).  
                 # They need to be grouped as a dicionary for input into a model.
@@ -3133,14 +3172,14 @@ def plot_params(model):
             pname_act = pname
 
         pvalue = getattr(model, pname_act)
-
+        #pdb.set_trace()
         if pname.endswith('_E'):
             pvalue = pvalue[0]
         if pname.endswith('_N'):
             pvalue = pvalue[1]
         if pname == 'log10_thetaE':
             pvalue = np.log10(pvalue)
-
+        
         return pvalue
 
     for ff in range(len(model.fitter_param_names)):
@@ -3151,31 +3190,34 @@ def plot_params(model):
         if pname.startswith('x'):
             fmt_str = '{0:s} = {1:.4f}'
 
-        ax_lab.text(x0, y0 - (ff + 1) * dy,
-                    fmt_str.format(pname, pvalu),
+        #pdb.set_trace()
+        if pname == 'thetaE':
+            fmt_str = '{0:s}'
+            ax_lab.text(x0, y0 - (ff + 1) * dy,
+                    f'thetaE = {np.around(pvalu, 2)}',
                     fontsize=10)
-
+        else:
+            ax_lab.text(x0, y0 - (ff + 1) * dy,
+                        fmt_str.format(pname, pvalu),
+                        fontsize=10)
     nrow = len(model.fitter_param_names)
     for ff in range(len(model.phot_param_names)):
         pname = model.phot_param_names[ff]
-        pvalu = get_param_value(pname)
-
+        pvalu = np.array(get_param_value(pname))
         fmt_str = '{0:s} = {1:.2f}'
-
+        #pdb.set_trace()
         for rr in range(len(pvalu)):
             ax_lab.text(x0, y0 - (nrow + 1) * dy,
-                        fmt_str.format(pname + str(rr + 1), pvalu[rr]),
+                        f'{pname + str(rr+1)} = {np.around(pvalu[rr], 2)}',
                         fontsize=10)
             nrow += 1
 
-    #nrow = 0
 
+    #nrow = 0
     for ff in range(len(model.additional_param_names)):
         pname = model.additional_param_names[ff]
         pvalu = get_param_value(pname)
-
         fmt_str = '{0:s} = {1:.2f}'
-
         if pname in multi_filt_params:
             for rr in range(len(pvalu)):
                 ax_lab.text(x0, y0 - (nrow + 1) * dy,
@@ -3206,6 +3248,7 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
         # 1 day sampling over whole range
         #mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1) #end model at last photometry data point
         mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #begin/end model +/-2000 days after last data point (for ongoing events)
+
     else:
         mod_t = dat_t
     if gp:
@@ -3347,7 +3390,8 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
     # same times as the measurements.
     if dense_time:
         # 1 day sampling over whole range
-        mod_t = np.arange(dat_t.min(), dat_t.max(), 1)
+        #mod_t = np.arange(dat_t.min(), dat_t.max(), 1)
+        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #+/-2000 days (for ongoing events)
     else:
         mod_t = dat_t
 

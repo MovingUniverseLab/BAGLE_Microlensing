@@ -62,7 +62,7 @@ def get_magnification_map(psbl, duration=0.05, time_steps=300):
 
     # Get lenses info
     m1 = psbl.m1
-    m2 = psbl.m
+    m2 = psbl.m2
     xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t=psbl.t0)
     z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
     z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
@@ -127,7 +127,7 @@ def get_magnification_map(psbl, duration=0.05, time_steps=300):
     plt.legend()
     plt.show()
     
-def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie.gif'):
+def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie'):
     """
     Make an animated GIF of a point-source binary-lens event. Animate the photometry
     and the astrometry. 
@@ -283,7 +283,7 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie.gif'):
                                   fargs=[t, rL_1, rL_2, rS, rS_img, rS_img_all, pS, lines],
                                   blit=True, interval=10)
     # ani.save(outfile, writer="imagemagick", dpi=80)
-    
+    ani.save("%s.mp4" % outfile, writer="ffmpeg") 
     return ani
 
 def animate_PSPL(pspl, duration=10, time_steps=300, outfile='pspl_movie.gif'):
