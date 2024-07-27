@@ -2,16 +2,9 @@
 Using BAGLE Models
 ==================
 
-``bagle.model`` is a module that contains a set of classes
-and functions that allow the user to construct microlensing
-models. The available classes for instantiating a microlensing
-event are shown in the list below. See the API documentation
-for each class for details.
 
-Example: A Microlens Model Event
-================================
+.. automodule:: model
 
-To instantiate a model:
 
 .. code-block:: python
                 

@@ -13,7 +13,6 @@ Note: all times must be given in MJD.
 
 from pymultinest.solve import Solver
 import os
-from astropy.table.row import Row
 import glob
 import math
 import numpy as np
@@ -33,9 +32,6 @@ import pdb
 from datetime import date
 import yaml
 from scipy.stats import norm
-
-from bagle.dynesty import plotting as dyplot
-from six.moves import range
 import matplotlib.patches as mpatches
 
 import logging
@@ -73,9 +69,9 @@ multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
 
 class PSPL_Solver(Solver):
     """
-    A PyMultiNest solver to find the optimal PSPL parameters, given data and
+    A PyMultiNest solver to find the optimal parameters, given data and
     a microlensing model from model.py.
-    DESPITE THE NAME YOU CAN ALSO USE IT TO FIT PSBL! 
+    DESPITE THE NAME YOU CAN ALSO USE IT TO FIT ANY WORKING MODELS IN MODEL.PY!
 
     Attributes
     ----------
@@ -122,9 +118,11 @@ class PSPL_Solver(Solver):
         along with extensive documentation as to their content and
         construction in the file's docstring. The model can support either
 
-        1.  photometric data or photometric and astrometric data,
-        2.  parallax or no parallax, and
-        3. different parameterizations of the model.
+        1.  PSPL, PSBL, BSPL, BSBL, or FSPL (FSPL implementation in-progress);
+        2.  photometric data only, photometric and astrometric data, or
+            astrometric data only;
+        3.  parallax or no parallax; and
+        4.  different parameterizations of the model.
 
         For example, a model with accepts both astrometric and photometric
         data, uses parallax, and uses a parameterization that includes the
@@ -134,9 +132,10 @@ class PSPL_Solver(Solver):
         If provided, the fitter will override the default
         `additional_param_names` of the model_class. These are the parameters,
         besides those that are being fitted for, that are written out to disk
-        for posterior plotting after the fit has completed. To see the default
+        for posterior plotting after the fit has completed. They must exist
+        as a variable in the model object. To see the default
         additional_param_names run:
-            `print(model_class.additional _param_names)`
+            `print(model_class.additional_param_names)`
     add_error_on_photometry : boolean, optional
         If set to True, the fitter will fit for an additive error to the
         photometric magnitudes in the fitting process. This error will have
@@ -203,6 +202,7 @@ class PSPL_Solver(Solver):
         'radius': ('make_gen', 1E-4, 1E-2),
         'fratio_bin': ('make_gen', 0, 1),
         # We really need to make some normal distributions. All these are junk right now.
+        # TODO: I don't think the above comment is accurate any more
         'gp_log_rho': ('make_norm_gen', 0, 5),
         'gp_log_S0': ('make_norm_gen', 0, 5),
         'gp_log_sigma': ('make_norm_gen', 0, 5), 
@@ -259,7 +259,7 @@ class PSPL_Solver(Solver):
                  n_live_points=300,
                  evidence_tolerance=0.5, sampling_efficiency=0.8,
                  n_iter_before_update=100, null_log_evidence=-1e90,
-                 max_modes=100, mode_tolerance=-1e90,
+                 max_modes=100, mode_tolerance=-1e90, single_gp=False,
                  outputfiles_basename="chains/1-", seed=-1, verbose=False,
                  resume=False, context=0, write_output=True, log_zero=-1e100,
                  max_iter=0, init_MPI=False, dump_callback='default'):
@@ -274,6 +274,10 @@ class PSPL_Solver(Solver):
 
         use_phot_optional_params : bool, or list of bools, optional
 	    optional photometry parameters
+     
+        single_gp: bool, optional
+        Set as true if there are multiple datasets but only a single set
+        of gp parameters.
         
         
         """
@@ -301,6 +305,7 @@ class PSPL_Solver(Solver):
         self.custom_additional_param_names = custom_additional_param_names
         self.n_phot_sets = None
         self.n_ast_sets = None
+        self.single_gp = single_gp
         self.fitter_param_names = None
         self.fixed_param_names = None
         self.additional_param_names = None
@@ -405,11 +410,17 @@ class PSPL_Solver(Solver):
                 for opt_phot_name in self.model_class.phot_optional_param_names:
                     if isinstance(self.use_phot_optional_params, (list, np.ndarray)):
                         if self.use_phot_optional_params[n_phot_sets-1]:
-                            phot_params.append(opt_phot_name + str(n_phot_sets))
+                            if self.single_gp is True and n_phot_sets > 1:
+                                continue
+                            else:
+                                phot_params.append(opt_phot_name + str(n_phot_sets))
                     # Case: single value -- set for all filters. 
                     else:
                         if self.use_phot_optional_params:
-                            phot_params.append(opt_phot_name + str(n_phot_sets))
+                            if self.single_gp is True and n_phot_sets > 1:
+                                continue
+                            else:
+                                phot_params.append(opt_phot_name + str(n_phot_sets))
                         else:
                             msg = 'WARNING: Your model supports optional photometric parameters; '
                             msg += 'but you have disabled them for all filters. '
@@ -464,7 +475,7 @@ class PSPL_Solver(Solver):
                 except ValueError:
                     print('*** CHECK YOUR INPUT! All astrometry data must have a corresponding photometry data set! ***')
                     raise
-
+                    
         self.n_phot_sets = n_phot_sets
         self.n_ast_sets = n_ast_sets
         self.map_phot_idx_to_ast_idx = map_phot_idx_to_ast_idx
@@ -486,6 +497,10 @@ class PSPL_Solver(Solver):
                     if param_name in self.gp_params:
                         if self.use_phot_optional_params is True:
                             for ff in range(n_phot_sets):
+                                # Only make one set of gp parameters if
+                                # multiple phot sets but one set of gp params
+                                if self.single_gp is True and ff > 1:
+                                    continue
                                 self.additional_param_names += [param_name + str(ff+1)]
                         elif self.use_phot_optional_params is False:
                             continue
@@ -504,7 +519,12 @@ class PSPL_Solver(Solver):
                     if param_name in self.gp_params:
                         if self.use_phot_optional_params is True:
                             for nn in range(self.n_phot_sets):
-                                self.additional_param_names += [param_name + str(nn+1)]
+                                # Only make one set of gp parameters if
+                                # multiple phot sets but one set of gp params
+                                if self.single_gp is True and nn > 0:
+                                    continue
+                                else:
+                                    self.additional_param_names += [param_name + str(nn+1)]
                         elif self.use_phot_optional_params is False:
                             continue
                         else:
@@ -513,7 +533,7 @@ class PSPL_Solver(Solver):
                                     self.additional_param_names += [param_name + str(ii+1)]
                 else:
                     self.additional_param_names += [param_name]
-
+        
         self.all_param_names = self.fitter_param_names + self.additional_param_names
 
         self.n_dims = len(self.fitter_param_names)
@@ -755,7 +775,7 @@ class PSPL_Solver(Solver):
                                                             self.data['ypos' + str(i+1)],
                                                             self.data['xpos_err' + str(i+1)],
                                                             self.data['ypos_err' + str(i+1)],
-                                                            ast_filt_idx = i)
+                                                            filt_idx = i)
                     lnL_ast += lnL_ast_i.sum() 
 
             # If photometry
@@ -766,7 +786,7 @@ class PSPL_Solver(Solver):
                                                             self.data['ypos' + str(i+1)],
                                                             self.data['xpos_err' + str(i+1)],
                                                             self.data['ypos_err' + str(i+1)],
-                                                            ast_filt_idx = self.map_phot_idx_to_ast_idx[i])
+                                                            filt_idx = self.map_phot_idx_to_ast_idx[i])
                     lnL_ast += lnL_ast_i.sum() 
         else:
             lnL_ast = 0
@@ -986,6 +1006,10 @@ class PSPL_Solver(Solver):
                         max_iter=self.max_iter,
                         init_MPI=self.init_MPI,
                         dump_callback=self.dump_callback)
+
+        # Reload the results and summary FITS tables.
+        self.load_mnest_results(remake_fits=True)
+        self.load_mnest_summary(remake_fits=True)
 
         return
 
@@ -1551,9 +1575,9 @@ class PSPL_Solver(Solver):
                 else:
                     gp = False
 
-#                if gp:
-#                    pointwise_likelihood(self.data, model, filt_index=i)
-#                    debug_gp_nan(self.data, model, filt_index=i)
+               # if gp:
+               #     pointwise_likelihood(self.data, model, filt_index=i)
+               #     debug_gp_nan(self.data, model, filt_index=i)
 
                 fig = plot_photometry(self.data, model, input_model=input_model,
                                       dense_time=True, residuals=True,
@@ -1849,10 +1873,10 @@ class PSPL_Solver(Solver):
                 # Calculate the lnL for just a single filter.
                 # If no photometry
                 if len(self.map_phot_idx_to_ast_idx) == 0:
-                    lnL_ast_nn = pspl.log_likely_astrometry(t_ast, x, y, xerr, yerr, ast_filt_idx=nn)
+                    lnL_ast_nn = pspl.log_likely_astrometry(t_ast, x, y, xerr, yerr, filt_idx=nn)
                 # If photometry
                 else:
-                    lnL_ast_nn = pspl.log_likely_astrometry(t_ast, x, y, xerr, yerr, ast_filt_idx=self.map_phot_idx_to_ast_idx[nn])
+                    lnL_ast_nn = pspl.log_likely_astrometry(t_ast, x, y, xerr, yerr, filt_idx=self.map_phot_idx_to_ast_idx[nn])
                 lnL_ast_nn = lnL_ast_nn.sum()
 
                 # Calculate the chi2 and constants for just a single filter.
@@ -1960,7 +1984,7 @@ class PSPL_Solver(Solver):
                 yerr = self.data['ypos_err' + str(nn + 1)]
 
                 # NOTE: WILL BREAK FOR LUMINOUS LENS. BREAKS FOR ASTROM AND PHOTOM??? ADD map_phot_
-                pos_out = pspl.get_astrometry(t_ast, ast_filt_idx=nn)
+                pos_out = pspl.get_astrometry(t_ast, filt_idx=nn)
 
                 chi2_ast_nn = (x - pos_out[:,0])**2/xerr**2
                 chi2_ast_nn += (y - pos_out[:,1])**2/yerr**2
@@ -2139,7 +2163,7 @@ class PSPL_Solver(Solver):
                 x_err_obs = self.data['xpos_err' + str(nn + 1)]
                 y_err_obs = self.data['ypos_err' + str(nn + 1)]
 
-                pos_model = pspl.get_astrometry(t_ast, ast_filt_idx=nn)
+                pos_model = pspl.get_astrometry(t_ast, filt_idx=nn)
                 chi_x = (x_obs - pos_model[:, 0]) / x_err_obs
                 chi_y = (y_obs - pos_model[:, 1]) / y_err_obs
 
@@ -2412,7 +2436,7 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
                 nk = len(mag)
                 nk21 = (nk / 2.0) + 1.0
 
-                chi2_m = model.get_chi2_photometry(t_phot, mag, mag_err, filt_index=i)
+                chi2_m = model.get_chi2_photometry(t_phot, mag, mag_err, filt_idx=i)
 
                 lnL_const_standard = model.get_lnL_constant(mag_err)
                 lnL_const_hobson = scipy.special.gammaln( nk21 ) + (nk21 * np.log(2))
@@ -2432,9 +2456,9 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
             for i in range(self.n_ast_sets):
                 # If no photometry
                 if len(self.map_phot_idx_to_ast_idx) == 0:
-                    ast_filt_idx = i
+                    filt_idx = i
                 else:
-                    ast_filt_idx = self.map_phot_idx_to_ast_idx[i]
+                    filt_idx = self.map_phot_idx_to_ast_idx[i]
 
                 t_ast = self.data['t_ast' + str(i+1)]
                 x_obs = self.data['xpos' + str(i+1)]
@@ -2445,7 +2469,7 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
                 nk = len(x_obs) + len(y_obs)
                 nk21 = (nk / 2.0) + 1.0
                     
-                chi2_xy = model.get_chi2_astrometry(t_ast, x_obs, y_obs, x_err_obs, y_err_obs, ast_filt_idx=ast_filt_idx)
+                chi2_xy = model.get_chi2_astrometry(t_ast, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx)
 
                 lnL_const_standard = model.get_lnL_constant(x_err_obs) + model.get_lnL_constant(y_err_obs)
                 lnL_const_hobson = scipy.special.gammaln( nk21 ) + (nk21 * np.log(2))
@@ -2558,7 +2582,7 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
 
                 nk = len(mag)
 
-                chi2_m = model.get_chi2_photometry(t_phot, mag, mag_err, filt_index=i)
+                chi2_m = model.get_chi2_photometry(t_phot, mag, mag_err, filt_idx=i)
 
                 ak_eff = nk / chi2_m.sum()
 
@@ -2571,9 +2595,9 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
             for i in range(self.n_ast_sets):
                 # If no photometry
                 if len(self.map_phot_idx_to_ast_idx) == 0:
-                    ast_filt_idx = i
+                    filt_idx = i
                 else:
-                    ast_filt_idx = self.map_phot_idx_to_ast_idx[i]
+                    filt_idx = self.map_phot_idx_to_ast_idx[i]
 
                 t_ast = self.data['t_ast' + str(i+1)]
                 x_obs = self.data['xpos' + str(i+1)]
@@ -2583,7 +2607,7 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
 
                 nk = len(x_obs) + len(y_obs)
                     
-                chi2_xy = model.get_chi2_astrometry(t_ast, x_obs, y_obs, x_err_obs, y_err_obs, ast_filt_idx=ast_filt_idx)
+                chi2_xy = model.get_chi2_astrometry(t_ast, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx)
 
                 ak_eff = nk / chi2_xy.sum()
 
@@ -3038,7 +3062,13 @@ def generate_params_dict(params, fitter_param_names):
 
 def generate_fixed_params_dict(data, fixed_param_names):
     param_dict = {}
-    for param in fixed_param_names:
+    if ('obsLocation' in fixed_param_names) and ('obsLocation' not in data.keys()):
+        # Catch the case where we need an obsLocation; but one hasn't been provided in the
+        # data object. Assume default parameter in model.py (earth).
+        use_fixed_param_names = [item for item in fixed_param_names if not item=='obsLocation']
+    else:
+        use_fixed_param_names = fixed_param_names
+    for param in use_fixed_param_names:
         param_dict[param] = data[param]
 
     return param_dict
@@ -3116,7 +3146,6 @@ def debug_gp_nan(data, model, filt_index=0):
 
 
 def plot_params(model):
-
     """Print parameters
     """
     x0 = 0.05
@@ -3136,6 +3165,8 @@ def plot_params(model):
         if pname.endswith('_E') or pname.endswith('_N'):
             pname_act = pname[:-2]
         elif pname == 'log10_thetaE':
+            pname_act = 'thetaE_amp'
+        elif pname == 'thetaE':
             pname_act = 'thetaE_amp'
         else:
             pname_act = pname
@@ -3181,9 +3212,8 @@ def plot_params(model):
                         fontsize=10)
             nrow += 1
 
-    nrow = 0
-            
 
+    #nrow = 0
     for ff in range(len(model.additional_param_names)):
         pname = model.additional_param_names[ff]
         pvalu = get_param_value(pname)
@@ -3216,8 +3246,9 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
     # same times as the measurements.
     if dense_time:
         # 1 day sampling over whole range
-        #mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1)
-        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #+/-2000 days (for ongoing events)
+        #mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1) #end model at last photometry data point
+        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #begin/end model +/-2000 days after last data point (for ongoing events)
+
     else:
         mod_t = dat_t
     if gp:
@@ -3322,7 +3353,7 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
     # Residuals
     #####
     if residuals:
-        f1.get_shared_x_axes().join(f1, f2)
+        f1.sharex(f2)
         f2.errorbar(dat_t, dat_m - mod_m_at_dat,
                     yerr=dat_me, fmt='k.', alpha=0.2)
         f2.axhline(0, linestyle='--', color='r')
@@ -3482,27 +3513,21 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     #### Models
     #
     # Model
-    p_mod_lens_tdat = model.get_astrometry(dat_t, ast_filt_idx=ast_filt_index)
-    p_mod_lens_tmod = model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index)
-    p_mod_lens_tlon = model.get_astrometry(t_long, ast_filt_idx=ast_filt_index)
+    p_mod_lens_tdat = model.get_astrometry(dat_t, filt_idx=ast_filt_index)
+    p_mod_lens_tmod = model.get_astrometry(t_mod, filt_idx=ast_filt_index)
+    p_mod_lens_tlon = model.get_astrometry(t_long, filt_idx=ast_filt_index)
 
-    if str(model.__class__).startswith('BS'):
-        # Binary sources have filter dependent unlensed astrometry.
-        p_mod_unlens_tdat = model.get_astrometry_unlensed(dat_t, ast_filt_idx=ast_filt_index)
-        p_mod_unlens_tmod = model.get_astrometry_unlensed(t_mod, ast_filt_idx=ast_filt_index)
-        p_mod_unlens_tlon = model.get_astrometry_unlensed(t_long, ast_filt_idx=ast_filt_index)
-    else:
-        p_mod_unlens_tdat = model.get_astrometry_unlensed(dat_t)
-        p_mod_unlens_tmod = model.get_astrometry_unlensed(t_mod)
-        p_mod_unlens_tlon = model.get_astrometry_unlensed(t_long)
+    p_mod_unlens_tdat = model.get_astrometry_unlensed(dat_t, filt_idx=ast_filt_index)
+    p_mod_unlens_tmod = model.get_astrometry_unlensed(t_mod, filt_idx=ast_filt_index)
+    p_mod_unlens_tlon = model.get_astrometry_unlensed(t_long, filt_idx=ast_filt_index)
 
     # Input model
     if input_model != None:
-        p_in_lens_tmod = input_model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index)
-        p_in_lens_tlon = input_model.get_astrometry(t_long, ast_filt_idx=ast_filt_index)
+        p_in_lens_tmod = input_model.get_astrometry(t_mod, filt_idx=ast_filt_index)
+        p_in_lens_tlon = input_model.get_astrometry(t_long, filt_idx=ast_filt_index)
         if str(model.__class__).startswith('BS'):
-            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod, ast_filt_idx=ast_filt_index)
-            p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long, ast_filt_idx=ast_filt_index)
+            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod, filt_idx=ast_filt_index)
+            p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long, filt_idx=ast_filt_index)
         else:
             p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod)
             p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long)
@@ -3510,7 +3535,6 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     # Get trace models and positions if we will be plotting traces
     if mnest_results is None:
         N_traces = 0
-        print('No mnest_results supplied for traces')
 
     if N_traces > 0:
         idx_arr = np.random.choice(np.arange(len(mnest_results['weights'])),
@@ -3523,15 +3547,15 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
             trace_model = fitter.get_model(mnest_results[idx])
             trace_models.append(trace_model)
 
-            pos_tr = trace_model.get_astrometry(t_mod, ast_filt_idx=ast_filt_index)
+            pos_tr = trace_model.get_astrometry(t_mod, filt_idx=ast_filt_index)
             p_tr_lens_tmod.append(pos_tr)
             
-            pos_tr = trace_model.get_astrometry(t_long, ast_filt_idx=ast_filt_index)
+            pos_tr = trace_model.get_astrometry(t_long, filt_idx=ast_filt_index)
             p_tr_lens_tlon.append(pos_tr)
 
 
     #####
-    # Plot On-Sky Astrometry 
+    # AST FIG 1: Plot On-Sky Astrometry
     #####
     # Setup figure
     fig_list = []
@@ -3568,7 +3592,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     # x = RA, y = Dec
     #####
 
-    ### X vs. time
+    ### AST FIG 2: X vs. time
     plt.close(n_phot_sets + 2)
     fig = plt.figure(n_phot_sets + 2, figsize=(10, 10))  # PLOT 2
     fig_list.append(fig)
@@ -3604,14 +3628,14 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     
     if residuals:
         f1.get_xaxis().set_visible(False)
-        f1.get_shared_x_axes().join(f1, f2)
+        f1.sharex(f2)
         f2.errorbar(dat_t, dat_x - p_mod_lens_tdat[:,0] * 1e3,
                     yerr=dat_xe, fmt='k.', alpha=0.2)
         f2.axhline(0, linestyle='--', color='r')
         f2.set_xlabel('Time (HJD)')
         f2.set_ylabel('Obs - Mod')
 
-    ### Y vs. time
+    ### AST FIG 3: Y vs. time
     plt.close(n_phot_sets + 3)
     fig = plt.figure(n_phot_sets + 3, figsize=(10, 10))  # PLOT 3
     fig_list.append(fig)
@@ -3647,7 +3671,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
     if residuals:
         f1.get_xaxis().set_visible(False)
-        f1.get_shared_x_axes().join(f1, f2)
+        f1.sharex(f2)
         f2.errorbar(dat_t,
                     dat_y - p_mod_lens_tdat[:,1] * 1e3,
                     yerr=dat_ye, fmt='k.', alpha=0.2)
@@ -3696,7 +3720,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     smap.set_array([])
 
     
-    ##### Setup X - PM vs. t figure
+    ##### AST FIG 4: Setup X - PM vs. t figure
     plt.close(n_phot_sets + 4)
     fig = plt.figure(n_phot_sets + 4, figsize=(10, 10))  # PLOT 4
     fig_list.append(fig)
@@ -3723,7 +3747,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     plt.ylabel(r'$\Delta \alpha^*$ - $\Delta \alpha^*_{unlensed}$ (mas)')
     plt.legend()
 
-    ##### Setup Y - PM vs. t figure
+    ##### AST FIG 5: Setup Y - PM vs. t figure
     plt.close(n_phot_sets + 5)
     fig = plt.figure(n_phot_sets + 5, figsize=(10, 10))  # PLOT 5
     fig_list.append(fig)
@@ -3749,7 +3773,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     plt.ylabel(r'$\Delta \delta$ - $\Delta \delta_{unlensed}$ (mas)')
     plt.legend()
 
-    ##### Setup X - PM vs. Y - PM 
+    ##### AST FIG 6: Setup X - PM vs. Y - PM
     plt.close(n_phot_sets + 6)
     fig = plt.figure(n_phot_sets + 6)  # PLOT 6
     fig_list.append(fig)
@@ -3781,7 +3805,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     #####
     # Astrometry on the sky -- LONG TIME
     #####
-    # X vs. Y
+    # AST FIG 7: X vs. Y
     plt.close(n_phot_sets + 7)
     fig = plt.figure(n_phot_sets + 7, figsize=(10, 10))  # PLOT 7
     fig_list.append(fig)
@@ -3798,7 +3822,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
     # Input model
     if input_model != None:
-        plt.plot(p_in_unlens_tlon[:, 0] * 1e3, p_in_unlens_tlon[:, 1] * 1e3, 'g-', label='Input Model')
+        plt.plot(p_in_lens_tlon[:, 0] * 1e3, p_in_lens_tlon[:, 1] * 1e3, 'g-', label='Input Model')
 
     # Trace models
     for tt in range(N_traces):
@@ -3811,7 +3835,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     plt.legend(fontsize=12)
 
 
-    # X vs. T longtime -- Proper motion removed
+    # AST FIG 8: X vs. T longtime -- Proper motion removed
     plt.close(n_phot_sets + 8)
     fig = plt.figure(n_phot_sets + 8, figsize=(10, 10))  # PLOT 8
     fig_list.append(fig)
@@ -3836,7 +3860,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
 
     
-    # Y vs. T longtime -- Proper motion removed
+    # AST FIG 9: Y vs. T longtime -- Proper motion removed
     plt.close(n_phot_sets + 9)
     fig = plt.figure(n_phot_sets + 9, figsize=(10, 10))  # PLOT 9
     fig_list.append(fig)
@@ -3866,6 +3890,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     smap = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     smap.set_array([])
 
+    # AST FIG 10: X - PM vs Y - PM
     plt.close(n_phot_sets + 10)
     fig = plt.figure(n_phot_sets + 10)  # PLOT 10
     fig_list.append(fig)
@@ -3960,14 +3985,14 @@ def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
         pe_dat.append( np.array([data['xpos_err' + dd], data['ypos_err' + dd]]).T * 1e3 )
 
         # Model lensed astrometry
-        p_mod_lens_tdat.append( model.get_astrometry(t_dat[ff], ast_filt_idx=ff_mod) * 1e3 )
-        p_mod_lens_tmod.append( model.get_astrometry(t_mod, ast_filt_idx=ff_mod) * 1e3 )
+        p_mod_lens_tdat.append( model.get_astrometry(t_dat[ff], filt_idx=ff_mod) * 1e3 )
+        p_mod_lens_tmod.append( model.get_astrometry(t_mod, filt_idx=ff_mod) * 1e3 )
 
         # Model unlensed astrometry
         if str(model.__class__).startswith('BS'):
             # Binary sources have filter dependent unlensed astrometry.
-            p_mod_unlens_tdat.append( model.get_astrometry_unlensed(t_dat[ff], ast_filt_idx=ff_mod) * 1e3 )
-            p_mod_unlens_tmod.append( model.get_astrometry_unlensed(t_mod, ast_filt_idx=ff_mod) * 1e3 )
+            p_mod_unlens_tdat.append( model.get_astrometry_unlensed(t_dat[ff], filt_idx=ff_mod) * 1e3 )
+            p_mod_unlens_tmod.append( model.get_astrometry_unlensed(t_mod, filt_idx=ff_mod) * 1e3 )
         else:
             p_mod_unlens_tdat.append( model.get_astrometry_unlensed(t_dat[ff]) * 1e3 )
             p_mod_unlens_tmod.append( model.get_astrometry_unlensed(t_mod) * 1e3 )
@@ -4038,7 +4063,7 @@ def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
     f1.legend()
     
     f1.get_xaxis().set_visible(False)
-    f1.get_shared_x_axes().join(f1, f2)
+    f1.sharex(f2)
     f2.axhline(0, linestyle='--', color='r')
     f2.set_xlabel('Time (HJD)')
     f2.set_ylabel('Obs - Mod')
@@ -4070,7 +4095,7 @@ def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
     f1.legend()
 
     f1.get_xaxis().set_visible(False)
-    f1.get_shared_x_axes().join(f1, f2)
+    f1.sharex(f2)
     f2.axhline(0, linestyle='--', color='r')
     f2.set_xlabel('Time (HJD)')
     f2.set_ylabel('Obs - Mod')
@@ -4176,7 +4201,7 @@ def plot_astrometry_on_sky(data, model, ast_filt_index=0):
     # pos_in
     if str(model.__class__).startswith('BS'):
         # Binary sources have filter dependent unlensed astrometry.
-        pos_in = model.get_astrometry_unlensed(dat_t, ast_filt_idx=ast_filt_index)
+        pos_in = model.get_astrometry_unlensed(dat_t, filt_idx=ast_filt_index)
     else:
         pos_in = model.get_astrometry_unlensed(dat_t)
 
@@ -4252,7 +4277,7 @@ def plot_astrometry_proper_motion_removed(data, model, ast_filt_index=0):
     # pos_in
     if str(model.__class__).startswith('BS'):
         # Binary sources have filter dependent unlensed astrometry.
-        pos_in = model.get_astrometry_unlensed(dat_t, ast_filt_idx=ast_filt_index)
+        pos_in = model.get_astrometry_unlensed(dat_t, filt_idx=ast_filt_index)
     else:
         pos_in = model.get_astrometry_unlensed(dat_t)
     

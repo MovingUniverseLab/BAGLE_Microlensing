@@ -1,5 +1,5 @@
 ##########################################################################
-FSPL(Finite-Source Point Lens) Models - NOT DONE YET... place holders
+FSPL(Finite-Source Point Lens) Models
 ##########################################################################
 
 FSPL Classes
