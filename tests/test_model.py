@@ -5986,7 +5986,7 @@ def test_bsbl_parallax():
             b_sff = 1
             bsbl = model.BSBL_PhotAstrom_noPar_EllOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta_com, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                alphaL, alphaS, omegaL, big_omegaL, iL, eL, pL, tpL, alephL, aleph_secL, 
+                 alphaL, alphaS, omegaL, big_omegaL, iL, eL, pL, tpL, alephL, aleph_secL,
                  omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, 
                  mag_src_pri, mag_src_sec, b_sff,
                  raL=None, decL=None, root_tol=1e-8)

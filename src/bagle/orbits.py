@@ -117,14 +117,14 @@ class Orbit(object):
         y = (self.conA * X) + (self.conF * Y) + self.vy * (t-t0_com)/days_per_year + self.y0
         x2 = (self.conB2 * X) + (self.conG2 * Y) + self.vx * (t-t0_com)/days_per_year + (self.x0)
         y2 = (self.conA2 * X) + (self.conF2 * Y) + self.vy * (t-t0_com)/days_per_year + (self.y0)
-            #self.K1 = 3
-            #self.gamma = 2
-            #rv = self.K1 * (np.cos(math.radians(self.w)) + eta) + self.e * np.cos(math.radians(self.w)) + self.gamma
-            #a1_num = self.K1  * self.p * np.sqrt(1-self.e**2)
-            #a1_den = 2*np.pi * np.sin(self.i)
-            #a1 = a1_num/a1_den
-            #a1 = np.abs(a1)
-            #rv is radial velocity
+        #self.K1 = 3
+        #self.gamma = 2
+        #rv = self.K1 * (np.cos(math.radians(self.w)) + eta) + self.e * np.cos(math.radians(self.w)) + self.gamma
+        #a1_num = self.K1  * self.p * np.sqrt(1-self.e**2)
+        #a1_den = 2*np.pi * np.sin(self.i)
+        #a1 = a1_num/a1_den
+        #a1 = np.abs(a1)
+        #rv is radial velocity
             
         
         # Unit conversions
@@ -134,7 +134,7 @@ class Orbit(object):
         #x /= cc.dist
         #y /= cc.dist
 
-       # x, y, x2, y2 = x/self.dS, y/self.dS, x2/self.dS, y2/self.dS
+        # x, y, x2, y2 = x/self.dS, y/self.dS, x2/self.dS, y2/self.dS
 
         return (x, y, x2, y2)
         
