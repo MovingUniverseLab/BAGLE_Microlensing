@@ -7005,4 +7005,9 @@ def test_spitzer_shvartzvald2019(plot=False):
 
     return
 
+def test_roman_lightcurve():
+    from bagle import fake_data
+    t = fake_data.get_times_roman_gbtds()
+
+    return
 

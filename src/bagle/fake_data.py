@@ -10,7 +10,12 @@ from bagle import model
 from bagle import model_fitter
 from bagle import plot_models
 import time
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
+from astropy.coordinates import solar_system_ephemeris, EarthLocation
+from astropy.coordinates import get_body
+from astropy.coordinates import SkyCoord
+from astropy import units as u
+
 
 # Always generate the same fake data.
 np.random.seed(0)
@@ -2316,6 +2321,73 @@ def fake_data_parallax_multi_location_bulge(outdir='test_mnest_bulge_multiLoc/',
 
     return data, params
 
+def get_times_roman_gbtds():
+    # Galactic Center (hopefully will be in GBTDS)
+    gc_coord = SkyCoord('17:40:40.04 -29:00:28.0', unit=(u.hourangle, u.deg),
+                        obstime='J2000', frame='icrs')
+
+    # Roman launch and survey window of 5 years.
+    t_start = Time('2027-01-01', format='isot', scale='utc')
+    t_end = Time('2031-12-31', format='isot', scale='utc')
+
+    # First, get coarse daily sampling to figure out Roman visibility windows.
+    t_daily = Time(np.arange(t_start.jd, t_end.jd, 1), format='jd')
+    time_loc = EarthLocation.of_site('greenwich')
+
+    # get coordinate object for the Sun for each day of the year
+    with solar_system_ephemeris.set('builtin'):
+        sun_coord = get_body('Sun', t_daily, location=time_loc)
+
+    # Get angular separation of GC LOS to Sun as function of date, in degrees
+    sun_angle = sun_coord.separation(gc_coord)
+
+    # allowed angles
+    min_sun_angle = (90. - 36.) * u.deg
+    max_sun_angle = (90. + 36.) * u.deg
+
+    # Visible days.
+    gdx = np.where((sun_angle > min_sun_angle) & (sun_angle < max_sun_angle))[0]
+
+    # Figure out the start of each season,
+    # using the time differences of the visible time array, figure out
+    dt_vis = np.diff(t_daily[gdx].mjd)
+    tdx = np.where(dt_vis > 2)[0]
+
+    t_start_seasons = t_daily[gdx[tdx+1]].mjd
+    t_stop_seasons = t_daily[gdx[tdx]].mjd
+
+    t_start_seasons = Time(np.insert(t_start_seasons, 0, t_daily[gdx][0].mjd), format='mjd')
+    t_stop_seasons = Time(np.insert(t_stop_seasons, len(t_stop_seasons), t_daily[gdx][-1].mjd), format='mjd')
+
+    # Seasons are spring and fall of each year. But not all will be observed at full cadence.
+    seasons_fast = [0, 1, 2, 7, 8, 9]
+    seasons_slow = [3, 4, 5, 6]
+
+    season_fast_len = 70 # days for which we do fast cadence. The rest of the time is slow.
+
+    # Define time arrays that we will fill in.
+    t_w149 = np.array([], dtype=float)
+    t_f087 = np.array([], dtype=float)
+
+    for ss in range(len(t_start_seasons)):
+
+    # t_phot = np.array([], dtype=float)
+    # t_ast = np.array([], dtype=float)
+    # for year_start in np.arange(56000, 58000, 365.25):
+    #     phot_win = 240.0
+    #     phot_start = (365.25 - phot_win) / 2.0
+    #     t_phot_new = np.arange(year_start + phot_start,
+    #                            year_start + phot_start + phot_win, 1)
+    #     t_phot = np.concatenate([t_phot, t_phot_new])
+    #
+    #     ast_win = 120.0
+    #     ast_start = (365.25 - ast_win) / 2.0
+    #     t_ast_new = np.arange(year_start + ast_start,
+    #                           year_start + ast_start + ast_win, 14)
+    #     t_ast = np.concatenate([t_ast, t_ast_new])
+    #
+
+    return
 
 def add_photometric_noise(flux0, imag0, imag_obs):
     flux_obs = flux0 * 10 ** ((imag_obs - imag0) / -2.5)

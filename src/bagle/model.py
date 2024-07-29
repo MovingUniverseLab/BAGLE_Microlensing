@@ -10594,7 +10594,10 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
     mL: float
         Mass of the lens (Msun)
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
     t: float
         Time of Observation
     beta: float
@@ -10715,7 +10718,10 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
     mL: float
         Mass of the lens (Msun)
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
     t: float
         Time of Observation
     beta: float
@@ -10837,7 +10843,10 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -10962,7 +10971,10 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
     mL: float
         Mass of the lens (Msun)
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
     t: float
         Time of Observation
     beta: float
@@ -11086,7 +11098,10 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -11208,7 +11223,10 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
     Attributes
     ----------
     t0: float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -11334,7 +11352,10 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
     mL: float
         Mass of the lens (Msun)
     t0: float
-        Time of closest approach between primary source and the lens, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
     beta: float
         Angular distance between the lens and primary source on the
         plane of the sky (mas). Can be
@@ -11572,7 +11593,10 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
     Attributes
     ----------
     t0: float
-        Time of closest approach between primary source and the lens, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
     u0_amp : float
         Angular distance between the primary source and the lens
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -11777,7 +11801,10 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
     Attributes
     ----------
     t0: float
-        Time of closest approach between the primary source and the lens, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between primary source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
     u0_amp : float
         Angular distance between the primary source and the lens
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -12259,7 +12286,10 @@ class BSPL_PhotAstrom_Circ_Param3(PSPL_Param):
     Attributes
     ----------
     t0: float
-        Time of closest approach between CoM of the source and the lens, as seen from Earth (MJD.DDD)
+        Time (MJD.DDD) of closest projected approach between CoM of the source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
     u0_amp : float
         Angular distance between the primary source and the lens
         on the plane of the sky at closest approach in units of thetaE. Can
