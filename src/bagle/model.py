@@ -5606,7 +5606,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 if self.orbitFlag == 'accelerated':
                     xL2 += np.outer((0.5 * (dt_in_years ** 2)), self.acc) * 1e-3
 
-            elif self.orbitFlag == 'circular' or self.orbitFlag == 'elliptical':
+            elif self.orbitFlag == 'Keplerian':
                 dt_in_years = (t_obs - self.t0_com) / days_per_year #About Center of Mass
                 xL1 = np.zeros((len(t_obs), 2), dtype=float)
                 xL2 = np.zeros((len(t_obs), 2), dtype=float)
@@ -5925,7 +5925,7 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N, dL, dS,
@@ -6151,7 +6151,7 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta_com, muL_E, muL_N,
@@ -7578,7 +7578,7 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
                      piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N,
@@ -7701,7 +7701,7 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
         
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
@@ -7800,7 +7800,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
@@ -8257,7 +8257,7 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
@@ -8899,7 +8899,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             if self.orbitFlag == 'accelerated':
                 xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.acc) * 1e-3
                 
-        elif self.orbitFlag == 'circular':
+        elif self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
             xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass
             
@@ -11458,7 +11458,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
@@ -11728,7 +11728,7 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
@@ -11962,7 +11962,7 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
@@ -12217,7 +12217,7 @@ class BSPL_PhotAstrom_Circ_Param1(BSPL_PhotAstrom_Ell_Param1):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, mL, t0_com, beta, dL, dL_dS,
                  x0_system_E, x0_system_N,
@@ -12341,7 +12341,7 @@ class BSPL_PhotAstrom_Circ_Param2(BSPL_PhotAstrom_Ell_Param2):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
@@ -12469,7 +12469,7 @@ class BSPL_PhotAstrom_Circ_Param3(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'circular'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
@@ -13821,7 +13821,7 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         # Calculate position vs. time in arcsec
 
         
-        if self.orbitFlag == 'circular':
+        if self.orbitFlag == 'Keplerian':
             xS1_unlens = np.zeros((len(t), 2), dtype=float)
             xS2_unlens = np.zeros((len(t), 2), dtype=float)
             orb = orbits.Orbit()
@@ -13933,7 +13933,7 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         xL1 = xL + offset  # primary
         xL2 = xL - offset  # secondary
         
-        if self.orbitFlag == 'circular':
+        if self.orbitFlag == 'Keplerian':
             xL1 = np.zeros((len(t_obs), 2), dtype=float)
             xL2 = np.zeros((len(t_obs), 2), dtype=float)
             orb = orbits.Orbit()
@@ -14971,7 +14971,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag='circular'
+    orbitFlag ='Keplerian'
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
@@ -15247,7 +15247,7 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag='circular'
+    orbitFlag='Keplerian'
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
@@ -15377,7 +15377,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag='circular'
+    orbitFlag='Keplerian'
 
     def __init__(self, t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
                  alphaL, alphaS, omegaL, big_omegaL, iL, eL, tpL, sepL,
@@ -15641,7 +15641,7 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag='circular'
+    orbitFlag='Keplerian'
 
     def __init__(self, t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
                 alphaL, alphaS, omegaL, big_omegaL, iL, tpL, sepL, 
