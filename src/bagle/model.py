@@ -5611,8 +5611,13 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                     xL2 += np.outer((0.5 * (dt_in_years ** 2)), self.acc) * 1e-3
 
             elif self.orbitFlag == 'circular' or self.orbitFlag == 'elliptical':
+                dt_in_years = (t_obs - self.t0_com) / days_per_year
+                
                 xL1 = np.zeros((len(t_obs), 2), dtype=float)
                 xL2 = np.zeros((len(t_obs), 2), dtype=float)
+
+                xcom = self.xL0_com + np.outer(dt_in_years, self.muL) *1e-3
+                
                 orb = orbits.Orbit()
                 orb.w = self.omega
                 orb.o = self.big_omega
@@ -5622,15 +5627,21 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 orb.tp = self.tp
                 orb.aleph = self.aleph *1e-3
                 orb.aleph2 = self.aleph_sec*1e-3
-                orb.vx = self.vx
-                orb.vy = self.vy
-                orb.x0 = self.xL0_sys_E
-                orb.y0 = self.xL0_sys_N
-                (x, y, x2, y2) = orb.oal2xy(t_obs, self.t0)
-                xL1[:, 0] = x
-                xL1[:, 1] = y
-                xL2[:, 0] = x2
-                xL2[:, 1] = y2
+                #orb.vx = self.vx
+                #orb.vy = self.vy
+                #orb.x0 = self.xL0_sys_E
+                #orb.y0 = self.xL0_sys_N
+                (x, y, x2, y2) = orb.oal2xy(t_obs)
+
+                self.x = x
+                self.y = y
+                self.x2 = x2
+                self.y2 = y2
+                
+                xL1[:, 0] = xcom[:, 0] + x
+                xL1[:, 1] = xcom[:, 1] + y
+                xL2[:, 0] = xcom[:, 0] + x2
+                xL2[:, 1] = xcom[:, 1] + y2
 
                 if self.parallaxFlag:
                     # Get the parallax vector for each date.
@@ -5890,6 +5901,10 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         This is the time of the periastron of the system in days.
     sep: float
         The angular separation between the lenses (mas). 
+
+    arat: float
+        Ratio of semi-major axis with current separation between lenses measured at         dL
+
         
     muS_E : float
         Source proper motion in the RA direction (mas/yr)
@@ -5914,7 +5929,7 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'muS_E', 'muS_N', 'dL', 'dS', 'alpha']
+                          'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat', 'muS_E', 'muS_N', 'dL', 'dS', 'alpha']
     
     phot_param_names = ['b_sff', 'mag_src']
 
@@ -5923,7 +5938,7 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     orbitFlag = 'circular'
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
-                 beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, sep, muS_E, muS_N, dL, dS,
+                 beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N, dL, dS,
                  alpha, b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
@@ -5932,7 +5947,7 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.t0_com = t0_com
         self.xS0 = np.array([xS0_E, xS0_N])
         self.beta_com = beta_com
-
+        self.arat = arat
                      
         self.muL = np.array([muL_E, muL_N])
         self.omega = omega
@@ -5979,11 +5994,12 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         # Calculate period, and semi-major axes
         self.sep = sep #mas
-        self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.sep #mas
-        self.aleph = self.sep - self.aleph_sec #mas
-        self.sep_AU = dL * (sep *1e-3) * units.AU
+        self.a = self.sep * self.arat
+        self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.a #mas
+        self.aleph = self.a - self.aleph_sec #mas
+        self.a_AU = dL * (self.a *1e-3) * units.AU
         mL = self.mL * units.Msun
-        p = (2 * np.pi * np.sqrt(self.sep_AU**3/(const.G * mL))).to('day')
+        p = (2 * np.pi * np.sqrt(self.a_AU**3/(const.G * mL))).to('day')
         self.p = p.value #Period in Days
                      
         
@@ -6064,8 +6080,8 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         thetaS0_com = self.u0_com * self.thetaE_amp
         self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
-        self.xL0_sys_E = self.xL0[0]
-        self.xL0_sys_N = self.xL0[1]
+        #self.xL0_com = self.xL0_com
+        #self.xL0_com = self.xL0[1]
 
         
 
@@ -6139,7 +6155,7 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'tp', 'sep', 'muS_E', 'muS_N',
+                          'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'tp', 'sep', 'arat', 'muS_E', 'muS_N',
                           'dL', 'dS', 'alpha']
     phot_param_names = ['b_sff', 'mag_src']
 
@@ -6154,7 +6170,7 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N,
                          beta_com, muL_E, muL_N,
-                         omega, big_omega, i, 0, tp, sep, muS_E, muS_N, dL, dS,
+                         omega, big_omega, i, 0, tp, sep,1, muS_E, muS_N, dL, dS,
                          alpha, b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
                      
@@ -7057,6 +7073,7 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         self.thetaE_amp = thetaE
         self.xS0 = np.array([xS0_E, xS0_N])
         self.muS = np.array([muS_E, muS_N])
+                     
         self.piS = piS
         self.q = q
         self.sep = sep
@@ -7542,6 +7559,10 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         Dec Source proper motion (mas/yr)
     sep: float
         Distance between lenses in AU
+
+    arat: float
+        Ratio of semi-major axis with current separation between lenses measured at         dL
+
         
     q : float
         Mass ratio (M2 / M1)
@@ -7557,8 +7578,8 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'p', 'tp', 'aleph', 
-                          'aleph_sec', 'muS_E', 'muS_N',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
+                           'muS_E', 'muS_N',
                           'q', 'alpha']
     phot_param_names = ['b_sff', 'mag_src']
     additional_param_names = ['mL', 'piL', 'piRel',
@@ -7570,7 +7591,7 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
     orbitFlag = 'circular'
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
-                     piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, e, tp, sep, muS_E, muS_N,
+                     piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N,
                      q, alpha,
                      b_sff, mag_src,
                      raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
@@ -7587,6 +7608,7 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
         self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
         self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
+        self.arat = arat
 
                          
         self.omega = omega
@@ -7594,17 +7616,16 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         self.i = i
         self.e = e
         self.tp = tp
-        self.vx = self.muL_E * 1e-3
-        self.vy = self.muL_N *1e-3
-        self.xL0_sys_E, self.xL0_sys_N = self.xL0_com
+        
         
          # Calculate period, and semi-major axes
         self.sep = sep #mas
-        self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.sep #mas
-        self.aleph = self.sep - self.aleph_sec #mas
-        self.sep_AU = self.dL * (sep *1e-3) * units.AU
+        self.a = self.arat * self.sep #mas 
+        self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.a #mas
+        self.aleph = self.a - self.aleph_sec #mas
+        self.al_AU = self.dL * (self.a *1e-3) * units.AU
         mL = self.mL * units.Msun
-        p = (2 * np.pi * np.sqrt(self.sep_AU**3/(const.G * mL))).to('day')
+        p = (2 * np.pi * np.sqrt(self.al_AU**3/(const.G * mL))).to('day')
         self.p = p.value #Period in Days
                      
 
@@ -7701,7 +7722,7 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
                          
         super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N,
-                         omega, big_omega, i, 0, tp, sep, muS_E, muS_N,
+                         omega, big_omega, i, 0, tp, sep, 1, muS_E, muS_N,
                          q, alpha,
                          b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
@@ -7779,7 +7800,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'sep', 
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
                           'muS_E', 'muS_N',
                           'q', 'alpha']
     phot_param_names = ['b_sff', 'mag_src']
@@ -7794,7 +7815,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
-                 omega, big_omega, i, e, tp, sep, muS_E, muS_N,
+                 omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N,
                  q, alpha,
                  b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
@@ -7811,6 +7832,8 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
         self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
         self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
+        self.arat = arat
+
 
                          
         self.omega = omega
@@ -7818,17 +7841,15 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         self.i = i
         self.e = e
         self.tp = tp
-        self.vx = self.muL_E * 1e-3
-        self.vy = self.muL_N *1e-3
-        self.xL0_sys_E, self.xL0_sys_N = self.xL0_com
         
          # Calculate period, and semi-major axes
         self.sep = sep #mas
-        self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.sep #mas
-        self.aleph = self.sep - self.aleph_sec #mas
-        self.sep_AU = self.dL * (sep *1e-3) * units.AU
+        self.a = self.arat * self.sep #mas 
+        self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.a #mas
+        self.aleph = self.a - self.aleph_sec #mas
+        self.al_AU = self.dL * (self.a *1e-3) * units.AU
         mL = self.mL * units.Msun
-        p = (2 * np.pi * np.sqrt(self.sep_AU**3/(const.G * mL))).to('day')
+        p = (2 * np.pi * np.sqrt(self.al_AU**3/(const.G * mL))).to('day')
         self.p = p.value #Period in Days
                      
 
@@ -8130,6 +8151,10 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
         Distance from the observer to the source (pc)
     sep : float
         Initial angular separation of the two lenses (mas)
+
+    arat: float
+        Ratio of semi-major axis with current separation between lenses measured at         dL
+
     alpha : float
         Angle made between the binary axis and North;
         measured in degrees East of North.
@@ -8884,9 +8909,16 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         elif self.orbitFlag == 'accelerated':
             xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3 + np.outer((0.5*(dt1_in_years**2)), self.acc) * 1e-3
+
+            
         elif self.orbitFlag == 'circular':
             xS1_unlens = np.zeros((len(t), 2), dtype=float)
             xS2_unlens = np.zeros((len(t), 2), dtype=float)
+
+            #CoM Proper motion
+            dt_in_years = (t - self.t0_com) / days_per_year
+            xcom = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 
+            
             orb = orbits.Orbit()
             orb.w = self.omega
             orb.o = self.big_omega
@@ -8896,18 +8928,24 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             orb.tp = self.tp
             orb.aleph = self.aleph *1e-3
             orb.aleph2 = self.aleph_sec*1e-3
-            orb.vx = self.vx
-            orb.vy = self.vy
-            orb.x0 = self.x0
-            orb.y0 = self.y0
-            (x, y, x2, y2) = orb.oal2xy(t, self.t0_com)
-            xS1_unlens[:, 0] = x
-            xS1_unlens[:, 1] = y
-            xS2_unlens[:, 0] = x2
-            xS2_unlens[:, 1] = y2
+            #orb.vx = self.vx
+            #orb.vy = self.vy
+            #orb.x0 = self.x0
+            #orb.y0 = self.y0
+            (x, y, x2, y2) = orb.oal2xy(t)
+            
+            xS1_unlens[:,0] = xcom[:, 0] + x
+            xS1_unlens[:,1] += xcom[:, 1] + y
+
+            xS2_unlens[:,0] += xcom[:, 0] + x2
+
+            xS2_unlens[:,1] += xcom[:, 1] + y2
+            
         else:    
             xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS) * 1e-3
+
+            
 
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
@@ -11398,10 +11436,10 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         The RA proper motion of the system in mas/yr.
     muS_system_N: float
         The Dec proper motion of the system in mas/yr.
-    x0_system_E: float
-        The initial center of mass coordinates (RA) of the system in arcsec.
-    x0_system_N: float
-        The initial center of mass coordinates (Dec) of the system in arcsec.
+    xS0_E: float
+        The initial  coordinates (RA) of the primary source in arcsec.
+    xS0_N: float
+        The initial  coordinates (Dec) of the secondary source in arcsec.
 
     alpha: float
         Angle made between the binary source axis and North;
@@ -11442,7 +11480,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
     orbitFlag = 'circular'
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
-                 x0_system_E, x0_system_N,
+                 xS0_E, xS0_N,
                  muL_E, muL_N,
                  muS_system_E, muS_system_N,
                  alpha, omega, big_omega, i,
@@ -11451,12 +11489,12 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
                  b_sff,
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0  # time of closest approach for system=primary pos
+                     
         self.mL = mL
-        self.xS0 = np.array([x0_system_E, x0_system_N])  # position of source system=primary
+        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_system_E, muS_system_N])  # mas
-        self.x0_system = self.xS0
         self.muS_system = self.muS
         self.dL = dL
         self.dL_dS = dL_dS
@@ -11475,10 +11513,12 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         self.tp = tp
         self.aleph = aleph  # mas
         self.aleph_sec = aleph_sec  # mas
-        self.vx = muS_system_E * 1e-3
-        self.vy = muS_system_N * 1e-3
-        self.x0 = x0_system_E
-        self.y0 = x0_system_N
+        
+        #self.vx = muS_system_E * 1e-3
+        #self.vy = muS_system_N * 1e-3
+                     
+        #self.x0 = x0_system_E
+        #self.y0 = x0_system_N
 
         self.sep = aleph + aleph_sec
 
@@ -11566,6 +11606,30 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         # Calculate the Einstein crossing time. (days)
         self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
 
+                     #####
+        # Derived binary source parameters.
+        #####
+        # Primary -- at origin
+        self.t0_pri = self.t0
+        self.xS0_pri = self.xS0
+        self.u0_amp_pri = self.u0_amp
+        self.u0_pri = self.u0
+
+        # Secondary
+        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
+                                       np.cos(self.alpha_rad)))  # mas
+
+        # Closest approach time
+        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
+        self.u0_sec = self.u0_amp_sec * self.u0_hat
+        s_murelhat = np.dot(sep_vec, self.muRel_hat)
+        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+
+        # CoM
+        com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
+                                       np.cos(self.alpha_rad)))  # mas
+
         # Vodoo Magic (Binary Source t0 conversion from t0_com to t0_p=t0)
 
         self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
@@ -11576,7 +11640,9 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         q_source = self.mass_source_primary / self.mass_source_secondary
         qeff_source = (1 - q_source) / (1 + q_source)
         self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
-
+                     
+        self.xS0_com = self.xS0_pri + com_vec *1e-3
+                     
         return
 
 
@@ -11784,6 +11850,31 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
         q_source = self.mass_source_primary / self.mass_source_secondary
         qeff_source = (1 - q_source) / (1 + q_source)
         self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
+
+        # Derived binary source parameters.
+        #####
+        # Primary -- at origin
+        self.t0_pri = self.t0
+        self.xS0_pri = self.xS0
+        self.u0_amp_pri = self.u0_amp
+        self.u0_pri = self.u0
+
+        # Secondary
+        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
+                                       np.cos(self.alpha_rad)))  # mas
+
+        # Closest approach time
+        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
+        self.u0_sec = self.u0_amp_sec * self.u0_hat
+        s_murelhat = np.dot(sep_vec, self.muRel_hat)
+        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+
+        # CoM
+        com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
+                                       np.cos(self.alpha_rad)))  # mas
+
+        self.xS0_com = self.xS0_pri + com_vec *1e-3
 
         return
 
@@ -12022,6 +12113,31 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
         qeff_source = (1 - q_source) / (1 + q_source)
         self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
 
+         # Derived binary source parameters.
+        #####
+        # Primary -- at origin
+        self.t0_pri = self.t0
+        self.xS0_pri = self.xS0
+        self.u0_amp_pri = self.u0_amp
+        self.u0_pri = self.u0
+
+        # Secondary
+        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
+                                       np.cos(self.alpha_rad)))  # mas
+
+        # Closest approach time
+        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
+        self.u0_sec = self.u0_amp_sec * self.u0_hat
+        s_murelhat = np.dot(sep_vec, self.muRel_hat)
+        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+
+        # CoM
+        com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
+                                       np.cos(self.alpha_rad)))  # mas
+
+        self.xS0_com = self.xS0_pri + com_vec *1e-3
+                     
         return
 
 
