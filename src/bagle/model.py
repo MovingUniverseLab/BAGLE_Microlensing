@@ -5590,34 +5590,27 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 
         if self.orbitFlag == False:
             xL = self.get_lens_astrometry(t_obs, filt_idx=filt_idx) # parallax applied
-
             # Apply offsets assuming binary origin at geometric center.
             xL1 = xL + offset  # primary
             xL2 = xL - offset  # secondary
         else:
             # Get resolved position for orbit-case instead.
-            if self.orbitFlag == 'linear' or self.orbitFlag == 'acc':
+            if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
                 dt_in_years = (t_obs - self.t0) / days_per_year
-
                 # Get positions assuming binary origin at primary.
                 xL1 = self.get_lens_astrometry(t_obs, filt_idx=filt_idx) # parallax applied
                 xL2 = xL1 + (2 * offset)
-
                 # Apply velocity difference.
                 xL2 += np.outer(dt_in_years, self.muL_sec - self.muL) * 1e-3
-
                 # Apply acceleration difference.
-                if self.orbitFlag == 'acc':
+                if self.orbitFlag == 'accelerated':
                     xL2 += np.outer((0.5 * (dt_in_years ** 2)), self.acc) * 1e-3
 
             elif self.orbitFlag == 'circular' or self.orbitFlag == 'elliptical':
-                dt_in_years = (t_obs - self.t0_com) / days_per_year
-                
+                dt_in_years = (t_obs - self.t0_com) / days_per_year #About Center of Mass
                 xL1 = np.zeros((len(t_obs), 2), dtype=float)
                 xL2 = np.zeros((len(t_obs), 2), dtype=float)
-
-                xcom = self.xL0_com + np.outer(dt_in_years, self.muL) *1e-3
-                
+                xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_g=t0. 
                 orb = orbits.Orbit()
                 orb.w = self.omega
                 orb.o = self.big_omega
@@ -5627,21 +5620,18 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 orb.tp = self.tp
                 orb.aleph = self.aleph *1e-3
                 orb.aleph2 = self.aleph_sec*1e-3
-                #orb.vx = self.vx
-                #orb.vy = self.vy
-                #orb.x0 = self.xL0_sys_E
-                #orb.y0 = self.xL0_sys_N
-                (x, y, x2, y2) = orb.oal2xy(t_obs)
+
+                (x, y, x2, y2) = orb.oal2xy(t_obs) #Motion of primary and secondary orbits
 
                 self.x = x
                 self.y = y
                 self.x2 = x2
                 self.y2 = y2
                 
-                xL1[:, 0] = xcom[:, 0] + x
-                xL1[:, 1] = xcom[:, 1] + y
-                xL2[:, 0] = xcom[:, 0] + x2
-                xL2[:, 1] = xcom[:, 1] + y2
+                xL1[:, 0] = xLCoM[:, 0] + x
+                xL1[:, 1] = xLCoM[:, 1] + y
+                xL2[:, 0] = xLCoM[:, 0] + x2
+                xL2[:, 1] = xLCoM[:, 1] + y2
 
                 if self.parallaxFlag:
                     # Get the parallax vector for each date.
@@ -7920,7 +7910,7 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'acc'
+    orbitFlag = 'accelerated'
 
     def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
@@ -8088,7 +8078,7 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'acc'
+    orbitFlag = 'accelerated'
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
                  beta_p, muL_E, muL_N,
@@ -8903,21 +8893,15 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         dt2_in_years = (t - self.t0_sec) / days_per_year
 
         # Calculate position vs. time in arcsec
-        if self.orbitFlag=='linear':
+        if self.orbitFlag=='linear' or self.orbitFlag == 'accelerated':
             xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
-        elif self.orbitFlag == 'accelerated':
-            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3 + np.outer((0.5*(dt1_in_years**2)), self.acc) * 1e-3
-
-            
+            if self.orbitFlag == 'accelerated':
+                xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.acc) * 1e-3
+                
         elif self.orbitFlag == 'circular':
-            xS1_unlens = np.zeros((len(t), 2), dtype=float)
-            xS2_unlens = np.zeros((len(t), 2), dtype=float)
-
-            #CoM Proper motion
-            dt_in_years = (t - self.t0_com) / days_per_year
-            xcom = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 
+            dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
+            xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass
             
             orb = orbits.Orbit()
             orb.w = self.omega
@@ -8928,18 +8912,15 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             orb.tp = self.tp
             orb.aleph = self.aleph *1e-3
             orb.aleph2 = self.aleph_sec*1e-3
-            #orb.vx = self.vx
-            #orb.vy = self.vy
-            #orb.x0 = self.x0
-            #orb.y0 = self.y0
-            (x, y, x2, y2) = orb.oal2xy(t)
+            (x, y, x2, y2) = orb.oal2xy(t) #Calculates orbital motion around the CoM at times t (MJD values)
             
-            xS1_unlens[:,0] = xcom[:, 0] + x
-            xS1_unlens[:,1] += xcom[:, 1] + y
-
-            xS2_unlens[:,0] += xcom[:, 0] + x2
-
-            xS2_unlens[:,1] += xcom[:, 1] + y2
+            xS1_unlens = np.zeros((len(t), 2), dtype=float)
+            xS2_unlens = np.zeros((len(t), 2), dtype=float)
+            
+            xS1_unlens[:,0] = xCoM_unlens[:, 0] + x
+            xS1_unlens[:,1] += xCoM_unlens[:, 1] + y
+            xS2_unlens[:,0] += xCoM_unlens[:, 0] + x2
+            xS2_unlens[:,1] += xCoM_unlens[:, 1] + y2
             
         else:    
             xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
