@@ -12551,6 +12551,21 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
     return u0_hat
 
 
+# Disable cache for parallax when running
+# on NERSC. Must set environment variable
+# on NERSC: export IS_NERSC=True
+is_NERSC = eval(os.getenv("IS_NERSC", "False"))
+def conditional_decorator(decorator1):
+    def decorator_wrapper(func):
+        if not is_NERSC:
+            # Apply decorator1
+            return decorator1(func)
+        else:
+            # Call original funciton
+            return func
+    return decorator_wrapper
+
+#@conditional_decorator(cache_memory.cache())
 @cache_memory.cache()
 def parallax_in_direction(RA, Dec, mjd):
     """
