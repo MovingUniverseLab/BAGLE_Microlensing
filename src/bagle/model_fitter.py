@@ -69,7 +69,7 @@ muS_scale_factor = 100.0
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
                      'mag_src_pri', 'mag_src_sec', 'fratio_bin',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
-                     'gp_log_omega04_S0', 'gp_log_omega0', 'add_err', 'mult_err']
+                     'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'add_err', 'mult_err']
 
 class PSPL_Solver(Solver):
     """
@@ -207,6 +207,7 @@ class PSPL_Solver(Solver):
         'gp_log_S0': ('make_norm_gen', 0, 5),
         'gp_log_sigma': ('make_norm_gen', 0, 5), 
         'gp_rho':('make_invgamma_gen', None, None),
+        'gp_log_omega0_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega04_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega0':('make_norm_gen', 0, 5)
     }
@@ -258,7 +259,7 @@ class PSPL_Solver(Solver):
         self.multi_filt_params = multi_filt_params
 
         self.gp_params = ['gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
-                          'gp_log_omega04_S0', 'gp_log_omega0']
+                          'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0']
 
         # Set up parameterization of the model
         self.remove_digits = str.maketrans('', '', digits)  # removes nums from strings
@@ -2953,7 +2954,7 @@ def generate_params_dict(params, fitter_param_names):
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
     multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin']
-    multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
+    multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0']
     
     params_dict = {}
     
@@ -3172,7 +3173,8 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
     # same times as the measurements.
     if dense_time:
         # 1 day sampling over whole range
-        mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1)
+        #mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1) #end model at last photometry data point
+        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #begin/end model +/-2000 days after last data point (for ongoing events)
     else:
         mod_t = dat_t
     if gp:

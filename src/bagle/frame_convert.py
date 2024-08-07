@@ -207,6 +207,7 @@ def convert_helio_geo_phot(ra, dec,
         Use fixed on-sky coordinate system (Lu) or right-handed
         system based on murel and minimum separation (Gould)
     """
+
     # Check inputs.
     _check_input_convert_helio_geo_phot(ra, dec, 
                                         t0_in, u0_in, tE_in, 
@@ -402,7 +403,6 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
             u0vec_out = u0vec_in + tauhat_in * (t0par - t0_in)/tE_in - tauhat_out * (t0par - t0_out)/tE_out - piE*par_t0par
             u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
 
-
     elif in_frame=='geo':
         try:
             dp_dt_t0par = -1*((tauhat_in/tE_in) - (tauhat_out/tE_out))/piE
@@ -585,6 +585,8 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     The parallax vector direction is always Earth to Sun (blue to red).
     All the input values are in the heliocentric frame, following the
     source-lens and East-North coordinate conventions.
+
+    FIXME: There seems to be some bugs in the reported values in the side panel still.
     """
     #####
     # Figure in Lu convention (S-L frame, E-N coord)
@@ -854,7 +856,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
+        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
         
         fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f}'.format(t0_out), fontsize=12)
         # Output is Lu helio, so need to fix those to be in Gould geo.
