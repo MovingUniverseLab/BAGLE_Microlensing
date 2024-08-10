@@ -69,7 +69,8 @@ muS_scale_factor = 100.0
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
                      'mag_src_pri', 'mag_src_sec', 'fratio_bin',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
-                     'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'add_err', 'mult_err']
+                     'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
+                     'add_err', 'mult_err']
 
 class PSPL_Solver(Solver):
     """
@@ -209,7 +210,8 @@ class PSPL_Solver(Solver):
         'gp_rho':('make_invgamma_gen', None, None),
         'gp_log_omega0_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega04_S0':('make_norm_gen', 0, 5), # FIX... get from data
-        'gp_log_omega0':('make_norm_gen', 0, 5)
+        'gp_log_omega0':('make_norm_gen', 0, 5),
+        'gp_log_jit_sigma':('make_norm_gen', 0, 5)
     }
 
     def __init__(self, data, model_class,
@@ -259,7 +261,7 @@ class PSPL_Solver(Solver):
         self.multi_filt_params = multi_filt_params
 
         self.gp_params = ['gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
-                          'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0']
+                          'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
 
         # Set up parameterization of the model
         self.remove_digits = str.maketrans('', '', digits)  # removes nums from strings
@@ -2954,7 +2956,8 @@ def generate_params_dict(params, fitter_param_names):
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
     multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin']
-    multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0']
+    multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0', 
+                  'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
     
     params_dict = {}
     
@@ -3096,7 +3099,7 @@ def plot_params(model):
     def get_param_value(pname):
         if pname.endswith('_E') or pname.endswith('_N'):
             pname_act = pname[:-2]
-        elif pname == 'log10_thetaE':
+        elif (pname == 'log10_thetaE') or (pname == 'thetaE'):
             pname_act = 'thetaE_amp'
         else:
             pname_act = pname

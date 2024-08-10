@@ -2105,6 +2105,84 @@ class PSPL_GP_PhotParam2_3(PSPL_PhotParam2):
 
         return
     
+class PSPL_GP_PhotParam2_4(PSPL_PhotParam2):
+    # Optional data-set specific parameters -- handled as dictionaries
+    # (with keys on the filter index). Not every data-set needs these.
+    # User indicates which data-sets use these parameters by including or not
+    # in the dictionary. This is most useful for noise properties.
+
+    # This is like the PSPL_GP_PhotParam2_2 class, EXCEPT it includes the jitter term as a parameter
+    phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
+    additional_param_names = ['gp_log_rho', 'gp_log_S0']
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0, gp_log_jit_sigma,
+                 raL=None, decL=None):
+
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega04_S0 = gp_log_omega04_S0
+        self.gp_log_omega0 = gp_log_omega0
+        self.gp_log_jit_sigma = gp_log_jit_sigma
+
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
+                         raL=raL, decL=decL)
+
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+
+        self.gp_log_S0 = {}
+        for key, val in self.gp_log_omega04_S0.items():
+            self.gp_log_S0[key] = self.gp_log_omega04_S0[key] - 4 * self.gp_log_omega0[key]
+
+        # Setup a useful "use_phot_gp" flag.
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+
+        return
+    
+class PSPL_GP_PhotParam2_5(PSPL_PhotParam2):
+    # Optional data-set specific parameters -- handled as dictionaries
+    # (with keys on the filter index). Not every data-set needs these.
+    # User indicates which data-sets use these parameters by including or not
+    # in the dictionary. This is most useful for noise properties.
+
+    # This is like the PSPL_GP_PhotParam2_3 class, EXCEPT it includes the jitter term as a parameter
+    phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
+    additional_param_names = ['gp_log_rho', 'gp_log_S0', 'gp_log_omega04_S0']
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega0_S0, gp_log_omega0, gp_log_jit_sigma,
+                 raL=None, decL=None):
+
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega0_S0 = gp_log_omega0_S0
+        self.gp_log_omega0 = gp_log_omega0
+        self.gp_log_jit_sigma = gp_log_jit_sigma
+
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
+                         raL=raL, decL=decL)
+
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+
+        self.gp_log_S0 = {}
+        self.gp_log_omega04_S0 = {}  
+        for key, val in self.gp_log_omega0_S0.items():
+            self.gp_log_S0[key] = self.gp_log_omega0_S0[key] - self.gp_log_omega0[key]
+            self.gp_log_omega04_S0[key] = self.gp_log_omega0_S0[key] + 3 * self.gp_log_omega0[key]
+            
+        # Setup a useful "use_phot_gp" flag.
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+
+        return
+    
 class PSPL_GP_PhotParam3(PSPL_PhotParam3):
     # Optional data-set specific parameters -- handled as dictionaries
     # (with keys on the filter index). Not ever data-set needs these.
@@ -2405,6 +2483,107 @@ class PSPL_GP_PhotAstromParam3_1(PSPL_PhotAstromParam3):
 
         return
 
+class PSPL_GP_PhotAstromParam3_2(PSPL_PhotAstromParam3):
+    """
+    Point Source Point Lens with GP model for microlensing. This model includes
+    proper motions of the source and the source position on the sky.
+    It is the same as PSPL_PhotAstromParam3_1 except it fits for the jitter term parameter as well.
+
+    Attributes
+    ----------
+
+    t0: float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp: float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time (days).
+    log10_thetaE: float
+        log10 of the size of the Einstein radius in (mas).
+    piS: float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E: float
+        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    xS0_N: float
+        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    muS_E: float
+        RA Source proper motion (mas/yr)
+    muS_N: float
+        Dec Source proper motion (mas/yr)
+    b_sff: numpy array or list of floats
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base: numpy array or list of floats
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    gp_log_sigma: float
+        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel. 
+    gp_rho: float
+        Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
+    gp_log_omega0_S0: float
+        Guassian process :math:`log(\omega_0 * S_0)` from the variance of the DDSHO kernel.
+    gp_log_omega0: float
+        Guassian process :math:`log(\omega_0)` from the SHO kernel. 
+    gp_log_jit_sigma: float
+        Gaussian process for jitter term
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+
+    Notes
+    -----
+    .. note::
+       `raL` and `decL` are required parameters if calculating with parallax
+    """
+    phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega0_S0, gp_log_omega0, gp_log_jit_sigma,
+                 raL=None, decL=None):
+
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega0_S0 = gp_log_omega0_S0
+        self.gp_log_omega0 = gp_log_omega0
+        self.gp_log_jit_sigma = gp_log_jit_sigma
+        
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
+                         piE_E, piE_N,
+                         xS0_E, xS0_N,
+                         muS_E, muS_N,
+                         b_sff, mag_base,
+                         raL=raL, decL=decL)
+
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+
+        self.gp_log_S0 = {}
+        self.gp_log_omega04_S0 = {}
+        for key, val in self.gp_log_omega0_S0.items():
+            self.gp_log_S0[key] = self.gp_log_omega0_S0[key] - self.gp_log_omega0[key]
+            self.gp_log_omega04_S0[key] = self.gp_log_omega0_S0[key] + 3 * self.gp_log_omega0[key]
+            
+        # Setup a useful "use_phot_gp" flag.
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+
+        return
+    
 class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
     """
     Point Source Point Lens with GP model for microlensing. This model includes
@@ -2506,6 +2685,213 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
 
         return
 
+class PSPL_GP_PhotAstromParam4_1(PSPL_PhotAstromParam4):
+    """
+    Point Source Point Lens with GP model for microlensing. This model includes
+    proper motions of the source and the source position on the sky.
+    It is the same as PSPL_PhotAstromParam4 xcept it fits for gp_log_omega0_S0 
+    instead of gp_log_omega04_S0.
+
+    Attributes
+    ----------
+    t0: float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+
+    u0_amp: float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time (days).
+    thetaE: float
+        The size of the Einstein radius in (mas).
+    piS: float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E: float
+        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    xS0_N: float
+        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    muS_E: float
+        RA Source proper motion (mas/yr)
+    muS_N: float
+        Dec Source proper motion (mas/yr)
+    b_sff: float
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base: float
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    gp_log_sigma: float
+        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel. 
+    gp_rho: float
+        Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
+    gp_log_omega0_S0: float
+        Guassian process :math:`log(\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
+    gp_log_omega0: float
+        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+
+
+    Notes
+    -----
+    .. note::
+       | `raL` and `decL` are required parameters if calculating with parallax
+       | For an explanation of the Guassian process parameters, see Golovich et al. 2019()
+
+    """
+    phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0', 'gp_log_omega0']
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega0_S0, gp_log_omega0,
+                 raL=None, decL=None):
+
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega0_S0 = gp_log_omega0_S0
+        self.gp_log_omega0 = gp_log_omega0
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                         piE_E, piE_N,
+                         xS0_E, xS0_N,
+                         muS_E, muS_N,
+                         b_sff, mag_base,
+                         raL=raL, decL=decL)
+
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+
+        self.gp_log_S0 = {}
+        self.gp_log_omega04_S0 = {}
+        for key, val in self.gp_log_omega0_S0.items():
+            self.gp_log_S0[key] = self.gp_log_omega0_S0[key] - self.gp_log_omega0[key]
+            self.gp_log_omega04_S0[key] = self.gp_log_omega0_S0[key] + 3 * self.gp_log_omega0[key]
+
+        # Setup a useful "use_phot_gp" flag.
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+
+        return
+
+class PSPL_GP_PhotAstromParam4_2(PSPL_PhotAstromParam4):
+    """
+    Point Source Point Lens with GP model for microlensing. This model includes
+    proper motions of the source and the source position on the sky.
+    It is the same as PSPL_PhotAstromParam4_1 except it fits for the jitter term parameter as well.
+
+    Attributes
+    ----------
+    t0: float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+
+    u0_amp: float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time (days).
+    thetaE: float
+        The size of the Einstein radius in (mas).
+    piS: float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E: float
+        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    xS0_N: float
+        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    muS_E: float
+        RA Source proper motion (mas/yr)
+    muS_N: float
+        Dec Source proper motion (mas/yr)
+    b_sff: float
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base: float
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    gp_log_sigma: float
+        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel. 
+    gp_rho: float
+        Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
+    gp_log_omega0_S0: float
+        Guassian process :math:`log(\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
+    gp_log_omega0: float
+        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+    gp_log_jit_sigma: float
+        Gaussian process for jitter term
+    
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+
+
+    Notes
+    -----
+    .. note::
+       | `raL` and `decL` are required parameters if calculating with parallax
+       | For an explanation of the Guassian process parameters, see Golovich et al. 2019()
+
+    """
+    phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega0_S0, gp_log_omega0, gp_log_jit_sigma,
+                 raL=None, decL=None):
+
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega0_S0 = gp_log_omega0_S0
+        self.gp_log_omega0 = gp_log_omega0
+        self.gp_log_jit_sigma = gp_log_jit_sigma
+        
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                         piE_E, piE_N,
+                         xS0_E, xS0_N,
+                         muS_E, muS_N,
+                         b_sff, mag_base,
+                         raL=raL, decL=decL)
+
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+
+        self.gp_log_S0 = {}
+        self.gp_log_omega04_S0 = {}
+        for key, val in self.gp_log_omega0_S0.items():
+            self.gp_log_S0[key] = self.gp_log_omega0_S0[key] - self.gp_log_omega0[key]
+            self.gp_log_omega04_S0[key] = self.gp_log_omega0_S0[key] + 3 * self.gp_log_omega0[key]
+
+        # Setup a useful "use_phot_gp" flag.
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+
+        return
 
 # --------------------------------------------------
 #
@@ -3331,7 +3717,7 @@ class PSPL_GP(ABC):
         Including a jitter term will inflate the white noise component of the GP model.
     """
     
-    def get_celerite_gp_object(self, mag_err_obs, jitter = True, filt_index = 0):
+    def get_celerite_gp_object(self, mag_err_obs, filt_index = 0):
         """
         Returns a celerite GP object that is used for all GP operations
 
@@ -3339,12 +3725,7 @@ class PSPL_GP(ABC):
         ----------
         mag_err_obs : array_like
             List of observed photometric uncertainties of the microlensing event in magnitudes. 
-            The mean of mag_err_obs is inputted into the jitter term of the kernel, 
-            and is only used if jitter is True.
-
-        jitter : bool
-            A boolean for if a jitter term should be included in the kernel or not. 
-            Including a jitter term will inflate the white noise component of the GP model.
+            The mean of mag_err_obs is inputted into the jitter term of the kernel if 'gp_log_jit_sigma' is not a parameter.
 
         filt_index : integer
             An integer indicating which photometric data set should be used for the GP.
@@ -3364,12 +3745,15 @@ class PSPL_GP(ABC):
             matern = celerite.terms.Matern32Term(self.gp_log_sigma[filt_index], self.gp_log_rho[filt_index])
             sho = celerite.terms.SHOTerm(self.gp_log_S0[filt_index], gp_log_Q, self.gp_log_omega0[filt_index])
 
-            if (jitter == True):
-                mean_mag_err_obs = np.average(mag_err_obs)
-                jitter_term = celerite.terms.JitterTerm(np.log(mean_mag_err_obs))
-                kernel = matern + sho + jitter_term
-            else:
-                kernel = matern + sho
+            # Check if jitter term's sigma is a parameter
+            if 'gp_log_jit_sigma' in self.phot_optional_param_names:
+                log_jit_sigma = self.gp_log_jit_sigma[filt_index]
+            else: 
+                log_jit_sigma = np.log(np.average(mag_err_obs))
+               
+            jitter_term = celerite.terms.JitterTerm(log_jit_sigma)
+            
+            kernel = matern + sho + jitter_term
 
             my_model = Celerite_GP_Model(self, filt_index) # self is any instance of PSPL
 
@@ -3422,7 +3806,7 @@ class PSPL_GP(ABC):
             # FIXME: is there a better way to write this? Since it totally
             # duplicates everything in log_likely_photometry
 
-            gp = self.get_celerite_gp_object(mag_err_obs, jitter = True, filt_index = filt_index)
+            gp = self.get_celerite_gp_object(mag_err_obs, filt_index = filt_index)
             try:
                 gp.compute(t_obs, mag_err_obs)
                 mag_model, mag_model_var = gp.predict(mag_obs, t_pred, return_var=True)
@@ -3448,7 +3832,7 @@ class PSPL_GP(ABC):
             # FIXME: is there a better way to write this? Since it totally
             # duplicates everything in log_likely_photometry
 
-            gp = self.get_celerite_gp_object(mag_err_obs, jitter = True, filt_index = filt_index)
+            gp = self.get_celerite_gp_object(mag_err_obs, filt_index = filt_index)
             try:
                 gp.compute(t_obs, mag_err_obs)
                 return gp.solver.log_determinant()
@@ -3490,7 +3874,7 @@ class PSPL_GP(ABC):
         """
         if self.use_gp_phot[filt_index]:
 
-            gp = self.get_celerite_gp_object(mag_err_obs, jitter = True, filt_index = filt_index)
+            gp = self.get_celerite_gp_object(mag_err_obs, filt_index = filt_index)
             # Make sure that kernel isn't giving crazy things...
             # otherwise return -np.inf for log likelihood 
             # Reference: https://github.com/dfm/celerite/issues/142
@@ -3511,12 +3895,45 @@ class PSPL_GP(ABC):
 class PSPL_GPnoJitter(ABC):
     """
     PSPL object that has optional support for Gaussian Process (GP) on each photometric filter.
-    The GP for this object uses a summation of the matern-3/2 and DDSHO terms as its kernel/covariance function (no jitter term).
+    The GP for this object uses a summation of the matern-3/2 and DDSHO terms as its kernel/covariance function (no jitter         term). 
     """
 
+    def get_celerite_gp_object(self, filt_index = 0):
+        """
+        Returns a celerite GP object that is used for all GP operations
+
+        Parameters
+        ----------
+        filt_index : integer
+            An integer indicating which photometric data set should be used for the GP.
+
+            .. note::
+            This will throw an error if this is a filter with `use_gp_phot[filt_index] = False`.
+
+        Returns
+        ----------
+        gp : a celerite GP object
+        """
+        
+        if self.use_gp_phot[filt_index]: 
+            # Fixed logQ following Golovich+20
+            gp_log_Q = np.log(2 ** -0.5)
+
+            matern = celerite.terms.Matern32Term(self.gp_log_sigma[filt_index], self.gp_log_rho[filt_index])
+            sho = celerite.terms.SHOTerm(self.gp_log_S0[filt_index], gp_log_Q, self.gp_log_omega0[filt_index])
+            
+            kernel = matern + sho
+
+            my_model = Celerite_GP_Model(self, filt_index) # self is any instance of PSPL
+
+            return celerite.GP(kernel, mean = my_model, fit_mean = True)
+
+        else:
+            raise RuntimeError(
+                'PSPL_GP: Cannot call for filter with use_gp_phot = False (filt_index={0:d})'.format(filt_index))
+            
     # We don't want to override get_photometry, do we?
     # Otherwise the mean model will be wrong.
-
     def get_photometry_with_gp(self, t_obs, mag_obs, mag_err_obs, filt_index=0, t_pred=None):
         """Returns photometry with GP noise added in. 
 
@@ -3557,7 +3974,7 @@ class PSPL_GPnoJitter(ABC):
             # FIXME: is there a better way to write this? Since it totally
             # duplicates everything in log_likely_photometry
 
-            gp = self.get_celerite_gp_object(mag_err_obs, jitter = False, filt_index = filt_index)
+            gp = self.get_celerite_gp_object(filt_index = filt_index)
             try:
                 gp.compute(t_obs, mag_err_obs)
                 mag_model, mag_model_var = gp.predict(mag_obs, t_pred, return_var=True)
@@ -3583,7 +4000,7 @@ class PSPL_GPnoJitter(ABC):
             # FIXME: is there a better way to write this? Since it totally
             # duplicates everything in log_likely_photometry
 
-            gp = self.get_celerite_gp_object(mag_err_obs, jitter = False, filt_index = filt_index)
+            gp = self.get_celerite_gp_object(filt_index = filt_index)
             try:
                 gp.compute(t_obs, mag_err_obs)
                 return gp.solver.log_determinant()
@@ -3626,7 +4043,7 @@ class PSPL_GPnoJitter(ABC):
         """
         if self.use_gp_phot[filt_index]:
 
-            gp = self.get_celerite_gp_object(mag_err_obs, jitter = False, filt_index = filt_index)
+            gp = self.get_celerite_gp_object(filt_index = filt_index)
             # Make sure that kernel isn't giving crazy things...
             # otherwise return -np.inf for log likelihood 
             # Reference: https://github.com/dfm/celerite/issues/142
@@ -12121,6 +12538,28 @@ class PSPL_Phot_Par_GP_Param2_3(ModelClassABC,
         checkconflicts(self)
         
 @inheritdocstring
+class PSPL_Phot_Par_GP_Param2_4(ModelClassABC,
+                                PSPL_GP,
+                                PSPL_Phot,
+                                PSPL_Parallax,
+                                PSPL_GP_PhotParam2_4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        
+@inheritdocstring
+class PSPL_Phot_Par_GP_Param2_5(ModelClassABC,
+                                PSPL_GP,
+                                PSPL_Phot,
+                                PSPL_Parallax,
+                                PSPL_GP_PhotParam2_5):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)   
+        
+@inheritdocstring
 class PSPL_Phot_Par_GP_Param3(ModelClassABC,
                               PSPL_GP,
                               PSPL_Phot,
@@ -12236,6 +12675,17 @@ class PSPL_PhotAstrom_Par_GP_Param3_1(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
+@inheritdocstring
+class PSPL_PhotAstrom_Par_GP_Param3_2(ModelClassABC,
+                                        PSPL_GP,
+                                        PSPL_PhotAstrom,
+                                        PSPL_Parallax,
+                                        PSPL_GP_PhotAstromParam3_2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
         
 @inheritdocstring
 class PSPL_PhotAstrom_Par_GP_Param4(ModelClassABC,
@@ -12248,6 +12698,28 @@ class PSPL_PhotAstrom_Par_GP_Param4(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+@inheritdocstring
+class PSPL_PhotAstrom_Par_GP_Param4_1(ModelClassABC,
+                                      PSPL_GP,
+                                      PSPL_PhotAstrom,
+                                      PSPL_Parallax,
+                                      PSPL_GP_PhotAstromParam4_1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+@inheritdocstring
+class PSPL_PhotAstrom_Par_GP_Param4_2(ModelClassABC,
+                                        PSPL_GP,
+                                        PSPL_PhotAstrom,
+                                        PSPL_Parallax,
+                                        PSPL_GP_PhotAstromParam4_2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        
 @inheritdocstring
 class PSPL_PhotAstrom_Par_LumLens_GP_Param1(ModelClassABC,
                                             PSPL_GP,
