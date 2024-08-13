@@ -11,7 +11,7 @@ days_per_year = 365.25
 
 class Orbit(object):
 
-    def oal2xy(self, t, t0_com, mass=None, dist=None, accel=False):
+    def oal2xy(self, t, mass=None, dist=None, accel=False):
         """
         This is for binaris orbiting each other and moving linearly together.
         Given a Orbit And a Linear motion, get the 2D position (x,y) at time epochs.
@@ -36,10 +36,6 @@ class Orbit(object):
         orb.tp = tp             # the time of the periastron passage in days
         orb.aleph = aleph       # semi-major axis of primary in arcsec
         orb.aleph2 = aleph      # semi-major axis of secondary in arcsec
-        orb.vx = vx             # arcsec/yr  - Proper motion of the system in RA
-        orb.vy = vy             - Proper motion of the system in Decl
-        orb.x0 = x0             # arcsec - CoM coordinates
-        orb.y0 = y0             # arcsec - CoM coordinates
         if accel=True:
             orb.ax = ax
             orb.ay = ay
@@ -113,10 +109,10 @@ class Orbit(object):
 
         # calculate x and y
         #The x and y that come out are the delta position of the star which you would then need to add to the center of mass 
-        x = (self.conB * X) + (self.conG * Y) + self.vx * (t-t0_com)/days_per_year + self.x0 
-        y = (self.conA * X) + (self.conF * Y) + self.vy * (t-t0_com)/days_per_year + self.y0
-        x2 = (self.conB2 * X) + (self.conG2 * Y) + self.vx * (t-t0_com)/days_per_year + (self.x0)
-        y2 = (self.conA2 * X) + (self.conF2 * Y) + self.vy * (t-t0_com)/days_per_year + (self.y0)
+        #x = (self.conB * X) + (self.conG * Y) + self.vx * (t-t0_com)/days_per_year + self.x0 
+        #y = (self.conA * X) + (self.conF * Y) + self.vy * (t-t0_com)/days_per_year + self.y0
+        #x2 = (self.conB2 * X) + (self.conG2 * Y) + self.vx * (t-t0_com)/days_per_year + (self.x0)
+        #y2 = (self.conA2 * X) + (self.conF2 * Y) + self.vy * (t-t0_com)/days_per_year + (self.y0)
         #self.K1 = 3
         #self.gamma = 2
         #rv = self.K1 * (np.cos(math.radians(self.w)) + eta) + self.e * np.cos(math.radians(self.w)) + self.gamma
@@ -135,7 +131,11 @@ class Orbit(object):
         #y /= cc.dist
 
         # x, y, x2, y2 = x/self.dS, y/self.dS, x2/self.dS, y2/self.dS
-
+        x = (self.conB * X) + (self.conG * Y)
+        y = (self.conA * X) + (self.conF * Y) 
+        x2 = (self.conB2 * X) + (self.conG2 * Y) 
+        y2 = (self.conA2 * X) + (self.conF2 * Y) 
+        
         return (x, y, x2, y2)
         
     """
