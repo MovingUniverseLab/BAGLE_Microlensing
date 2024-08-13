@@ -7337,7 +7337,7 @@ class PSBL_PhotAstromParam8(PSPL_Param):
     tE : float
         Einstein crossing time (days).
     log10_thetaE : float
-        The size of the Einstein radius in (mas).
+        The log of the size of the Einstein radius in (mas).
     piS : float
         Amplitude of the parallax (1AU/dS) of the source. (mas)
     piE_E : float
@@ -7729,8 +7729,8 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
           * negative (u0_amp < 0 when u0_hat[0] < 0).
     tE : float
         Einstein crossing time (days).
-    thetaE : float
-        The size of the Einstein radius in (mas).
+    log10_thetaE : float
+        The log of the size of the Einstein radius in (mas).
     piS : float
         Amplitude of the parallax (1AU/dS) of the source. (mas)
     piE_E : float
@@ -7743,7 +7743,6 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     xS0_N : float
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-        
     omega: float
         The argument of periastron of the primary lens's orbit in degrees. 
         The secondary source will be directly 180 degrees across the primary 
@@ -7759,12 +7758,12 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         The ccentricity of the System
     tp: float
         This is the time of the periastron of the system in days.
-
+    sep : float
+        Angular separation of the two lenses (mas)
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
         Dec Source proper motion (mas/yr)
-
     q : float
         Mass ratio (M2 / M1)
     alpha : float
@@ -7778,7 +7777,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'sep', 
                           'muS_E', 'muS_N',
                           'q', 'alpha']
@@ -7792,18 +7791,18 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     orbitFlag = 'circular'
 
 
-    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
+    def __init__(self, t0_com, u0_amp_com, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
                  omega, big_omega, i, e, tp, sep, muS_E, muS_N,
                  q, alpha,
                  b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
                          
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
+        super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS,
                      piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                      q, sep, alpha,
                      b_sff, mag_src,
-                     raL=raL, decL=raL, obsLocation=obsLocation, root_tol=root_tol)
+                     raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
         
         #Orbital parameters     
         self.beta_com = self.u0_amp_com * self.thetaE_amp
