@@ -6728,6 +6728,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    orbitFlag=False
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
                      piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
@@ -6895,6 +6896,8 @@ class PSBL_PhotAstromParam5(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    orbitFlag=False
+
 
     def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS,
                      piE_E, piEN_piEE, xS0_E, xS0_N, muS_E, muS_N,
@@ -7060,6 +7063,8 @@ class PSBL_PhotAstromParam6(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    orbitFlag=False
+
 
     def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
@@ -7219,6 +7224,8 @@ class PSBL_PhotAstromParam7(PSPL_Param):
     phot_param_names = ['b_sff', 'mag_src']
 
     paramAstromFlag = True
+    orbitFlag=False
+
     paramPhotFlag = True
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
@@ -8371,6 +8378,8 @@ class PSBL_PhotParam1(PSPL_Param):
 
     paramAstromFlag = False
     paramPhotFlag = True
+    orbitFlag=False
+
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep, phi,
                  b_sff, mag_src,
@@ -9460,6 +9469,8 @@ class BSPL_PhotParam1(PSPL_Param):
 
     paramAstromFlag = False
     paramPhotFlag = True
+    orbitFlag = False
+
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N,
                  sep, phi, mag_src_pri, mag_src_sec,
@@ -9621,6 +9632,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    orbitFlag = False
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
@@ -9834,6 +9846,7 @@ class BSPL_PhotAstromParam2(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    orbitFlag = False
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
@@ -10039,6 +10052,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    orbitFlag = False
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
@@ -14372,6 +14386,8 @@ class BSBL_PhotParam1(PSPL_Param):
 
     paramAstromFlag = False
     paramPhotFlag = True
+    orbitFlag = False
+
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N,
                  sep_SL, sep_S, phi_S, sep_L, phi_L,
