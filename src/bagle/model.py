@@ -5610,9 +5610,9 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 dt_in_years = (t_obs - self.t0_com) / days_per_year #About Center of Mass
                 xL1 = np.zeros((len(t_obs), 2), dtype=float)
                 xL2 = np.zeros((len(t_obs), 2), dtype=float)
-                
+
                 xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
-                
+
                 orb = orbits.Orbit()
                 orb.w = self.omega
                 orb.o = self.big_omega
@@ -5629,7 +5629,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 self.y = y
                 self.x2 = x2
                 self.y2 = y2
-                
+
                 xL1[:, 0] = xLCoM[:, 0] + x
                 xL1[:, 1] = xLCoM[:, 1] + y
                 xL2[:, 0] = xLCoM[:, 0] + x2
@@ -5856,7 +5856,7 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between the source and binary lens system's COM
-        
+
     xS0_E : float
         R.A. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
@@ -5896,7 +5896,7 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     arat: float
         Ratio of semi-major axis with current separation between lenses measured at         dL
 
-        
+
     muS_E : float
         Source proper motion in the RA direction (mas/yr)
     muS_N : float
@@ -6072,7 +6072,7 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         thetaS0_com = self.u0_com * self.thetaE_amp
         self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
 
-                     
+
         #self.xL0_com = self.xL0_com
         #self.xL0_com = self.xL0[1]
 
@@ -6092,56 +6092,56 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between the source and binary lens system's COM
-        
+
     xS0_E : float
         R.A. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
     xS0_N : float
         Dec. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
-        
+
     beta_com: float
         Angular distance between the source and the CoM
         of the lenses on the plane of the sky (mas). Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
           * negative (u0_amp < 0 when u0_hat[0] < 0).
-          
+
     muL_E : float
         Lens System proper motion in the RA direction (mas/yr)
     muL_N : float
         Lens System proper motion in the Dec. direction (mas/yr)
 
-        
+
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         omega_sec = omega_pri + 180 deg
-        
+
     big_omega_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees.
-        
+
     i: float
-        The inclination angle of the system in degrees. 
+        The inclination angle of the system in degrees.
 
     tp: float
         This is the time of the periastron of the system in days.
     sep: float
-        The angular separation between the lenses (mas). 
+        The angular separation between the lenses (mas).
 
     arat: float
         Ratio of semi-major axis with current separation between lenses measured at         dL
 
-        
+
     muS_E : float
         Source proper motion in the RA direction (mas/yr)
     muS_N : float
         Source proper motion in the Dec. direction (mas/yr)
-        
+
     dL : float
         Distance from the observer to the lens system (pc)
     dS : float
         Distance from the observer to the source's CoM (pc)
-        
+
     alpha : float
         Angle made between the binary axis and North;
         measured in degrees East of North.
@@ -6152,7 +6152,7 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         Source magnitude, unlensed. One in each filter.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
-        
+
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'tp', 'sep', 'arat', 'muS_E', 'muS_N',
@@ -7078,7 +7078,7 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         self.thetaE_amp = thetaE
         self.xS0 = np.array([xS0_E, xS0_N])
         self.muS = np.array([muS_E, muS_N])
-                     
+
         self.piS = piS
         self.q = q
         self.sep = sep
@@ -7361,7 +7361,7 @@ class PSBL_PhotAstromParam8(PSPL_Param):
     tE : float
         Einstein crossing time (days).
     log10_thetaE : float
-        The size of the Einstein radius in (mas).
+        The log of the size of the Einstein radius in (mas).
     piS : float
         Amplitude of the parallax (1AU/dS) of the source. (mas)
     piE_E : float
@@ -7538,14 +7538,14 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-        
+
     xS0_E : float
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
     xS0_N : float
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-        
+
     omega: float
         The argument of periastron of the primary lens's orbit in degrees. 
         The secondary source will be directly 180 degrees across the primary 
@@ -7622,11 +7622,11 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         self.i = i
         self.e = e
         self.tp = tp
-        
+
         
          # Calculate period, and semi-major axes
         self.sep = sep #mas
-        self.a = self.arat * self.sep #mas 
+        self.a = self.arat * self.sep #mas
         self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.a #mas
         self.aleph = self.a - self.aleph_sec #mas
         self.al_AU = self.dL * (self.a *1e-3) * units.AU
@@ -7665,14 +7665,14 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-        
+
     xS0_E : float
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
     xS0_N : float
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-        
+
     omega: float
         The argument of periastron of the primary lens's orbit in degrees. 
         The secondary source will be directly 180 degrees across the primary 
@@ -7683,7 +7683,7 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
         inclination angle for their orbital planes, they also share the same
         big_omega
     i: float
-        Inclination angle of the system in degrees. 
+        Inclination angle of the system in degrees.
     e: float
         Eccentricity of the System
     tp: float
@@ -7752,18 +7752,18 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     Attributes
     ----------
     t0_com : float
-        Time of closest approach between the source and the CoM of the lenses, as seen from Earth (MJD.DDD) 
+        Time of closest approach between the source and the CoM of the lenses, as seen from Earth (MJD.DDD)
     u0_amp_com : float
         Angular distance between the source and the binary lens COM
         on the plane of the sky at closest approach in units of thetaE. Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
           * negative (u0_amp < 0 when u0_hat[0] < 0).
-          
+
     tE : float
         Einstein crossing time (days).
     log10_thetaE : float
-        The size of the Einstein radius in (mas).
-        
+        The log of the size of the Einstein radius in (mas).
+
     piS : float
         Amplitude of the parallax (1AU/dS) of the source. (mas)
     piE_E : float
@@ -7776,7 +7776,6 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     xS0_N : float
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-        
     omega: float
         The argument of periastron of the primary lens's orbit in degrees. 
         The secondary source will be directly 180 degrees across the primary 
@@ -7792,7 +7791,8 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         The eccentricity of the System
     tp: float
         This is the time of the periastron of the system in days.
-
+    sep : float
+        Angular separation of the two lenses (mas)
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -7803,7 +7803,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         Distance between lenses in mas
     arat: float
         Ratio of semi-major axis with current separation between lenses at time of measurement.
-        
+
     q : float
         Mass ratio (M2 / M1)
     alpha : float
@@ -7842,7 +7842,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
                      piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                      q, sep, alpha,
                      b_sff, mag_src,
-                     raL=raL, decL=raL, obsLocation=obsLocation, root_tol=root_tol)
+                     raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
         
         #Orbital parameters     
         self.beta_com = self.u0_amp_com * self.thetaE_amp
@@ -7862,7 +7862,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         
          # Calculate period, and semi-major axes
         self.sep = sep #mas
-        self.a = self.arat * self.sep #mas 
+        self.a = self.arat * self.sep #mas
         self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.a #mas
         self.aleph = self.a - self.aleph_sec #mas
         self.al_AU = self.dL * (self.a *1e-3) * units.AU
@@ -8216,18 +8216,18 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
     Attributes
     ----------
     t0_com : float
-        Time of closest approach between the source and the CoM of the lenses, as seen from Earth (MJD.DDD) 
+        Time of closest approach between the source and the CoM of the lenses, as seen from Earth (MJD.DDD)
     u0_amp_com : float
         Angular distance between the source and the binary lens COM
         on the plane of the sky at closest approach in units of thetaE. Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
           * negative (u0_amp < 0 when u0_hat[0] < 0).
-          
+
     tE : float
         Einstein crossing time (days).
     log10_thetaE : float
         The size of the Einstein radius in (mas).
-        
+
     piS : float
         Amplitude of the parallax (1AU/dS) of the source. (mas)
     piE_E : float
@@ -8251,7 +8251,7 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         inclination angle for their orbital planes, they also share the same
         big_omega
     i: float
-        The inclination angle of the system in degrees. 
+        The inclination angle of the system in degrees.
     tp: float
         This is the time of the periastron of the system in days.
 
@@ -8260,10 +8260,10 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
     muS_N : float
         Dec Source proper motion (mas/yr)
 
-        
+
     sep: float
         Distance between lenses in mas
-        
+
     q : float
         Mass ratio (M2 / M1)
     alpha : float
@@ -8277,7 +8277,7 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    
+
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'tp', 'sep', 
                           'muS_E', 'muS_N',
@@ -8306,7 +8306,7 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
 
-                     
+
 
         PSPL_Param().__init__()
         return
@@ -8549,7 +8549,7 @@ class PSBL_GP_PhotAstromParam2(PSBL_PhotAstromParam2):
 class BSPL(PSPL):
     def get_u(self, t, filt_idx=0):
         """
-        
+
         Parameters
         ----------
         t : numpy array
@@ -8557,25 +8557,25 @@ class BSPL(PSPL):
 
         Returns
         -------
-        u : numpy array 
+        u : numpy array
             Shape = `[len(t), 2 sources, 2 directions on sky]`
         """
-        # t0 is the time of closest approach, projected on the sky, for the 
+        # t0 is the time of closest approach, projected on the sky, for the
         # whole binary source system. By default, we assume a static binary with
         # the primary star being at the origin of the system.
 
-        # Calculate the elapsed time, in units of tE. 
+        # Calculate the elapsed time, in units of tE.
         # This gives the linear motion offset due to muRel in the muRel_hat direction.
 
         xS_unlensed = self.get_resolved_astrometry_unlensed(t)
-        
-        xS1_unlens = xS_unlensed[:, 0, :] 
-        xS2_unlens = xS_unlensed[:, 1, :] 
+
+        xS1_unlens = xS_unlensed[:, 0, :]
+        xS2_unlens = xS_unlensed[:, 1, :]
 
         xL = self.get_lens_astrometry(t)
 
         thetaE_amp = self.thetaE_amp * 1e-3
-        u_pri = (xS1_unlens-xL)/thetaE_amp        
+        u_pri = (xS1_unlens-xL)/thetaE_amp
         u_sec = (xS2_unlens-xL)/thetaE_amp
         #import pdb
         #pdb.set_trace()
@@ -8936,11 +8936,11 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
             if self.orbitFlag == 'accelerated':
                 xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.acc) * 1e-3
-                
+
         elif self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
             xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass. xS0_com is the initial source CoM position at t0=t0_p.
-            
+
             orb = orbits.Orbit()
             orb.w = self.omega
             orb.o = self.big_omega
@@ -8951,20 +8951,20 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             orb.aleph = self.aleph *1e-3
             orb.aleph2 = self.aleph_sec*1e-3
             (x, y, x2, y2) = orb.oal2xy(t) #Calculates orbital motion around the CoM at times t (MJD values)
-            
+
             xS1_unlens = np.zeros((len(t), 2), dtype=float)
             xS2_unlens = np.zeros((len(t), 2), dtype=float)
-            
+
             xS1_unlens[:,0] = xCoM_unlens[:, 0] + x
             xS1_unlens[:,1] += xCoM_unlens[:, 1] + y
             xS2_unlens[:,0] += xCoM_unlens[:, 0] + x2
             xS2_unlens[:,1] += xCoM_unlens[:, 1] + y2
-            
+
         else:    
             xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS) * 1e-3
 
-            
+
 
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
@@ -11460,7 +11460,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         The RA proper motion of the system in mas/yr.
     muS_system_N: float
         The Dec proper motion of the system in mas/yr.
-        
+
     xS0_E: float
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
     xS0_N: float
@@ -11514,7 +11514,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
                  b_sff,
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0  # time of closest approach for system=primary pos
-                     
+
         self.mL = mL
         self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
         self.beta = beta
@@ -11538,10 +11538,10 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.tp = tp
         self.aleph = aleph  # mas
         self.aleph_sec = aleph_sec  # mas
-        
+
         #self.vx = muS_system_E * 1e-3
         #self.vy = muS_system_N * 1e-3
-                     
+
         #self.x0 = x0_system_E
         #self.y0 = x0_system_N
 
@@ -11665,9 +11665,9 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         q_source = self.mass_source_primary / self.mass_source_secondary
         qeff_source = (1 - q_source) / (1 + q_source)
         self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
-                     
+
         self.xS0_com = self.xS0_pri + com_vec *1e-3
-                     
+
         return
 
 
@@ -11814,7 +11814,7 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.tp = tp
         self.aleph = aleph  # mas
         self.aleph_sec = aleph_sec  # mas
-       
+
         self.alpha = alpha
         self.fratio_bin = np.array(fratio_bin)
         self.alpha_rad = self.alpha * np.pi / 180.0
@@ -12157,7 +12157,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
                                        np.cos(self.alpha_rad)))  # mas
 
         self.xS0_com = self.xS0_pri + com_vec *1e-3
-                     
+
         return
 
 
@@ -12220,7 +12220,7 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         The RA proper motion of the system in mas/yr.
     muS_system_N: float
         The Dec proper motion of the system in mas/yr.
-        
+
     xS0_E: float
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
     xS0_N: float
@@ -12504,7 +12504,7 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
     decL: float, optional
         Declination of the lens in decimal degrees.
     """
-    
+
     fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'alpha', 'omega', 'big_omega', 'i', 'p',
@@ -13870,11 +13870,11 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
 
         # Calculate position vs. time in arcsec
 
-            
+
         if self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
             xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass. xS0_com is the initial source CoM position at t0=t0_p.
-            
+
             orb = orbits.Orbit()
             orb.w = self.omegaS
             orb.o = self.big_omegaS
@@ -13885,10 +13885,10 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
             orb.aleph = self.alephS *1e-3
             orb.aleph2 = self.aleph_secS*1e-3
             (x, y, x2, y2) = orb.oal2xy(t) #Calculates orbital motion around the CoM at times t (MJD values)
-            
+
             xS1_unlens = np.zeros((len(t), 2), dtype=float)
             xS2_unlens = np.zeros((len(t), 2), dtype=float)
-            
+
             xS1_unlens[:,0] = xCoM_unlens[:, 0] + x
             xS1_unlens[:,1] += xCoM_unlens[:, 1] + y
             xS2_unlens[:,0] += xCoM_unlens[:, 0] + x2
@@ -13983,14 +13983,14 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
 
         xL1 = xL + offset  # primary
         xL2 = xL - offset  # secondary
-                    
+
         if self.orbitFlag == 'Keplerian':
             dt_in_years = (t_obs - self.t0_com) / days_per_year #About Center of Mass
             xL1 = np.zeros((len(t_obs), 2), dtype=float)
             xL2 = np.zeros((len(t_obs), 2), dtype=float)
-            
+
             xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
-            
+
             orb = orbits.Orbit()
             orb.w = self.omegaL
             orb.o = self.big_omegaL
@@ -14007,7 +14007,7 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
             self.y = y
             self.x2 = x2
             self.y2 = y2
-            
+
             xL1[:, 0] = xLCoM[:, 0] + x
             xL1[:, 1] = xLCoM[:, 1] + y
             xL2[:, 0] = xLCoM[:, 0] + x2
@@ -14020,8 +14020,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
                 xL1 += (self.piL * parallax_vec) * 1e-3  # arcsec
                 xL2 += (self.piL * parallax_vec) * 1e-3  # arcsec
 
-                
-                
+
+
         return (xL1, xL2)
 
 
@@ -14926,8 +14926,8 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
 
         return
-        
-    
+
+
 
 class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     """BSBL model for astrometry and photometry - physical parameterization.
@@ -14947,7 +14947,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
           * negative (u0_amp < 0 when u0_hat[0] < 0).
 
-          
+
     tE : float
         Einstein crossing time (days).
     thetaE : float
@@ -14960,7 +14960,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         The microlensing parallax in the North direction in units of thetaE
     q : float
             Mass ratio (M2 / M1)
-            
+
     xS0_E : float
         R.A. of primary source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
@@ -14979,7 +14979,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         measured in degrees East of North.
         Example, alphaL = 90 will place the source primary to the East 
         and the source secondary to the West.
-        
+
     omegaL: float
         The argument of periastron of the primary lens's orbit in degrees. 
     big_omegaL: float
@@ -15061,7 +15061,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.muS_system = self.muS
         self.muS_E, self.muS_N = self.muS
 
-                     
+
         self.xS0 = np.array([xS0_E, xS0_N])
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
@@ -15107,7 +15107,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         qeff = (1 - q)/(1 + q)
         self.t0 = self.t0_com - 0.5 * qeff * self.tE * self.sepL * np.cos(self.phiL_rad) / self.thetaE_amp #bin lens geom center to primary source
         self.u0_amp = self.u0_amp_com - 0.5 * qeff * self.sepL * np.sin(self.phiL_rad)/self.thetaE_amp
-                     
+
         self.beta = self.u0_amp * self.thetaE_amp
         self.piE_amp = np.linalg.norm(self.piE)
         self.piRel = self.piE_amp * self.thetaE_amp
@@ -15182,7 +15182,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         # usage of the function with u0_amp works exactly the same.
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
-        
+
         self.beta_com = self.u0_amp_com * self.thetaE_amp
 
         self.u0_com = np.abs(self.u0_amp_com) * u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
@@ -15198,10 +15198,10 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.xL0_com = self.xS0  - self.thetaS0_com * 1e-3
         com_vec = self.alephS * np.array((np.sin(self.alphaS_rad),
                                        np.cos(self.alphaS_rad)))  # mas
-                     
+
         self.xL0 = self.xL0_com
         self.xS0_com = self.xS0 + com_vec *1e-3
-                     
+
         return
 
 
@@ -15224,7 +15224,7 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
           * negative (u0_amp < 0 when u0_hat[0] < 0).
 
-          
+
     tE : float
         Einstein crossing time (days).
     thetaE : float
@@ -15237,7 +15237,7 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         The microlensing parallax in the North direction in units of thetaE
     q : float
             Mass ratio (M2 / M1)
-            
+
     xS0_E : float
         R.A. of primary source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
@@ -15256,7 +15256,7 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         measured in degrees East of North.
         Example, alphaL = 90 will place the source primary to the East 
         and the source secondary to the West.
-        
+
     omegaL: float
         The argument of periastron of the primary lens's orbit in degrees. 
     big_omegaL: float
@@ -15309,7 +15309,7 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     decL: float, optional
         Declination of the lens in decimal degrees.
     """
-    
+
     fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                 'alphaL', 'alphaS',  'omegaL', 'big_omegaL', 'iL',  'tpL', 'sepL', 
                  'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
@@ -18420,7 +18420,7 @@ class BSBL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC,
         checkconflicts(self)
 
 
-        
+
         
 # BSBL_parallax
 @inheritdocstring

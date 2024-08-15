@@ -17,6 +17,7 @@ from bagle.fake_data import *
 from bagle import frame_convert
 import time
 import pdb
+import yaml, pickle
 import pytest
 import inspect, sys
 
@@ -5953,9 +5954,232 @@ def test_spitzer_shvartzvald2019(plot=False):
 
     return
 
-def test_roman_lightcurve():
+def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
     from bagle import fake_data
-    t = fake_data.get_times_roman_gbtds()
+
+    # Get times for the two different roman filters.
+    t_w149, t_f087 = fake_data.get_times_roman_gbtds()
+
+    # Bulge RA and Dec
+    raL = 17.5 * 15.0  # in degrees
+    decL = -30.0
+    obsLocation = 'gaia'
+
+    # Set the random seet.
+    np.random.seed(seed=int(time.time()))
+
+    # Randomly select a t0 for the event from the time array.
+    t0_com = np.random.choice(t_w149, size=nevents)
+
+    u0_amp_com = np.random.uniform(-1, 1, size=nevents)
+    tE = 10 ** np.random.normal(np.log10(15), 0.25, size=nevents)  # log-uniform
+    log10_thetaE = np.random.uniform(-2, 0, size=nevents)
+    piS = 1.0 / np.random.normal(8.0, 1.5, size=nevents)
+    piE_E = np.random.uniform(-0.4, 0.4, size=nevents)
+    piE_N = np.random.uniform(-0.4, 0.4, size=nevents)
+    # xS0_E = np.random.uniform(-1, 1, size=n_events)
+    # xS0_N = np.random.uniform(-1, 1, size=n_events)
+    xS0_E = np.zeros(nevents, dtype=float)
+    xS0_N = np.zeros(nevents, dtype=float)
+    omega = np.random.uniform(0, 360, size=nevents)
+    big_omega = np.random.uniform(0, 180, size=nevents)
+    i = np.random.uniform(0, 180, size=nevents)
+    e = np.random.uniform(0, 0.9, size=nevents)
+    tp = np.random.choice(t_w149, size=nevents)
+    #sep = np.random.normal(2, 0.2, size=n_events)
+    # Lets make these more likely to have caustic crossings.
+    sep = 10**log10_thetaE / 2.0
+    muS_E = np.random.uniform(0, 7, size=nevents)
+    muS_N = np.random.uniform(-7, 0, size=nevents)
+    q = 10 ** np.random.uniform(-5, -1, size=nevents)
+    alpha = np.random.uniform(0, 360, size=nevents)
+    b_sff_w149 = np.random.uniform(0, 1, size=nevents)
+    mag_src_w149 = np.random.uniform(18, 20, size=nevents)
+    b_sff_f087 = b_sff_w149
+    mag_src_f087 = mag_src_w149 + 0.9  # fixed color.
+
+    b_sff = np.vstack([b_sff_w149, b_sff_f087]).T
+    mag_src = np.vstack([mag_src_w149, mag_src_f087]).T
+
+    for nn in range(nevents):
+        ff = nstart + nn
+        print(f'Event {ff}')
+
+        mod_class = model.PSBL_PhotAstrom_EllOrbs_Par_Param8
+        psbl_par = mod_class(t0_com[nn], u0_amp_com[nn],
+                             tE[nn], log10_thetaE[nn],
+                             piS[nn], piE_E[nn], piE_N[nn],
+                             xS0_E[nn], xS0_N[nn],
+                             omega[nn], big_omega[nn],
+                             i[nn], e[nn], tp[nn], sep[nn],
+                             muS_E[nn], muS_N[nn],
+                             q[nn], alpha[nn],
+                             b_sff[nn], mag_src[nn],
+                             raL=raL, decL=decL, obsLocation=obsLocation)
+
+        # Get all arrays for each filter, we will use them again.
+        img_w149, amp_w149 = psbl_par.get_all_arrays(t_w149, filt_idx=0)
+        img_f087, amp_f087 = psbl_par.get_all_arrays(t_f087, filt_idx=1)
+
+        ##
+        ## Synthetic photometry
+        ##
+        mag_w149 = psbl_par.get_photometry(t_w149, filt_idx=0, amp_arr=amp_w149)
+        mag_f087 = psbl_par.get_photometry(t_f087, filt_idx=1, amp_arr=amp_f087)
+
+        zp_w149 = 28  # SNR=1
+        zp_f087 = 28  # SNR=1
+
+        f_w149 = 10**((mag_w149 - zp_w149) / -2.5)
+        f_f087 = 10**((mag_f087 - zp_f087) / -2.5)
+
+        snr_w149 = f_w149**0.5
+        snr_f087 = f_f087**0.5
+        print(f'Mean W149 Mag = {mag_w149.mean():.1f}')
+        print(f'Mean W149 SNR = {snr_w149.mean():.1f}')
+
+        mag_err_w149 = 1e-5 * 1. / snr_w149
+        mag_err_f087 = 1e-5 * 1. / snr_f087
+        print(f'Mean W149 mag err = {mag_err_w149.mean():.2f} mag')
+
+        mag_w149 += np.random.normal(0, mag_err_w149)
+        mag_f087 += np.random.normal(0, mag_err_f087)
+
+        ##
+        ## Make an output table.
+        ##
+        tab_w149 = Table((t_w149, mag_w149, mag_err_w149),
+                         names=('t_w149', 'm_w149', 'me_w149'))
+        tab_f087 = Table((t_f087, mag_f087, mag_err_f087),
+                         names=('t_f087', 'm_f087', 'me_f087'))
+        ##
+        ## Synthetic Astrometry (in mas)
+        ##
+        ast_w149 = 1e3 * psbl_par.get_astrometry(t_w149, filt_idx=0,
+                                           image_arr=img_w149, amp_arr=amp_w149)
+        ast_f087 = 1e3 * psbl_par.get_astrometry(t_f087, filt_idx=1,
+                                           image_arr=img_f087, amp_arr=amp_f087)
+
+        # Assign astrometric errors as FWHM / 2*SNR or 0.1 mas minimum.
+        # FWHM_in_arcsec = 0.25 * lambda_in_microns / telescope_diam_in_meters
+        tel_diam = 2.4 # m
+        fwhm_w149 = 0.25 * 1.49 / tel_diam
+        fwhm_f087 = 0.25 * 0.087 / tel_diam
+        # will we really get better spatial resolution at 0.87 microns?
+
+        ast_err_w149 = 1e-5 * fwhm_w149 * 1e3 / (2 * snr_w149) # mas
+        ast_err_f087 = 1e-5 * fwhm_f087 * 1e3 / (2 * snr_f087) # mas
+        ast_err_w149 = np.vstack([ast_err_w149, ast_err_w149]).T
+        ast_err_f087 = np.vstack([ast_err_f087, ast_err_f087]).T
+
+        ast_err_w149[ast_err_w149 < 0.1] = 0.1
+        ast_err_f087[ast_err_f087 < 0.1] = 0.1
+
+        print(f'Mean W149 ast err = {ast_err_w149.mean():.2f} mas')
+
+        ast_w149 += np.random.normal(size=ast_err_w149.shape) * ast_err_w149
+        ast_f087 += np.random.normal(size=ast_err_f087.shape) *ast_err_f087
+
+        tab_w149['x_w149'] = ast_w149[:, 0]
+        tab_w149['y_w149'] = ast_w149[:, 1]
+        tab_w149['xe_w149'] = ast_err_w149[:, 0]
+        tab_w149['ye_w149'] = ast_err_w149[:, 1]
+
+        tab_f087['x_f087'] = ast_f087[:, 0]
+        tab_f087['y_f087'] = ast_f087[:, 1]
+        tab_f087['xe_f087'] = ast_err_f087[:, 0]
+        tab_f087['ye_f087'] = ast_err_f087[:, 1]
+
+        ##
+        ## Plot
+        ##
+        plt_msc = [['F1', 'AA', 'A1'],
+                   ['F2', 'AA', 'A2']]
+        fig, axs = plt.subplot_mosaic(plt_msc,
+                                      figsize=(16, 5),
+                                      tight_layout=True)
+        axs['F1'].errorbar(t_w149, mag_w149, yerr=mag_err_w149, label='W149',
+                           ls='none', marker='.')
+        axs['F1'].set_ylabel('W149 mag')
+        axs['F1'].invert_yaxis()
+
+        axs['F2'].errorbar(t_f087, mag_f087, yerr=mag_err_f087, label='F087',
+                     ls='none', marker='.')
+        axs['F2'].set_ylabel('F087 mag')
+        axs['F2'].set_xlabel('Time (MJD)')
+        axs['F2'].invert_yaxis()
+        axs['F2'].sharex(axs['F1'])
+
+        axs['AA'].errorbar(tab_w149['x_w149'], tab_w149['y_w149'],
+                     xerr=tab_w149['xe_w149'], yerr=tab_w149['ye_w149'],
+                     ls='none', marker='.')
+        axs['AA'].set_xlabel(f'$\Delta\\alpha \cos \delta$ (mas)')
+        axs['AA'].set_ylabel(f'$\Delta\delta$ (mas)')
+
+        axs['A1'].errorbar(tab_w149['t_w149'], tab_w149['x_w149'],
+                     yerr=tab_w149['xe_w149'],
+                     ls='none', marker='.')
+        axs['A1'].set_xlabel(f'Time (MJD)')
+        axs['A1'].set_ylabel(f'$\Delta\\alpha \cos \delta$ (mas)')
+        axs['A1'].sharex(axs['F1'])
+
+        axs['A2'].errorbar(tab_w149['t_w149'], tab_w149['y_w149'],
+                     yerr=tab_w149['ye_w149'],
+                     ls='none', marker='.')
+        axs['A2'].set_xlabel(f'Time (MJD)')
+        axs['A2'].set_ylabel(f'$\Delta\delta$ (mas)')
+        axs['A2'].sharex(axs['F1'])
+
+        # Print out all the parameters to the screen and in a YAML file.
+        params_mod = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
+                      'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'sep',
+                      'muS_E', 'muS_N',
+                      'q', 'alpha', 'b_sff', 'mag_src']
+        params_mod_fix = ['raL', 'decL', 'obsLocation']
+        params_add = ['mL', 'mLp', 'mLs', 'piL', 'dL', 'dS',
+                      'piRel',
+                      'muL_E', 'muL_N', 'muRel_E', 'muRel_N',
+                      'sep', 'sep_AU', 'p']
+
+        loc_vars = locals()
+        pdict_mod = {}
+        for par in params_mod:
+            pdict_mod[par] = loc_vars[par][nn]
+
+        pdict_mod_fix = {}
+        for par in params_mod_fix:
+            pdict_mod_fix[par] = loc_vars[par]
+
+        pdict_add = {}
+        for par in params_add:
+            pdict_add[par] = getattr(psbl_par, par)
+
+        print(pdict_mod)
+        print(pdict_mod_fix)
+        print(pdict_add)
+
+        plt.savefig(f'{outdir}/roman_event_lcurves_{ff:04d}.png')
+
+        # Make lens geometry plot.
+        plt.close('all')
+        plot_models.plot_PSBL(psbl_par, outfile=f'{outdir}/roman_event_geom_{ff:04d}.png')
+
+        # Save parameters to YAML file.
+        param_save_file = f'{outdir}/roman_event_params_{ff:04d}.pkl'
+        param_save_data = {}
+        param_save_data['model_class'] = psbl_par.__class__
+        param_save_data['model_params'] = pdict_mod
+        param_save_data['model_params_fix'] = pdict_mod_fix
+        param_save_data['model_params_add'] = pdict_add
+
+        with open(param_save_file, 'wb') as f:
+            pickle.dump(param_save_data, f)
+
+        # Save the data to an astropy FITS table. We have one for each filter.
+        tab_w149.write(f'{outdir}/roman_event_w149_data_{ff:04d}.fits', overwrite=True)
+        tab_f087.write(f'{outdir}/roman_event_f087_data_{ff:04d}.fits', overwrite=True)
+
+        print(tab_w149.colnames)
 
     return
 
