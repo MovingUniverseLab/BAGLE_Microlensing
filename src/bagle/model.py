@@ -4,8 +4,9 @@
 #
 # .. moduleauthor:: Jessica Lu <jlu.astro@berkeley.edu>
 # .. moduleauthor:: Michael Medford <MichaelMedford@berkeley.edu>
-# .. moduleauthor:: Casey Lam <casey_lam@berkeley.edu>get_resolved_lens_astrometry
+# .. moduleauthor:: Casey Lam
 # .. moduleauthor:: Edward Broadberry
+# .. moduleauthor:: Tanay Bhadra
 """
 Overview of bagle.model
 =========================
@@ -7216,7 +7217,6 @@ class PSBL_PhotAstromParam7(PSPL_Param):
     sep : float
         Angular separation of the two lenses (mas)
     alpha : float
-    alpha : float
         Angle made between the binary axis and North;
         measured in degrees East of North.
     b_sff : numpy array or list
@@ -14419,7 +14419,7 @@ class BSBL_PhotParam1(PSPL_Param):
         self.obsLocation = obsLocation
 
         # Separation between source and lens
-        self.sep_SL = sep  # mas
+        #self.sep_SL = u0_amp  # mas # TODO: Dex needs to fix this?
 
         # Binary source parameters.
         self.sep_S = sep_S  # mas
@@ -16267,8 +16267,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         # Catch the edge case where we exceed the zeropoint.
         bad = np.where(flux_model <= 0)
         if len(bad[0]) > 0:
-            if print_warning:
-                print('Warning: get_photometry: bad flux encountered.')
+            print('Warning: get_photometry: bad flux encountered.')
             flux_model[bad] = np.nan
 
         mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
@@ -18511,7 +18510,7 @@ class BSPL_PhotAstrom_Par_GP_LinOrbs_Param3(ModelClassABC,
 class BSPL_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC,
                                           BSPL_PhotAstrom,
                                           BSPL_Parallax,
-                                          BSPL_PhotAstrom_Circ_Param1):
+                                          BSPL_PhotAstrom_CircOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18521,7 +18520,7 @@ class BSPL_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC,
 class BSPL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
                                             BSPL_PhotAstrom,
                                             BSPL_noParallax,
-                                            BSPL_PhotAstrom_Circ_Param1):
+                                            BSPL_PhotAstrom_CircOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18531,7 +18530,7 @@ class BSPL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
 class BSPL_PhotAstrom_Par_CircOrbs_Param2(ModelClassABC,
                                           BSPL_PhotAstrom,
                                           BSPL_Parallax,
-                                          BSPL_PhotAstrom_Circ_Param2):
+                                          BSPL_PhotAstrom_CircOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18541,7 +18540,7 @@ class BSPL_PhotAstrom_Par_CircOrbs_Param2(ModelClassABC,
 class BSPL_PhotAstrom_noPar_CircOrbs_Param2(ModelClassABC,
                                             BSPL_PhotAstrom,
                                             BSPL_noParallax,
-                                            BSPL_PhotAstrom_Circ_Param2):
+                                            BSPL_PhotAstrom_CircOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18551,7 +18550,7 @@ class BSPL_PhotAstrom_noPar_CircOrbs_Param2(ModelClassABC,
 class BSPL_PhotAstrom_Par_CircOrbs_Param3(ModelClassABC,
                                           BSPL_PhotAstrom,
                                           BSPL_Parallax,
-                                          BSPL_PhotAstrom_Circ_Param3):
+                                          BSPL_PhotAstrom_CircOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18561,7 +18560,7 @@ class BSPL_PhotAstrom_Par_CircOrbs_Param3(ModelClassABC,
 class BSPL_PhotAstrom_noPar_CircOrbs_Param3(ModelClassABC,
                                             BSPL_PhotAstrom,
                                             BSPL_noParallax,
-                                            BSPL_PhotAstrom_Circ_Param3):
+                                            BSPL_PhotAstrom_CircOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18571,7 +18570,7 @@ class BSPL_PhotAstrom_noPar_CircOrbs_Param3(ModelClassABC,
 class BSPL_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC,
                                          BSPL_PhotAstrom,
                                          BSPL_Parallax,
-                                         BSPL_PhotAstrom_Ell_Param1):
+                                         BSPL_PhotAstrom_EllOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18581,7 +18580,7 @@ class BSPL_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC,
 class BSPL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
                                            BSPL_PhotAstrom,
                                            BSPL_noParallax,
-                                           BSPL_PhotAstrom_Ell_Param1):
+                                           BSPL_PhotAstrom_EllOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18591,7 +18590,7 @@ class BSPL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
 class BSPL_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC,
                                          BSPL_PhotAstrom,
                                          BSPL_Parallax,
-                                         BSPL_PhotAstrom_Ell_Param2):
+                                         BSPL_PhotAstrom_EllOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18601,7 +18600,7 @@ class BSPL_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC,
 class BSPL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC,
                                            BSPL_PhotAstrom,
                                            BSPL_noParallax,
-                                           BSPL_PhotAstrom_Ell_Param2):
+                                           BSPL_PhotAstrom_EllOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18611,7 +18610,7 @@ class BSPL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC,
 class BSPL_PhotAstrom_Par_EllOrbs_Param3(ModelClassABC,
                                          BSPL_PhotAstrom,
                                          BSPL_Parallax,
-                                         BSPL_PhotAstrom_Ell_Param3):
+                                         BSPL_PhotAstrom_EllOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18621,7 +18620,7 @@ class BSPL_PhotAstrom_Par_EllOrbs_Param3(ModelClassABC,
 class BSPL_PhotAstrom_noPar_EllOrbs_Param3(ModelClassABC,
                                            BSPL_PhotAstrom,
                                            BSPL_noParallax,
-                                           BSPL_PhotAstrom_Ell_Param3):
+                                           BSPL_PhotAstrom_EllOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
