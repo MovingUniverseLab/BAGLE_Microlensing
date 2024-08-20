@@ -532,8 +532,8 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     # Print out all of the parameters.
     plt.figtext(0.802, 0.8, 'PSBL Model')
 
-    fmt_dict = {'mLp': r'M$_{{L1}}$ = {0:.2f} M$_\odot$',
-                'mLs': r'M$_{{L2}}$ = {0:.2f} M$_\odot$',
+    fmt_dict = {'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\odot$',
+                'mLs': r'M$_{{L2}}$ = {0:.3f} M$_\odot$',
                 'sep': r'sep = {0:.4f} arcsec or $\theta_E$',
                 'alpha': r'$\alpha$ = {0:.2f} deg',
                 'beta': r'$\beta$ = {0:.1f} mas',

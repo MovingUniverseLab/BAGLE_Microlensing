@@ -1007,9 +1007,21 @@ class PSPL_Solver(Solver):
                         init_MPI=self.init_MPI,
                         dump_callback=self.dump_callback)
 
-        # Reload the results and summary FITS tables.
-        self.load_mnest_results(remake_fits=True)
-        self.load_mnest_summary(remake_fits=True)
+        #if it's with MPI just
+        # get the first rank to make tables
+        try:
+            from mpi4py import MPI
+            comm = MPI.COMM_WORLD
+            comm.Barrier()
+
+            if comm.Get_rank() == 0:
+                # Reload the results and summary FITS tables.
+                self.load_mnest_results(remake_fits=True)
+                self.load_mnest_summary(remake_fits=True)
+        except:
+            # Reload the results and summary FITS tables.
+            self.load_mnest_results(remake_fits=True)
+            self.load_mnest_summary(remake_fits=True)
 
         return
 

@@ -2391,8 +2391,11 @@ def get_times_roman_gbtds():
                         obstime='J2000', frame='icrs')
 
     # Roman launch and survey window of 5 years.
-    t_start = Time('2027-01-01', format='isot', scale='utc')
-    t_end = Time('2031-12-31', format='isot', scale='utc')
+    # Until Roman actually launches, subtract a few years and use Gaia.
+    # t_start = Time('2027-01-01', format='isot', scale='utc')
+    # t_end = Time('2031-12-31', format='isot', scale='utc')
+    t_start = Time('2019-01-01', format='isot', scale='utc')
+    t_end = Time('2023-12-31', format='isot', scale='utc')
 
     # First, get coarse daily sampling to figure out Roman visibility windows.
     t_daily = Time(np.arange(t_start.jd, t_end.jd, 1), format='jd')
@@ -2427,31 +2430,100 @@ def get_times_roman_gbtds():
     seasons_fast = [0, 1, 2, 7, 8, 9]
     seasons_slow = [3, 4, 5, 6]
 
-    season_fast_len = 70 # days for which we do fast cadence. The rest of the time is slow.
+    seasons_fast_len = 70 # days for which we do fast cadence. The rest of the time is slow.
 
-    # Define time arrays that we will fill in.
+    # Here is the cycle of observing within the seasons.
+    # Fast season:
+    n_fields_per_set = 7
+    dt_f087_fast = (286 * u.s).to(u.d).value   # F087 in fast cadence
+    n_sets_f087_fast = 1
+    dt_w149_fast = (128 * u.s).to(u.d).value  # W149 at fast cadence
+    n_sets_w149_fast = 44
+    dt_gap_fast = 0
+
+    # Slow season
+    dt_f087_slow = (286 * u.s).to(u.d).value   # W149 in slow cadence
+    n_sets_f087_slow = 0
+    dt_w149_slow = (128 * u.s).to(u.d).value   # W149 in slow cadence
+    n_sets_w149_slow = 1
+    dt_gap_slow = (10 * u.d).to(u.d).value
+
+    # Define time arrays that we will fill in. Start with MJD floats.
     t_w149 = np.array([], dtype=float)
     t_f087 = np.array([], dtype=float)
 
     for ss in range(len(t_start_seasons)):
+        t_ss_start_mjd = t_start_seasons[ss].mjd
+        t_ss_stop_mjd = t_stop_seasons[ss].mjd
 
-    # t_phot = np.array([], dtype=float)
-    # t_ast = np.array([], dtype=float)
-    # for year_start in np.arange(56000, 58000, 365.25):
-    #     phot_win = 240.0
-    #     phot_start = (365.25 - phot_win) / 2.0
-    #     t_phot_new = np.arange(year_start + phot_start,
-    #                            year_start + phot_start + phot_win, 1)
-    #     t_phot = np.concatenate([t_phot, t_phot_new])
-    #
-    #     ast_win = 120.0
-    #     ast_start = (365.25 - ast_win) / 2.0
-    #     t_ast_new = np.arange(year_start + ast_start,
-    #                           year_start + ast_start + ast_win, 14)
-    #     t_ast = np.concatenate([t_ast, t_ast_new])
-    #
+        if ss in seasons_fast:
+            if (t_ss_stop_mjd - t_ss_start_mjd) < seasons_fast_len:
+                t_ss_stop_mjd = t_ss_start_mjd + seasons_fast_len
 
-    return
+            t_cur = t_ss_start_mjd
+
+            # Loop through the cycle until we hit the end of the fast cadence window.
+            while t_cur < t_ss_stop_mjd:
+                # Start with F087
+                ttot_f087_fields = dt_f087_fast * n_fields_per_set
+                ttot_f087_fields_sets = ttot_f087_fields * n_sets_f087_fast
+                t_f087_cyc = np.arange(t_cur, t_cur + ttot_f087_fields_sets - 1e-5, ttot_f087_fields)
+                if len(t_f087_cyc) > 0:
+                    t_f087 = np.append(t_f087, t_f087_cyc)
+                    t_cur += ttot_f087_fields_sets
+
+                # Now add W149
+                ttot_w149_fields = dt_w149_fast * n_fields_per_set
+                ttot_w149_fields_sets = ttot_w149_fields * n_sets_w149_fast
+                t_w149_cyc = np.arange(t_cur, t_cur + ttot_w149_fields_sets - 1e-5, ttot_w149_fields)
+                if len(t_w149_cyc) > 0:
+                    t_w149 = np.append(t_w149, t_w149_cyc)
+                    t_cur += ttot_w149_fields_sets
+
+                # Now add the gap
+                t_cur += dt_gap_fast
+
+            # We are done with fast; but we might have some time left in this season for slow cadence.
+            # Rest start/stop so the slow loops below can catch this.
+            t_ss_start_mjd = t_ss_stop_mjd
+            t_ss_stop_mjd = t_stop_seasons[ss].mjd
+
+        # Time to do all the slow cycles.
+        t_cur = t_ss_start_mjd
+
+        # Loop through the cycle until we hit the end of the fast cadence window.
+        while t_cur < t_ss_stop_mjd:
+            # Start with F087
+            ttot_f087_fields = dt_f087_slow * n_fields_per_set
+            ttot_f087_fields_sets = ttot_f087_fields * n_sets_f087_slow
+            t_f087_cyc = np.arange(t_cur, t_cur + ttot_f087_fields_sets - 1e-5, ttot_f087_fields)
+            if len(t_f087_cyc) > 0:
+                t_f087 = np.append(t_f087, t_f087_cyc)
+                t_cur += ttot_f087_fields_sets
+
+            # Now add W149
+            ttot_w149_fields = dt_w149_slow * n_fields_per_set
+            ttot_w149_fields_sets = ttot_w149_fields * n_sets_w149_slow
+            t_w149_cyc = np.arange(t_cur, t_cur + ttot_w149_fields_sets - 1e-5, ttot_w149_fields)
+            if len(t_w149_cyc) > 0:
+                t_w149 = np.append(t_w149, t_w149_cyc)
+                t_cur += ttot_w149_fields_sets
+
+            # Now add the gap.
+            t_cur += dt_gap_slow
+
+
+    # Test plotting just to visualize.
+    # plt.figure(1)
+    # plt.clf()
+    # f_w149 = np.ones(len(t_w149))
+    # f_f087 = np.ones(len(t_f087)) + 0.1
+    # plt.plot(t_w149, f_w149, 'k.')
+    # plt.plot(t_f087, f_f087, 'r.')
+    # #plt.xlim(t_w149.min(), t_w149.min() + 12)
+    # plt.ylim(0.9, 1.2)
+
+    return t_w149, t_f087
 
 def add_photometric_noise(flux0, imag0, imag_obs):
     flux_obs = flux0 * 10 ** ((imag_obs - imag0) / -2.5)
