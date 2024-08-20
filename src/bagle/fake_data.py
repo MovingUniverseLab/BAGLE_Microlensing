@@ -311,7 +311,7 @@ def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     return data, params
 
 
-def fake_data1(beta_sign=-1, plot=False, verbose=False):
+def fake_data1(beta_sign=-1, plot=False, verbose=False, outdir='./', target='sim'):
     # Input parameters
     mL_in = 10.0  # msun
     t0_in = 57000.00
@@ -1240,8 +1240,8 @@ def fake_correlated_data_multiphot(t0 = 57000, u0_amp = 0.1, tE = 150,
                                            piE_E, piE_N, 
                                            np.array([b_sff1, b_sff2]), 
                                            np.array([mag_src1, mag_src2]),
-                                           gp_log_sigma, gp_log_rho, 
-                                           gp_log_So, gp_log_omegao, 
+                                           gp_log_sigma1, gp_log_rho1,
+                                           gp_log_So1, gp_log_omegao1,
                                            raL=raL, decL=decL)
     
     cel_model = model.Celerite_GP_Model(our_model, 0)
@@ -1481,9 +1481,9 @@ def fake_correlated_data_lunch_talk():
     l3 = 30
     A3 = 1
     p3 = 180
-    K = A1*np.exp(-0.5*diff**2/(2*l1**2))
-    K *= A2*np.exp(2*np.sin(np.pi*np.abs(diff)/p2)**2/l2**2)
-    K *= A3*np.exp(2*np.sin(np.pi*np.abs(diff)/p3)**2/l3**2)
+    K = A1 * np.exp(-0.5*diff**2/(2*l1**2))
+    K *= A2 * np.exp(2*np.sin(np.pi*np.abs(diff)/p2)**2/l2**2)
+    K *= A3 * np.exp(2*np.sin(np.pi*np.abs(diff)/p3)**2/l3**2)
     K[np.diag_indices(len(t_phot))] += imag_obs_err**2
     imag_obs_corr = np.random.multivariate_normal(cel_model.get_value(t_phot), K)
 
@@ -1492,7 +1492,7 @@ def fake_correlated_data_lunch_talk():
 #    imag_obs_corr = np.random.multivariate_normal(cel_model.get_value(t_phot), K)
     
     # Plot the data
-    plt.errorbar(t_phot, imag_obs_uncorr, yerr=imag_obs_err, fmt=".k", label='No corr')
+    plt.errorbar(t_phot, imag_obs, yerr=imag_obs_err, fmt=".k", label='No corr')
     plt.errorbar(t_phot, imag_obs_corr, yerr=imag_obs_err, fmt=".r", label='Corr')
     plt.legend()
     plt.gca().invert_yaxis()
@@ -1503,7 +1503,7 @@ def fake_correlated_data_lunch_talk():
     data['ast_files'] = []
     
     data['t_phot1'] = t_phot
-    data['mag1'] = imag_obs_uncorr
+    data['mag1'] = imag_obs
     data['mag_err1'] = imag_obs_err
 
     data_corr = {}
@@ -2148,6 +2148,7 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
                                       dL_in, dS_in,
                                       b_sff_in1, mag_src_in1, obsLocation1,
                                       b_sff_in2, mag_src_in2, obsLocation2,
+                                      b_sff_in3, mag_src_in3, obsLocation3,
                                       outdir='', target='Unknown', noise=True):
     pspl_par_in = model.PSPL_PhotAstrom_Par_Param1(mL_in,
                                                    t0_in,
@@ -2160,11 +2161,12 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
                                                    muL_in[1],
                                                    muS_in[0],
                                                    muS_in[1],
-                                                   b_sff=[b_sff_in1, b_sff_in2],
-                                                   mag_src=[mag_src_in1, mag_src_in2],
-                                                   obsLocation=[obsLocation1, obsLocation2],
+                                                   b_sff=[b_sff_in1, b_sff_in2, b_sff_in3],
+                                                   mag_src=[mag_src_in1, mag_src_in2, mag_src_in3],
+                                                   obsLocation=[obsLocation1, obsLocation2, obsLocation3],
                                                    raL=raL_in,
                                                    decL=decL_in)
+<<<<<<< Updated upstream
     
     # Simulate
     # photometric observations every 1 day and
@@ -2181,63 +2183,92 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
         t_phot_new = np.arange(year_start + phot_start,
                                year_start + phot_start + phot_win, 1)
         t_phot = np.concatenate([t_phot, t_phot_new])
+=======
 
-        ast_win = 120.0
-        ast_start = (365.25 - ast_win) / 2.0
-        t_ast_new = np.arange(year_start + ast_start,
-                              year_start + ast_start + ast_win, 14)
-        t_ast = np.concatenate([t_ast, t_ast_new])
+    ##########
+    # Simulate
+    # photometric observations every 1 day from Earth
+    # photometric observations every 1 day from Spitzer
+    # photometric and astrometric observations every 14 days from Keck
+    # for the bulge observing window. Has gaps.
+    ##########
+>>>>>>> Stashed changes
+
+    # OGLE-like
+    survey_time1 = 10 * 365.25  # full survey duration in days.
+    survey_start1 = t0_in - (survey_time1 / 2.0)
+    survey_cadence1 = 1         # sample lightcurve (days)
+
+    # Spitzer-like (but use OGLE visiblity windows)
+    survey_time2 = 5 * 365.25   # full survey duration in days.
+    survey_start2 = t0_in - (survey_time2 / 2.0)
+    survey_cadence2 = 1         # sample lightcurve (days)
+
+    # Keck-like for astrometry.
+    survey_time3 = 10 * 365.25   # full survey duration in days.
+    survey_start3 = t0_in - (survey_time3 / 2.0)
+    survey_cadence3 = 14         # sample lightcurve (days)
+
+    t_phot1 = get_bulge_survey_times(survey_start1, survey_time1, survey_cadence1, telescope='OGLE')
+    t_phot2 = get_bulge_survey_times(survey_start2, survey_time2, survey_cadence2, telescope='OGLE')
+    t_ast3  = get_bulge_survey_times(survey_start3, survey_time3, survey_cadence3, telescope='Keck')
 
 
     # Make the photometric observations.
     # Assume 0.05 mag photoemtric errors at I=19.
+    # Assume the same magnitude scaling for all telescopes (not necessarily realistic)
     # This means Signal = 400 e- at I=19.
     flux0 = 4000.0
-    imag0 = 19.0
+    mag0 = 19.0
+    pos_err0 = 1.0 * 1e-3
 
     # First location observations - all times sampled
-    imag_obs1 = pspl_par_in.get_photometry(t_phot, filt_idx=0)
-
-    # Second location observations - decimated to every 3 point.
-    imag_obs2 = pspl_par_in.get_photometry(t_phot[::3], filt_idx=1)
+    imag_obs1 = pspl_par_in.get_photometry(t_phot1, filt_idx=0)
+    imag_obs2 = pspl_par_in.get_photometry(t_phot2, filt_idx=1)
+    imag_obs3 = pspl_par_in.get_photometry(t_ast3, filt_idx=2)
 
     if noise:
-        imag_obs1, imag_obs_err1 = add_photometric_noise(flux0, imag0, imag_obs1)
-        imag_obs2, imag_obs_err2 = add_photometric_noise(flux0, imag0, imag_obs2)
+        imag_obs1, imag_obs_err1 = add_photometric_noise(flux0, mag0, imag_obs1)
+        imag_obs2, imag_obs_err2 = add_photometric_noise(flux0, mag0, imag_obs2)
+        imag_obs3, imag_obs_err3 = add_photometric_noise(flux0, mag0, imag_obs3)
     else:
         imag_obs_err1 = np.zeros(len(imag_obs1))
         imag_obs_err2 = np.zeros(len(imag_obs2))
+        imag_obs_err3 = np.zeros(len(imag_obs3))
 
     # Make the astrometric observations. They go with dataset 1 (0 index).
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
+    pos_obs3 = pspl_par_in.get_astrometry(t_ast3, filt_idx=2)
+
     if noise:
-        pos_obs_tmp = pspl_par_in.get_astrometry(t_ast, filt_idx=0)
-        pos_obs_err = np.ones((len(t_ast), 2), dtype=float) * 0.01 * 1e-3
-        pos_obs = pos_obs_tmp + pos_obs_err * np.random.randn(len(t_ast), 2)
+        pos_obs3, pos_obs_err3 = add_astrometric_noise(flux0, mag0, pos_err0,
+                                                       imag_obs3, pos_obs3)
     else:
-        pos_obs = pspl_par_in.get_astrometry(t_ast, filt_idx=0)
-        pos_obs_err = np.zeros((len(t_ast), 2))
+        pos_obs_err3 = np.zeros((len(t_ast3), 2))
 
     data = {}
-    data['t_phot1'] = t_phot
+    data['t_phot1'] = t_phot1
     data['mag1'] = imag_obs1
     data['mag_err1'] = imag_obs_err1
-    data['t_phot2'] = t_phot[::3]
+    data['t_phot2'] = t_phot2
     data['mag2'] = imag_obs2
     data['mag_err2'] = imag_obs_err2
+    data['t_phot3'] = t_ast3
+    data['mag3'] = imag_obs3
+    data['mag_err3'] = imag_obs_err3
 
-    data['phot_files'] = ['fake_data_parallax_1', 'fake_data_parallax_2']
-    data['ast_files'] = ['fake_data_parallax_1']
+    data['t_ast1'] = t_ast3
+    data['xpos1'] = pos_obs3[:, 0]
+    data['ypos1'] = pos_obs3[:, 1]
+    data['xpos_err1'] = pos_obs_err3[:, 0]
+    data['ypos_err1'] = pos_obs_err3[:, 1]
 
-    data['t_ast1'] = t_ast
-    data['xpos1'] = pos_obs[:, 0]
-    data['ypos1'] = pos_obs[:, 1]
-    data['xpos_err1'] = pos_obs_err[:, 0]
-    data['ypos_err1'] = pos_obs_err[:, 1]
+    data['phot_files'] = ['fake_ogle', 'fake_spitzer', 'fake_keck']
+    data['ast_files'] = ['fake_keck']
 
     data['raL'] = raL_in
     data['decL'] = decL_in
-    data['obsLocation'] = [obsLocation1, obsLocation2]
+    data['obsLocation'] = [obsLocation1, obsLocation2, obsLocation3]
     data['target'] = target
     data['phot_data'] = 'sim'
     data['ast_data'] = 'sim'
@@ -2245,7 +2276,7 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
     params = {}
     params['raL'] = raL_in
     params['decL'] = decL_in
-    params['obsLocation'] = [obsLocation1, obsLocation2]
+    params['obsLocation'] = [obsLocation1, obsLocation2, obsLocation3]
     params['mL'] = mL_in
     params['t0'] = t0_in
     params['xS0_E'] = xS0_in[0]
@@ -2257,12 +2288,14 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
     params['muL_N'] = muL_in[1]
     params['dL'] = dL_in
     params['dS'] = dS_in
-    params['b_sff'] = [b_sff_in1, b_sff_in2]
-    params['mag_src'] = [mag_src_in1, mag_src_in2]
+    params['b_sff'] = [b_sff_in1, b_sff_in2, b_sff_in3]
+    params['mag_src'] = [mag_src_in1, mag_src_in2, mag_src_in3]
     params['b_sff1'] = b_sff_in1
     params['b_sff2'] = b_sff_in2
+    params['b_sff3'] = b_sff_in3
     params['mag_src1'] = mag_src_in1
     params['mag_src2'] = mag_src_in2
+    params['mag_src3'] = mag_src_in3
 
     # Extra parameters
     params['dL_dS'] = params['dL'] / params['dS']
@@ -2282,7 +2315,12 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
     phot_fig2.axes[0].set_title('Input Data and Model')
     phot_fig2.savefig(outdir + target + '_fake_data_phot_2.png')
 
-    ast_figs = model_fitter.plot_astrometry(data, pspl_par_in, filt_index=0, dense_time=True)
+    phot_fig3 = model_fitter.plot_photometry(data, pspl_par_in, filt_index=2, dense_time=True)
+    phot_fig3.axes[0].set_title('Input Data and Model')
+    phot_fig3.savefig(outdir + target + '_fake_data_phot_3.png')
+
+    ast_figs = model_fitter.plot_astrometry(data, pspl_par_in,
+                                            data_filt_index=0, filt_index=2, dense_time=True)
     ast_figs[0].axes[0].set_title('Input Data and Model')
     ast_figs[0].savefig(outdir + target +  '_fake_data_ast_1.png')
 
@@ -2294,30 +2332,56 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
 
     return data, params
 
+
+
 def fake_data_parallax_multi_location_bulge(outdir='test_mnest_bulge_multiLoc/', outroot='Bulge'):
     raL_in = 17.30 * 15.  # Bulge R.A.
     decL_in = -29.0
     mL_in = 10.0  # msun
-    t0_in = 57000.0
-    xS0_in = np.array([0.000, 0.088e-3])  # arcsec
-    beta_in = 2.0  # mas  same as p=0.4
-    muS_in = np.array([-5.0, 0.0])
+    t0_in = 59000.0
+    xS0_in = np.array([0.000, 0.000])  # arcsec
+    beta_in = -2.0  # mas  same as p=0.4
+    muS_in = np.array([4.0, -7.0])
     muL_in = np.array([0.0, 0.0])
-    dL_in = 4000.0  # pc
-    dS_in = 8000.0  # pc
+    dL_in = 2000.0  # pc
+    dS_in = 7000.0  # pc
     b_sff1 = 1.0
-    imag_in1 = 19.0
+    # Photometry only
+    imag_in1 = 16.0
     obs_loc1 = 'earth'
     b_sff2 = 1.0
-    imag_in2 = 18.0
+    # Photometry only
+    imag_in2 = 16.0
     obs_loc2 = 'spitzer'
+    # Photometry and Astrometry, more coursely sampled in time.
+    b_sff3 = 1.0
+    imag_in3 = 16.0
+    obs_loc3 = 'earth'
 
     data, params = fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in, xS0_in,
                                                      beta_in,
                                                      muS_in, muL_in, dL_in, dS_in,
                                                      b_sff1, imag_in1, obs_loc1,
                                                      b_sff2, imag_in2, obs_loc2,
+                                                     b_sff3, imag_in3, obs_loc3,
                                                      outdir=outdir, target=outroot, noise=True)
+
+    dm2 = imag_in2 - imag_in1
+    dm3 = imag_in3 - imag_in1
+
+    # Plot the two light curves to ensure good satellite parallax signal.
+    plt.figure(15)
+    plt.clf()
+    plt.errorbar(data['t_phot1'], data['mag1'], yerr=data['mag_err1'],
+                 color='blue', label=obs_loc1, ls='none')
+    plt.errorbar(data['t_phot2'], data['mag2']-dm2, yerr=data['mag_err2'],
+                 color='green', label=f'{obs_loc2}, m-{dm2:.0f}', ls='none')
+    plt.errorbar(data['t_phot3'], data['mag3']-dm3, yerr=data['mag_err3'],
+                 color='red', label=f'{obs_loc3}, m-{dm3:.0f}', ls='none')
+    plt.gca().invert_yaxis()
+    plt.xlabel('MJD')
+    plt.ylabel('Magnitude')
+    plt.legend()
 
     return data, params
 
@@ -2411,6 +2475,7 @@ def add_astrometric_noise(flux0, mag0, pos_err0, mag_obs, pos_obs):
 
     return pos_obs_new, pos_obs_err
 
+<<<<<<< Updated upstream
 
 def fake_dex_data_noPar_BSPL_6(outdir='', outroot='bspl',
                    t0_com = 57000.00, u0_amp = .2,
@@ -4137,3 +4202,53 @@ def fake_dex_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp = 10, mLs = 8,
     params['decL'] = decL
 
     return data,  params, bsbl
+=======
+def get_bulge_survey_times(survey_start, survey_duration, survey_cadence, telescope='OGLE'):
+    """
+    Get an array of times for a synthetic survey.
+
+    Parameters
+    ----------
+    survey_start : float
+        Start of the survey in MJD.
+
+    survey_duration : float
+        Number of days of the survey length.
+
+    survey_cadence : float
+        Cadence of the survey in units of days. (i.e. number of days between observations).
+
+    telescope : str
+        Name of the telescope to simulate. This controls the visiblity windows.
+        For instance, OGLE and MOA can't see the bulge from November - February. Keck
+        can't see the bulge from October - March.
+
+        Choices: OGLE, MOA, Keck
+    """
+
+    # Establish Sun exclusion zone. Bulge isn't visible to ground-based
+    # telescopes from November-January.
+    t_vis_start = {'MOA': Time('2024-02-10T00:00:00.0'),
+                   'OGLE': Time('2024-02-10T00:00:00.0'),
+                   'Keck': Time(2024.32, format='decimalyear')}
+    t_vis_stop  = {'MOA': Time('2024-10-31T00:00:00.0'),
+                   'OGLE': Time('2024-10-31T00:00:00.0'),
+                   'Keck': Time(2024.65, format='decimalyear')}
+
+    # Make a temporary time array and then trim based on visiblity.
+    t_tmp = Time(np.arange(survey_start,
+                           survey_start + survey_duration,
+                           survey_cadence), format='mjd')
+
+    # Get the decimal phase of the year for each time.
+    year_phase1 = t_tmp.decimalyear % 1.0
+
+    # Trim down to times only in visibility windows.
+    idx = np.where((year_phase1 > (t_vis_start[telescope].decimalyear % 1.0)) &
+                   (year_phase1 < (t_vis_stop[telescope].decimalyear % 1.0)))[0]
+
+    t_final = t_tmp[idx]
+
+    return t_final.mjd
+
+>>>>>>> Stashed changes

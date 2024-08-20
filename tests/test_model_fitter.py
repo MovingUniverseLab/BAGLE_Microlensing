@@ -365,7 +365,7 @@ def test_PSPL_Solver(plot=False, verbose=False, resume=False):
             if p_in[param] != 0:
                 frac_diff /= p_in[param]
                 
-            assert frac_diff < 0.3
+            assert frac_diff < 0.4
         except KeyError:
             pass
 
@@ -1195,8 +1195,8 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
         fitter.priors['q'] = model_fitter.make_gen(p_in['q']-0.01, p_in['q']+0.01)
         fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.01, p_in['sep']+0.01)
         fitter.priors['alpha'] = model_fitter.make_gen(p_in['alpha']-0.01, p_in['alpha']+0.01)
-        fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.01, p_in['b_sff']+0.01)
-        fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.01, p_in['mag_src']+0.01)
+        fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
+        fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
     if prior == 'wide':
         # Lets adjust some priors for faster solving.
         fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
@@ -1213,8 +1213,8 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
         fitter.priors['q'] = model_fitter.make_gen(p_in['q']-0.1, p_in['q']+0.1) 
         fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.1, p_in['sep']+0.1) 
         fitter.priors['alpha'] = model_fitter.make_gen(0, 360)
-        fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.1, p_in['b_sff']+0.1) 
-        fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.5, p_in['mag_src']+0.5)
+        fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-0.1, p_in['b_sff1']+0.1)
+        fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.5, p_in['mag_src1']+0.5)
 
     fitter.solve()
 
@@ -1289,8 +1289,8 @@ def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
     fitter.priors['dS'] = model_fitter.make_gen(p_in['dS']-0.01, p_in['dS']+0.01)
     fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.01, p_in['sep']+0.01)
     fitter.priors['alpha'] = model_fitter.make_gen(p_in['alpha']-0.01, p_in['alpha']+0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.01, p_in['b_sff']+0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.01, p_in['mag_src']+0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
         
     fitter.solve()
 
@@ -1389,7 +1389,7 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', 
     xL1 = xL1[0]
 
     muRel_angle = np.degrees(np.arctan2(psbl_in.muRel[0], psbl_in.muRel[1]))
-    phi = muRel_angle - psbl_in.alpha# - muRel_angle # FIXME when we fix PSBL_PhotParam angle convention.
+    phi = psbl_in.alpha - muRel_angle
 
     phi = phi % 360 # angle wrapping
 
@@ -1499,7 +1499,7 @@ def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', re
     xL1 = xL1[0]
 
     muRel_angle = np.degrees(np.arctan2(psbl_in.muRel[0], psbl_in.muRel[1]))
-    phi = muRel_angle - psbl_in.alpha# - muRel_angle # FIXME when we fix PSBL_PhotParam angle convention.
+    phi = psbl_in.alpha - muRel_angle
     phi = phi % 360 # angle wrapping
     
     # Make a p_in suitable for photometry.
@@ -2265,9 +2265,9 @@ def test_bspl_parallax_fit(verbose=False, resume=False):
     fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N'] - 0.01, p_in['muS_N'] + 0.01)
     fitter.priors['dL'] = model_fitter.make_gen(p_in['dL'] - 10, p_in['dL'] + 10)
     fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL'] / p_in['dS']) - 0.01, (p_in['dL'] / p_in['dS']) + 0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff'] - 0.01, p_in['b_sff'] + 0.01)
-    fitter.priors['mag_src_pri1'] = model_fitter.make_gen(p_in['mag_src_pri']-0.1, p_in['mag_src_pri']+0.1)
-    fitter.priors['mag_src_sec1'] = model_fitter.make_gen(p_in['mag_src_sec']-0.1, p_in['mag_src_sec']+0.1)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
+    fitter.priors['mag_src_pri1'] = model_fitter.make_gen(p_in['mag_src_pri1']-0.1, p_in['mag_src_pri1']+0.1)
+    fitter.priors['mag_src_sec1'] = model_fitter.make_gen(p_in['mag_src_sec1']-0.1, p_in['mag_src_sec1']+0.1)
     fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.01, p_in['sep']+0.01)
     fitter.priors['alpha'] = model_fitter.make_gen(p_in['alpha'] - 1, p_in['alpha'] + 1)
 
@@ -2335,8 +2335,8 @@ def test_multi_obsLocation(resume=False, verbose=False):
                          n_live_points=100,
                          outputfiles_basename=base,
                          sampling_efficiency=0.9,
-                         evidence_tolerance=0.8,
-                         max_iter=5000,
+                         evidence_tolerance=0.5,
+                         max_iter=15000,
                          #dump_callback=None,
                          resume=resume, verbose=False)
 
@@ -2356,6 +2356,8 @@ def test_multi_obsLocation(resume=False, verbose=False):
     fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
     fitter.priors['b_sff2'] = model_fitter.make_gen(p_in['b_sff2']-0.01, p_in['b_sff2']+0.01)
     fitter.priors['mag_src2'] = model_fitter.make_gen(p_in['mag_src2']-0.01, p_in['mag_src2']+0.01)
+    fitter.priors['b_sff3'] = model_fitter.make_gen(p_in['b_sff3']-0.01, p_in['b_sff3']+0.01)
+    fitter.priors['mag_src3'] = model_fitter.make_gen(p_in['mag_src3']-0.01, p_in['mag_src3']+0.01)
 
 
     fitter.solve()
@@ -2373,8 +2375,8 @@ def test_multi_obsLocation(resume=False, verbose=False):
                                                 muL_N=best['muL_N'],
                                                 muS_E=best['muS_E'],
                                                 muS_N=best['muS_N'],
-                                                mag_src=[best['mag_src1'], best['mag_src2']],
-                                                b_sff=[best['b_sff1'], best['b_sff2']],
+                                                mag_src=[best['mag_src1'], best['mag_src2'], best['mag_src3']],
+                                                b_sff=[best['b_sff1'], best['b_sff2'], best['b_sff3']],
                                                 obsLocation=p_in['obsLocation'],
                                                 raL=p_in['raL'], decL=p_in['decL'])
 

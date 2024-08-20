@@ -1,11 +1,11 @@
-#.. module:: model
+# .. module:: model
 #    :platform: Unix, Mac, Windows
 #    :synopsis: Microlensing model objects.
 #
-#.. moduleauthor:: Jessica Lu <jlu.astro@berkeley.edu>
-#.. moduleauthor:: Michael Medford <MichaelMedford@berkeley.edu>
-#.. moduleauthor:: Casey Lam <casey_lam@berkeley.edu>get_resolved_lens_astrometry
-#.. moduleauthor:: Edward Broadberry
+# .. moduleauthor:: Jessica Lu <jlu.astro@berkeley.edu>
+# .. moduleauthor:: Michael Medford <MichaelMedford@berkeley.edu>
+# .. moduleauthor:: Casey Lam <casey_lam@berkeley.edu>get_resolved_lens_astrometry
+# .. moduleauthor:: Edward Broadberry
 """
 Overview of bagle.model
 =========================
@@ -467,6 +467,7 @@ from bagle import frame_convert as fc
 from bagle import orbits as orbits
 from bagle import parallax
 from abc import ABC
+
 
 ######################################################
 ### POINT SOURCE POINT LENS (PSPL) CLASSES ###
@@ -1129,6 +1130,7 @@ class PSPL_PhotParam2(PSPL_Param):
 
         return
 
+
 class PSPL_PhotParam3(PSPL_Param):
     """
     Point source point lens model for microlensing photometry only.
@@ -1188,11 +1190,11 @@ class PSPL_PhotParam3(PSPL_Param):
         self.u0_amp = u0_amp
         self.log_tE = log_tE
         self.log_piE = log_piE
-        self.phi_muRel = phi_muRel # degrees
+        self.phi_muRel = phi_muRel  # degrees
         self.b_sff = b_sff
         self.mag_base = mag_base
         self.raL = raL
-        self.decL = decL        
+        self.decL = decL
         self.obsLocation = obsLocation
 
         # Must call after setting parameters.
@@ -1200,12 +1202,12 @@ class PSPL_PhotParam3(PSPL_Param):
         super().__init__()
 
         # Derived quantities
-        self.tE = 10**log_tE
-        self.piE_amp = 10**log_piE
-        self.phi_muRel_rad = np.deg2rad(phi_muRel) # radians
+        self.tE = 10 ** log_tE
+        self.piE_amp = 10 ** log_piE
+        self.phi_muRel_rad = np.deg2rad(phi_muRel)  # radians
         self.piE = self.piE_amp * np.array([np.sin(self.phi_muRel_rad),
                                             np.cos(self.phi_muRel_rad)])
-        
+
         self.mag_src = self.mag_base - 2.5 * np.log10(self.b_sff)
 
         # Get thetaE_hat (same direction as piE
@@ -1233,7 +1235,8 @@ class PSPL_PhotParam3(PSPL_Param):
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
 
         return
-    
+
+
 class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
     """PSPL model for photometry only.
     
@@ -1284,7 +1287,8 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    def __init__(self, t0, u0_amp, tE, 
+
+    def __init__(self, t0, u0_amp, tE,
                  piE_E, piE_N, b_sff, mag_src,
                  t0par,
                  raL=None, decL=None, obsLocation='earth'):
@@ -1301,7 +1305,7 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
-        super().__init__(t0, u0_amp, tE, 
+        super().__init__(t0, u0_amp, tE,
                          piE_E, piE_N, b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
@@ -2025,6 +2029,7 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
                        identical. Otherwise, array of same length as mag_src
                        or b_sff (e.g. other photometric parameters).
     """
+
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
                  xS0_E, xS0_N,
@@ -2032,7 +2037,6 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
                  b_sff, mag_base,
                  t0par,
                  raL=None, decL=None, obsLocation='earth'):
-
         self.t0par = t0par
         self.t0 = t0
         self.u0_amp = u0_amp
@@ -2145,8 +2149,8 @@ class PSPL_PhotAstromParam5(PSPL_Param):
         piE_N = piE_E * piEN_piEE
         self.piE = np.array([piE_E, piE_N])
         self.log10_thetaE = log10_thetaE
-        self.thetaE = 10**log10_thetaE
-        self.thetaE_amp = 10**log10_thetaE
+        self.thetaE = 10 ** log10_thetaE
+        self.thetaE_amp = 10 ** log10_thetaE
         self.xS0 = np.array([xS0_E, xS0_N])
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
@@ -2159,9 +2163,9 @@ class PSPL_PhotAstromParam5(PSPL_Param):
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
         super().__init__()
-                        
+
         # Derived quantities
-        self.mag_src = self.mag_base - 2.5*np.log10(self.b_sff)
+        self.mag_src = self.mag_base - 2.5 * np.log10(self.b_sff)
         self.beta = self.u0_amp * self.thetaE_amp
         self.piE_amp = np.linalg.norm(self.piE)
         self.piRel = self.piE_amp * self.thetaE_amp
@@ -2221,7 +2225,6 @@ class PSPL_PhotAstromParam5(PSPL_Param):
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         return
-
 
 
 class PSPL_GP_PhotParam1(PSPL_PhotParam1):
@@ -2348,6 +2351,7 @@ class PSPL_GP_PhotParam2_2(PSPL_PhotParam2):
             self.use_gp_phot[key] = True
 
         return
+
 
 class PSPL_GP_PhotParam3(PSPL_PhotParam3):
     # Optional data-set specific parameters -- handled as dictionaries
@@ -3646,7 +3650,6 @@ class PSPL_GP(ABC):
             return lnL.sum()
 
 
-        
 # --------------------------------------------------
 #
 # Parallax Class Family
@@ -3654,6 +3657,7 @@ class PSPL_GP(ABC):
 # --------------------------------------------------
 class ParallaxClassABC(ABC):
     pass
+
 
 class PSPL_noParallax(ParallaxClassABC):
     parallaxFlag = False
@@ -3855,7 +3859,7 @@ class PSPL_noParallax(ParallaxClassABC):
             "piE_ecliptic is not supported on this object: "
             + str(self.__class__))
 
-    
+
 class PSPL_Parallax(ParallaxClassABC):
     parallaxFlag = True
     fixed_param_names = ['raL', 'decL']
@@ -4020,7 +4024,7 @@ class PSPL_Parallax(ParallaxClassABC):
         -------
         xS_unlensed : numpy array, dtype=float, shape = [len(t), 2]
             The unlensed positions of the source in arcseconds.
-        """ 
+        """
         # Get the parallax vector for each date.
         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t_obs,
                                                       obsLocation=self.obsLocation[filt_idx])
@@ -4226,15 +4230,15 @@ class PSPL_Parallax(ParallaxClassABC):
 
         """
         xS0E_g, xS0N_g, muSE_g, muSN_g = fc.convert_helio_geo_ast(self.raL, self.decL,
-                                                               self.piS, self.xS0[0], self.xS0[1],
-                                                               self.muS[0], self.muS[1],
-                                                               self.t0, self.u0_amp,
-                                                               self.tE, self.piE[0], self.piE[1],
-                                                               t0par,
-                                                               in_frame='helio',
-                                                               murel_in='SL', murel_out='LS',
-                                                               coord_in='EN', coord_out='tb',
-                                                               plot=plot)
+                                                                  self.piS, self.xS0[0], self.xS0[1],
+                                                                  self.muS[0], self.muS[1],
+                                                                  self.t0, self.u0_amp,
+                                                                  self.tE, self.piE[0], self.piE[1],
+                                                                  t0par,
+                                                                  in_frame='helio',
+                                                                  murel_in='SL', murel_out='LS',
+                                                                  coord_in='EN', coord_out='tb',
+                                                                  plot=plot)
 
         return xS0E_g, xS0N_g, muSE_g, muSN_g
 
@@ -4257,20 +4261,20 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
         if ((type(ra) == float) or (type(ra) == int)):
             coord = SkyCoord(ra, dec, unit=(units.deg, units.deg))
 
-        direction = coord.cartesian.xyz.value    
+        direction = coord.cartesian.xyz.value
         north = np.array([0., 0., 1.])
-        _east_projected = np.cross(north, direction)/np.linalg.norm(np.cross(north, direction))
-        _north_projected = np.cross(direction, _east_projected)/np.linalg.norm(np.cross(direction, _east_projected))
+        _east_projected = np.cross(north, direction) / np.linalg.norm(np.cross(north, direction))
+        _north_projected = np.cross(direction, _east_projected) / np.linalg.norm(np.cross(direction, _east_projected))
 
         t = t + 2400000.5
         t0par = t0par + 2400000.5
         _t0par = Time(t0par, format='jd', scale='tdb')
         _t = Time(t, format='jd', scale='tdb')
         (jd1, jd2) = get_jd12(_t0par, 'tdb')
-        (earth_pv_helio, earth_pv_bary) = erfa.epv00(jd1, jd2) # this is earth-sun
+        (earth_pv_helio, earth_pv_bary) = erfa.epv00(jd1, jd2)  # this is earth-sun
         velocity = np.asarray(earth_pv_bary[1])
 
-        position = get_body_barycentric(body='earth', time=_t) 
+        position = get_body_barycentric(body='earth', time=_t)
         position_ref = get_body_barycentric(body='earth', time=_t0par)
 
         delta_s = (position_ref.xyz.T - position.xyz.T).to(units.au).value
@@ -4295,8 +4299,8 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
         qe, qn = self.geta(self.raL, self.decL, self.t0par, t)
 
         tau = (t - self.t0) / self.tE
-        dtau = self.piE[1]*qn + self.piE[0]*qe
-        dbeta = self.piE[1]*qe - self.piE[0]*qn
+        dtau = self.piE[1] * qn + self.piE[0] * qe
+        dbeta = self.piE[1] * qe - self.piE[0] * qn
 
         taup = tau + dtau
         betap = self.u0_amp + dbeta
@@ -4384,19 +4388,19 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
         qe, qn = self.geta(self.raL, self.decL, self.t0par, t)
 
         tau = (t - self.t0) / self.tE
-        dtau = self.piE[1]*qn + self.piE[0]*qe
-        dbeta = self.piE[1]*qe - self.piE[0]*qn
+        dtau = self.piE[1] * qn + self.piE[0] * qe
+        dbeta = self.piE[1] * qe - self.piE[0] * qn
 
         taup = tau + dtau
         betap = self.u0_amp + dbeta
 
         u_amp = np.hypot(taup, betap)
 
-        u_N = -betap*self.muRel_hat[0] + taup*self.muRel_hat[1]
-        u_E = betap*self.muRel_hat[1] + taup*self.muRel_hat[0]
+        u_N = -betap * self.muRel_hat[0] + taup * self.muRel_hat[1]
+        u_E = betap * self.muRel_hat[1] + taup * self.muRel_hat[0]
 
-        delta_N = u_N / (u_amp**2 + 2.0)
-        delta_E = u_E / (u_amp**2 + 2.0)
+        delta_N = u_N / (u_amp ** 2 + 2.0)
+        delta_E = u_E / (u_amp ** 2 + 2.0)
 
         shift = self.thetaE_amp * np.vstack((delta_E, delta_N)).T
 
@@ -4419,7 +4423,7 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
         -------
         xS_unlensed : numpy array, dtype=float, shape = [len(t), 2]
             The unlensed positions of the source in arcseconds.
-        """ 
+        """
         # Get the parallax vector for each date.
         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t_obs,
                                                       obsLocation=self.obsLocation[filt_idx])
@@ -4601,6 +4605,7 @@ class PSPL_noParallax_LumLens(PSPL_noParallax):
 
         return shift
 
+
 class PSPL_Parallax_LumLens(PSPL_Parallax):
     parallaxFlag = True
 
@@ -4744,14 +4749,14 @@ class PSBL(PSPL):
             BLEH
         """
         N_times = z1.shape[0]
-        #print(z_arr)
-        #print(z1)
-        #print(z2)
+        # print(z_arr)
+        # print(z1)
+        # print(z2)
         dwbardz = self.m1 / (z_arr - z1.reshape((N_times, 1))) ** 2
         dwbardz += self.m2 / (z_arr - z2.reshape((N_times, 1))) ** 2
         jacobian = 1 - np.absolute(dwbardz) ** 2
         amp_arr = 1.0 / np.absolute(jacobian)  # Absolute value of J
-        
+
         # CASEY: CHECK
 
         return amp_arr
@@ -4763,7 +4768,7 @@ class PSBL(PSPL):
         """
         m1 = copy.deepcopy(self.m1)
         m2 = copy.deepcopy(self.m2)
-        
+
         # Put the positions of the source and lenses into
         # an array, so we can calculate the average position
         # and "width" of points at each time, in order to center
@@ -4775,20 +4780,20 @@ class PSBL(PSPL):
         w -= shift
         z1 -= shift
         z2 -= shift
-        
+
         # Calculate the average spread to get the scale.
         xscale = np.max(pos.real, axis=1) - np.min(pos.real, axis=1)
         yscale = np.max(pos.imag, axis=1) - np.min(pos.imag, axis=1)
-        xyscale = np.concatenate([xscale, yscale]).reshape(len(xscale),2)
-        scale = 1/np.max(xyscale, axis=1)
+        xyscale = np.concatenate([xscale, yscale]).reshape(len(xscale), 2)
+        scale = 1 / np.max(xyscale, axis=1)
         w *= scale
         z1 *= scale
         z2 *= scale
-        m1 *= scale**2
-        m2 *= scale**2
+        m1 *= scale ** 2
+        m2 *= scale ** 2
 
         return w, z1, z2, m1, m2, scale, shift
-    
+
     def get_image_pos_arr_old(self, w, z1, z2, check_sols=True):
         """Gets image positions.
         | Solve the fifth-order polynomial and get the image positions.
@@ -4823,7 +4828,6 @@ class PSBL(PSPL):
         z_arr = self.get_image_pos_arr(w, z1, z2, self.m1, self.m2,
                                        check_sols=check_sols)
         return z_arr
-
 
     def get_image_pos_arr(self, w, z1, z2, m1, m2, check_sols=True):
         """Gets image positions.
@@ -4879,67 +4883,67 @@ class PSBL(PSPL):
              z1bar * (m1 + (w + 2 * (z1 + z2)) * z2bar) + \
              wbar * (m1 + m2 + (w + 2 * (z1 + z2)) * (z1bar + z2bar))
         a3 = (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
-                    z1 + z2)) * wbar ** 2 + \
+                z1 + z2)) * wbar ** 2 + \
              (m1 * (w - z1) + m2 * (w + 2 * z1 + z2)) * z2bar + \
              z1bar * (m2 * (w - z2) + m1 * (w + z1 + 2 * z2) + \
                       (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
-                                  z1 + z2)) * z2bar) - \
+                              z1 + z2)) * z2bar) - \
              wbar * (2 * (m2 * (w + z1) + m1 * (w + z2)) + \
                      (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * (
-                                 z1bar + z2bar))
+                             z1bar + z2bar))
         a2 = -((m1 + m2) * (
-                    m1 * (w - z1) + m2 * (w - z2))) - \
+                m1 * (w - z1) + m2 * (w - z2))) - \
              (2 * z1 * z2 * (z1 + z2) + w * (
-                         z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * wbar ** 2 - \
+                     z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * wbar ** 2 - \
              (m2 * (w - z2) * (2 * z1 + z2) + m1 * (
-                         w * z1 + 2 * (w + z1) * z2 + z2 ** 2)) * z1bar - \
+                     w * z1 + 2 * (w + z1) * z2 + z2 ** 2)) * z1bar - \
              (m2 * w * (2 * z1 + z2) + m1 * (w - z1) * (
-                         z1 + 2 * z2) + m2 * z1 * (z1 + 2 * z2) + \
+                     z1 + 2 * z2) + m2 * z1 * (z1 + 2 * z2) + \
               2 * z1 * z2 * (z1 + z2) * z1bar + w * (
-                          z1 ** 2 + 4 * z1 * z2 + z2 ** 2) * z1bar) * \
+                      z1 ** 2 + 4 * z1 * z2 + z2 ** 2) * z1bar) * \
              z2bar + wbar * (z1 * (
-                    2 * m1 * w + 4 * m2 * w - m1 * z1 + m2 * z1) + \
+                2 * m1 * w + 4 * m2 * w - m1 * z1 + m2 * z1) + \
                              2 * (2 * m1 + m2) * w * z2 + (
-                                         m1 - m2) * z2 ** 2 + \
+                                     m1 - m2) * z2 ** 2 + \
                              (2 * z1 * z2 * (z1 + z2) + w * (
-                                         z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * (
-                                         z1bar + z2bar))
+                                     z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * (
+                                     z1bar + z2bar))
         a1 = 2 * m1 ** 2 * w * z2 + 2 * m1 * m2 * w * z2 - m1 * m2 * z2 ** 2 - 2 * m1 * w * z2 ** 2 * wbar + \
              m1 * w * z2 ** 2 * z1bar + m1 * w * z2 ** 2 * z2bar + \
              z1 ** 2 * (-(
-                    m1 * m2) - 2 * m2 * w * wbar + 2 * m1 * z2 * wbar + \
+                m1 * m2) - 2 * m2 * w * wbar + 2 * m1 * z2 * wbar + \
                         2 * w * z2 * wbar ** 2 + z2 ** 2 * wbar ** 2 + m2 * (
-                                    w - z2) * z1bar - \
+                                w - z2) * z1bar - \
                         2 * w * z2 * wbar * z1bar - z2 ** 2 * wbar * z1bar + \
                         m2 * w * z2bar - 2 * m1 * z2 * z2bar + m2 * z2 * z2bar - \
                         2 * w * z2 * wbar * z2bar - z2 ** 2 * wbar * z2bar + \
                         2 * w * z2 * z1bar * z2bar + z2 ** 2 * z1bar * z2bar) + \
              z1 * (2 * m1 * m2 * w + 2 * m2 ** 2 * (
-                    w - z2) - 2 * m1 ** 2 * z2 - 2 * m1 * m2 * z2 - \
+                w - z2) - 2 * m1 ** 2 * z2 - 2 * m1 * m2 * z2 - \
                    4 * m1 * w * z2 * wbar - 4 * m2 * w * z2 * wbar + 2 * m2 * z2 ** 2 * wbar + \
                    2 * w * z2 ** 2 * wbar ** 2 + 2 * m1 * w * z2 * z1bar + \
                    2 * m2 * (
-                               w - z2) * z2 * z1bar + m1 * z2 ** 2 * z1bar - \
+                           w - z2) * z2 * z1bar + m1 * z2 ** 2 * z1bar - \
                    2 * w * z2 ** 2 * wbar * z1bar + 2 * m1 * w * z2 * z2bar + \
                    2 * m2 * w * z2 * z2bar - m1 * z2 ** 2 * z2bar - \
                    2 * w * z2 ** 2 * wbar * z2bar + 2 * w * z2 ** 2 * z1bar * z2bar)
         a0 = (m2 * z1 + m1 * z2) * (
-                    m1 * (-w + z1) * z2 + m2 * z1 * (-w + z2)) + \
+                m1 * (-w + z1) * z2 + m2 * z1 * (-w + z2)) + \
              z1 * z2 * (-(w * z1 * z2 * wbar ** 2) - (
-                    m2 * z1 * (w - z2) + m1 * w * z2) * z1bar - \
+                m2 * z1 * (w - z2) + m1 * w * z2) * z1bar - \
                         (m2 * w * z1 + m1 * (
-                                    w - z1) * z2 + w * z1 * z2 * z1bar) * z2bar + \
+                                w - z1) * z2 + w * z1 * z2 * z1bar) * z2bar + \
                         wbar * (2 * m2 * w * z1 + 2 * m1 * w * z2 - (
-                            m1 + m2) * z1 * z2 + \
+                        m1 + m2) * z1 * z2 + \
                                 w * z1 * z2 * (z1bar + z2bar)))
 
         # Solve the lens equation and find all 5 roots.
         # Loop through different time steps and solve each one.
         N_times = len(w)
         z_arr = np.zeros((N_times, 5), dtype=np.complex_)
-        #ai_arr = np.zeros((N_times, 6), dtype=np.complex_)
+        # ai_arr = np.zeros((N_times, 6), dtype=np.complex_)
         for i in range(N_times):
-            #ai_arr[i] = np.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
+            # ai_arr[i] = np.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
             z_arr[i] = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
 
         # Plug back into equation and see if those roots are actually solutions.
@@ -5015,15 +5019,15 @@ class PSBL(PSPL):
         amp_arr : array_like
             Array/tuple of amplification of each images at each t_obs.
         '''
-        kwargs = {'check_sols' : check_sols}
+        kwargs = {'check_sols': check_sols}
 
         if rescale:
             # Get complex positions (no rescaling).
             _comp = self.get_complex_pos(t_obs, filt_idx=filt_idx)
-            
+
             # Deepcopy because for some reason in my test it would modify.
             comp = copy.deepcopy(_comp)
-            
+
             # Rescaled complex positions.
             rcomp = self.rescale_complex_pos(*_comp)
 
@@ -5039,15 +5043,15 @@ class PSBL(PSPL):
 
             # Take the image positions derived from the rescaled complex positions
             # and rescale them to get the images back in the original scale.
-            images = (rimages/rcomp[5].reshape(len(rcomp[5]), 1)) + rcomp[6].reshape(len(rcomp[6]), 1)
+            images = (rimages / rcomp[5].reshape(len(rcomp[5]), 1)) + rcomp[6].reshape(len(rcomp[6]), 1)
             # Get amplifications.
             amps = self.get_amp_arr(images, *comp[1:])
-            
+
         else:
             comp = self.get_complex_pos(t_obs, filt_idx=filt_idx)
             images = self.get_image_pos_arr_old(*comp)
             amps = self.get_amp_arr(images, *comp[1:])
-        
+
         return images, amps
 
     def get_resolved_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
@@ -5162,7 +5166,7 @@ class PSBL(PSPL):
         except AttributeError:
             pass
 
-        #print('flux_model = ', flux_model)
+        # print('flux_model = ', flux_model)
 
         # Catch the edge case where we exceed the zeropoint.
         bad = np.where(flux_model <= 0)[0]
@@ -5170,7 +5174,7 @@ class PSBL(PSPL):
             if print_warning:
                 print('!!!!!!!!!! Warning: get_photometry: bad flux encountered.')
                 print('')
-#                pdb.set_trace()
+            #                pdb.set_trace()
             flux_model[bad] = np.nan
 
         mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
@@ -5180,9 +5184,9 @@ class PSBL(PSPL):
         if len(bad) > 0:
             mag_model.data[bad] = np.nan
 
-        #pdb.set_trace()
-        #print('mag_model = ', mag_model)
-        
+        # pdb.set_trace()
+        # print('mag_model = ', mag_model)
+
         return mag_model
 
 
@@ -5229,7 +5233,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         # Incorporate parallax
         if self.parallaxFlag:
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t_obs,
-                                                 obsLocation=self.obsLocation[filt_idx])
+                                                          obsLocation=self.obsLocation[filt_idx])
             u -= self.piE_amp * parallax_vec
 
         # Convert positions to complex coordinates
@@ -5589,7 +5593,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         offset *= 1e-3  # convert to arcsec
 
         if self.orbitFlag == False:
-            xL = self.get_lens_astrometry(t_obs, filt_idx=filt_idx) # parallax applied
+            xL = self.get_lens_astrometry(t_obs, filt_idx=filt_idx)  # parallax applied
             # Apply offsets assuming binary origin at geometric center.
             xL1 = xL + offset  # primary
             xL2 = xL - offset  # secondary
@@ -5598,7 +5602,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
             if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
                 dt_in_years = (t_obs - self.t0) / days_per_year
                 # Get positions assuming binary origin at primary.
-                xL1 = self.get_lens_astrometry(t_obs, filt_idx=filt_idx) # parallax applied
+                xL1 = self.get_lens_astrometry(t_obs, filt_idx=filt_idx)  # parallax applied
                 xL2 = xL1 + (2 * offset)
                 # Apply velocity difference.
                 xL2 += np.outer(dt_in_years, self.muL_sec - self.muL) * 1e-3
@@ -5607,10 +5611,11 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                     xL2 += np.outer((0.5 * (dt_in_years ** 2)), self.acc) * 1e-3
 
             elif self.orbitFlag == 'Keplerian':
-                dt_in_years = (t_obs - self.t0_com) / days_per_year #About Center of Mass
+                dt_in_years = (t_obs - self.t0_com) / days_per_year  # About Center of Mass
                 xL1 = np.zeros((len(t_obs), 2), dtype=float)
                 xL2 = np.zeros((len(t_obs), 2), dtype=float)
-                xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_g=t0. 
+                xLCoM = self.xL0_com + np.outer(dt_in_years,
+                                                self.muL) * 1e-3  # Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_g=t0.
                 orb = orbits.Orbit()
                 orb.w = self.omega
                 orb.o = self.big_omega
@@ -5618,16 +5623,16 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 orb.e = self.e
                 orb.p = self.p
                 orb.tp = self.tp
-                orb.aleph = self.aleph *1e-3
-                orb.aleph2 = self.aleph_sec*1e-3
+                orb.aleph = self.aleph * 1e-3
+                orb.aleph2 = self.aleph_sec * 1e-3
 
-                (x, y, x2, y2) = orb.oal2xy(t_obs) #Motion of primary and secondary orbits
+                (x, y, x2, y2) = orb.oal2xy(t_obs)  # Motion of primary and secondary orbits
 
                 self.x = x
                 self.y = y
                 self.x2 = x2
                 self.y2 = y2
-                
+
                 xL1[:, 0] = xLCoM[:, 0] + x
                 xL1[:, 1] = xLCoM[:, 1] + y
                 xL2[:, 0] = xLCoM[:, 0] + x2
@@ -5639,7 +5644,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 
                     xL1 += (self.piL * parallax_vec) * 1e-3  # arcsec
                     xL2 += (self.piL * parallax_vec) * 1e-3  # arcsec
-            
+
         return (xL1, xL2)
 
     def get_centroid(self, t_obs, amp_arr=None, image_arr=None, filt_idx=0):
@@ -5674,10 +5679,9 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         xS_unlens = self.get_astrometry_unlensed(t_obs, filt_idx=filt_idx)
 
         # Centroid offset in arcseconds.
-        shift = (xS_lensed - xS_unlens) 
+        shift = (xS_lensed - xS_unlens)
 
         return shift
-
 
     def dexanimate(self, tE, time_steps, frame_time, name, size, zoom, astrometry, loc):
         """ Produces animation of microlensing event. 
@@ -5708,11 +5712,10 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         img, amp = self.get_all_arrays(t)
 
         xL1, xL2 = self.get_resolved_lens_astrometry(t)
-        source  = self.get_astrometry_unlensed(t) 
-        image  = self.get_astrometry(t, image_arr = img, amp_arr = amp) 
+        source = self.get_astrometry_unlensed(t)
+        image = self.get_astrometry(t, image_arr=img, amp_arr=amp)
         image_all = self.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)
-        #photometry = psbl.get_photometry
-    
+        # photometry = psbl.get_photometry
 
         fig = plt.figure(figsize=[size[0], size[1] + 0.5])  # sets up the figure
         ax1 = fig.add_subplot(2, 1, 1)
@@ -5723,10 +5726,10 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         l2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='grey', linewidth=2)
         s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Source", color='yellow', linewidth=2)
         s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='yellow', linewidth=2)
-        
 
         if astrometry == "unresolved":
-            i1_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Source (Unresolved)", color='yellow', linewidth=2)
+            i1_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Source (Unresolved)", color='yellow',
+                                 linewidth=2)
             i1_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='yellow', linewidth=2)
             ax1.set_xlabel('RA (")')
             ax1.set_ylabel('Dec (")')
@@ -5735,19 +5738,22 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
             ax1.legend(fontsize=12, loc=loc)
 
             line = [l1_line1, l1_line2, l2_line1, l2_line2, s1_line1, s1_line2, i1_line1, i1_line2]
+
             def update(i, lens1, lens2, source, image, tau, line):
-                    # print(str(i) + ", ", end='', flush=True)
-                    line[0].set_data(lens1[i, 0], lens1[i, 1])
-                    line[1].set_data(lens1[:i + 1, 0], lens1[:i + 1, 1])
-                    line[2].set_data(lens2[i, 0], lens2[i, 1])
-                    line[3].set_data(lens2[:i + 1, 0], lens2[:i + 1, 1])
-                    line[4].set_data(source[i, 0], source[i, 1])
-                    line[5].set_data(source[:i + 1, 0], source[:i + 1, 1])
-                    line[6].set_data(image[i, 0], image[i, 1])
-                    line[7].set_data(image[:i + 1, 0], image[:i + 1, 1])
-                    return line
-            ani = animation.FuncAnimation(fig, update, len(tau), fargs=[xL1, xL2,source, image, tau, line], blit=True, interval=frame_time)
-            ani.save("%s.mp4" % name, writer="ffmpeg")   
+                # print(str(i) + ", ", end='', flush=True)
+                line[0].set_data(lens1[i, 0], lens1[i, 1])
+                line[1].set_data(lens1[:i + 1, 0], lens1[:i + 1, 1])
+                line[2].set_data(lens2[i, 0], lens2[i, 1])
+                line[3].set_data(lens2[:i + 1, 0], lens2[:i + 1, 1])
+                line[4].set_data(source[i, 0], source[i, 1])
+                line[5].set_data(source[:i + 1, 0], source[:i + 1, 1])
+                line[6].set_data(image[i, 0], image[i, 1])
+                line[7].set_data(image[:i + 1, 0], image[:i + 1, 1])
+                return line
+
+            ani = animation.FuncAnimation(fig, update, len(tau), fargs=[xL1, xL2, source, image, tau, line], blit=True,
+                                          interval=frame_time)
+            ani.save("%s.mp4" % name, writer="ffmpeg")
         else:
             i2_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Image", color='yellow', linewidth=2)
             i2_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='yellow', linewidth=2)
@@ -5759,37 +5765,45 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
             i5_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='yellow', linewidth=2)
             i6_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='yellow', linewidth=2)
             i6_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='yellow', linewidth=2)
-            
+
             ax1.set_xlabel('RA (")')
             ax1.set_ylabel('Dec (")')
             ax1.set_xlim(zoom, -zoom)
             ax1.set_ylim(-zoom, zoom)
             ax1.legend(fontsize=12, loc=loc)
 
-            line = [l1_line1, l1_line2, l2_line1, l2_line2, s1_line1, s1_line2, i2_line1, i2_line2, i3_line1, i3_line2, i4_line1, i4_line2, i5_line1, i5_line2, i6_line1, i6_line2]
-            def update(i, lens1, lens2, source, image1, image2, image3, image4, image5, tau, line):
-                    line[0].set_data(lens1[i, 0], lens1[i, 1])
-                    line[1].set_data(lens1[:i + 1, 0], lens1[:i + 1, 1])
-                    line[2].set_data(lens2[i, 0], lens2[i, 1])
-                    line[3].set_data(lens2[:i + 1, 0], lens2[:i + 1, 1])
-                    line[4].set_data(source[i, 0], source[i, 1])
-                    line[5].set_data(source[:i + 1, 0], source[:i + 1, 1])
-                    line[6].set_data(image1[i, 0], image1[i, 1])
-                    line[7].set_data(image1[:i + 1, 0], image1[:i + 1, 1])
-                    line[8].set_data(image2[i, 0], image2[i, 1])
-                    line[9].set_data(image2[:i + 1, 0], image2[:i + 1, 1])
-                    line[10].set_data(image3[i, 0], image3[i, 1])
-                    line[11].set_data(image3[:i + 1, 0], image3[:i + 1, 1])
-                    line[12].set_data(image4[i, 0], image4[i, 1])
-                    line[13].set_data(image4[:i + 1, 0], image4[:i + 1, 1])
-                    line[14].set_data(image5[i, 0], image5[i, 1])
-                    line[15].set_data(image5[:i + 1, 0], image5[:i + 1, 1])
+            line = [l1_line1, l1_line2, l2_line1, l2_line2, s1_line1, s1_line2, i2_line1, i2_line2, i3_line1, i3_line2,
+                    i4_line1, i4_line2, i5_line1, i5_line2, i6_line1, i6_line2]
 
-                    return line
-            ani = animation.FuncAnimation(fig, update, len(tau), fargs=[xL1, xL2,source, image_all[:,0], image_all[:,1], image_all[:,2], image_all[:,3], image_all[:,4], tau, line], blit=True, interval=frame_time)
-            ani.save("%s.mp4" % name, writer="ffmpeg")   
-    
+            def update(i, lens1, lens2, source, image1, image2, image3, image4, image5, tau, line):
+                line[0].set_data(lens1[i, 0], lens1[i, 1])
+                line[1].set_data(lens1[:i + 1, 0], lens1[:i + 1, 1])
+                line[2].set_data(lens2[i, 0], lens2[i, 1])
+                line[3].set_data(lens2[:i + 1, 0], lens2[:i + 1, 1])
+                line[4].set_data(source[i, 0], source[i, 1])
+                line[5].set_data(source[:i + 1, 0], source[:i + 1, 1])
+                line[6].set_data(image1[i, 0], image1[i, 1])
+                line[7].set_data(image1[:i + 1, 0], image1[:i + 1, 1])
+                line[8].set_data(image2[i, 0], image2[i, 1])
+                line[9].set_data(image2[:i + 1, 0], image2[:i + 1, 1])
+                line[10].set_data(image3[i, 0], image3[i, 1])
+                line[11].set_data(image3[:i + 1, 0], image3[:i + 1, 1])
+                line[12].set_data(image4[i, 0], image4[i, 1])
+                line[13].set_data(image4[:i + 1, 0], image4[:i + 1, 1])
+                line[14].set_data(image5[i, 0], image5[i, 1])
+                line[15].set_data(image5[:i + 1, 0], image5[:i + 1, 1])
+
+                return line
+
+            ani = animation.FuncAnimation(fig, update, len(tau),
+                                          fargs=[xL1, xL2, source, image_all[:, 0], image_all[:, 1], image_all[:, 2],
+                                                 image_all[:, 3], image_all[:, 4], tau, line], blit=True,
+                                          interval=frame_time)
+            ani.save("%s.mp4" % name, writer="ffmpeg")
+
         return ani
+
+
 # --------------------------------------------------
 #
 # Parallax Class Family - PSBL
@@ -5797,6 +5811,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 # --------------------------------------------------
 class PSBL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+
     def get_amplification(self, t_obs, amp_arr=None, filt_idx=0):
         """noParallax: Get the photometric amplification term at a set of times, t.
         
@@ -5815,9 +5830,11 @@ class PSBL_Parallax(PSPL_Parallax):
         amp = np.sum(amp_arr_msk, axis=1)
 
         return amp
+
 
 class PSBL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+
     def get_amplification(self, t_obs, amp_arr=None, filt_idx=0):
         """noParallax: Get the photometric amplification term at a set of times, t.
         
@@ -5836,6 +5853,7 @@ class PSBL_noParallax(PSPL_noParallax):
         amp = np.sum(amp_arr_msk, axis=1)
 
         return amp
+
 
 # --------------------------------------------------
 #
@@ -5919,8 +5937,9 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat', 'muS_E', 'muS_N', 'dL', 'dS', 'alpha']
-    
+                          'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat', 'muS_E',
+                          'muS_N', 'dL', 'dS', 'alpha']
+
     phot_param_names = ['b_sff', 'mag_src']
 
     paramAstromFlag = True
@@ -5931,14 +5950,13 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
                  beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N, dL, dS,
                  alpha, b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_com = t0_com
         self.xS0 = np.array([xS0_E, xS0_N])
         self.beta_com = beta_com
         self.arat = arat
-                     
+
         self.muL = np.array([muL_E, muL_N])
         self.omega = omega
         self.big_omega = big_omega
@@ -5957,9 +5975,8 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.obsLocation = obsLocation
         self.root_tol = root_tol
         self.vx = muL_E * 1e-3
-        self.vy = muL_N *1e-3
+        self.vy = muL_N * 1e-3
 
-                     
         # Super handles checking for properly formatted variables.
         super().__init__()
 
@@ -5979,20 +5996,17 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.muRel = self.muS - self.muL
         self.muRel_amp = np.linalg.norm(self.muRel)  # mas/yr
 
-        
         self.mL = self.mLp + self.mLs  # Total lens mass
 
         # Calculate period, and semi-major axes
-        self.sep = sep #mas
+        self.sep = sep  # mas
         self.a = self.sep * self.arat
-        self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.a #mas
-        self.aleph = self.a - self.aleph_sec #mas
-        self.a_AU = dL * (self.a *1e-3) * units.AU
+        self.aleph_sec = (self.mLp / (self.mLp + self.mLs)) * self.a  # mas
+        self.aleph = self.a - self.aleph_sec  # mas
+        self.a_AU = dL * (self.a * 1e-3) * units.AU
         mL = self.mL * units.Msun
-        p = (2 * np.pi * np.sqrt(self.a_AU**3/(const.G * mL))).to('day')
-        self.p = p.value #Period in Days
-                     
-        
+        p = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mL))).to('day')
+        self.p = p.value  # Period in Days
 
         # Calculate the Einstein radius
         # AFAICT, thetaE for binary lenses is calculated from the total lens mass.
@@ -6004,8 +6018,8 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.thetaE = self.thetaE_amp * self.thetaE_hat
 
         # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
-        m1 = units.rad**2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
-        m2 = units.rad**2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
         self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
         self.m2 = m2.to(units.arcsec ** 2).value
 
@@ -6038,28 +6052,25 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.piE = self.piE_amp * self.thetaE_hat
         self.piE_E, self.piE_N = self.piE
 
-        
         # Calculate the Einstein crossing time. (days)
         self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
 
-
-        
         # Calculate t0 and beta for geometric center of lens
         self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
-        self.q = self.mLs/self.mLp
-                     
-        u0_x_out, u0_y_out, t0_out = fc.convert_u0_t0_psbl(t0_in = self.t0_com, u0_x_in = self.u0_com[0], u0_y_in = self.u0_com[1],
-                           tE = self.tE, theta_E = self.thetaE_amp, q = self.q, phi = self.phi_rad, sep = self.sep, mu_rel_x = self.muRel[0],
-                           mu_rel_y = self.muRel[1], coords_in='COM', coords_out='geom_mid')
-        
-        self.u0 = np.array([u0_x_out, u0_y_out]) #Geometric u0
-        self.u0_amp = np.sqrt(self.u0[0]**2 + self.u0[1]**2) #Geometric u0_amp
-        self.t0 = t0_out #Geometric t0
-        self.beta = self.u0_amp*self.thetaE_amp #Geometric beta
+        self.q = self.mLs / self.mLp
 
+        u0_x_out, u0_y_out, t0_out = fc.convert_u0_t0_psbl(t0_in=self.t0_com, u0_x_in=self.u0_com[0],
+                                                           u0_y_in=self.u0_com[1],
+                                                           tE=self.tE, theta_E=self.thetaE_amp, q=self.q,
+                                                           phi=self.phi_rad, sep=self.sep, mu_rel_x=self.muRel[0],
+                                                           mu_rel_y=self.muRel[1], coords_in='COM',
+                                                           coords_out='geom_mid')
 
-                     
-                     
+        self.u0 = np.array([u0_x_out, u0_y_out])  # Geometric u0
+        self.u0_amp = np.sqrt(self.u0[0] ** 2 + self.u0[1] ** 2)  # Geometric u0_amp
+        self.t0 = t0_out  # Geometric t0
+        self.beta = self.u0_amp * self.thetaE_amp  # Geometric beta
+
         # Angular separation vector between source and lens (vector from lens to source)
         self.thetaS0 = self.u0 * self.thetaE_amp  # mas
 
@@ -6070,14 +6081,12 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         thetaS0_com = self.u0_com * self.thetaE_amp
         self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
-        #self.xL0_com = self.xL0_com
-        #self.xL0_com = self.xL0[1]
-
-        
+        # self.xL0_com = self.xL0_com
+        # self.xL0_com = self.xL0[1]
 
         return
 
-                     
+
 class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
     """
     Point source binary lens.
@@ -6160,12 +6169,13 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N,
                          beta_com, muL_E, muL_N,
-                         omega, big_omega, i, 0, tp, sep,1, muS_E, muS_N, dL, dS,
+                         omega, big_omega, i, 0, tp, sep, 1, muS_E, muS_N, dL, dS,
                          alpha, b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-                     
+
         return
-      
+
+
 class PSBL_PhotAstromParam1(PSPL_Param):
     """
     Point source binary lens.
@@ -6278,8 +6288,8 @@ class PSBL_PhotAstromParam1(PSPL_Param):
         self.thetaE = self.thetaE_amp * self.thetaE_hat
 
         # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
-        m1 = units.rad**2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
-        m2 = units.rad**2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
         self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
         self.m2 = m2.to(units.arcsec ** 2).value
 
@@ -6384,14 +6394,13 @@ class PSBL_PhotAstromParam2(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag=False
+    orbitFlag = False
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
                  b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -6450,8 +6459,8 @@ class PSBL_PhotAstromParam2(PSPL_Param):
 
         # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
         inv_dist_diff = (1.0 / dL) - (1.0 / dS)
-        m1 = units.rad**2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
-        m2 = units.rad**2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
         self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
         self.m2 = m2.to(units.arcsec ** 2).value
 
@@ -6556,10 +6565,10 @@ class PSBL_PhotAstromParam3(PSPL_Param):
     orbitFlag = False
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
-                     piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                     q, sep, alpha,
-                     b_sff, mag_base,
-                     raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q, sep, alpha,
+                 b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
@@ -6620,8 +6629,8 @@ class PSBL_PhotAstromParam3(PSPL_Param):
 
         # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
         inv_dist_diff = (1.0 / dL) - (1.0 / dS)
-        m1 = units.rad**2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
-        m2 = units.rad**2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
         self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
         self.m2 = m2.to(units.arcsec ** 2).value
 
@@ -6652,8 +6661,9 @@ class PSBL_PhotAstromParam3(PSPL_Param):
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         return
-      
-class PSBL_PhotAstromParam4(PSPL_Param):                     
+
+
+class PSBL_PhotAstromParam4(PSPL_Param):
     """
     Point source binary lens.
     It has 3 more parameters than PSPL (additional mass term, separation,
@@ -6720,10 +6730,10 @@ class PSBL_PhotAstromParam4(PSPL_Param):
     paramPhotFlag = True
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
-                     piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                     q, sep, alpha,
-                     b_sff, mag_src,
-                     raL=None, decL=None, obsLocation='earth', root_tol=1e-8):    
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q, sep, alpha,
+                 b_sff, mag_src,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_com = t0_com
         self.u0_amp_com = u0_amp_com
         self.tE = tE
@@ -6748,7 +6758,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
 
         # Derived quantities
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
-        qeff = (1 - q)/(1 + q)
+        qeff = (1 - q) / (1 + q)
         self.t0 = self.t0_com - 0.5 * qeff * self.tE * self.sep * np.cos(self.phi_rad) / self.thetaE_amp
         self.u0_amp = self.u0_amp_com - 0.5 * qeff * self.sep * np.sin(self.phi_rad) / self.thetaE_amp
 
@@ -6764,7 +6774,6 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
         self.mLp = self.mL / (1.0 + self.q)
         self.mLs = self.mLp * self.q
-
 
         # Calculate the distance to source and lens.
         dL = (self.piL * units.mas).to(units.parsec,
@@ -6788,8 +6797,8 @@ class PSBL_PhotAstromParam4(PSPL_Param):
 
         # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
         inv_dist_diff = (1.0 / dL) - (1.0 / dS)
-        m1 = units.rad**2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
-        m2 = units.rad**2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
         self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
         self.m2 = m2.to(units.arcsec ** 2).value
 
@@ -6820,6 +6829,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         return
+
 
 class PSBL_PhotAstromParam5(PSPL_Param):
     """
@@ -6887,10 +6897,10 @@ class PSBL_PhotAstromParam5(PSPL_Param):
     paramPhotFlag = True
 
     def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS,
-                     piE_E, piEN_piEE, xS0_E, xS0_N, muS_E, muS_N,
-                     q, sep, alpha,
-                     b_sff, mag_base,
-                     raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+                 piE_E, piEN_piEE, xS0_E, xS0_N, muS_E, muS_N,
+                 q, sep, alpha,
+                 b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_prim = t0_prim
         self.u0_amp_prim = u0_amp_prim
         self.tE = tE
@@ -6917,7 +6927,7 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         super().__init__()
 
         # Derived quantities
-        self.mag_src = self.mag_base - 2.5*np.log10(self.b_sff)
+        self.mag_src = self.mag_base - 2.5 * np.log10(self.b_sff)
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
         self.t0 = self.t0_prim - 0.5 * self.tE * self.sep * np.cos(self.phi_rad) / self.thetaE_amp
         self.u0_amp = self.u0_amp_prim - 0.5 * self.sep * np.sin(self.phi_rad) / self.thetaE_amp
@@ -6934,7 +6944,7 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
         self.mLp = self.mL / (1.0 + self.q)
         self.mLs = self.mLp * self.q
-        
+
         # Calculate the distance to source and lens.
         dL = (self.piL * units.mas).to(units.parsec,
                                        equivalencies=units.parallax())
@@ -6957,8 +6967,8 @@ class PSBL_PhotAstromParam5(PSPL_Param):
 
         # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
         inv_dist_diff = (1.0 / dL) - (1.0 / dS)
-        m1 = units.rad**2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
-        m2 = units.rad**2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
         self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
         self.m2 = m2.to(units.arcsec ** 2).value
 
@@ -6972,7 +6982,7 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         #    u0_amp > 0 means u0_E > 0
         #    u0_amp < 0 means u0_E < 0
         # Note that we assume beta = u0_amp (with same signs).
-              
+
         # Calculate the closest approach vector. Define beta sign convention
         # same as of Andy Gould does with beta > 0 means u0_E > 0
         # (lens passes to the right of the source as seen from Earth or Sun).
@@ -6985,6 +6995,7 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         # IS THIS IT? DOES IT WORK?
 
         return
+
 
 class PSBL_PhotAstromParam6(PSPL_Param):
     """
@@ -7063,7 +7074,7 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         self.thetaE_amp = thetaE
         self.xS0 = np.array([xS0_E, xS0_N])
         self.muS = np.array([muS_E, muS_N])
-                     
+
         self.piS = piS
         self.q = q
         self.sep = sep
@@ -7379,7 +7390,7 @@ class PSBL_PhotAstromParam8(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                           'q', 'sep', 'alpha']
     phot_param_names = ['b_sff', 'mag_src']
@@ -7494,6 +7505,7 @@ class PSBL_PhotAstromParam8(PSPL_Param):
 
         return
 
+
 class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
     """
     Point source binary lens.
@@ -7536,7 +7548,6 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         in degrees. Since the primary and secondary sources share the same 
         inclination angle for their orbital planes, they also share the same
         big_omega
-        
     i: float
         Inclination angle of the system in degrees. 
     e: float
@@ -7549,11 +7560,8 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         Dec Source proper motion (mas/yr)
     sep: float
         Distance between lenses in AU
-
     arat: float
-        Ratio of semi-major axis with current separation between lenses measured at         dL
-
-        
+        Ratio of semi-major axis with current separation between lenses measured at dL
     q : float
         Mass ratio (M2 / M1)
     alpha : float
@@ -7568,31 +7576,31 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
-                           'muS_E', 'muS_N',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N',
+                          'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
+                          'muS_E', 'muS_N',
                           'q', 'alpha']
     phot_param_names = ['b_sff', 'mag_src']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
-        
+
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
-                     piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N,
-                     q, alpha,
-                     b_sff, mag_src,
-                     raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-                         
+                 piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N,
+                 q, alpha,
+                 b_sff, mag_src,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                          q, sep, alpha,
                          b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-                         
-        #Orbital parameters     
+
+        # Orbital parameters
         self.beta_com = self.u0_amp_com * self.thetaE_amp
         self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
         self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
@@ -7600,28 +7608,26 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
         self.arat = arat
 
-                         
         self.omega = omega
         self.big_omega = big_omega
         self.i = i
         self.e = e
         self.tp = tp
-        
-        
-         # Calculate period, and semi-major axes
-        self.sep = sep #mas
-        self.a = self.arat * self.sep #mas 
-        self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.a #mas
-        self.aleph = self.a - self.aleph_sec #mas
-        self.al_AU = self.dL * (self.a *1e-3) * units.AU
+
+        # Calculate period, and semi-major axes
+        self.sep = sep  # mas
+        self.a = self.arat * self.sep  # mas
+        self.aleph_sec = (self.mLp / (self.mLp + self.mLs)) * self.a  # mas
+        self.aleph = self.a - self.aleph_sec  # mas
+        self.al_AU = self.dL * (self.a * 1e-3) * units.AU
         mL = self.mL * units.Msun
-        p = (2 * np.pi * np.sqrt(self.al_AU**3/(const.G * mL))).to('day')
-        self.p = p.value #Period in Days
-                     
+        p = (2 * np.pi * np.sqrt(self.al_AU ** 3 / (const.G * mL))).to('day')
+        self.p = p.value  # Period in Days
 
         PSPL_Phot().__init__()
         return
-                         
+
+
 class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
     """
     Point source binary lens.
@@ -7690,15 +7696,15 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i',  'tp', 'sep'
-                        , 'muS_E', 'muS_N',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega', 'big_omega', 'i', 'tp', 'sep'
+        , 'muS_E', 'muS_N',
                           'q', 'alpha']
     phot_param_names = ['b_sff', 'mag_src']
-    
+
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
-        
+
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
@@ -7709,7 +7715,6 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
                  q, alpha,
                  b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-                         
         super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N,
                          omega, big_omega, i, 0, tp, sep, 1, muS_E, muS_N,
@@ -7717,9 +7722,9 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
                          b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-                     
         PSPL_Param().__init__()
         return
+
 
 class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     """
@@ -7740,7 +7745,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
           * negative (u0_amp < 0 when u0_hat[0] < 0).
     tE : float
         Einstein crossing time (days).
-    thetaE : float
+    log10_thetaE : float
         The size of the Einstein radius in (mas).
     piS : float
         Amplitude of the parallax (1AU/dS) of the source. (mas)
@@ -7754,7 +7759,6 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     xS0_N : float
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-        
     omega: float
         The argument of periastron of the primary lens's orbit in degrees. 
         The secondary source will be directly 180 degrees across the primary 
@@ -7770,12 +7774,14 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         The ccentricity of the System
     tp: float
         This is the time of the periastron of the system in days.
-
+    sep: float
+        Distance between lenses in AU
+    arat: float
+        Ratio of semi-major axis with current separation between lenses measured at dL
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
         Dec Source proper motion (mas/yr)
-
     q : float
         Mass ratio (M2 / M1)
     alpha : float
@@ -7789,34 +7795,33 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
+    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N',
+                          'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
                           'muS_E', 'muS_N',
                           'q', 'alpha']
     phot_param_names = ['b_sff', 'mag_src']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
-        
+
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-
-    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
+    def __init__(self, t0_com, u0_amp_com, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
                  omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N,
                  q, alpha,
                  b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-                         
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
-                     piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                     q, sep, alpha,
-                     b_sff, mag_src,
-                     raL=raL, decL=raL, obsLocation=obsLocation, root_tol=root_tol)
-        
-        #Orbital parameters     
+        super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS,
+                         piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                         q, sep, alpha,
+                         b_sff, mag_src,
+                         raL=raL, decL=raL, obsLocation=obsLocation, root_tol=root_tol)
+
+        # Orbital parameters
         self.beta_com = self.u0_amp_com * self.thetaE_amp
         self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
         self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
@@ -7824,28 +7829,26 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
         self.arat = arat
 
-
-                         
         self.omega = omega
         self.big_omega = big_omega
         self.i = i
         self.e = e
         self.tp = tp
-        
-         # Calculate period, and semi-major axes
-        self.sep = sep #mas
-        self.a = self.arat * self.sep #mas 
-        self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.a #mas
-        self.aleph = self.a - self.aleph_sec #mas
-        self.al_AU = self.dL * (self.a *1e-3) * units.AU
-        mL = self.mL * units.Msun
-        p = (2 * np.pi * np.sqrt(self.al_AU**3/(const.G * mL))).to('day')
-        self.p = p.value #Period in Days
-                     
 
+        # Calculate period, and semi-major axes
+        self.sep = sep  # mas
+        self.a = self.arat * self.sep  # mas
+        self.aleph_sec = (self.mLp / (self.mLp + self.mLs)) * self.a  # mas
+        self.aleph = self.a - self.aleph_sec  # mas
+        self.al_AU = self.dL * (self.a * 1e-3) * units.AU
+        mL = self.mL * units.Msun
+        p = (2 * np.pi * np.sqrt(self.al_AU ** 3 / (const.G * mL))).to('day')
+        self.p = p.value  # Period in Days
 
         PSPL_Param().__init__()
         return
+
+
 class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
     """
     Point source binary lens.
@@ -7904,7 +7907,8 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'acc_E', 'acc_N', 'muS_E', 'muS_N',
+                          'beta', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'acc_E', 'acc_N', 'muS_E',
+                          'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
     phot_param_names = ['b_sff', 'mag_src']
 
@@ -7914,25 +7918,24 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
 
     def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
-                 delta_muLsec_E, delta_muLsec_N, acc_E, acc_N,  muS_E, muS_N,
+                 delta_muLsec_E, delta_muLsec_N, acc_E, acc_N, muS_E, muS_N,
                  q, sep, alpha,
                  b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        
-                     
         super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS,
-                     piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                     q, sep, alpha,
-                     b_sff, mag_src,
-                     raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
+                         piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                         q, sep, alpha,
+                         b_sff, mag_src,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
 
-        self.delta_muL_sec =  np.array([delta_muLsec_E, delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
         self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([self.muL_E+delta_muLsec_E, self.muL_N+delta_muLsec_N])
+        self.muL_sec = np.array([self.muL_E + delta_muLsec_E, self.muL_N + delta_muLsec_N])
         self.acc = np.array([acc_E, acc_N])
 
         return
-      
+
+
 class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
     """
     Point source binary lens.
@@ -8001,8 +8004,6 @@ class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
                  q, sep, alpha,
                  b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        
-                     
         super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N,
                          delta_muLsec_E, delta_muLsec_N, 0, 0, muS_E, muS_N,
@@ -8010,10 +8011,9 @@ class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
                          b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
 
-                         
         return
-      
-      
+
+
 class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
     """
     Point source binary lens.
@@ -8072,7 +8072,8 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'acc_E', 'acc_N', 'muS_E', 'muS_N',
+                          'beta', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'acc_E', 'acc_N', 'muS_E',
+                          'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
     phot_param_names = ['b_sff', 'mag_src']
 
@@ -8085,20 +8086,19 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
                  delta_muLsec_E, delta_muLsec_N, acc_E, acc_N, muS_E, muS_N, dL, dS,
                  sep, alpha, b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-                     
         super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
                          beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
                          sep, alpha, b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-           
-        self.delta_muL_sec =  np.array([delta_muLsec_E, delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
         self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E+delta_muLsec_E, muL_N+delta_muLsec_N])
+        self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
         self.acc = np.array([acc_E, acc_N])
 
         return
-                     
+
+
 class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
     """
     Point source binary lens.
@@ -8176,8 +8176,8 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
                          sep, alpha, b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
         return
-      
-    
+
+
 class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
     """
     Point source binary lens.
@@ -8247,14 +8247,14 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'tp', 'sep', 
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega', 'big_omega', 'i', 'tp', 'sep',
                           'muS_E', 'muS_N',
                           'q', 'alpha']
     phot_param_names = ['b_sff', 'mag_src']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
-        
+
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
@@ -8265,7 +8265,6 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
                  q, alpha,
                  b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-                         
         super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N,
                          omega, big_omega, i, 0, tp, sep, muS_E, muS_N,
@@ -8273,9 +8272,9 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
                          b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-
         PSPL_Param().__init__()
         return
+
 
 class PSBL_PhotParam1(PSPL_Param):
     """
@@ -8380,7 +8379,7 @@ class PSBL_PhotParam1(PSPL_Param):
         self.phi_piE_rad = np.arctan2(self.piE[0], self.piE[1])
         # Note that phi_rho1 is the same alpha in our astrometry model;
         # however, here we don't have North as a reference.
-        self.phi_rho1_rad = self.phi_piE_rad - self.phi_rad
+        self.phi_rho1_rad = self.phi_rad - self.phi_piE_rad
         self.xL1_over_theta = np.array([0.5 * self.sep * np.sin(self.phi_rho1_rad),
                                         0.5 * self.sep * np.cos(self.phi_rho1_rad)])
         self.xL2_over_theta = np.array([-0.5 * self.sep * np.sin(self.phi_rho1_rad),
@@ -8448,7 +8447,7 @@ class PSBL_GP_PhotParam1(PSBL_PhotParam1):
 
         return
 
-      
+
 class PSBL_GP_PhotAstromParam1(PSBL_PhotAstromParam1):
     phot_optional_param_names = ['gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0']
 
@@ -8474,7 +8473,7 @@ class PSBL_GP_PhotAstromParam1(PSBL_PhotAstromParam1):
 
         return
 
-      
+
 class PSBL_GP_PhotAstromParam2(PSBL_PhotAstromParam2):
     phot_optional_param_names = ['gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0']
 
@@ -8500,8 +8499,8 @@ class PSBL_GP_PhotAstromParam2(PSBL_PhotAstromParam2):
             self.use_gp_phot[key] = True
 
         return
-      
-      
+
+
 ######################################################
 ### BINARY SOURCE POINT LENS (BSPL) CLASSES ###       
 ######################################################
@@ -8547,13 +8546,12 @@ class BSPL(PSPL):
                                                           obsLocation=self.obsLocation[filt_idx])
             u_pri -= self.piE_amp * parallax_vec
             u_sec -= self.piE_amp * parallax_vec
-            
+
         u = np.zeros((len(t), 2, 2), dtype=float)
         u[:, 0, :] = u_pri
         u[:, 1, :] = u_sec
 
         return u
-            
 
     def get_resolved_amplification(self, t, filt_idx=0):
         """Parallax: Get the photometric amplification term at a set of times, t for both the
@@ -8603,8 +8601,7 @@ class BSPL(PSPL):
         A[:, 1, 0] = A2_plus
         A[:, 1, 1] = A2_minu
 
-        return A   
-
+        return A
 
     def get_amplification(self, t, filt_idx=0):
         """Parallax: Get the photometric amplification term at a set of times, t.
@@ -8627,7 +8624,7 @@ class BSPL(PSPL):
         A : numpy array
             | Array of combined amplifications in the specified filter. 
             | Shape = [len(t)]
-        """   
+        """
         u_vec = self.get_u(t, filt_idx=filt_idx)
 
         u_vec1 = u_vec[:, 0, :]
@@ -8645,7 +8642,7 @@ class BSPL(PSPL):
         A = ((A1 * f1) + (A2 * f2)) / (f1 + f2)
 
         return A
-      
+
     def get_photometry(self, t, filt_idx=0, print_warning=True):
         """
         Get the predicted photomety at the specified times for the specified
@@ -8684,8 +8681,8 @@ class BSPL(PSPL):
 
         # mags to fluxes
         # switch nan mags to 0 fluxes
-        f1 = np.nan_to_num(mag2flux(self.mag_src_pri[filt_idx]), nan = 0)      
-        f2 = np.nan_to_num(mag2flux(self.mag_src_sec[filt_idx]), nan = 0)
+        f1 = np.nan_to_num(mag2flux(self.mag_src_pri[filt_idx]), nan=0)
+        f2 = np.nan_to_num(mag2flux(self.mag_src_sec[filt_idx]), nan=0)
 
         # Add linear source flux change.
         if hasattr(self, 'fdfdt_pri'):
@@ -8716,7 +8713,8 @@ class BSPL(PSPL):
         mag_lensed = flux2mag(flux_lensed)
 
         return mag_lensed
-      
+
+
 class BSPL_Phot(BSPL, PSPL_Phot):
     """
     Contains methods for model a BSPL photometry only.
@@ -8788,7 +8786,7 @@ class BSPL_Phot(BSPL, PSPL_Phot):
         # Flux-weighted centroid.
         u_unlens = (u1_unlens * f1 + u2_unlens * f2) / (f1 + f2)
 
-        return u_unlens      
+        return u_unlens
 
     def get_resolved_astrometry(self, t, filt_idx=0):
         '''
@@ -8869,6 +8867,7 @@ class BSPL_Phot(BSPL, PSPL_Phot):
             "Astrometry is not supported on this object: " +
             str(self.__class__))
 
+
 class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
     photometryFlag = True
     astrometryFlag = True
@@ -8893,16 +8892,16 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         dt2_in_years = (t - self.t0_sec) / days_per_year
 
         # Calculate position vs. time in arcsec
-        if self.orbitFlag=='linear' or self.orbitFlag == 'accelerated':
+        if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
             xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
             if self.orbitFlag == 'accelerated':
-                xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.acc) * 1e-3
-                
+                xS2_unlens += np.outer((0.5 * (dt1_in_years ** 2)), self.acc) * 1e-3
+
         elif self.orbitFlag == 'Keplerian':
-            dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
-            xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass
-            
+            dt_in_years = (t - self.t0) / days_per_year  # Array of Time With Respect To Primary
+            xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3  # Motion of the Center of Mass
+
             orb = orbits.Orbit()
             orb.w = self.omega
             orb.o = self.big_omega
@@ -8910,23 +8909,21 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             orb.e = self.e
             orb.p = self.p
             orb.tp = self.tp
-            orb.aleph = self.aleph *1e-3
-            orb.aleph2 = self.aleph_sec*1e-3
-            (x, y, x2, y2) = orb.oal2xy(t) #Calculates orbital motion around the CoM at times t (MJD values)
-            
+            orb.aleph = self.aleph * 1e-3
+            orb.aleph2 = self.aleph_sec * 1e-3
+            (x, y, x2, y2) = orb.oal2xy(t)  # Calculates orbital motion around the CoM at times t (MJD values)
+
             xS1_unlens = np.zeros((len(t), 2), dtype=float)
             xS2_unlens = np.zeros((len(t), 2), dtype=float)
-            
-            xS1_unlens[:,0] = xCoM_unlens[:, 0] + x
-            xS1_unlens[:,1] += xCoM_unlens[:, 1] + y
-            xS2_unlens[:,0] += xCoM_unlens[:, 0] + x2
-            xS2_unlens[:,1] += xCoM_unlens[:, 1] + y2
-            
-        else:    
+
+            xS1_unlens[:, 0] = xCoM_unlens[:, 0] + x
+            xS1_unlens[:, 1] += xCoM_unlens[:, 1] + y
+            xS2_unlens[:, 0] += xCoM_unlens[:, 0] + x2
+            xS2_unlens[:, 1] += xCoM_unlens[:, 1] + y2
+
+        else:
             xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS) * 1e-3
-
-            
 
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
@@ -8938,7 +8935,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
                                                           obsLocation=self.obsLocation[filt_idx])  # mas
             xS_unlensed += (self.piS * parallax_vec[:, np.newaxis, :]) * 1e-3  # arcsec
-            
+
         return xS_unlensed
 
     def get_astrometry_unlensed(self, t, filt_idx=0):
@@ -8962,7 +8959,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         xS_unlensed = (xS1_unlens * f1 + xS2_unlens * f2) / (f1 + f2)
 
         return xS_unlensed
-      
+
     def get_resolved_astrometry(self, t, filt_idx=0):
         """Parallax: For each source, get the x, y astrometry for the
         two lensed source images. For each source, we label the two
@@ -9067,7 +9064,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         xS_lensed = (xS1_lensed * f1 + xS2_lensed * f2) / (f1 + f2)
 
         return xS_lensed
-        
+
     def get_astrometry_shift(self, t, filt_idx=0):
         """Parallax: Get unresolved centroid shift (due to lensing) for each of the binary source.
 
@@ -9092,7 +9089,6 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
         u1 = np.linalg.norm(u_vec1, axis=1)
         u2 = np.linalg.norm(u_vec2, axis=1)
- 
 
         # Calculate the shifts for each source.
         thetaS1 = u_vec1 * self.thetaE_amp
@@ -9101,19 +9097,17 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         shift1 = thetaS1 / (u1[:, np.newaxis] ** 2 + 2.0)
         shift2 = thetaS2 / (u2[:, np.newaxis] ** 2 + 2.0)
 
-        xS1_lensed = xS1_unlens + (shift1 *1e-3)
-        xS2_lensed = xS2_unlens + (shift2 *1e-3)
+        xS1_lensed = xS1_unlens + (shift1 * 1e-3)
+        xS2_lensed = xS2_unlens + (shift2 * 1e-3)
 
-        
         N_sources = 2
         xS_lensed = np.zeros((len(t), N_sources, 2), dtype=float)
 
         xS_lensed[:, 0, :] = xS1_lensed
         xS_lensed[:, 1, :] = xS2_lensed
-        
 
         return xS_lensed
-        
+
     def get_centroid_shift(self, t, filt_idx=0):
         """Parallax: Get the centroid shift (in mas) for a list of
         observation times (in MJD).
@@ -9139,7 +9133,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         return shift
 
     def dexanimate(self, tE, time_steps, frame_time, name, size, zoom,
-                astrometry, type, loc):
+                   astrometry, type, loc):
         """ Produces animation of microlensing event. 
         This function takes the PSPL and makes an animation, the input variables are as follows
 
@@ -9166,18 +9160,18 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         t = self.t0 + (tau * self.tE)
 
         l = self.get_lens_astrometry(t)
-                    
+
         xS_unlensed = self.get_resolved_astrometry_unlensed(t)
-        source1 =xS_unlensed[:, 0, :]
-        source2 = xS_unlensed[:, 1, :]  
+        source1 = xS_unlensed[:, 0, :]
+        source2 = xS_unlensed[:, 1, :]
 
         xS_lensed = self.get_astrometry_shift(t)
         image1 = xS_lensed[:, 0, :]
-        image2 =  xS_lensed[:, 1, :]
-                    
+        image2 = xS_lensed[:, 1, :]
+
         xSL = self.get_resolved_astrometry(t)
-        xSL1_plus = xSL[:, 0, 0, :] 
-        xSL1_minu = xSL[:, 0, 1, :] 
+        xSL1_plus = xSL[:, 0, 0, :]
+        xSL1_minu = xSL[:, 0, 1, :]
         xSL2_plus = xSL[:, 1, 0, :]
         xSL2_minu = xSL[:, 1, 1, :]
 
@@ -9186,72 +9180,88 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         fig.subplots_adjust(hspace=.5)
 
         if type == 'resolved_unlensed':
-            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='grey', linewidth=2)
+            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='grey',
+                                 linewidth=2)
             s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='grey', linewidth=2)
-            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='purple', linewidth=2)
+            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='purple',
+                                 linewidth=2)
             s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
-            
+
         elif type == 'unresolved_lensed':
-            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Lensed Primary Source ", color='grey', linewidth=2)
+            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Lensed Primary Source ", color='grey',
+                                 linewidth=2)
             s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='grey', linewidth=2)
-            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Lensed Secondary Source ", color='purple', linewidth=2)
+            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Lensed Secondary Source ", color='purple',
+                                 linewidth=2)
             s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
-            
+
         elif type == 'resolved_unlensed_unresolved_lensed':
-            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='grey', linewidth=2)
+            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='grey',
+                                 linewidth=2)
             s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='grey', linewidth=2)
-            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='purple', linewidth=2)
+            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='purple',
+                                 linewidth=2)
             s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
-            i1_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Primary Source ", color='grey', linewidth=2)
+            i1_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Primary Source ", color='grey',
+                                 linewidth=2)
             i1_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='grey', linewidth=2)
-            i2_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Secondary Source ", color='purple', linewidth=2)
+            i2_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Secondary Source ", color='purple',
+                                 linewidth=2)
             i2_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='purple', linewidth=2)
-            
-        elif type == 'resolved_unlensed_resolved_lensed':    
-            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3,  color='grey', linewidth=2)
-            s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, label="Unlensed Primary Source ", color='grey', linewidth=2)
+
+        elif type == 'resolved_unlensed_resolved_lensed':
+            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, color='grey', linewidth=2)
+            s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, label="Unlensed Primary Source ", color='grey',
+                                 linewidth=2)
             s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, color='purple', linewidth=2)
-            s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, label="Unlensed Secondary Source ", color='purple', linewidth=2)
-                        
+            s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, label="Unlensed Secondary Source ", color='purple',
+                                 linewidth=2)
+
             i1_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='grey', linewidth=2)
-            i1_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Primary Source Major Image ", color='grey', linewidth=2)
+            i1_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Primary Source Major Image ",
+                                      color='grey', linewidth=2)
             i1_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='grey', linewidth=2)
-            i1_minus_line2, = ax1.plot([], ':', markersize=size[0] * 0.2, label="Lensed Primary Source Minor Image", color='grey', linewidth=2)
-                        
+            i1_minus_line2, = ax1.plot([], ':', markersize=size[0] * 0.2, label="Lensed Primary Source Minor Image",
+                                       color='grey', linewidth=2)
+
             i2_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='purple', linewidth=2)
-            i2_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Secondary Source Major Image ", color='purple', linewidth=2)
-            i2_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0,  color='purple', linewidth=2)
-            i2_minus_line2, = ax1.plot([], ':', markersize=size[0] * 0.2, label="Lensed Secondary Source Minor Image ", color='purple', linewidth=2)    
-    
-        l_line1, = ax1.plot([], '.', markersize=size[0] * 0.7,  color='k', linewidth=2)
+            i2_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Secondary Source Major Image ",
+                                      color='purple', linewidth=2)
+            i2_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='purple', linewidth=2)
+            i2_minus_line2, = ax1.plot([], ':', markersize=size[0] * 0.2, label="Lensed Secondary Source Minor Image ",
+                                       color='purple', linewidth=2)
+
+        l_line1, = ax1.plot([], '.', markersize=size[0] * 0.7, color='k', linewidth=2)
         l_line2, = ax1.plot([], '-', markersize=size[0] * 0.2, label="Lens", color='k', linewidth=2)
 
         ax1.set_xlabel('RA (")')
         ax1.set_ylabel('Dec (")')
         ax1.set_xlim(zoom, -zoom)
         ax1.set_ylim(-zoom, zoom)
-        
-        #ax1.set_xlim(zoom, -zoom)
-        #ax1.set_ylim(-zoom, zoom)
 
-        #plt.gca().set_xlim(1.1, 0.9)
-        #plt.gca().set_ylim(0.75, 1.3)
+        # ax1.set_xlim(zoom, -zoom)
+        # ax1.set_ylim(-zoom, zoom)
+
+        # plt.gca().set_xlim(1.1, 0.9)
+        # plt.gca().set_ylim(0.75, 1.3)
 
         ax1.legend(fontsize=12, loc=loc)
 
         if astrometry == "yes":
             line = [s1_line1, s1_line2, s2_line1, s2_line2, l_line1, l_line2]
+
             def update(i, source1, source2, lens, tau, line):
-                    # print(str(i) + ", ", end='', flush=True)
-                    line[0].set_data(source1[i, 0], source1[i, 1])
-                    line[1].set_data(source1[:i + 1, 0], source1[:i + 1, 1])
-                    line[2].set_data(source2[i, 0], source2[i, 1])
-                    line[3].set_data(source2[:i + 1, 0], source2[:i + 1, 1])
-                    line[4].set_data(lens[i, 0], lens[i, 1])
-                    line[5].set_data(lens[:i + 1, 0], lens[:i + 1, 1])
-                    return line
+                # print(str(i) + ", ", end='', flush=True)
+                line[0].set_data(source1[i, 0], source1[i, 1])
+                line[1].set_data(source1[:i + 1, 0], source1[:i + 1, 1])
+                line[2].set_data(source2[i, 0], source2[i, 1])
+                line[3].set_data(source2[:i + 1, 0], source2[:i + 1, 1])
+                line[4].set_data(lens[i, 0], lens[i, 1])
+                line[5].set_data(lens[:i + 1, 0], lens[:i + 1, 1])
+                return line
+
             if type == 'resolved_unlensed':
-    
+
                 """
                 FuncAnimation takes in the following arguments
     
@@ -9277,17 +9287,19 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
                                                      line],
                                               blit=True, interval=frame_time)
                 ani.save("%s.mp4" % name, writer="ffmpeg")
-                
-            elif type == 'unresolved_lensed': 
-               
+
+            elif type == 'unresolved_lensed':
+
                 ani = animation.FuncAnimation(fig, update, len(tau),
                                               fargs=[image1, image2, l, tau,
                                                      line],
                                               blit=True, interval=frame_time)
                 ani.save("%s.mp4" % name, writer="ffmpeg")
-                
+
             elif type == 'resolved_unlensed_unresolved_lensed':
-                line = [s1_line1, s1_line2, s2_line1, s2_line2,i1_line1, i1_line2, i2_line1, i2_line2, l_line1, l_line2]
+                line = [s1_line1, s1_line2, s2_line1, s2_line2, i1_line1, i1_line2, i2_line1, i2_line2, l_line1,
+                        l_line2]
+
                 def update(i, source1, source2, image1, image2, lens, tau, line):
                     # print(str(i) + ", ", end='', flush=True)
                     line[0].set_data(source1[i, 0], source1[i, 1])
@@ -9301,13 +9313,17 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
                     line[8].set_data(lens[i, 0], lens[i, 1])
                     line[9].set_data(lens[:i + 1, 0], lens[:i + 1, 1])
                     return line
-                ani = animation.FuncAnimation(fig, update, len(tau), fargs=[source1, source2,image1, image2, l, tau, line],
+
+                ani = animation.FuncAnimation(fig, update, len(tau),
+                                              fargs=[source1, source2, image1, image2, l, tau, line],
                                               blit=True, interval=frame_time)
                 ani.save("%s.mp4" % name, writer="ffmpeg")
-                
+
             elif type == 'resolved_unlensed_resolved_lensed':
-                line = [s1_line1, s1_line2, s2_line1, s2_line2, i1_plus_line1, i1_plus_line2, i1_minus_line1, i1_minus_line2, i2_plus_line1, i2_plus_line2, 
-                        i2_minus_line1,  i2_minus_line2, l_line1, l_line2]
+                line = [s1_line1, s1_line2, s2_line1, s2_line2, i1_plus_line1, i1_plus_line2, i1_minus_line1,
+                        i1_minus_line2, i2_plus_line1, i2_plus_line2,
+                        i2_minus_line1, i2_minus_line2, l_line1, l_line2]
+
                 def update(i, source1, source2, xSL1_plus, xSL1_minu, xSL2_plus, xSL2_minu, lens, tau, line):
                     # print(str(i) + ", ", end='', flush=True)
                     line[0].set_data(source1[i, 0], source1[i, 1])
@@ -9325,18 +9341,22 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
                     line[12].set_data(lens[i, 0], lens[i, 1])
                     line[13].set_data(lens[:i + 1, 0], lens[:i + 1, 1])
                     return line
-                ani = animation.FuncAnimation(fig, update, len(tau), fargs=[source1, source2,xSL1_plus, xSL1_minu, xSL2_plus, xSL2_minu, l, tau, line],
+
+                ani = animation.FuncAnimation(fig, update, len(tau),
+                                              fargs=[source1, source2, xSL1_plus, xSL1_minu, xSL2_plus, xSL2_minu, l,
+                                                     tau, line],
                                               blit=True, interval=frame_time)
-                ani.save("%s.mp4" % name, writer="ffmpeg")   
+                ani.save("%s.mp4" % name, writer="ffmpeg")
         else:
             print("Only astrometry for now")
 
         return ani
-                
+
 
 class BSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
-    def get_amplification(t):
+
+    def get_amplification(self, t):
         u_vec = self.get_u(t)
 
         u_vec1 = u_vec[:, 0, :]
@@ -9348,10 +9368,12 @@ class BSPL_Parallax(PSPL_Parallax):
         A1 = (u1 ** 2 + 2) / (u1 * np.sqrt(u1 ** 2 + 4))
         A2 = (u2 ** 2 + 2) / (u2 * np.sqrt(u2 ** 2 + 4))
         return A1 + A2
+
 
 class BSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
-    def get_amplification(t):
+
+    def get_amplification(self, t):
         u_vec = self.get_u(t)
 
         u_vec1 = u_vec[:, 0, :]
@@ -9364,7 +9386,7 @@ class BSPL_noParallax(PSPL_noParallax):
         A2 = (u2 ** 2 + 2) / (u2 * np.sqrt(u2 ** 2 + 4))
         return A1 + A2
 
-      
+
 # --------------------------------------------------
 #
 # Parameterization Class Family - BSPL
@@ -9454,11 +9476,11 @@ class BSPL_PhotParam1(PSPL_Param):
 
         # Check variable formatting.
         super().__init__()
-        
+
         # Calculate the microlensing parallax amplitude
         self.piE_amp = np.linalg.norm(self.piE)
         self.piE_E, self.piE_N = self.piE
-  
+
         # Baseline magnitude
         self.mag_base = self.mag_src_pri \
                         + self.mag_src_sec \
@@ -9469,7 +9491,7 @@ class BSPL_PhotParam1(PSPL_Param):
         self.muRel_hat = self.thetaE_hat
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
-  
+
         #####
         # Derived binary source parameters.
         #####
@@ -9482,7 +9504,7 @@ class BSPL_PhotParam1(PSPL_Param):
         # to the primary mass. This requires a combination of
         # phi and piE_hat.
         self.phi_piE_rad = np.arctan2(self.piE[0], self.piE[1])
-        
+
         # Note that phi_rho1 is the same alpha in our astrometry model;
         # however, here we don't have North as a reference.
         self.phi_rho1_rad = self.phi_piE_rad - self.phi_rad
@@ -9503,6 +9525,7 @@ class BSPL_PhotParam1(PSPL_Param):
         self.t0_sec = self.t0_pri - (s_murelhat * self.tE)
 
         return
+
 
 class BSPL_PhotAstromParam1(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
@@ -9692,7 +9715,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
         self.piE_amp = self.piRel / self.thetaE_amp
         self.piE = self.piE_amp * self.thetaE_hat
         self.piE_E, self.piE_N = self.piE
-        
+
         #####
         # Derived binary source parameters.
         #####
@@ -9715,7 +9738,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
 
         return
 
-      
+
 class BSPL_PhotAstromParam2(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
 
@@ -10130,7 +10153,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
 
         return
 
-      
+
 class BSPL_GP_PhotParam1(BSPL_PhotParam1):
     """BSPL model for photometry only, with GP.
 
@@ -10230,7 +10253,7 @@ class BSPL_GP_PhotParam1(BSPL_PhotParam1):
 
         return
 
-      
+
 class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
@@ -10333,13 +10356,13 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
         self.gp_log_omega0 = gp_log_omega0
 
         super().__init__(mL, t0, beta, dL, dL_dS,
-                 xS0_E, xS0_N,
-                 muL_E, muL_N,
-                 muS_E, muS_N,
-                 sep, alpha,
-                 mag_src_pri, mag_src_sec,
-                 b_sff,
-                 raL=raL, decL=decL, obsLocation=obsLocation)
+                         xS0_E, xS0_N,
+                         muL_E, muL_N,
+                         muS_E, muS_N,
+                         sep, alpha,
+                         mag_src_pri, mag_src_sec,
+                         b_sff,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -10473,14 +10496,14 @@ class BSPL_GP_PhotAstromParam2(BSPL_PhotAstromParam2):
         self.gp_log_S0 = {}
         for key, val in self.gp_log_omega04_S0.items():
             self.gp_log_S0[key] = self.gp_log_omega04_S0[key] - 4 * self.gp_log_omega0[key]
-            
+
         # Setup a useful "use_phot_gp" flag.
         self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
         for key in self.gp_log_sigma.keys():
             self.use_gp_phot[key] = True
 
         return
-   
+
 
 class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
     """
@@ -10600,6 +10623,7 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
 
         return
 
+
 class BSPL_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstromParam1):
     """BSPL model for astrometry and photometry - physical parameterization - for linear orbits.
 
@@ -10673,7 +10697,7 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
     decL: float, optional
         Declination of the lens in decimal degrees.
     """
-    
+
     fitter_param_names = ['mL', 't0', 't', 'beta', 'dL', 'dL_dS',
                           'xS0_E', 'xS0_N',
                           'muL_E', 'muL_N',
@@ -10699,7 +10723,6 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
                  mag_src_pri, mag_src_sec,
                  b_sff,
                  raL=None, decL=None, obsLocation='earth'):
-
         super().__init__(mL, t0, beta, dL, dL_dS,
                          xS0_E, xS0_N,
                          muL_E, muL_N,
@@ -10709,17 +10732,16 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
                          b_sff,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
-        
-        self.delta_muS_sec =  np.array([delta_muS_sec_E, delta_muS_sec_N])
+        self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E, self.delta_muS_sec_N = self.delta_muS_sec
-        self.muS_sec = self.muS + self.delta_muS_sec 
+        self.muS_sec = self.muS + self.delta_muS_sec
 
         self.muRel_sec = self.muS + self.delta_muS_sec - self.muL
         self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
         self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
+        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
 
-        self.tE_sec = self.thetaE_amp/self.muRel_sec_amp * days_per_year
+        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
         return
 
@@ -10830,25 +10852,27 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
                  raL=None, decL=None, obsLocation='earth'):
 
         super().__init__(mL, t0, beta, dL, dL_dS,
-                 xS0_E, xS0_N,
-                 muL_E, muL_N,
-                 muS_E, muS_N,
-                 delta_muS_sec_E, delta_muS_sec_N,
-                 sep, alpha,
-                 mag_src_pri, mag_src_sec,
-                 b_sff,
-                 raL=raL, decL=decL, obsLocation=obsLocation)
-                     
+                         xS0_E, xS0_N,
+                         muL_E, muL_N,
+                         muS_E, muS_N,
+                         delta_muS_sec_E, delta_muS_sec_N,
+                         sep, alpha,
+                         mag_src_pri, mag_src_sec,
+                         b_sff,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
         self.acc = np.array([acc_E, acc_N])
         self.acc_E, self.acc_N = self.acc
         self.acc_amp = np.linalg.norm(self.acc)
-        #self.acc_hat = self.muRel_sec_hat
-        if self.acc_E==0.0 and self.acc_N==0.0:
+        # self.acc_hat = self.muRel_sec_hat
+        if self.acc_E == 0.0 and self.acc_N == 0.0:
             self.acc_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc/self.acc_amp
-                     
+            self.acc_hat = self.acc / self.acc_amp
+
         return
+
+
 class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
     """BSPL model for astrometry and photometry - physical parameterization.
 
@@ -10941,7 +10965,6 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
     paramPhotFlag = True
     orbitFlag = 'linear'
 
-
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
                  xS0_E, xS0_N,
@@ -10950,30 +10973,26 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
                  raL=None, decL=None, obsLocation='earth'):
-
         super().__init__(t0, u0_amp, tE, thetaE, piS,
-                 piE_E, piE_N,
-                 xS0_E, xS0_N,
-                 muS_E, muS_N,
-                 sep, alpha, fratio_bin,
-                 mag_base, b_sff,
-                 raL=raL, decL=decL, obsLocation=obsLocation)
-                     
+                         piE_E, piE_N,
+                         xS0_E, xS0_N,
+                         muS_E, muS_N,
+                         sep, alpha, fratio_bin,
+                         mag_base, b_sff,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
-        self.muS_sec = self.muS + self.delta_muS_sec 
+        self.muS_sec = self.muS + self.delta_muS_sec
 
         self.muRel_sec = self.muS_sec - self.muL
         self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
         self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
+        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
 
+        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
-        self.tE_sec = self.thetaE_amp/self.muRel_sec_amp * days_per_year
-
-
-                     
         return
 
 
@@ -11055,7 +11074,7 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
     decL: float, optional
         Declination of the lens in decimal degrees.
     """
-    
+
     fitter_param_names = ['mL', 't0', 't', 'beta', 'dL', 'dL_dS',
                           'xS0_E', 'xS0_N',
                           'muL_E', 'muL_N',
@@ -11073,8 +11092,6 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
     paramPhotFlag = True
     orbitFlag = 'accelerated'
 
-    
-
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
                  xS0_E, xS0_N,
@@ -11086,23 +11103,24 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
                  raL=None, decL=None, obsLocation='earth'):
 
         super().__init__(t0, u0_amp, tE, thetaE, piS,
-                 piE_E, piE_N,
-                 xS0_E, xS0_N,
-                 muS_E, muS_N,
-                 delta_muS_sec_E, delta_muS_sec_N,
-                 sep, alpha, fratio_bin,
-                 mag_base, b_sff,
-                 raL=raL, decL=decL, obsLocation=obsLocation)
-                     
+                         piE_E, piE_N,
+                         xS0_E, xS0_N,
+                         muS_E, muS_N,
+                         delta_muS_sec_E, delta_muS_sec_N,
+                         sep, alpha, fratio_bin,
+                         mag_base, b_sff,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
         self.acc = np.array([acc_E, acc_N])
         self.acc_E, self.acc_N = self.acc
         self.acc_amp = np.linalg.norm(self.acc)
-        if self.acc_E==0.0 and self.acc_N==0.0:
+        if self.acc_E == 0.0 and self.acc_N == 0.0:
             self.acc_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc/self.acc_amp
-                     
+            self.acc_hat = self.acc / self.acc_amp
+
         return
+
 
 class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
     """BSPL model for astrometry and photometry - physical parameterization.
@@ -11204,7 +11222,6 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
                  raL=None, decL=None, obsLocation='earth'):
-
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                          piE_E, piE_N,
                          xS0_E, xS0_N,
@@ -11216,15 +11233,13 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
-        self.muS_sec = self.muS + self.delta_muS_sec 
+        self.muS_sec = self.muS + self.delta_muS_sec
 
-        
         self.muRel_sec = self.muRel + self.delta_muS_sec
         self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
         self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
-        self.tE_sec = self.thetaE_amp/self.muRel_sec_amp * days_per_year
-
+        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
+        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
         return
 
@@ -11344,15 +11359,15 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
                          sep, alpha, fratio_bin,
                          mag_base, b_sff,
                          raL=raL, decL=decL, obsLocation=obsLocation)
-                
+
         self.acc = np.array([acc_E, acc_N])
         self.acc_E, self.acc_N = self.acc
         self.acc_amp = np.linalg.norm(self.acc)
-        if self.acc_E==0.0 and self.acc_N==0.0:
+        if self.acc_E == 0.0 and self.acc_N == 0.0:
             self.acc_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc/self.acc_amp
-                     
+            self.acc_hat = self.acc / self.acc_amp
+
         return
 
 
@@ -11470,7 +11485,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
                  b_sff,
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0  # time of closest approach for system=primary pos
-                     
+
         self.mL = mL
         self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
         self.beta = beta
@@ -11494,12 +11509,12 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         self.tp = tp
         self.aleph = aleph  # mas
         self.aleph_sec = aleph_sec  # mas
-        
-        #self.vx = muS_system_E * 1e-3
-        #self.vy = muS_system_N * 1e-3
-                     
-        #self.x0 = x0_system_E
-        #self.y0 = x0_system_N
+
+        # self.vx = muS_system_E * 1e-3
+        # self.vy = muS_system_N * 1e-3
+
+        # self.x0 = x0_system_E
+        # self.y0 = x0_system_N
 
         self.sep = aleph + aleph_sec
 
@@ -11587,7 +11602,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         # Calculate the Einstein crossing time. (days)
         self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
 
-                     #####
+        #####
         # Derived binary source parameters.
         #####
         # Primary -- at origin
@@ -11609,7 +11624,7 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
 
         # CoM
         com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
-                                       np.cos(self.alpha_rad)))  # mas
+                                         np.cos(self.alpha_rad)))  # mas
 
         # Vodoo Magic (Binary Source t0 conversion from t0_com to t0_p=t0)
 
@@ -11621,9 +11636,9 @@ class BSPL_PhotAstrom_Ell_Param1(PSPL_Param):
         q_source = self.mass_source_primary / self.mass_source_secondary
         qeff_source = (1 - q_source) / (1 + q_source)
         self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
-                     
-        self.xS0_com = self.xS0_pri + com_vec *1e-3
-                     
+
+        self.xS0_com = self.xS0_pri + com_vec * 1e-3
+
         return
 
 
@@ -11741,7 +11756,6 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
                  fratio_bin,
                  mag_base, b_sff,
                  raL=None, decL=None, obsLocation='earth'):
-
         self.t0 = t0  # Makes get_lens_astrometry easier.
         self.u0_amp = u0_amp
         self.tE = tE
@@ -11853,9 +11867,9 @@ class BSPL_PhotAstrom_Ell_Param2(PSPL_Param):
 
         # CoM
         com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
-                                       np.cos(self.alpha_rad)))  # mas
+                                         np.cos(self.alpha_rad)))  # mas
 
-        self.xS0_com = self.xS0_pri + com_vec *1e-3
+        self.xS0_com = self.xS0_pri + com_vec * 1e-3
 
         return
 
@@ -12094,7 +12108,7 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
         qeff_source = (1 - q_source) / (1 + q_source)
         self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
 
-         # Derived binary source parameters.
+        # Derived binary source parameters.
         #####
         # Primary -- at origin
         self.t0_pri = self.t0
@@ -12115,10 +12129,10 @@ class BSPL_PhotAstrom_Ell_Param3(PSPL_Param):
 
         # CoM
         com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
-                                       np.cos(self.alpha_rad)))  # mas
+                                         np.cos(self.alpha_rad)))  # mas
 
-        self.xS0_com = self.xS0_pri + com_vec *1e-3
-                     
+        self.xS0_com = self.xS0_pri + com_vec * 1e-3
+
         return
 
 
@@ -12579,7 +12593,7 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
         Declination of the lens in decimal degrees.
     """
 
-    orbitFlag='linear'
+    orbitFlag = 'linear'
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
@@ -12592,7 +12606,6 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
                  b_sff,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                  raL=None, decL=None, obsLocation='earth'):
-
         super().__init__(mL, t0, beta, dL, dL_dS,
                          xS0_E, xS0_N,
                          muL_E, muL_N,
@@ -12602,21 +12615,20 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
                          b_sff,
                          gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                          raL=raL, decL=decL, obsLocation=obsLocation)
-        
-        
+
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
-        
+
         self.muRel_sec = self.muRel + self.delta_muS_sec
         self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
         self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
-        self.tE_sec = self.thetaE_amp/self.muRel_sec_amp * days_per_year
+        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
+        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
         return
 
-      
+
 class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
@@ -12697,7 +12709,7 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
         Declination of the lens in decimal degrees.
     """
 
-    orbitFlag='accelerated'
+    orbitFlag = 'accelerated'
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
@@ -12722,18 +12734,17 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
                          b_sff,
                          gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                          raL=raL, decL=decL, obsLocation=obsLocation)
-        
-                
+
         self.acc = np.array([acc_E, acc_N])
         self.acc_E, self.acc_N = self.acc
         self.acc_amp = np.linalg.norm(self.acc)
-        if self.acc_E==0.0 and self.acc_N==0.0:
+        if self.acc_E == 0.0 and self.acc_N == 0.0:
             self.acc_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc/self.acc_amp
-                     
+            self.acc_hat = self.acc / self.acc_amp
 
         return
+
 
 class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
@@ -12829,7 +12840,6 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
                  mag_base, b_sff,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                  raL=None, decL=None, obsLocation='earth'):
-
         super().__init__(t0, u0_amp, tE, thetaE, piS,
                          piE_E, piE_N,
                          xS0_E, xS0_N,
@@ -12839,18 +12849,18 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
                          gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
-        
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
-        
+
         self.muRel_sec = self.muRel + self.delta_muS_sec
         self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
         self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
-        self.tE_sec = self.thetaE_amp/self.muRel_sec_amp * days_per_year
+        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
+        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
         return
+
 
 class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
@@ -12958,18 +12968,16 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
                          gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
-        
-        
         self.acc = np.array([acc_E, acc_N])
         self.acc_E, self.acc_N = self.acc
         self.acc_amp = np.linalg.norm(self.acc)
-        if self.acc_E==0.0 and self.acc_N==0.0:
+        if self.acc_E == 0.0 and self.acc_N == 0.0:
             self.acc_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc/self.acc_amp
-                     
+            self.acc_hat = self.acc / self.acc_amp
 
         return
+
 
 class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
     """
@@ -13046,7 +13054,7 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
     decL: float, optional
         Declination of the lens in decimal degrees.
     """
-    orbitFlag='linear'
+    orbitFlag = 'linear'
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
@@ -13058,7 +13066,6 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
                  mag_base, b_sff,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                  raL=None, decL=None, obsLocation='earth'):
-
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                          piE_E, piE_N,
                          xS0_E, xS0_N,
@@ -13068,21 +13075,19 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
                          gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
-        
-        
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
-        
+
         self.muRel_sec = self.muRel + self.delta_muS_sec
         self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
         self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec/self.muRel_sec_amp
+        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
 
-        self.tE_sec = self.thetaE_amp/self.muRel_sec_amp * days_per_year
+        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
-                     
         return
+
 
 class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
     """
@@ -13159,7 +13164,7 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
     decL: float, optional
         Declination of the lens in decimal degrees.
     """
-    orbitFlag='accelerated'
+    orbitFlag = 'accelerated'
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
@@ -13183,18 +13188,16 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
                          gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
-        
-        
         self.acc = np.array([acc_E, acc_N])
         self.acc_E, self.acc_N = self.acc
         self.acc_amp = np.linalg.norm(self.acc)
-        if self.acc_E==0.0 and self.acc_N==0.0:
+        if self.acc_E == 0.0 and self.acc_N == 0.0:
             self.acc_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc/self.acc_amp
-                     
+            self.acc_hat = self.acc / self.acc_amp
+
         return
-                     
+
 
 ######################################################
 ### BINARY SOURCE BINARY LENS (BSBL) CLASSES ###
@@ -13449,16 +13452,19 @@ class BSBL(PSBL):
             Magnitude of each lensed image centroid at t_obs.
             Shape = [5, len(t_obs)]
         '''
+        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
+        flux_zp = 1.0
+
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t_obs)
 
         # Mask invalid values from the amplification array.
         amp_arr_mskd = np.masked_invalid(amp_arr)
-        
+
         # mags to fluxes
         # switch nan mags to 0 fluxes
-        f1 = np.nan_to_num(mag2flux(self.mag_src_pri[filt_idx]), nan = 0)
-        f2 = np.nan_to_num(mag2flux(self.mag_src_sec[filt_idx]), nan = 0)
+        f1 = np.nan_to_num(mag2flux(self.mag_src_pri[filt_idx]), nan=0)
+        f2 = np.nan_to_num(mag2flux(self.mag_src_sec[filt_idx]), nan=0)
 
         flux_model = amp_arr_mskd
         flux_model[:, 0, :] *= f1
@@ -13514,11 +13520,11 @@ class BSBL(PSBL):
         amp = np.sum(amp_arr_msk, axis=2)
         A1 = amp[:, 0]
         A2 = amp[:, 1]
-        
+
         # mags to fluxes
         # switch nan mags to 0 fluxes
-        f1 = np.nan_to_num(mag2flux(self.mag_src_pri[filt_idx]), nan = 0)
-        f2 = np.nan_to_num(mag2flux(self.mag_src_sec[filt_idx]), nan = 0)
+        f1 = np.nan_to_num(mag2flux(self.mag_src_pri[filt_idx]), nan=0)
+        f2 = np.nan_to_num(mag2flux(self.mag_src_sec[filt_idx]), nan=0)
 
         f1_lensed = f1 * A1
         f2_lensed = f2 * A2
@@ -13785,7 +13791,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
             raise RuntimeError("time must be a 1D numpy array")
 
         # Find positions of lenses and sources over t_obs (arcsec)
-        xS_vec = self.get_resolved_astrometry_unlensed(t, filt_idx=filt_idx)  # shape = [N_times, N_sources, 2 directions]
+        xS_vec = self.get_resolved_astrometry_unlensed(t,
+                                                       filt_idx=filt_idx)  # shape = [N_times, N_sources, 2 directions]
         xL1_vec, xL2_vec = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
 
         # Convert positions to complex coordinates
@@ -13796,7 +13803,6 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
 
         return w, z1, z2
 
-    
     def get_resolved_astrometry_unlensed(self, t, filt_idx=0):
         """Get the astrometry of the sources if the lens didn't exist.
 
@@ -13814,13 +13820,11 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         """
         # Equation of motion for just the background source.
         dt1_in_years = (t - self.t0) / days_per_year
-        #dt2_in_years = (t - self.t0_sec) / days_per_year
-        #Test. call function. two position vectors on the sky calculated. Subtract the two and make sure that the separation stays the same in the no orbits case. 
-
+        # dt2_in_years = (t - self.t0_sec) / days_per_year
+        # Test. call function. two position vectors on the sky calculated. Subtract the two and make sure that the separation stays the same in the no orbits case.
 
         # Calculate position vs. time in arcsec
 
-        
         if self.orbitFlag == 'Keplerian':
             xS1_unlens = np.zeros((len(t), 2), dtype=float)
             xS2_unlens = np.zeros((len(t), 2), dtype=float)
@@ -13831,8 +13835,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
             orb.e = self.eS
             orb.p = self.pS
             orb.tp = self.tpS
-            orb.aleph = self.alephS *1e-3
-            orb.aleph2 = self.aleph_secS*1e-3
+            orb.aleph = self.alephS * 1e-3
+            orb.aleph2 = self.aleph_secS * 1e-3
             orb.vx = self.vxS
             orb.vy = self.vyS
             orb.x0 = self.xS0_E
@@ -13842,22 +13846,21 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
             xS1_unlens[:, 1] = y
             xS2_unlens[:, 0] = x2
             xS2_unlens[:, 1] = y2
-        else:    
+        else:
             xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS) * 1e-3
-    
+
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
 
         xS_unlensed[:, 0, :] = xS1_unlens
-        xS_unlensed[:, 1, :] = xS2_unlens        
+        xS_unlensed[:, 1, :] = xS2_unlens
 
         if self.parallaxFlag:
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t)  # mas
             xS_unlensed += (self.piS * parallax_vec[:, np.newaxis, :]) * 1e-3  # arcsec
 
-        return xS_unlensed #arcsex
-        
+        return xS_unlensed  # arcsex
 
     def get_astrometry_unlensed(self, t, filt_idx=0):
         """Get the astrometry of the combined, flux-weighted sources if the
@@ -13907,7 +13910,6 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
 
         return xL
 
-
     def get_resolved_lens_astrometry(self, t_obs, filt_idx=0):
         """Equation of motion for just the foreground lenses, individually.
 
@@ -13923,16 +13925,16 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         xL2 : array_like, shape = [N_times, 2 directions]
             Position of the lens secondary
         """
-        
-        xL = self.get_lens_astrometry(t_obs, filt_idx=filt_idx) # arcsec
+
+        xL = self.get_lens_astrometry(t_obs, filt_idx=filt_idx)  # arcsec
 
         offset = 0.5 * self.sepL * np.array([np.sin(self.alphaL_rad),
-                                            np.cos(self.alphaL_rad)])
+                                             np.cos(self.alphaL_rad)])
         offset *= 1e-3  # convert to arcsec
 
         xL1 = xL + offset  # primary
         xL2 = xL - offset  # secondary
-        
+
         if self.orbitFlag == 'Keplerian':
             xL1 = np.zeros((len(t_obs), 2), dtype=float)
             xL2 = np.zeros((len(t_obs), 2), dtype=float)
@@ -13943,8 +13945,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
             orb.e = self.eL
             orb.p = self.pL
             orb.tp = self.tpL
-            orb.aleph = self.alephL *1e-3
-            orb.aleph2 = self.aleph_secL*1e-3
+            orb.aleph = self.alephL * 1e-3
+            orb.aleph2 = self.aleph_secL * 1e-3
             orb.vx = self.vxL
             orb.vy = self.vyL
             orb.x0 = self.xL0_E
@@ -13960,9 +13962,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
                 parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t_obs)
                 xL1 += (self.piL * parallax_vec) * 1e-3  # arcsec
                 xL2 += (self.piL * parallax_vec) * 1e-3  # arcsec
-            
-        return (xL1, xL2)
 
+        return (xL1, xL2)
 
     def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
         """Parallax: For each source, get the x, y astrometry for the
@@ -14049,8 +14050,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         amp_arr_mskd = np.ma.masked_invalid(amp_arr)
         xS_lensed_res_mskd = np.ma.masked_invalid(xS_lensed_res)
 
-        xS_lensed_ures = np.sum(xS_lensed_res_mskd * amp_arr_mskd[:,:,:,np.newaxis], axis=(1,2))
-        xS_lensed_ures /= np.sum(amp_arr_mskd[:,:,:,np.newaxis], axis=(1,2))
+        xS_lensed_ures = np.sum(xS_lensed_res_mskd * amp_arr_mskd[:, :, :, np.newaxis], axis=(1, 2))
+        xS_lensed_ures /= np.sum(amp_arr_mskd[:, :, :, np.newaxis], axis=(1, 2))
 
         return xS_lensed_ures.data
 
@@ -14077,9 +14078,9 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         shift = xS - xS_unlensed
 
         return shift
-    
+
     def dexanimate(self, tE, time_steps, frame_time, name, size, zoom, astrometry, loc):
-            """ Produces animation of microlensing event. 
+        """ Produces animation of microlensing event.
             This function takes the PSPL and makes an animation, the input variables are as follows
     
             Parameters
@@ -14100,113 +14101,119 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
             zoom:
                 # of einstein radii plotted in vertical direction
             """
-    
-            times = np.array(range(-time_steps, time_steps + 1, 1))
-            tau = tE * times / (-times[0])
-            t = self.t0 + (tau * self.tE)
-    
-            img, amp = self.get_all_arrays(t)
-    
-            xL1, xL2 = self.get_resolved_lens_astrometry(t)
-            source  = self.get_resolved_astrometry_unlensed(t) 
-            source_primary = source[:, 0, :]
-            source_secondary = source[:, 1, :]
-    
-            xS_resolved = self.get_resolved_astrometry(t, image_arr = img)
-            img_pri = xS_resolved[:, 0, :, :] 
-            img_sec = xS_resolved[:, 1, :, :] 
-    
-            fig = plt.figure(figsize=[size[0], size[1] + 0.5])  # sets up the figure
-            ax1 = fig.add_subplot(2, 1, 1)
-            fig.subplots_adjust(hspace=.5)
-    
-            markersize = 1
-            linewidth = 1
-            l1_line1, = ax1.plot([], '.', markersize = size[0] * 1.3, label="Primary Lens ", color='#FF8C00', linewidth=2)
-            l1_line2, = ax1.plot([], '-', markersize = size[0] * .3, color='#FF8C00', linewidth=2)
-            l2_line1, = ax1.plot([], '.', markersize = size[0] * 1.3, label="Secondary Lens ", color='#FF218C', linewidth=2)
-            l2_line2, = ax1.plot([], '-', markersize = size[0] * .3, color='#FF218C',linewidth=2 )
-        
-            s1_line1, = ax1.plot([], '.', markersize = size[0] * 1.3, label="Unlensed Primary Source", color='#21B1FF', linewidth=2)
-            s1_line2, = ax1.plot([], '-', markersize = size[0] * .3, color='#21B1FF', linewidth=2)
-        
-            s2_line1, = ax1.plot([], '.', markersize = size[0] * 1.3,label="Unlensed Secondary Source", color='springgreen', linewidth=2)
-            s2_line2, = ax1.plot([], '-', markersize = size[0] * .3, color='springgreen', linewidth=2)
-    
-    
-    
-        
-            i11_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, label="Lensed Primary Image", color='#21B1FF')
-            i11_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='#21B1FF')
-            i12_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='#21B1FF')
-            i12_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='#21B1FF')
-            i13_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='#21B1FF')
-            i13_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='#21B1FF')
-            i14_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='#21B1FF')
-            i14_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='#21B1FF')
-            i15_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='#21B1FF')
-            i15_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='#21B1FF')
-        
-            i21_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, label="Lensed Secondary Image", color='springgreen')
-            i21_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='springgreen')
-            i22_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='springgreen')
-            i22_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='springgreen')
-            i23_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='springgreen')
-            i23_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='springgreen')
-            i24_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='springgreen')
-            i24_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='springgreen')
-            i25_line1, = ax1.plot([], '.', markersize = size[0] * 1.0, color='springgreen')
-            i25_line2, = ax1.plot([], '.', markersize = size[0] * .2, color='springgreen')
-    
-        
-            
-            ax1.set_xlabel('RA (")')
-            ax1.set_ylabel('Dec (")')
-            ax1.set_xlim(zoom, -zoom)
-            ax1.set_ylim(-zoom, zoom)
-            ax1.legend(fontsize=12, loc=loc)
-    
-            line = [l1_line1, l1_line2, l2_line1, l2_line2, s1_line1, s1_line2, s2_line1, s2_line2, i11_line1, i11_line2, i12_line1, i12_line2, i13_line1, i13_line2, i14_line1, i14_line2, i15_line1, i15_line2,i21_line1, i21_line2, i22_line1, i22_line2, i23_line1, i23_line2, i24_line1, i24_line2, i25_line1, i25_line2]
-        
-            def update(i, lens1, lens2, source1, source2, image1, image2, image3, image4, image5,image6, image7, image8, image9, image10, tau, line):
-                    line[0].set_data(lens1[i, 0], lens1[i, 1])
-                    line[1].set_data(lens1[:i + 1, 0], lens1[:i + 1, 1])
-                    line[2].set_data(lens2[i, 0], lens2[i, 1])
-                    line[3].set_data(lens2[:i + 1, 0], lens2[:i + 1, 1])
-                    line[4].set_data(source1[i, 0], source1[i, 1])
-                    line[5].set_data(source1[:i + 1, 0], source1[:i + 1, 1])
-                    line[6].set_data(source2[i, 0], source2[i, 1])
-                    line[7].set_data(source2[:i + 1, 0], source2[:i + 1, 1])
-                
-                    line[8].set_data(image1[i, 0], image1[i, 1])
-                    line[9].set_data(image1[:i + 1, 0], image1[:i + 1, 1])
-                    line[10].set_data(image2[i, 0], image2[i, 1])
-                    line[11].set_data(image2[:i + 1, 0], image2[:i + 1, 1])
-                    line[12].set_data(image3[i, 0], image3[i, 1])
-                    line[13].set_data(image3[:i + 1, 0], image3[:i + 1, 1])
-                    line[14].set_data(image4[i, 0], image4[i, 1])
-                    line[15].set_data(image4[:i + 1, 0], image4[:i + 1, 1])
-                    line[16].set_data(image5[i, 0], image5[i, 1])
-                    line[17].set_data(image5[:i + 1, 0], image5[:i + 1, 1])
-                    line[18].set_data(image6[i, 0], image6[i, 1])
-                    line[19].set_data(image6[:i + 1, 0], image6[:i + 1, 1])
-                    line[20].set_data(image7[i, 0], image7[i, 1])
-                    line[21].set_data(image7[:i + 1, 0], image7[:i + 1, 1])
-                    line[22].set_data(image8[i, 0], image8[i, 1])
-                    line[23].set_data(image8[:i + 1, 0], image8[:i + 1, 1])
-                    line[24].set_data(image9[i, 0], image9[i, 1])
-                    line[25].set_data(image9[:i + 1, 0], image9[:i + 1, 1])
-                    line[26].set_data(image10[i, 0], image10[i, 1])
-                    line[27].set_data(image10[:i + 1, 0], image10[:i + 1, 1])
-                    return line
-            ani = animation.FuncAnimation(fig, update, len(tau), fargs=[xL1, xL2,source_primary, source_secondary, img_pri[:,0], img_pri[:,1], img_pri[:,2], img_pri[:,3], img_pri[:,4],img_sec[:,0], img_sec[:,1], img_sec[:,2], img_sec[:,3], img_sec[:,4], tau, line], blit=True, interval=frame_time)
-            ani.save("%s.mp4" % name, writer="ffmpeg")   
-        
-            return ani
+
+        times = np.array(range(-time_steps, time_steps + 1, 1))
+        tau = tE * times / (-times[0])
+        t = self.t0 + (tau * self.tE)
+
+        img, amp = self.get_all_arrays(t)
+
+        xL1, xL2 = self.get_resolved_lens_astrometry(t)
+        source = self.get_resolved_astrometry_unlensed(t)
+        source_primary = source[:, 0, :]
+        source_secondary = source[:, 1, :]
+
+        xS_resolved = self.get_resolved_astrometry(t, image_arr=img)
+        img_pri = xS_resolved[:, 0, :, :]
+        img_sec = xS_resolved[:, 1, :, :]
+
+        fig = plt.figure(figsize=[size[0], size[1] + 0.5])  # sets up the figure
+        ax1 = fig.add_subplot(2, 1, 1)
+        fig.subplots_adjust(hspace=.5)
+
+        markersize = 1
+        linewidth = 1
+        l1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Primary Lens ", color='#FF8C00', linewidth=2)
+        l1_line2, = ax1.plot([], '-', markersize=size[0] * .3, color='#FF8C00', linewidth=2)
+        l2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Secondary Lens ", color='#FF218C', linewidth=2)
+        l2_line2, = ax1.plot([], '-', markersize=size[0] * .3, color='#FF218C', linewidth=2)
+
+        s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source", color='#21B1FF',
+                             linewidth=2)
+        s1_line2, = ax1.plot([], '-', markersize=size[0] * .3, color='#21B1FF', linewidth=2)
+
+        s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source", color='springgreen',
+                             linewidth=2)
+        s2_line2, = ax1.plot([], '-', markersize=size[0] * .3, color='springgreen', linewidth=2)
+
+        i11_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Primary Image", color='#21B1FF')
+        i11_line2, = ax1.plot([], '.', markersize=size[0] * .2, color='#21B1FF')
+        i12_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='#21B1FF')
+        i12_line2, = ax1.plot([], '.', markersize=size[0] * .2, color='#21B1FF')
+        i13_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='#21B1FF')
+        i13_line2, = ax1.plot([], '.', markersize=size[0] * .2, color='#21B1FF')
+        i14_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='#21B1FF')
+        i14_line2, = ax1.plot([], '.', markersize=size[0] * .2, color='#21B1FF')
+        i15_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='#21B1FF')
+        i15_line2, = ax1.plot([], '.', markersize=size[0] * .2, color='#21B1FF')
+
+        i21_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Secondary Image", color='springgreen')
+        i21_line2, = ax1.plot([], '.', markersize=size[0] * .2, color='springgreen')
+        i22_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='springgreen')
+        i22_line2, = ax1.plot([], '.', markersize=size[0] * .2, color='springgreen')
+        i23_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='springgreen')
+        i23_line2, = ax1.plot([], '.', markersize=size[0] * .2, color='springgreen')
+        i24_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='springgreen')
+        i24_line2, = ax1.plot([], '.', markersize=size[0] * .2, color='springgreen')
+        i25_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='springgreen')
+        i25_line2, = ax1.plot([], '.', markersize=size[0] * .2, color='springgreen')
+
+        ax1.set_xlabel('RA (")')
+        ax1.set_ylabel('Dec (")')
+        ax1.set_xlim(zoom, -zoom)
+        ax1.set_ylim(-zoom, zoom)
+        ax1.legend(fontsize=12, loc=loc)
+
+        line = [l1_line1, l1_line2, l2_line1, l2_line2, s1_line1, s1_line2, s2_line1, s2_line2, i11_line1, i11_line2,
+                i12_line1, i12_line2, i13_line1, i13_line2, i14_line1, i14_line2, i15_line1, i15_line2, i21_line1,
+                i21_line2, i22_line1, i22_line2, i23_line1, i23_line2, i24_line1, i24_line2, i25_line1, i25_line2]
+
+        def update(i, lens1, lens2, source1, source2, image1, image2, image3, image4, image5, image6, image7, image8,
+                   image9, image10, tau, line):
+            line[0].set_data(lens1[i, 0], lens1[i, 1])
+            line[1].set_data(lens1[:i + 1, 0], lens1[:i + 1, 1])
+            line[2].set_data(lens2[i, 0], lens2[i, 1])
+            line[3].set_data(lens2[:i + 1, 0], lens2[:i + 1, 1])
+            line[4].set_data(source1[i, 0], source1[i, 1])
+            line[5].set_data(source1[:i + 1, 0], source1[:i + 1, 1])
+            line[6].set_data(source2[i, 0], source2[i, 1])
+            line[7].set_data(source2[:i + 1, 0], source2[:i + 1, 1])
+
+            line[8].set_data(image1[i, 0], image1[i, 1])
+            line[9].set_data(image1[:i + 1, 0], image1[:i + 1, 1])
+            line[10].set_data(image2[i, 0], image2[i, 1])
+            line[11].set_data(image2[:i + 1, 0], image2[:i + 1, 1])
+            line[12].set_data(image3[i, 0], image3[i, 1])
+            line[13].set_data(image3[:i + 1, 0], image3[:i + 1, 1])
+            line[14].set_data(image4[i, 0], image4[i, 1])
+            line[15].set_data(image4[:i + 1, 0], image4[:i + 1, 1])
+            line[16].set_data(image5[i, 0], image5[i, 1])
+            line[17].set_data(image5[:i + 1, 0], image5[:i + 1, 1])
+            line[18].set_data(image6[i, 0], image6[i, 1])
+            line[19].set_data(image6[:i + 1, 0], image6[:i + 1, 1])
+            line[20].set_data(image7[i, 0], image7[i, 1])
+            line[21].set_data(image7[:i + 1, 0], image7[:i + 1, 1])
+            line[22].set_data(image8[i, 0], image8[i, 1])
+            line[23].set_data(image8[:i + 1, 0], image8[:i + 1, 1])
+            line[24].set_data(image9[i, 0], image9[i, 1])
+            line[25].set_data(image9[:i + 1, 0], image9[:i + 1, 1])
+            line[26].set_data(image10[i, 0], image10[i, 1])
+            line[27].set_data(image10[:i + 1, 0], image10[:i + 1, 1])
+            return line
+
+        ani = animation.FuncAnimation(fig, update, len(tau),
+                                      fargs=[xL1, xL2, source_primary, source_secondary, img_pri[:, 0], img_pri[:, 1],
+                                             img_pri[:, 2], img_pri[:, 3], img_pri[:, 4], img_sec[:, 0], img_sec[:, 1],
+                                             img_sec[:, 2], img_sec[:, 3], img_sec[:, 4], tau, line], blit=True,
+                                      interval=frame_time)
+        ani.save("%s.mp4" % name, writer="ffmpeg")
+
+        return ani
 
 
 class BSBL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+
     def get_amplification(self, t_obs, amp_arr=None):
         """noParallax: Get the photometric amplification term at a set of times, t.
         
@@ -14221,12 +14228,13 @@ class BSBL_Parallax(PSPL_Parallax):
         amp_arr_msk = np.ma.masked_invalid(amp_arr)
         # Sum up all the amplifications b/c surface brightness is conserved.
         amp = np.sum(amp_arr_msk, axis=2)
-        
-        return amp[:, 0] + amp[:, 1] #Combined amplification of both sources
-        
+
+        return amp[:, 0] + amp[:, 1]  # Combined amplification of both sources
+
 
 class BSBL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+
     def get_amplification(self, t_obs, amp_arr=None):
         """noParallax: Get the photometric amplification term at a set of times, t.
         
@@ -14241,9 +14249,8 @@ class BSBL_noParallax(PSPL_noParallax):
         amp_arr_msk = np.ma.masked_invalid(amp_arr)
         # Sum up all the amplifications b/c surface brightness is conserved.
         amp = np.sum(amp_arr_msk, axis=2)
-        
-        return amp[:, 0] + amp[:, 1] #Combined amplification of both sources
-        
+
+        return amp[:, 0] + amp[:, 1]  # Combined amplification of both sources
 
 
 # --------------------------------------------------
@@ -14341,7 +14348,7 @@ class BSBL_PhotParam1(PSPL_Param):
         self.obsLocation = obsLocation
 
         # Separation between source and lens
-        self.sep_SL = sep # mas
+        self.sep_SL = sep  # mas
 
         # Binary source parameters.
         self.sep_S = sep_S  # mas
@@ -14394,7 +14401,6 @@ class BSBL_PhotParam1(PSPL_Param):
         self.xL2_over_theta = np.array([-0.5 * self.sep_L * np.sin(self.phi_L_rho1_rad),
                                         -0.5 * self.sep_L * np.cos(self.phi_L_rho1_rad)])
 
-
         # ON NO>>> TWO DIFFERENT CONVENTIONS.
         # Primary -- at origin
         self.t0_pri = self.t0
@@ -14412,6 +14418,7 @@ class BSBL_PhotParam1(PSPL_Param):
         self.t0_sec = self.t0_pri - (s_murelhat * self.tE)
 
         return
+
 
 class BSBL_PhotAstromParam1(PSPL_Param):
     """BSBL model for astrometry and photometry - physical parameterization.
@@ -14493,11 +14500,11 @@ class BSBL_PhotAstromParam1(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag= False
+    orbitFlag = False
 
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                 sepL, alphaL, sepS, alphaS, 
+                 sepL, alphaL, sepS, alphaS,
                  mag_src_pri, mag_src_sec, b_sff,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
@@ -14561,8 +14568,8 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         self.thetaE = self.thetaE_amp * self.thetaE_hat
 
         # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
-        m1 = units.rad**2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
-        m2 = units.rad**2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
         self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
         self.m2 = m2.to(units.arcsec ** 2).value
 
@@ -14628,7 +14635,8 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
 
         return
-    
+
+
 class BSBL_PhotAstromParam2(PSPL_Param):
     """BSBL model for astrometry and photometry - physical parameterization
     with primary lens and primary source center.
@@ -14710,11 +14718,11 @@ class BSBL_PhotAstromParam2(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag=False
+    orbitFlag = False
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
                  beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                 sepL, alphaL, sepS, alphaS, 
+                 sepL, alphaL, sepS, alphaS,
                  mag_src_pri, mag_src_sec, b_sff,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
@@ -14778,14 +14786,14 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         self.thetaE = self.thetaE_amp * self.thetaE_hat
 
         # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
-        m1 = units.rad**2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
-        m2 = units.rad**2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
         self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
         self.m2 = m2.to(units.arcsec ** 2).value
 
         # Calculate the microlensing parallax
         self.piE = (self.piRel / self.thetaE_amp) * self.thetaE_hat
-        
+
         # Calculate other angles
         self.phi_piE_rad = np.arctan2(self.piE[0], self.piE[1])
         self.phi_piE = self.phi_piE_rad * 180.0 / np.pi
@@ -14815,18 +14823,20 @@ class BSBL_PhotAstromParam2(PSPL_Param):
 
         # Calculate the Einstein crossing time. (days)
         self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
-        
+
         # Calculate t0 and beta for geometric center of lens
-        self.q = self.mLs/self.mLp
-        u0_x_out, u0_y_out, t0_out = fc.convert_u0_t0_psbl(t0_in = self.t0_p, u0_x_in = self.u0_p[0], u0_y_in = self.u0_p[1],
-                           tE = self.tE, theta_E = self.thetaE_amp, q = self.q, phi = self.phiL_rad, sep = self.sepL, mu_rel_x = self.muRel[0],
-                           mu_rel_y = self.muRel[1], coords_in='prim_center', coords_out='geom_mid')
+        self.q = self.mLs / self.mLp
+        u0_x_out, u0_y_out, t0_out = fc.convert_u0_t0_psbl(t0_in=self.t0_p, u0_x_in=self.u0_p[0], u0_y_in=self.u0_p[1],
+                                                           tE=self.tE, theta_E=self.thetaE_amp, q=self.q,
+                                                           phi=self.phiL_rad, sep=self.sepL, mu_rel_x=self.muRel[0],
+                                                           mu_rel_y=self.muRel[1], coords_in='prim_center',
+                                                           coords_out='geom_mid')
         self.u0 = np.array([u0_x_out, u0_y_out])
-        self.u0_amp = np.sqrt(self.u0[0]**2 + self.u0[1]**2)
-        self.u0_hat = self.u0/self.u0_amp
+        self.u0_amp = np.sqrt(self.u0[0] ** 2 + self.u0[1] ** 2)
+        self.u0_hat = self.u0 / self.u0_amp
         self.t0 = t0_out
-        self.beta = self.u0_amp*self.thetaE_amp
-        
+        self.beta = self.u0_amp * self.thetaE_amp
+
         # Angular separation vector between source and lens (vector from lens to source).
         # Note this is the angle between the geometric center of the lens and the
         # source primary position. Apologies for the mixed systems, but this is best
@@ -14840,7 +14850,6 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         self.piE_amp = self.piRel / self.thetaE_amp
         self.piE = self.piE_amp * self.thetaE_hat
         self.piE_E, self.piE_N = self.piE
-
 
         #####
         # Derived binary source parameters. Origin is at the primary.
@@ -14863,8 +14872,8 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
 
         return
-        
-    
+
+
 class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     """BSBL model for astrometry and photometry - physical parameterization.
     
@@ -14966,17 +14975,18 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     """
     fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'alphaL', 'alphaS',  'omegaL', 'big_omegaL', 'iL', 'eL', 'pL', 'tpL', 'alephL', 'aleph_secL', 
-                 'omegaS', 'big_omegaS', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+                          'dL', 'dS', 'alphaL', 'alphaS', 'omegaL', 'big_omegaL', 'iL', 'eL', 'pL', 'tpL', 'alephL',
+                          'aleph_secL',
+                          'omegaS', 'big_omegaS', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag ='Keplerian'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  alphaL, alphaS, omegaL, big_omegaL, iL, eL, tpL, sepL,
-                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, 
+                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS,
                  mag_src_pri, mag_src_sec, b_sff,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
@@ -14991,7 +15001,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.dL = dL
         self.dS = dS
         self.sepL = sepL
-        self.sepS = alephS+aleph_secS
+        self.sepS = alephS + aleph_secS
 
         self.alphaL = alphaL
         self.alphaL_rad = self.alphaL * np.pi / 180.0
@@ -15002,7 +15012,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.iL = iL
         self.eL = eL
         self.tpL = tpL
-                     
+
         self.omegaS = omegaS
         self.big_omegaS = big_omegaS
         self.iS = iS
@@ -15011,7 +15021,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.tpS = tpS
         self.alephS = alephS
         self.aleph_secS = aleph_secS
-                     
+
         self.mag_src_pri = np.array([mag_src_pri])
         self.mag_src_sec = np.array([mag_src_sec])
         self.b_sff = b_sff
@@ -15019,14 +15029,13 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.decL = decL
         self.obsLocation = obsLocation
         self.root_tol = root_tol
-                     
+
         self.vxS = muS_E * 1e-3
-        self.vyS = muS_N *1e-3
+        self.vyS = muS_N * 1e-3
 
         self.vxL = muL_E * 1e-3
-        self.vyL = muL_N *1e-3
+        self.vyL = muL_N * 1e-3
 
-                     
         # Super handles checking for properly formatted variables.
         super().__init__()
 
@@ -15065,8 +15074,8 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.thetaE = self.thetaE_amp * self.thetaE_hat
 
         # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
-        m1 = units.rad**2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
-        m2 = units.rad**2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
         self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
         self.m2 = m2.to(units.arcsec ** 2).value
 
@@ -15091,49 +15100,39 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         # the sign of beta is always the same as the sign of u0_amp. Therefore this
         # usage of the function with u0_amp works exactly the same.
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0_amp= self.beta/ self.thetaE_amp  # in Einstein units
+        self.u0_amp = self.beta / self.thetaE_amp  # in Einstein units
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
 
-    
-    
         # Calculate the microlensing parallax
         self.piE_amp = self.piRel / self.thetaE_amp
         self.piE = self.piE_amp * self.thetaE_hat
         self.piE_E, self.piE_N = self.piE
 
-                     
         # Calculate the Einstein crossing time. (days)
         self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
 
-        
-
-                     
-
         # Calculate period, and semi-major axes
-        self.aleph_secL = (self.mLp/(self.mLp+self.mLs))*self.sepL #mas
-        self.alephL = self.sepL - self.aleph_secL #mas
-        self.sepL_AU = dL * (sepL *1e-3) * units.AU
+        self.aleph_secL = (self.mLp / (self.mLp + self.mLs)) * self.sepL  # mas
+        self.alephL = self.sepL - self.aleph_secL  # mas
+        self.sepL_AU = dL * (sepL * 1e-3) * units.AU
         mL = self.mL * units.Msun
-        pL = (2 * np.pi * np.sqrt(self.sepL_AU**3/(const.G * mL))).to('day')
-        self.pL = pL.value #Period in Days
-                     
+        pL = (2 * np.pi * np.sqrt(self.sepL_AU ** 3 / (const.G * mL))).to('day')
+        self.pL = pL.value  # Period in Days
+
         # Calculate t0 (time of closest approach between geometric center of lens and the primary source) 
         self.phi_radL = self.alphaL_rad - np.arctan2(self.piE_E, self.piE_N)
-        self.q = self.mLs/self.mLp
-        qeff_lens = (1-self.q)/(1+self.q)
-        t0_geom_temp = t0_com - self.tE * self.sepL/self.thetaE_amp * qeff_lens *np.cos(self.phi_radL)                
+        self.q = self.mLs / self.mLp
+        qeff_lens = (1 - self.q) / (1 + self.q)
+        t0_geom_temp = t0_com - self.tE * self.sepL / self.thetaE_amp * qeff_lens * np.cos(self.phi_radL)
         self.phi_radS = self.alphaS_rad - np.arctan2(self.piE_E, self.piE_N)
-        self.sepS_AU = self.dS * (self.sepS *1e-3) * units.AU
-        self.mass_sources = ((4*np.pi**2*self.sepS_AU**3)/(const.G * (self.pS*units.day)**2)).to('Msun')
-        self.mass_source_primary = (self.aleph_secS/self.sepS) * self.mass_sources.value #Msun
-        self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary #Msun
-        q_source = self.mass_source_primary/self.mass_source_secondary
-        qeff_source = (1-q_source)/(1+q_source)
-        self.t0 = t0_geom_temp - (self.tE * np.cos(self.phi_radS) * self.sepS/self.thetaE_amp)*(qeff_source-1/2)
-        
+        self.sepS_AU = self.dS * (self.sepS * 1e-3) * units.AU
+        self.mass_sources = ((4 * np.pi ** 2 * self.sepS_AU ** 3) / (const.G * (self.pS * units.day) ** 2)).to('Msun')
+        self.mass_source_primary = (self.aleph_secS / self.sepS) * self.mass_sources.value  # Msun
+        self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary  # Msun
+        q_source = self.mass_source_primary / self.mass_source_secondary
+        qeff_source = (1 - q_source) / (1 + q_source)
+        self.t0 = t0_geom_temp - (self.tE * np.cos(self.phi_radS) * self.sepS / self.thetaE_amp) * (qeff_source - 1 / 2)
 
-
-                     
         # Angular separation vector between source and lens (vector from lens to source).
         # Note this is the angle between the geometric center of the lens and the
         # source geometric center. Apologies for the mixed systems, but this is best
@@ -15143,10 +15142,10 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
         self.xL0_E, self.xL0_N = self.xL0
-                     
+
         return
 
-      
+
 class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     """BSBL model for astrometry and photometry - physical parameterization.
     
@@ -15241,31 +15240,28 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'alphaL', 'alphaS',  'omegaL', 'big_omegaL', 'iL', 'tpL', 'sepL', 
-                 'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
-    
+                          'dL', 'dS', 'alphaL', 'alphaS', 'omegaL', 'big_omegaL', 'iL', 'tpL', 'sepL',
+                          'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag='Keplerian'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                alphaL, alphaS, omegaL, big_omegaL, iL, tpL, sepL, 
-                 omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS, 
+                 alphaL, alphaS, omegaL, big_omegaL, iL, tpL, sepL,
+                 omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS,
                  mag_src_pri, mag_src_sec, b_sff,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-
-                     
         super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N,
-                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                alphaL, alphaS, omegaL, big_omegaL, iL, 0, tpL, sepL, 
-                 omegaS, big_omegaS, iS, 0, pS, tpS, alephS, aleph_secS, 
-                 mag_src_pri, mag_src_sec, b_sff,
-                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-                     
-        return
+                         beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                         alphaL, alphaS, omegaL, big_omegaL, iL, 0, tpL, sepL,
+                         omegaS, big_omegaS, iS, 0, pS, tpS, alephS, aleph_secS,
+                         mag_src_pri, mag_src_sec, b_sff,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
+        return
 
 
 class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
@@ -15371,19 +15367,19 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     decL: float, optional
         Declination of the lens in decimal degrees.
     """
-    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                'alphaL', 'alphaS',  'omegaL', 'big_omegaL', 'iL',  'tpL', 'sepL', 
-                 'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E',
+                          'muS_N',
+                          'alphaL', 'alphaS', 'omegaL', 'big_omegaL', 'iL', 'tpL', 'sepL',
+                          'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag='Keplerian'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
                  alphaL, alphaS, omegaL, big_omegaL, iL, eL, tpL, sepL,
                  omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-                     
         self.t0_com = t0_com
         self.u0_amp = u0_amp
         self.tE = tE
@@ -15392,14 +15388,13 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.piS = piS
         self.q = q
         self.sepL = sepL
-        self.sepS = alephS+aleph_secS
+        self.sepS = alephS + aleph_secS
         self.muS = np.array([muS_E, muS_N])
         self.muS_E, self.muS_N = self.muS
         self.xS0 = np.array([xS0_E, xS0_N])
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
 
-                     
         self.alphaL = alphaL
         self.alphaL_rad = self.alphaL * np.pi / 180.0
         self.alphaS = alephS + aleph_secS
@@ -15409,7 +15404,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.iL = iL
         self.eL = eL
         self.tpL = tpL
-                     
+
         self.omegaS = omegaS
         self.big_omegaS = big_omegaS
         self.iS = iS
@@ -15419,20 +15414,19 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.alephS = alephS
         self.aleph_secS = aleph_secS
 
-
         self.mag_base = np.array([mag_base])
-        self.b_sff = np.array([b_sff])      
-        self.fratio_bin =  np.array([fratio_bin])
-                     
+        self.b_sff = np.array([b_sff])
+        self.fratio_bin = np.array([fratio_bin])
+
         self.mag_src_pri = self.mag_base - 2.5 * np.log10(self.b_sff) + 2.5 * np.log10(1.0 + self.fratio_bin)
         self.mag_src_sec = self.mag_base - 2.5 * np.log10(self.b_sff) + 2.5 * np.log10(1.0 + (1.0 / self.fratio_bin))
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
         self.root_tol = root_tol
-                     
+
         self.vxS = muS_E * 1e-3
-        self.vyS = muS_N *1e-3
+        self.vyS = muS_N * 1e-3
 
         # Super handles checking for properly formatted variables.
         super().__init__()
@@ -15449,8 +15443,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
         self.mLp = self.mL / (1.0 + self.q)
         self.mLs = self.mLp * self.q
-        
-            
+
         # Calculate the distance to source and lens.
         dL = (self.piL * units.mas).to(units.parsec,
                                        equivalencies=units.parallax())
@@ -15459,16 +15452,14 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.dL = dL.to('pc').value
         self.dS = dS.to('pc').value
 
-        
         # Calculate period, and semi-major axes
-        self.aleph_secL = (self.mLp/(self.mLp+self.mLs))*self.sepL #mas
-        self.alephL = self.sepL - self.aleph_secL #mas
-        self.sepL_AU = self.dL * (sepL *1e-3) * units.AU
+        self.aleph_secL = (self.mLp / (self.mLp + self.mLs)) * self.sepL  # mas
+        self.alephL = self.sepL - self.aleph_secL  # mas
+        self.sepL_AU = self.dL * (sepL * 1e-3) * units.AU
         mL = self.mL * units.Msun
-        pL = (2 * np.pi * np.sqrt(self.sepL_AU**3/(const.G * mL))).to('day')
-        self.pL = pL.value #Period in Days
+        pL = (2 * np.pi * np.sqrt(self.sepL_AU ** 3 / (const.G * mL))).to('day')
+        self.pL = pL.value  # Period in Days
 
-                     
         # Get the directional vectors.
         self.thetaE_hat = self.piE / self.piE_amp
         self.muRel_hat = self.thetaE_hat
@@ -15482,12 +15473,12 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.muL_E, self.muL_N = self.muL
 
         self.vxL = self.muL_E * 1e-3
-        self.vyL = self.muL_N *1e-3
-                     
+        self.vyL = self.muL_N * 1e-3
+
         # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
         inv_dist_diff = (1.0 / dL) - (1.0 / dS)
-        m1 = units.rad**2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
-        m2 = units.rad**2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
         self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
         self.m2 = m2.to(units.arcsec ** 2).value
 
@@ -15501,7 +15492,6 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         #    u0_amp > 0 means u0_E > 0
         #    u0_amp < 0 means u0_E < 0
         # Note that we assume beta = u0_amp (with same signs).
-
 
         # Calculate the closest approach vector. Define beta sign convention
         # same as of Andy Gould does with beta > 0 means u0_E > 0
@@ -15521,20 +15511,19 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         # Calculate t0 (time of closest approach between geometric center of lens and the primary source) 
         self.phi_radL = self.alphaL_rad - np.arctan2(self.piE[0], self.piE[1])
-        self.q = self.mLs/self.mLp
-        qeff_lens = (1-self.q)/(1+self.q)
-        t0_geom_temp = t0_com - self.tE * self.sepL/self.thetaE_amp * qeff_lens *np.cos(self.phi_radL)                
+        self.q = self.mLs / self.mLp
+        qeff_lens = (1 - self.q) / (1 + self.q)
+        t0_geom_temp = t0_com - self.tE * self.sepL / self.thetaE_amp * qeff_lens * np.cos(self.phi_radL)
         self.phi_radS = self.alphaS_rad - np.arctan2(self.piE[0], self.piE[1])
-        self.sepS_AU = self.dS * (self.sepS *1e-3) * units.AU
-        self.mass_sources = ((4*np.pi**2*self.sepS_AU**3)/(const.G * (self.pS*units.day)**2)).to('Msun')
-        self.mass_source_primary = (self.aleph_secS/self.sepS) * self.mass_sources.value #Msun
-        self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary #Msun
-        q_source = self.mass_source_primary/self.mass_source_secondary
-        qeff_source = (1-q_source)/(1+q_source)
-        self.t0 = t0_geom_temp - (self.tE * np.cos(self.phi_radS) * self.sepS/self.thetaE_amp)*(qeff_source-1/2)
-        
-        return
+        self.sepS_AU = self.dS * (self.sepS * 1e-3) * units.AU
+        self.mass_sources = ((4 * np.pi ** 2 * self.sepS_AU ** 3) / (const.G * (self.pS * units.day) ** 2)).to('Msun')
+        self.mass_source_primary = (self.aleph_secS / self.sepS) * self.mass_sources.value  # Msun
+        self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary  # Msun
+        q_source = self.mass_source_primary / self.mass_source_secondary
+        qeff_source = (1 - q_source) / (1 + q_source)
+        self.t0 = t0_geom_temp - (self.tE * np.cos(self.phi_radS) * self.sepS / self.thetaE_amp) * (qeff_source - 1 / 2)
 
+        return
 
 
 class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
@@ -15635,31 +15624,28 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     decL: float, optional
         Declination of the lens in decimal degrees.
     """
-    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                'alphaL', 'alphaS',  'omegaL', 'big_omegaL', 'iL',  'tpL', 'sepL', 
-                 'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E',
+                          'muS_N',
+                          'alphaL', 'alphaS', 'omegaL', 'big_omegaL', 'iL', 'tpL', 'sepL',
+                          'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag='Keplerian'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
-                alphaL, alphaS, omegaL, big_omegaL, iL, tpL, sepL, 
+                 alphaL, alphaS, omegaL, big_omegaL, iL, tpL, sepL,
                  omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff,
-                 raL=None, decL=None, obsLocation = 'earth', root_tol=1e-8):
-                     
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
-                alphaL, alphaS, omegaL, big_omegaL, iL, 0, tpL, sepL, 
-                 omegaS, big_omegaS, iS, 0, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff,
-                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
+                         alphaL, alphaS, omegaL, big_omegaL, iL, 0, tpL, sepL,
+                         omegaS, big_omegaS, iS, 0, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
 
-                     
         # Super handles checking for properly formatted variables.
         PSPL_Param().__init__()
 
-
         return
-
 
 
 # ==================================================
@@ -15729,7 +15715,7 @@ class FSPL(PSPL):
         # Mask invalid values from the amplification array.
         # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
         amp_arr_mskd = amp_arr
-        
+
         amp = np.sum(amp_arr_mskd, axis=1)
 
         flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
@@ -15866,7 +15852,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     #         mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
     #
     #         return mag_model
-    
+
     def get_u(self, t_obs, filt_idx=0):
         """
         Get the separation vector, \vec{u}(t), which is the unlensed
@@ -15938,14 +15924,14 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             The source outline is described by a list of points along the circumference
             of the circular source. The last axis contains East/North positions.
         """
-        xS_unlensed_center = self.get_astrometry_unlensed(t_obs, filt_idx=filt_idx) # arcsec
+        xS_unlensed_center = self.get_astrometry_unlensed(t_obs, filt_idx=filt_idx)  # arcsec
 
         xS_unlensed_outline = np.zeros((len(t_obs), self.n_outline, 2), dtype=float)
 
         # The angles of the points equally spaced around the source circumference.
         angles = (np.arange(self.n_outline) / self.n_outline) * 2 * np.pi  # radians
-        dx = self.radiusS * 1e-3 * np.cos(angles) # arcsec
-        dy = self.radiusS * 1e-3 * np.sin(angles) # arcsec
+        dx = self.radiusS * 1e-3 * np.cos(angles)  # arcsec
+        dy = self.radiusS * 1e-3 * np.sin(angles)  # arcsec
 
         # This could be faster with repeat, etc. Get rid of the for loop.
         for n in range(self.n_outline):
@@ -15953,7 +15939,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             xS_unlensed_outline[:, n, 1] = xS_unlensed_center[:, 1] + dy[n]
 
         return xS_unlensed_outline
-      
+
     def get_all_arrays(self, t_obs, filt_idx=0):
         """
         Obtain the image and amplitude arrays for each t_obs. These arrays
@@ -15984,7 +15970,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         """
         # Lensed positions of each outline point for both plus/minus images.
         # Note these are positions on the sky. in arcsec
-        
+
         # Shape = [len(t), N_outline, [+,-], [E,N]]
         images = self.get_resolved_astrometry_outline(t_obs, filt_idx=filt_idx)
 
@@ -15999,21 +15985,21 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         # Temporarily duplicate the first point as the last point
         # to speed up our contour integrals.
         # Shape of plus array: [len(times), self.n_outline + 1, 2] where
-        plus = np.append(plus, plus[:,0:1,:], axis=1)
-        minus = np.append(minus, minus[:,0:1,:], axis=1)
+        plus = np.append(plus, plus[:, 0:1, :], axis=1)
+        minus = np.append(minus, minus[:, 0:1, :], axis=1)
 
         # Pre-calculate squared versions...
         # we use these a lot in the calculations below.
-        plus2 = plus**2
-        minus2 = minus**2
+        plus2 = plus ** 2
+        minus2 = minus ** 2
 
         # First derivatives (len = n_outline)
         d1_plus = np.diff(plus, axis=1)
         d1_minus = np.diff(minus, axis=1)
 
         # Second derivatives (len = n_outline)
-        d2_plus = np.diff( np.append(d1_plus, d1_plus[:, 0:1, :], axis=1), axis=1)
-        d2_minus = np.diff( np.append(d1_minus, d1_minus[:, 0:1, :], axis=1), axis=1)
+        d2_plus = np.diff(np.append(d1_plus, d1_plus[:, 0:1, :], axis=1), axis=1)
+        d2_minus = np.diff(np.append(d1_minus, d1_minus[:, 0:1, :], axis=1), axis=1)
 
         # 2 element box addition
         b2_plus = plus[:, :-1, :] + plus[:, 1:, :]
@@ -16023,7 +16009,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             foo = aa[:, :, 0] * bb[:, :, 1] - aa[:, :, 1] * bb[:, :, 0]
 
             return foo
-          
+
         # wedge products for parabolic corrections. i and i+1 terms
         # see Eq 10 of Bozza+ 2021
         wp_d1_d2_i_plus = wedge_product(d1_plus[:, :-1, :], d2_plus[:, :-1, :])
@@ -16034,30 +16020,29 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         # Do the contour integrals.
         # Equations from Bozza+ 2021 (Eq 9)
-        Aplus  = -(1. / 2) * np.sum( b2_plus[:,:,1] * d1_plus[:,:,0], axis=1 )
-        Aminus =  (1. / 2) * np.sum( b2_minus[:,:,1] * d1_minus[:,:,0], axis=1 )
+        Aplus = -(1. / 2) * np.sum(b2_plus[:, :, 1] * d1_plus[:, :, 0], axis=1)
+        Aminus = (1. / 2) * np.sum(b2_minus[:, :, 1] * d1_minus[:, :, 0], axis=1)
 
         # Parabolic correction (Eq 10)
-        Aplus  +=  (1. / 24) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus), axis=1)
+        Aplus += (1. / 24) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus), axis=1)
         Aminus += -(1. / 24) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus), axis=1)
 
         # Centroid equations (Eq. 19)
-        Cplus_x =  (1. / 8.0) * np.sum( b2_plus[:, :, 0]**2 * d1_plus[:, :, 1], axis=1 )
-        Cplus_y = -(1. / 8.0) * np.sum( b2_plus[:, :, 1]**2 * d1_plus[:, :, 0], axis=1 )
+        Cplus_x = (1. / 8.0) * np.sum(b2_plus[:, :, 0] ** 2 * d1_plus[:, :, 1], axis=1)
+        Cplus_y = -(1. / 8.0) * np.sum(b2_plus[:, :, 1] ** 2 * d1_plus[:, :, 0], axis=1)
 
-        Cminus_x = -(1. / 8.0) * np.sum( b2_minus[:, :, 0]**2 * d1_minus[:, :, 1], axis=1 )
-        Cminus_y =  (1. / 8.0) * np.sum( b2_minus[:, :, 1]**2 * d1_minus[:, :, 0], axis=1 )
+        Cminus_x = -(1. / 8.0) * np.sum(b2_minus[:, :, 0] ** 2 * d1_minus[:, :, 1], axis=1)
+        Cminus_y = (1. / 8.0) * np.sum(b2_minus[:, :, 1] ** 2 * d1_minus[:, :, 0], axis=1)
 
         # Parabolic Correction
-        #Cplus_x +=  (1. / 24.) * np.sum((d1_plus[:, :, 0]**2 * d1_plus[:, :, 1]
+        # Cplus_x +=  (1. / 24.) * np.sum((d1_plus[:, :, 0]**2 * d1_plus[:, :, 1]
         #                                +d1_plus[:, :, 0] * wp_d1_d2_i_plus) + \
         #                                (d1_plus[:, :])
 
-        amp_plus  = np.abs(Aplus)  / (np.pi * (self.radiusS * 1e-3)**2)
-        amp_minus = np.abs(Aminus) / (np.pi * (self.radiusS * 1e-3)**2)
-        img_pos_plus  = np.array([Cplus_x / np.abs(Aplus),  Cplus_y / np.abs(Aplus)])
+        amp_plus = np.abs(Aplus) / (np.pi * (self.radiusS * 1e-3) ** 2)
+        amp_minus = np.abs(Aminus) / (np.pi * (self.radiusS * 1e-3) ** 2)
+        img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])
         img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])
-
 
         # # Original Broadberry equations.
         # Aplus  = 0.5 * np.sum(  plus[:, :-1, 0]  * d1_plus[:, :, 1]
@@ -16086,7 +16071,6 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         # img_pos_plus  = np.array([(1 / (2 * Aplus))  * Cplus1,  (1 / (2 * Aplus))  * Cplus2])
         # img_pos_minus = np.array([(1 / (2 * Aminus)) * Cminus1,  (-1 / (2 * Aminus)) * Cminus2])
 
-
         # print('imag_pos_plus.shape = ', img_pos_plus.shape)
         # print('Aplus.shape = ', Aplus.shape)
         # print('plus.shape = ', plus.shape)
@@ -16099,7 +16083,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         amps = np.array((amp_plus, amp_minus)).T  # amplifications
 
         return images, amps
-      
+
     def get_resolved_astrometry(self, t_obs, image_arr=None, amp_arr=None, filt_idx=0):
         """
         Position of the observed (lensed) source position on the sky.
@@ -16144,7 +16128,6 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             img_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
 
         return np.swapaxes(amp_arr, 0, 1)
-
 
     def get_resolved_photometry(self, t_obs, filt_idx=0, amp_arr=None):
         '''
@@ -16393,11 +16376,13 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         return ani
 
+
 class FSPL_Phot(FSPL):
     photometryFlag = True
     astrometryFlag = False
 
     pass
+
 
 class FSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
@@ -16405,6 +16390,7 @@ class FSPL_noParallax(PSPL_noParallax):
 
 class FSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+
 
 class FSPL_PhotParam2(PSPL_Param):
     """
@@ -16512,7 +16498,8 @@ class FSPL_PhotParam2(PSPL_Param):
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
 
         return
-        
+
+
 class FSPL_PhotAstromParam1(PSPL_Param):
     """PSPL model for astrometry and photometry - physical parameterization.
 
@@ -16736,8 +16723,8 @@ class FSPL_PhotAstrom_tmp(FSPL, PSPL_PhotAstrom):
         or b_sff (e.g. other photometric parameters).
     """
     photometryFlag = True
-    astrometryFlag = True    
-    
+    astrometryFlag = True
+
     # Shouldn't get_lens_astrometry be inherited?
     # Why is parallax stuff different than PSPL?
     def get_lens_astrometry(self, t_obs, filt_idx=0):
@@ -16802,7 +16789,7 @@ class FSPL_PhotAstrom_tmp(FSPL, PSPL_PhotAstrom):
 
         return np.array(positions)
 
-      
+
 class FSPL_Limb(FSPL):
     def F(self, r):
         return 2 / (1 - self.utilde / 3) * (
@@ -16901,9 +16888,8 @@ class FSPL_Limb(FSPL):
                 M += Mk
             amplification.append(M)
         return amplification
-      
 
-    def animate(self, crossings, time_steps, frame_time, name, size, zoom):
+    def animate(self, crossings, time_steps, frame_time, name, size, zoom, filt_idx=0):
         # creates the animation html, given an instance of the Uniformly_bright class and a list of times
 
         times = np.array(range(-time_steps, time_steps + 1, 1))
@@ -17122,6 +17108,7 @@ def checkconflicts(self):
 class ModelClassABC(ABC):
     pass
 
+
 # PSPL
 @inheritdocstring
 class PSPL_PhotAstrom_noPar_Param1(ModelClassABC,
@@ -17215,7 +17202,8 @@ class PSPL_PhotAstrom_noPar_Param3(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-        
+
+
 @inheritdocstring
 class PSPL_PhotAstrom_Par_Param3(ModelClassABC,
                                  PSPL_PhotAstrom,
@@ -17258,6 +17246,7 @@ class PSPL_PhotAstrom_Par_Param5(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
 
 @inheritdocstring
 class PSPL_PhotAstrom_noPar_Param4(ModelClassABC,
@@ -17314,6 +17303,7 @@ class PSPL_Phot_noPar_Param2(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+
 @inheritdocstring
 class PSPL_Phot_noPar_Param3(ModelClassABC,
                              PSPL_Phot,
@@ -17323,7 +17313,7 @@ class PSPL_Phot_noPar_Param3(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-        
+
 
 # PSPL_phot_parallax / PSPL_phot_multiphot_parallax
 @inheritdocstring
@@ -17335,6 +17325,7 @@ class PSPL_Phot_Par_Param1(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
 
 @inheritdocstring
 class PSPL_Phot_Par_Param1_geoproj(ModelClassABC,
@@ -17367,7 +17358,7 @@ class PSPL_Phot_Par_Param3(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-        
+
 
 # PSPL Phot parallax with GP
 @inheritdocstring
@@ -17417,7 +17408,7 @@ class PSPL_Phot_Par_GP_Param2_2(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
-        
+
 @inheritdocstring
 class PSPL_Phot_Par_GP_Param3(ModelClassABC,
                               PSPL_GP,
@@ -17596,9 +17587,9 @@ class PSPL_PhotAstrom_noPar_GP_Param2(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_EllOrbs_noPar_Param1(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_noParallax,
-                                   PSBL_PhotAstrom_EllOrbs_Param1):
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17607,9 +17598,9 @@ class PSBL_PhotAstrom_EllOrbs_noPar_Param1(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_CircOrbs_noPar_Param1(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_noParallax,
-                                   PSBL_PhotAstrom_CircOrbs_Param1):
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17618,9 +17609,9 @@ class PSBL_PhotAstrom_CircOrbs_noPar_Param1(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_AccOrbs_noPar_Param7(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_noParallax,
-                                   PSBL_PhotAstrom_AccOrbs_Param7):
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_AccOrbs_Param7):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17629,22 +17620,20 @@ class PSBL_PhotAstrom_AccOrbs_noPar_Param7(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_AccOrbs_noPar_Param6(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_noParallax,
-                                   PSBL_PhotAstrom_AccOrbs_Param6):
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_AccOrbs_Param6):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
 
-
-
 @inheritdocstring
 class PSBL_PhotAstrom_LinOrbs_noPar_Param7(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_noParallax,
-                                   PSBL_PhotAstrom_LinOrbs_Param7):
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_LinOrbs_Param7):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17653,21 +17642,20 @@ class PSBL_PhotAstrom_LinOrbs_noPar_Param7(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_LinOrbs_noPar_Param6(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_noParallax,
-                                   PSBL_PhotAstrom_LinOrbs_Param6):
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_LinOrbs_Param6):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
 
-
 @inheritdocstring
 class PSBL_PhotAstrom_EllOrbs_Par_Param1(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_Parallax,
-                                   PSBL_PhotAstrom_EllOrbs_Param1):
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17676,9 +17664,9 @@ class PSBL_PhotAstrom_EllOrbs_Par_Param1(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_CircOrbs_Par_Param1(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_Parallax,
-                                   PSBL_PhotAstrom_CircOrbs_Param1):
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17687,9 +17675,9 @@ class PSBL_PhotAstrom_CircOrbs_Par_Param1(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_AccOrbs_Par_Param7(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_Parallax,
-                                   PSBL_PhotAstrom_AccOrbs_Param7):
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_AccOrbs_Param7):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17698,32 +17686,31 @@ class PSBL_PhotAstrom_AccOrbs_Par_Param7(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_AccOrbs_Par_Param6(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_Parallax,
-                                   PSBL_PhotAstrom_AccOrbs_Param6):
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_AccOrbs_Param6):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
 
 @inheritdocstring
 class PSBL_PhotAstrom_LinOrbs_Par_Param7(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_Parallax,
-                                   PSBL_PhotAstrom_LinOrbs_Param7):
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_LinOrbs_Param7):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
-
 
 
 @inheritdocstring
 class PSBL_PhotAstrom_LinOrbs_Par_Param6(ModelClassABC,
-                                   PSBL_PhotAstrom,
-                                   PSBL_Parallax,
-                                   PSBL_PhotAstrom_LinOrbs_Param6):
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_LinOrbs_Param6):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17799,12 +17786,11 @@ class PSBL_PhotAstrom_noPar_Param3(ModelClassABC,
         checkconflicts(self)
 
 
-
 @inheritdocstring
 class PSBL_PhotAstrom_EllOrbs_noPar_Param4(ModelClassABC,
-                                 PSBL_PhotAstrom,
-                                 PSBL_noParallax,
-                                 PSBL_PhotAstrom_EllOrbs_Param4):
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17813,9 +17799,9 @@ class PSBL_PhotAstrom_EllOrbs_noPar_Param4(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_EllOrbs_Par_Param4(ModelClassABC,
-                                 PSBL_PhotAstrom,
-                                 PSBL_Parallax,
-                                 PSBL_PhotAstrom_EllOrbs_Param4):
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17824,9 +17810,9 @@ class PSBL_PhotAstrom_EllOrbs_Par_Param4(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_CircOrbs_noPar_Param4(ModelClassABC,
-                                 PSBL_PhotAstrom,
-                                 PSBL_noParallax,
-                                 PSBL_PhotAstrom_CircOrbs_Param4):
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17835,9 +17821,9 @@ class PSBL_PhotAstrom_CircOrbs_noPar_Param4(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_CircOrbs_Par_Param4(ModelClassABC,
-                                 PSBL_PhotAstrom,
-                                 PSBL_Parallax,
-                                 PSBL_PhotAstrom_CircOrbs_Param4):
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17846,15 +17832,13 @@ class PSBL_PhotAstrom_CircOrbs_Par_Param4(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_noPar_Param4(ModelClassABC,
-                                 PSBL_PhotAstrom,
-                                 PSBL_noParallax,
-                                 PSBL_PhotAstromParam4):
+                                   PSBL_PhotAstrom,
+                                   PSBL_noParallax,
+                                   PSBL_PhotAstromParam4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
-
 
 
 @inheritdocstring
@@ -17868,8 +17852,6 @@ class PSBL_PhotAstrom_Par_Param4(ModelClassABC,
         checkconflicts(self)
 
 
-
-
 @inheritdocstring
 class PSBL_PhotAstrom_Par_Param5(ModelClassABC,
                                  PSBL_PhotAstrom,
@@ -17879,6 +17861,7 @@ class PSBL_PhotAstrom_Par_Param5(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
 
 @inheritdocstring
 class PSBL_PhotAstrom_Par_Param7(ModelClassABC,
@@ -17890,13 +17873,12 @@ class PSBL_PhotAstrom_Par_Param7(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
-        
 
 @inheritdocstring
 class PSBL_PhotAstrom_EllOrbs_noPar_Param8(ModelClassABC,
-                                 PSBL_PhotAstrom,
-                                 PSBL_noParallax,
-                                 PSBL_PhotAstrom_EllOrbs_Param8):
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param8):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17905,9 +17887,9 @@ class PSBL_PhotAstrom_EllOrbs_noPar_Param8(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_EllOrbs_Par_Param8(ModelClassABC,
-                                 PSBL_PhotAstrom,
-                                 PSBL_Parallax,
-                                 PSBL_PhotAstrom_EllOrbs_Param8):
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param8):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17916,9 +17898,9 @@ class PSBL_PhotAstrom_EllOrbs_Par_Param8(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_CircOrbs_noPar_Param8(ModelClassABC,
-                                 PSBL_PhotAstrom,
-                                 PSBL_noParallax,
-                                 PSBL_PhotAstrom_CircOrbs_Param8):
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param8):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -17927,14 +17909,15 @@ class PSBL_PhotAstrom_CircOrbs_noPar_Param8(ModelClassABC,
 
 @inheritdocstring
 class PSBL_PhotAstrom_CircOrbs_Par_Param8(ModelClassABC,
-                                 PSBL_PhotAstrom,
-                                 PSBL_Parallax,
-                                 PSBL_PhotAstrom_CircOrbs_Param8):
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param8):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-        
+
+
 # PSBL_phot
 @inheritdocstring
 class PSBL_Phot_noPar_Param1(ModelClassABC,
@@ -18076,7 +18059,6 @@ class BSPL_PhotAstrom_noPar_Param1(ModelClassABC,
         checkconflicts(self)
 
 
-
 # BSPL_parallax and linear orbits
 @inheritdocstring
 class BSPL_PhotAstrom_Par_Param1(ModelClassABC,
@@ -18089,7 +18071,6 @@ class BSPL_PhotAstrom_Par_Param1(ModelClassABC,
         checkconflicts(self)
 
 
-    
 # BSPL no parallax
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_Param2(ModelClassABC,
@@ -18101,8 +18082,6 @@ class BSPL_PhotAstrom_noPar_Param2(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
-
-        
 
 # BSPL_parallax
 @inheritdocstring
@@ -18147,9 +18126,9 @@ class BSPL_PhotAstrom_Par_Param3(ModelClassABC,
 # BSPL_parallax
 @inheritdocstring
 class BSPL_PhotAstrom_Par_AccOrbs_Param1(ModelClassABC,
-                                 BSPL_PhotAstrom,
-                                 BSPL_Parallax,
-                                 BSPL_PhotAstrom_AccOrbs_Param1):
+                                         BSPL_PhotAstrom,
+                                         BSPL_Parallax,
+                                         BSPL_PhotAstrom_AccOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18159,23 +18138,21 @@ class BSPL_PhotAstrom_Par_AccOrbs_Param1(ModelClassABC,
 # BSPL no parallax 
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_AccOrbs_Param1(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_AccOrbs_Param1):
+                                           BSPL_PhotAstrom,
+                                           BSPL_noParallax,
+                                           BSPL_PhotAstrom_AccOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
-
 
 # BSPL_parallax
 @inheritdocstring
 class BSPL_PhotAstrom_Par_AccOrbs_Param2(ModelClassABC,
-                                 BSPL_PhotAstrom,
-                                 BSPL_Parallax,
-                                 BSPL_PhotAstrom_AccOrbs_Param2):
+                                         BSPL_PhotAstrom,
+                                         BSPL_Parallax,
+                                         BSPL_PhotAstrom_AccOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18185,21 +18162,21 @@ class BSPL_PhotAstrom_Par_AccOrbs_Param2(ModelClassABC,
 # BSPL no parallax 
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_AccOrbs_Param2(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_AccOrbs_Param2):
+                                           BSPL_PhotAstrom,
+                                           BSPL_noParallax,
+                                           BSPL_PhotAstrom_AccOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
+
 # BSPL_parallax
 @inheritdocstring
 class BSPL_PhotAstrom_Par_AccOrbs_Param3(ModelClassABC,
-                                 BSPL_PhotAstrom,
-                                 BSPL_Parallax,
-                                 BSPL_PhotAstrom_AccOrbs_Param3):
+                                         BSPL_PhotAstrom,
+                                         BSPL_Parallax,
+                                         BSPL_PhotAstrom_AccOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18209,37 +18186,35 @@ class BSPL_PhotAstrom_Par_AccOrbs_Param3(ModelClassABC,
 # BSPL no parallax 
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_AccOrbs_Param3(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_AccOrbs_Param3):
+                                           BSPL_PhotAstrom,
+                                           BSPL_noParallax,
+                                           BSPL_PhotAstrom_AccOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
 
 # BSPL no parallax
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1(ModelClassABC,
-                                      PSPL_GP,
-                                      BSPL_PhotAstrom,
-                                      BSPL_noParallax,
-                                      BSPL_GP_PhotAstrom_AccOrbs_Param1):
+                                              PSPL_GP,
+                                              BSPL_PhotAstrom,
+                                              BSPL_noParallax,
+                                              BSPL_GP_PhotAstrom_AccOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
 
 
 # BSPL_parallax
 @inheritdocstring
 class BSPL_PhotAstrom_Par_GP_AccOrbs_Param1(ModelClassABC,
-                                    PSPL_GP,
-                                    BSPL_PhotAstrom,
-                                    BSPL_Parallax,
-                                    BSPL_GP_PhotAstrom_AccOrbs_Param1):
+                                            PSPL_GP,
+                                            BSPL_PhotAstrom,
+                                            BSPL_Parallax,
+                                            BSPL_GP_PhotAstrom_AccOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18249,10 +18224,10 @@ class BSPL_PhotAstrom_Par_GP_AccOrbs_Param1(ModelClassABC,
 # BSPL no parallax
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2(ModelClassABC,
-                                      PSPL_GP,
-                                      BSPL_PhotAstrom,
-                                      BSPL_noParallax,
-                                      BSPL_GP_PhotAstrom_AccOrbs_Param2):
+                                              PSPL_GP,
+                                              BSPL_PhotAstrom,
+                                              BSPL_noParallax,
+                                              BSPL_GP_PhotAstrom_AccOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18262,23 +18237,23 @@ class BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2(ModelClassABC,
 # BSPL_parallax
 @inheritdocstring
 class BSPL_PhotAstrom_Par_GP_AccOrbs_Param2(ModelClassABC,
-                                    PSPL_GP,
-                                    BSPL_PhotAstrom,
-                                    BSPL_Parallax,
-                                    BSPL_GP_PhotAstrom_AccOrbs_Param2):
+                                            PSPL_GP,
+                                            BSPL_PhotAstrom,
+                                            BSPL_Parallax,
+                                            BSPL_GP_PhotAstrom_AccOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
+
 # BSPL no parallax
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3(ModelClassABC,
-                                      PSPL_GP,
-                                      BSPL_PhotAstrom,
-                                      BSPL_noParallax,
-                                      BSPL_GP_PhotAstrom_AccOrbs_Param3):
+                                              PSPL_GP,
+                                              BSPL_PhotAstrom,
+                                              BSPL_noParallax,
+                                              BSPL_GP_PhotAstrom_AccOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18288,23 +18263,22 @@ class BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3(ModelClassABC,
 # BSPL_parallax
 @inheritdocstring
 class BSPL_PhotAstrom_Par_GP_AccOrbs_Param3(ModelClassABC,
-                                    PSPL_GP,
-                                    BSPL_PhotAstrom,
-                                    BSPL_Parallax,
-                                    BSPL_GP_PhotAstrom_AccOrbs_Param3):
+                                            PSPL_GP,
+                                            BSPL_PhotAstrom,
+                                            BSPL_Parallax,
+                                            BSPL_GP_PhotAstrom_AccOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
-        
+
 # BSPL_parallax
 @inheritdocstring
 class BSPL_PhotAstrom_Par_LinOrbs_Param1(ModelClassABC,
-                                 BSPL_PhotAstrom,
-                                 BSPL_Parallax,
-                                 BSPL_PhotAstrom_LinOrbs_Param1):
+                                         BSPL_PhotAstrom,
+                                         BSPL_Parallax,
+                                         BSPL_PhotAstrom_LinOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18314,20 +18288,21 @@ class BSPL_PhotAstrom_Par_LinOrbs_Param1(ModelClassABC,
 # BSPL no parallax 
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_LinOrbs_Param1(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_LinOrbs_Param1):
+                                           BSPL_PhotAstrom,
+                                           BSPL_noParallax,
+                                           BSPL_PhotAstrom_LinOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
+
 # BSPL_parallax
 @inheritdocstring
 class BSPL_PhotAstrom_Par_LinOrbs_Param2(ModelClassABC,
-                                 BSPL_PhotAstrom,
-                                 BSPL_Parallax,
-                                 BSPL_PhotAstrom_LinOrbs_Param2):
+                                         BSPL_PhotAstrom,
+                                         BSPL_Parallax,
+                                         BSPL_PhotAstrom_LinOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18337,22 +18312,21 @@ class BSPL_PhotAstrom_Par_LinOrbs_Param2(ModelClassABC,
 # BSPL no parallax 
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_LinOrbs_Param2(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_LinOrbs_Param2):
+                                           BSPL_PhotAstrom,
+                                           BSPL_noParallax,
+                                           BSPL_PhotAstrom_LinOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
 
-
-# BSPL no parallax 
+# BSPL no parallax
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_LinOrbs_Param3(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_LinOrbs_Param3):
+                                           BSPL_PhotAstrom,
+                                           BSPL_noParallax,
+                                           BSPL_PhotAstrom_LinOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18362,24 +18336,22 @@ class BSPL_PhotAstrom_noPar_LinOrbs_Param3(ModelClassABC,
 # BSPL_parallax 
 @inheritdocstring
 class BSPL_PhotAstrom_Par_LinOrbs_Param3(ModelClassABC,
-                                 BSPL_PhotAstrom,
-                                 BSPL_Parallax,
-                                 BSPL_PhotAstrom_LinOrbs_Param3):
+                                         BSPL_PhotAstrom,
+                                         BSPL_Parallax,
+                                         BSPL_PhotAstrom_LinOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
-        
 
 # BSPL no parallax
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1(ModelClassABC,
-                                      PSPL_GP,
-                                      BSPL_PhotAstrom,
-                                      BSPL_noParallax,
-                                      BSPL_GP_PhotAstrom_LinOrbs_Param1):
+                                              PSPL_GP,
+                                              BSPL_PhotAstrom,
+                                              BSPL_noParallax,
+                                              BSPL_GP_PhotAstrom_LinOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18389,10 +18361,10 @@ class BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1(ModelClassABC,
 # BSPL_parallax
 @inheritdocstring
 class BSPL_PhotAstrom_Par_GP_LinOrbs_Param1(ModelClassABC,
-                                    PSPL_GP,
-                                    BSPL_PhotAstrom,
-                                    BSPL_Parallax,
-                                    BSPL_GP_PhotAstrom_LinOrbs_Param1):
+                                            PSPL_GP,
+                                            BSPL_PhotAstrom,
+                                            BSPL_Parallax,
+                                            BSPL_GP_PhotAstrom_LinOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18402,10 +18374,10 @@ class BSPL_PhotAstrom_Par_GP_LinOrbs_Param1(ModelClassABC,
 # BSPL no parallax
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2(ModelClassABC,
-                                      PSPL_GP,
-                                      BSPL_PhotAstrom,
-                                      BSPL_noParallax,
-                                      BSPL_GP_PhotAstrom_LinOrbs_Param2):
+                                              PSPL_GP,
+                                              BSPL_PhotAstrom,
+                                              BSPL_noParallax,
+                                              BSPL_GP_PhotAstrom_LinOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18415,23 +18387,23 @@ class BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2(ModelClassABC,
 # BSPL_parallax
 @inheritdocstring
 class BSPL_PhotAstrom_Par_GP_LinOrbs_Param2(ModelClassABC,
-                                    PSPL_GP,
-                                    BSPL_PhotAstrom,
-                                    BSPL_Parallax,
-                                    BSPL_GP_PhotAstrom_LinOrbs_Param2):
+                                            PSPL_GP,
+                                            BSPL_PhotAstrom,
+                                            BSPL_Parallax,
+                                            BSPL_GP_PhotAstrom_LinOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
+
 # BSPL no parallax
 @inheritdocstring
 class BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3(ModelClassABC,
-                                      PSPL_GP,
-                                      BSPL_PhotAstrom,
-                                      BSPL_noParallax,
-                                      BSPL_GP_PhotAstrom_LinOrbs_Param3):
+                                              PSPL_GP,
+                                              BSPL_PhotAstrom,
+                                              BSPL_noParallax,
+                                              BSPL_GP_PhotAstrom_LinOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18441,163 +18413,136 @@ class BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3(ModelClassABC,
 # BSPL_parallax
 @inheritdocstring
 class BSPL_PhotAstrom_Par_GP_LinOrbs_Param3(ModelClassABC,
-                                    PSPL_GP,
-                                    BSPL_PhotAstrom,
-                                    BSPL_Parallax,
-                                    BSPL_GP_PhotAstrom_LinOrbs_Param3):
+                                            PSPL_GP,
+                                            BSPL_PhotAstrom,
+                                            BSPL_Parallax,
+                                            BSPL_GP_PhotAstrom_LinOrbs_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
-
-
 
 
 class BSPL_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_Parallax,
-                                   BSPL_PhotAstrom_Circ_Param1):
+                                          BSPL_PhotAstrom,
+                                          BSPL_Parallax,
+                                          BSPL_PhotAstrom_Circ_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
 
 
 class BSPL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_Circ_Param1):
+                                            BSPL_PhotAstrom,
+                                            BSPL_noParallax,
+                                            BSPL_PhotAstrom_Circ_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
-
-
-
-
 
 
 class BSPL_PhotAstrom_Par_CircOrbs_Param2(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_Parallax,
-                                   BSPL_PhotAstrom_Circ_Param2):
+                                          BSPL_PhotAstrom,
+                                          BSPL_Parallax,
+                                          BSPL_PhotAstrom_Circ_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
 
 
 class BSPL_PhotAstrom_noPar_CircOrbs_Param2(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_Circ_Param2):
+                                            BSPL_PhotAstrom,
+                                            BSPL_noParallax,
+                                            BSPL_PhotAstrom_Circ_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
-
-        
 
 
 class BSPL_PhotAstrom_Par_CircOrbs_Param3(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_Parallax,
-                                   BSPL_PhotAstrom_Circ_Param3):
+                                          BSPL_PhotAstrom,
+                                          BSPL_Parallax,
+                                          BSPL_PhotAstrom_Circ_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
 
 
 class BSPL_PhotAstrom_noPar_CircOrbs_Param3(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_Circ_Param3):
+                                            BSPL_PhotAstrom,
+                                            BSPL_noParallax,
+                                            BSPL_PhotAstrom_Circ_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
-
-
 
 
 class BSPL_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_Parallax,
-                                   BSPL_PhotAstrom_Ell_Param1):
+                                         BSPL_PhotAstrom,
+                                         BSPL_Parallax,
+                                         BSPL_PhotAstrom_Ell_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
 
 
 class BSPL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_Ell_Param1):
+                                           BSPL_PhotAstrom,
+                                           BSPL_noParallax,
+                                           BSPL_PhotAstrom_Ell_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
-
-
 
 
 class BSPL_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_Parallax,
-                                   BSPL_PhotAstrom_Ell_Param2):
+                                         BSPL_PhotAstrom,
+                                         BSPL_Parallax,
+                                         BSPL_PhotAstrom_Ell_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
 
 
 class BSPL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_Ell_Param2):
+                                           BSPL_PhotAstrom,
+                                           BSPL_noParallax,
+                                           BSPL_PhotAstrom_Ell_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
-
-        
 
 
 class BSPL_PhotAstrom_Par_EllOrbs_Param3(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_Parallax,
-                                   BSPL_PhotAstrom_Ell_Param3):
+                                         BSPL_PhotAstrom,
+                                         BSPL_Parallax,
+                                         BSPL_PhotAstrom_Ell_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
 
 
 class BSPL_PhotAstrom_noPar_EllOrbs_Param3(ModelClassABC,
-                                   BSPL_PhotAstrom,
-                                   BSPL_noParallax,
-                                   BSPL_PhotAstrom_Ell_Param3):
+                                           BSPL_PhotAstrom,
+                                           BSPL_noParallax,
+                                           BSPL_PhotAstrom_Ell_Param3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
-        
+
 # =====
 # BSPL + GP Model Classes
 # =====
@@ -18704,6 +18649,7 @@ class BSPL_PhotAstrom_Par_GP_Param3(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+
 # =====
 # PSBL Model Classes
 # =====
@@ -18722,20 +18668,20 @@ class BSBL_PhotAstrom_noPar_Param1(ModelClassABC,
 # BSBL_parallax
 @inheritdocstring
 class BSBL_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC,
-                                 BSBL_PhotAstrom,
-                                 BSBL_Parallax,
-                                 BSBL_PhotAstrom_EllOrbs_Param1):
+                                         BSBL_PhotAstrom,
+                                         BSBL_Parallax,
+                                         BSBL_PhotAstrom_EllOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
+
 @inheritdocstring
 class BSBL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
-                                   BSBL_PhotAstrom,
-                                   BSBL_noParallax,
-                                   BSBL_PhotAstrom_EllOrbs_Param1):
+                                           BSBL_PhotAstrom,
+                                           BSBL_noParallax,
+                                           BSBL_PhotAstrom_EllOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18745,74 +18691,71 @@ class BSBL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
 # BSBL_parallax
 @inheritdocstring
 class BSBL_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC,
-                                 BSBL_PhotAstrom,
-                                 BSBL_Parallax,
-                                 BSBL_PhotAstrom_EllOrbs_Param2):
+                                         BSBL_PhotAstrom,
+                                         BSBL_Parallax,
+                                         BSBL_PhotAstrom_EllOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
+
 @inheritdocstring
 class BSBL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC,
-                                   BSBL_PhotAstrom,
-                                   BSBL_noParallax,
-                                   BSBL_PhotAstrom_EllOrbs_Param2):
+                                           BSBL_PhotAstrom,
+                                           BSBL_noParallax,
+                                           BSBL_PhotAstrom_EllOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
 
-        
 # BSBL_parallax
 @inheritdocstring
 class BSBL_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC,
-                                 BSBL_PhotAstrom,
-                                 BSBL_Parallax,
-                                 BSBL_PhotAstrom_CircOrbs_Param1):
+                                          BSBL_PhotAstrom,
+                                          BSBL_Parallax,
+                                          BSBL_PhotAstrom_CircOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
+
 @inheritdocstring
 class BSBL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
-                                   BSBL_PhotAstrom,
-                                   BSBL_noParallax,
-                                   BSBL_PhotAstrom_CircOrbs_Param1):
+                                            BSBL_PhotAstrom,
+                                            BSBL_noParallax,
+                                            BSBL_PhotAstrom_CircOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
+
 # BSBL_parallax
 @inheritdocstring
 class BSBL_PhotAstrom_Par_CircOrbs_Param2(ModelClassABC,
-                                 BSBL_PhotAstrom,
-                                 BSBL_Parallax,
-                                 BSBL_PhotAstrom_CircOrbs_Param2):
+                                          BSBL_PhotAstrom,
+                                          BSBL_Parallax,
+                                          BSBL_PhotAstrom_CircOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-        
+
 @inheritdocstring
 class BSBL_PhotAstrom_noPar_CircOrbs_Param2(ModelClassABC,
-                                   BSBL_PhotAstrom,
-                                   BSBL_noParallax,
-                                   BSBL_PhotAstrom_CircOrbs_Param2):
+                                            BSBL_PhotAstrom,
+                                            BSBL_noParallax,
+                                            BSBL_PhotAstrom_CircOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
 
-
-        
 
 # BSBL_parallax
 @inheritdocstring
@@ -18826,18 +18769,18 @@ class BSBL_PhotAstrom_Par_Param1(ModelClassABC,
         checkconflicts(self)
 
 
-        
 # BSBL_noparallax
 @inheritdocstring
 class BSBL_PhotAstrom_noPar_Param2(ModelClassABC,
-                                 BSBL_PhotAstrom,
-                                 BSBL_noParallax,
-                                 BSBL_PhotAstromParam2):
+                                   BSBL_PhotAstrom,
+                                   BSBL_noParallax,
+                                   BSBL_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-        
+
+
 # BSBL_parallax
 @inheritdocstring
 class BSBL_PhotAstrom_Par_Param2(ModelClassABC,
@@ -18848,7 +18791,6 @@ class BSBL_PhotAstrom_Par_Param2(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
 
 
 # =====
@@ -18865,15 +18807,17 @@ class FSPL_Phot_noPar_Param2(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+
 @inheritdocstring
 class FSPL_PhotAstrom_noPar_Param1(ModelClassABC,
-                                 FSPL_PhotAstrom,
-                                 FSPL_noParallax,
-                                 FSPL_PhotAstromParam1):
+                                   FSPL_PhotAstrom,
+                                   FSPL_noParallax,
+                                   FSPL_PhotAstromParam1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
 
 # FSPL_parallax
 @inheritdocstring
@@ -18886,6 +18830,7 @@ class FSPL_Phot_Par_Param2(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+
 # FSPL_parallax
 @inheritdocstring
 class FSPL_PhotAstrom_Par_Param1(ModelClassABC,
@@ -18896,7 +18841,7 @@ class FSPL_PhotAstrom_Par_Param1(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-        
+
 
 ########################################
 ### GENERAL USE AND SHARED FUNCTIONS ###
@@ -18910,7 +18855,7 @@ days_per_year = 365.25
 meter_per_AU = 1.496e11
 meter_per_Rsun = 6.96e8
 
-    
+
 def get_model(model_class, params, params_fixed):
     """Helper function to get a BAGLE model based on the
     model_class and input dictionaries for the

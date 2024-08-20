@@ -1660,8 +1660,8 @@ class PSPL_Solver(Solver):
                                                input_model=input_model,
                                                dense_time=True,
                                                n_phot_sets=self.n_phot_sets,
+                                               data_filt_index=i,
                                                filt_index=i,
-                                               ast_filt_index=i,
                                                mnest_results=mnest_results, fitter=fitter,
                                                N_traces=N_traces)
                 # If photometry
@@ -1670,8 +1670,8 @@ class PSPL_Solver(Solver):
                                                input_model=input_model,
                                                dense_time=True,
                                                n_phot_sets=self.n_phot_sets,
-                                               filt_index=i,
-                                               ast_filt_index=self.map_phot_idx_to_ast_idx[i],
+                                               data_filt_index=i,
+                                               filt_index=self.map_phot_idx_to_ast_idx[i],
                                                mnest_results=mnest_results, fitter=fitter,
                                                N_traces=N_traces)
 
@@ -3475,16 +3475,27 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
         return None
 
 def plot_astrometry(data, model, input_model=None, dense_time=True,
-                    residuals=True, n_phot_sets=0, filt_index=0, ast_filt_index=0,
+                    residuals=True, n_phot_sets=0, data_filt_index=0, filt_index=0,
                     mnest_results=None, N_traces=50, fitter=None):
     """Astrometry on the sky
+
+    Parameters
+    ----------
+    data : dict
+        Data dictionary.
+    model : bagle.model.Model
+        BAGLE microlens model class instance.
+    data_filt_index : int
+        Index number of the dataset.
+    filt_index : int
+        Filter index into the model object.
     """
     #### Get the data out.
-    dat_x = data['xpos' + str(filt_index + 1)] * 1e3
-    dat_y = data['ypos' + str(filt_index + 1)] * 1e3
-    dat_xe = data['xpos_err' + str(filt_index + 1)] * 1e3
-    dat_ye = data['ypos_err' + str(filt_index + 1)] * 1e3
-    dat_t = data['t_ast' + str(filt_index + 1)]
+    dat_x = data['xpos' + str(data_filt_index + 1)] * 1e3
+    dat_y = data['ypos' + str(data_filt_index + 1)] * 1e3
+    dat_xe = data['xpos_err' + str(data_filt_index + 1)] * 1e3
+    dat_ye = data['ypos_err' + str(data_filt_index + 1)] * 1e3
+    dat_t = data['t_ast' + str(data_filt_index + 1)]
 
     if (dat_xe.ndim == 2 and dat_xe.shape[0] == 1):
         dat_t = dat_t.reshape(len(dat_t[0]))
@@ -3513,21 +3524,21 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     #### Models
     #
     # Model
-    p_mod_lens_tdat = model.get_astrometry(dat_t, filt_idx=ast_filt_index)
-    p_mod_lens_tmod = model.get_astrometry(t_mod, filt_idx=ast_filt_index)
-    p_mod_lens_tlon = model.get_astrometry(t_long, filt_idx=ast_filt_index)
+    p_mod_lens_tdat = model.get_astrometry(dat_t, filt_idx=filt_index)
+    p_mod_lens_tmod = model.get_astrometry(t_mod, filt_idx=filt_index)
+    p_mod_lens_tlon = model.get_astrometry(t_long, filt_idx=filt_index)
 
-    p_mod_unlens_tdat = model.get_astrometry_unlensed(dat_t, filt_idx=ast_filt_index)
-    p_mod_unlens_tmod = model.get_astrometry_unlensed(t_mod, filt_idx=ast_filt_index)
-    p_mod_unlens_tlon = model.get_astrometry_unlensed(t_long, filt_idx=ast_filt_index)
+    p_mod_unlens_tdat = model.get_astrometry_unlensed(dat_t, filt_idx=filt_index)
+    p_mod_unlens_tmod = model.get_astrometry_unlensed(t_mod, filt_idx=filt_index)
+    p_mod_unlens_tlon = model.get_astrometry_unlensed(t_long, filt_idx=filt_index)
 
     # Input model
     if input_model != None:
-        p_in_lens_tmod = input_model.get_astrometry(t_mod, filt_idx=ast_filt_index)
-        p_in_lens_tlon = input_model.get_astrometry(t_long, filt_idx=ast_filt_index)
+        p_in_lens_tmod = input_model.get_astrometry(t_mod, filt_idx=filt_index)
+        p_in_lens_tlon = input_model.get_astrometry(t_long, filt_idx=filt_index)
         if str(model.__class__).startswith('BS'):
-            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod, filt_idx=ast_filt_index)
-            p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long, filt_idx=ast_filt_index)
+            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod, filt_idx=filt_index)
+            p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long, filt_idx=filt_index)
         else:
             p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod)
             p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long)
@@ -3547,10 +3558,10 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
             trace_model = fitter.get_model(mnest_results[idx])
             trace_models.append(trace_model)
 
-            pos_tr = trace_model.get_astrometry(t_mod, filt_idx=ast_filt_index)
+            pos_tr = trace_model.get_astrometry(t_mod, filt_idx=filt_index)
             p_tr_lens_tmod.append(pos_tr)
             
-            pos_tr = trace_model.get_astrometry(t_long, filt_idx=ast_filt_index)
+            pos_tr = trace_model.get_astrometry(t_long, filt_idx=filt_index)
             p_tr_lens_tlon.append(pos_tr)
 
 
@@ -3690,8 +3701,8 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     # Data
     x_mod_tdat = p_mod_unlens_tdat[:, 0]
     y_mod_tdat = p_mod_unlens_tdat[:, 1]
-    x_no_pm = data['xpos' + str(filt_index + 1)] - x_mod_tdat
-    y_no_pm = data['ypos' + str(filt_index + 1)] - y_mod_tdat
+    x_no_pm = data['xpos' + str(data_filt_index + 1)] - x_mod_tdat
+    y_no_pm = data['ypos' + str(data_filt_index + 1)] - y_mod_tdat
 
     # Dense sampled model
     dp_tmod_unlens = p_mod_lens_tmod - p_mod_unlens_tmod
