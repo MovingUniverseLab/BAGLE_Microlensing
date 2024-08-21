@@ -2166,24 +2166,6 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
                                                    obsLocation=[obsLocation1, obsLocation2, obsLocation3],
                                                    raL=raL_in,
                                                    decL=decL_in)
-<<<<<<< Updated upstream
-    
-    # Simulate
-    # photometric observations every 1 day and
-    # astrometric observations every 14 days
-    # for the bulge observing window. Observations missed
-    # for 125 days out of 365 days for photometry and missed
-    # for 245 days out of 365 days for astrometry.
-    
-    t_phot = np.array([], dtype=float)
-    t_ast = np.array([], dtype=float)
-    for year_start in np.arange(56000, 58000, 365.25):
-        phot_win = 240.0
-        phot_start = (365.25 - phot_win) / 2.0
-        t_phot_new = np.arange(year_start + phot_start,
-                               year_start + phot_start + phot_win, 1)
-        t_phot = np.concatenate([t_phot, t_phot_new])
-=======
 
     ##########
     # Simulate
@@ -2192,7 +2174,6 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
     # photometric and astrometric observations every 14 days from Keck
     # for the bulge observing window. Has gaps.
     ##########
->>>>>>> Stashed changes
 
     # OGLE-like
     survey_time1 = 10 * 365.25  # full survey duration in days.
@@ -2546,8 +2527,6 @@ def add_astrometric_noise(flux0, mag0, pos_err0, mag_obs, pos_obs):
     pos_obs_new = pos_obs + (pos_obs_err * np.random.randn(pos_obs.shape[0], pos_obs.shape[1]))
 
     return pos_obs_new, pos_obs_err
-
-<<<<<<< Updated upstream
 
 def fake_dex_data_noPar_BSPL_6(outdir='', outroot='bspl',
                    t0_com = 57000.00, u0_amp = .2,
@@ -4274,7 +4253,8 @@ def fake_dex_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp = 10, mLs = 8,
     params['decL'] = decL
 
     return data,  params, bsbl
-=======
+
+
 def get_bulge_survey_times(survey_start, survey_duration, survey_cadence, telescope='OGLE'):
     """
     Get an array of times for a synthetic survey.
@@ -4322,5 +4302,3 @@ def get_bulge_survey_times(survey_start, survey_duration, survey_cadence, telesc
     t_final = t_tmp[idx]
 
     return t_final.mjd
-
->>>>>>> Stashed changes

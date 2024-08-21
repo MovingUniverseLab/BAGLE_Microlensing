@@ -5989,6 +5989,7 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
     #sep = np.random.normal(2, 0.2, size=n_events)
     # Lets make these more likely to have caustic crossings.
     sep = 10**log10_thetaE / 2.0
+    arat = np.random.uniform(1.1, 1.7, size=nevents)
     muS_E = np.random.uniform(0, 7, size=nevents)
     muS_N = np.random.uniform(-7, 0, size=nevents)
     q = 10 ** np.random.uniform(-5, -1, size=nevents)
@@ -6011,7 +6012,7 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
                              piS[nn], piE_E[nn], piE_N[nn],
                              xS0_E[nn], xS0_N[nn],
                              omega[nn], big_omega[nn],
-                             i[nn], e[nn], tp[nn], sep[nn],
+                             i[nn], e[nn], tp[nn], sep[nn], arat[nn],
                              muS_E[nn], muS_N[nn],
                              q[nn], alpha[nn],
                              b_sff[nn], mag_src[nn],

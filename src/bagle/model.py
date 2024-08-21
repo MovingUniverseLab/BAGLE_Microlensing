@@ -7799,14 +7799,12 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         This is the time of the periastron of the system in days.
     sep : float
         Angular separation of the two lenses (mas)
+    arat: float
+        Ratio of semi-major axis with current separation between lenses at time of measurement.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
         Dec Source proper motion (mas/yr)
-    sep: float
-        Distance between lenses in mas
-    arat: float
-        Ratio of semi-major axis with current separation between lenses at time of measurement.
     q : float
         Mass ratio (M2 / M1)
     alpha : float
