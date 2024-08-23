@@ -6,7 +6,7 @@
 # .. moduleauthor:: Michael Medford <MichaelMedford@berkeley.edu>
 # .. moduleauthor:: Casey Lam
 # .. moduleauthor:: Edward Broadberry
-# .. moduleauthor:: Tanay Bhadra
+# .. moduleauthor:: T. Dex Bhadra
 """
 Overview of bagle.model
 =========================
@@ -5267,6 +5267,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         xL1 = np.tile(self.xL1_over_theta, (len(t_obs), 1))
         xL2 = np.tile(self.xL2_over_theta, (len(t_obs), 1))
 
+            
         return (xL1, xL2)
 
     def get_astrometry_unlensed(self, t_obs, filt_idx=0):
@@ -7861,6 +7862,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         
          # Calculate period, and semi-major axes
         self.sep = sep #mas
+        self.sep_AU = self.dL * (self.sep *1e-3) 
         self.a = self.arat * self.sep #mas
         self.aleph_sec = (self.mLp/(self.mLp+self.mLs))*self.a #mas
         self.aleph = self.a - self.aleph_sec #mas
@@ -7871,6 +7873,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
                      
         # Calculate period, and semi-major axes
         self.sep = sep  # mas
+        #self.sep_AU = self.dL * (self.sep *1e-3) Uncomment this line when test_roman_lightcurve freezing thing is solved
         self.a = self.arat * self.sep  # mas
         self.aleph_sec = (self.mLp / (self.mLp + self.mLs)) * self.a  # mas
         self.aleph = self.a - self.aleph_sec  # mas
@@ -8412,15 +8415,18 @@ class PSBL_PhotParam1(PSPL_Param):
         # Calculate the angle between muRel and the binary axis
         # in radians.
         self.phi_rad = self.phi * np.pi / 180.0
-
         # For convenience, calculate the vector pointing
         # from the geometric center of the lens binary system
         # to the primary mass. This requires a combination of
         # phi and piE_hat.
         self.phi_piE_rad = np.arctan2(self.piE[0], self.piE[1])
         # Note that phi_rho1 is the same alpha in our astrometry model;
-        # however, here we don't have North as a reference.
-        self.phi_rho1_rad = self.phi_rad - self.phi_piE_rad
+        # However, here, we don't have North as a reference.
+        self.phi_rho1_rad = self.phi_piE_rad - self.phi_rad
+        #self.phi_rho1_rad = self.phi_piE_rad + self.phi_rad
+
+        #self.phi_rho1_rad = self.phi_rad - self.phi_piE_rad
+        
         self.xL1_over_theta = np.array([0.5 * self.sep * np.sin(self.phi_rho1_rad),
                                         0.5 * self.sep * np.cos(self.phi_rho1_rad)])
         self.xL2_over_theta = np.array([-0.5 * self.sep * np.sin(self.phi_rho1_rad),
