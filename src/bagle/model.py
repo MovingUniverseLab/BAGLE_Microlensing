@@ -10,7 +10,6 @@
 """
 Overview of bagle.model
 =========================
-
 The ``bagle.model`` module contains a collection of classes and functions that
 allow the user to construct microlensing models. The available classes for
 instantiating a microlensing event are shown in the list below.
@@ -6692,7 +6691,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
           * negative (u0_amp < 0 when u0_hat[0] < 0).
     tE : float
         Einstein crossing time (days).
-    log10_thetaE : float
+    thetaE : float
         The size of the Einstein radius in (mas).
     piS : float
         Amplitude of the parallax (1AU/dS) of the source. (mas)
@@ -8422,16 +8421,16 @@ class PSBL_PhotParam1(PSPL_Param):
         self.phi_piE_rad = np.arctan2(self.piE[0], self.piE[1])
         # Note that phi_rho1 is the same alpha in our astrometry model;
         # However, here, we don't have North as a reference.
-        self.phi_rho1_rad = self.phi_piE_rad - self.phi_rad
-        #self.phi_rho1_rad = self.phi_piE_rad + self.phi_rad
-
-        #self.phi_rho1_rad = self.phi_rad - self.phi_piE_rad
+                     
+        #self.phi_rho1_rad = self.phi_piE_rad - self.phi_rad 
         
+        self.phi_rho1_rad = self.phi_piE_rad + self.phi_rad
+        #self.phi_rho1_rad = self.phi_rad - self.phi_piE_rad
+
         self.xL1_over_theta = np.array([0.5 * self.sep * np.sin(self.phi_rho1_rad),
                                         0.5 * self.sep * np.cos(self.phi_rho1_rad)])
         self.xL2_over_theta = np.array([-0.5 * self.sep * np.sin(self.phi_rho1_rad),
                                         -0.5 * self.sep * np.cos(self.phi_rho1_rad)])
-
         # Get thetaE_hat (same direction as piE and muRel)
         self.thetaE_hat = self.piE / self.piE_amp
         self.muRel_hat = self.thetaE_hat
