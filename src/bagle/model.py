@@ -528,6 +528,13 @@ class PSPL_Param(ABC):
             param_var = getattr(self, param)
             if not isinstance(param_var, (list, np.ndarray)):
                 setattr(self, param, np.array([param_var]))
+            elif isinstance(param_var, list):
+                setattr(self, param, np.array(param_var))
+            param_var = getattr(self, param)
+
+            # Ensure array shape only has 1 dimension.
+            if len(param_var.shape) > 1:
+                setattr(self, param, param_var.reshape(np.max(param_var.shape)))
 
         # Check that required fixed_phot_params are proper arrays.
         # If not, then make them arrays of the appropriate length.
@@ -5144,9 +5151,6 @@ class PSBL(PSPL):
         mag_model : array_like
             Magnitude of the unresolved microlensing event at t_obs.
         '''
-        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
-        flux_zp = 1.0
-
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
 
@@ -5156,7 +5160,7 @@ class PSBL(PSPL):
         # Sum up all the amplifications b/c surface brightness is conserved.
         amp = np.sum(amp_arr_msk, axis=1)
 
-        flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
+        flux_src = np.nan_to_num(mag2flux(self.mag_src[filt_idx]), nan=0)
         flux_model = flux_src * amp
 
         # Account for blending, if necessary.
@@ -5178,15 +5182,12 @@ class PSBL(PSPL):
             #                pdb.set_trace()
             flux_model[bad] = np.nan
 
-        mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
+        mag_model = flux2mag(flux_model)
 
         # Set the masked values (in the data array) to also be nan.
         bad = np.where(flux_model.mask == True)
         if len(bad) > 0:
             mag_model.data[bad] = np.nan
-
-        # pdb.set_trace()
-        # print('mag_model = ', mag_model)
 
         return mag_model
 
@@ -9520,6 +9521,7 @@ class BSPL_PhotParam1(PSPL_Param):
         self.mag_src_pri = mag_src_pri
         self.mag_src_sec = mag_src_sec
 
+
         # Check variable formatting.
         super().__init__()
 
@@ -9762,6 +9764,9 @@ class BSPL_PhotAstromParam1(PSPL_Param):
         self.piE_amp = self.piRel / self.thetaE_amp
         self.piE = self.piE_amp * self.thetaE_hat
         self.piE_E, self.piE_N = self.piE
+
+        # Calculate the Einstein crossing time. (days)
+        self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
 
         #####
         # Derived binary source parameters.
@@ -13567,7 +13572,7 @@ class BSBL(PSBL):
             Magnitude of the unresolved microlensing event at t_obs.
         '''
         if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t_obs)
+            img_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
 
         # Mask invalid values from the amplification array.
         amp_arr_msk = np.ma.masked_invalid(amp_arr)
