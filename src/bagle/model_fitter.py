@@ -1664,6 +1664,7 @@ class PSPL_Solver(Solver):
                                         + 'phot_and_residuals_gp_'
                                         + str(i + 1) + suffix + 'zoom.png')
                             plt.close()
+
         if model.astrometryFlag:
             for i in range(self.n_ast_sets):
                 # If no photometry
@@ -1706,16 +1707,16 @@ class PSPL_Solver(Solver):
                     self.outputfiles_basename + 'astr_remove_pm_' + str(i + 1) + suffix + '.png')
 
                 fig_list[6].savefig(
-                    self.outputfiles_basename + 'astr_on_sky_unlensed' + suffix + '.png')
+                    self.outputfiles_basename + 'astr_on_sky_unlensed' + str(i + 1) + suffix + '.png')
 
                 fig_list[7].savefig(
-                    self.outputfiles_basename + 'astr_longtime_RA_remove_pm' + suffix + '.png')
+                    self.outputfiles_basename + 'astr_longtime_RA_remove_pm' + str(i + 1) + suffix + '.png')
 
                 fig_list[8].savefig(
-                    self.outputfiles_basename + 'astr_longtime_Dec_remove_pm' + suffix + '.png')
+                    self.outputfiles_basename + 'astr_longtime_Dec_remove_pm' + str(i + 1) + suffix + '.png')
 
                 fig_list[9].savefig(
-                    self.outputfiles_basename + 'astr_longtime_remove_pm' + suffix + '.png')
+                    self.outputfiles_basename + 'astr_longtime_remove_pm' + str(i + 1) + suffix + '.png')
 
                 for fig in fig_list:
                     plt.close(fig)
