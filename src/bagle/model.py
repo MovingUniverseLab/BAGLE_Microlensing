@@ -8526,8 +8526,8 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         self.alpha = alpha
         self.fratio_bin = np.array(fratio_bin)
         self.alpha_rad = self.alpha * np.pi / 180.0
-        self.mag_src_pri = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fratio_bin)
-        self.mag_src_sec = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + (1.0 / fratio_bin))
+        self.mag_src_pri = self.mag_base - 2.5 * np.log10(self.b_sff) + 2.5 * np.log10(1.0 + self.fratio_bin)
+        self.mag_src_sec = self.mag_base - 2.5 * np.log10(self.b_sff) + 2.5 * np.log10(1.0 + (1.0 / self.fratio_bin))
 
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
