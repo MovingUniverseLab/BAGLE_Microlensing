@@ -9468,17 +9468,22 @@ class BSPL_PhotParam1(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    q: float
-        Mass ratio (low-mass / high-mass)
     sep: float
-        Angular separation of the two lenses in units of thetaE where
-        thetaE is defined with the total binary mass.
+        Angular separation of the source scondary from the
+        source primary (mas).
     phi: float
         Angle made between the binary axis and the relative proper motion vector,
         measured in degrees.
+    mag_src_pri: array or list
+        Photometric magnitude of the first (primary) source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    mag_src_sec: array or list
+        Photometric magnitude of the second (secondary) source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
     b_sff: array or list
         The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        :math:`b_sff = (f_S1 + f_S2) / (f_S1 + f_s2 + f_L + f_N)`.
+        This must be passed in as a list or
         array, with one entry for each photometric filter.
     mag_src:  array or list
         Photometric magnitude of the source. This must be passed in as a
@@ -9498,13 +9503,12 @@ class BSPL_PhotParam1(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'phi']
-    phot_param_names = ['b_sff', 'mag_src']
+                          'sep', 'phi']
+    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', ]
 
     paramAstromFlag = False
     paramPhotFlag = True
     orbitFlag = False
-
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N,
                  sep, phi, mag_src_pri, mag_src_sec,

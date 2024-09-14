@@ -108,7 +108,6 @@ def fisher_cov_matrix_phot_astrom(t, mag_err, ast_err,
 
     # with np.printoptions(precision=2):
     #     print(fish_mat)
-    cov_mat = np.linalg.inv(fish_mat)
     # with np.printoptions(precision=3):
     #     print(fish_mat)
     #     print(cov_mat)
@@ -351,7 +350,10 @@ def fisher_cov_matrix_multi_cadence(t, mag_err, ast_err,
     cov_mat = np.zeros((n_cadences, n_in_matrix, n_in_matrix), dtype=float)
 
     for t in range(n_cadences):
-        cov_mat[t, :, :] = np.linalg.inv(fish_mat[t, :, :])
+        try:
+            cov_mat[t, :, :] = np.linalg.inv(fish_mat[t, :, :])
+        except np.linalg.LinAlgError:
+            cov_mat[t, :, :] = np.nan
 
     return param_names, cov_mat
 
