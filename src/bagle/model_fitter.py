@@ -2726,26 +2726,30 @@ def make_mag_src_gen(mag):
     return gen
 
 
-def make_xS0_gen(pos):
+def make_xS0_gen(pos, verbose = False):
     posmin = pos.min() - 5 * pos.std()
     posmax = pos.max() + 5 * pos.std()
-#    print('make_xS0_gen')
-#    print('posmin : ', posmin)
-#    print('posmax : ', posmax)
-#    print('         ')
+
+    if verbose:
+        print('make_xS0_gen')
+        print('posmin : ', posmin)
+        print('posmax : ', posmax)
+        print('         ')
     return make_gen(posmin, posmax)
 
-def make_xS0_norm_gen(pos):
+def make_xS0_norm_gen(pos, verbose = False):
     posmid = 0.5 * (pos.min() + pos.max())
     poswidth = np.abs(pos.max() - pos.min())
-#    print('make_xS0_norm_gen')
-#    print('posmid : ', posmid)
-#    print('poswidth : ', poswidth)
-#    print('         ')
+
+    if verbose:
+        print('make_xS0_norm_gen')
+        print('posmid : ', posmid)
+        print('poswidth : ', poswidth)
+        print('         ')
     return make_norm_gen(posmid, poswidth)
 
 
-def make_muS_EN_gen(t, pos, scale_factor=100.0):
+def make_muS_EN_gen(t, pos, scale_factor=100.0, verbose = False):
     """Get an approximate muS search range by looking at the best fit
     straight line to the astrometry. Then allows lots of free space.
 
@@ -2775,10 +2779,12 @@ def make_muS_EN_gen(t, pos, scale_factor=100.0):
 
     vel_lo = vel - scale_factor * vel_err
     vel_hi = vel + scale_factor * vel_err
-#    print('make_muS_EN_gen')
-#    print('vel_lo : ', vel_lo)
-#    print('vel_hi : ', vel_hi)
-#    print('         ')
+
+    if verbose:
+        print('make_muS_EN_gen')
+        print('vel_lo : ', vel_lo)
+        print('vel_hi : ', vel_hi)
+        print('         ')
     return make_gen(vel_lo, vel_hi)
 
 def make_muS_EN_norm_gen(t, pos, n_use=None, scale_factor=10.0):
