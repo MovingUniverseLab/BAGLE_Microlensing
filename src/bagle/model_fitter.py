@@ -4221,15 +4221,29 @@ def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
 
     return fig_list
 
-def plot_astrometry_on_sky(data, model, ast_filt_index=0):
-    t_mod = np.arange(data['t_ast1'].min() - 300.0, data['t_ast1'].max() + 300.0, 5.0)
+def plot_astrometry_on_sky(data, model, data_filt_index=0):
+    #### Get the data out.
+    dat_x = data['xpos' + str(data_filt_index + 1)] * 1e3
+    dat_y = data['ypos' + str(data_filt_index + 1)] * 1e3
+    dat_xe = data['xpos_err' + str(data_filt_index + 1)] * 1e3
+    dat_ye = data['ypos_err' + str(data_filt_index + 1)] * 1e3
+    dat_t = data['t_ast' + str(data_filt_index + 1)]
+
+    if (dat_xe.ndim == 2 and dat_xe.shape[0] == 1):
+        dat_t = dat_t.reshape(len(dat_t[0]))
+        dat_x = dat_x.reshape(len(dat_x[0]))
+        dat_y = dat_y.reshape(len(dat_y[0]))
+        dat_xe = dat_xe.reshape(len(dat_xe[0]))
+        dat_ye = dat_ye.reshape(len(dat_ye[0]))
+
+    t_mod = np.arange(dat_t.min() - 300.0, dat_t.max() + 300.0, 5.0)
 
     lens_in = model.get_lens_astrometry(t_mod)
-    pos_out = model.get_astrometry(t_mod, ast_filt_index=ast_filt_index)
+    pos_out = model.get_astrometry(t_mod, filt_idx=data_filt_index)
     # pos_in
     if str(model.__class__).startswith('BS'):
         # Binary sources have filter dependent unlensed astrometry.
-        pos_in = model.get_astrometry_unlensed(dat_t, filt_idx=ast_filt_index)
+        pos_in = model.get_astrometry_unlensed(dat_t, filt_idx=data_filt_index)
     else:
         pos_in = model.get_astrometry_unlensed(dat_t)
 
@@ -4295,17 +4309,31 @@ def plot_astrometry_on_sky(data, model, ast_filt_index=0):
     return fig
 
 
-def plot_astrometry_proper_motion_removed(data, model, ast_filt_index=0):
+def plot_astrometry_proper_motion_removed(data, model, data_filt_index=0):
     """Proper Motion Subtracted
     """
-    t_mod = np.arange(data['t_ast1'].min() - 300.0, data['t_ast1'].max() + 300.0, 5.0)
+    #### Get the data out.
+    dat_x = data['xpos' + str(data_filt_index + 1)] * 1e3
+    dat_y = data['ypos' + str(data_filt_index + 1)] * 1e3
+    dat_xe = data['xpos_err' + str(data_filt_index + 1)] * 1e3
+    dat_ye = data['ypos_err' + str(data_filt_index + 1)] * 1e3
+    dat_t = data['t_ast' + str(data_filt_index + 1)]
+
+    if (dat_xe.ndim == 2 and dat_xe.shape[0] == 1):
+        dat_t = dat_t.reshape(len(dat_t[0]))
+        dat_x = dat_x.reshape(len(dat_x[0]))
+        dat_y = dat_y.reshape(len(dat_y[0]))
+        dat_xe = dat_xe.reshape(len(dat_xe[0]))
+        dat_ye = dat_ye.reshape(len(dat_ye[0]))
+
+    t_mod = np.arange(dat_t.min() - 300.0, dat_t.max() + 300.0, 5.0)
 
     lens_in = model.get_lens_astrometry(t_mod)
-    pos_out = model.get_astrometry(t_mod, ast_filt_index=ast_filt_index)
+    pos_out = model.get_astrometry(t_mod, filt_index=data_filt_index)
     # pos_in
     if str(model.__class__).startswith('BS'):
         # Binary sources have filter dependent unlensed astrometry.
-        pos_in = model.get_astrometry_unlensed(dat_t, filt_idx=ast_filt_index)
+        pos_in = model.get_astrometry_unlensed(dat_t, filt_idx=data_filt_index)
     else:
         pos_in = model.get_astrometry_unlensed(dat_t)
     
@@ -5187,7 +5215,7 @@ def cornerplot_2truth(results, dims=None, span=None, quantiles=[0.025, 0.5, 0.97
                 if truths1[j] is not None:
                     try:
                         [ax.axvline(t, color=truth_color1, **truth_kwargs1)
-                         for t in truths[j]]
+                         for t in truths1[j]]
                     except:
                         ax.axvline(truths1[j], color=truth_color1,
                                    **truth_kwargs1)

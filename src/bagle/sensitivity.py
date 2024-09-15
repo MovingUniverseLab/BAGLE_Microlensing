@@ -31,8 +31,8 @@ def fisher_cov_matrix_phot_astrom(t, mag_err, ast_err,
         Dictionary of fixed model parameters. Usually this includes
         raL and decL for the R.A. and Dec of the lens. 
 
-    Optional
-    --------
+    Optional Parameters
+    -------------------
     num_deriv_frac : float
         Fisher matrix is calculated with a numerical derivative. This
         sets the step size used to calculate the numerical derivative.
@@ -111,6 +111,11 @@ def fisher_cov_matrix_phot_astrom(t, mag_err, ast_err,
     # with np.printoptions(precision=3):
     #     print(fish_mat)
     #     print(cov_mat)
+
+    try:
+        cov_mat = np.linalg.inv(fish_mat)
+    except np.linalg.LinAlgError:
+        cov_mat = np.diag(np.ones(fish_mat.shape[0])) * np.inf
 
     return cov_mat
 
@@ -252,8 +257,8 @@ def fisher_cov_matrix_multi_cadence(t, mag_err, ast_err,
         List of lists containing the time indices to include in each of the
         different cadence tests.
 
-    Optional
-    --------
+    Optional Parameters
+    -------------------
     num_deriv_frac : float
         Fisher matrix is calculated with a numerical derivative. This
         sets the step size used to calculate the numerical derivative.
