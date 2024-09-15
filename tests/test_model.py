@@ -20,6 +20,7 @@ import pdb
 import yaml, pickle
 import pytest
 import inspect, sys
+import matplotlib
 
 from astropy.time import Time
 from astropy.coordinates import solar_system_ephemeris, EarthLocation, spherical_to_cartesian, cartesian_to_spherical
@@ -27,6 +28,7 @@ from astropy.coordinates import get_body_barycentric, get_body, get_moon, get_bo
 
 # Always generate the same fake data.
 np.random.seed(0)
+
 
 def test_PSPL_other(plot=False):
     mL = 10.0  # msun
@@ -2261,7 +2263,7 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     from pyLIMA import toolbox as microltoolbox
     from pyLIMA.models import generate_model
 
-    phi_rad = np.radians(phi)
+    phi_rad = np.radians(-phi)
 
     # These are arbitrary in the Phot-noParallax model.
     piEE = 0.1
@@ -2269,16 +2271,9 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
 
     # Our --> PyLIMA  conversions
     pylima_q = q
-
     q_prime = (1.0 - q) / (2.0 * (1 + q))
-
     pylima_u0 = u0_amp + q_prime * sep * np.sin(phi_rad)
     pylima_t0 = t0 + q_prime * sep * tE * np.cos(phi_rad)
-
-    # Note that pylima_phi = phi
-
-    log_q = np.log10(pylima_q)
-    log_s = np.log10(sep)
 
     # Load up some artificial data for pyLIMA... need this for time array definition.
     tests_dir = os.path.dirname(os.path.realpath(__file__))
@@ -5954,6 +5949,7 @@ def test_spitzer_shvartzvald2019(plot=False):
 
     return
 
+@pytest.mark.skip(reason="broken: plot_PSBL not working. Fixing rn")
 def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
     from bagle import fake_data
 

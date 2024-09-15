@@ -7,6 +7,9 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.table import Table
 
+from matplotlib import logging
+logging.getLogger('matplotlib.font_manager').disabled = True
+
 def blah():
     t = Table.read('/u/jlu/work/microlens/OB110462/a_2022_03_01/model_fits/pspl/ogle_hst_phot_gp/base_b/b0_post_equal_weights.dat', format='ascii')
     t = Table.read('/u/jlu/work/microlens/OB110462/a_2021_12_20/model_fits/ogle_hst_phot/base_a/a0_post_equal_weights.dat', format='ascii')
@@ -256,6 +259,7 @@ def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
                                  plot_conv=False,
                                  plot_lc=False,
                                  verbose=False):
+
     """
     Test conversion from geocentric projected frame
     (using lens-source tau-beta convention) to
@@ -321,7 +325,7 @@ def test_bagle_geo_to_helio_phot(ra, dec, t_mjd,
         ax[1].set_ylabel('Geo proj - Helio')
         ax[1].set_xlabel('MJD')
         plt.show()
-#        plt.pause(0.5)
+        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
@@ -546,7 +550,7 @@ def test_bagle_to_mulens(ra, dec, t_mjd,
         ax[1].set_ylabel('Mulens - BAGLE')
         ax[1].set_xlabel('MJD')
         plt.show()
-#        plt.pause(0.5)
+        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
@@ -634,7 +638,7 @@ def test_mulens_to_bagle(ra, dec, t_mjd,
         ax[1].set_ylabel('Mulens - BAGLE')
         ax[1].set_xlabel('MJD')
         plt.show()
-#        plt.pause(0.5)
+        plt.pause(0.5)
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than

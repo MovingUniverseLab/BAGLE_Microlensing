@@ -65,7 +65,8 @@ muS_scale_factor = 100.0
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
                      'mag_src_pri', 'mag_src_sec', 'fratio_bin',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
-                     'gp_log_omega04_S0', 'gp_log_omega0', 'add_err', 'mult_err']
+                     'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
+                     'add_err', 'mult_err']
 
 class PSPL_Solver(Solver):
     """
@@ -207,6 +208,7 @@ class PSPL_Solver(Solver):
         'gp_log_S0': ('make_norm_gen', 0, 5),
         'gp_log_sigma': ('make_norm_gen', 0, 5), 
         'gp_rho':('make_invgamma_gen', None, None),
+        'gp_log_omega0_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega04_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega0':('make_norm_gen', 0, 5),
         'delta_muS_sec_E':('make_gen', -1, 1),
@@ -243,8 +245,9 @@ class PSPL_Solver(Solver):
         'pS': ('make_gen', 0, 10000),
         'tpS': ('make_gen', 0, 10000),
         'alephS': ('make_gen', 1, 10),
-        'aleph_secS':('make_gen', 1, 10)
-
+        'aleph_secS':('make_gen', 1, 10),
+        'gp_log_omega0':('make_norm_gen', 0, 5),
+        'gp_log_jit_sigma':('make_norm_gen', 0, 5)
     }
 
     def __init__(self, data, model_class,
@@ -274,11 +277,11 @@ class PSPL_Solver(Solver):
 
         use_phot_optional_params : bool, or list of bools, optional
 	    optional photometry parameters
-     
+
         single_gp: bool, optional
         Set as true if there are multiple datasets but only a single set
         of gp parameters.
-        
+
         
         """
 
@@ -298,7 +301,7 @@ class PSPL_Solver(Solver):
         self.multi_filt_params = multi_filt_params
 
         self.gp_params = ['gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
-                          'gp_log_omega04_S0', 'gp_log_omega0']
+                          'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
 
         # Set up parameterization of the model
         self.remove_digits = str.maketrans('', '', digits)  # removes nums from strings
@@ -475,7 +478,7 @@ class PSPL_Solver(Solver):
                 except ValueError:
                     print('*** CHECK YOUR INPUT! All astrometry data must have a corresponding photometry data set! ***')
                     raise
-                    
+
         self.n_phot_sets = n_phot_sets
         self.n_ast_sets = n_ast_sets
         self.map_phot_idx_to_ast_idx = map_phot_idx_to_ast_idx
@@ -533,7 +536,7 @@ class PSPL_Solver(Solver):
                                     self.additional_param_names += [param_name + str(ii+1)]
                 else:
                     self.additional_param_names += [param_name]
-        
+
         self.all_param_names = self.fitter_param_names + self.additional_param_names
 
         self.n_dims = len(self.fitter_param_names)
@@ -651,7 +654,7 @@ class PSPL_Solver(Solver):
             mod = self.model_class(*params_dict.values())
 
         # FIXME: Why are we updating params here???
-        
+
         if not isinstance(params, (dict, Row)):
 
             # FIXME: is there better way to do this.
@@ -1664,6 +1667,7 @@ class PSPL_Solver(Solver):
                                         + 'phot_and_residuals_gp_'
                                         + str(i + 1) + suffix + 'zoom.png')
                             plt.close()
+
         if model.astrometryFlag:
             for i in range(self.n_ast_sets):
                 # If no photometry
@@ -1706,16 +1710,16 @@ class PSPL_Solver(Solver):
                     self.outputfiles_basename + 'astr_remove_pm_' + str(i + 1) + suffix + '.png')
 
                 fig_list[6].savefig(
-                    self.outputfiles_basename + 'astr_on_sky_unlensed' + suffix + '.png')
+                    self.outputfiles_basename + 'astr_on_sky_unlensed' + str(i + 1) + suffix + '.png')
 
                 fig_list[7].savefig(
-                    self.outputfiles_basename + 'astr_longtime_RA_remove_pm' + suffix + '.png')
+                    self.outputfiles_basename + 'astr_longtime_RA_remove_pm' + str(i + 1) + suffix + '.png')
 
                 fig_list[8].savefig(
-                    self.outputfiles_basename + 'astr_longtime_Dec_remove_pm' + suffix + '.png')
+                    self.outputfiles_basename + 'astr_longtime_Dec_remove_pm' + str(i + 1) + suffix + '.png')
 
                 fig_list[9].savefig(
-                    self.outputfiles_basename + 'astr_longtime_remove_pm' + suffix + '.png')
+                    self.outputfiles_basename + 'astr_longtime_remove_pm' + str(i + 1) + suffix + '.png')
 
                 for fig in fig_list:
                     plt.close(fig)
@@ -3037,7 +3041,8 @@ def generate_params_dict(params, fitter_param_names):
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
     multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin']
-    multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
+    multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0',
+                  'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
     
     params_dict = {}
     for i, param_name in enumerate(fitter_param_names):
@@ -3197,7 +3202,7 @@ def plot_params(model):
             pvalue = pvalue[1]
         if pname == 'log10_thetaE':
             pvalue = np.log10(pvalue)
-        
+
         return pvalue
 
     for ff in range(len(model.fitter_param_names)):
@@ -4222,15 +4227,29 @@ def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
 
     return fig_list
 
-def plot_astrometry_on_sky(data, model, ast_filt_index=0):
-    t_mod = np.arange(data['t_ast1'].min() - 300.0, data['t_ast1'].max() + 300.0, 5.0)
+def plot_astrometry_on_sky(data, model, data_filt_index=0):
+    #### Get the data out.
+    dat_x = data['xpos' + str(data_filt_index + 1)] * 1e3
+    dat_y = data['ypos' + str(data_filt_index + 1)] * 1e3
+    dat_xe = data['xpos_err' + str(data_filt_index + 1)] * 1e3
+    dat_ye = data['ypos_err' + str(data_filt_index + 1)] * 1e3
+    dat_t = data['t_ast' + str(data_filt_index + 1)]
+
+    if (dat_xe.ndim == 2 and dat_xe.shape[0] == 1):
+        dat_t = dat_t.reshape(len(dat_t[0]))
+        dat_x = dat_x.reshape(len(dat_x[0]))
+        dat_y = dat_y.reshape(len(dat_y[0]))
+        dat_xe = dat_xe.reshape(len(dat_xe[0]))
+        dat_ye = dat_ye.reshape(len(dat_ye[0]))
+
+    t_mod = np.arange(dat_t.min() - 300.0, dat_t.max() + 300.0, 5.0)
 
     lens_in = model.get_lens_astrometry(t_mod)
-    pos_out = model.get_astrometry(t_mod, ast_filt_index=ast_filt_index)
+    pos_out = model.get_astrometry(t_mod, filt_idx=data_filt_index)
     # pos_in
     if str(model.__class__).startswith('BS'):
         # Binary sources have filter dependent unlensed astrometry.
-        pos_in = model.get_astrometry_unlensed(dat_t, filt_idx=ast_filt_index)
+        pos_in = model.get_astrometry_unlensed(dat_t, filt_idx=data_filt_index)
     else:
         pos_in = model.get_astrometry_unlensed(dat_t)
 
@@ -4296,17 +4315,31 @@ def plot_astrometry_on_sky(data, model, ast_filt_index=0):
     return fig
 
 
-def plot_astrometry_proper_motion_removed(data, model, ast_filt_index=0):
+def plot_astrometry_proper_motion_removed(data, model, data_filt_index=0):
     """Proper Motion Subtracted
     """
-    t_mod = np.arange(data['t_ast1'].min() - 300.0, data['t_ast1'].max() + 300.0, 5.0)
+    #### Get the data out.
+    dat_x = data['xpos' + str(data_filt_index + 1)] * 1e3
+    dat_y = data['ypos' + str(data_filt_index + 1)] * 1e3
+    dat_xe = data['xpos_err' + str(data_filt_index + 1)] * 1e3
+    dat_ye = data['ypos_err' + str(data_filt_index + 1)] * 1e3
+    dat_t = data['t_ast' + str(data_filt_index + 1)]
+
+    if (dat_xe.ndim == 2 and dat_xe.shape[0] == 1):
+        dat_t = dat_t.reshape(len(dat_t[0]))
+        dat_x = dat_x.reshape(len(dat_x[0]))
+        dat_y = dat_y.reshape(len(dat_y[0]))
+        dat_xe = dat_xe.reshape(len(dat_xe[0]))
+        dat_ye = dat_ye.reshape(len(dat_ye[0]))
+
+    t_mod = np.arange(dat_t.min() - 300.0, dat_t.max() + 300.0, 5.0)
 
     lens_in = model.get_lens_astrometry(t_mod)
-    pos_out = model.get_astrometry(t_mod, ast_filt_index=ast_filt_index)
+    pos_out = model.get_astrometry(t_mod, filt_index=data_filt_index)
     # pos_in
     if str(model.__class__).startswith('BS'):
         # Binary sources have filter dependent unlensed astrometry.
-        pos_in = model.get_astrometry_unlensed(dat_t, filt_idx=ast_filt_index)
+        pos_in = model.get_astrometry_unlensed(dat_t, filt_idx=data_filt_index)
     else:
         pos_in = model.get_astrometry_unlensed(dat_t)
     
@@ -5188,7 +5221,7 @@ def cornerplot_2truth(results, dims=None, span=None, quantiles=[0.025, 0.5, 0.97
                 if truths1[j] is not None:
                     try:
                         [ax.axvline(t, color=truth_color1, **truth_kwargs1)
-                         for t in truths[j]]
+                         for t in truths1[j]]
                     except:
                         ax.axvline(truths1[j], color=truth_color1,
                                    **truth_kwargs1)
