@@ -65,7 +65,8 @@ muS_scale_factor = 100.0
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
                      'mag_src_pri', 'mag_src_sec', 'fratio_bin',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
-                     'gp_log_omega04_S0', 'gp_log_omega0', 'add_err', 'mult_err']
+                     'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
+                     'add_err', 'mult_err']
 
 class PSPL_Solver(Solver):
     """
@@ -207,6 +208,7 @@ class PSPL_Solver(Solver):
         'gp_log_S0': ('make_norm_gen', 0, 5),
         'gp_log_sigma': ('make_norm_gen', 0, 5), 
         'gp_rho':('make_invgamma_gen', None, None),
+        'gp_log_omega0_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega04_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega0':('make_norm_gen', 0, 5),
         'delta_muS_sec_E':('make_gen', -1, 1),
@@ -243,8 +245,9 @@ class PSPL_Solver(Solver):
         'pS': ('make_gen', 0, 10000),
         'tpS': ('make_gen', 0, 10000),
         'alephS': ('make_gen', 1, 10),
-        'aleph_secS':('make_gen', 1, 10)
-
+        'aleph_secS':('make_gen', 1, 10),
+        'gp_log_omega0':('make_norm_gen', 0, 5),
+        'gp_log_jit_sigma':('make_norm_gen', 0, 5)
     }
 
     def __init__(self, data, model_class,
@@ -274,11 +277,11 @@ class PSPL_Solver(Solver):
 
         use_phot_optional_params : bool, or list of bools, optional
 	    optional photometry parameters
-     
+
         single_gp: bool, optional
         Set as true if there are multiple datasets but only a single set
         of gp parameters.
-        
+
         
         """
 
@@ -298,7 +301,7 @@ class PSPL_Solver(Solver):
         self.multi_filt_params = multi_filt_params
 
         self.gp_params = ['gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
-                          'gp_log_omega04_S0', 'gp_log_omega0']
+                          'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
 
         # Set up parameterization of the model
         self.remove_digits = str.maketrans('', '', digits)  # removes nums from strings
@@ -475,7 +478,7 @@ class PSPL_Solver(Solver):
                 except ValueError:
                     print('*** CHECK YOUR INPUT! All astrometry data must have a corresponding photometry data set! ***')
                     raise
-                    
+
         self.n_phot_sets = n_phot_sets
         self.n_ast_sets = n_ast_sets
         self.map_phot_idx_to_ast_idx = map_phot_idx_to_ast_idx
@@ -533,7 +536,7 @@ class PSPL_Solver(Solver):
                                     self.additional_param_names += [param_name + str(ii+1)]
                 else:
                     self.additional_param_names += [param_name]
-        
+
         self.all_param_names = self.fitter_param_names + self.additional_param_names
 
         self.n_dims = len(self.fitter_param_names)
@@ -651,7 +654,7 @@ class PSPL_Solver(Solver):
             mod = self.model_class(*params_dict.values())
 
         # FIXME: Why are we updating params here???
-        
+
         if not isinstance(params, (dict, Row)):
 
             # FIXME: is there better way to do this.
@@ -3032,7 +3035,8 @@ def generate_params_dict(params, fitter_param_names):
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
     multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin']
-    multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
+    multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0',
+                  'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
     
     params_dict = {}
     for i, param_name in enumerate(fitter_param_names):
@@ -3192,7 +3196,7 @@ def plot_params(model):
             pvalue = pvalue[1]
         if pname == 'log10_thetaE':
             pvalue = np.log10(pvalue)
-        
+
         return pvalue
 
     for ff in range(len(model.fitter_param_names)):
