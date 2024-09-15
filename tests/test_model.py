@@ -20,6 +20,7 @@ import pdb
 import yaml, pickle
 import pytest
 import inspect, sys
+import matplotlib
 
 from astropy.time import Time
 from astropy.coordinates import solar_system_ephemeris, EarthLocation, spherical_to_cartesian, cartesian_to_spherical
@@ -27,6 +28,7 @@ from astropy.coordinates import get_body_barycentric, get_body, get_moon, get_bo
 
 # Always generate the same fake data.
 np.random.seed(0)
+
 
 def test_PSPL_other(plot=False):
     mL = 10.0  # msun

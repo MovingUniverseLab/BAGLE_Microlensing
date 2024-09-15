@@ -3372,8 +3372,7 @@ class PSPL(ABC):
 
             """
             ani = animation.FuncAnimation(fig, update, len(tau),
-                                          fargs=[rs, l, plus, minus, a, tau, A,
-                                                 line],
+                                          fargs=[rs, l, plus, minus, a, tau, A, line],
                                           blit=True, interval=frame_time)
             ani.save("%s.mp4" % name, writer="ffmpeg")
         elif astrometry == "no":
@@ -4271,7 +4270,7 @@ class PSPL_GPnoJitter(ABC):
 
         else:
             raise RuntimeError(
-                'PSPL_GP: Cannot call for filter with use_gp_phot = False (filt_idx={0:d})'.format(filt_index))
+                'PSPL_GP: Cannot call for filter with use_gp_phot = False (filt_idx={0:d})'.format(filt_idx))
 
 
     # We don't want to override get_photometry, do we?
@@ -4351,7 +4350,7 @@ class PSPL_GPnoJitter(ABC):
                 return None, None
         else:
             raise RuntimeError(
-                'PSPL_GP: Cannot call for filter with use_gp_phot = False (filt_idx={0:d})'.format(filt_index))
+                'PSPL_GP: Cannot call for filter with use_gp_phot = False (filt_idx={0:d})'.format(filt_idx))
 
         return
 
@@ -17131,11 +17130,9 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         minus = images[1]  # minus image
         C = self.get_centroids(t, self.radiusS, filt_idx=filt_idx)
         A = C[0]  # magnification
-        times = range(
-            time_steps)  # gets time in units of the einstein crossing time
+        times = range(time_steps)  # gets time in units of the einstein crossing time
 
-        fig = plt.figure(
-            figsize=[size[0], size[1] + 0.5])  # sets up the figure
+        fig = plt.figure(figsize=[size[0], size[1] + 0.5])  # sets up the figure
         ax1 = fig.add_subplot(2, 1, 1)
         ax2 = fig.add_subplot(2, 1, 2)
         fig.subplots_adjust(hspace=.5)
@@ -17148,13 +17145,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         ax1.set_xlabel("RA")
         ax1.set_ylabel("Dec")
 
-        ax1.set_xlim(
-            (rl[0][0] + rl[-1][0]) / 2 - 2 * (size[0]) / (2 * size[1]) * (
-                    rl[-1][1] - rl[0][
-                1] + 2 * zoom * self.thetaEamp * 1e-3),
-            (rl[0][0] + rl[-1][0]) / 2 + 2 * (size[0]) / (2 * size[1]) * (
-                    rl[-1][1] - rl[0][
-                1] + 2 * zoom * self.thetaEamp * 1e-3))
+        ax1.set_xlim((rl[0][0] + rl[-1][0]) / 2 - 2 * (size[0]) / (2 * size[1]) * (rl[-1][1] - rl[0][1] + 2 * zoom * self.thetaEamp * 1e-3),
+                     (rl[0][0] + rl[-1][0]) / 2 + 2 * (size[0]) / (2 * size[1]) * (rl[-1][1] - rl[0][1] + 2 * zoom * self.thetaEamp * 1e-3))
         ax1.set_ylim(rl[0, 1] - zoom * self.thetaEamp * 0.001,
                      rl[-1, 1] + zoom * self.thetaEamp * 0.001)
         a = C[1]
