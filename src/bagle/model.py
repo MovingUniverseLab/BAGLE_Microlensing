@@ -9565,7 +9565,7 @@ class BSPL(PSPL):
         # Calculate the elapsed time, in units of tE.
         # This gives the linear motion offset due to muRel in the muRel_hat direction.
 
-        if self.astrometryFlag:
+        if self.astrometryFlag==True:
             xS_unlensed = self.get_resolved_astrometry_unlensed(t)
     
             xS1_unlens = xS_unlensed[:, 0, :]
@@ -9580,6 +9580,7 @@ class BSPL(PSPL):
             u = np.zeros((len(t), 2, 2), dtype=float)
             u[:, 0, :] = u_pri
             u[:, 1, :] = u_sec
+        
         else:
             tau_pri = (t - self.t0_pri) / self.tE
             tau_sec = (t - self.t0_sec) / self.tE
@@ -9593,7 +9594,6 @@ class BSPL(PSPL):
             u = np.zeros((len(t), 2, 2), dtype=float)
             u[:, 0, :] = u_pri
             u[:, 1, :] = u_sec
-            u = u * 1e-3
 
         return u
 
@@ -9720,6 +9720,7 @@ class BSPL(PSPL):
         u1 = np.linalg.norm(u_vec1, axis=1)
         u2 = np.linalg.norm(u_vec2, axis=1)
 
+       
         A1 = (u1 ** 2 + 2) / (u1 * np.sqrt(u1 ** 2 + 4))
         A2 = (u2 ** 2 + 2) / (u2 * np.sqrt(u2 ** 2 + 4))
 
@@ -9727,6 +9728,7 @@ class BSPL(PSPL):
         # switch nan mags to 0 fluxes
         f1 = np.nan_to_num(mag2flux(self.mag_src_pri[filt_idx]), nan=0)
         f2 = np.nan_to_num(mag2flux(self.mag_src_sec[filt_idx]), nan=0)
+       
 
         # Add linear source flux change.
         if hasattr(self, 'fdfdt_pri'):
@@ -10533,9 +10535,14 @@ class BSPL_PhotParam1(PSPL_Param):
         self.piE_E, self.piE_N = self.piE
 
         # Baseline magnitude
-        self.mag_base = self.mag_src_pri \
-                        + self.mag_src_sec \
-                        + 2.5 * np.log10(self.b_sff)
+        #self.mag_base = self.mag_src_pri \
+         #               + self.mag_src_sec \
+          #              + 2.5 * np.log10(self.b_sff)
+        
+        flux_pri = mag2flux(self.mag_src_pri)
+        flux_sec = mag2flux(self.mag_src_sec)
+        self.mag_base = flux2mag(flux_pri + flux_sec) + 2.5 * np.log10(self.b_sff)
+                     
 
         # Calculate the directional vectors.
         self.thetaE_hat = self.piE / self.piE_amp
