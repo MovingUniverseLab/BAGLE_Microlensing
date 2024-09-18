@@ -7717,7 +7717,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                           'q', 'sep', 'alpha']
     additional_param_names = ['mL', 'piL', 'piRel',
@@ -8053,7 +8053,7 @@ class PSBL_PhotAstromParam6(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_prim', 'u0_amp_prim', 'tE', 'thetaE', 'piS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                           'q', 'sep', 'alpha']
     additional_param_names = ['mL', 'piL', 'piRel',
@@ -8582,7 +8582,7 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N',
                           'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
                           'muS_E', 'muS_N',
@@ -8707,7 +8707,7 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega', 'big_omega', 'i', 'tp', 'sep'
         , 'muS_E', 'muS_N',
                           'q', 'alpha']
