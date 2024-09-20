@@ -10565,7 +10565,7 @@ class BSPL_PhotParam1(PSPL_Param):
 
         # Note that phi_rho1 is the same alpha in our astrometry model;
         # however, here we don't have North as a reference.
-        self.phi_rho1_rad = self.phi_piE_rad - self.phi_rad
+        self.phi_rho1_rad = self.phi_piE_rad + self.phi_rad
 
         # Primary -- at origin
         self.t0_pri = self.t0
