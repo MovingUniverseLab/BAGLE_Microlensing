@@ -6393,8 +6393,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 
         return (xL1, xL2)
 
-    def get_centroid(self, t_obs, amp_arr=None, image_arr=None, filt_idx=0):
-        """PSPL: Get the centroid shift (in arcsecs) for a list of
+    def get_centroid_shift(self, t_obs, amp_arr=None, image_arr=None, filt_idx=0):
+        """PSPL: Get the centroid shift (in mas) for a list of
         observation times (in MJD).
 
         Parameters
@@ -6427,7 +6427,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         # Centroid offset in arcseconds.
         shift = (xS_lensed - xS_unlens)
 
-        return shift
+        return shift * 1e3 #mas
 
     def dexanimate(self, tE, time_steps, frame_time, name, size, zoom, astrometry, loc):
         """ Produces animation of microlensing event.
@@ -10158,7 +10158,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         return xS_lensed
 
     def get_centroid_shift(self, t, filt_idx=0):
-        """Parallax: Get the centroid shift (in arcsec) for a list of
+        """Parallax: Get the centroid shift (in mas) for a list of
         observation times (in MJD).
 
         Returns the flux-weighted centroid of all the sources lensed images. 
@@ -10179,7 +10179,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
         shift = xS - xS_unlensed
 
-        return shift
+        return shift * 1e3
 
     def dexanimate(self, tE, time_steps, frame_time, name, size, zoom,
                    astrometry, type, loc):
@@ -15141,7 +15141,7 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         return xS_lensed_ures.data
 
     def get_centroid_shift(self, t, filt_idx=0):
-        """Parallax: Get the centroid shift (in arcsec) for a list of
+        """Parallax: Get the centroid shift (in mas) for a list of
         observation times (in MJD).
 
         Returns the flux-weighted centroid of all the sources lensed images.
@@ -15162,7 +15162,7 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
 
         shift = xS - xS_unlensed
 
-        return shift
+        return shift * 1e3 #mas
 
     def dexanimate(self, tE, time_steps, frame_time, name, size, zoom, astrometry, loc):
         """ Produces animation of microlensing event.
