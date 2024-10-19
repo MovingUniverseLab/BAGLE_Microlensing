@@ -9567,8 +9567,6 @@ class BSPL(PSPL):
 
         
         tau_pri = (t - self.t0_pri) / self.tE
-        tau_sec = (t - self.t0_sec) / self.tE
-        dt2_in_years = (t - self.t0_sec) / days_per_year
 
         if self.astrometryFlag==True:
             xS_unlensed = self.get_resolved_astrometry_unlensed(t)
@@ -9578,15 +9576,11 @@ class BSPL(PSPL):
             xL = self.get_lens_astrometry(t)
             thetaE_amp = self.thetaE_amp * 1e-3
             u_pri = (xS1_unlens - xL) / thetaE_amp
-    
-            if self.orbitFlag != 'Keplerian':
-                xL_sec = self.xL0 + np.outer(dt2_in_years, self.muL) * 1e-3
-                u_sec = (xS2_unlens - xL_sec) / thetaE_amp
-            else:
-                u_sec = (xS2_unlens - xL)/thetaE_amp
+            u_sec = (xS2_unlens - xL)/thetaE_amp
+                
         else:
             u_pri = self.u0_pri[np.newaxis, :] + tau_pri[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
-            u_sec = self.u0_sec[np.newaxis, :] + tau_sec[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
+            u_sec = self.u0_sec[np.newaxis, :] + tau_pri[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
             
             if self.parallaxFlag:
                 parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
@@ -9916,6 +9910,13 @@ class BSPL_Phot(BSPL, PSPL_Phot):
             "Astrometry is not supported on this object: " +
             str(self.__class__))
 
+    def get_t0_sec(self):
+        sep_vec = self.sep * np.array((np.sin(self.phi_rho1_rad),
+                                       np.cos(self.phi_rho1_rad)))  
+        s_murelhat = np.dot(sep_vec, self.muRel_hat)
+        t0_sec = self.t0_pri - (s_murelhat * self.tE)
+        return t0_sec
+
 
 class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
     photometryFlag = True
@@ -9938,14 +9939,14 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         """
         # Equation of motion for just the background source.
         dt1_in_years = (t - self.t0_pri) / days_per_year
-        dt2_in_years = (t - self.t0_sec) / days_per_year
+        #dt2_in_years = (t - self.t0_sec) / days_per_year
 
         # Calculate position vs. time in arcsec
         if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
             xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = self.xS0_sec + np.outer(dt2_in_years, self.muS_sec) * 1e-3
+            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
             if self.orbitFlag == 'accelerated':
-                xS2_unlens += np.outer((0.5*(dt2_in_years**2)), self.acc) * 1e-3
+                xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.acc) * 1e-3
 
         elif self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
@@ -9972,7 +9973,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
         else:
             xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = self.xS0_sec + np.outer(dt2_in_years, self.muS) * 1e-3
+            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS) * 1e-3
 
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
@@ -10115,7 +10116,8 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         return xS_lensed
 
     def get_astrometry_shift(self, t, filt_idx=0):
-        """Parallax: Get unresolved centroid shift (due to lensing) for each of the binary source.
+        """Parallax: Get unresolved centroid shift (due to lensing) for each of the binary source. 
+        Dex-made for simulation purposes
 
         Parameters
         ----------
@@ -10180,6 +10182,21 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         shift = xS - xS_unlensed
 
         return shift * 1e3
+
+    def get_u0_sec(self):
+        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
+                                       np.cos(self.alpha_rad)))  # mas
+        u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
+        u0_sec = u0_amp_sec * self.u0_hat
+        return u0_sec
+        
+    def get_t0_sec(self):
+        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
+                                       np.cos(self.alpha_rad)))  # mas
+        s_murelhat = np.dot(sep_vec, self.muRel_hat)
+        t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp) 
+        return t0_sec
+    
 
     def dexanimate(self, tE, time_steps, frame_time, name, size, zoom,
                    astrometry, type, loc):
@@ -10578,13 +10595,10 @@ class BSPL_PhotParam1(PSPL_Param):
         # Secondary
         sep_vec = self.sep * np.array((np.sin(self.phi_rho1_rad),
                                        np.cos(self.phi_rho1_rad)))  # mas
-
         # Closest approach time
         self.u0_amp_sec = self.u0_amp_pri + np.dot(sep_vec, self.u0_hat)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat #This should then be the closest approach of the secondary at time t0_sec?
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * self.tE)
-
+        self.u0_sec = self.u0_amp_sec * self.u0_hat 
+        
         return
 
 
@@ -10794,11 +10808,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
         sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
                                        np.cos(self.alpha_rad)))  # mas
 
-        # Closest approach time
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
         s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
         self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
 
         return
@@ -11000,12 +11010,9 @@ class BSPL_PhotAstromParam2(PSPL_Param):
                                        np.cos(self.alpha_rad)))  # mas
 
         # Closest approach time and distance
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
         s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
         self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
-
+        
         return
 
 
@@ -11211,11 +11218,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
                                        np.cos(self.alpha_rad)))  # mas
 
-        # Closest approach time and distance
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
         s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
         self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
 
         return
@@ -14663,11 +14666,11 @@ class BSBL_Phot(BSBL, PSBL_Phot):
         # Calculate the elapsed time, in units of tE.
         # This gives the linear motion offset due to muRel in the muRel_hat direction.
         tau_pri = (t_obs - self.t0_pri) / self.tE
-        tau_sec = (t_obs - self.t0_sec) / self.tE
+        #tau_sec = (t_obs - self.t0_sec) / self.tE
 
         # Calculate u due to linear motion of the system.
         u_pri = self.u0_pri[np.newaxis, :] + tau_pri[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
-        u_sec = self.u0_sec[np.newaxis, :] + tau_sec[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
+        u_sec = self.u0_sec[np.newaxis, :] + tau_pri[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
 
         # Some day: implement orbital motion
         # if self.orbitFlag == 'full':
@@ -14824,6 +14827,13 @@ class BSBL_Phot(BSBL, PSBL_Phot):
 
         return xS_lensed_ures.data
 
+    def get_t0_sec(self):
+        sep_vec = self.sep * np.array((np.sin(self.phi_rho1_rad),
+                                       np.cos(self.phi_rho1_rad)))  # mas
+        s_murelhat = np.dot(sep_vec, self.muRel_hat)
+        t0_sec = self.t0_pri - (s_murelhat * self.tE)
+        return t0_sec
+
 
 class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
     photometryFlag = True
@@ -14894,10 +14904,6 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         """
         # Equation of motion for just the background source.
         dt1_in_years = (t - self.t0) / days_per_year
-        # dt2_in_years = (t - self.t0_sec) / days_per_year
-        # Test. call function. two position vectors on the sky calculated. Subtract the two and make sure that the separation stays the same in the no orbits case.
-
-        # Calculate position vs. time in arcsec
 
         if self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
@@ -15495,15 +15501,12 @@ class BSBL_PhotParam1(PSPL_Param):
         self.u0_pri = self.u0
 
         # Secondary
-        sep_vec = self.sep * np.array((np.sin(self.phi_rho1_rad),
-                                       np.cos(self.phi_rho1_rad)))  # mas
 
         # Closest approach time
         self.u0_amp_sec = self.u0_amp_pri + np.dot(sep_vec, self.u0_hat)
         self.u0_sec = self.u0_amp_sec * self.u0_hat
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * self.tE)
-
+        
+                     
         return
 
 
