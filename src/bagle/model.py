@@ -4466,7 +4466,7 @@ class PSPL_noParallax(ParallaxClassABC):
     def get_astrometry(self, t, filt_idx=0):
         """
         Get the astrometry of the unresolved (observed) position of the
-        lensed source at the input times.
+        lensed source and lens at the input times.
         No parallax is included. The returned array is in arcsec and
         has a shape of [len(t), 2] where the second dimension includes 
         [RA, Dec] positions in arcsec.
@@ -4479,11 +4479,15 @@ class PSPL_noParallax(ParallaxClassABC):
             Index of the astrometric filter or data set.
 
         """
+        # Derivations are in https://www.overleaf.com/project/5c058eb8e5b5b14080d3d567
+        xS_unlensed = self.get_astrometry_unlensed(t, filt_idx=filt_idx)
+        xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
-        srce_pos_model = self.xS0 + np.outer((t - self.t0) / days_per_year,
-                                             self.muS) * 1e-3
-        pos_model = srce_pos_model + (self.get_centroid_shift(t, filt_idx=filt_idx) * 1e-3)
-        return pos_model
+        # Flux-weighted centroid, lensed
+        pos_lensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
+        pos_lensed += self.get_centroid_shift(t, filt_idx=filt_idx) * 1e-3
+
+        return pos_lensed
 
     def get_centroid_shift(self, t, filt_idx=0):
         """
@@ -4502,10 +4506,28 @@ class PSPL_noParallax(ParallaxClassABC):
         """
         tau = (t - self.t0) / self.tE
 
+        # Assume all neighbor flux is in the lens. Define g = f_L / f_s
+        g = (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+
+        # Define u^2 and u variables for ease.
+        u2 = tau**2 + self.u0_amp**2
+        u = np.sqrt(u2)
+
+        # u^2 +3 - u\sqrt{u^2 + 4}
+        numer_u = u2 + 3 - u * np.sqrt(u2 + 4)
+
+        # u^2 + 2 + gu\sqrt{u^2+4}
+        denom_u = u2 + 2 + g * u * np.sqrt(u2 + 4)
+
+        # \vec{\theta}_S - \vec{\theta}_L = theta_E \vec{u}
+        thetaSL = (np.outer(tau, self.thetaE_hat) + self.u0) * self.thetaE_amp
+
         # Lens-induced astrometric shift of the sum of all source images (in mas)
-        numer = (np.outer(tau, self.thetaE_hat) + self.u0) * self.thetaE_amp
-        denom = (tau ** 2.0 + self.u0_amp ** 2.0 + 2.0).reshape(numer.shape[0], 1)
-        shift = numer / denom
+        numer = (1 + g * numer_u) * thetaSL
+        denom = (1 + g) * denom_u
+
+        # Lens-induced astrometric shift of the sum of all source images (in mas)
+        shift = numer / denom.reshape(numer.shape[0], 1)
 
         return shift
 
@@ -4711,20 +4733,37 @@ class PSPL_Parallax(ParallaxClassABC):
         xS_unlensed = self.xS0 + np.outer(dt_in_years, self.muS) * 1e-3
         xS_unlensed += np.squeeze(self.piS * parallax_vec) * 1e-3  # arcsec
 
+        # Equation of motion for just the foreground lens.
+        xL_unlensed = self.xL0 + np.outer(dt_in_years, self.muL) * 1e-3
+        xL_unlensed += np.squeeze(self.piL * parallax_vec) * 1e-3  # arcsec
+
         # Equation of motion for the relative angular separation between the background source and lens.
         # Note, we don't just call get_centroid_shift() because parallax_vec calculation is repeated.
         # and it is slow. 
-        thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)  # mas
-        thetaS -= np.squeeze(self.piRel * parallax_vec)  # mas
+        thetaS = xS_unlensed - xL_unlensed
         u_vec = thetaS / self.thetaE_amp
         u_amp = np.linalg.norm(u_vec, axis=1)
 
-        denom = u_amp ** 2 + 2.0
-        shift = thetaS / denom.reshape((len(u_amp), 1))  # mas
+        # Assume all neighbor flux is in the lens.
+        g = (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
 
-        xS = xS_unlensed + (shift * 1e-3)  # arcsec
+        # u^2 - u\sqrt{u^2 + 4} + 3
+        numer_u = u_amp ** 2 - u_amp * np.sqrt(u_amp ** 2 + 4) + 3
 
-        return xS
+        # u^2 + 2 + gu\sqrt{u^2+4}
+        denom_u = u_amp ** 2 + 2 + g * u_amp * np.sqrt(u_amp ** 2 + 4)
+
+        # Lens-induced astrometric shift of the sum of all source images (in mas)
+        numer = thetaS * (1 + g * numer_u).reshape(len(numer_u), 1)
+        denom = (1 + g) * denom_u
+
+        shift = numer / denom.reshape((len(u_amp), 1))  # mas
+
+        # Flux-weighted centroid, lensed
+        pos_lensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
+        pos_lensed += shift * 1e-3
+
+        return pos_lensed
 
     def get_centroid_shift(self, t, filt_idx=0):
         """
@@ -4754,9 +4793,20 @@ class PSPL_Parallax(ParallaxClassABC):
         u_vec = thetaS / self.thetaE_amp
         u_amp = np.linalg.norm(u_vec, axis=1)
 
-        denom = u_amp ** 2 + 2.0
+        # Assume all neighbor flux is in the lens.
+        g = (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
 
-        shift = thetaS / denom.reshape((len(u_amp), 1))  # mas
+        # u^2 - u\sqrt{u^2 + 4} + 3
+        numer_u = u_amp ** 2 - u_amp * np.sqrt(u_amp ** 2 + 4) + 3
+
+        # u^2 + 2 + gu\sqrt{u^2+4}
+        denom_u = u_amp ** 2 + 2 + g * u_amp * np.sqrt(u_amp ** 2 + 4)
+
+        # Lens-induced astrometric shift of the sum of all source images (in mas)
+        numer = thetaS * (1 + g * numer_u).reshape(len(numer_u), 1)
+        denom = (1 + g) * denom_u
+
+        shift = numer / denom.reshape((len(u_amp), 1))  # mas
 
         return shift
 
@@ -5309,157 +5359,6 @@ class PSPL_Parallax_geoproj(PSPL_Parallax):
                                                                      plot=plot)
 
         return t0_h, u0_h, tE_h, piEE_h, piEN_h
-
-
-class PSPL_noParallax_LumLens(PSPL_noParallax):
-    parallaxFlag = False
-
-    def get_centroid_shift(self, t, filt_idx=0):
-        """
-        Get the centroid shift (in mas) at the input times. The centroid shift
-        is the difference between the lensed, unresolved position and the 
-        intrinsic position of the source. 
-        No parallax is included and the lens is assumed to be luminous. 
-        The returned array is in arcsec and
-        has a shape of [len(t), 2] where the second dimension includes 
-        [RA, Dec] positions in arcsec.
-
-        Parameters
-        ----------
-        t : array_like
-            Time (in MJD).
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        """
-        tau = (t - self.t0) / self.tE
-
-        # Assume all neighbor flux is in the lens.
-        g = (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-
-        u2 = tau ** 2 + self.u0_amp ** 2
-        u = np.sqrt(u2)
-
-        # u^2 - u\sqrt{u^2 + 4} + 3
-        numer_u = u2 - u * np.sqrt(u2 + 4) + 3
-
-        # u^2 + 2 + gu\sqrt{u^2+4}
-        denom_u = u2 + 2 + g * u * np.sqrt(u2 + 4)
-
-        # \vec{\theta}_S = theta_E \vec{u}
-        thetaS = (np.outer(tau, self.thetaE_hat) + self.u0) * self.thetaE_amp
-
-        # Lens-induced astrometric shift of the sum of all source images (in mas)
-        numer = thetaS * (1 + g * numer_u)
-        denom = (1 + g) * denom_u
-
-        shift = numer / denom.reshape(numer.shape[0], 1)
-
-        return shift
-
-
-class PSPL_Parallax_LumLens(PSPL_Parallax):
-    parallaxFlag = True
-
-    def get_astrometry(self, t_obs, filt_idx=0):
-        """
-        Get the centroid shift (in mas) at the input times. The centroid shift
-        is the difference between the lensed, unresolved position and the 
-        intrinsic position of the source. 
-        Parallax is included and the lens is assumed to be luminous. 
-        The returned array is in arcsec and
-        has a shape of [len(t), 2] where the second dimension includes 
-        [RA, Dec] positions in arcsec.
-
-        Parameters
-        ----------
-        t : array_like
-            Time (in MJD).
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        """
-        # Things we will need.
-        dt_in_years = (t_obs - self.t0) / days_per_year
-
-        # Get the parallax vector for each date.
-        parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t_obs,
-                                                      obsLocation=self.obsLocation[filt_idx])
-        # Equation of motion for just the background source.
-        xS_unlensed = self.xS0 + np.outer(dt_in_years, self.muS) * 1e-3
-        xS_unlensed += np.squeeze(self.piS * parallax_vec) * 1e-3  # arcsec
-
-        # Equation of motion for the relative angular separation between the background source and lens.
-        # Note, we don't just call get_centroid_shift() because parallax_vec calculation is repeated.
-        # and it is slow. 
-        thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)  # mas
-        thetaS -= np.squeeze(self.piRel * parallax_vec)  # mas
-        u_vec = thetaS / self.thetaE_amp
-        u_amp = np.linalg.norm(u_vec, axis=1)
-
-        # Assume all neighbor flux is in the lens.
-        g = (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-
-        # u^2 - u\sqrt{u^2 + 4} + 3
-        numer_u = u_amp ** 2 - u_amp * np.sqrt(u_amp ** 2 + 4) + 3
-
-        # u^2 + 2 + gu\sqrt{u^2+4}
-        denom_u = u_amp ** 2 + 2 + g * u_amp * np.sqrt(u_amp ** 2 + 4)
-
-        # Lens-induced astrometric shift of the sum of all source images (in mas)
-        numer = thetaS * (1 + g * numer_u).reshape(len(numer_u), 1)
-        denom = (1 + g) * denom_u
-
-        shift = numer / denom.reshape((len(u_amp), 1))  # mas
-
-        xS = xS_unlensed + (shift * 1e-3)  # arcsec
-
-        return xS
-
-    def get_centroid_shift(self, t, filt_idx=0):
-        """
-        Get the centroid shift (in mas) at the input times. The centroid shift
-        is the difference between the lensed, unresolved position and the 
-        intrinsic position of the source. 
-        Parallax is included and the lens is luminous. The returned array is in arcsec and
-        has a shape of [len(t), 2] where the second dimension includes 
-        [RA, Dec] positions in arcsec.
-
-        Parameters
-        ----------
-        t : array_like
-            Time (in MJD).
-
-        """
-        # Things we will need.
-        dt_in_years = (t - self.t0) / days_per_year
-
-        # Get the parallax vector for each date.
-        parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
-                                                      obsLocation=self.obsLocation[filt_idx])
-
-        # Equation of motion for the relative angular separation between the background source and lens.
-        thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)  # mas
-        thetaS -= (self.piRel * parallax_vec)  # mas
-        u_vec = thetaS / self.thetaE_amp
-        u_amp = np.linalg.norm(u_vec, axis=1)
-
-        # Assume all neighbor flux is in the lens.
-        g = (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-
-        # u^2 - u\sqrt{u^2 + 4} + 3
-        numer_u = u_amp ** 2 - u_amp * np.sqrt(u_amp ** 2 + 4) + 3
-
-        # u^2 + 2 + gu\sqrt{u^2+4}
-        denom_u = u_amp ** 2 + 2 + g * u_amp * np.sqrt(u_amp ** 2 + 4)
-
-        # Lens-induced astrometric shift of the sum of all source images (in mas)
-        numer = thetaS * (1 + g * numer_u)
-        denom = (1 + g) * denom_u
-
-        shift = numer / denom.reshape((len(u_amp), 1))  # mas
-
-        return shift
 
 
 ######################################################
@@ -6087,7 +5986,8 @@ class PSBL_Phot(PSBL, PSPL_Phot):
 
     def get_astrometry(self, t_obs, image_arr=None, amp_arr=None, filt_idx=0):
         '''
-        Position of the observed (unresolved) source position in Einstein radii.
+        Position of the observed (unresolved) source position in Einstein radii. Note, this
+        includes blending from the lens (IN PROGRESS)
 
         Parameters
         ----------
@@ -6223,7 +6123,9 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 
     def get_astrometry(self, t_obs, image_arr=None, amp_arr=None, filt_idx=0):
         """
-        Position of the observed (unresolved) source position in arcsec.
+        Position of the observed (unresolved) source + lens position in arcsec.
+        This accounts for the source magnification and the contamination by any
+        luminous lens. Note: we assume no other luminous neighbors.
 
         Parameters
         ----------
@@ -6263,8 +6165,13 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
             (amp_arr_mskd.shape[0], amp_arr_mskd.shape[1], 1))
         xS_lensed_res_mskd = np.ma.masked_invalid(xS_lensed_res)
 
-        xS_lensed_ures = np.sum(xS_lensed_res_mskd * amp_arr_mskd2,
-                                axis=1) / np.sum(amp_arr_mskd2, axis=1)
+        # Also get the lens position.
+        xL_res = self.get_resolved_lens_astrometry(t_obs, filt_idx=filt_idx)
+
+        xCentroid = np.sum(xS_lensed_res_mskd * amp_arr_mskd2, axis=1) + (1 - self.b_sff[filt_idx]) * xL_res
+
+        xS_lensed_ures = np.sum(xS_lensed_res_mskd * amp_arr_mskd2, axis=1)
+        xS_lensed_ures /= np.sum(amp_arr_mskd2, axis=1)
 
         return xS_lensed_ures.data
 
@@ -6600,13 +6507,38 @@ class PSBL_noParallax(PSPL_noParallax):
 
         return amp
 
+    def get_astrometry(self, t, filt_idx=0):
+        """
+        Get the astrometry of the unresolved (observed) position of the
+        lensed source and lens at the input times.
+        No parallax is included. The returned array is in arcsec and
+        has a shape of [len(t), 2] where the second dimension includes
+        [RA, Dec] positions in arcsec.
+
+        Parameters
+        ----------
+        t : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+
+        """
+        # Derivations are in https://www.overleaf.com/project/5c058eb8e5b5b14080d3d567
+        xS_unlensed = self.get_astrometry_unlensed(t, filt_idx=filt_idx)
+        xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
+
+        # Flux-weighted centroid, lensed
+        pos_lensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
+        pos_lensed += self.get_centroid_shift(t, filt_idx=filt_idx) * 1e-3
+
+        return pos_lensed
+
 
 # --------------------------------------------------
 #
 # Parameterization Class Family - PSBL
 #
 # --------------------------------------------------
-
 class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     """
     Point source binary lens.
