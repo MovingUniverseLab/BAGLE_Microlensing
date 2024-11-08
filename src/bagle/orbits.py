@@ -97,7 +97,6 @@ class Orbit(object):
         sin_om2 = np.sin(math.radians(self.w+180))
 
         
-        
         self.conA2 = self.aleph2 * (cos_om2 * cos_bigOm  - sin_om2 * sin_bigOm * cos_i)
         self.conB2 = self.aleph2 * (cos_om2 * sin_bigOm  + sin_om2 * cos_bigOm * cos_i)
         self.conC2 = self.aleph2 * (sin_om2 * sin_i)

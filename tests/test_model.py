@@ -4277,11 +4277,10 @@ def test_psbl_noparallax():
         ra_L = 260
         arat = 1
         dec_L = -29
-        alpha = 90
         
         psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N, dL, dS,
-                 alpha, b_sff, mag_src,
+                 b_sff, mag_src,
                  raL=ra_L, decL=dec_L, root_tol=1e-8)
         assert psbl.t0_com == t0_com
         assert psbl.beta_com == beta_com
@@ -4438,12 +4437,11 @@ def test_psbl_parallax():
         ra_L = 260
         arat = 1
         dec_L = -29
-        alpha = 90
     
         psbl = model.PSBL_PhotAstrom_EllOrbs_Par_Param1(
         mLp, mLs, t0_com, xS0_E, xS0_N,
              beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N, dL, dS,
-             alpha, b_sff, mag_src,
+             b_sff, mag_src,
              raL=ra_L, decL=dec_L, root_tol=1e-8
     )
         assert psbl.t0_com == t0_com
@@ -4602,12 +4600,12 @@ def test_psbl_nopropermotion():
         ra_L = 260
         arat = 1
         dec_L = -29
-        alpha = 90
+
     
         psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(
         mLp, mLs, t0_com, xS0_E, xS0_N,
              beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N, dL, dS,
-             alpha, b_sff, mag_src,
+             b_sff, mag_src,
              raL=ra_L, decL=dec_L, root_tol=1e-8
     )
         assert psbl.t0_com == t0_com
@@ -4806,17 +4804,15 @@ def magnification_maps():
     b_sff = 1
     ra_L = 30
     dec_L = -29
-    alpha = 90
     beta = 1
     q = 0.7
     sep = 10
-    alpha = 90
     b_sff = [1]
     mag_src = [10]
     root_tol = 1e-8
     psbl_nopar = model.PSBL_PhotAstrom_CircOrbs_noPar_Param4(t0, u0_amp, tE, thetaE, piS,
                      piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, tp, sep, muS_E, muS_N,
-                     q, alpha,
+                     q, 
                      b_sff, mag_src,
                      raL=ra_L, decL=dec_L, root_tol=1e-8)
     
