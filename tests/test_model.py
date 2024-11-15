@@ -1884,6 +1884,7 @@ def test_PSBL_PhotAstrom_noPar_Param2(plot=False):
     q = 0.8  # M2 / M1
     sep = 3.0  # mas
     alpha = 135.0
+    dmag_L1_L2 = np.array([0.0])
 
     psbl = model.PSBL_PhotAstrom_noPar_Param2(t0, u0, tE,
                                               thetaE, piS,
@@ -1891,7 +1892,7 @@ def test_PSBL_PhotAstrom_noPar_Param2(plot=False):
                                               xS0_E, xS0_N,
                                               muS_E, muS_N,
                                               q, sep, alpha,
-                                              b_sff, mag_src,
+                                              b_sff, mag_src, dmag_L1_L2,
                                               raL=raL, decL=decL,
                                               root_tol=1e-4)
 

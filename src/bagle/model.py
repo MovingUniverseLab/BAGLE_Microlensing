@@ -94,9 +94,6 @@ Point source, point lens, photometry and astrometry:
     - :class:`PSPL_PhotAstrom_Par_Param3`
     - :class:`PSPL_PhotAstrom_Par_Param4`
     - :class:`PSPL_PhotAstrom_Par_Param5`
-    - :class:`PSPL_PhotAstrom_LumLens_Par_Param1`
-    - :class:`PSPL_PhotAstrom_LumLens_Par_Param2`
-    - :class:`PSPL_PhotAstrom_LumLens_Par_Param4`
     - :class:`PSPL_PhotAstrom_noPar_GP_Param1`
     - :class:`PSPL_PhotAstrom_noPar_GP_Param2`
     - :class:`PSPL_PhotAstrom_Par_GP_Param1`
@@ -107,10 +104,6 @@ Point source, point lens, photometry and astrometry:
     - :class:`PSPL_PhotAstrom_Par_GP_Param4`
     - :class:`PSPL_PhotAstrom_Par_GP_Param4_1`
     - :class:`PSPL_PhotAstrom_Par_GP_Param4_2`
-    - :class:`PSPL_PhotAstrom_Par_LumLens_GP_Param1`
-    - :class:`PSPL_PhotAstrom_Par_LumLens_GP_Param2`
-    - :class:`PSPL_PhotAstrom_Par_LumLens_GP_Param3`
-    - :class:`PSPL_PhotAstrom_Par_LumLens_GP_Param4`
     - :class:`PSPL_PhotAstrom_Par_GPnoJitter_Param3_1`
 
 Point source, point lens, astrometry only
@@ -4722,6 +4715,7 @@ class PSPL_Parallax(ParallaxClassABC):
 
         """
 
+
         # Things we will need.
         dt_in_years = (t_obs - self.t0) / days_per_year
 
@@ -5832,6 +5826,74 @@ class PSBL(PSPL):
 
         return mag_model
 
+    def get_resolved_lens_photometry(self, filt_idx=0):
+        """
+        Get the resolved lens photometry, assuming that all the non-source 
+        light comes from the lens (and not neighbors). We split the light 
+        amongst the lenses based on the input lens flux ratio quantities. 
+        
+        Optional Parameters
+        -------------------
+        filt_idx : int
+            Filter index.
+            
+        Returns
+        -------
+        mag_L1, mag_L2 : float, float
+            Magnitude of the primary lens (L1) and the secondary lens (L2).
+        """
+        # Flux of the source.
+        flux_sorc = np.nan_to_num(mag2flux(self.mag_src[filt_idx]), nan=0)
+
+        # Flux of everythign else. We will assume this is all lens (no neighbor) light.
+        flux_non_sorc = flux_sorc * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+
+        # Flux Ratio of f_Lp / f_Ls
+        fr_Lp_Ls = np.nan_to_num(dmag2fratio(self.dmag_Lp_Ls[filt_idx]), nan=0)
+
+        # Derivation of individual lens photometry
+        # fr = fL1 / fL2 input value
+        # fLtot = fL1 + fL2      we calc this above
+        #
+        # fLtot = fL1 + (fL1 / fr)
+        #       = ((fL1 * fr) + fL1) / fr
+        #       = fL1 * (fr + 1) / fr
+        # Solve for fL1
+        # fL1 = fLtot * fr / (1 + fr)
+        # fL2 = fL1 / fr = fLtot / (1 + fr)
+        flux_Lp = flux_non_sorc * fr_Lp_Ls / (1 + fr_Lp_Ls)
+        flux_Ls = flux_non_sorc / (1 + fr_Lp_Ls)
+
+        # Convert back to magnitudes
+        mag_Lp = flux2mag(flux_Lp)
+        mag_Ls = flux2mag(flux_Ls)
+
+        return (mag_Lp, mag_Ls)
+    
+    def get_lens_photometry(self, filt_idx=0):
+        """
+        Get the combined lens photometry. 
+        
+        Optional Parameters
+        -------------------
+        filt_idx : int
+            Filter index.
+            
+        Returns
+        -------
+        mag_L : float
+            Magnitude of the combined primary (L1) and secondary (L2) lens brightness. 
+        """
+        mag_Lp, mag_Ls = self.get_resolved_lens_photometry(filt_idx=filt_idx)
+        
+        flux_Lp = np.nan_to_num(mag2flux(mag_Lp), nan=0)
+        flux_Lp = np.nan_to_num(mag2flux(mag_Ls), nan=0)
+        
+        flux_L_all = flux_Lp + flux_Lp
+        
+        mag_L_all = flux2mag(flux_L_all)
+        
+        return mag_L_all
 
 class PSBL_Phot(PSBL, PSPL_Phot):
     photometryFlag = True
@@ -5908,7 +5970,6 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         # the right shape.
         xL1 = np.tile(self.xL1_over_theta, (len(t_obs), 1))
         xL2 = np.tile(self.xL2_over_theta, (len(t_obs), 1))
-
 
         return (xL1, xL2)
 
@@ -6025,9 +6086,23 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         amp_arr_mskd2 = amp_arr_mskd.reshape((amp_arr_mskd.shape[0], amp_arr_mskd.shape[1], 1))
         xS_lensed_res_mskd = np.ma.masked_invalid(xS_lensed_res)
 
-        xS_lensed_ures = np.sum(xS_lensed_res_mskd * amp_arr_mskd2, axis=1) / np.sum(amp_arr_mskd2, axis=1)
+        # Get the source flux.
+        fS = np.nan_to_num(mag2flux(self.mag_src[filt_idx]), nan=0)
 
-        return xS_lensed_ures.data
+        # Get the lens position and flux
+        xL1, xL2 = self.get_resolved_lens_astrometry(t_obs, filt_idx=filt_idx)
+        magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
+        fL1 = np.nan_to_num(mag2flux(magL1), nan=0)
+        fL2 = np.nan_to_num(mag2flux(magL2), nan=0)
+
+        # Derivations are in https://www.overleaf.com/project/5c058eb8e5b5b14080d3d567
+        # centroid = [ sum(A_i*fS*xS_i) + fL1*xL1 + fL2*xL2 ] / [ sum(A_i*fS) + fL1 + fL2 ]
+        numer = np.sum(xS_lensed_res_mskd * amp_arr_mskd2 * fS, axis=1) + xL1 * fL1 + xL2 * fL2
+        denom = np.sum(amp_arr_mskd2 * fS, axis=1) + fL1 + fL2
+
+        xCentroid = numer / denom
+
+        return xCentroid.data
 
 
 class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
@@ -6161,19 +6236,26 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         # Mask invalid values from the amplification array.
         amp_arr_mskd = np.ma.masked_invalid(amp_arr)
         # amp_arr_mskd2 = np.tile(amp_arr_mskd, (1, 1, 2))
-        amp_arr_mskd2 = amp_arr_mskd.reshape(
-            (amp_arr_mskd.shape[0], amp_arr_mskd.shape[1], 1))
+        amp_arr_mskd2 = amp_arr_mskd.reshape((amp_arr_mskd.shape[0], amp_arr_mskd.shape[1], 1))
         xS_lensed_res_mskd = np.ma.masked_invalid(xS_lensed_res)
 
-        # Also get the lens position.
-        xL_res = self.get_resolved_lens_astrometry(t_obs, filt_idx=filt_idx)
+        # Get the source flux.
+        fS = np.nan_to_num(mag2flux(self.mag_src[filt_idx]), nan=0)
 
-        xCentroid = np.sum(xS_lensed_res_mskd * amp_arr_mskd2, axis=1) + (1 - self.b_sff[filt_idx]) * xL_res
+        # Get the lens position and flux
+        xL1, xL2 = self.get_resolved_lens_astrometry(t_obs, filt_idx=filt_idx)
+        magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
+        fL1 = np.nan_to_num(mag2flux(magL1), nan=0)
+        fL2 = np.nan_to_num(mag2flux(magL2), nan=0)
 
-        xS_lensed_ures = np.sum(xS_lensed_res_mskd * amp_arr_mskd2, axis=1)
-        xS_lensed_ures /= np.sum(amp_arr_mskd2, axis=1)
+        # Derivations are in https://www.overleaf.com/project/5c058eb8e5b5b14080d3d567
+        # centroid = [ sum(A_i*fS*xS_i) + fL1*xL1 + fL2*xL2 ] / [ sum(A_i*fS) + fL1 + fL2 ]
+        numer = np.sum(xS_lensed_res_mskd * amp_arr_mskd2 * fS, axis=1) + xL1 * fL1 + xL2 * fL2
+        denom = np.sum(amp_arr_mskd2 * fS, axis=1) + fL1 + fL2
 
-        return xS_lensed_ures.data
+        xCentroid = numer / denom
+
+        return xCentroid.data
 
     def get_astrometry_unlensed(self, t_obs, filt_idx=0):
         """Get the astrometry of the source if the lens didn't exist.
@@ -6550,34 +6632,27 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between the source and binary lens system's COM
-
     xS0_E : float
         R.A. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
     xS0_N : float
         Dec. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
-
     beta_com: float
         Angular distance between the source and the CoM
         of the lenses on the plane of the sky (mas). Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
-
     muL_E : float
         Lens System proper motion in the RA direction (mas/yr)
     muL_N : float
         Lens System proper motion in the Dec. direction (mas/yr)
-
-
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         omega_sec = omega_pri + 180 deg
-
     big_omega_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees.
-
     i: float
         The inclination angle of the system in degrees.
     e: float
@@ -6586,16 +6661,12 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         This is the time of the periastron of the system in days.
     sep: float
         The angular separation between the lenses (mas).
-
     arat: float
         Ratio of semi-major axis with current separation between lenses measured at         dL
-
-
     muS_E : float
         Source proper motion in the RA direction (mas/yr)
     muS_N : float
         Source proper motion in the Dec. direction (mas/yr)
-
     dL : float
         Distance from the observer to the lens system (pc)
     dS : float
@@ -6609,15 +6680,19 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
-
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat', 'muS_E',
                           'muS_N', 'dL', 'dS', 'alpha']
-
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -6625,7 +6700,7 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N, dL, dS,
-                 alpha, b_sff, mag_src,
+                 alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
@@ -6647,6 +6722,7 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
         self.mag_src = mag_src
+        self.dmag_Lp_Ls = dmag_Lp_Ls
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -6776,56 +6852,43 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between the source and binary lens system's COM
-
     xS0_E : float
         R.A. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
     xS0_N : float
         Dec. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
-
     beta_com: float
         Angular distance between the source and the CoM
         of the lenses on the plane of the sky (mas). Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
-
     muL_E : float
         Lens System proper motion in the RA direction (mas/yr)
     muL_N : float
         Lens System proper motion in the Dec. direction (mas/yr)
-
-
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         omega_sec = omega_pri + 180 deg
-
     big_omega_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees.
-
     i: float
         The inclination angle of the system in degrees.
-
     tp: float
         This is the time of the periastron of the system in days.
     sep: float
         The angular separation between the lenses (mas).
-
     arat: float
         Ratio of semi-major axis with current separation between lenses measured at         dL
-
-
     muS_E : float
         Source proper motion in the RA direction (mas/yr)
     muS_N : float
         Source proper motion in the Dec. direction (mas/yr)
-
     dL : float
         Distance from the observer to the lens system (pc)
     dS : float
         Distance from the observer to the source's CoM (pc)
-
     alpha : float
         Angle made between the binary axis and North;
         measured in degrees East of North.
@@ -6834,6 +6897,12 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
 
@@ -6841,7 +6910,7 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'tp', 'sep', 'arat', 'muS_E', 'muS_N',
                           'dL', 'dS', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -6850,12 +6919,12 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta_com, muL_E, muL_N,
                  omega, big_omega, i, tp, sep, muS_E, muS_N, dL, dS,
-                 alpha, b_sff, mag_src,
+                 alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N,
                          beta_com, muL_E, muL_N,
                          omega, big_omega, i, 0, tp, sep, 1, muS_E, muS_N, dL, dS,
-                         alpha, b_sff, mag_src,
+                         alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return
@@ -6907,13 +6976,19 @@ class PSBL_PhotAstromParam1(PSPL_Param):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -6921,7 +6996,7 @@ class PSBL_PhotAstromParam1(PSPL_Param):
 
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                 sep, alpha, b_sff, mag_src,
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
@@ -6938,6 +7013,7 @@ class PSBL_PhotAstromParam1(PSPL_Param):
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
         self.mag_src = mag_src
+        self.dmag_Lp_Ls = dmag_Lp_Ls
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -7066,13 +7142,19 @@ class PSBL_PhotAstromParam2(PSPL_Param):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                           'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -7084,7 +7166,7 @@ class PSBL_PhotAstromParam2(PSPL_Param):
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_src,
+                 b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0 = t0
         self.u0_amp = u0_amp
@@ -7100,6 +7182,7 @@ class PSBL_PhotAstromParam2(PSPL_Param):
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
         self.mag_src = mag_src
+        self.dmag_Lp_Ls = dmag_Lp_Ls
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -7231,6 +7314,12 @@ class PSBL_PhotAstromParam3(PSPL_Param):
     mag_base : numpy array or list
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -7239,7 +7328,7 @@ class PSBL_PhotAstromParam3(PSPL_Param):
                           'xS0_E', 'xS0_N',
                           'muS_E', 'muS_N',
                           'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_base']
+    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -7252,7 +7341,7 @@ class PSBL_PhotAstromParam3(PSPL_Param):
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_base,
+                 b_sff, mag_base, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0 = t0
         self.u0_amp = u0_amp
@@ -7270,6 +7359,7 @@ class PSBL_PhotAstromParam3(PSPL_Param):
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
         self.mag_base = mag_base
+        self.dmag_Lp_Ls = dmag_Lp_Ls
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -7413,6 +7503,12 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
     mag_base : numpy array or list
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -7420,7 +7516,7 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
                           'muS_E', 'muS_N',
                           'q', 'alpha']
-    phot_param_names = ['b_sff', 'mag_base']
+    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -7435,13 +7531,13 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
                  piE_E, piE_N, xS0_E, xS0_N,
                  omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N,
                  q, alpha,
-                 b_sff, mag_base,
+                 b_sff, mag_base, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_base,
+                 b_sff, mag_base, dmag_Lp_Ls,
                  raL=raL, decL=decL, obsLocation='earth', root_tol=root_tol)
 
         #Orbital parameters
@@ -7558,6 +7654,12 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
     mag_base : numpy array or list
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -7565,7 +7667,7 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'tp', 'sep', 
                           'muS_E', 'muS_N',
                           'q', 'alpha']
-    phot_param_names = ['b_sff', 'mag_base']
+    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -7579,14 +7681,14 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
                  piE_E, piE_N, xS0_E, xS0_N,
                  omega, big_omega, i,tp, sep, muS_E, muS_N,
                  q, alpha,
-                 b_sff, mag_base,
+                 b_sff, mag_base, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
                  omega, big_omega, i, 0, tp, sep, 1, muS_E, muS_N,
                  q, alpha,
-                 b_sff, mag_base,
+                 b_sff, mag_base, dmag_Lp_Ls,
                  raL=raL, decL=decL, obsLocation='earth', root_tol=root_tol)
 
         PSPL_Param().__init__()
@@ -7646,6 +7748,12 @@ class PSBL_PhotAstromParam4(PSPL_Param):
     mag_base : numpy array or list
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -7655,6 +7763,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
+    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -7679,6 +7788,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
         self.mag_src = mag_src
+        self.dmag_Lp_Ls = dmag_Lp_Ls
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -7813,13 +7923,19 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0_prim', 'u0_amp_prim', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piEN_piEE', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                           'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_base']
+    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
     additional_param_names = ['piE_N', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N', 'mag_src']
@@ -7832,7 +7948,7 @@ class PSBL_PhotAstromParam5(PSPL_Param):
     def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS,
                  piE_E, piEN_piEE, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_base,
+                 b_sff, mag_base, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_prim = t0_prim
         self.u0_amp_prim = u0_amp_prim
@@ -7851,6 +7967,7 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
         self.mag_base = mag_base
+        self.dmag_Lp_Ls = dmag_Lp_Ls
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -7982,12 +8099,19 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                           'q', 'sep', 'alpha']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8000,7 +8124,7 @@ class PSBL_PhotAstromParam6(PSPL_Param):
     def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_src,
+                 b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_prim = t0_prim
         self.u0_amp_prim = u0_amp_prim
@@ -8017,6 +8141,7 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
         self.mag_src = mag_src
+        self.dmag_Lp_Ls = dmag_Lp_Ls
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -8145,13 +8270,19 @@ class PSBL_PhotAstromParam7(PSPL_Param):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
                           'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
     orbitFlag=False
@@ -8160,7 +8291,7 @@ class PSBL_PhotAstromParam7(PSPL_Param):
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
                  beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                 sep, alpha, b_sff, mag_src,
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
@@ -8176,6 +8307,7 @@ class PSBL_PhotAstromParam7(PSPL_Param):
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
         self.mag_src = mag_src
+        self.dmag_Lp_Ls = dmag_Lp_Ls
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -8323,13 +8455,19 @@ class PSBL_PhotAstromParam8(PSPL_Param):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                           'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8341,7 +8479,7 @@ class PSBL_PhotAstromParam8(PSPL_Param):
     def __init__(self, t0_com, u0_amp_com, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_src,
+                 b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_com = t0_com
         self.u0_amp_com = u0_amp_com
@@ -8359,6 +8497,7 @@ class PSBL_PhotAstromParam8(PSPL_Param):
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
         self.mag_src = mag_src
+        self.dmag_Lp_Ls = dmag_Lp_Ls
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -8511,6 +8650,12 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -8519,7 +8664,7 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
                           'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
                           'muS_E', 'muS_N',
                           'q', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8531,12 +8676,12 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N,
                  q, alpha,
-                 b_sff, mag_src,
+                 b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                          q, sep, alpha,
-                         b_sff, mag_src,
+                         b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         # Orbital parameters
@@ -8636,6 +8781,12 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -8643,7 +8794,7 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega', 'big_omega', 'i', 'tp', 'sep'
         , 'muS_E', 'muS_N',
                           'q', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -8657,13 +8808,13 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
                  piE_E, piE_N, xS0_E, xS0_N,
                  omega, big_omega, i, tp, sep, muS_E, muS_N,
                  q, alpha,
-                 b_sff, mag_src,
+                 b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N,
                          omega, big_omega, i, 0, tp, sep, 1, muS_E, muS_N,
                          q, alpha,
-                         b_sff, mag_src,
+                         b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         PSPL_Param().__init__()
@@ -8736,6 +8887,12 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -8743,7 +8900,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
                           'muS_E', 'muS_N',
                           'q', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8757,13 +8914,13 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
                  piE_E, piE_N, xS0_E, xS0_N,
                  omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N,
                  q, alpha,
-                 b_sff, mag_src,
+                 b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS,
                      piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                      q, sep, alpha,
-                     b_sff, mag_src,
+                     b_sff, mag_src, dmag_Lp_Ls,
                      raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         #Orbital parameters
@@ -8860,6 +9017,12 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -8867,7 +9030,7 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
                           'beta', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'acc_E', 'acc_N', 'muS_E',
                           'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -8877,12 +9040,12 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
                  piE_E, piE_N, xS0_E, xS0_N,
                  delta_muLsec_E, delta_muLsec_N, acc_E, acc_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_src,
+                 b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                          q, sep, alpha,
-                         b_sff, mag_src,
+                         b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
 
         self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
@@ -8943,13 +9106,19 @@ class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -8959,13 +9128,13 @@ class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
                  piE_E, piE_N, xS0_E, xS0_N,
                  delta_muLsec_E, delta_muLsec_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_src,
+                 b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N,
                          delta_muLsec_E, delta_muLsec_N, 0, 0, muS_E, muS_N,
                          q, sep, alpha,
-                         b_sff, mag_src,
+                         b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
 
         return
@@ -9025,6 +9194,12 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -9032,7 +9207,7 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
                           'beta', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'acc_E', 'acc_N', 'muS_E',
                           'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -9041,11 +9216,11 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
                  beta_p, muL_E, muL_N,
                  delta_muLsec_E, delta_muLsec_N, acc_E, acc_N, muS_E, muS_N, dL, dS,
-                 sep, alpha, b_sff, mag_src,
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
                          beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                         sep, alpha, b_sff, mag_src,
+                         sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
@@ -9110,13 +9285,19 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -9125,12 +9306,12 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
                  beta, muL_E, muL_N,
                  delta_muLsec_E, delta_muLsec_N, muS_E, muS_N, dL, dS,
-                 sep, alpha, b_sff, mag_src,
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
                          beta, muL_E, muL_N, delta_muLsec_E,
                          delta_muLsec_N, 0, 0, muS_E, muS_N, dL, dS,
-                         sep, alpha, b_sff, mag_src,
+                         sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
         return
 
@@ -9203,6 +9384,12 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         for each filter.
     mag_src : numpy array or list
         Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -9211,7 +9398,7 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'tp', 'sep',
                           'muS_E', 'muS_N',
                           'q', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -9224,14 +9411,14 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
                  piE_E, piE_N, xS0_E, xS0_N,
                  omega, big_omega, i, tp, sep, muS_E, muS_N,
                  q, alpha,
-                 b_sff, mag_src,
+                 b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N,
                          omega, big_omega, i, 0, tp, sep, 1, muS_E, muS_N,
                          q, alpha,
-                         b_sff, mag_src,
+                         b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         PSPL_Param().__init__()
@@ -9384,6 +9571,9 @@ class PSBL_PhotParam1(PSPL_Param):
         self.m1 = 1.0 / (1.0 + self.q)
         self.m2 = self.q / (1.0 + self.q)
 
+        # Set flux contributions from lens to 0 for some
+        # astrometry plots (unblended).
+        self.dmag_Lp_Ls = np.zeros(len(self.mag_src))
         return
 
 
@@ -9420,7 +9610,7 @@ class PSBL_GP_PhotAstromParam1(PSBL_PhotAstromParam1):
 
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                 sep, alpha, b_sff, mag_src,
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.gp_log_sigma = gp_log_sigma
@@ -9430,7 +9620,7 @@ class PSBL_GP_PhotAstromParam1(PSBL_PhotAstromParam1):
 
         super().__init__(mLp, mLs, t0, xS0_E, xS0_N,
                          beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                         sep, alpha, b_sff, mag_src,
+                         sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         # Setup a useful "use_phot_gp" flag.
@@ -9447,7 +9637,7 @@ class PSBL_GP_PhotAstromParam2(PSBL_PhotAstromParam2):
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_src,
+                 b_sff, mag_src, dmag_Lp_Ls,
                  gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.gp_log_sigma = gp_log_sigma
@@ -9457,7 +9647,7 @@ class PSBL_GP_PhotAstromParam2(PSBL_PhotAstromParam2):
 
         super().__init__(t0, u0_amp, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                         q, sep, alpha, b_sff, mag_src,
+                         q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         # Setup a useful "use_phot_gp" flag.
@@ -14721,6 +14911,8 @@ class BSBL_Phot(BSBL, PSBL_Phot):
     def get_astrometry(self, t_obs, image_arr=None, amp_arr=None, filt_idx=0):
         '''
         Position of the observed (unresolved) source position in Einstein radii.
+        This accounts for the source magnification and the contamination by any
+        luminous lens. Note: we assume no other luminous neighbors.
 
         Parameters
         ----------
@@ -14755,9 +14947,28 @@ class BSBL_Phot(BSBL, PSBL_Phot):
         amp_arr_mskd2 = amp_arr_mskd.reshape((amp_arr_mskd.shape[0], amp_arr_mskd.shape[1], 1))
         xS_lensed_res_mskd = np.ma.masked_invalid(xS_lensed_res)
 
+        # Get the source flux.
+        fS1 = np.nan_to_num(mag2flux(self.mag_src_pri[filt_idx]), nan=0)
+        fS2 = np.nan_to_num(mag2flux(self.mag_src_sec[filt_idx]), nan=0)
+        # Get the flux in the right shape for the source images.
+
+        # Get the lens position and flux
+        xL1, xL2 = self.get_resolved_lens_astrometry(t_obs, filt_idx=filt_idx)
+        magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
+        fL1 = np.nan_to_num(mag2flux(magL1), nan=0)
+        fL2 = np.nan_to_num(mag2flux(magL2), nan=0)
+
+        # Derivations are in https://www.overleaf.com/project/5c058eb8e5b5b14080d3d567
+        # centroid = [ sum(A_i*fS*xS_i) + fL1*xL1 + fL2*xL2 ] / [ sum(A_i*fS) + fL1 + fL2 ]
+        numer = np.sum(xS_lensed_res_mskd * amp_arr_mskd2 * fS, axis=1) + xL1 * fL1 + xL2 * fL2
+        denom = np.sum(amp_arr_mskd2 * fS, axis=1) + fL1 + fL2
+
+        xCentroid = numer / denom
         xS_lensed_ures = np.sum(xS_lensed_res_mskd * amp_arr_mskd2, axis=1) / np.sum(amp_arr_mskd2, axis=1)
 
-        return xS_lensed_ures.data
+
+        return xCentroid.data
+
 
     def get_t0_sec(self):
         sep_vec = self.sep * np.array((np.sin(self.phi_rho1_rad),
@@ -18161,42 +18372,6 @@ class PSPL_PhotAstrom_Par_Param1(ModelClassABC,
         checkconflicts(self)
 
 
-# PSPL_parallax
-@inheritdocstring
-class PSPL_PhotAstrom_LumLens_Par_Param1(ModelClassABC,
-                                         PSPL_PhotAstrom,
-                                         PSPL_Parallax_LumLens,
-                                         PSPL_PhotAstromParam1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-# PSPL_parallax
-@inheritdocstring
-class PSPL_PhotAstrom_LumLens_Par_Param2(ModelClassABC,
-                                         PSPL_PhotAstrom,
-                                         PSPL_Parallax_LumLens,
-                                         PSPL_PhotAstromParam2):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-# PSPL_parallax
-@inheritdocstring
-class PSPL_PhotAstrom_LumLens_Par_Param4(ModelClassABC,
-                                         PSPL_PhotAstrom,
-                                         PSPL_Parallax_LumLens,
-                                         PSPL_PhotAstromParam4):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
 # PSPL_parallax2 / PSPL_multiphot_parallax
 @inheritdocstring
 class PSPL_PhotAstrom_Par_Param2(ModelClassABC,
@@ -18633,52 +18808,6 @@ class PSPL_PhotAstrom_Par_GP_Param4_2(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
-@inheritdocstring
-class PSPL_PhotAstrom_Par_LumLens_GP_Param1(ModelClassABC,
-                                            PSPL_GP,
-                                            PSPL_PhotAstrom,
-                                            PSPL_Parallax_LumLens,
-                                            PSPL_GP_PhotAstromParam1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSPL_PhotAstrom_Par_LumLens_GP_Param2(ModelClassABC,
-                                            PSPL_GP,
-                                            PSPL_PhotAstrom,
-                                            PSPL_Parallax_LumLens,
-                                            PSPL_GP_PhotAstromParam2):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSPL_PhotAstrom_Par_LumLens_GP_Param3(ModelClassABC,
-                                            PSPL_GP,
-                                            PSPL_PhotAstrom,
-                                            PSPL_Parallax_LumLens,
-                                            PSPL_GP_PhotAstromParam3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSPL_PhotAstrom_Par_LumLens_GP_Param4(ModelClassABC,
-                                            PSPL_GP,
-                                            PSPL_PhotAstrom,
-                                            PSPL_Parallax_LumLens,
-                                            PSPL_GP_PhotAstromParam4):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
 
 # PSPL PhotAstrom, parallax with GP, but no jitter term
 @inheritdocstring
@@ -20082,6 +20211,15 @@ def flux2mag(flux):
 
     return mag
 
+def dmag2fratio(dmag):
+    flux_ratio = 10 ** (dmag / -2.5)
+
+    return flux_ratio
+
+def fratio2dmag(flux_ratio):
+    dmag = -2.5 * np.log10(flux_ratio)
+
+    return dmag
 
 def u0_hat_from_thetaE_hat(thetaE_hat, beta):
     """
