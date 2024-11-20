@@ -16724,7 +16724,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         Returns
         -------
-        u : array, float, shape = [len(t_obs), 2]
+        u : array, float, shape = [len(t_obs), N_outline, 2]
             Separation vector in East, North on the sky in units of \theta_E.
         """
         u_vec = self.get_u(t_obs, filt_idx=filt_idx)
@@ -16770,6 +16770,62 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             xS_unlensed_outline[:, n, 1] = xS_unlensed_center[:, 1] + dy[n]
 
         return xS_unlensed_outline
+
+    def get_resolved_astrometry_outline(self, t_obs, filt_idx=0):
+        """
+        Get the astrometric microlensing shift of each
+        point in the source outline for each of the multiple
+        lensed images.
+
+        Note this is actually the source position w.r.t.
+        the lens. In other words, it is the source - lens separation,
+        not just the astrometric microlensing shift.
+        Sorry it is poorly named.
+
+        Input Parameters
+        ----------------
+        t_obs : array, float
+            Times in MJD at which to evaluate the separation.
+
+        Return
+        -------
+        pos_plus : array, float, shape = [len(t_obs), n_outline, 2]
+            Relative astrometric position of the plus image in East, North
+            w.r.t. the lens in units of milli-arcseconds.
+        pos_minus : array, float, shape = [len(t_obs), n_outline, 2]
+            Relative astrometric position of the minus image in East, North
+            w.r.t. the lens in units of milli-arcseconds.
+        """
+
+        # Shape = [len(t_obs), self.n_outline, 2]
+        u_vec = self.get_u_outline(t_obs, filt_idx=filt_idx)
+
+        # Shape = [len(t_obs), self.n_outline]
+        u_amp = np.linalg.norm(u_vec, axis=2)
+        u_hat = u_vec / u_amp[:, :, np.newaxis]
+
+        # Calcluate the source image position for the plus and minus
+        # position. These positions are measured with respect
+        # to the lens position.
+        # Shape = [len(t_obs), self.n_outline, 2]
+        u_obs_amp_plus = ((u_amp + np.sqrt(u_amp ** 2 + 4)) / 2.0)
+        u_obs_amp_minus = ((u_amp - np.sqrt(u_amp ** 2 + 4)) / 2.0)
+        u_obs_vec_plus = u_obs_amp_plus[:, :, np.newaxis] * u_hat
+        u_obs_vec_minus = u_obs_amp_minus[:, :, np.newaxis] * u_hat
+
+        # Get the lens position over time to convert to actual source image positions.
+        xL = self.get_lens_astrometry(t_obs, filt_idx=filt_idx)
+
+        pos_plus  = xL[:, np.newaxis, :] + (u_obs_vec_plus  * self.thetaE_amp / 1e3)  # in arcsec
+        pos_minus = xL[:, np.newaxis, :] + (u_obs_vec_minus * self.thetaE_amp / 1e3)  # in arcsec
+
+        # Shape = [len(t), n_outline, [+, -], [E, N]]
+        img_pos = np.zeros((len(t_obs), self.n_outline, 2, 2), dtype=float)
+
+        img_pos[:, :, 0, :] = pos_plus
+        img_pos[:, :, 1, :] = pos_minus
+
+        return img_pos
 
     def get_all_arrays(self, t_obs, filt_idx=0):
         """
@@ -17037,6 +17093,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
             This will over-ride t_obs; but is more efficient when calculating
             both photometry and astrometry. If None, then just use t_obs.
+        filt_idx : int
+            The filter index (def=0).
 
         Returns
         -------
@@ -17094,10 +17152,12 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             i.e. image_arr.shape = (len(t_obs), number of images at each t_obs).
             Each value in this array is complex
             (real = north component, imaginary = east component)
-
         amp_arr : array_like
             Array of magnifications of each images.
             Same shape as image_arr.
+        filt_idx : int
+            The filter index (def=0).
+
 
         Returns
         -------
@@ -17347,9 +17407,8 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         
     dL: float
         Distance from the observer to the lens (pc)
-    dL_dS: float
-        Ratio of Distance from the obersver to the lens to
-        Distance from the observer to the source
+    dS: float
+        Distance from the observer to the lens (pc)
     xS0_E: float
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
     xS0_N: float
@@ -17363,7 +17422,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
     muS_N: float
         Dec Source proper motion (mas/yr)
     radius: float
-        Projected radius of the star in arcsec on the sky plane.
+        Projected radius of the source star in arcsec on the sky plane.
     b_sff: float
         The ratio of the source flux to the total (source + neighbors + lens)
         :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
@@ -17384,9 +17443,10 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mL', 't0', 'xS0_E', 'xS0_N', 'beta', 'muL_N', 'muL_E',
-                          'muS_N', 'muS_E', 'dL', 'dS', 'radius']
-    phot_param_names = ['mag_src', 'b_sff']
+    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dS',
+                          'xS0_E', 'xS0_N', 'muL_N', 'muL_E',
+                          'muS_N', 'muS_E', 'radius']
+    phot_param_names = ['b_sff', 'mag_src']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -17409,7 +17469,8 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
         self.n_outline = n_outline
-        self.radius = (radius * meter_per_Rsun / meter_per_AU) / dS
+        #self.radiusS = (radius * meter_per_Rsun / meter_per_AU) / dS
+        self.radiusS = radius
         self.mag_src = mag_src
         self.b_sff = b_sff
         self.raL = raL
@@ -17442,8 +17503,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         self.muL_E, self.muL_N = self.muL
 
         # Calculate the Einstein radius
-        thetaE = units.rad * np.sqrt(
-            (4.0 * const.G * mL * units.M_sun / const.c ** 2) * inv_dist_diff)
+        thetaE = units.rad * np.sqrt((4.0 * const.G * mL * units.M_sun / const.c ** 2) * inv_dist_diff)
         self.thetaE_amp = thetaE.to('mas').value  # mas
         self.thetaE_hat = self.muRel / self.muRel_amp
         self.muRel_hat = self.thetaE_hat
@@ -17652,7 +17712,7 @@ class FSPL_Limb(FSPL):
         flux_zp = 1.0
 
         if amp_arr is None:
-            amp_arr, img_arr = self.get_centroids(t_obs, self.radius)
+            amp_arr, img_arr = self.get_centroids(t_obs, self.radiusS)
             amp = self.get_amplification(t_obs)
 
             # CHECK
@@ -17749,7 +17809,7 @@ class FSPL_Limb(FSPL):
                 1] + 2 * zoom * self.thetaE_amp * 1e-3))
         ax1.set_ylim(rl[0, 1] - zoom * self.thetaE_amp * 0.001,
                      rl[-1, 1] + zoom * self.thetaE_amp * 0.001)
-        a = self.get_centroids(t, self.radius)[1]
+        a = self.get_centroids(t, self.radiusS)[1]
         xcent = a[:, 0]
         ycent = a[:, 1]
         line5, = ax1.plot([], 'm', markersize=5, label="Image Centroid")
@@ -17811,8 +17871,8 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
         self.dL = dL  # Distance from observer to lens (pc)
         self.dS = dS  # Distance from observer to source (pc)
         self.n = n  # No. of boundary points approximating the source
-        self.radius = (radius * 6.96e8 / 1.496e11) / dS  # Radius of star on the sky (as)
-        self.source = self.get_source(self.radius, n, xS0)  # Positions of the centroid + points on the boundary
+        self.radiusS = (radius * 6.96e8 / 1.496e11) / dS  # Radius of star on the sky (as)
+        self.source = self.get_source(self.radiusS, n, xS0)  # Positions of the centroid + points on the boundary
         self.nr = nr  # sets the precision on the integrals
         self.t0 = t0
         self.mag_src = mag_src
