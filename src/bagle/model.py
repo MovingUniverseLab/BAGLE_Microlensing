@@ -5,6 +5,7 @@
 #.. moduleauthor:: Jessica Lu <jlu.astro@berkeley.edu>
 #.. moduleauthor:: Michael Medford <MichaelMedford@berkeley.edu>
 #.. moduleauthor:: Casey Lam <casey_lam@berkeley.edu>
+#.. moduleauthor:: Dex Bhadra <tanaymbhadra@berkeley.edu>
 #.. moduleauthor:: Edward Broadberry
 """
 Overview of bagle.model
@@ -6465,23 +6466,28 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 
         fig = plt.figure(figsize=[size[0], size[1] + 0.5])  # sets up the figure
         ax1 = fig.add_subplot(2, 1, 1)
+        ax2 = fig.add_subplot(2, 1, 2)
         fig.subplots_adjust(hspace=.5)
-        l1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Primary Lens ", color='purple', linewidth=2)
-        l1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
-        l2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Secondary Lens ", color='grey', linewidth=2)
-        l2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='grey', linewidth=2)
-        s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Source", color='yellow', linewidth=2)
-        s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='yellow', linewidth=2)
+        pS = self.get_photometry(t, amp_arr = amp)
+        
+        l1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Primary Lens ", color='red', linewidth=2)
+        l1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='red', linewidth=2)
+        l2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Secondary Lens ", color='blue', linewidth=2)
+        l2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='blue', linewidth=2)
+        s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Source", color='green', linewidth=2)
+        s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='green', linewidth=2)
 
         if astrometry == "unresolved":
-            i1_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Source (Unresolved)", color='yellow',
+            i1_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Source (Unresolved)", color='orange',
                                  linewidth=2)
-            i1_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='yellow', linewidth=2)
+            i1_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='orange', linewidth=2)
             ax1.set_xlabel('RA (")')
             ax1.set_ylabel('Dec (")')
             ax1.set_xlim(zoom, -zoom)
             ax1.set_ylim(-zoom, zoom)
-            ax1.legend(fontsize=12, loc=loc)
+            #ax1.legend(fontsize=25, loc=loc)
+            ax1.legend(bbox_to_anchor = (1,1))
+
 
             line = [l1_line1, l1_line2, l2_line1, l2_line2, s1_line1, s1_line2, i1_line1, i1_line2]
 
@@ -6501,27 +6507,32 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                                           interval=frame_time)
             ani.save("%s.mp4" % name, writer="ffmpeg")
         else:
-            i2_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Image", color='yellow', linewidth=2)
-            i2_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='yellow', linewidth=2)
-            i3_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='yellow', linewidth=2)
-            i3_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='yellow', linewidth=2)
-            i4_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='yellow', linewidth=2)
-            i4_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='yellow', linewidth=2)
-            i5_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='yellow', linewidth=2)
-            i5_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='yellow', linewidth=2)
-            i6_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='yellow', linewidth=2)
-            i6_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='yellow', linewidth=2)
+            i2_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Image", color='orange', linewidth=2)
+            i2_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='orange', linewidth=2)
+            i3_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='orange', linewidth=2)
+            i3_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='orange', linewidth=2)
+            i4_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='orange', linewidth=2)
+            i4_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='orange', linewidth=2)
+            i5_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='orange', linewidth=2)
+            i5_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='orange', linewidth=2)
+            i6_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='orange', linewidth=2)
+            i6_line2, = ax1.plot([], '.', markersize=size[0] * 0.2, color='orange', linewidth=2)
+            pSline, = ax2.plot(t - self.t0, pS, 'r-')
 
             ax1.set_xlabel('RA (")')
             ax1.set_ylabel('Dec (")')
             ax1.set_xlim(zoom, -zoom)
             ax1.set_ylim(-zoom, zoom)
-            ax1.legend(fontsize=12, loc=loc)
+            ax1.legend(bbox_to_anchor = (1,1))
+
+            ax2.set_xlabel("Time (days)")
+            ax2.set_ylabel("Brightness (mag)")
+            ax2.invert_yaxis()
 
             line = [l1_line1, l1_line2, l2_line1, l2_line2, s1_line1, s1_line2, i2_line1, i2_line2, i3_line1, i3_line2,
-                    i4_line1, i4_line2, i5_line1, i5_line2, i6_line1, i6_line2]
+                    i4_line1, i4_line2, i5_line1, i5_line2, i6_line1, i6_line2, pSline]
 
-            def update(i, lens1, lens2, source, image1, image2, image3, image4, image5, tau, line):
+            def update(i, lens1, lens2, source, image1, image2, image3, image4, image5, pS, t, tau, line):
                 line[0].set_data(lens1[i, 0], lens1[i, 1])
                 line[1].set_data(lens1[:i + 1, 0], lens1[:i + 1, 1])
                 line[2].set_data(lens2[i, 0], lens2[i, 1])
@@ -6538,12 +6549,13 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 line[13].set_data(image4[:i + 1, 0], image4[:i + 1, 1])
                 line[14].set_data(image5[i, 0], image5[i, 1])
                 line[15].set_data(image5[:i + 1, 0], image5[:i + 1, 1])
+                line[16].set_data(t[:i+1] - self.t0, pS[:i+1])
 
                 return line
 
             ani = animation.FuncAnimation(fig, update, len(tau),
                                           fargs=[xL1, xL2, source, image_all[:, 0], image_all[:, 1], image_all[:, 2],
-                                                 image_all[:, 3], image_all[:, 4], tau, line], blit=True,
+                                                 image_all[:, 3], image_all[:, 4], pS, t, tau, line], blit=True,
                                           interval=frame_time)
             ani.save("%s.mp4" % name, writer="ffmpeg")
 
@@ -6682,7 +6694,6 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat', 'muS_E',
                           'muS_N', 'dL', 'dS']
-
     phot_param_names = ['b_sff', 'mag_src']
 
     paramAstromFlag = True
@@ -6921,7 +6932,7 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'tp', 'sep', 'arat', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'alpha']
+                          'dL', 'dS']
     phot_param_names = ['b_sff', 'mag_src']
 
     paramAstromFlag = True
@@ -7668,7 +7679,7 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'tp', 'sep', 
                           'muS_E', 'muS_N',
-                          'q', 'alpha']
+                          'q']
     phot_param_names = ['b_sff', 'mag_base']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -7682,14 +7693,14 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
                  omega, big_omega, i,tp, sep, muS_E, muS_N,
-                 q, alpha,
+                 q,
                  b_sff, mag_base,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
                  omega, big_omega, i, 0, tp, sep, 1, muS_E, muS_N,
-                 q, alpha,
+                 q, 
                  b_sff, mag_base,
                  raL=raL, decL=decL, obsLocation='earth', root_tol=root_tol)
 
@@ -8619,7 +8630,7 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N',
                           'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
                           'muS_E', 'muS_N',
-                          'q', 'alpha']
+                          'q']
     phot_param_names = ['b_sff', 'mag_src']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -8775,12 +8786,11 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega', 'big_omega', 'i', 'tp', 'sep'
         , 'muS_E', 'muS_N',
-                          'q', 'alpha']
+                          'q']
     phot_param_names = ['b_sff', 'mag_src']
-
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8795,6 +8805,7 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
                  q, 
                  b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+                     
         super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N,
                          omega, big_omega, i, 0, tp, sep, 1, muS_E, muS_N,
@@ -8875,7 +8886,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat',
                           'muS_E', 'muS_N',
-                          'q', 'alpha']
+                          'q']
     phot_param_names = ['b_sff', 'mag_src']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -10328,67 +10339,76 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
         fig = plt.figure(figsize=[size[0], size[1] + 0.5])  # sets up the figure
         ax1 = fig.add_subplot(2, 1, 1)
+        ax2 = fig.add_subplot(2, 1, 2)
+
         fig.subplots_adjust(hspace=.5)
 
+        pS = self.get_photometry(t)
+                       
         if type == 'resolved_unlensed':
-            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='grey',
+            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='green',
                                  linewidth=2)
-            s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='grey', linewidth=2)
-            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='purple',
+            s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='green', linewidth=2)
+            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='hotpink',
                                  linewidth=2)
-            s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
+            s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='hotpink', linewidth=2)
 
         elif type == 'unresolved_lensed':
-            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Lensed Primary Source ", color='grey',
+            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Lensed Primary Source ", color='green',
                                  linewidth=2)
-            s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='grey', linewidth=2)
-            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Lensed Secondary Source ", color='purple',
+            s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='green', linewidth=2)
+            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Lensed Secondary Source ", color='hotpink',
                                  linewidth=2)
-            s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
+            s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='hotpink', linewidth=2)
 
         elif type == 'resolved_unlensed_unresolved_lensed':
-            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='grey',
+            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Primary Source ", color='green',
                                  linewidth=2)
-            s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='grey', linewidth=2)
-            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='purple',
+            s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='green', linewidth=2)
+            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, label="Unlensed Secondary Source ", color='hotpink',
                                  linewidth=2)
-            s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='purple', linewidth=2)
-            i1_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Primary Source ", color='grey',
+            s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, color='hotpink', linewidth=2)
+            i1_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Primary Source ", color='green',
                                  linewidth=2)
-            i1_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='grey', linewidth=2)
-            i2_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Secondary Source ", color='purple',
+            i1_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='green', linewidth=2)
+            i2_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, label="Lensed Secondary Source ", color='hotpink',
                                  linewidth=2)
-            i2_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='purple', linewidth=2)
+            i2_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, color='hotpink', linewidth=2)
 
         elif type == 'resolved_unlensed_resolved_lensed':
-            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, color='grey', linewidth=2)
-            s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, label="Unlensed Primary Source ", color='grey',
+            s1_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, color='green', linewidth=2)
+            s1_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, label="Unlensed Primary Source ", color='green',
                                  linewidth=2)
-            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, color='purple', linewidth=2)
-            s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, label="Unlensed Secondary Source ", color='purple',
+            s2_line1, = ax1.plot([], '.', markersize=size[0] * 1.3, color='hotpink', linewidth=2)
+            s2_line2, = ax1.plot([], '-', markersize=size[0] * 0.3, label="Unlensed Secondary Source ", color='hotpink',
                                  linewidth=2)
 
-            i1_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='grey', linewidth=2)
-            i1_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Primary Source Major Image ",
-                                      color='grey', linewidth=2)
-            i1_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='grey', linewidth=2)
-            i1_minus_line2, = ax1.plot([], ':', markersize=size[0] * 0.2, label="Lensed Primary Source Minor Image",
-                                       color='grey', linewidth=2)
+            i1_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='green', linewidth=2)
+            i1_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Primary Source Image ",
+                                      color='green', linewidth=2)
+            i1_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='green', linewidth=2)
+            i1_minus_line2, = ax1.plot([], ':', markersize=size[0] * 0.2, 
+                                       color='green', linewidth=2)
 
-            i2_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='purple', linewidth=2)
-            i2_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Secondary Source Major Image ",
-                                      color='purple', linewidth=2)
-            i2_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='purple', linewidth=2)
-            i2_minus_line2, = ax1.plot([], ':', markersize=size[0] * 0.2, label="Lensed Secondary Source Minor Image ",
-                                       color='purple', linewidth=2)
+            i2_plus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='hotpink', linewidth=2)
+            i2_plus_line2, = ax1.plot([], '--', markersize=size[0] * 0.2, label="Lensed Secondary Source Image ",
+                                      color='hotpink', linewidth=2)
+            i2_minus_line1, = ax1.plot([], '.', markersize=size[0] * 1.0, color='hotpink', linewidth=2)
+            i2_minus_line2, = ax1.plot([], ':', markersize=size[0] * 0.2,
+                                       color='hotpink', linewidth=2)
 
-        l_line1, = ax1.plot([], '.', markersize=size[0] * 0.7, color='k', linewidth=2)
-        l_line2, = ax1.plot([], '-', markersize=size[0] * 0.2, label="Lens", color='k', linewidth=2)
+        l_line1, = ax1.plot([], '.', markersize=size[0] * 0.7, color='red', linewidth=2)
+        l_line2, = ax1.plot([], '-', markersize=size[0] * 0.2, label="Lens", color='red', linewidth=2)
+        pSline, = ax2.plot(t - self.t0, pS, 'r-')
+
 
         ax1.set_xlabel('RA (")')
         ax1.set_ylabel('Dec (")')
         ax1.set_xlim(zoom, -zoom)
         ax1.set_ylim(-zoom, zoom)
+        ax2.set_xlabel("Time (days)")
+        ax2.set_ylabel("Brightness (mag)")
+        ax2.invert_yaxis()
 
         # ax1.set_xlim(zoom, -zoom)
         # ax1.set_ylim(-zoom, zoom)
@@ -10396,12 +10416,13 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         # plt.gca().set_xlim(1.1, 0.9)
         # plt.gca().set_ylim(0.75, 1.3)
 
-        ax1.legend(fontsize=12, loc=loc)
+        ax1.legend(bbox_to_anchor = (1,1))
+        #ax1.legend(fontsize=25, loc=loc)
 
         if astrometry == "yes":
-            line = [s1_line1, s1_line2, s2_line1, s2_line2, l_line1, l_line2]
+            line = [s1_line1, s1_line2, s2_line1, s2_line2, l_line1, l_line2, pSline]
 
-            def update(i, source1, source2, lens, tau, line):
+            def update(i, source1, source2, lens, pS, t,  tau, line):
                 # print(str(i) + ", ", end='', flush=True)
                 line[0].set_data(source1[i, 0], source1[i, 1])
                 line[1].set_data(source1[:i + 1, 0], source1[:i + 1, 1])
@@ -10434,7 +10455,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
     
                 """
                 ani = animation.FuncAnimation(fig, update, len(tau),
-                                              fargs=[source1, source2, l, tau,
+                                              fargs=[source1, source2, l, pS, t, tau,
                                                      line],
                                               blit=True, interval=frame_time)
                 ani.save("%s.mp4" % name, writer="ffmpeg")
@@ -10442,16 +10463,16 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             elif type == 'unresolved_lensed':
 
                 ani = animation.FuncAnimation(fig, update, len(tau),
-                                              fargs=[image1, image2, l, tau,
+                                              fargs=[image1, image2, l, pS, t, tau,
                                                      line],
                                               blit=True, interval=frame_time)
                 ani.save("%s.mp4" % name, writer="ffmpeg")
 
             elif type == 'resolved_unlensed_unresolved_lensed':
                 line = [s1_line1, s1_line2, s2_line1, s2_line2, i1_line1, i1_line2, i2_line1, i2_line2, l_line1,
-                        l_line2]
+                        l_line2, pSline]
 
-                def update(i, source1, source2, image1, image2, lens, tau, line):
+                def update(i, source1, source2, image1, image2, lens, pS, t, tau, line):
                     # print(str(i) + ", ", end='', flush=True)
                     line[0].set_data(source1[i, 0], source1[i, 1])
                     line[1].set_data(source1[:i + 1, 0], source1[:i + 1, 1])
@@ -10463,6 +10484,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
                     line[7].set_data(image2[:i + 1, 0], image2[:i + 1, 1])
                     line[8].set_data(lens[i, 0], lens[i, 1])
                     line[9].set_data(lens[:i + 1, 0], lens[:i + 1, 1])
+                    line[10].set_data(t[:i+1] - self.t0, pS[:i+1])
                     return line
 
                 ani = animation.FuncAnimation(fig, update, len(tau),
@@ -10473,9 +10495,9 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             elif type == 'resolved_unlensed_resolved_lensed':
                 line = [s1_line1, s1_line2, s2_line1, s2_line2, i1_plus_line1, i1_plus_line2, i1_minus_line1,
                         i1_minus_line2, i2_plus_line1, i2_plus_line2,
-                        i2_minus_line1, i2_minus_line2, l_line1, l_line2]
+                        i2_minus_line1, i2_minus_line2, l_line1, l_line2, pSline]
 
-                def update(i, source1, source2, xSL1_plus, xSL1_minu, xSL2_plus, xSL2_minu, lens, tau, line):
+                def update(i, source1, source2, xSL1_plus, xSL1_minu, xSL2_plus, xSL2_minu, lens, pS, t, tau, line):
                     # print(str(i) + ", ", end='', flush=True)
                     line[0].set_data(source1[i, 0], source1[i, 1])
                     line[1].set_data(source1[:i + 1, 0], source1[:i + 1, 1])
@@ -10491,11 +10513,13 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
                     line[11].set_data(xSL2_minu[:i + 1, 0], xSL2_minu[:i + 1, 1])
                     line[12].set_data(lens[i, 0], lens[i, 1])
                     line[13].set_data(lens[:i + 1, 0], lens[:i + 1, 1])
+                    line[14].set_data(t[:i+1] - self.t0, pS[:i+1])
+
                     return line
 
                 ani = animation.FuncAnimation(fig, update, len(tau),
                                               fargs=[source1, source2, xSL1_plus, xSL1_minu, xSL2_plus, xSL2_minu, l,
-                                                     tau, line],
+                                                     pS, t, tau, line],
                                               blit=True, interval=frame_time)
                 ani.save("%s.mp4" % name, writer="ffmpeg")
         else:
@@ -12793,7 +12817,6 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
                                          np.cos(self.alpha_rad)))  # mas
 
-        # Vodoo Magic (Binary Source t0 conversion from t0_com to t0_p=t0)
 
         self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
         self.sep_AU = self.dS * (self.sep * 1e-3) * units.AU
@@ -13011,7 +13034,6 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
-        # Vodoo Magic (Binary Source t0 conversion from t0_com to t0_p=t0)
 
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
         self.sep_AU = self.dS * (self.sep * 1e-3) * units.AU
@@ -13284,7 +13306,6 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        # Vodoo Magic (Binary Source t0 conversion from t0_com to t0_p=t0)
 
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
         self.sep_AU = self.dS * (self.sep * 1e-3) * units.AU
@@ -13421,7 +13442,7 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, mL, t0_com, beta, dL, dL_dS,
+    def __init__(self, mL, t0, beta, dL, dL_dS,
                  x0_system_E, x0_system_N,
                  muL_E, muL_N,
                  muS_system_E, muS_system_N,
@@ -13430,7 +13451,7 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
                  mag_src_pri, mag_src_sec,
                  b_sff,
                  raL=None, decL=None, obsLocation='earth'):
-        super().__init__(mL, t0_com, beta, dL, dL_dS,
+        super().__init__(mL, t0, beta, dL, dL_dS,
                          x0_system_E, x0_system_N,
                          muL_E, muL_N,
                          muS_system_E, muS_system_N,
@@ -13529,7 +13550,7 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
         Declination of the lens in decimal degrees.
     """
 
-    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'omega', 'big_omega', 'i',
                           'p', 'tp', 'aleph', 'aleph_sec', 'muS_system_E', 'muS_system_N',
@@ -13545,7 +13566,7 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, t0_com, u0_amp, tE, thetaE, piS,
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
                  omega,
                  big_omega, i,
@@ -13556,7 +13577,7 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
                  fratio_bin,
                  mag_base, b_sff,
                  raL=None, decL=None, obsLocation='earth'):
-        super().__init__(t0_com, u0_amp, tE, thetaE, piS,
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
                          piE_E, piE_N,
                          omega,
                          big_omega, i, 0,
@@ -13657,7 +13678,7 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
         Declination of the lens in decimal degrees.
     """
 
-    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'omega', 'big_omega', 'i', 'p',
                           'tp', 'aleph', 'aleph_sec',
@@ -13673,7 +13694,7 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, t0_com, u0_amp, tE, log10_thetaE, piS,
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
                  omega,
                  big_omega, i,
@@ -13684,7 +13705,7 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
                  fratio_bin,
                  mag_base, b_sff,
                  raL=None, decL=None, obsLocation='earth'):
-        super().__init__(t0_com, u0_amp, tE, log10_thetaE, piS,
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                          piE_E, piE_N,
                          omega,
                          big_omega, i, 0,
@@ -15364,7 +15385,7 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         ax1.set_ylabel('Dec (")')
         ax1.set_xlim(zoom, -zoom)
         ax1.set_ylim(-zoom, zoom)
-        ax1.legend(fontsize=12, loc=loc)
+        ax1.legend(fontsize=25, loc=loc)
 
         line = [l1_line1, l1_line2, l2_line1, l2_line2, s1_line1, s1_line2, s2_line1, s2_line2, i11_line1, i11_line2,
                 i12_line1, i12_line2, i13_line1, i13_line2, i14_line1, i14_line2, i15_line1, i15_line2, i21_line1,
@@ -16197,8 +16218,10 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
         self.beta = beta
+        
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
+        self.muS_system = self.muS
         self.dL = dL
         self.dS = dS
         self.sepL = sepL
@@ -16344,6 +16367,12 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
         self.xL0_E, self.xL0_N = self.xL0
 
+                     
+        com_vec = self.alephS * np.array((np.sin(self.alphaS_rad),
+                                       np.cos(self.alphaS_rad)))  # mas
+        self.xL0_com = self.xL0 
+                     
+        self.xS0_com = self.xS0 
         return
 
 

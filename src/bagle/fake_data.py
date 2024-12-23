@@ -2552,21 +2552,21 @@ def add_astrometric_noise(flux0, mag0, pos_err0, mag_obs, pos_obs):
 
 
 def fake_dex_data_noPar_BSPL_6(outdir='', outroot='bspl',
-                               t0_com=57000.00, u0_amp=.2,
+                               t0=57000.00, u0_amp=.2,
                                tE=542, log10_thetaE=np.log(2), piS=0.1,
                                piE_E=0.6, piE_N=.6, alpha=100,
                                muS_system_E=8, muS_system_N=3,
                                omega=90, big_omega=0, i=0,
                                e=0, p=450, tp=30, aleph=2,
-                               aleph_sec=2.5, x0_system_E=0, x0_system_N=0,
+                               aleph_sec=2.5, xS0_E=0, xS0_N=0,
                                raL=259.5, decL=-29.0, fratio_bin=1, mag_base=20,
                                b_sff=1,
                                target='BSPL', animate=False):
     start = time.time()
-    bspl = model.BSPL_PhotAstrom_noPar_CircOrbs_Param3(t0_com, u0_amp, tE, log10_thetaE, piS, piE_E, piE_N, alpha,
+    bspl = model.BSPL_PhotAstrom_noPar_CircOrbs_Param3(t0, u0_amp, tE, log10_thetaE, piS, piE_E, piE_N,
                                                        omega, big_omega,
                                                        i, p, tp, aleph, aleph_sec,
-                                                       muS_system_E, muS_system_N, x0_system_E, x0_system_N,
+                                                       muS_system_E, muS_system_N, xS0_E, xS0_N,
                                                        np.array([fratio_bin]), [mag_base],
                                                        [b_sff], raL, decL)
 
@@ -2697,7 +2697,7 @@ def fake_dex_data_noPar_BSPL_6(outdir='', outroot='bspl',
     data['decL'] = decL
 
     params = {}
-    params['t0_com'] = t0_com
+    params['t0'] = t0
     params['u0_amp'] = u0_amp
     params['tE'] = tE
     params['log10_thetaE'] = log10_thetaE
@@ -2717,8 +2717,8 @@ def fake_dex_data_noPar_BSPL_6(outdir='', outroot='bspl',
 
     params['aleph'] = aleph
     params['aleph_sec'] = aleph_sec
-    params['x0_system_E'] = x0_system_E
-    params['x0_system_N'] = x0_system_N
+    params['xS0_E'] = xS0_E
+    params['xS0_N'] = xS0_N
 
     params['fratio_bin'] = np.array([fratio_bin])
     params['b_sff'] = np.array([b_sff])
@@ -3821,7 +3821,7 @@ def fake_dex_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
 
 def fake_dex_data_noPar_PSBL_4(outdir='', outroot='psbl',
                                t0=5700, u0_amp=.2, tE=100, thetaE=4, piS=1,
-                               piE_E=0.1, piE_N=0.1, xS0_E=0, xS0_N=0, omega=0, big_omega=0, i=0, p=500, tp=30, aleph=5,
+                               piE_E=0.1, piE_N=0.1, xS0_E=0, xS0_N=0, omega=0, big_omega=0, i=0, p=500, tp=30, aleph=5, sep = 2,
                                aleph_sec=8, muS_E=0, muS_N=5,
                                q=.9, alpha=90,
                                b_sff=1, mag_src=20,
@@ -3829,10 +3829,10 @@ def fake_dex_data_noPar_PSBL_4(outdir='', outroot='psbl',
                                target='PSBL', animate=False):
     start = time.time()
     psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param4(t0, u0_amp, tE, thetaE, piS,
-                                                       piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, p, tp, aleph,
-                                                       aleph_sec, muS_E, muS_N,
-                                                       q, alpha,
-                                                       b_sff, mag_src, root_tol=root_tol)
+                     piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, tp, sep, muS_E, muS_N,
+                     q, 
+                     b_sff, mag_src,
+                     raL=raL, decL=decL, root_tol=1e-8)
 
     # Simulate
     # photometric observations every 1 day and
