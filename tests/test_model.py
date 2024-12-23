@@ -1860,6 +1860,110 @@ def plot_PSBL_compare(psbl1, label1, psbl2, label2, t_obs):
 
     return
 
+def plot_BSPL(bspl, t_obs, fignum_init=1):
+    """
+    Make some standard plots for PSBL.
+    """
+    ##########
+    # Photometry
+    ##########
+    phot = bspl.get_photometry(t_obs)
+
+    # Plot the photometry
+    plt.figure(fignum_init + 0)
+    plt.clf()
+    plt.plot(t_obs, phot, 'r-')
+    plt.ylabel('Photometry (mag)')
+    plt.xlabel('Time (MJD)')
+    plt.gca().invert_yaxis()
+
+    ##########
+    # Astrometry
+    ##########
+    if bspl.astrometryFlag:
+        # Find the points closest to t0
+        t0idx = np.argmin(np.abs(t_obs - bspl.t0))
+
+        xL = bspl.get_lens_astrometry(t_obs) * 1e3
+        xS_unlens_cent = bspl.get_astrometry_unlensed(t_obs) * 1e3
+        xS_unlens = bspl.get_resolved_astrometry_unlensed(t_obs) * 1e3
+        xS_lensed_res = bspl.get_resolved_astrometry(t_obs) * 1e3
+        xS_lensed = bspl.get_astrometry(t_obs) * 1e3
+
+        dxS = (xS_lensed - xS_unlens_cent)
+
+        # Plot the positions of everything
+        plt.figure(fignum_init + 1)
+        plt.clf()
+        plt.plot(xS_unlens[:, 0, 0], xS_unlens[:, 0, 1], 'b--',
+                 mfc='blue', mec='blue', color='blue')
+        plt.plot(xS_unlens[:, 1, 0], xS_unlens[:, 1, 1], 'b--',
+                 mfc='mediumblue', mec='mediumblue', color='mediumblue')
+        plt.plot(xS_lensed_res[:, 0, 0, 0], xS_lensed_res[:, 0, 0, 1], 'c-.',
+                 mfc='none', mec='steelblue', color='steelblue')
+        plt.plot(xS_lensed_res[:, 0, 1, 0], xS_lensed_res[:, 0, 1, 1], 'c-.',
+                 mfc='none', mec='skyblue', color='skyblue')
+        plt.plot(xS_lensed_res[:, 1, 0, 0], xS_lensed_res[:, 1, 0, 1], 'c-.',
+                 mfc='none', mec='cyan', color='cyan')
+        plt.plot(xS_lensed_res[:, 1, 1, 0], xS_lensed_res[:, 1, 1, 1], 'c-.',
+                 mfc='none', mec='darkturquoise', color='darkturquoise')
+        plt.plot(xS_lensed[:, 0], xS_lensed[:, 1], 'b-',
+                 color='blue')
+        plt.plot(xL[:, 0], xL[:, 1], 'g--',
+                 mfc='none', mec='green', color='green')
+
+        plt.plot(xS_unlens[t0idx, 0, 0], xS_unlens[t0idx, 0, 1], 'bx', mfc='blue',
+                 mec='blue',
+                 label='xS1, unlensed')
+        plt.plot(xS_unlens[t0idx, 1, 0], xS_unlens[t0idx, 1, 1], 'bx', mfc='mediumblue',
+                 mec='mediumblue',
+                 label='xS2, unlensed')
+        plt.plot(xS_lensed_res[t0idx, 0, 0, 0], xS_lensed_res[t0idx, 0, 0, 1], 'c^',
+                 mfc='none', mec='steelblue',
+                 label='xS1, lensed +')
+        plt.plot(xS_lensed_res[t0idx, 0, 1, 0], xS_lensed_res[t0idx, 0, 1, 1], 'cv',
+                 mfc='none', mec='skyblue',
+                 label='xS1, lensed -')
+        plt.plot(xS_lensed_res[t0idx, 1, 0, 0], xS_lensed_res[t0idx, 1, 0, 1], 'c<',
+                 mfc='none', mec='cyan',
+                 label='xS2, lensed +')
+        plt.plot(xS_lensed_res[t0idx, 1, 1, 0], xS_lensed_res[t0idx, 1, 1, 1], 'c>',
+                 mfc='none', mec='darkturquoise',
+                 label='xS2, lensed -')
+        plt.plot(xS_lensed[t0idx, 0], xS_lensed[t0idx, 1], 'bo',
+                 label='observed')
+        plt.plot(xL[t0idx, 0], xL[t0idx, 1], 'gs', mfc='green',
+                 mec='green',
+                 label='xL')
+
+        plt.legend(fontsize=10)
+        plt.gca().invert_xaxis()
+        plt.xlabel('R.A. (mas)')
+        plt.ylabel('Dec. (mas)')
+
+        # Check just the astrometric shift part.
+        plt.figure(fignum_init + 2)
+        plt.clf()
+        plt.plot(t_obs, dxS[:, 0], 'r--', label='R.A.')
+        plt.plot(t_obs, dxS[:, 1], 'b--', label='Dec.')
+        plt.legend(fontsize=10)
+        plt.ylabel('Astrometric Shift (mas)')
+        plt.xlabel('Time (MJD)')
+
+        plt.figure(fignum_init + 3)
+        plt.clf()
+        plt.plot(dxS[:, 0], dxS[:, 1], 'r-')
+        plt.axhline(0, linestyle='--')
+        plt.axvline(0, linestyle='--')
+        plt.gca().invert_xaxis()
+        plt.xlabel('Shift RA (mas)')
+        plt.ylabel('Shift Dec (mas)')
+        plt.axis('equal')
+
+        print('Einstein radius: ', bspl.thetaE_amp)
+        print('Einstein crossing time: ', bspl.tE)
+
+    return
 
 def test_PSBL_PhotAstrom_noPar_Param2(plot=False):
     """
@@ -1970,6 +2074,7 @@ def test_PSBL_PhotAstrom_Par_Param2(plot=False, verbose=False):
     piE_N = -0.01
     b_sff = np.array([1.0])
     mag_src = np.array([18])
+    dmag_Lp_Ls = np.array([0.0])
     thetaE = 3.0  # in mas
     xS0_E = 0.0
     xS0_N = 0.01
@@ -1986,7 +2091,7 @@ def test_PSBL_PhotAstrom_Par_Param2(plot=False, verbose=False):
                                                 xS0_E, xS0_N,
                                                 muS_E, muS_N,
                                                 q, sep, alpha,
-                                                b_sff, mag_src,
+                                                b_sff, mag_src, dmag_Lp_Ls,
                                                 raL=raL, decL=decL,
                                                 root_tol=1e-4)
 
@@ -1996,7 +2101,7 @@ def test_PSBL_PhotAstrom_Par_Param2(plot=False, verbose=False):
                                               xS0_E, xS0_N,
                                               muS_E, muS_N,
                                               q, sep, alpha,
-                                              b_sff, mag_src,
+                                              b_sff, mag_src, dmag_Lp_Ls,
                                               raL=raL, decL=decL,
                                               root_tol=1e-4)
 
@@ -3038,11 +3143,12 @@ def test_PSBL_get_photometry_nans():
     sep = 205.1250722516
     alpha = -496.2173351517
     mag_src = 10.6950225830
+    dmag_Lp_Ls = 20.0
     b_sff = 0.0005696291
 
     psbl = model.PSBL_PhotAstrom_Par_Param1(mL1, mL2, t0, xS0[0], xS0[1],
                                             beta, muL[0], muL[1], muS[0], muS[1], dL, dS,
-                                            sep, alpha, [b_sff], [mag_src],
+                                            sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
                                             raL=raL, decL=decL, root_tol=1e-10)
 
     # print(f't0 = {psbl.t0:.1f} MJD')
@@ -3354,7 +3460,7 @@ def test_FSPL_source_astrometry(plot=False):
                                             raL=raL, decL=decL)
 
     #####
-    # Compare the unlensed source astrometry.
+    # Compare the unlensed source astrometry. Should be identical.
     #####
     fspl_src_ast = fspl.get_astrometry_unlensed(time_arr)
     pspl_src_ast = pspl.get_astrometry_unlensed(time_arr)
@@ -3402,7 +3508,7 @@ def test_FSPL_source_astrometry(plot=False):
 
         for tt in range(len(time3)):
             plt.plot(fspl_xyS_unlensed_res[tt, :, 0], fspl_xyS_unlensed_res[tt, :, 1],
-                     'k.', color=colors[tt], label=f'{time3[tt]:.0f}')
+                     '.', color=colors[tt], label=f'{time3[tt]:.0f}')
 
         plt.axis('equal')
         plt.xlabel('X (")')
@@ -3826,42 +3932,6 @@ def test_FSPL_Phot_classes(plot=False):
 
     return
 
-
-def test_PSPL_PhotAstrom_LumLens_Par_Param1():
-    """
-    Make sure can instantiate
-    """
-    raL_in = 17.30 * 15.  # Bulge R.A.
-    decL_in = -29.0
-    mL_in = 1.0  # msun
-    t0_in = 57100.0
-    xS0_in = np.array([0.000, 0.088e-3])  # arcsec
-    beta_in = 2.0  # mas  same as p=0.4
-    muS_in = np.array([-5.0, 0.0])
-    muL_in = np.array([5.0, 0.0])
-    dL_in = 4000.0  # pc
-    dS_in = 8000.0  # pc
-    b_sff_in = 1.0
-    mag_src_in = 19.0
-
-    mod = model.PSPL_PhotAstrom_LumLens_Par_Param1(mL=mL_in,
-                                                   t0=t0_in,
-                                                   beta=beta_in,
-                                                   dL=dL_in,
-                                                   dL_dS=dL_in / dS_in,
-                                                   xS0_E=xS0_in[0],
-                                                   xS0_N=xS0_in[1],
-                                                   muL_E=muL_in[0],
-                                                   muL_N=muL_in[1],
-                                                   muS_E=muS_in[0],
-                                                   muS_N=muS_in[1],
-                                                   raL=raL_in,
-                                                   decL=decL_in,
-                                                   b_sff=[b_sff_in],
-                                                   mag_src=[mag_src_in])
-    return
-
-
 def test_PSPL_GP_MRO():
     """
     For the GP class, the PSPL_GP likelihood should be the one that's used.
@@ -3874,8 +3944,6 @@ def test_PSPL_GP_MRO():
             model.PSPL_Phot_noPar_GP_Param2,
             model.PSPL_PhotAstrom_Par_GP_Param1,
             model.PSPL_PhotAstrom_Par_GP_Param2,
-            model.PSPL_PhotAstrom_Par_LumLens_GP_Param1,
-            model.PSPL_PhotAstrom_Par_LumLens_GP_Param2,
             model.PSPL_PhotAstrom_noPar_GP_Param1,
             model.PSPL_PhotAstrom_noPar_GP_Param2]
 
@@ -3959,8 +4027,8 @@ def test_ABC_MRO():
     parallax_classes_good = ['BSPL_Parallax', 'BSPL_noParallax', 'FSPL_Limb_Parallax',
                              'FSPL_Limb_noParallax', 'FSPL_Parallax', 'FSPL_noParallax',
                              'PSBL_Parallax', 'PSBL_noParallax', 'PSPL_Parallax',
-                             'PSPL_Parallax_LumLens', 'PSPL_Parallax_geoproj',
-                             'PSPL_noParallax', 'PSPL_noParallax_LumLens']
+                             'PSPL_Parallax_geoproj',
+                             'PSPL_noParallax']
     for pcls in parallax_classes_good:
         assert pcls in parallax_classes
 
@@ -4198,6 +4266,74 @@ def test_BSBL_PhotAstrom_Par_Param1():
     return
 
 
+def test_BSPL_PhotAstrom_Par_Param1_lumlens():
+    """
+    Test BSPL with and without luminous lenses.
+    """
+    raL = 259.5
+    decL = -28.5
+    mL = 10.0
+    t0 = 57000
+    beta = 1.0  # mas
+    dL = 4000  # pc
+    dS = 8000  # pc
+    dL_dS = dL / dS
+    xS0_E = 0.001  # mas
+    xS0_N = 0.0
+    muL_E = 0.0  # mas/yr
+    muL_N = 0.0  # mas/yr
+    muS_E = -3.0  # mas/yr
+    muS_N = 0.0  # mas/yr
+    sepS = 0.5  # mas
+    alphaS = 0.0  # PA of source binary on the sky
+    mag_src_pri = np.array([18.0])
+    mag_src_sec = np.array([19.0])
+
+    # Setup two different blend fractions assuming the lens is
+    # either bright or dark.
+    b_sff1 = np.array([1.0])
+    b_sff2 = np.array([0.5])  # Lum Lens contributes 50% of flux of source.
+
+    bspl1 = model.BSPL_PhotAstrom_noPar_Param1(mL, t0, beta, dL, dL_dS,
+                                               xS0_E, xS0_N,
+                                               muL_E, muL_N, muS_E, muS_N,
+                                               sepS, alphaS,
+                                               mag_src_pri, mag_src_sec, b_sff1,
+                                               raL=raL, decL=decL)
+    bspl2 = model.BSPL_PhotAstrom_noPar_Param1(mL, t0, beta, dL, dL_dS,
+                                               xS0_E, xS0_N,
+                                               muL_E, muL_N, muS_E, muS_N,
+                                               sepS, alphaS,
+                                               mag_src_pri, mag_src_sec, b_sff2,
+                                               raL=raL, decL=decL)
+    t_obs = np.arange(56000.0, 58000.0, 1)
+
+    plot_BSPL(bspl1, t_obs)
+    plot_BSPL(bspl2, t_obs, fignum_init=5)
+
+    # Check that we have some extreme magnifications since this
+    # is caustic crossing.
+    phot1 = bspl1.get_photometry(t_obs)
+    ast1 = bspl1.get_astrometry(t_obs)
+
+    phot2 = bspl2.get_photometry(t_obs)
+    ast2 = bspl2.get_astrometry(t_obs)
+
+    # All photometry should be brighter than baseline.
+    assert phot1.min() < 18.1
+    assert phot2.min() < 18.1
+
+    # Test that the blended astrometry always falls to the
+    # south of the un-blended (in the direction of the luminous lens).
+    # Only test in the North-South direction
+    np.testing.assert_array_less(ast2[:, 1], ast1[:, 1])
+
+    # Blended photometry (2) should always be brighter than unblended.
+    np.testing.assert_array_less(phot2, phot1)
+
+    return
+
+
 def test_PSPL_Phot_Param2_vs_Param3():
     """
     Compare models with parameters vs. log parameters. 
@@ -4275,6 +4411,7 @@ def test_psbl_noparallax():
         dS = 1200
         mag_src = 20
         b_sff = 1
+        dmag_Lp_Ls = 0
         ra_L = 260
         arat = 1
         dec_L = -29
@@ -4282,7 +4419,7 @@ def test_psbl_noparallax():
         
         psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N, dL, dS,
-                 alpha, b_sff, mag_src,
+                 alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=ra_L, decL=dec_L, root_tol=1e-8)
         assert psbl.t0_com == t0_com
         assert psbl.beta_com == beta_com
@@ -4435,6 +4572,7 @@ def test_psbl_parallax():
         dL = 1000 #parsecs
         dS = 1200
         mag_src = 20
+        dmag_Lp_Ls = 0
         b_sff = 1
         ra_L = 260
         arat = 1
@@ -4444,7 +4582,7 @@ def test_psbl_parallax():
         psbl = model.PSBL_PhotAstrom_EllOrbs_Par_Param1(
         mLp, mLs, t0_com, xS0_E, xS0_N,
              beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N, dL, dS,
-             alpha, b_sff, mag_src,
+             alpha, b_sff, mag_src, dmag_Lp_Ls,
              raL=ra_L, decL=dec_L, root_tol=1e-8
     )
         assert psbl.t0_com == t0_com
@@ -4600,6 +4738,7 @@ def test_psbl_nopropermotion():
         dS = 1200
         mag_src = 20
         b_sff = 1
+        dmag_Lp_Ls = 0
         ra_L = 260
         arat = 1
         dec_L = -29
@@ -4608,7 +4747,7 @@ def test_psbl_nopropermotion():
         psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(
         mLp, mLs, t0_com, xS0_E, xS0_N,
              beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, sep, arat, muS_E, muS_N, dL, dS,
-             alpha, b_sff, mag_src,
+             alpha, b_sff, mag_src, dmag_Lp_Ls,
              raL=ra_L, decL=dec_L, root_tol=1e-8
     )
         assert psbl.t0_com == t0_com
@@ -6180,4 +6319,396 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
         print(tab_w149.colnames)
 
     return
+
+
+def test_pspl_luminous_lens(plot=False):
+    outdir = 'tests/test_pspl_lumlens/'
+
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
+
+    # Scenario from Belokurov and Evans 2002 (Figure 1)
+    raL = 17.5 * 15.0  # in degrees
+    decL = -30.0
+    mL = 10.0  # msun
+    t0 = 57650.0
+    xS0 = np.array([0.000, 0.000])
+    beta = 3.0  # mas
+    muS = np.array([0.0, 0.0])
+    muL = np.array([10.0, 0.0])
+    dL = 3000.0
+    dS = 6000.0
+    mag_src = 19.0
+
+    b_sff1 = 1.0 # no luminous lens
+    b_sff2 = 0.75 # luminous lens
+
+    pspl1 = model.PSPL_PhotAstrom_Par_Param1(mL,
+                                            t0,
+                                            beta,
+                                            dL, dL / dS,
+                                            xS0[0], xS0[1],
+                                            muL[0], muL[1],
+                                            muS[0], muS[1],
+                                            [b_sff1],
+                                            [mag_src],
+                                            raL=raL,
+                                            decL=decL)
+
+    pspl2 = model.PSPL_PhotAstrom_Par_Param1(mL,
+                                             t0,
+                                             beta,
+                                             dL, dL / dS,
+                                             xS0[0], xS0[1],
+                                             muL[0], muL[1],
+                                             muS[0], muS[1],
+                                             [b_sff2],
+                                             [mag_src],
+                                             raL=raL,
+                                             decL=decL)
+
+    if plot:
+        t = np.arange(t0 - 1000, t0 + 1000, 1)
+        dt = t - pspl1.t0
+
+        mag_out1 = pspl1.get_photometry(t)
+        mag_out2 = pspl2.get_photometry(t)
+
+        xS1 = pspl1.get_astrometry_unlensed(t)
+        xS2 = pspl2.get_astrometry_unlensed(t)
+        pos_out1 = pspl1.get_astrometry(t)
+        pos_out2 = pspl2.get_astrometry(t)
+        xL1 = pspl1.get_lens_astrometry(t)
+        xL2 = pspl2.get_lens_astrometry(t)
+
+        shift1 = pspl1.get_centroid_shift(t)
+        shift2 = pspl2.get_centroid_shift(t)
+
+        dxS = xS2 - xS1
+        dpos = pos_out2 - pos_out1
+        dxL = xL2 - xL1
+
+        plt.figure(1)
+        plt.clf()
+        plt.plot(t, mag_out1, 'k-', label='mod 1')
+        plt.plot(t, mag_out2, 'r-', label='mod 2')
+        plt.legend()
+        plt.gca().invert_yaxis()
+        plt.xlabel('Time (days)')
+        plt.ylabel('Magnitude')
+        plt.savefig(outdir + 'comp_mod_phot.png')
+
+        plt.figure(2)
+        plt.clf()
+        plt.plot(t, xS1[:, 0] * 1e3, 'k--', label='xS1 unlens')
+        plt.plot(t, xS2[:, 0] * 1e3, 'r--', label='xS2 unlens')
+        plt.plot(t, pos_out1[:, 0] * 1e3, 'k-', label='sky 1')
+        plt.plot(t, pos_out2[:, 0] * 1e3, 'r-', label='sky 2')
+        plt.plot(t, xL1[:, 0] * 1e3, '-', color='grey', label='xL1')
+        plt.plot(t, xL2[:, 0] * 1e3, '-', color='orange', label='xL2')
+        plt.legend()
+        plt.xlabel('Time (days)')
+        plt.ylabel(r'$\alpha^*$ (mas)')
+        plt.savefig(outdir + 'comp_mod_posX.png')
+
+        plt.figure(3)
+        plt.clf()
+        plt.plot(t, xS1[:, 1] * 1e3, 'k--', label='xS1 unlens')
+        plt.plot(t, xS2[:, 1] * 1e3, 'r--', label='xS2 unlens')
+        plt.plot(t, pos_out1[:, 1] * 1e3, 'k-', label='sky 1')
+        plt.plot(t, pos_out2[:, 1] * 1e3, 'r-', label='sky 2')
+        plt.plot(t, xL1[:, 1] * 1e3, '-', color='grey', label='xL1')
+        plt.plot(t, xL2[:, 1] * 1e3, '-', color='orange', label='xL2')
+        plt.legend()
+        plt.xlabel('Time (days)')
+        plt.ylabel(r'$\delta$ (mas)')
+        plt.savefig(outdir + 'comp_mod_posY.png')
+
+        plt.figure(4)
+        plt.clf()
+        plt.plot(xS1[:, 0] * 1e3, xS1[:, 1] * 1e3, 'k--',
+                 label='xS1 unlens')
+        plt.plot(xS2[:, 0] * 1e3, xS2[:, 1] * 1e3, 'r--',
+                 label='xS2 unlens')
+        plt.plot(pos_out1[:, 0] * 1e3, pos_out1[:, 1] * 1e3, 'k-', label='sky 1')
+        plt.plot(pos_out2[:, 0] * 1e3, pos_out2[:, 1] * 1e3, 'r-', label='sky 2')
+        plt.plot(xL1[:, 0] * 1e3, xL1[:, 1] * 1e3, '-', color='grey', label='xL1')
+        plt.plot(xL2[:, 0] * 1e3, xL2[:, 1] * 1e3, '-', color='orange', label='xL2')
+        plt.xlabel(r'$\alpha^*$ (mas)')
+        plt.ylabel(r'$\delta$ (mas)')
+        plt.legend()
+        plt.title('RA vs Dec')
+        plt.savefig(outdir + 'comp_mod_posXY.png')
+
+        plt.figure(5)
+        plt.clf()
+        plt.plot(t, dxS[:, 0] * 1e3, 'r-', label='X')
+        plt.plot(t, dxS[:, 1] * 1e3, 'b-', label='Y')
+        plt.title("xS2 - xS1")
+        plt.xlabel('Time (days)')
+        plt.ylabel(r'$\Delta X_{S}$ (mas)')
+        plt.legend()
+
+        plt.figure(6)
+        plt.clf()
+        plt.plot(t, dpos[:, 0] * 1e3, 'r-', label='X')
+        plt.plot(t, dpos[:, 1] * 1e3, 'b-', label='Y')
+        plt.title("out2 - out1")
+        plt.xlabel('Time (days)')
+        plt.ylabel(r'$\Delta x_{S}$ (mas)')
+        plt.legend()
+
+        plt.figure(7)
+        plt.clf()
+        plt.plot(t, shift1[:, 0], 'r-', label='unblended X')
+        plt.plot(t, shift1[:, 1], 'b-', label='unblended Y')
+        plt.plot(t, shift2[:, 0], 'r--', label='blended X')
+        plt.plot(t, shift2[:, 1], 'b--', label='blended Y')
+        plt.title("Centroid Shift vs Time")
+        plt.xlabel('Time (days)')
+        plt.ylabel(r'Centroid Shift (mas)')
+        plt.legend()
+
+    #
+    # Make numerical comparisons
+    #
+    t = np.arange(t0 - 1000, t0 + 1000, 10)
+    dt = t - pspl1.t0
+
+    # Blended one should always be brighter. (since lum lens)
+    # Remember that smaller numbers are brighter.
+    m_1 = pspl1.get_photometry(t)
+    m_2 = pspl2.get_photometry(t)
+    np.testing.assert_array_less(m_2, m_1)
+
+    # The lensed centroid position should always be different.
+    # The X axis should have blended < unblended in the beginning and switch at the end.
+    # The Y axis should always have blended more to the South (since lens is south).
+    xS_1 = pspl1.get_astrometry(t)
+    xS_2 = pspl2.get_astrometry(t)
+    np.testing.assert_array_less(xS_2[:, 1], xS_1[:, 1])
+    assert xS_2[0, 0] < xS_1[0, 0]
+    assert xS_2[-1, 0] > xS_1[-1, 0]
+
+    # Unlensed source position should be the same. (as if lens wasn't there).
+    xS_unlens_1 = pspl1.get_astrometry_unlensed(t)
+    xS_unlens_2 = pspl2.get_astrometry_unlensed(t)
+    np.testing.assert_almost_equal(xS_unlens_1, xS_unlens_2)
+
+    # Lens astrometry should be the same.
+    xL_1 = pspl1.get_lens_astrometry(t)
+    xL_2 = pspl2.get_lens_astrometry(t)
+    np.testing.assert_almost_equal(xL_1, xL_2)
+
+    # Check just the astrometric shift part. Blended shift should always be
+    # smaller than unblended (except at t=0).
+    shift_1 = pspl1.get_centroid_shift(t)  # mas
+    shift_2 = pspl2.get_centroid_shift(t)  # mas
+    shift_1 = np.hypot(shift_1[:, 0], shift_1[:, 1])
+    shift_2 = np.hypot(shift_2[:, 0], shift_2[:, 1])
+
+    np.testing.assert_array_less(shift_2[0:90], shift_1[0:90])
+    np.testing.assert_array_less(shift_2[-90:], shift_1[-90:])
+
+    return
+
+def test_psbl_luminous_lens(plot=False):
+    outdir = 'tests/test_pspl_lumlens/'
+
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
+
+    # Scenario from Belokurov and Evans 2002 (Figure 1)
+    raL = 17.5 * 15.0  # in degrees
+    decL = -30.0
+    mLp = 10.0  # msun
+    mLs = 1.0   # msun
+    t0 = 57650.0
+    xS0 = np.array([0.000, 0.000])
+    beta = 3.0  # mas
+    muS = np.array([0.0, 0.0])
+    muL = np.array([10.0, 0.0])
+    dL = 3000.0
+    dS = 6000.0
+    sep = 1.0 # mas
+    alpha = 90.0 # deg
+    dmag_Lp_Ls = 20 # mag_Lp - mag_Ls
+    mag_src = 19.0
+
+    b_sff1 = 1.0 # no luminous lens
+    b_sff2 = 0.75 # luminous lens
+
+    psbl1 = model.PSBL_PhotAstrom_Par_Param1(mLp, mLs,
+                                             t0,
+                                             xS0[0], xS0[1],
+                                             beta,
+                                             muL[0], muL[1],
+                                             muS[0], muS[1],
+                                             dL, dS,
+                                             sep, alpha,
+                                             [b_sff1],
+                                             [mag_src],
+                                             [dmag_Lp_Ls],
+                                             raL=raL,
+                                             decL=decL)
+
+    psbl2 = model.PSBL_PhotAstrom_Par_Param1(mLp, mLs,
+                                             t0,
+                                             xS0[0], xS0[1],
+                                             beta,
+                                             muL[0], muL[1],
+                                             muS[0], muS[1],
+                                             dL, dS,
+                                             sep, alpha,
+                                             [b_sff2],
+                                             [mag_src],
+                                             [dmag_Lp_Ls],
+                                             raL=raL,
+                                             decL=decL)
+
+    if plot:
+        t = np.arange(t0 - 1000, t0 + 1000, 1)
+        dt = t - psbl1.t0
+
+        mag_out1 = psbl1.get_photometry(t)
+        mag_out2 = psbl2.get_photometry(t)
+
+        xS1 = psbl1.get_astrometry_unlensed(t)
+        xS2 = psbl2.get_astrometry_unlensed(t)
+        pos_out1 = psbl1.get_astrometry(t)
+        pos_out2 = psbl2.get_astrometry(t)
+        xL1 = psbl1.get_lens_astrometry(t)
+        xL2 = psbl2.get_lens_astrometry(t)
+
+        shift1 = psbl1.get_centroid_shift(t)
+        shift2 = psbl2.get_centroid_shift(t)
+
+        dxS = xS2 - xS1
+        dpos = pos_out2 - pos_out1
+        dxL = xL2 - xL1
+
+        plt.figure(1)
+        plt.clf()
+        plt.plot(t, mag_out1, 'k-', label='mod 1')
+        plt.plot(t, mag_out2, 'r-', label='mod 2')
+        plt.legend()
+        plt.gca().invert_yaxis()
+        plt.xlabel('Time (days)')
+        plt.ylabel('Magnitude')
+        plt.savefig(outdir + 'comp_mod_phot.png')
+
+        plt.figure(2)
+        plt.clf()
+        plt.plot(t, xS1[:, 0] * 1e3, 'k--', label='xS1 unlens')
+        plt.plot(t, xS2[:, 0] * 1e3, 'r--', label='xS2 unlens')
+        plt.plot(t, pos_out1[:, 0] * 1e3, 'k-', label='sky 1')
+        plt.plot(t, pos_out2[:, 0] * 1e3, 'r-', label='sky 2')
+        plt.plot(t, xL1[:, 0] * 1e3, '-', color='grey', label='xL1')
+        plt.plot(t, xL2[:, 0] * 1e3, '-', color='orange', label='xL2')
+        plt.legend()
+        plt.xlabel('Time (days)')
+        plt.ylabel(r'$\alpha^*$ (mas)')
+        plt.savefig(outdir + 'comp_mod_posX.png')
+
+        plt.figure(3)
+        plt.clf()
+        plt.plot(t, xS1[:, 1] * 1e3, 'k--', label='xS1 unlens')
+        plt.plot(t, xS2[:, 1] * 1e3, 'r--', label='xS2 unlens')
+        plt.plot(t, pos_out1[:, 1] * 1e3, 'k-', label='sky 1')
+        plt.plot(t, pos_out2[:, 1] * 1e3, 'r-', label='sky 2')
+        plt.plot(t, xL1[:, 1] * 1e3, '-', color='grey', label='xL1')
+        plt.plot(t, xL2[:, 1] * 1e3, '-', color='orange', label='xL2')
+        plt.legend()
+        plt.xlabel('Time (days)')
+        plt.ylabel(r'$\delta$ (mas)')
+        plt.savefig(outdir + 'comp_mod_posY.png')
+
+        plt.figure(4)
+        plt.clf()
+        plt.plot(xS1[:, 0] * 1e3, xS1[:, 1] * 1e3, 'k--',
+                 label='xS1 unlens')
+        plt.plot(xS2[:, 0] * 1e3, xS2[:, 1] * 1e3, 'r--',
+                 label='xS2 unlens')
+        plt.plot(pos_out1[:, 0] * 1e3, pos_out1[:, 1] * 1e3, 'k-', label='sky 1')
+        plt.plot(pos_out2[:, 0] * 1e3, pos_out2[:, 1] * 1e3, 'r-', label='sky 2')
+        plt.plot(xL1[:, 0] * 1e3, xL1[:, 1] * 1e3, '-', color='grey', label='xL1')
+        plt.plot(xL2[:, 0] * 1e3, xL2[:, 1] * 1e3, '-', color='orange', label='xL2')
+        plt.xlabel(r'$\alpha^*$ (mas)')
+        plt.ylabel(r'$\delta$ (mas)')
+        plt.legend()
+        plt.title('RA vs Dec')
+        plt.savefig(outdir + 'comp_mod_posXY.png')
+
+        plt.figure(5)
+        plt.clf()
+        plt.plot(t, dxS[:, 0] * 1e3, 'r-', label='X')
+        plt.plot(t, dxS[:, 1] * 1e3, 'b-', label='Y')
+        plt.title("xS2 - xS1")
+        plt.xlabel('Time (days)')
+        plt.ylabel(r'$\Delta X_{S}$ (mas)')
+        plt.legend()
+
+        plt.figure(6)
+        plt.clf()
+        plt.plot(t, dpos[:, 0] * 1e3, 'r-', label='X')
+        plt.plot(t, dpos[:, 1] * 1e3, 'b-', label='Y')
+        plt.title("out2 - out1")
+        plt.xlabel('Time (days)')
+        plt.ylabel(r'$\Delta x_{S}$ (mas)')
+        plt.legend()
+
+        plt.figure(7)
+        plt.clf()
+        plt.plot(t, shift1[:, 0], 'r-', label='unblended X')
+        plt.plot(t, shift1[:, 1], 'b-', label='unblended Y')
+        plt.plot(t, shift2[:, 0], 'r--', label='blended X')
+        plt.plot(t, shift2[:, 1], 'b--', label='blended Y')
+        plt.title("Centroid Shift vs Time")
+        plt.xlabel('Time (days)')
+        plt.ylabel(r'Centroid Shift (mas)')
+        plt.legend()
+
+    #
+    # Make numerical comparisons
+    #
+    t = np.arange(t0 - 1000, t0 + 1000, 10)
+    dt = t - psbl1.t0
+
+    # Blended one should always be brighter. (since lum lens)
+    # Remember that smaller numbers are brighter.
+    m_1 = psbl1.get_photometry(t)
+    m_2 = psbl2.get_photometry(t)
+    np.testing.assert_array_less(m_2, m_1)
+
+    # The lensed centroid position should always be different.
+    # The X axis should have blended < unblended in the beginning and switch at the end.
+    # The Y axis should always have blended more to the South (since lens is south).
+    xS_1 = psbl1.get_astrometry(t)
+    xS_2 = psbl2.get_astrometry(t)
+    np.testing.assert_array_less(xS_2[:, 1], xS_1[:, 1])
+    assert xS_2[0, 0] < xS_1[0, 0]
+    assert xS_2[-1, 0] > xS_1[-1, 0]
+
+    # Unlensed source position should be the same. (as if lens wasn't there).
+    xS_unlens_1 = psbl1.get_astrometry_unlensed(t)
+    xS_unlens_2 = psbl2.get_astrometry_unlensed(t)
+    np.testing.assert_almost_equal(xS_unlens_1, xS_unlens_2)
+
+    # Lens astrometry should be the same.
+    xL_1 = psbl1.get_lens_astrometry(t)
+    xL_2 = psbl2.get_lens_astrometry(t)
+    np.testing.assert_almost_equal(xL_1, xL_2)
+
+    # Check just the astrometric shift part. Blended shift should always be
+    # smaller than unblended (except at t=0).
+    shift_1 = psbl1.get_centroid_shift(t)  # mas
+    shift_2 = psbl2.get_centroid_shift(t)  # mas
+    shift_1 = np.hypot(shift_1[:, 0], shift_1[:, 1])
+    shift_2 = np.hypot(shift_2[:, 0], shift_2[:, 1])
+
+    np.testing.assert_array_less(shift_2[0:90], shift_1[0:90])
+    np.testing.assert_array_less(shift_2[-90:], shift_1[-90:])
+
+    return
+
 

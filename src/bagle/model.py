@@ -5650,7 +5650,7 @@ class PSBL(PSPL):
 
     def get_all_arrays(self, t_obs, filt_idx=0, check_sols=True, rescale=True):
         '''
-        Obtain the image and amplitude arrays for each t_obs.
+        Obtain the lensed image and amplitude arrays for each t_obs.
 
         Parameters
         ----------
@@ -5660,7 +5660,7 @@ class PSBL(PSPL):
         Returns
         -------
         images : array_like
-            Array/tuple of complex positions of each images at each t_obs.
+            Array/tuple of complex positions of each lensed image at each t_obs.
         amp_arr : array_like
             Array/tuple of amplification of each images at each t_obs.
         '''
@@ -6979,7 +6979,8 @@ class PSBL_PhotAstromParam1(PSPL_Param):
     dmag_Lp_Ls : numpy array or list
         Magnitude difference of lens primary - lens secondary. If the primary lens
         is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
-        If the secondary lens 2 is dark, then it should be set to -20.
+        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
+        then dmag_Lp_Ls=0 and b_sff=1.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
     root_tol : float
@@ -7144,8 +7145,9 @@ class PSBL_PhotAstromParam2(PSPL_Param):
         Source magnitude, unlensed. One in each filter.
     dmag_Lp_Ls : numpy array or list
         Magnitude difference of lens primary - lens secondary. If the primary lens
-        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
-        If the secondary lens 2 is dark, then it should be set to -20.
+        is dark, then dmag_Lp_Ls should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
+        then dmag_Lp_Ls=0 and b_sff=1.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
     root_tol : float
@@ -7772,7 +7774,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_src,
+                 b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_com = t0_com
         self.u0_amp_com = u0_amp_com
@@ -9806,6 +9808,7 @@ class BSPL(PSPL):
 
         return A
 
+
     def get_photometry(self, t, filt_idx=0, print_warning=True):
         """
         Get the predicted photomety at the specified times for the specified
@@ -10019,11 +10022,20 @@ class BSPL_Phot(BSPL, PSPL_Phot):
         u1_lensed /= np.sum(A_lensed4[:, 0, :, np.newaxis], axis=1)
         u2_lensed /= np.sum(A_lensed4[:, 1, :, np.newaxis], axis=1)
 
-        # Calculate un-magnified fluxes. Note, we ignore blended flux entirely.
-        f1 = mag2flux(self.mag_src_pri[filt_idx])
-        f2 = mag2flux(self.mag_src_sec[filt_idx])
+        # Summed ampliciations
+        A1 = np.sum(A_lensed4[:, 0, :, np.newaxis], axis=1)
+        A2 = np.sum(A_lensed4[:, 1, :, np.newaxis], axis=1)
 
-        u_lensed = (u1_lensed * f1 + u2_lensed * f2) / (f1 + f2)
+        # Calculate un-magnified fluxes. Note, we ignore blended flux entirely.
+        fS1 = mag2flux(self.mag_src_pri[filt_idx])
+        fS2 = mag2flux(self.mag_src_sec[filt_idx])
+
+        # Assume all blended light comes from the lens.
+        fL = (fS1 + fS2) * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+
+        # Calculate the flux-weighted centroid of all the source images and lens.
+        # Remember lens is at origin (pos=0) in this coordinate system.
+        u_lensed = (u1_lensed * fS1 * A1 + u2_lensed * fS2 * A2) / (fS1 * A1 + fS2 * A2 + fL)
 
         return u_lensed
 
@@ -10111,7 +10123,8 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         return xS_unlensed
 
     def get_astrometry_unlensed(self, t, filt_idx=0):
-        """Get the astrometry of the sources if the lens didn't exist.
+        """Get the flux-weighted centroid for the
+        astrometry of the sources if the lens didn't exist.
 
         Returns
         -------
@@ -10207,35 +10220,38 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         xS_lensed
             Returns flux-weighted average of lensed source positions.
         """
-        xS_unlens_both = self.get_resolved_astrometry_unlensed(t, filt_idx=filt_idx)
-        xS1_unlens = xS_unlens_both[:, 0, :]  # shape = [len(t), 2]
-        xS2_unlens = xS_unlens_both[:, 1, :]
+        # Equation of motion for just the foreground lens.
+        # Shape is [len(t), [E, N]]
+        xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
-        # Get u for the primary and secondary at all times.
-        u_vec = self.get_u(t, filt_idx=filt_idx)
-        u_vec1 = u_vec[:, 0, :]
-        u_vec2 = u_vec[:, 1, :]
+        # Positions and amplifications for each of the lensed sources.
+        # For all 4 images (2 per source)
+        # xS Shape is [len(t), N_sources, [+/-], [E, N]]
+        # A Shape is [len(t), N_sources, [+/-]]
+        xS_lensed4 = self.get_resolved_astrometry(t, filt_idx=filt_idx)
+        A_lensed4 = self.get_resolved_amplification(t, filt_idx=filt_idx)
 
-        u1 = np.linalg.norm(u_vec1, axis=1)
-        u2 = np.linalg.norm(u_vec2, axis=1)
+        # Calculate un-magnified fluxes of the sources.
+        fS1 = mag2flux(self.mag_src_pri[filt_idx])
+        fS2 = mag2flux(self.mag_src_sec[filt_idx])
 
-        # Calculate the shifts for each source.
-        thetaS1 = u_vec1 * self.thetaE_amp
-        thetaS2 = u_vec2 * self.thetaE_amp
+        # Convenient fS array.
+        fS = np.array([fS1, fS2])
 
-        shift1 = thetaS1 / (u1[:, np.newaxis] ** 2 + 2.0)
-        shift2 = thetaS2 / (u2[:, np.newaxis] ** 2 + 2.0)
+        # Assume all blended light comes from the lens.
+        fL = (fS1 + fS2) * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
 
-        xS1_lensed = xS1_unlens + (shift1 * 1e-3)
-        xS2_lensed = xS2_unlens + (shift2 * 1e-3)
+        # Calculate the lensed flux for each image and each source at each time.
+        fS_lensed4 = A_lensed4 * fS[np.newaxis, :, np.newaxis] # Shape = [len(t), N_sources, [+/-]]
 
-        # Calculate un-magnified fluxes. Note, we ignore blended flux entirely.
-        f1 = mag2flux(self.mag_src_pri[filt_idx])
-        f2 = mag2flux(self.mag_src_sec[filt_idx])
+        # Sum all the source images.
+        fS_lensed = np.sum(fS_lensed4, axis=(1,2)) # shape = [len(t)]
+        xS_lensed = np.sum(xS_lensed4 * fS_lensed4[:, :, :, np.newaxis], axis=(1,2)) / fS_lensed[:, np.newaxis]
 
-        xS_lensed = (xS1_lensed * f1 + xS2_lensed * f2) / (f1 + f2)
+        # Calculate flux-weighted centroid of lens + lensed source images.
+        pos = ((xS_lensed * fS_lensed[:, np.newaxis]) + (xL * fL)) / (fS_lensed + fL)[:, np.newaxis]
 
-        return xS_lensed
+        return pos
 
     def get_astrometry_shift(self, t, filt_idx=0):
         """Parallax: Get unresolved centroid shift (due to lensing) for each of the binary source. 
@@ -10642,7 +10658,7 @@ class BSPL_PhotParam1(PSPL_Param):
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
                           'sep', 'phi']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', ]
+    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -17027,7 +17043,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     dL
     dS
     dL_dS (dL over dS)
-    radius
+    radiusS
     n
     b_sff[#]
     mag_src[#] -- add in
@@ -17072,7 +17088,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     #         flux_zp = 1.0
     #
     #         if amp_arr is None:
-    #             amp_arr, img_arr = self.get_centroids(t_obs, self.radius)
+    #             amp_arr, img_arr = self.get_centroids(t_obs, self.radiusS)
     #
     #         # Do we need this masked stuff?
     #         # Mask invalid values from the amplification array.
@@ -17140,7 +17156,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         Returns
         -------
-        u : array, float, shape = [len(t_obs), N_outline, 2]
+        u : array, float, shape = [len(t_obs), n_outline, [E, N]]
             Separation vector in East, North on the sky in units of \theta_E.
         """
         u_vec = self.get_u(t_obs, filt_idx=filt_idx)
@@ -17187,16 +17203,13 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         return xS_unlensed_outline
 
-    def get_resolved_astrometry_outline(self, t_obs, filt_idx=0):
+    def get_resolved_shift_outline(self, t_obs, filt_idx=0):
         """
         Get the astrometric microlensing shift of each
         point in the source outline for each of the multiple
-        lensed images.
-
-        Note this is actually the source position w.r.t.
-        the lens. In other words, it is the source - lens separation,
-        not just the astrometric microlensing shift.
-        Sorry it is poorly named.
+        lensed images. These are the positional offsets between the
+        soruce image outline and the lens position.
+        No impact from the lens flux is included.
 
         Input Parameters
         ----------------
@@ -17205,11 +17218,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         Return
         -------
-        pos_plus : array, float, shape = [len(t_obs), n_outline, 2]
-            Relative astrometric position of the plus image in East, North
-            w.r.t. the lens in units of milli-arcseconds.
-        pos_minus : array, float, shape = [len(t_obs), n_outline, 2]
-            Relative astrometric position of the minus image in East, North
+        xSL_lensed_resolved : array, float, shape = [len(t_obs), n_outline, [+, -], [E, N]]
+            Relative astrometric position of the plus and minus image in East, North
             w.r.t. the lens in units of milli-arcseconds.
         """
 
@@ -17220,28 +17230,79 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         u_amp = np.linalg.norm(u_vec, axis=2)
         u_hat = u_vec / u_amp[:, :, np.newaxis]
 
-        # Calcluate the source image position for the plus and minus
-        # position. These positions are measured with respect
-        # to the lens position.
-        # Shape = [len(t_obs), self.n_outline, 2]
+        # Lensed u amplitude:
+        # Shape = [len(t_obs), self.n_outline]
         u_obs_amp_plus = ((u_amp + np.sqrt(u_amp ** 2 + 4)) / 2.0)
         u_obs_amp_minus = ((u_amp - np.sqrt(u_amp ** 2 + 4)) / 2.0)
+
+        # Lensed u vector:
+        # Shape = [len(t_obs), self.n_outline, [E, N]]
         u_obs_vec_plus = u_obs_amp_plus[:, :, np.newaxis] * u_hat
         u_obs_vec_minus = u_obs_amp_minus[:, :, np.newaxis] * u_hat
 
-        # Get the lens position over time to convert to actual source image positions.
-        xL = self.get_lens_astrometry(t_obs, filt_idx=filt_idx)
+        # Shift vector.
+        # Shape = [len(t_obs), self.n_outline, [E, N]]
+        xSL_plus = u_obs_vec_plus * self.thetaE_amp  # in mas
+        xSL_minus = u_obs_vec_minus * self.thetaE_amp  # in mas
 
-        pos_plus  = xL[:, np.newaxis, :] + (u_obs_vec_plus  * self.thetaE_amp / 1e3)  # in arcsec
-        pos_minus = xL[:, np.newaxis, :] + (u_obs_vec_minus * self.thetaE_amp / 1e3)  # in arcsec
+        # Shape = [len(t), N_outline, [+, -], [E, N]]
+        xSL_lensed_res = np.zeros((len(t), self.n_outline, 2, 2), dtype=float)
 
-        # Shape = [len(t), n_outline, [+, -], [E, N]]
-        img_pos = np.zeros((len(t_obs), self.n_outline, 2, 2), dtype=float)
+        xSL_lensed_res[:, :, 0, :] = xSL_plus
+        xSL_lensed_res[:, :, 1, :] = xSL_minu
 
-        img_pos[:, :, 0, :] = pos_plus
-        img_pos[:, :, 1, :] = pos_minus
+        return xSL_lensed_res
 
-        return img_pos
+    def get_resolved_astrometry_outline(self, t_obs, filt_idx=0):
+        """Get the x, y astrometry for each of the two lensed source images
+        and all the associated outline points for each. The two lensed source images
+        are labeled plus and minus.
+
+        These are actual positions on the sky.
+
+        Returns
+        -------
+        xS_lensed_resolved_outline : numpy array
+            Vector position of the plus and minus images.
+            shape = [len(t_obs), self.n_outline, [+,-], [E,N]]
+            where the last axis contains East and North positions.
+        """
+        # Things we will need.
+        dt_in_years = (t_obs - self.t0) / days_per_year
+
+        # Lens position over time
+        xL = self.get_lens_astrometry(t_obs, filt_idx=filt_idx)  # arcsec
+
+        # Get the source-lens position in units of thetaE
+        # Shape = [len(t), N_outline, [E, N]]
+        u_vec = self.get_u_outline(t_obs, filt_idx=filt_idx)
+        # Shape = [len(t), N_outline]
+        u = np.linalg.norm(u_vec, axis=2)
+        # Shape = [len(t), N_outline, [E, N]]
+        u_hat = u_vec / u[:, :, np.newaxis]
+
+        # Calculate the shifts, separately for + and - images.
+        u2_plus4_sq = np.sqrt(u ** 2 + 4)
+        u_obs_amp_plus = ((u + u2_plus4_sq) / 2.0)
+        u_obs_amp_minu = ((u - u2_plus4_sq) / 2.0)
+        u_obs_vec_plus = u_obs_amp_plus[:, :, np.newaxis] * u_hat
+        u_obs_vec_minu = u_obs_amp_minu[:, :, np.newaxis] * u_hat
+
+        # Lensed Source Images - Lens Image
+        xSL_plus = u_obs_vec_plus * self.thetaE_amp  # in mas
+        xSL_minu = u_obs_vec_minu * self.thetaE_amp  # in mas
+
+        # Shape = [len(t), N_outline, [+, -], [E, N]]
+        xSL = np.zeros((len(t_obs), self.n_outline, 2, 2), dtype=float)
+
+        xSL[:, :, 0, :] = xSL_plus
+        xSL[:, :, 1, :] = xSL_minu
+
+        # xS = xL + xSL = xL + (xS - xL)
+        xS_res = xL[:, np.newaxis, np.newaxis, :] + (xSL * 1e-3)  # arcsec
+
+        # Shape = [len(t), N_outline, [+, -], [E, N]]
+        return xS_res
 
     def get_all_arrays(self, t_obs, filt_idx=0):
         """
@@ -17378,11 +17439,12 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         # print('Aplus.shape = ', Aplus.shape)
         # print('plus.shape = ', plus.shape)
 
-        # Finaly shape = [N_times, [+, -], [E, N]]
+        # Final shape = [N_times, [+, -], [E, N]]
         images = np.zeros((len(t_obs), 2, 2), dtype=float)
         images[:, 0, :] = img_pos_plus.T
         images[:, 1, :] = img_pos_minus.T
 
+        # Final shape = [N_times, [+, -]]
         amps = np.array((amp_plus, amp_minus)).T  # amplifications
 
         return images, amps
@@ -17536,8 +17598,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         try:
             # Adding flux of neighbors and lens
             # b_sff = fS / (fS + fN + fL)
-            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / \
-                          self.b_sff[filt_idx]
+            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
         except AttributeError:
             pass
 
@@ -17580,15 +17641,57 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         model_pos : array_like
             Array of vector positions of the centroid at each t_obs.
         '''
+        # Equation of motion for just the foreground lens.
+        # Shape is [len(t), [E, N]]
+        xL = self.get_lens_astrometry(t_obs, filt_idx=filt_idx)
+
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
+            # amp_arr shape = [N_times, [+, -]]
+            # image_arr shape = [N_times, [+, -], [E, N]]
 
-        # image_arr shape = [N_times, N_images, 2]
+        # Add in the flux of the lens objects as well.
+        fS = mag2flux(self.mag_src[filt_idx])
+        fL = fS * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
 
-        xS_lensed = np.sum(image_arr * amp_arr[:, :, np.newaxis], axis=1)
-        xS_lensed /= np.sum(amp_arr, axis=1)[:, np.newaxis]
+        # Calculate the total flux from all lensed source images and the lens itself.
+        ftot = fL + np.sum(fS * amp_arr, axis=1)
 
-        return xS_lensed
+        # Calculate the flux-weighted centroid. Components are:
+        #  - all lensed source images
+        #  - luminous lens
+        pos = np.sum(image_arr * amp_arr[:, :, np.newaxis] * fS, axis=1)
+        pos += fL * xL
+        pos /= ftot[:, np.newaxis]
+
+        return pos
+
+
+    def get_centroid_shift(self, t, filt_idx=0, image_arr=None, amp_arr=None):
+        """Parallax: Get the centroid shift (in mas) for a list of
+        observation times (in MJD).
+
+        Returns the flux-weighted centroid of all the sources lensed images.
+
+        Parameters
+        ----------
+        t:
+            Array of times in MJD.DDD
+
+        Returns
+        -------
+        centroid_shift : numpy array
+            [shape = len(t), 2]
+        """
+        # Note that xS is actually the observed centroid position
+        # including all light from the source and lens.
+        xS = self.get_astrometry(t, filt_idx=filt_idx, image_arr=image_arr, amp_arr=amp_arr)
+        xS_unlensed = self.get_astrometry_unlensed(t, filt_idx=filt_idx)
+
+        shift = xS - xS_unlensed
+
+        return shift * 1e3
+
 
     def animate(self, crossings, time_steps, frame_time, name, size, zoom,
                 astrometry, filt_idx=0):
@@ -17823,8 +17926,9 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         
     dL: float
         Distance from the observer to the lens (pc)
-    dS: float
-        Distance from the observer to the lens (pc)
+    dL_dS: float
+        Ratio of Distance from the obersver to the lens to
+        Distance from the observer to the source
     xS0_E: float
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
     xS0_N: float
@@ -17837,7 +17941,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         RA Source proper motion (mas/yr)
     muS_N: float
         Dec Source proper motion (mas/yr)
-    radius: float
+    radiusS: float
         Projected radius of the source star in arcsec on the sky plane.
     b_sff: float
         The ratio of the source flux to the total (source + neighbors + lens)
@@ -17859,19 +17963,24 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dS',
-                          'xS0_E', 'xS0_N', 'muL_N', 'muL_E',
-                          'muS_N', 'muS_E', 'radius']
+    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
+                          'xS0_E', 'xS0_N',
+                          'muL_E', 'muL_N',
+                          'muS_E', 'muS_N', 'radiusS']
     phot_param_names = ['b_sff', 'mag_src']
+    additional_param_names = ['dS', 'tE', 'u0_amp',
+                              'thetaE_E', 'thetaE_N',
+                              'piE_E', 'piE_N',
+                              'muRel_E', 'muRel_N']
 
     paramAstromFlag = True
     paramPhotFlag = True
 
-    def __init__(self, mL, t0, beta, dL, dS,
+    def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
                  muL_E, muL_N,
                  muS_E, muS_N,
-                 radius,
+                 radiusS,
                  b_sff, mag_src,
                  n_outline=10,
                  raL=None, decL=None, obsLocation='earth'):
@@ -17880,13 +17989,13 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         self.mL = mL
         self.beta = beta
         self.dL = dL
-        self.dS = dS
+        self.dL_dS = dL_dS
+        self.dS = self.dL / self.dL_dS
         self.xS0 = np.array([xS0_E, xS0_N])
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
         self.n_outline = n_outline
-        #self.radiusS = (radius * meter_per_Rsun / meter_per_AU) / dS
-        self.radiusS = radius
+        self.radiusS = (radiusS * meter_per_Rsun / meter_per_AU) / self.dS
         self.mag_src = mag_src
         self.b_sff = b_sff
         self.raL = raL
@@ -18006,7 +18115,7 @@ class FSPL_PhotAstrom_tmp(FSPL, PSPL_PhotAstrom):
     dL
     dS
     dL_dS (dL over dS)
-    radius
+    radiusS
     n
     b_sff[#]
     mag_src[#] -- add in
@@ -18265,7 +18374,7 @@ class FSPL_Limb_Parallax(FSPL_Parallax):
 
 # FIXME: Use super here
 class FSPL_Limb_PhotAstromParam1(PSPL_Param):
-    def __init__(self, lens_mass, t0, xS0, beta, muL, muS, dL, dS, n, radius,
+    def __init__(self, lens_mass, t0, xS0, beta, muL, muS, dL, dS, n, radiusS,
                  utilde, nr, mag_src, raL=None, decL=None, obsLocation='earth'):
         """
         DO NOT USE -- in progress
@@ -18287,7 +18396,7 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
         self.dL = dL  # Distance from observer to lens (pc)
         self.dS = dS  # Distance from observer to source (pc)
         self.n = n  # No. of boundary points approximating the source
-        self.radiusS = (radius * 6.96e8 / 1.496e11) / dS  # Radius of star on the sky (as)
+        self.radiusS = (radiusS * 6.96e8 / 1.496e11) / dS  # Radius of star on the sky (as)
         self.source = self.get_source(self.radiusS, n, xS0)  # Positions of the centroid + points on the boundary
         self.nr = nr  # sets the precision on the integrals
         self.t0 = t0
