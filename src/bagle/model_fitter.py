@@ -215,6 +215,7 @@ class PSPL_Solver(Solver):
         'delta_muS_sec_N':('make_gen', -1, 1),
         #dex new priors
         't0_com': ('make_t0_gen', None, None),
+        'u0_amp_com': ('make_gen', -1, 1),
         'thetaE_amp': ('make_lognorm_gen', 0, 1),
         'x0_system_E': ('make_gen', -10, 10),
         'x0_system_N': ('make_gen', -10, 10),
