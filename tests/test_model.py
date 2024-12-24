@@ -392,7 +392,7 @@ def run_test_pspl_parallax(raL, decL, mL, t0, xS0, beta, muS, muL, dL, dS,
     A_p = pspl_p.get_amplification(t)
 
     xS_n = pspl_n.get_astrometry(t)
-    xS_p_unlens = pspl_p.get_astrometry_unlensed(t)
+    xS_p_unlens = pspl_p.get_source_astrometry_unlensed(t)
     xS_p_lensed = pspl_p.get_astrometry(t)
     xL_p = pspl_p.get_lens_astrometry(t)
 
@@ -3410,7 +3410,7 @@ def test_GP_classes(plot=False):
     return
 
 
-def test_FSPL_source_astrometry(plot=False):
+def test_FSPL_PhotAstrom_source_astrometry(plot=False):
     """
     Make sure we can instantiate.
     """
@@ -3425,7 +3425,7 @@ def test_FSPL_source_astrometry(plot=False):
     muS_N = 0.0
     muL_E = 0.0
     muL_N = 0.0
-    radius = 1.0 # mas
+    radius = 1e-3 # arcsec
     b_sff = 0.9
     mag_src = 19.0
     raL = 17.30 * 15.
@@ -3620,9 +3620,10 @@ def test_FSPL_source_astrometry(plot=False):
     return
 
 
-def test_FSPL_PhotAstrom_classes(plot=False):
+def test_FSPL_PhotAstrom_lens_astrometry(plot=False):
     """
-    Make sure we can instantiate.
+    Test FSPL lens astrometry with a really really small source.
+    Should converge to the same value.
     """
     mL = 10
     t0 = 57000
@@ -3635,7 +3636,7 @@ def test_FSPL_PhotAstrom_classes(plot=False):
     muS_N = 0.0
     muL_E = 0.0
     muL_N = 0.0
-    radius = 1e-3
+    radius = 1e-6 # arcsec
     b_sff = 0.9
     mag_src = 19.0
     raL = 17.30 * 15.
@@ -3683,9 +3684,10 @@ def test_FSPL_PhotAstrom_classes(plot=False):
         ax[1].set_ylabel('X (")')
         fig.show()
         
-def test_FSPL_PhotAstrom_classes2(plot=False):
+def test_FSPL_PhotAstrom_methods(plot=False):
     """
-    Make sure we can instantiate.
+    Test FSPL astrometry with a really really small source.
+    Should converge to the same value.
     """
     mL = 10
     t0 = 57000
@@ -3698,7 +3700,7 @@ def test_FSPL_PhotAstrom_classes2(plot=False):
     muS_N = 0.0
     muL_E = 0.0
     muL_N = 0.0
-    radius = 1e-3
+    radius = 1e-6 # arcsec
     b_sff = 0.9
     mag_src = 19.0
     raL = 17.30 * 15.
@@ -3729,54 +3731,57 @@ def test_FSPL_PhotAstrom_classes2(plot=False):
 
         # Generate photometry
         phot_arr = tmp_mod.get_photometry(time_arr)
-
-        # When working, fetch 10 points, evenly distributed and
-        # save as the "right answer" in the individual tests below.
-        # print(repr(phot_arr[::100]))  # GET GOOD
+        amp_arr = tmp_mod.get_amplification(time_arr)
 
         # Check against good data
-        # np.testing.assert_allclose(phot_arr[::100], phot_arr_good, rtol=tol)
+        np.testing.assert_allclose(phot_arr[::100], phot_arr_good, rtol=tol)
 
         tdelta = time.time() - tstart
 
         print(f'Eval time for {mod:s}: {tdelta:.4f} sec, n = {n_in:d}, r = {r_in:.3f}')
 
+        # When working, fetch 10 points, evenly distributed and
+        # save as the "right answer" in the individual tests below.
+        # print(repr(phot_arr[::100]))  # GET GOOD
+        # print(repr(amp_arr[::100]))  # GET GOOD
+        # print()
+
         return phot_arr
-
-    ##########
-    # FSPL n=10, r=0.001
-    ##########
-    fspl_arr_n10_good = np.array([18.95006166, 18.94949701, 18.9472021, 18.93811389, 18.85723805,
-                                  18.3424005, 18.85941388, 18.93826845, 18.9472443, 18.94950649])
-    fspl_arr_n10 = test_fspl_once(radius, 10, fspl_arr_n10_good, mod='FSPL')
-
-    ##########
-    # FSPL n=50, r=0.001
-    ##########
-    fspl_arr_n50_good = np.array([18.88768975, 18.88712136, 18.88481127, 18.87566324, 18.79427668,
-                                  18.27694883, 18.79646575, 18.87581881, 18.88485374, 18.8871309])
-    fspl_arr_n50 = test_fspl_once(radius, 50, fspl_arr_n50_good, mod='FSPL')
-
-    ##########
-    # FSPL n=100, r=0.001
-    ##########
-    fspl_arr_n100_good = np.array([18.88575986, 18.88519136, 18.88288081, 18.87373098, 18.79232908,
-                                   18.27492657, 18.79451856, 18.87388658, 18.88292329, 18.8852009])
-    fspl_arr_n100 = test_fspl_once(radius, 100, fspl_arr_n100_good, mod='FSPL')
-
-    ##########
-    # FSPL n=10, r=1
-    ##########
-    fspl_arr_n10_r1_good = np.array([18.950062, 18.949497, 18.947202, 18.938114, 18.857238, 18.3424,
-                                     18.859414, 18.938268, 18.947244, 18.949506])
-    fspl_arr_n10_r1 = test_fspl_once(1, 10, fspl_arr_n10_r1_good, mod='FSPL')
 
     ##########
     # PSPL for run-time comparisons.
     ##########
-    pspl_arr_good = np.array([18.8851265, 18.88452664, 18.88231504, 18.87282729, 18.79254205,
-                              18.28992589, 18.79486318, 18.87299118, 18.88235892, 18.88453582])
+    pspl_arr_good = np.array([18.87539976, 18.86616655, 18.83702185, 18.76783706, 18.54908672,
+                              18.27960245, 18.55224616, 18.76873734, 18.83743328, 18.86630883])
     pspl_arr = test_fspl_once(-1, -1, pspl_arr_good, mod='PSPL')
+
+    ##########
+    # FSPL n=10, r=0.001 thetaE
+    ##########
+    fspl_arr_n10_good = np.array([18.92669033, 18.91750603, 18.88851301, 18.81967248, 18.60187731,
+                                  18.33333436, 18.60502467, 18.82056849, 18.88892235, 18.91764756])
+    fspl_arr_n10 = test_fspl_once(radius, 10, fspl_arr_n10_good, mod='FSPL')
+
+    ##########
+    # FSPL n=50, r=0.001 thetaE
+    ##########
+    fspl_arr_n50_good = np.array([18.87797024, 18.86873943, 18.83960216, 18.77043423, 18.55173065,
+                                  18.28229242, 18.55488948, 18.7713343, 18.84001349, 18.86888168])
+    fspl_arr_n50 = test_fspl_once(radius, 50, fspl_arr_n50_good, mod='FSPL')
+
+    ##########
+    # FSPL n=100, r=0.001 thetaE
+    ##########
+    fspl_arr_n100_good = np.array([18.87604328, 18.86681067, 18.83766782, 18.76848725, 18.5497486,
+                                   18.28027583, 18.55290789, 18.76938749, 18.83807923, 18.86695294])
+    fspl_arr_n100 = test_fspl_once(radius, 100, fspl_arr_n100_good, mod='FSPL')
+
+    ##########
+    # FSPL n=10, r=0.1 thetaE
+    ##########
+    fspl_arr_n10_r1_good = np.array([18.9348646, 18.9348647, 18.93486484, 18.93486497, 18.93486511,
+                                     18.93486526, 18.93486542, 18.93486559, 18.93486576, 18.93486596])
+    fspl_arr_n10_r1 = test_fspl_once(0.1, 10, fspl_arr_n10_r1_good, mod='FSPL')
 
     if plot:
         plt.figure(1)
@@ -3805,12 +3810,9 @@ def test_FSPL_PhotAstrom_classes2(plot=False):
         plt.plot(time_arr, fspl_arr_n10_r1 - fspl_arr_n10, '.')
         plt.title('Different radii')
 
-
-
     return
 
-@pytest.mark.skip(reason="broken")
-def test_FSPL_Phot_classes(plot=False):
+def test_FSPL_Phot_methods(plot=False):
     """
     Make sure can instantiate.
     """
@@ -3820,9 +3822,9 @@ def test_FSPL_Phot_classes(plot=False):
     u0_amp = -0.2
     tE = 135.0
     piE_E = -0.1
-    piE_N = 0.1
-    radius = 1e-3
-    b_sff = [1.1]
+    piE_N = 0.0
+    radius = 1e-3  # in units of thetaE
+    b_sff = [0.9]
     mag_base = [19.0]
     
     # Array of times we will sample on.
@@ -3841,6 +3843,7 @@ def test_FSPL_Phot_classes(plot=False):
                                                  b_sff,
                                                  mag_base,
                                                  radius,
+                                                 n_in,
                                                  raL=raL, decL=decL)
         else:
             tmp_mod = model.PSPL_Phot_Par_Param2(t0,
@@ -3854,10 +3857,7 @@ def test_FSPL_Phot_classes(plot=False):
 
         # Generate photometry
         phot_arr = tmp_mod.get_photometry(time_arr)
-
-        # When working, fetch 10 points, evenly distributed and
-        # save as the "right answer" in the individual tests below.
-        # print(repr(phot_arr[::100]))  # GET GOOD
+        # amp_arr = tmp_mod.get_amplification(time_arr)
 
         # Check against good data
         np.testing.assert_allclose(phot_arr[::100], phot_arr_good, rtol=tol)
@@ -3866,42 +3866,48 @@ def test_FSPL_Phot_classes(plot=False):
 
         print(f'Eval time for {mod:s}: {tdelta:.4f} sec, n = {n_in:d}, r = {r_in:.3f}')
 
+        # When working, fetch 10 points, evenly distributed and
+        # save as the "right answer" in the individual tests below.
+        # print('phot = ', repr(phot_arr[::100]))  # GET GOOD
+        # print('amp  = ', repr(amp_arr[::100]))  # GET GOOD
+        # print()
+
         return phot_arr
+
+    ##########
+    # PSPL for run-time comparisons.
+    ##########
+    pspl_arr_good = np.array([18.99936395, 18.99866471, 18.99557563, 18.98404853, 18.86796675,
+                              17.3799675, 18.87199099, 18.9841648, 18.99564001, 18.99867367])
+    pspl_arr = test_fspl_phot_once(-1, -1, pspl_arr_good, mod='PSPL')
 
     ##########
     # FSPL n=10, r=0.001
     ##########
-    fspl_arr_n10_good = np.array([18.95006166, 18.94949701, 18.9472021, 18.93811389, 18.85723805,
-                                  18.3424005, 18.85941388, 18.93826845, 18.9472443, 18.94950649])
+    fspl_arr_n10_good = np.array([19.05060339, 19.0499079, 19.04683536, 19.03536958, 18.9198703,
+                                  17.43573262, 18.92387548, 19.03548521, 19.04689939, 19.04991681])
     fspl_arr_n10 = test_fspl_phot_once(radius, 10, fspl_arr_n10_good, mod='FSPL')
 
     ##########
     # FSPL n=50, r=0.001
     ##########
-    fspl_arr_n50_good = np.array([18.88768975, 18.88712136, 18.88481127, 18.87566324, 18.79427668,
-                                  18.27694883, 18.79646575, 18.87581881, 18.88485374, 18.8871309])
+    fspl_arr_n50_good = np.array([19.00193193, 19.00123287, 18.9981446, 18.98662051, 18.87056724,
+                                  17.38275375, 18.87459054, 18.98673675, 18.99820897, 19.00124183])
     fspl_arr_n50 = test_fspl_phot_once(radius, 50, fspl_arr_n50_good, mod='FSPL')
 
     ##########
     # FSPL n=100, r=0.001
     ##########
-    fspl_arr_n100_good = np.array([18.88575986, 18.88519136, 18.88288081, 18.87373098, 18.79232908,
-                                   18.27492657, 18.79451856, 18.87388658, 18.88292329, 18.8852009])
+    fspl_arr_n100_good = np.array([19.00000684, 18.99930765, 18.99621877, 18.98469243, 18.86861775,
+                                   17.38066274, 18.87264176, 18.98480869, 18.99628315, 18.99931661])
     fspl_arr_n100 = test_fspl_phot_once(radius, 100, fspl_arr_n100_good, mod='FSPL')
 
     ##########
     # FSPL n=10, r=1
     ##########
-    fspl_arr_n10_r1_good = np.array([18.950062, 18.949497, 18.947202, 18.938114, 18.857238, 18.3424,
-                                     18.859414, 18.938268, 18.947244, 18.949506])
+    fspl_arr_n10_r1_good = np.array([19.05060339, 19.0499079, 19.04683536, 19.03536958, 18.9198703,
+                                     17.43573262, 18.92387548, 19.03548521, 19.04689939, 19.04991681])
     fspl_arr_n10_r1 = test_fspl_phot_once(1, 10, fspl_arr_n10_r1_good, mod='FSPL')
-
-    ##########
-    # PSPL for run-time comparisons.
-    ##########
-    pspl_arr_good = np.array([18.8851265, 18.88452664, 18.88231504, 18.87282729, 18.79254205,
-                              18.28992589, 18.79486318, 18.87299118, 18.88235892, 18.88453582])
-    pspl_arr = test_fspl_phot_once(-1, -1, pspl_arr_good, mod='PSPL')
 
     if plot:
         plt.figure(1)
@@ -6333,7 +6339,7 @@ def test_pspl_luminous_lens(plot=False):
     mL = 10.0  # msun
     t0 = 57650.0
     xS0 = np.array([0.000, 0.000])
-    beta = 3.0  # mas
+    beta = 1.0  # mas
     muS = np.array([0.0, 0.0])
     muL = np.array([10.0, 0.0])
     dL = 3000.0
@@ -6343,7 +6349,7 @@ def test_pspl_luminous_lens(plot=False):
     b_sff1 = 1.0 # no luminous lens
     b_sff2 = 0.75 # luminous lens
 
-    pspl1 = model.PSPL_PhotAstrom_Par_Param1(mL,
+    pspl1 = model.PSPL_PhotAstrom_noPar_Param1(mL,
                                             t0,
                                             beta,
                                             dL, dL / dS,
@@ -6355,7 +6361,7 @@ def test_pspl_luminous_lens(plot=False):
                                             raL=raL,
                                             decL=decL)
 
-    pspl2 = model.PSPL_PhotAstrom_Par_Param1(mL,
+    pspl2 = model.PSPL_PhotAstrom_noPar_Param1(mL,
                                              t0,
                                              beta,
                                              dL, dL / dS,
@@ -6374,8 +6380,8 @@ def test_pspl_luminous_lens(plot=False):
         mag_out1 = pspl1.get_photometry(t)
         mag_out2 = pspl2.get_photometry(t)
 
-        xS1 = pspl1.get_astrometry_unlensed(t)
-        xS2 = pspl2.get_astrometry_unlensed(t)
+        xS1 = pspl1.get_source_astrometry_unlensed(t)
+        xS2 = pspl2.get_source_astrometry_unlensed(t)
         pos_out1 = pspl1.get_astrometry(t)
         pos_out2 = pspl2.get_astrometry(t)
         xL1 = pspl1.get_lens_astrometry(t)
@@ -6383,6 +6389,8 @@ def test_pspl_luminous_lens(plot=False):
 
         shift1 = pspl1.get_centroid_shift(t)
         shift2 = pspl2.get_centroid_shift(t)
+        shift_tot1 = np.hypot(shift1[:, 0], shift1[:, 1])
+        shift_tot2 = np.hypot(shift2[:, 0], shift2[:, 1])
 
         dxS = xS2 - xS1
         dpos = pos_out2 - pos_out1
@@ -6390,8 +6398,8 @@ def test_pspl_luminous_lens(plot=False):
 
         plt.figure(1)
         plt.clf()
-        plt.plot(t, mag_out1, 'k-', label='mod 1')
-        plt.plot(t, mag_out2, 'r-', label='mod 2')
+        plt.plot(t, mag_out1, '-', color='k', label='mod 1')
+        plt.plot(t, mag_out2, '-', color='r', label='mod 2')
         plt.legend()
         plt.gca().invert_yaxis()
         plt.xlabel('Time (days)')
@@ -6400,12 +6408,12 @@ def test_pspl_luminous_lens(plot=False):
 
         plt.figure(2)
         plt.clf()
-        plt.plot(t, xS1[:, 0] * 1e3, 'k--', label='xS1 unlens')
-        plt.plot(t, xS2[:, 0] * 1e3, 'r--', label='xS2 unlens')
+        plt.plot(t, xS1[:, 0] * 1e3, 'k-.', label='xS1 unlens')
+        plt.plot(t, xS2[:, 0] * 1e3, 'r:', label='xS2 unlens')
         plt.plot(t, pos_out1[:, 0] * 1e3, 'k-', label='sky 1')
         plt.plot(t, pos_out2[:, 0] * 1e3, 'r-', label='sky 2')
-        plt.plot(t, xL1[:, 0] * 1e3, '-', color='grey', label='xL1')
-        plt.plot(t, xL2[:, 0] * 1e3, '-', color='orange', label='xL2')
+        plt.plot(t, xL1[:, 0] * 1e3, '-.', color='grey', label='xL1')
+        plt.plot(t, xL2[:, 0] * 1e3, ':', color='orange', label='xL2')
         plt.legend()
         plt.xlabel('Time (days)')
         plt.ylabel(r'$\alpha^*$ (mas)')
@@ -6413,12 +6421,12 @@ def test_pspl_luminous_lens(plot=False):
 
         plt.figure(3)
         plt.clf()
-        plt.plot(t, xS1[:, 1] * 1e3, 'k--', label='xS1 unlens')
-        plt.plot(t, xS2[:, 1] * 1e3, 'r--', label='xS2 unlens')
+        plt.plot(t, xS1[:, 1] * 1e3, 'k-.', label='xS1 unlens')
+        plt.plot(t, xS2[:, 1] * 1e3, 'r:', label='xS2 unlens')
         plt.plot(t, pos_out1[:, 1] * 1e3, 'k-', label='sky 1')
         plt.plot(t, pos_out2[:, 1] * 1e3, 'r-', label='sky 2')
-        plt.plot(t, xL1[:, 1] * 1e3, '-', color='grey', label='xL1')
-        plt.plot(t, xL2[:, 1] * 1e3, '-', color='orange', label='xL2')
+        plt.plot(t, xL1[:, 1] * 1e3, '-.', color='grey', label='xL1')
+        plt.plot(t, xL2[:, 1] * 1e3, ':', color='orange', label='xL2')
         plt.legend()
         plt.xlabel('Time (days)')
         plt.ylabel(r'$\delta$ (mas)')
@@ -6426,14 +6434,14 @@ def test_pspl_luminous_lens(plot=False):
 
         plt.figure(4)
         plt.clf()
-        plt.plot(xS1[:, 0] * 1e3, xS1[:, 1] * 1e3, 'k--',
+        plt.plot(xS1[:, 0] * 1e3, xS1[:, 1] * 1e3, 'k-.',
                  label='xS1 unlens')
-        plt.plot(xS2[:, 0] * 1e3, xS2[:, 1] * 1e3, 'r--',
+        plt.plot(xS2[:, 0] * 1e3, xS2[:, 1] * 1e3, 'r:',
                  label='xS2 unlens')
         plt.plot(pos_out1[:, 0] * 1e3, pos_out1[:, 1] * 1e3, 'k-', label='sky 1')
         plt.plot(pos_out2[:, 0] * 1e3, pos_out2[:, 1] * 1e3, 'r-', label='sky 2')
-        plt.plot(xL1[:, 0] * 1e3, xL1[:, 1] * 1e3, '-', color='grey', label='xL1')
-        plt.plot(xL2[:, 0] * 1e3, xL2[:, 1] * 1e3, '-', color='orange', label='xL2')
+        plt.plot(xL1[:, 0] * 1e3, xL1[:, 1] * 1e3, '-.', color='grey', label='xL1')
+        plt.plot(xL2[:, 0] * 1e3, xL2[:, 1] * 1e3, ':', color='orange', label='xL2')
         plt.xlabel(r'$\alpha^*$ (mas)')
         plt.ylabel(r'$\delta$ (mas)')
         plt.legend()
@@ -6460,10 +6468,12 @@ def test_pspl_luminous_lens(plot=False):
 
         plt.figure(7)
         plt.clf()
-        plt.plot(t, shift1[:, 0], 'r-', label='unblended X')
-        plt.plot(t, shift1[:, 1], 'b-', label='unblended Y')
+        plt.plot(t, shift1[:, 0], 'r:', label='unblended X')
+        plt.plot(t, shift1[:, 1], 'b:', label='unblended Y')
         plt.plot(t, shift2[:, 0], 'r--', label='blended X')
         plt.plot(t, shift2[:, 1], 'b--', label='blended Y')
+        plt.plot(t, shift_tot1, ':', color='green', label='unblended Tot')
+        plt.plot(t, shift_tot2, '--', color='green', label='blended Tot')
         plt.title("Centroid Shift vs Time")
         plt.xlabel('Time (days)')
         plt.ylabel(r'Centroid Shift (mas)')
@@ -6491,8 +6501,8 @@ def test_pspl_luminous_lens(plot=False):
     assert xS_2[-1, 0] > xS_1[-1, 0]
 
     # Unlensed source position should be the same. (as if lens wasn't there).
-    xS_unlens_1 = pspl1.get_astrometry_unlensed(t)
-    xS_unlens_2 = pspl2.get_astrometry_unlensed(t)
+    xS_unlens_1 = pspl1.get_source_astrometry_unlensed(t)
+    xS_unlens_2 = pspl2.get_source_astrometry_unlensed(t)
     np.testing.assert_almost_equal(xS_unlens_1, xS_unlens_2)
 
     # Lens astrometry should be the same.
@@ -6504,13 +6514,14 @@ def test_pspl_luminous_lens(plot=False):
     # smaller than unblended (except at t=0).
     shift_1 = pspl1.get_centroid_shift(t)  # mas
     shift_2 = pspl2.get_centroid_shift(t)  # mas
-    shift_1 = np.hypot(shift_1[:, 0], shift_1[:, 1])
-    shift_2 = np.hypot(shift_2[:, 0], shift_2[:, 1])
+    shift_tot1 = np.hypot(shift_1[:, 0], shift_1[:, 1])
+    shift_tot2 = np.hypot(shift_2[:, 0], shift_2[:, 1])
 
-    np.testing.assert_array_less(shift_2[0:90], shift_1[0:90])
-    np.testing.assert_array_less(shift_2[-90:], shift_1[-90:])
+    np.testing.assert_array_less(shift_tot2[0:4], shift_tot1[0:4])
+    np.testing.assert_array_less(shift_tot2[-4:], shift_tot1[-4:])
 
     return
+
 
 def test_psbl_luminous_lens(plot=False):
     outdir = 'tests/test_pspl_lumlens/'
@@ -6531,14 +6542,14 @@ def test_psbl_luminous_lens(plot=False):
     dL = 3000.0
     dS = 6000.0
     sep = 1.0 # mas
-    alpha = 90.0 # deg
+    alpha = 45.0 # deg
     dmag_Lp_Ls = 20 # mag_Lp - mag_Ls
     mag_src = 19.0
 
     b_sff1 = 1.0 # no luminous lens
     b_sff2 = 0.75 # luminous lens
 
-    psbl1 = model.PSBL_PhotAstrom_Par_Param1(mLp, mLs,
+    psbl1 = model.PSBL_PhotAstrom_noPar_Param1(mLp, mLs,
                                              t0,
                                              xS0[0], xS0[1],
                                              beta,
@@ -6552,7 +6563,7 @@ def test_psbl_luminous_lens(plot=False):
                                              raL=raL,
                                              decL=decL)
 
-    psbl2 = model.PSBL_PhotAstrom_Par_Param1(mLp, mLs,
+    psbl2 = model.PSBL_PhotAstrom_noPar_Param1(mLp, mLs,
                                              t0,
                                              xS0[0], xS0[1],
                                              beta,
@@ -6573,19 +6584,24 @@ def test_psbl_luminous_lens(plot=False):
         mag_out1 = psbl1.get_photometry(t)
         mag_out2 = psbl2.get_photometry(t)
 
-        xS1 = psbl1.get_astrometry_unlensed(t)
-        xS2 = psbl2.get_astrometry_unlensed(t)
-        pos_out1 = psbl1.get_astrometry(t)
+        xC1 = psbl1.get_astrometry_unlensed(t)  # unlensed centroid
+        xC2 = psbl2.get_astrometry_unlensed(t)
+        xS1 = psbl1.get_source_astrometry_unlensed(t)  # source position
+        xS2 = psbl2.get_source_astrometry_unlensed(t)
+        pos_out1 = psbl1.get_astrometry(t)     # lensed centroid
         pos_out2 = psbl2.get_astrometry(t)
-        xL1 = psbl1.get_lens_astrometry(t)
-        xL2 = psbl2.get_lens_astrometry(t)
+        xL1p, xL1s = psbl1.get_resolved_lens_astrometry(t) # lens position
+        xL2p, xL2s = psbl2.get_resolved_lens_astrometry(t)
 
         shift1 = psbl1.get_centroid_shift(t)
         shift2 = psbl2.get_centroid_shift(t)
+        shift_tot1 = np.hypot(shift1[:, 0], shift1[:, 1])
+        shift_tot2 = np.hypot(shift2[:, 0], shift2[:, 1])
 
         dxS = xS2 - xS1
         dpos = pos_out2 - pos_out1
-        dxL = xL2 - xL1
+        dxLp = xL2p - xL1p
+        dxLs = xL2s - xL1s
 
         plt.figure(1)
         plt.clf()
@@ -6599,12 +6615,16 @@ def test_psbl_luminous_lens(plot=False):
 
         plt.figure(2)
         plt.clf()
-        plt.plot(t, xS1[:, 0] * 1e3, 'k--', label='xS1 unlens')
-        plt.plot(t, xS2[:, 0] * 1e3, 'r--', label='xS2 unlens')
+        plt.plot(t, xC1[:, 0] * 1e3, 'k-.', label='xC1 unlens', alpha=0.3)
+        plt.plot(t, xC2[:, 0] * 1e3, 'r:', label='xC2 unlens', alpha=0.3)
+        plt.plot(t, xS1[:, 0] * 1e3, 'k-.', label='xS1 unlens')
+        plt.plot(t, xS2[:, 0] * 1e3, 'r:', label='xS2 unlens')
         plt.plot(t, pos_out1[:, 0] * 1e3, 'k-', label='sky 1')
         plt.plot(t, pos_out2[:, 0] * 1e3, 'r-', label='sky 2')
-        plt.plot(t, xL1[:, 0] * 1e3, '-', color='grey', label='xL1')
-        plt.plot(t, xL2[:, 0] * 1e3, '-', color='orange', label='xL2')
+        plt.plot(t, xL1p[:, 0] * 1e3, '-.', color='grey', label='xL1p')
+        plt.plot(t, xL2p[:, 0] * 1e3, '-.', color='orange', label='xL2p')
+        plt.plot(t, xL1s[:, 0] * 1e3, ':', color='grey', label='xL1s')
+        plt.plot(t, xL2s[:, 0] * 1e3, ':', color='orange', label='xL2s')
         plt.legend()
         plt.xlabel('Time (days)')
         plt.ylabel(r'$\alpha^*$ (mas)')
@@ -6612,12 +6632,16 @@ def test_psbl_luminous_lens(plot=False):
 
         plt.figure(3)
         plt.clf()
-        plt.plot(t, xS1[:, 1] * 1e3, 'k--', label='xS1 unlens')
-        plt.plot(t, xS2[:, 1] * 1e3, 'r--', label='xS2 unlens')
+        plt.plot(t, xC1[:, 1] * 1e3, 'k-.', label='xC1 unlens', alpha=0.3)
+        plt.plot(t, xC2[:, 1] * 1e3, 'r:', label='xC2 unlens', alpha=0.3)
+        plt.plot(t, xS1[:, 1] * 1e3, 'k-.', label='xS1 unlens')
+        plt.plot(t, xS2[:, 1] * 1e3, 'r:', label='xS2 unlens')
         plt.plot(t, pos_out1[:, 1] * 1e3, 'k-', label='sky 1')
         plt.plot(t, pos_out2[:, 1] * 1e3, 'r-', label='sky 2')
-        plt.plot(t, xL1[:, 1] * 1e3, '-', color='grey', label='xL1')
-        plt.plot(t, xL2[:, 1] * 1e3, '-', color='orange', label='xL2')
+        plt.plot(t, xL1p[:, 1] * 1e3, '-.', color='grey', label='xL1p')
+        plt.plot(t, xL2p[:, 1] * 1e3, '-.', color='orange', label='xL2p')
+        plt.plot(t, xL1s[:, 1] * 1e3, ':', color='grey', label='xL1s')
+        plt.plot(t, xL2s[:, 1] * 1e3, ':', color='orange', label='xL2s')
         plt.legend()
         plt.xlabel('Time (days)')
         plt.ylabel(r'$\delta$ (mas)')
@@ -6625,14 +6649,16 @@ def test_psbl_luminous_lens(plot=False):
 
         plt.figure(4)
         plt.clf()
-        plt.plot(xS1[:, 0] * 1e3, xS1[:, 1] * 1e3, 'k--',
-                 label='xS1 unlens')
-        plt.plot(xS2[:, 0] * 1e3, xS2[:, 1] * 1e3, 'r--',
-                 label='xS2 unlens')
+        plt.plot(xC1[:, 0] * 1e3, xC1[:, 1] * 1e3, 'k-.', label='xC1 unlens', alpha=0.3)
+        plt.plot(xC2[:, 0] * 1e3, xC2[:, 1] * 1e3, 'r:', label='xC2 unlens', alpha=0.3)
+        plt.plot(xS1[:, 0] * 1e3, xS1[:, 1] * 1e3, 'k-.', label='xS1 unlens')
+        plt.plot(xS2[:, 0] * 1e3, xS2[:, 1] * 1e3, 'r:', label='xS2 unlens')
         plt.plot(pos_out1[:, 0] * 1e3, pos_out1[:, 1] * 1e3, 'k-', label='sky 1')
         plt.plot(pos_out2[:, 0] * 1e3, pos_out2[:, 1] * 1e3, 'r-', label='sky 2')
-        plt.plot(xL1[:, 0] * 1e3, xL1[:, 1] * 1e3, '-', color='grey', label='xL1')
-        plt.plot(xL2[:, 0] * 1e3, xL2[:, 1] * 1e3, '-', color='orange', label='xL2')
+        plt.plot(xL1p[:, 0] * 1e3, xL1p[:, 1] * 1e3, '-.', color='grey', label='xL1p')
+        plt.plot(xL2p[:, 0] * 1e3, xL2p[:, 1] * 1e3, '-.', color='orange', label='xL2p')
+        plt.plot(xL1s[:, 0] * 1e3, xL1s[:, 1] * 1e3, ':', color='grey', label='xL1s')
+        plt.plot(xL2s[:, 0] * 1e3, xL2s[:, 1] * 1e3, ':', color='orange', label='xL2s')
         plt.xlabel(r'$\alpha^*$ (mas)')
         plt.ylabel(r'$\delta$ (mas)')
         plt.legend()
@@ -6659,10 +6685,12 @@ def test_psbl_luminous_lens(plot=False):
 
         plt.figure(7)
         plt.clf()
-        plt.plot(t, shift1[:, 0], 'r-', label='unblended X')
-        plt.plot(t, shift1[:, 1], 'b-', label='unblended Y')
+        plt.plot(t, shift1[:, 0], 'r:', label='unblended X')
+        plt.plot(t, shift1[:, 1], 'b:', label='unblended Y')
         plt.plot(t, shift2[:, 0], 'r--', label='blended X')
         plt.plot(t, shift2[:, 1], 'b--', label='blended Y')
+        plt.plot(t, shift_tot1, ':', color='green', label='unblended Tot')
+        plt.plot(t, shift_tot2, '--', color='green', label='blended Tot')
         plt.title("Centroid Shift vs Time")
         plt.xlabel('Time (days)')
         plt.ylabel(r'Centroid Shift (mas)')
@@ -6690,9 +6718,18 @@ def test_psbl_luminous_lens(plot=False):
     assert xS_2[-1, 0] > xS_1[-1, 0]
 
     # Unlensed source position should be the same. (as if lens wasn't there).
-    xS_unlens_1 = psbl1.get_astrometry_unlensed(t)
-    xS_unlens_2 = psbl2.get_astrometry_unlensed(t)
+    xS_unlens_1 = psbl1.get_source_astrometry_unlensed(t)
+    xS_unlens_2 = psbl2.get_source_astrometry_unlensed(t)
     np.testing.assert_almost_equal(xS_unlens_1, xS_unlens_2)
+
+    # Unlensed source+lens centroid position should NOT the same.
+    # RA centroid shouldb e first less and then more due to motion of lens.
+    # Dec centroid should be between lens and source (always South)
+    xCent_unlens_1 = psbl1.get_astrometry_unlensed(t)
+    xCent_unlens_2 = psbl2.get_astrometry_unlensed(t)
+    np.testing.assert_array_less(xCent_unlens_2[:4, 0], xCent_unlens_1[:4, 0])
+    np.testing.assert_array_less(xCent_unlens_1[-4:, 0], xCent_unlens_2[-4:, 0])
+    np.testing.assert_array_less(xCent_unlens_2[:, 1], xCent_unlens_1[:, 1])
 
     # Lens astrometry should be the same.
     xL_1 = psbl1.get_lens_astrometry(t)
@@ -6706,8 +6743,8 @@ def test_psbl_luminous_lens(plot=False):
     shift_1 = np.hypot(shift_1[:, 0], shift_1[:, 1])
     shift_2 = np.hypot(shift_2[:, 0], shift_2[:, 1])
 
-    np.testing.assert_array_less(shift_2[0:90], shift_1[0:90])
-    np.testing.assert_array_less(shift_2[-90:], shift_1[-90:])
+    np.testing.assert_array_less(shift_2[0:4], shift_1[0:4])
+    np.testing.assert_array_less(shift_2[-4:], shift_1[-4:])
 
     return
 
