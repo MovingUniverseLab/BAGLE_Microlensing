@@ -2781,7 +2781,6 @@ def test_bagle_self_conversion(plot=False):
         ax1[0].legend()
         ax1[0].invert_yaxis()
         ax1[0].set_title('helio --> geotr --> helio')
-        
 
     assert np.abs(mag_h - mag_h_from_g).max() < 1e-9
 
