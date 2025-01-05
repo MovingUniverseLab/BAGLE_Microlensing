@@ -1886,7 +1886,7 @@ def plot_BSPL(bspl, t_obs, fignum_init=1):
 
         xL = bspl.get_lens_astrometry(t_obs) * 1e3
         xS_unlens_cent = bspl.get_astrometry_unlensed(t_obs) * 1e3
-        xS_unlens = bspl.get_resolved_astrometry_unlensed(t_obs) * 1e3
+        xS_unlens = bspl.get_resolved_source_astrometry_unlensed(t_obs) * 1e3
         xS_lensed_res = bspl.get_resolved_astrometry(t_obs) * 1e3
         xS_lensed = bspl.get_astrometry(t_obs) * 1e3
 
@@ -4073,7 +4073,7 @@ def plot_BSBL(bsbl, t_obs):
         xL1, xL2 = bsbl.get_resolved_lens_astrometry(t_obs)
         xL1 *= 1e3
         xL2 *= 1e3
-        xS_res_unlens = bsbl.get_resolved_astrometry_unlensed(t_obs) * 1e3
+        xS_res_unlens = bsbl.get_resolved_source_astrometry_unlensed(t_obs) * 1e3
         xS1 = xS_res_unlens[:, 0, :]
         xS2 = xS_res_unlens[:, 1, :]
 
@@ -5044,7 +5044,7 @@ def test_bsbl_noparallax():
         t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
         img, amp = bsbl.get_all_arrays(t)
         lens1, lens2 = bsbl.get_resolved_lens_astrometry(t)
-        source_unlensed = bsbl.get_resolved_astrometry_unlensed(t)
+        source_unlensed = bsbl.get_resolved_source_astrometry_unlensed(t)
         source_resolved = bsbl.get_resolved_astrometry(t, image_arr=img)
 
 
@@ -5299,7 +5299,7 @@ def test_bsbl_parallax():
         t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
         img, amp = bsbl.get_all_arrays(t)
         lens1, lens2 = bsbl.get_resolved_lens_astrometry(t)
-        source_unlensed = bsbl.get_resolved_astrometry_unlensed(t)
+        source_unlensed = bsbl.get_resolved_source_astrometry_unlensed(t)
         source_resolved = bsbl.get_resolved_astrometry(t, image_arr=img)
 
 

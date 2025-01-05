@@ -4077,7 +4077,7 @@ def fake_dex_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
     lens1_pos, lens2_pos = bsbl.get_resolved_lens_astrometry(t_mod)
 
-    source_unlensed = bsbl.get_resolved_astrometry_unlensed(t_mod)
+    source_unlensed = bsbl.get_resolved_source_astrometry_unlensed(t_mod)
     srce_pos_primary = source_unlensed[:, 0, :]
     srce_pos_secondary = source_unlensed[:, 1, :]
 

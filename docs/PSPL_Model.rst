@@ -15,21 +15,6 @@ PSPL Parallax
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSPL_PhotAstrom_LumLens_Par_Param1
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.PSPL_PhotAstrom_LumLens_Par_Param2
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.PSPL_PhotAstrom_LumLens_Par_Param4
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
 PSPL_parallax2 / PSPL_multiphot_parallax
 -----------------------------------------
 .. autoclass:: model.PSPL_PhotAstrom_Par_Param2
@@ -153,28 +138,6 @@ PSPL PhotAstrom, parallax with GP
     :members:
     :inherited-members:
     :show-inheritance:
-
-.. autoclass:: model.PSPL_PhotAstrom_Par_LumLens_GP_Param1
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.PSPL_PhotAstrom_Par_LumLens_GP_Param2
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.PSPL_PhotAstrom_Par_LumLens_GP_Param3
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-
-.. autoclass:: model.PSPL_PhotAstrom_Par_LumLens_GP_Param4
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
 
 PSPL PhotAstrom, no parallax with GP
 ----------------------------------

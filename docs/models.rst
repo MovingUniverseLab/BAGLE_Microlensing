@@ -79,19 +79,12 @@ Point source, point lens, photometry and astrometry
     - PSPL_PhotAstrom_Par_Param3
     - PSPL_PhotAstrom_Par_Param4
     - PSPL_PhotAstrom_Par_Param5
-    - PSPL_PhotAstrom_LumLens_Par_Param1
-    - PSPL_PhotAstrom_LumLens_Par_Param2
-    - PSPL_PhotAstrom_LumLens_Par_Param4
     - PSPL_PhotAstrom_noPar_GP_Param1
     - PSPL_PhotAstrom_noPar_GP_Param2
     - PSPL_PhotAstrom_Par_GP_Param1
     - PSPL_PhotAstrom_Par_GP_Param2
     - PSPL_PhotAstrom_Par_GP_Param3
     - PSPL_PhotAstrom_Par_GP_Param4
-    - PSPL_PhotAstrom_Par_LumLens_GP_Param1
-    - PSPL_PhotAstrom_Par_LumLens_GP_Param2
-    - PSPL_PhotAstrom_Par_LumLens_GP_Param3
-    - PSPL_PhotAstrom_Par_LumLens_GP_Param4
 
 Point source, point lens, astrometry only
 -----------------------------------------

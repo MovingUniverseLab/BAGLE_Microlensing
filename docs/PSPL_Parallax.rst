@@ -17,18 +17,7 @@ Parallax Class Family
     :inherited-members:
     :show-inheritance:
 
-
 .. autoclass:: model.PSPL_Parallax 
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.PSPL_noParallax_LumLens 
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.PSPL_Parallax_LumLens 
     :members:
     :inherited-members:
     :show-inheritance:
