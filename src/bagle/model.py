@@ -1925,9 +1925,6 @@ class PSPL_GP(ABC):
             if t_pred is None:
                 t_pred = t_obs
 
-            # FIXME: is there a better way to write this? Since it totally
-            # duplicates everything in log_likely_photometry
-
             gp = self.get_celerite_gp_object(mag_err_obs, filt_idx = filt_idx)
             try:
                 gp.compute(t_obs, mag_err_obs)
@@ -2089,9 +2086,6 @@ class PSPL_GPnoJitter(ABC):
         if self.use_gp_phot[filt_idx]:
             if t_pred is None:
                 t_pred = t_obs
-
-            # FIXME: is there a better way to write this? Since it totally
-            # duplicates everything in log_likely_photometry
 
             gp = self.get_celerite_gp_object(filt_idx = filt_idx)
             try:
