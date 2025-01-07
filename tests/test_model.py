@@ -1144,21 +1144,21 @@ def compare_lumlens_parallax_bulge():
     b_sff_in = 0.5
     mag_src_in = 19.0
 
-    pspl_ll = model.PSPL_PhotAstrom_LumLens_Par_Param1(mL=mL_in,
-                                                       t0=t0_in,
-                                                       beta=beta_in,
-                                                       dL=dL_in,
-                                                       dL_dS=dL_in / dS_in,
-                                                       xS0_E=xS0_in[0],
-                                                       xS0_N=xS0_in[1],
-                                                       muL_E=muL_in[0],
-                                                       muL_N=muL_in[1],
-                                                       muS_E=muS_in[0],
-                                                       muS_N=muS_in[1],
-                                                       raL=raL_in,
-                                                       decL=decL_in,
-                                                       b_sff=[b_sff_in],
-                                                       mag_src=[mag_src_in])
+    pspl_ll = model.PSPL_PhotAstrom_Par_Param1(mL=mL_in,
+                                               t0=t0_in,
+                                               beta=beta_in,
+                                               dL=dL_in,
+                                               dL_dS=dL_in / dS_in,
+                                               xS0_E=xS0_in[0],
+                                               xS0_N=xS0_in[1],
+                                               muL_E=muL_in[0],
+                                               muL_N=muL_in[1],
+                                               muS_E=muS_in[0],
+                                               muS_N=muS_in[1],
+                                               raL=raL_in,
+                                               decL=decL_in,
+                                               b_sff=[b_sff_in],
+                                               mag_src=[mag_src_in])
 
     pspl = model.PSPL_PhotAstrom_Par_Param1(mL=mL_in,
                                             t0=t0_in,
@@ -4202,6 +4202,7 @@ def test_BSBL_PhotAstrom_Par_Param1():
     mag_src_pri = np.array([18.0])
     mag_src_sec = np.array([19.0])
     b_sff = np.array([1.0])
+    dmag_Lp_Ls = 20
     
     # phi_piE = np.degrees(np.arctan2(piE_N, piE_E))  # PA of muRel on the sky
     # phi = alpha - phi_piE  # relative angle between binary and muRel.
@@ -4212,13 +4213,13 @@ def test_BSBL_PhotAstrom_Par_Param1():
     bsbl_n = model.BSBL_PhotAstrom_noPar_Param1(mLp, mLs, t0, xS0_E, xS0_N,
                                                 beta, muL_E, muL_N, muS_E, muS_N,
                                                 dL, dS, sepL, alphaL, sepS, alphaS,
-                                                mag_src_pri, mag_src_sec, b_sff,
+                                                mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                                                 raL=raL, decL=decL,
                                                 root_tol=1e-4)
     bsbl_p = model.BSBL_PhotAstrom_Par_Param1(mLp, mLs, t0, xS0_E, xS0_N,
                                               beta, muL_E, muL_N, muS_E, muS_N,
                                               dL, dS, sepL, alphaL, sepS, alphaS,
-                                              mag_src_pri, mag_src_sec, b_sff,
+                                              mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                                               raL=raL, decL=decL,
                                               root_tol=1e-4)
     t_obs = np.arange(56000.0, 58000.0, 1)
@@ -5018,11 +5019,12 @@ def test_bsbl_noparallax():
         fratio_bin = 1
         b_sff = 1
         mag_base = 16
+        dmag_Lp_Ls = 20
         raL = 30
         decL = 20
         bsbl = model.BSBL_PhotAstrom_noPar_EllOrbs_Param2(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
                 alphaL, alphaS, omegaL, big_omegaL, iL, eL, tpL, sepL,  
-                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff,
+                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                  raL=raL, decL=decL, root_tol=1e-8)
         
         assert bsbl.t0_com == t0_com
@@ -5273,11 +5275,12 @@ def test_bsbl_parallax():
         fratio_bin = 1
         b_sff = 1
         mag_base = 16
+        dmag_Lp_Ls = 20
         raL = 30
         decL = 20
         bsbl = model.BSBL_PhotAstrom_Par_EllOrbs_Param2(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
                 alphaL, alphaS, omegaL, big_omegaL, iL, eL, tpL, sepL,  
-                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff,
+                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                  raL=raL, decL=decL, root_tol=1e-8)
         
         assert bsbl.t0_com == t0_com

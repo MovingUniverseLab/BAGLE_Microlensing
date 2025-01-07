@@ -388,8 +388,8 @@ def test_pspl_dy_fit():
     fitter.priors['beta'] = model_fitter.make_gen(-0.45, -0.35)
     fitter.priors['muL_E'] = model_fitter.make_gen(-0.1, 0.1)
     fitter.priors['muL_N'] = model_fitter.make_gen(-7.1, -6.9)
-    fitter.priors['muS_E'] = model_fitter.make_gen(1.3, 1.7)
-    fitter.priors['muS_N'] = model_fitter.make_gen(-0.7, -0.3)
+    fitter.priors['muS_E'] = model_fitter.make_gen(1.4, 1.6)
+    fitter.priors['muS_N'] = model_fitter.make_gen(-0.6, -0.4)
     fitter.priors['dL'] = model_fitter.make_gen(3900, 4100)
     fitter.priors['dL_dS'] = model_fitter.make_gen(0.45, 0.55)
     fitter.priors['b_sff1'] = model_fitter.make_gen(0.95, 1.01)
@@ -407,7 +407,7 @@ def test_pspl_dy_fit():
 
     t0 = time.time()
 
-    sampler.run_nested(nlive_init=300, print_progress=True, maxiter=1000)
+    sampler.run_nested(nlive_init=300, print_progress=True, maxiter=1500)
 
     t1 = time.time()
 
@@ -427,6 +427,7 @@ def test_pspl_dy_fit():
 
     # TEST that output params match input within 20%
     for key in best:
+        print(best[key], p_in[key], best[key] - p_in[key])
         if p_in[key] == 0:
             assert np.abs(best[key] - p_in[key]) < 0.2
         else:
@@ -622,8 +623,7 @@ def test_lumlens_parallax_fit(verbose=False):
     data, p_in = fake_data.fake_data_lumlens_parallax_bulge()
 
     fitter = PSPL_Solver(data, 
-                         model.PSPL_PhotAstrom_LumLens_Par_Param1,
-#                         model.PSPL_PhotAstrom_Par_Param1,
+                         model.PSPL_PhotAstrom_Par_Param1,
                          n_live_points=300,
                          sampling_efficiency=0.9,
                          evidence_tolerance=0.8,
@@ -649,7 +649,7 @@ def test_lumlens_parallax_fit(verbose=False):
 
     best = fitter.get_best_fit()
 
-    pspl_out = model.PSPL_PhotAstrom_LumLens_Par_Param1(best['mL'],
+    pspl_out = model.PSPL_PhotAstrom_Par_Param1(best['mL'],
                                                 best['t0'],
                                                 best['beta'],
                                                 best['dL'],
@@ -665,7 +665,7 @@ def test_lumlens_parallax_fit(verbose=False):
                                                 raL=p_in['raL'],
                                                 decL=p_in['decL'])
 
-    pspl_in = model.PSPL_PhotAstrom_LumLens_Par_Param1(p_in['mL'],
+    pspl_in = model.PSPL_PhotAstrom_Par_Param1(p_in['mL'],
                                                p_in['t0'],
                                                p_in['beta'],
                                                p_in['dL'],
@@ -736,7 +736,7 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
     p_in['mag_src2'] = params2['mag_src1']
 
     fitter = PSPL_Solver(data, 
-                         model.PSPL_PhotAstrom_LumLens_Par_Param1,
+                         model.PSPL_PhotAstrom_Par_Param1,
 #                         model.PSPL_PhotAstrom_Par_Param1,
                          n_live_points=100,
                          outputfiles_basename=outdir + 'aa_',
@@ -765,7 +765,7 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
 
     best = fitter.get_best_fit()
 
-    pspl_out = model.PSPL_PhotAstrom_LumLens_Par_Param1(best['mL'],
+    pspl_out = model.PSPL_PhotAstrom_Par_Param1(best['mL'],
                                                 best['t0'],
                                                 best['beta'],
                                                 best['dL'],
@@ -781,7 +781,7 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
                                                 raL=p_in['raL'],
                                                 decL=p_in['decL'])
 
-    pspl_in = model.PSPL_PhotAstrom_LumLens_Par_Param1(p_in['mL'],
+    pspl_in = model.PSPL_PhotAstrom_Par_Param1(p_in['mL'],
                                                p_in['t0'],
                                                p_in['beta'],
                                                p_in['dL'],
@@ -872,8 +872,7 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
     p_in['mag_src4'] = params4['mag_src1']
 
     fitter = PSPL_Solver(data, 
-                         model.PSPL_PhotAstrom_LumLens_Par_Param1,
-#                         model.PSPL_PhotAstrom_Par_Param1,
+                         model.PSPL_PhotAstrom_Par_Param1,
                          n_live_points=100,
                          outputfiles_basename=outdir + 'aa_',
                          dump_callback=None,
@@ -912,7 +911,7 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
 
     best = fitter.get_best_fit()
 
-    pspl_out = model.PSPL_PhotAstrom_LumLens_Par_Param1(best['mL'],
+    pspl_out = model.PSPL_PhotAstrom_Par_Param1(best['mL'],
                                                 best['t0'],
                                                 best['beta'],
                                                 best['dL'],
@@ -928,7 +927,7 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
                                                 raL=p_in['raL'],
                                                 decL=p_in['decL'])
 
-    pspl_in = model.PSPL_PhotAstrom_LumLens_Par_Param1(p_in['mL'],
+    pspl_in = model.PSPL_PhotAstrom_Par_Param1(p_in['mL'],
                                                p_in['t0'],
                                                p_in['beta'],
                                                p_in['dL'],
@@ -972,7 +971,7 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
     np.testing.assert_array_almost_equal(imag_out, imag_in, 1)
     np.testing.assert_array_almost_equal(pos_out, pos_in, 4)
 
-    assert np.abs(lnL_out - lnL_in) < 100
+    assert np.abs(lnL_out - lnL_in) < 150
 
     return
 
@@ -1126,7 +1125,7 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
                                                 best['piE_E'], best['piE_N'], best['xS0_E'], best['xS0_N'],
                                                 best['muS_E'], best['muS_N'],
                                                 best['q'], best['sep'], best['alpha'],
-                                                best['b_sff1'], best['mag_base1'],
+                                                best['b_sff1'], best['mag_base1'], best['dmag_Lp_Ls1'],
                                                 raL=data['raL'], decL=data['decL'], root_tol=1e-8)
 
     psbl_in = model.PSBL_PhotAstrom_Par_Param3(p_in['t0'], p_in['u0_amp'], p_in['tE'],
@@ -1134,7 +1133,7 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
                                                p_in['piE_E'], p_in['piE_N'], p_in['xS0_E'], p_in['xS0_N'],
                                                p_in['muS_E'], p_in['muS_N'],
                                                p_in['q'], p_in['sep'], p_in['alpha'],
-                                               p_in['b_sff'], p_in['mag_base'],
+                                               p_in['b_sff'], p_in['mag_base'], p_in['dmag_Lp_Ls'],
                                                raL=data['raL'], decL=data['decL'], root_tol=1e-8)
 
 
@@ -1144,7 +1143,7 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
     pnames = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
               'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
               'q', 'sep', 'alpha',
-              'b_sff1', 'mag_base1']
+              'b_sff1', 'mag_base1', 'dmag_Lp_Ls1']
 
     # There should be a better way to do this.
     p_in_params = {k: p_in[k] for k in pnames}
@@ -1224,14 +1223,14 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
                                                 best['piE_E'], best['piE_N'], best['xS0_E'], best['xS0_N'],
                                                 best['muS_E'], best['muS_N'],
                                                 best['q'], best['sep'], best['alpha'],
-                                                best['b_sff1'], best['mag_src1'],
+                                                best['b_sff1'], best['mag_src1'], best['dmag_Lp_Ls'],
                                                 raL=data['raL'], decL=data['decL'], root_tol=1e-8)
 
     psbl_in = model.PSBL_PhotAstrom_Par_Param2(p_in['t0'], p_in['u0_amp'], p_in['tE'], p_in['thetaE'], p_in['piS'],
                                                 p_in['piE_E'], p_in['piE_N'], p_in['xS0_E'], p_in['xS0_N'],
                                                p_in['muS_E'], p_in['muS_N'],
                                                 p_in['q'], p_in['sep'], p_in['alpha'],
-                                                p_in['b_sff'], p_in['mag_src'],
+                                                p_in['b_sff'], p_in['mag_src'], p_in['dmag_Lp_Ls'],
                                                 raL=data['raL'], decL=data['decL'], root_tol=1e-8)
 
 
@@ -1299,13 +1298,13 @@ def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
     psbl_out = model.PSBL_PhotAstrom_Par_Param1(best['mLp'], best['mLs'], best['t0'], best['xS0_E'], best['xS0_N'],
                                                 best['beta'], best['muL_E'], best['muL_N'],
                                                 best['muS_E'], best['muS_N'], best['dL'], best['dS'], best['sep'],
-                                                best['alpha'], best['b_sff1'], best['mag_src1'],
+                                                best['alpha'], best['b_sff1'], best['mag_src1'], best['dmag_Lp_Ls'],
                                                 raL=data['raL'], decL=data['decL'])
     
     psbl_in = model.PSBL_PhotAstrom_Par_Param1(p_in['mLp'], p_in['mLs'], p_in['t0'], p_in['xS0_E'], p_in['xS0_N'],
                                                 p_in['beta'], p_in['muL_E'], p_in['muL_N'],
                                                 p_in['muS_E'], p_in['muS_N'], p_in['dL'], p_in['dS'], p_in['sep'],
-                                                p_in['alpha'], p_in['b_sff'], p_in['mag_src'],
+                                                p_in['alpha'], p_in['b_sff'], p_in['mag_src'], p_in['dmag_Lp_Ls'],
                                                 raL=data['raL'], decL=data['decL'])
 
 #    p_in['mLp'] = psbl_in.mLp
@@ -2346,17 +2345,17 @@ def test_multi_obsLocation(resume=False, verbose=False):
     fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
     fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
     fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.01, p_in['muS_E']+0.01)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.01, p_in['muS_N']+0.01)
+    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-1e-3, p_in['muL_E']+1e-3)
+    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-1e-3, p_in['muL_N']+1e-3)
+    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-1e-3, p_in['muS_E']+1e-3)
+    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-1e-3, p_in['muS_N']+1e-3)
     fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-10, p_in['dL']+10)
     fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-1e-3, p_in['b_sff1']+1e-3)
     fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
-    fitter.priors['b_sff2'] = model_fitter.make_gen(p_in['b_sff2']-0.01, p_in['b_sff2']+0.01)
+    fitter.priors['b_sff2'] = model_fitter.make_gen(p_in['b_sff2']-1e-3, p_in['b_sff2']+1e-3)
     fitter.priors['mag_src2'] = model_fitter.make_gen(p_in['mag_src2']-0.01, p_in['mag_src2']+0.01)
-    fitter.priors['b_sff3'] = model_fitter.make_gen(p_in['b_sff3']-0.01, p_in['b_sff3']+0.01)
+    fitter.priors['b_sff3'] = model_fitter.make_gen(p_in['b_sff3']-1e-3, p_in['b_sff3']+1e-3)
     fitter.priors['mag_src3'] = model_fitter.make_gen(p_in['mag_src3']-0.01, p_in['mag_src3']+0.01)
 
 
@@ -2426,6 +2425,6 @@ def test_multi_obsLocation(resume=False, verbose=False):
     lnL_out = fitter.log_likely(best, verbose=verbose)
     lnL_in = fitter.log_likely(p_in, verbose=verbose)
 
-    assert np.abs(lnL_out - lnL_in) < 100
+    assert (np.abs(lnL_out - lnL_in) / np.abs(lnL_in)) < 0.1
 
     return

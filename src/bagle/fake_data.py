@@ -469,7 +469,7 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
                    xS0_E=0, xS0_N=0, beta=2,
                    muL_E=0, muL_N=0, muS_E=3, muS_N=0,
                    dL=3000, dS=8000, sep=10, alpha=90,
-                   mag_src=14, b_sff=1, parallax=True,
+                   mag_src=14, b_sff=1, dmag_Lp_Ls=20, parallax=True,
                    target='PSBL', animate=False):
     """
     Optional Inputs
@@ -524,6 +524,8 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
         Brightness of the source.
     b_sff : float
         Source flux fraction = fluxS / (fluxS + fluxL1 + fluxL2 + fluxN)
+    dmag_Lp_Ls : float
+        Magnitude difference between primary and secondary lens.
 
     """
 
@@ -531,12 +533,12 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
     if parallax:
         psbl = model.PSBL_PhotAstrom_Par_Param1(mLp, mLs, t0, xS0_E, xS0_N,
                                                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                                                sep, alpha, [b_sff], [mag_src],
+                                                sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
                                                 raL=raL, decL=decL, root_tol=1e-8)
     else:
         psbl = model.PSBL_PhotAstrom_noPar_Param1(mLp, mLs, t0, xS0_E, xS0_N,
                                                   beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                                                  sep, alpha, [b_sff], [mag_src],
+                                                  sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
                                                   root_tol=1e-8)
 
     # Simulate
@@ -635,9 +637,11 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
     params['b_sff'] = [b_sff]
     params['mag_src'] = [mag_src]
     params['mag_base'] = [params['mag_src'] + 2.5 * np.log10(params['b_sff'])]
+    params['dmag_Lp_Ls'] = [dmag_Lp_Ls]
     params['b_sff1'] = b_sff
     params['mag_src1'] = mag_src
     params['mag_base1'] = params['mag_base'][0]
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
     params['thetaE_amp'] = psbl.thetaE_amp
     params['thetaE'] = psbl.thetaE_amp
     params['log10_thetaE'] = np.log10(params['thetaE'])
@@ -677,7 +681,8 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
                                        xS0_E=0, xS0_N=0, beta=5.0,
                                        muL_E=0, muL_N=0, muS_E=1, muS_N=1,
                                        dL=4000, dS=8000, sep=5e-3, alpha=90,
-                                       mag_src=18, b_sff=1, parallax=True,
+                                       mag_src=18, b_sff=1, dmag_Lp_Ls=20,
+                                       parallax=True,
                                        target='PSBL', animate=False):
     """
     Optional Inputs
@@ -739,12 +744,12 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
     if parallax:
         psbl = model.PSBL_PhotAstrom_Par_Param1(mL1, mL2, t0, xS0_E, xS0_N,
                                                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                                                sep, alpha, [b_sff], [mag_src],
+                                                sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
                                                 raL=raL, decL=decL, root_tol=1e-8)
     else:
         psbl = model.PSBL_PhotAstrom_noPar_Param1(mL1, mL2, t0, xS0_E, xS0_N,
                                                   beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                                                  sep, alpha, [b_sff], [mag_src],
+                                                  sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
                                                   root_tol=1e-8)
 
     # Simulate photometric and astrometric observations every day.
@@ -826,8 +831,10 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
     params['dS'] = dS
     params['b_sff'] = [b_sff]
     params['mag_src'] = [mag_src]
+    params['dmag_Lp_Ls'] = [dmag_Lp_Ls]
     params['b_sff1'] = b_sff
     params['mag_src1'] = mag_src
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
 
     out_name = outdir + outroot + '_movie.gif'
     if animate:
@@ -859,6 +866,7 @@ def fake_data_PSBL_phot(outdir='', outroot='psbl',
                         t0=57000.0, u0_amp=0.8, tE=500.0,
                         piE_E=0.02, piE_N=0.02,
                         q=0.5, sep=5.0, phi=75.0, b_sff1=0.5, mag_src1=16.0,
+                        dmag_Lp_Ls=20,
                         parallax=True, target='Unknown', animate=False):
     """
     Optional Inputs
@@ -904,11 +912,11 @@ def fake_data_PSBL_phot(outdir='', outroot='psbl',
     start = time.time()
     if parallax:
         psbl = model.PSBL_Phot_Par_Param1(t0, u0_amp, tE, piE_E, piE_N, q, sep, phi,
-                                          [b_sff1], [mag_src1],
+                                          [b_sff1], [mag_src1], [dmag_Lp_Ls],
                                           raL=raL, decL=decL, root_tol=1e-8)
     else:
         psbl = model.PSBL_Phot_noPar_Param1(t0, u0_amp, tE, piE_E, piE_N, q, sep, phi,
-                                            [b_sff1], [mag_src1],
+                                            [b_sff1], [mag_src1], [dmag_Lp_Ls],
                                             root_tol=1e-8)
 
     # Simulate
@@ -967,8 +975,10 @@ def fake_data_PSBL_phot(outdir='', outroot='psbl',
     params['phi'] = phi
     params['b_sff'] = [b_sff1]
     params['mag_src'] = [mag_src1]
+    params['dmag_Lp_Ls'] = [dmag_Lp_Ls]
     params['b_sff1'] = b_sff1
     params['mag_src1'] = mag_src1
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
 
     out_name = outdir + outroot + '_movie.gif'
     if animate:
@@ -1692,7 +1702,7 @@ def fake_data_lumlens_parallax_bulge(outdir='./test_mnest_lumlens_bulge/'):
     muL_in = np.array([0.0, 0.0])
     dL_in = 4000.0  # pc
     dS_in = 8000.0  # pc
-    b_sff = 1.0
+    b_sff = 0.2
     imag_in = 19.0
 
     data, params = fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in,
@@ -1778,21 +1788,21 @@ def fake_data_lumlens_parallax_bulge4(outdir='./test_mnest_lumlens_bulge4_DEBUG/
 def fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
                                muS_in, muL_in, dL_in, dS_in, b_sff_in, mag_src_in,
                                outdir='', target='Unknwon'):
-    pspl_par_in = model.PSPL_PhotAstrom_LumLens_Par_Param1(mL=mL_in,
-                                                           t0=t0_in,
-                                                           beta=beta_in,
-                                                           dL=dL_in,
-                                                           dL_dS=dL_in / dS_in,
-                                                           xS0_E=xS0_in[0],
-                                                           xS0_N=xS0_in[1],
-                                                           muL_E=muL_in[0],
-                                                           muL_N=muL_in[1],
-                                                           muS_E=muS_in[0],
-                                                           muS_N=muS_in[1],
-                                                           raL=raL_in,
-                                                           decL=decL_in,
-                                                           b_sff=[b_sff_in],
-                                                           mag_src=[mag_src_in])
+    pspl_par_in = model.PSPL_PhotAstrom_Par_Param1(mL=mL_in,
+                                                   t0=t0_in,
+                                                   beta=beta_in,
+                                                   dL=dL_in,
+                                                   dL_dS=dL_in / dS_in,
+                                                   xS0_E=xS0_in[0],
+                                                   xS0_N=xS0_in[1],
+                                                   muL_E=muL_in[0],
+                                                   muL_N=muL_in[1],
+                                                   muS_E=muS_in[0],
+                                                   muS_N=muS_in[1],
+                                                   raL=raL_in,
+                                                   decL=decL_in,
+                                                   b_sff=[b_sff_in],
+                                                   mag_src=[mag_src_in])
 
     # Simulate
     # photometric observations every 1 day and
@@ -3288,14 +3298,14 @@ def fake_dex_data_noPar_PSBL_1(outdir='', outroot='psbl',
                                mLp=18, mLs=3, t0=5700, xS0_E=0, xS0_N=0,
                                beta=10, muL_E=8, muL_N=0, omega=0, big_omega=0, i=0, p=400, tp=30, aleph=5, aleph_sec=8,
                                muS_E=0, muS_N=4, dL=1000, dS=1500,
-                               alpha=90, b_sff=1, mag_src1=15,
+                               alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls1=20,
                                raL=None, decL=None, root_tol=1e-8,
                                target='PSBL', animate=False):
     start = time.time()
     psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
         beta, muL_E, muL_N, omega, big_omega, i, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
-        alpha, [b_sff], [mag_src1],
+        alpha, [b_sff], [mag_src1], [dmag_Lp_Ls1],
         raL=raL, decL=decL, root_tol=root_tol)
 
     # Simulate
@@ -3455,6 +3465,7 @@ def fake_dex_data_noPar_PSBL_1(outdir='', outroot='psbl',
 
     params['b_sff'] = np.array([b_sff])
     params['mag_src1'] = np.array([mag_src1])
+    params['dmag_Lp_Ls1'] = np.array([dmag_Lp_Ls1])
 
     params['raL'] = raL
     params['decL'] = decL
@@ -3466,14 +3477,14 @@ def fake_dex_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
                                   mLp=18, mLs=3, t0=5700, xS0_E=0, xS0_N=0,
                                   beta=10, muL_E=8, muL_N=0, omega=10, big_omega=10, i=10, p=400, tp=30, aleph=2,
                                   aleph_sec=8, muS_E=0, muS_N=4, dL=1000, dS=1500,
-                                  alpha=90, b_sff=1, mag_src1=15,
+                                  alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls=20,
                                   raL=None, decL=None, root_tol=1e-8,
                                   target='PSBL', animate=False):
     start = time.time()
     psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
         beta, muL_E, muL_N, omega, big_omega, i, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
-        alpha, [b_sff], [mag_src1],
+        alpha, [b_sff], [mag_src1], [dmag_Lp_Ls],
         raL=raL, decL=decL, root_tol=root_tol)
 
     # Simulate
@@ -3633,6 +3644,8 @@ def fake_dex_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
 
     params['b_sff'] = np.array([b_sff])
     params['mag_src1'] = np.array([mag_src1])
+    params['dmag_Lp_Ls'] = np.array([dmag_Lp_Ls])
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
 
     params['raL'] = raL
     params['decL'] = decL
@@ -3644,14 +3657,14 @@ def fake_dex_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
                                    mLp=18, mLs=3, t0=5700, xS0_E=0, xS0_N=0,
                                    beta=10, muL_E=8, muL_N=0, omega=10, big_omega=10, i=10, e=0.3, p=400, tp=30,
                                    aleph=2, aleph_sec=8, muS_E=0, muS_N=4, dL=1000, dS=1500,
-                                   alpha=90, b_sff=1, mag_src1=15,
+                                   alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls1=20,
                                    raL=None, decL=None, root_tol=1e-8,
                                    target='PSBL', animate=False):
     start = time.time()
     psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
         beta, muL_E, muL_N, omega, big_omega, i, e, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
-        alpha, [b_sff], [mag_src1],
+        alpha, [b_sff], [mag_src1], [dmag_Lp_Ls1],
         raL=raL, decL=decL, root_tol=root_tol)
 
     # Simulate
@@ -3812,6 +3825,8 @@ def fake_dex_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
 
     params['b_sff'] = np.array([b_sff])
     params['mag_src1'] = np.array([mag_src1])
+    params['dmag_Lp_Ls'] = np.array([dmag_Lp_Ls])
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
 
     params['raL'] = raL
     params['decL'] = decL
@@ -3824,14 +3839,14 @@ def fake_dex_data_noPar_PSBL_4(outdir='', outroot='psbl',
                                piE_E=0.1, piE_N=0.1, xS0_E=0, xS0_N=0, omega=0, big_omega=0, i=0, p=500, tp=30, aleph=5, sep = 2,
                                aleph_sec=8, muS_E=0, muS_N=5,
                                q=.9, alpha=90,
-                               b_sff=1, mag_src=20,
+                               b_sff=1, mag_src=20, dmag_Lp_Ls=20,
                                raL=None, decL=None, root_tol=1e-8,
                                target='PSBL', animate=False):
     start = time.time()
     psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param4(t0, u0_amp, tE, thetaE, piS,
                      piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, tp, sep, muS_E, muS_N,
                      q, 
-                     b_sff, mag_src,
+                     b_sff, mag_src, dmag_Lp_Ls,
                      raL=raL, decL=decL, root_tol=1e-8)
 
     # Simulate
@@ -3991,6 +4006,7 @@ def fake_dex_data_noPar_PSBL_4(outdir='', outroot='psbl',
     params['alpha'] = alpha
     params['b_sff'] = np.array([b_sff])
     params['mag_src1'] = np.array([mag_src])
+    params['dmag_Lp_Ls'] = np.array([dmag_Lp_Ls])
 
     params['raL'] = raL
     params['decL'] = decL

@@ -63,10 +63,11 @@ muS_scale_factor = 100.0
 
 # Global variable to define all array-style parameters (i.e. multiple filters).
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
-                     'mag_src_pri', 'mag_src_sec', 'fratio_bin',
+                     'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
                      'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
                      'add_err', 'mult_err']
+
 
 class PSPL_Solver(Solver):
     """
@@ -187,6 +188,7 @@ class PSPL_Solver(Solver):
         'mag_src_pri': ('make_mag_src_gen', None, None),
         'mag_src_sec': ('make_mag_src_gen', None, None),
         'mag_base': ('make_mag_base_gen', None, None),
+        'dmag_Lp_Ls': ('make_gen', -20, 20),
         'tE': ('make_gen', 1, 400),
         'piE_E': ('make_gen', -1, 1),
         'piE_N': ('make_gen', -1, 1),
@@ -3041,7 +3043,7 @@ def generate_params_dict(params, fitter_param_names):
 
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
-    multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin']
+    multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls']
     multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0',
                   'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
     
@@ -3912,7 +3914,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     for tt in range(N_traces):
         pos_no_pm_tr = p_tr_lens_tlon[tt] - p_mod_unlens_tlon
         plt.plot(t_long, pos_no_pm_tr[:, 1] * 1e3,
-                color='c', alpha=0.5, linewidth=1, zorder=-1)
+                 color='c', alpha=0.5, linewidth=1, zorder=-1)
 
     plt.xlabel('t - t0 (days)')
     plt.ylabel(r'$\Delta \delta$ (mas) - $\Delta \delta_{unlensed}$')
