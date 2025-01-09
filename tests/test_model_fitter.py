@@ -1223,7 +1223,7 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
                                                 best['piE_E'], best['piE_N'], best['xS0_E'], best['xS0_N'],
                                                 best['muS_E'], best['muS_N'],
                                                 best['q'], best['sep'], best['alpha'],
-                                                best['b_sff1'], best['mag_src1'], best['dmag_Lp_Ls'],
+                                                best['b_sff1'], best['mag_src1'], best['dmag_Lp_Ls1'],
                                                 raL=data['raL'], decL=data['decL'], root_tol=1e-8)
 
     psbl_in = model.PSBL_PhotAstrom_Par_Param2(p_in['t0'], p_in['u0_amp'], p_in['tE'], p_in['thetaE'], p_in['piS'],
@@ -1298,7 +1298,7 @@ def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
     psbl_out = model.PSBL_PhotAstrom_Par_Param1(best['mLp'], best['mLs'], best['t0'], best['xS0_E'], best['xS0_N'],
                                                 best['beta'], best['muL_E'], best['muL_N'],
                                                 best['muS_E'], best['muS_N'], best['dL'], best['dS'], best['sep'],
-                                                best['alpha'], best['b_sff1'], best['mag_src1'], best['dmag_Lp_Ls'],
+                                                best['alpha'], best['b_sff1'], best['mag_src1'], best['dmag_Lp_Ls1'],
                                                 raL=data['raL'], decL=data['decL'])
     
     psbl_in = model.PSBL_PhotAstrom_Par_Param1(p_in['mLp'], p_in['mLs'], p_in['t0'], p_in['xS0_E'], p_in['xS0_N'],

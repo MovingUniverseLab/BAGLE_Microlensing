@@ -752,7 +752,8 @@ class PSPL(ABC):
         # Note, we don't just call get_centroid_shift() because parallax_vec calculation is repeated.
         # and it is slow.
         thetaS = xS_unlensed - xL_unlensed
-        u_vec = thetaS / self.thetaE_amp
+
+        u_vec = thetaS / (self.thetaE_amp / 1e-3)
         u_amp = np.linalg.norm(u_vec, axis=1)
 
         # Assume all neighbor flux is in the lens.
@@ -764,15 +765,15 @@ class PSPL(ABC):
         # u^2 + 2 + gu\sqrt{u^2+4}
         denom_u = u_amp ** 2 + 2 + g * u_amp * np.sqrt(u_amp ** 2 + 4)
 
-        # Lens-induced astrometric shift of the sum of all source images (in mas)
-        numer = thetaS * (1 + g * numer_u).reshape(len(numer_u), 1)
+        # Lens-induced astrometric shift of the sum of all source images
+        numer = thetaS * (1 + g * numer_u).reshape(len(numer_u), 1) # arcsec
         denom = (1 + g) * denom_u
 
-        shift = numer / denom.reshape((len(u_amp), 1))  # mas
+        shift = numer / denom.reshape((len(u_amp), 1))  # arcsec
 
         # Flux-weighted centroid, lensed
         pos_lensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
-        pos_lensed += shift * 1e-3
+        pos_lensed += shift
 
         return pos_lensed
 
