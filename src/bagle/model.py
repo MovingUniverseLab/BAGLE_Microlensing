@@ -753,7 +753,7 @@ class PSPL(ABC):
         # and it is slow.
         thetaS = xS_unlensed - xL_unlensed
 
-        u_vec = thetaS / (self.thetaE_amp / 1e-3)
+        u_vec = thetaS / (self.thetaE_amp * 1e-3)
         u_amp = np.linalg.norm(u_vec, axis=1)
 
         # Assume all neighbor flux is in the lens.
@@ -5908,7 +5908,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
     """
     Contains methods for model a PSPL photometry + astrometry.
     This is a Data-type class in our hierarchy. It is abstract and should not
-    be instantiated. 
+    be instantiated.
     """
     photometryFlag = True
     astrometryFlag = True

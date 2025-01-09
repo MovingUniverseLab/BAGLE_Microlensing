@@ -2368,6 +2368,7 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     from pyLIMA import telescopes
     from pyLIMA import toolbox as microltoolbox
     from pyLIMA.models import generate_model
+    from pyLIMA.models import USBL_model, pyLIMA_fancy_parameters
 
     phi_rad = np.radians(-phi)
 
@@ -2389,15 +2390,16 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     time_mjd = time_jd - 2400000.5
 
     pylima_tel = telescopes.Telescope(name='OGLE', camera_filter='I',
-                                      light_curve=pylima_data,
-                                      light_curve_names = ['time', 'mag', 'err_mag'],
-                                      light_curve_units = ['JD', 'mag', 'mag'])
+                                      lightcurve=pylima_data,
+                                      lightcurve_names = ['time', 'mag', 'err_mag'],
+                                      lightcurve_units = ['JD', 'mag', 'mag'])
 
     pylima_ev = event.Event()
     pylima_ev.name = 'Fubar'
     pylima_ev.telescopes.append(pylima_tel)
+    pylima_fancy = pyLIMA_fancy_parameters.StandardFancyParameters()
 
-    pylima_mod = generate_model.create_model('PSBL', pylima_ev)
+    pylima_mod = generate_model.create_model('PSBL', pylima_ev, fancy_parameters=pylima_fancy)
     pylima_mod.define_model_parameters()
     pylima_mod.blend_flux_ratio = False
 
@@ -2589,9 +2591,9 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     pylima_t0_par = t0_par + 2400000.5
 
     pylima_tel = telescopes.Telescope(name='OGLE', camera_filter='I',
-                                      light_curve=pylima_data,
-                                      light_curve_names = ['time', 'mag', 'err_mag'],
-                                      light_curve_units = ['JD', 'mag', 'mag'])
+                                      lightcurve=pylima_data,
+                                      lightcurve_names = ['time', 'mag', 'err_mag'],
+                                      lightcurve_units = ['JD', 'mag', 'mag'])
     pylima_ev = event.Event()
     pylima_ev.name = 'Fubar'
     pylima_ev.telescopes.append(pylima_tel)
@@ -3635,7 +3637,7 @@ def test_FSPL_PhotAstrom_lens_astrometry(plot=False):
     muS_N = 0.0
     muL_E = 0.0
     muL_N = 0.0
-    radius = 1e-6 # arcsec
+    radiusS = 1e-6 # arcsec
     b_sff = 0.9
     mag_src = 19.0
     raL = 17.30 * 15.
@@ -3652,7 +3654,7 @@ def test_FSPL_PhotAstrom_lens_astrometry(plot=False):
                                             xS0_E, xS0_N,
                                             muL_E, muL_N,
                                             muS_E, muS_N,
-                                            radius,
+                                            radiusS,
                                             b_sff, mag_src, n_outline,
                                             raL=raL, decL=decL)
 
@@ -3699,7 +3701,7 @@ def test_FSPL_PhotAstrom_methods(plot=False):
     muS_N = 0.0
     muL_E = 0.0
     muL_N = 0.0
-    radius = 1e-6 # arcsec
+    radiusS = 1e-6 # arcsec
     b_sff = 0.9
     mag_src = 19.0
     raL = 17.30 * 15.
@@ -3759,21 +3761,21 @@ def test_FSPL_PhotAstrom_methods(plot=False):
     ##########
     fspl_arr_n10_good = np.array([18.92669033, 18.91750603, 18.88851301, 18.81967248, 18.60187731,
                                   18.33333436, 18.60502467, 18.82056849, 18.88892235, 18.91764756])
-    fspl_arr_n10 = test_fspl_once(radius, 10, fspl_arr_n10_good, mod='FSPL')
+    fspl_arr_n10 = test_fspl_once(radiusS, 10, fspl_arr_n10_good, mod='FSPL')
 
     ##########
     # FSPL n=50, r=0.001 thetaE
     ##########
     fspl_arr_n50_good = np.array([18.87797024, 18.86873943, 18.83960216, 18.77043423, 18.55173065,
                                   18.28229242, 18.55488948, 18.7713343, 18.84001349, 18.86888168])
-    fspl_arr_n50 = test_fspl_once(radius, 50, fspl_arr_n50_good, mod='FSPL')
+    fspl_arr_n50 = test_fspl_once(radiusS, 50, fspl_arr_n50_good, mod='FSPL')
 
     ##########
     # FSPL n=100, r=0.001 thetaE
     ##########
     fspl_arr_n100_good = np.array([18.87604328, 18.86681067, 18.83766782, 18.76848725, 18.5497486,
                                    18.28027583, 18.55290789, 18.76938749, 18.83807923, 18.86695294])
-    fspl_arr_n100 = test_fspl_once(radius, 100, fspl_arr_n100_good, mod='FSPL')
+    fspl_arr_n100 = test_fspl_once(radiusS, 100, fspl_arr_n100_good, mod='FSPL')
 
     ##########
     # FSPL n=10, r=0.1 thetaE
@@ -4203,7 +4205,7 @@ def test_BSBL_PhotAstrom_Par_Param1():
     mag_src_sec = np.array([19.0])
     b_sff = np.array([1.0])
     dmag_Lp_Ls = 20
-    
+
     # phi_piE = np.degrees(np.arctan2(piE_N, piE_E))  # PA of muRel on the sky
     # phi = alpha - phi_piE  # relative angle between binary and muRel.
     # print('alpha = ', alpha, ' deg')
