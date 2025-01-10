@@ -1,5 +1,4 @@
-from microlens.jlu import model
-# from microlens.jlu import model_fitter
+from bagle import model, model_fitter, parallax
 from microlens.jlu import astrometry
 from astropy import constants as c
 from astropy import units as u
@@ -11,7 +10,7 @@ import pdb
 import math
 import os
 
-paper_dir = '/Users/jlu/doc/papers/lens_math/'
+paper_dir = '/u/mhuston/work/bagle_papers/'
 
 def plot_pspl_parallax_belokurov():
     dim_ang = u.dimensionless_angles()
@@ -179,7 +178,7 @@ def plot_geometry():
     Plot a geometry figure showing source, lens, proper motions, parallax vector, etc. 
     """
     ra = 17.50 * 15.0
-    dec = -30.00
+    dec = -29.00
     lens_distance = 4000.0
     
     astrometry.plot_parallax_vector(ra, dec, lens_distance)
@@ -206,7 +205,7 @@ def plot_geometry():
 
     # Project the microlensing parallax into parallel and perpendicular
     # w.r.t. the ecliptic... useful quantities.
-    parallax_vec_at_t = model.parallax_in_direction(ra, dec, times)
+    parallax_vec_at_t = parallax.parallax_in_direction(ra, dec, times)
     parallax_amp = 1.0e3 / src_dist
     print(f'src parallax: {parallax_amp:0.1f} mas')
     parallax_vec_at_t *= parallax_amp
@@ -300,7 +299,7 @@ def plot_pspl_ellipse():
     plt.figure(1, figsize=(12, 6))
     plt.clf()
     
-    gs_kw = dict(width_ratios=[1, 1], height_ratios=[2, 1])
+    gs_kw = dict(width_ratios=[0.9,1.1], height_ratios=[2, 1])
     fig, axd = plt.subplot_mosaic([['upper left', 'right'],
                                    ['lower left', 'right']],
                                       gridspec_kw=gs_kw, figsize=(12, 6),
@@ -328,7 +327,7 @@ def plot_pspl_ellipse():
     ax_m.invert_yaxis()
     
 
-    ax_p.scatter(pos_par[:, 0]*1e3, pos_par[:, 1]*1e3,
+    im=ax_p.scatter(pos_par[:, 0]*1e3, pos_par[:, 1]*1e3,
                     label='Parallax',
                  c=t, cmap=cmap, norm=norm, s=3)
     ax_p.scatter(pos[:, 0]*1e3, pos[:, 1]*1e3,
@@ -336,7 +335,7 @@ def plot_pspl_ellipse():
                  c=t, cmap=cmap, norm=norm, s=0.5, alpha=0.3)
     ax_p.plot(pos_src_par[:, 0]*1e3, pos_src_par[:, 1]*1e3,
                   label='Unlensed Source',
-                  ls='-', marker=None, color='orange')
+                  ls='-', marker=None, color='darkorange')
     ax_p.plot(pos_lens_par[:, 0]*1e3, pos_lens_par[:, 1]*1e3,
                   label='Lens',
                   ls='--', marker=None, color='black')
@@ -347,15 +346,18 @@ def plot_pspl_ellipse():
     ax_p.set_ylim(-sz, sz)
     ax_p.set_xlim(-sz, sz)
     ax_p.invert_xaxis()
-    ax_p.legend(fontsize=12)
-
+    ax_p.legend(fontsize=12,scatterpoints=10,markerscale=2,scatteryoffsets=[0.5])
+    cbar = fig.colorbar(im,pad=0.02)
+    cbar.ax.tick_params(labelsize=12)
+    cbar.set_label(label='time (mjd)',size=12)
+    plt.tight_layout()
     plt.savefig(paper_dir + 'pspl_ellipse.png')
     
     return
 
 
 def compare_with_pylima():
-    from microlens.jlu.tests import test_model
+    from bagle.tests import test_model
 
     ra = 267.4640833333333
     dec = -34.62555555555556
@@ -384,7 +386,7 @@ def plot_helio_geo_t0():
     Plot how the t0, tE, u0 all change when converting from helio to geo(tr) for a 
     single set of parameters (but maybe move t0 throughout the year). 
     """
-    from microlens.jlu import helio_geo_conversion as hgc
+    from bagle import helio_geo_conversion as hgc
     
     # Bulge event: some parameters from OB110462 DW solution.
     ra = '17:51:40.19'
