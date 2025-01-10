@@ -16706,6 +16706,7 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
 #
 # ==================================================
 class FSPL(PSPL):
+    """Finite-Source, Point-Lens models."""
     def get_source_outline_astrometry(self, center):
         """Return astrometric points that outline the outer circumference of the
         source star. The outline is described as a circle of radius
