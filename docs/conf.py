@@ -57,7 +57,7 @@ html_static_path = ['_static']
 # a list of builtin themes.
 #
 import sphinx_rtd_theme
-from graphviz import dot
+#from graphviz import dot
 html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
