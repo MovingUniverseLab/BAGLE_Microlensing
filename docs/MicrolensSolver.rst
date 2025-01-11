@@ -1,18 +1,18 @@
 
-PSPL_Solver
+MicrolensSolver
 ---------------
 
-.. autoclass:: model_fitter.PSPL_Solver
+.. autoclass:: model_fitter.MicrolensSolver
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model_fitter.PSPL_Solver_weighted
+.. autoclass:: model_fitter.MicrolensSolverWeighted
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model_fitter.PSPL_Solver_Hobson_Weighted
+.. autoclass:: model_fitter.MicrolensSolverHobsonWeighted
     :members:
     :inherited-members:
     :show-inheritance:

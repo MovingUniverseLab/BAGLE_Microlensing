@@ -51,46 +51,61 @@ List of Available Models
 
 The complete list of instantiable model classes is: 
 
-Point source, point lens, photometry only
------------------------------------------
-
-    - PSPL_Phot_noPar_Param1
-    - PSPL_Phot_noPar_Param2
-    - PSPL_Phot_Par_Param1
-    - PSPL_Phot_Par_Param2
-    - PSPL_Phot_Par_Param1_geoproj
-    - PSPL_Phot_noPar_GP_Param1
-    - PSPL_Phot_noPar_GP_Param2
-    - PSPL_Phot_Par_GP_Param1
-    - PSPL_Phot_Par_GP_Param1_2
-    - PSPL_Phot_Par_GP_Param2
-    - PSPL_Phot_Par_GP_Param2_2
-
 Point source, point lens, photometry and astrometry
 ---------------------------------------------------
 
-    - PSPL_PhotAstrom_noPar_Param1
-    - PSPL_PhotAstrom_noPar_Param2
-    - PSPL_PhotAstrom_noPar_Param3
-    - PSPL_PhotAstrom_noPar_Param4
-    - PSPL_PhotAstrom_Par_Param4_geoproj
     - PSPL_PhotAstrom_Par_Param1
     - PSPL_PhotAstrom_Par_Param2
     - PSPL_PhotAstrom_Par_Param3
     - PSPL_PhotAstrom_Par_Param4
     - PSPL_PhotAstrom_Par_Param5
-    - PSPL_PhotAstrom_noPar_GP_Param1
-    - PSPL_PhotAstrom_noPar_GP_Param2
+    - PSPL_PhotAstrom_noPar_Param1
+    - PSPL_PhotAstrom_noPar_Param2
+    - PSPL_PhotAstrom_noPar_Param3
+    - PSPL_PhotAstrom_noPar_Param4
+    - PSPL_PhotAstrom_Par_Param1_geoproj
+    - PSPL_PhotAstrom_Par_Param4_geoproj
     - PSPL_PhotAstrom_Par_GP_Param1
     - PSPL_PhotAstrom_Par_GP_Param2
     - PSPL_PhotAstrom_Par_GP_Param3
     - PSPL_PhotAstrom_Par_GP_Param4
+    - PSPL_PhotAstrom_Par_GP_Param3_1
+    - PSPL_PhotAstrom_Par_GP_Param3_2
+    - PSPL_PhotAstrom_Par_GP_Param4_1
+    - PSPL_PhotAstrom_Par_GP_Param4_2
+    - PSPL_PhotAstrom_Par_GPnoJitter_Param3_1
+    - PSPL_PhotAstrom_noPar_GP_Param1
+    - PSPL_PhotAstrom_noPar_GP_Param2
+
+Point source, point lens, photometry only
+-----------------------------------------
+
+    - PSPL_Phot_Par_Param1
+    - PSPL_Phot_Par_Param2
+    - PSPL_Phot_Par_Param3
+    - PSPL_Phot_noPar_Param1
+    - PSPL_Phot_noPar_Param2
+    - PSPL_Phot_noPar_Param3
+    - PSPL_Phot_Par_Param1_geoproj
+    - PSPL_Phot_Par_GP_Param1
+    - PSPL_Phot_Par_GP_Param2
+    - PSPL_Phot_Par_GP_Param3
+    - PSPL_Phot_Par_GP_Param1_2
+    - PSPL_Phot_Par_GP_Param2_2
+    - PSPL_Phot_Par_GP_Param2_3
+    - PSPL_Phot_Par_GP_Param2_4
+    - PSPL_Phot_Par_GP_Param2_5
+    - PSPL_Phot_Par_GPnoJitter_Param2_2
+    - PSPL_Phot_Par_GPnoJitter_Param2_3
+    - PSPL_Phot_noPar_GP_Param1
+    - PSPL_Phot_noPar_GP_Param2
 
 Point source, point lens, astrometry only
 -----------------------------------------
 
-    - PSPL_Astrom_Par_Param4
     - PSPL_Astrom_Par_Param3
+    - PSPL_Astrom_Par_Param4
+
 
 Point soruce, binary lens, photometry only
 ------------------------------------------
