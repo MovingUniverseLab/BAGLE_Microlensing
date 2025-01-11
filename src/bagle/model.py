@@ -19225,9 +19225,6 @@ class PSBL_PhotAstrom_Par_GP_Param1(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
-
-        
-        
 # PSBL
 @inheritdocstring
 class PSBL_PhotAstrom_noPar_GP_Param2(ModelClassABC,
