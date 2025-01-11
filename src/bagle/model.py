@@ -546,10 +546,10 @@ class PSPL(ABC):
 
     def get_astrometry_unlensed(self, t, filt_idx=0):
         """
-        Get the unresolved astrometry of the source and lens if there was
-        no gravitational lensing. The returned array is in arcsec and
-        has a shape of [len(t), 2] where the second dimension includes
-        [RA, Dec] positions in arcsec.
+        Get the unresolved astrometry of the combined source and lens if
+        there was no gravitational lensing. The returned array is in
+        arcsec and has a shape of [len(t), 2] where the second dimension
+        includes [RA, Dec] positions in arcsec.
 
         Parameters
         ----------
@@ -566,10 +566,10 @@ class PSPL(ABC):
         xS_unlensed = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
-        # Flux-weighted centroid of source and lens, lensed
-        pos_lensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
+        # Flux-weighted centroid of source and lens, unlensed
+        pos_unlensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
 
-        return pos_lensed
+        return pos_unlensed
 
     def get_resolved_amplification(self, t, filt_idx=0):
         """
@@ -1129,7 +1129,6 @@ class PSPL(ABC):
     def animate(self, tE, time_steps, frame_time, name, size, zoom,
                 astrometry, filt_idx=0):
         """ Produces animation of microlensing event.
-        This function takes the PSPL and makes an animation, the input variables are as follows
 
         Parameters
         ----------
@@ -16756,9 +16755,13 @@ class FSPL(PSPL):
 
         Notes
         -----
-        The algorithm uses green's theorem to change an area integral of the
-        image of the source into a path integral around the outside outline.
-        We perform a first-order contour integral to approximate the area.
+        The algorithm uses Green's theorem to change an area integral of the
+        image of the source into a path integral around the outline.
+        For the amplification, we perform a first-order contour integral to
+        approximate the area, and include a second-order parabolic correction.
+        For the centroid calculation, we perform only the first-order contour
+        integral with no second-order parabolic correction.
+        Equations for the contour integrals come from Bozza et al. (2021).
         """
         # Lensed positions of each outline point for both plus/minus images.
         # Note these are positions on the sky. in arcsec
@@ -16880,7 +16883,6 @@ class FSPL(PSPL):
     def get_amplification(self, t, filt_idx=0, amp_arr=None):
         """
         Get an array of the photometric amplifications at the input times.
-        Parallax is included.
 
         Parameters
         ----------
@@ -16957,7 +16959,7 @@ class FSPL(PSPL):
 
 class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     """
-    Contains methods for model a PSPL photometry + astrometry.
+    Contains methods for model FSPL photometry + astrometry.
     This is a Data-type class in our hierarchy. It is abstract and should not
     be instantiated. 
 
@@ -16997,8 +16999,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     radiusS
     n
     b_sff[#]
-    mag_src[#] -- add in
-    mag_base[#] -- add in 
+    mag_src[#]
+    mag_base[#]
     raL - if parallax model
     decL - if parallax model
 
@@ -17006,71 +17008,16 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     photometryFlag = True
     astrometryFlag = True
 
-    # FIXME: I don't think this works... need to check what the shape of amp_array is.
-    #     def get_resolved_photometry(self, t_obs, filt_idx=0, amp_arr=None):
-    #         '''
-    #         Get the photometry for each of the lensed source images.
-    #         Implement with no blending (since we don't support different
-    #         blendings for the different images).
-    #
-    #         Parameters
-    #         ----------
-    #         t_obs : array_like
-    #             Array of times to model.
-    #
-    #         Other Parameters
-    #         ----------------
-    #         amp_arr : array_like
-    #             Amplifications of each individual image at each time,
-    #             i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
-    #
-    #             This will over-ride t_obs; but is more efficient when calculating
-    #             both photometry and astrometry. If None, then just use t_obs.
-    #         filt_idx : int
-    #             The filter index (def=0).
-    #
-    #         Returns
-    #         -------
-    #         mag_model : array_like
-    #             Magnitude of each lensed image centroid at t_obs.
-    #             Shape = FIXME
-    #         '''
-    #         mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
-    #         flux_zp = 1.0
-    #
-    #         if amp_arr is None:
-    #             amp_arr, img_arr = self.get_centroids(t_obs, self.radiusS)
-    #
-    #         # Do we need this masked stuff?
-    #         # Mask invalid values from the amplification array.
-    #         amp_arr_mskd = np.masked_invalid(amp_arr)
-    #
-    #         flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
-    #         flux_model = flux_src * amp_arr_mskd
-    #
-    #         # Account for blending, if necessary.
-    #         try:
-    #             # Adding flux of neighbors and lens
-    #             # b_sff = fS / (fS + fN + fL)
-    #             flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / \
-    #                           self.b_sff[filt_idx]
-    #         except AttributeError:
-    #             pass
-    #
-    #         # Catch the edge case where we exceed the zeropoint.
-    #         bad = np.where(flux_model <= 0)
-    #         if len(bad[0]) > 0:
-    #             print('Warning: get_photometry: bad flux encountered.')
-    #             flux_model[bad] = np.nan
-    #
-    #         mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
-    #
-    #         return mag_model
-
-
     def get_astrometry_outline_unlensed(self, t_obs, filt_idx=0):
         """Get the astrometry of the source outline if the lens didn't exist.
-
+        
+        Parameters
+        ----------
+        t_obs : array, float
+            Times in MJD at which to evaluate the separation.
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+            
         Returns
         -------
         xS_unlensed : numpy array, dtype=float, shape = [len(t_obs), self.n_outline, 2]
@@ -17098,7 +17045,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         """
         Get the separation vector, \vec{u}(t), which is the unlensed
         source - lens separation vector for each point of the source
-        outline. Positions are  on the plane of the sky in units of \theta_E.
+        outline. Positions are on the plane of the sky in units of \theta_E.
 
         Parameters
         ----------
@@ -17136,7 +17083,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Get the astrometric microlensing shift of each
         point in the source outline for each of the multiple
         lensed images. These are the positional offsets between the
-        soruce image outline and the lens position.
+        source image outline and the lens position.
         No impact from the lens flux is included.
 
         Parameters
@@ -17193,7 +17140,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Returns
         -------
         xS_lensed_resolved_outline : numpy array
-            Vector position of the plus and minus images.
+            Vector position of the plus and minus images in arcsec.
             shape = [len(t_obs), self.n_outline, [+,-], [E,N]]
             where the last axis contains East and North positions.
         """
@@ -17278,7 +17225,12 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         t: Array of times in MJD.DDD
         filt_idx : int, optional
             Index of the astrometric filter or data set.
-
+            
+        Returns
+        _______
+        amp_arr : array_like
+            Array/tuple of amplification of each lensed image at each t_obs.
+            Shape = [n_images=2, len(t_obs)]
         """
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
@@ -17416,7 +17368,6 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         filt_idx : int
             The filter index (def=0).
 
-
         Returns
         -------
         model_pos : array_like
@@ -17478,7 +17429,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
     def animate(self, crossings, time_steps, frame_time, name, size, zoom,
                 astrometry, filt_idx=0):
-        # BROKEN
+        # TODO: BROKEN
         # creates the animation html, given an instance of the Uniformly_bright class and a list of times
 
         times = np.array(range(-time_steps, time_steps + 1, 1))
