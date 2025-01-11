@@ -244,7 +244,7 @@ Finite source, point lens, photometry and astrometry (broken)
 
 
 
-Developers
+For Developers
 =========================
 
 Each model class is built up from a menu of different features
