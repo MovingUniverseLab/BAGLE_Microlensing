@@ -19911,7 +19911,7 @@ class BSBL_PhotAstrom_noPar_Param1(ModelClassABC,
                                    BSBL_noParallax,
                                    BSBL_PhotAstromParam1):
     """
-    Parameterization with t0 defined between the geometric center of the lens and the source. Takes in lens masses.       No Parallax.
+    Parameterization with t0 defined between the geometric center of the lens and the source; takes in lens masses; No Parallax.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -19926,18 +19926,14 @@ class BSBL_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC,
                                          BSBL_PhotAstrom,
                                          BSBL_Parallax,
                                          BSBL_PhotAstrom_EllOrbs_Param1):
-        """
-        Parameterization with t0 defined between the lens CoM and source CoM. Takes in lens masses. 
-        Parallax.
-        """
-
+    """
+    Parameterization with t0 defined between the lens CoM and source CoM. Takes in lens masses. 
+    Parallax.
+    """    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
-
-        Time of closest approach between source COM and Lens COM (MJD.DDD)
 
 
 @inheritdocstring
@@ -19945,7 +19941,7 @@ class BSBL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
                                            BSBL_PhotAstrom,
                                            BSBL_noParallax,
                                            BSBL_PhotAstrom_EllOrbs_Param1):
-     """
+    """
     Parameterization with t0 defined between the lens CoM and source CoM. Takes in lens masses. 
     No Parallax.
     """
@@ -19961,10 +19957,10 @@ class BSBL_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC,
                                          BSBL_PhotAstrom,
                                          BSBL_Parallax,
                                          BSBL_PhotAstrom_EllOrbs_Param2):
-        """
-        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in mass ratio of lenses.
-        Parallax.
-        """
+    """
+    Parameterization with t0 defined between the primary source and binary lens CoM. Takes in mass ratio of lenses.
+    Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -19976,10 +19972,10 @@ class BSBL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC,
                                            BSBL_PhotAstrom,
                                            BSBL_noParallax,
                                            BSBL_PhotAstrom_EllOrbs_Param2):
-        """
-        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in mass ratio of lenses.
-        Parallax.
-        """
+    """
+    Parameterization with t0 defined between the primary source and binary lens CoM. Takes in mass ratio of lenses.
+    Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -19992,10 +19988,10 @@ class BSBL_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC,
                                           BSBL_PhotAstrom,
                                           BSBL_Parallax,
                                           BSBL_PhotAstrom_CircOrbs_Param1):
-        """
-        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in masses of lenses.
-        Parallax.
-        """
+    """
+    Parameterization with t0 defined between the primary source and binary lens CoM. Takes in masses of lenses.
+    Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20007,10 +20003,10 @@ class BSBL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
                                             BSBL_PhotAstrom,
                                             BSBL_noParallax,
                                             BSBL_PhotAstrom_CircOrbs_Param1):
-        """
-        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in masses of lenses.
-        No Parallax.
-        """
+    """
+    Parameterization with t0 defined between the primary source and binary lens CoM. Takes in masses of lenses.
+    No Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20023,10 +20019,10 @@ class BSBL_PhotAstrom_Par_CircOrbs_Param2(ModelClassABC,
                                           BSBL_PhotAstrom,
                                           BSBL_Parallax,
                                           BSBL_PhotAstrom_CircOrbs_Param2):
-        """
-        Parameterization with t0 and u0_amp_com defined between the primary source and binary lens center of mass. Takes in mass ratio of lenses.
-        Parallax.
-        """
+    """
+    Parameterization with t0 and u0_amp_com defined between the primary source and binary lens center of mass. Takes in mass ratio of lenses.
+    Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20038,10 +20034,10 @@ class BSBL_PhotAstrom_noPar_CircOrbs_Param2(ModelClassABC,
                                             BSBL_PhotAstrom,
                                             BSBL_noParallax,
                                             BSBL_PhotAstrom_CircOrbs_Param2):
-        """
-        Parameterization with t0 and u0_amp_com defined between the primary source and binary lens center of mass. Takes in mass ratio of lenses. 
-        No Parallax.
-        """
+    """
+    Parameterization with t0 and u0_amp_com defined between the primary source and binary lens center of mass. Takes in mass ratio of lenses. 
+    No Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20054,9 +20050,9 @@ class BSBL_PhotAstrom_Par_Param1(ModelClassABC,
                                  BSBL_PhotAstrom,
                                  BSBL_Parallax,
                                  BSBL_PhotAstromParam1):
-        """
-        Parameterization with t0 defined between the geometric center of the lens and the source. Parallax.
-        """
+    """
+    Parameterization with t0 defined between the geometric center of the lens and the source. Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20070,11 +20066,9 @@ class BSBL_PhotAstrom_noPar_Param2(ModelClassABC,
                                    BSBL_PhotAstrom,
                                    BSBL_noParallax,
                                    BSBL_PhotAstromParam2):
-        
     """
     Parameterization with t0 defined between the geometric center of the source and the primary lens. No Parallax.
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20086,14 +20080,14 @@ class BSBL_PhotAstrom_Par_Param2(ModelClassABC,
                                  BSBL_PhotAstrom,
                                  BSBL_Parallax,
                                  BSBL_PhotAstromParam2):
+    """
+    Parameterization with t0 defined between the geometric center of the source and the primary lens. Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
  
-    """
-    Parameterization with t0 defined between the geometric center of the source and the primary lens. Parallax.
-    """
                                      
 # =====
 # FSPL Model
