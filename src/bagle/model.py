@@ -244,7 +244,7 @@ Finite source, point lens, photometry and astrometry (broken)
 
 
 
-Developers
+For Developers
 =========================
 
 Each model class is built up from a menu of different features
@@ -546,10 +546,10 @@ class PSPL(ABC):
 
     def get_astrometry_unlensed(self, t, filt_idx=0):
         """
-        Get the unresolved astrometry of the source and lens if there was
-        no gravitational lensing. The returned array is in arcsec and
-        has a shape of [len(t), 2] where the second dimension includes
-        [RA, Dec] positions in arcsec.
+        Get the unresolved astrometry of the combined source and lens if
+        there was no gravitational lensing. The returned array is in
+        arcsec and has a shape of [len(t), 2] where the second dimension
+        includes [RA, Dec] positions in arcsec.
 
         Parameters
         ----------
@@ -566,10 +566,10 @@ class PSPL(ABC):
         xS_unlensed = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
-        # Flux-weighted centroid of source and lens, lensed
-        pos_lensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
+        # Flux-weighted centroid of source and lens, unlensed
+        pos_unlensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
 
-        return pos_lensed
+        return pos_unlensed
 
     def get_resolved_amplification(self, t, filt_idx=0):
         """
@@ -1129,7 +1129,6 @@ class PSPL(ABC):
     def animate(self, tE, time_steps, frame_time, name, size, zoom,
                 astrometry, filt_idx=0):
         """ Produces animation of microlensing event.
-        This function takes the PSPL and makes an animation, the input variables are as follows
 
         Parameters
         ----------
@@ -15423,7 +15422,7 @@ class BSBL_PhotAstromParam1(PSPL_Param):
     mLp, mLs : float
         Masses of the lenses (Msun)
     t0 : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
+        Time of closest approach between the geometric center of source and geometric center of the lens, as seen from Earth (MJD.DDD)
     xS0_E : float
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
@@ -16757,9 +16756,13 @@ class FSPL(PSPL):
 
         Notes
         -----
-        The algorithm uses green's theorem to change an area integral of the
-        image of the source into a path integral around the outside outline.
-        We perform a first-order contour integral to approximate the area.
+        The algorithm uses Green's theorem to change an area integral of the
+        image of the source into a path integral around the outline.
+        For the amplification, we perform a first-order contour integral to
+        approximate the area, and include a second-order parabolic correction.
+        For the centroid calculation, we perform only the first-order contour
+        integral with no second-order parabolic correction.
+        Equations for the contour integrals come from Bozza et al. (2021).
         """
         # Lensed positions of each outline point for both plus/minus images.
         # Note these are positions on the sky. in arcsec
@@ -16881,7 +16884,6 @@ class FSPL(PSPL):
     def get_amplification(self, t, filt_idx=0, amp_arr=None):
         """
         Get an array of the photometric amplifications at the input times.
-        Parallax is included.
 
         Parameters
         ----------
@@ -16958,7 +16960,7 @@ class FSPL(PSPL):
 
 class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     """
-    Contains methods for model a PSPL photometry + astrometry.
+    Contains methods for model FSPL photometry + astrometry.
     This is a Data-type class in our hierarchy. It is abstract and should not
     be instantiated. 
 
@@ -16998,8 +17000,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     radiusS
     n
     b_sff[#]
-    mag_src[#] -- add in
-    mag_base[#] -- add in 
+    mag_src[#]
+    mag_base[#]
     raL - if parallax model
     decL - if parallax model
 
@@ -17007,71 +17009,16 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
     photometryFlag = True
     astrometryFlag = True
 
-    # FIXME: I don't think this works... need to check what the shape of amp_array is.
-    #     def get_resolved_photometry(self, t_obs, filt_idx=0, amp_arr=None):
-    #         '''
-    #         Get the photometry for each of the lensed source images.
-    #         Implement with no blending (since we don't support different
-    #         blendings for the different images).
-    #
-    #         Parameters
-    #         ----------
-    #         t_obs : array_like
-    #             Array of times to model.
-    #
-    #         Other Parameters
-    #         ----------------
-    #         amp_arr : array_like
-    #             Amplifications of each individual image at each time,
-    #             i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
-    #
-    #             This will over-ride t_obs; but is more efficient when calculating
-    #             both photometry and astrometry. If None, then just use t_obs.
-    #         filt_idx : int
-    #             The filter index (def=0).
-    #
-    #         Returns
-    #         -------
-    #         mag_model : array_like
-    #             Magnitude of each lensed image centroid at t_obs.
-    #             Shape = FIXME
-    #         '''
-    #         mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
-    #         flux_zp = 1.0
-    #
-    #         if amp_arr is None:
-    #             amp_arr, img_arr = self.get_centroids(t_obs, self.radiusS)
-    #
-    #         # Do we need this masked stuff?
-    #         # Mask invalid values from the amplification array.
-    #         amp_arr_mskd = np.masked_invalid(amp_arr)
-    #
-    #         flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
-    #         flux_model = flux_src * amp_arr_mskd
-    #
-    #         # Account for blending, if necessary.
-    #         try:
-    #             # Adding flux of neighbors and lens
-    #             # b_sff = fS / (fS + fN + fL)
-    #             flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / \
-    #                           self.b_sff[filt_idx]
-    #         except AttributeError:
-    #             pass
-    #
-    #         # Catch the edge case where we exceed the zeropoint.
-    #         bad = np.where(flux_model <= 0)
-    #         if len(bad[0]) > 0:
-    #             print('Warning: get_photometry: bad flux encountered.')
-    #             flux_model[bad] = np.nan
-    #
-    #         mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
-    #
-    #         return mag_model
-
-
     def get_astrometry_outline_unlensed(self, t_obs, filt_idx=0):
         """Get the astrometry of the source outline if the lens didn't exist.
-
+        
+        Parameters
+        ----------
+        t_obs : array, float
+            Times in MJD at which to evaluate the separation.
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+            
         Returns
         -------
         xS_unlensed : numpy array, dtype=float, shape = [len(t_obs), self.n_outline, 2]
@@ -17099,7 +17046,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         """
         Get the separation vector, \vec{u}(t), which is the unlensed
         source - lens separation vector for each point of the source
-        outline. Positions are  on the plane of the sky in units of \theta_E.
+        outline. Positions are on the plane of the sky in units of \theta_E.
 
         Parameters
         ----------
@@ -17137,7 +17084,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Get the astrometric microlensing shift of each
         point in the source outline for each of the multiple
         lensed images. These are the positional offsets between the
-        soruce image outline and the lens position.
+        source image outline and the lens position.
         No impact from the lens flux is included.
 
         Parameters
@@ -17194,7 +17141,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Returns
         -------
         xS_lensed_resolved_outline : numpy array
-            Vector position of the plus and minus images.
+            Vector position of the plus and minus images in arcsec.
             shape = [len(t_obs), self.n_outline, [+,-], [E,N]]
             where the last axis contains East and North positions.
         """
@@ -17279,7 +17226,12 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         t: Array of times in MJD.DDD
         filt_idx : int, optional
             Index of the astrometric filter or data set.
-
+            
+        Returns
+        _______
+        amp_arr : array_like
+            Array/tuple of amplification of each lensed image at each t_obs.
+            Shape = [n_images=2, len(t_obs)]
         """
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
@@ -17417,7 +17369,6 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         filt_idx : int
             The filter index (def=0).
 
-
         Returns
         -------
         model_pos : array_like
@@ -17479,7 +17430,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
     def animate(self, crossings, time_steps, frame_time, name, size, zoom,
                 astrometry, filt_idx=0):
-        # BROKEN
+        # TODO: BROKEN
         # creates the animation html, given an instance of the Uniformly_bright class and a list of times
 
         times = np.array(range(-time_steps, time_steps + 1, 1))
@@ -18162,7 +18113,10 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
 def inheritdocstring(cls):
     for base in inspect.getmro(cls)[::-1]:
         if base != object and base != ABC and base.__doc__ is not None:
-            cls.__doc__ = base.__doc__
+            if cls.__doc__ is not None:
+                cls.__doc__ += '\n' + base.__doc__
+            else:
+                cls.__doc__ = base.__doc__
             break
     return cls
 
@@ -18254,6 +18208,9 @@ class PSPL_PhotAstrom_noPar_Param1(ModelClassABC,
                                    PSPL_PhotAstrom,
                                    PSPL_noParallax,
                                    PSPL_PhotAstromParam1):
+    """
+    Physical parameterization (i.e. mL instead of tE)
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18266,6 +18223,9 @@ class PSPL_PhotAstrom_Par_Param1(ModelClassABC,
                                  PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam1):
+    """
+    Physical parameterization (i.e. mL instead of tE)
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18278,6 +18238,9 @@ class PSPL_PhotAstrom_Par_Param2(ModelClassABC,
                                  PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam2):
+    """
+    Microlensing params with mag_src
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18290,6 +18253,9 @@ class PSPL_PhotAstrom_noPar_Param2(ModelClassABC,
                                    PSPL_PhotAstrom,
                                    PSPL_noParallax,
                                    PSPL_PhotAstromParam2):
+    """
+    Microlensing params with mag_src
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18301,6 +18267,9 @@ class PSPL_PhotAstrom_noPar_Param3(ModelClassABC,
                                    PSPL_PhotAstrom,
                                    PSPL_noParallax,
                                    PSPL_PhotAstromParam3):
+    """
+    Microlensing params with mag_base and log10_thetaE
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18312,6 +18281,9 @@ class PSPL_PhotAstrom_Par_Param3(ModelClassABC,
                                  PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam3):
+    """
+    Microlensing params with mag_base and log10_thetaE
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18323,6 +18295,9 @@ class PSPL_PhotAstrom_Par_Param4(ModelClassABC,
                                  PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam4):
+    """
+    Microlensing params with mag_base
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18347,6 +18322,9 @@ class PSPL_PhotAstrom_Par_Param5(ModelClassABC,
                                  PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam5):
+    """
+    Microlensing params with mag_base and piE_E and piE_E/piE_N
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18358,6 +18336,9 @@ class PSPL_PhotAstrom_noPar_Param4(ModelClassABC,
                                    PSPL_PhotAstrom,
                                    PSPL_noParallax,
                                    PSPL_PhotAstromParam4):
+    """
+    Microlensing params with mag_base
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18369,6 +18350,9 @@ class PSPL_Astrom_Par_Param4(ModelClassABC,
                              PSPL_Astrom,
                              PSPL_Parallax,
                              PSPL_AstromParam4):
+    """
+    Microlensing params with mag_base
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18380,6 +18364,9 @@ class PSPL_Astrom_Par_Param3(ModelClassABC,
                              PSPL_Astrom,
                              PSPL_Parallax,
                              PSPL_AstromParam3):
+    """
+    Microlensing params with mag_base and log10_thetaE
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18392,6 +18379,9 @@ class PSPL_Phot_noPar_Param1(ModelClassABC,
                              PSPL_Phot,
                              PSPL_noParallax,
                              PSPL_PhotParam1):
+    """
+    Microlensing params with mag_src
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18403,6 +18393,9 @@ class PSPL_Phot_noPar_Param2(ModelClassABC,
                              PSPL_Phot,
                              PSPL_noParallax,
                              PSPL_PhotParam2):
+    """
+    Microlensing params with mag_base
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18414,6 +18407,9 @@ class PSPL_Phot_noPar_Param3(ModelClassABC,
                              PSPL_Phot,
                              PSPL_noParallax,
                              PSPL_PhotParam3):
+    """
+    Microlensing params with mag_base, log_tE, log_piE, and phi_muRel
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -19223,7 +19219,6 @@ class PSBL_PhotAstrom_Par_GP_Param1(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
-
 # PSBL
 @inheritdocstring
 class PSBL_PhotAstrom_noPar_GP_Param2(ModelClassABC,
@@ -19915,10 +19910,14 @@ class BSBL_PhotAstrom_noPar_Param1(ModelClassABC,
                                    BSBL_PhotAstrom,
                                    BSBL_noParallax,
                                    BSBL_PhotAstromParam1):
+    """
+    Parameterization with t0 defined between the geometric center of the lens and the source. Takes in lens masses.       No Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
 
 
 # BSBL_parallax
@@ -19927,10 +19926,18 @@ class BSBL_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC,
                                          BSBL_PhotAstrom,
                                          BSBL_Parallax,
                                          BSBL_PhotAstrom_EllOrbs_Param1):
+        """
+        Parameterization with t0 defined between the lens CoM and source CoM. Takes in lens masses. 
+        Parallax.
+        """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
+
+        Time of closest approach between source COM and Lens COM (MJD.DDD)
 
 
 @inheritdocstring
@@ -19938,6 +19945,10 @@ class BSBL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
                                            BSBL_PhotAstrom,
                                            BSBL_noParallax,
                                            BSBL_PhotAstrom_EllOrbs_Param1):
+     """
+    Parameterization with t0 defined between the lens CoM and source CoM. Takes in lens masses. 
+    No Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -19950,6 +19961,10 @@ class BSBL_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC,
                                          BSBL_PhotAstrom,
                                          BSBL_Parallax,
                                          BSBL_PhotAstrom_EllOrbs_Param2):
+        """
+        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in mass ratio of lenses.
+        Parallax.
+        """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -19961,6 +19976,10 @@ class BSBL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC,
                                            BSBL_PhotAstrom,
                                            BSBL_noParallax,
                                            BSBL_PhotAstrom_EllOrbs_Param2):
+        """
+        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in mass ratio of lenses.
+        Parallax.
+        """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -19973,6 +19992,10 @@ class BSBL_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC,
                                           BSBL_PhotAstrom,
                                           BSBL_Parallax,
                                           BSBL_PhotAstrom_CircOrbs_Param1):
+        """
+        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in masses of lenses.
+        Parallax.
+        """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -19984,6 +20007,10 @@ class BSBL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
                                             BSBL_PhotAstrom,
                                             BSBL_noParallax,
                                             BSBL_PhotAstrom_CircOrbs_Param1):
+        """
+        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in masses of lenses.
+        No Parallax.
+        """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -19996,6 +20023,10 @@ class BSBL_PhotAstrom_Par_CircOrbs_Param2(ModelClassABC,
                                           BSBL_PhotAstrom,
                                           BSBL_Parallax,
                                           BSBL_PhotAstrom_CircOrbs_Param2):
+        """
+        Parameterization with t0 and u0_amp_com defined between the primary source and binary lens center of mass. Takes in mass ratio of lenses.
+        Parallax.
+        """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20007,6 +20038,10 @@ class BSBL_PhotAstrom_noPar_CircOrbs_Param2(ModelClassABC,
                                             BSBL_PhotAstrom,
                                             BSBL_noParallax,
                                             BSBL_PhotAstrom_CircOrbs_Param2):
+        """
+        Parameterization with t0 and u0_amp_com defined between the primary source and binary lens center of mass. Takes in mass ratio of lenses. 
+        No Parallax.
+        """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20019,10 +20054,14 @@ class BSBL_PhotAstrom_Par_Param1(ModelClassABC,
                                  BSBL_PhotAstrom,
                                  BSBL_Parallax,
                                  BSBL_PhotAstromParam1):
+        """
+        Parameterization with t0 defined between the geometric center of the lens and the source. Parallax.
+        """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
 
 
 # BSBL_noparallax
@@ -20031,11 +20070,15 @@ class BSBL_PhotAstrom_noPar_Param2(ModelClassABC,
                                    BSBL_PhotAstrom,
                                    BSBL_noParallax,
                                    BSBL_PhotAstromParam2):
+        
+    """
+    Parameterization with t0 defined between the geometric center of the source and the primary lens. No Parallax.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
 
 # BSBL_parallax
 @inheritdocstring
@@ -20047,8 +20090,11 @@ class BSBL_PhotAstrom_Par_Param2(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
-
+ 
+    """
+    Parameterization with t0 defined between the geometric center of the source and the primary lens. Parallax.
+    """
+                                     
 # =====
 # FSPL Model
 # =====
