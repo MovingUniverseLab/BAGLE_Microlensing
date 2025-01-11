@@ -18161,7 +18161,10 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
 def inheritdocstring(cls):
     for base in inspect.getmro(cls)[::-1]:
         if base != object and base != ABC and base.__doc__ is not None:
-            cls.__doc__ = base.__doc__
+            if cls.__doc__ is not None:
+                cls.__doc__ += '\n' + base.__doc__
+            else:
+                cls.__doc__ = base.__doc__
             break
     return cls
 
