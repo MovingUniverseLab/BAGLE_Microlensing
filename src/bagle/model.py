@@ -18256,6 +18256,9 @@ class PSPL_PhotAstrom_noPar_Param1(ModelClassABC,
                                    PSPL_PhotAstrom,
                                    PSPL_noParallax,
                                    PSPL_PhotAstromParam1):
+    """
+    Physical parameterization (i.e. mL instead of tE)
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18268,6 +18271,9 @@ class PSPL_PhotAstrom_Par_Param1(ModelClassABC,
                                  PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam1):
+    """
+    Physical parameterization (i.e. mL instead of tE)
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18280,6 +18286,9 @@ class PSPL_PhotAstrom_Par_Param2(ModelClassABC,
                                  PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam2):
+    """
+    Microlensing params with mag_src
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18292,6 +18301,9 @@ class PSPL_PhotAstrom_noPar_Param2(ModelClassABC,
                                    PSPL_PhotAstrom,
                                    PSPL_noParallax,
                                    PSPL_PhotAstromParam2):
+    """
+    Microlensing params with mag_src
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18303,6 +18315,9 @@ class PSPL_PhotAstrom_noPar_Param3(ModelClassABC,
                                    PSPL_PhotAstrom,
                                    PSPL_noParallax,
                                    PSPL_PhotAstromParam3):
+    """
+    Microlensing params with mag_base and log10_thetaE
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18314,6 +18329,9 @@ class PSPL_PhotAstrom_Par_Param3(ModelClassABC,
                                  PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam3):
+    """
+    Microlensing params with mag_base and log10_thetaE
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18325,6 +18343,9 @@ class PSPL_PhotAstrom_Par_Param4(ModelClassABC,
                                  PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam4):
+    """
+    Microlensing params with mag_base
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18349,6 +18370,9 @@ class PSPL_PhotAstrom_Par_Param5(ModelClassABC,
                                  PSPL_PhotAstrom,
                                  PSPL_Parallax,
                                  PSPL_PhotAstromParam5):
+    """
+    Microlensing params with mag_base and piE_E and piE_E/piE_N
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18360,6 +18384,9 @@ class PSPL_PhotAstrom_noPar_Param4(ModelClassABC,
                                    PSPL_PhotAstrom,
                                    PSPL_noParallax,
                                    PSPL_PhotAstromParam4):
+    """
+    Microlensing params with mag_base
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18371,6 +18398,9 @@ class PSPL_Astrom_Par_Param4(ModelClassABC,
                              PSPL_Astrom,
                              PSPL_Parallax,
                              PSPL_AstromParam4):
+    """
+    Microlensing params with mag_base
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18382,6 +18412,9 @@ class PSPL_Astrom_Par_Param3(ModelClassABC,
                              PSPL_Astrom,
                              PSPL_Parallax,
                              PSPL_AstromParam3):
+    """
+    Microlensing params with mag_base and log10_thetaE
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18394,6 +18427,9 @@ class PSPL_Phot_noPar_Param1(ModelClassABC,
                              PSPL_Phot,
                              PSPL_noParallax,
                              PSPL_PhotParam1):
+    """
+    Microlensing params with mag_src
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18405,6 +18441,9 @@ class PSPL_Phot_noPar_Param2(ModelClassABC,
                              PSPL_Phot,
                              PSPL_noParallax,
                              PSPL_PhotParam2):
+    """
+    Microlensing params with mag_base
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -18416,6 +18455,9 @@ class PSPL_Phot_noPar_Param3(ModelClassABC,
                              PSPL_Phot,
                              PSPL_noParallax,
                              PSPL_PhotParam3):
+    """
+    Microlensing params with mag_base, log_tE, log_piE, and phi_muRel
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
