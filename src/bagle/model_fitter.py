@@ -69,7 +69,7 @@ multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
                      'add_err', 'mult_err']
 
 
-class PSPL_Solver(Solver):
+class MicrolensSolver(Solver):
     """
     A PyMultiNest solver to find the optimal parameters, given data and
     a microlensing model from model.py.
@@ -2220,7 +2220,7 @@ class PSPL_Solver(Solver):
 
         return chi_x_list, chi_y_list, chi_m_list
         
-class PSPL_Solver_weighted(PSPL_Solver):
+class MicrolensSolverWeighted(MicrolensSolver):
     """
     Soliver where the likelihood function has each data
     set weigthed equally (i.e. not the natural weighting by
@@ -2417,7 +2417,7 @@ class PSPL_Solver_weighted(PSPL_Solver):
         return lnL_phot
 
 
-class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
+class MicrolensSolverHobsonWeighted(MicrolensSolver):
     def log_likely(self, cube, verbose=False):
         """
         Compute a log-likelihood where there is a hyperparameter,
@@ -2634,7 +2634,17 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
 
         return eff_weights
         
-    
+#########################
+### For backwards compatibility
+#########################
+class PSPL_Solver(MicrolensSolver):
+    pass
+
+class PSPL_Solver_weighted(MicrolensSolverWeighted):
+    pass
+
+class PSPL_Solver_Hobson_weighted(MicrolensSolverHobsonWeighted):
+    pass
 
 #########################
 ### PRIOR GENERATORS  ###

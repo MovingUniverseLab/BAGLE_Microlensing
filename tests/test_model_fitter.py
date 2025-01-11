@@ -3,7 +3,7 @@ from bagle import model_fitter
 from bagle import multinest_utils
 from bagle import fake_data
 from bagle import data as data_mod
-from bagle.model_fitter import PSPL_Solver, PSPL_Solver_Hobson_Weighted
+from bagle.model_fitter import MicrolensSolver, MicrolensSolverHobsonWeighted
 import numpy as np
 import pylab as plt
 import os
@@ -64,15 +64,15 @@ def test_pspl_parallax_fit_geoproj(verbose=False, resume=False):
 #                                 t0par,
 #                                 raL, decL)
 
-    fitter = PSPL_Solver(data,
-                         model.PSPL_Phot_Par_Param1_geoproj,
-                         n_live_points=300,
-                         dump_callback=None,
-                         max_iter=5000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=outdir + '/bb_',
-                         resume=resume)
+    fitter = MicrolensSolver(data,
+                             model.PSPL_Phot_Par_Param1_geoproj,
+                             n_live_points=300,
+                             dump_callback=None,
+                             max_iter=5000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=3.0,
+                             outputfiles_basename=outdir + '/bb_',
+                             resume=resume)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
@@ -111,15 +111,15 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
 
     data, p_in = fake_data.fake_data_parallax_lmc()
 
-    fitter = PSPL_Solver(data,
-                         model.PSPL_PhotAstrom_Par_Param1,
-                         n_live_points=100,
-                         outputfiles_basename=outdir + 'aa_',
-                         sampling_efficiency=0.9,
-                         evidence_tolerance=0.8,
-                         max_iter=5000,
-                         dump_callback=None,
-                         resume=resume, verbose=False)
+    fitter = MicrolensSolver(data,
+                             model.PSPL_PhotAstrom_Par_Param1,
+                             n_live_points=100,
+                             outputfiles_basename=outdir + 'aa_',
+                             sampling_efficiency=0.9,
+                             evidence_tolerance=0.8,
+                             max_iter=5000,
+                             dump_callback=None,
+                             resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-1, p_in['t0']+1)
@@ -283,15 +283,15 @@ def test_PSPL_Solver(plot=False, verbose=False, resume=False):
 
     data, p_in = fake_data.fake_data1()
 
-    fitter = PSPL_Solver(data,
-                         model.PSPL_PhotAstrom_noPar_Param1,
-                         n_live_points=100,
-                         outputfiles_basename=base,
-                         sampling_efficiency=0.9,
-                         evidence_tolerance=0.8,
-                         max_iter=5000,
-                         dump_callback=None,
-                         resume=resume, verbose=False)
+    fitter = MicrolensSolver(data,
+                             model.PSPL_PhotAstrom_noPar_Param1,
+                             n_live_points=100,
+                             outputfiles_basename=base,
+                             sampling_efficiency=0.9,
+                             evidence_tolerance=0.8,
+                             max_iter=5000,
+                             dump_callback=None,
+                             resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['mL'] = model_fitter.make_gen(8.0, 12.0)
@@ -380,8 +380,8 @@ def test_pspl_dy_fit():
     # No parallax
     data, p_in = fake_data.fake_data1()
 
-    fitter = model_fitter.PSPL_Solver(data, model.PSPL_PhotAstrom_noPar_Param1,
-                                      custom_additional_param_names = [])
+    fitter = model_fitter.MicrolensSolver(data, model.PSPL_PhotAstrom_noPar_Param1,
+                                          custom_additional_param_names = [])
     # Lets adjust some priors for faster solving.
     fitter.priors['mL'] = model_fitter.make_gen(9.9, 10.1)
     fitter.priors['t0'] = model_fitter.make_gen(56990, 57010)
@@ -490,9 +490,9 @@ def test_pspl_ultranest_fit():
     # No parallax
     data, p_in = fake_data.fake_data1()
 
-    fitter = model_fitter.PSPL_Solver(data, model.PSPL_PhotAstrom_noPar_Param1,
-                                      custom_additional_param_names = [], 
-                                      outputfiles_basename='./test_fit_ultranest_pspl/a1_')
+    fitter = model_fitter.MicrolensSolver(data, model.PSPL_PhotAstrom_noPar_Param1,
+                                          custom_additional_param_names = [],
+                                          outputfiles_basename='./test_fit_ultranest_pspl/a1_')
 
     # Lets adjust some priors for faster solving.
     fitter.priors['mL'] = model_fitter.make_gen(9.9, 10.1)
@@ -622,14 +622,14 @@ def test_lumlens_parallax_fit(verbose=False):
 
     data, p_in = fake_data.fake_data_lumlens_parallax_bulge()
 
-    fitter = PSPL_Solver(data, 
-                         model.PSPL_PhotAstrom_Par_Param1,
-                         n_live_points=300,
-                         sampling_efficiency=0.9,
-                         evidence_tolerance=0.8,
-                         max_iter=5000,
-                         dump_callback=None,
-                         outputfiles_basename=outdir + 'aa_')
+    fitter = MicrolensSolver(data,
+                             model.PSPL_PhotAstrom_Par_Param1,
+                             n_live_points=300,
+                             sampling_efficiency=0.9,
+                             evidence_tolerance=0.8,
+                             max_iter=5000,
+                             dump_callback=None,
+                             outputfiles_basename=outdir + 'aa_')
 #                         outputfiles_basename=outdir + 'bb_')
 
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-2, p_in['t0']+2)
@@ -735,15 +735,15 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
     p_in['b_sff2'] = params2['b_sff1']
     p_in['mag_src2'] = params2['mag_src1']
 
-    fitter = PSPL_Solver(data, 
-                         model.PSPL_PhotAstrom_Par_Param1,
-#                         model.PSPL_PhotAstrom_Par_Param1,
-                         n_live_points=100,
-                         outputfiles_basename=outdir + 'aa_',
-                         evidence_tolerance=2.0, 
-                         max_iter=5000,
-                         dump_callback=None,
-                         sampling_efficiency=3.0)
+    fitter = MicrolensSolver(data,
+                             model.PSPL_PhotAstrom_Par_Param1,
+                             #                         model.PSPL_PhotAstrom_Par_Param1,
+                             n_live_points=100,
+                             outputfiles_basename=outdir + 'aa_',
+                             evidence_tolerance=2.0,
+                             max_iter=5000,
+                             dump_callback=None,
+                             sampling_efficiency=3.0)
 #                         outputfiles_basename=outdir + 'bb_')
 
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-1, p_in['t0']+1)
@@ -871,16 +871,16 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
     p_in['b_sff4'] = params4['b_sff1']
     p_in['mag_src4'] = params4['mag_src1']
 
-    fitter = PSPL_Solver(data, 
-                         model.PSPL_PhotAstrom_Par_Param1,
-                         n_live_points=100,
-                         outputfiles_basename=outdir + 'aa_',
-                         dump_callback=None,
-                         max_iter=2000,
-                         evidence_tolerance=5.0,
-                         sampling_efficiency=0.9,
-                         resume=resume,
-                         verbose=False)
+    fitter = MicrolensSolver(data,
+                             model.PSPL_PhotAstrom_Par_Param1,
+                             n_live_points=100,
+                             outputfiles_basename=outdir + 'aa_',
+                             dump_callback=None,
+                             max_iter=2000,
+                             evidence_tolerance=5.0,
+                             sampling_efficiency=0.9,
+                             resume=resume,
+                             verbose=False)
 
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-1, p_in['t0']+1)
     fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
@@ -990,15 +990,15 @@ def test_correlated_data2(resume=False):
     #####
     base = './test_correlated_data/aa_'
 
-    fitter_corr = PSPL_Solver(data_corr,
-                              model.PSPL_Phot_Par_GP_Param2,
-                              n_live_points=100,
-                              dump_callback=None,
-                              max_iter=5000,
-                              evidence_tolerance=2.0,
-                              sampling_efficiency=3.0,
-                              outputfiles_basename=base,
-                              resume=resume, verbose=False)
+    fitter_corr = MicrolensSolver(data_corr,
+                                  model.PSPL_Phot_Par_GP_Param2,
+                                  n_live_points=100,
+                                  dump_callback=None,
+                                  max_iter=5000,
+                                  evidence_tolerance=2.0,
+                                  sampling_efficiency=3.0,
+                                  outputfiles_basename=base,
+                                  resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
     fitter_corr.priors['t0'] = model_fitter.make_gen(57000 - 1, 57000 + 1)
@@ -1035,15 +1035,15 @@ def test_correlated_data_astrom(verbose=False, resume=False):
     #####
     base = './test_correlated_data_astrom/corr_gp_'
 
-    fitter_corr = PSPL_Solver(data_corr,
-                              model.PSPL_PhotAstrom_Par_GP_Param2,
-                              n_live_points=100,
-                              dump_callback=None,
-                              max_iter=5000,
-                              evidence_tolerance=2.0,
-                              sampling_efficiency=3.0,
-                              outputfiles_basename=base,
-                              resume=resume, verbose=False)
+    fitter_corr = MicrolensSolver(data_corr,
+                                  model.PSPL_PhotAstrom_Par_GP_Param2,
+                                  n_live_points=100,
+                                  dump_callback=None,
+                                  max_iter=5000,
+                                  evidence_tolerance=2.0,
+                                  sampling_efficiency=3.0,
+                                  outputfiles_basename=base,
+                                  resume=resume, verbose=False)
 
     fitter_corr.priors['t0'] = model_fitter.make_gen(params['t0']-2, params['t0']+2)
     fitter_corr.priors['u0_amp'] = model_fitter.make_gen(params['u0_amp']-0.01, params['u0_amp']+0.01)
@@ -1079,15 +1079,15 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
 
     data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
 
-    fitter = PSPL_Solver(data, 
-                         model.PSBL_PhotAstrom_Par_Param3,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=3000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=base,
-                         resume=resume)
+    fitter = MicrolensSolver(data,
+                             model.PSBL_PhotAstrom_Par_Param3,
+                             n_live_points=100,
+                             dump_callback=None,
+                             max_iter=3000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=3.0,
+                             outputfiles_basename=base,
+                             resume=resume)
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
@@ -1168,15 +1168,15 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
 
     data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
 
-    fitter = PSPL_Solver(data, 
-                         model.PSBL_PhotAstrom_Par_Param2,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=2000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=base,
-                         resume=resume)
+    fitter = MicrolensSolver(data,
+                             model.PSBL_PhotAstrom_Par_Param2,
+                             n_live_points=100,
+                             dump_callback=None,
+                             max_iter=2000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=3.0,
+                             outputfiles_basename=base,
+                             resume=resume)
 
     if prior == 'narrow':
         # Lets adjust some priors for faster solving.
@@ -1263,15 +1263,15 @@ def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
 
     data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
 
-    fitter = PSPL_Solver(data, 
-                         model.PSBL_PhotAstrom_Par_Param1,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=2000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=base,
-                         resume=resume, verbose=False)
+    fitter = MicrolensSolver(data,
+                             model.PSBL_PhotAstrom_Par_Param1,
+                             n_live_points=100,
+                             dump_callback=None,
+                             max_iter=2000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=3.0,
+                             outputfiles_basename=base,
+                             resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['mLp'] = model_fitter.make_gen(p_in['mLp']-0.01, p_in['mLp']+0.01)
@@ -1408,14 +1408,14 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', 
     print(p_in)
 
     # Fit the data.
-    fitter = PSPL_Solver(data, model.PSBL_Phot_noPar_Param1,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=5000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=base,
-                         resume=resume, verbose=False)
+    fitter = MicrolensSolver(data, model.PSBL_Phot_noPar_Param1,
+                             n_live_points=100,
+                             dump_callback=None,
+                             max_iter=5000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=3.0,
+                             outputfiles_basename=base,
+                             resume=resume, verbose=False)
     
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0'] - 0.1, p_in['t0'] + 0.1)
@@ -1516,14 +1516,14 @@ def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', re
     print('INPUT:')
     print(p_in)
 
-    fitter = PSPL_Solver(data, model.PSBL_Phot_Par_Param1,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=5000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=base,
-                         resume=resume)
+    fitter = MicrolensSolver(data, model.PSBL_Phot_Par_Param1,
+                             n_live_points=100,
+                             dump_callback=None,
+                             max_iter=5000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=3.0,
+                             outputfiles_basename=base,
+                             resume=resume)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0'] - 0.1, p_in['t0'] + 0.1)
@@ -1662,15 +1662,15 @@ def test_u0_sign_change(new_u0_sign=False, resume=False):
         base = old_base
         suffix = '_u0sign_old'
         
-    fitter = PSPL_Solver(data,
-                         model.PSPL_PhotAstrom_noPar_Param1,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=5000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=base,
-                         resume=resume, verbose=False)
+    fitter = MicrolensSolver(data,
+                             model.PSPL_PhotAstrom_noPar_Param1,
+                             n_live_points=100,
+                             dump_callback=None,
+                             max_iter=5000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=3.0,
+                             outputfiles_basename=base,
+                             resume=resume, verbose=False)
 
 
     # Load them up from an old fit.
@@ -1721,15 +1721,15 @@ def test_pspl_solver_gp_params(resume=False):
     #####
     base = outdir + 'aa_'
 
-    fitter = PSPL_Solver(data,
-                         model.PSPL_Phot_Par_GP_Param2,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=5000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=base,
-                         resume=resume, verbose=False)
+    fitter = MicrolensSolver(data,
+                             model.PSPL_Phot_Par_GP_Param2,
+                             n_live_points=100,
+                             dump_callback=None,
+                             max_iter=5000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=3.0,
+                             outputfiles_basename=base,
+                             resume=resume, verbose=False)
 
     # Check that the GP parameters will be used.
     # Their presence in the fitter_param_names instance variable means
@@ -1749,16 +1749,16 @@ def test_pspl_solver_gp_params(resume=False):
     #####
     base = outdir + 'aa_'
 
-    fitter = PSPL_Solver(data,
-                         model.PSPL_Phot_Par_GP_Param2,
-                         use_phot_optional_params = [True, False],
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=5000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=base,
-                         resume=resume, verbose=False)
+    fitter = MicrolensSolver(data,
+                             model.PSPL_Phot_Par_GP_Param2,
+                             use_phot_optional_params = [True, False],
+                             n_live_points=100,
+                             dump_callback=None,
+                             max_iter=5000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=3.0,
+                             outputfiles_basename=base,
+                             resume=resume, verbose=False)
 
     # Check that the GP parameters will be used.
     # Their presence in the fitter_param_names instance variable means
@@ -1777,16 +1777,16 @@ def test_pspl_solver_gp_params(resume=False):
     #####
     base = outdir + 'aa_'
 
-    fitter = PSPL_Solver(data,
-                         model.PSPL_Phot_Par_GP_Param2,
-                         use_phot_optional_params = False,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=5000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=base,
-                         resume=resume, verbose=False)
+    fitter = MicrolensSolver(data,
+                             model.PSPL_Phot_Par_GP_Param2,
+                             use_phot_optional_params = False,
+                             n_live_points=100,
+                             dump_callback=None,
+                             max_iter=5000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=3.0,
+                             outputfiles_basename=base,
+                             resume=resume, verbose=False)
 
     # Check that the GP parameters will be used.
     # Their presence in the fitter_param_names instance variable means
@@ -1814,16 +1814,16 @@ def test_plot_model_and_data_GP_err():
     outdir = '/u/jlu/work/microlens/OB120169/a_2020_08_18/model_fits/201_phot_ogle_gp/base_a/'
     outbase = 'a1_'
 
-    fitter = model_fitter.PSPL_Solver(data,
-                                  model.PSPL_Phot_Par_GP_Param2,
-                                  use_phot_optional_params=True,
-                                  add_error_on_photometry=False,
-                                  multiply_error_on_photometry=False,
-                                  importance_nested_sampling = False,
-                                  n_live_points = 1000,
-                                  evidence_tolerance = 0.1,
-                                  sampling_efficiency = 0.8,
-                                  outputfiles_basename=outdir + outbase)
+    fitter = model_fitter.MicrolensSolver(data,
+                                          model.PSPL_Phot_Par_GP_Param2,
+                                          use_phot_optional_params=True,
+                                          add_error_on_photometry=False,
+                                          multiply_error_on_photometry=False,
+                                          importance_nested_sampling = False,
+                                          n_live_points = 1000,
+                                          evidence_tolerance = 0.1,
+                                          sampling_efficiency = 0.8,
+                                          outputfiles_basename=outdir + outbase)
 
     print('testing')
     best_mod = fitter.get_best_fit_model(def_best='maxl')
@@ -1964,15 +1964,15 @@ def test_cache_parallax_vector(verbose=False, resume=False):
 
     data, p_in = fake_data.fake_data_parallax_lmc()
 
-    fitter = PSPL_Solver(data,
-                         model.PSPL_PhotAstrom_Par_Param1,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=3000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=0.8,
-                         outputfiles_basename=outdir + '/pvec_',
-                         resume=resume, verbose=False)
+    fitter = MicrolensSolver(data,
+                             model.PSPL_PhotAstrom_Par_Param1,
+                             n_live_points=100,
+                             dump_callback=None,
+                             max_iter=3000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=0.8,
+                             outputfiles_basename=outdir + '/pvec_',
+                             resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-2, p_in['t0']+2)
@@ -2068,26 +2068,26 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
     data, p_in = fake_data.fake_data_parallax_lmc()
 
     if hobson:
-        fitter = PSPL_Solver_Hobson_Weighted(data,
-                         model.PSPL_PhotAstrom_Par_Param1,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=5000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=outdir + '/hh_',
-                         resume=resume, verbose=False)
+        fitter = MicrolensSolverHobsonWeighted(data,
+                                               model.PSPL_PhotAstrom_Par_Param1,
+                                               n_live_points=100,
+                                               dump_callback=None,
+                                               max_iter=5000,
+                                               evidence_tolerance=2.0,
+                                               sampling_efficiency=3.0,
+                                               outputfiles_basename=outdir + '/hh_',
+                                               resume=resume, verbose=False)
 
     else:
-        fitter = PSPL_Solver(data,
-                         model.PSPL_PhotAstrom_Par_Param1,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=5000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=outdir + '/aa_',
-                         resume=resume, verbose=False)
+        fitter = MicrolensSolver(data,
+                                 model.PSPL_PhotAstrom_Par_Param1,
+                                 n_live_points=100,
+                                 dump_callback=None,
+                                 max_iter=5000,
+                                 evidence_tolerance=2.0,
+                                 sampling_efficiency=3.0,
+                                 outputfiles_basename=outdir + '/aa_',
+                                 resume=resume, verbose=False)
     
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-2, p_in['t0']+2)
@@ -2243,15 +2243,15 @@ def test_bspl_parallax_fit(verbose=False, resume=False):
 
     data, p_in, bspl_in, ani = fake_data.fake_data_BSPL()
 
-    fitter = PSPL_Solver(data,
-                         model.BSPL_PhotAstrom_Par_Param1,
-                         n_live_points=100,
-                         dump_callback=None,
-                         max_iter=5000,
-                         evidence_tolerance=2.0,
-                         sampling_efficiency=3.0,
-                         outputfiles_basename=outdir + '/aa_',
-                         resume=resume)
+    fitter = MicrolensSolver(data,
+                             model.BSPL_PhotAstrom_Par_Param1,
+                             n_live_points=100,
+                             dump_callback=None,
+                             max_iter=5000,
+                             evidence_tolerance=2.0,
+                             sampling_efficiency=3.0,
+                             outputfiles_basename=outdir + '/aa_',
+                             resume=resume)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0'] - 2, p_in['t0'] + 2)
@@ -2329,15 +2329,15 @@ def test_multi_obsLocation(resume=False, verbose=False):
 
     data, p_in = fake_data.fake_data_parallax_multi_location_bulge(outdir=outdir, outroot=outroot)
 
-    fitter = PSPL_Solver(data,
-                         model.PSPL_PhotAstrom_Par_Param1,
-                         n_live_points=100,
-                         outputfiles_basename=base,
-                         sampling_efficiency=0.9,
-                         evidence_tolerance=0.5,
-                         max_iter=15000,
-                         #dump_callback=None,
-                         resume=resume, verbose=False)
+    fitter = MicrolensSolver(data,
+                             model.PSPL_PhotAstrom_Par_Param1,
+                             n_live_points=100,
+                             outputfiles_basename=base,
+                             sampling_efficiency=0.9,
+                             evidence_tolerance=0.5,
+                             max_iter=15000,
+                             #dump_callback=None,
+                             resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['mL'] = model_fitter.make_gen(p_in['mL']-1, p_in['mL']+1)

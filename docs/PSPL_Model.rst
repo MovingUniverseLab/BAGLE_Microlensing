@@ -1,28 +1,19 @@
 PSPL Model Classes
 ===================
 
-PSPL
-------
+PSPL Photometry + Astrometry, no Parallax
+-----------------------------------------
 .. autoclass:: model.PSPL_PhotAstrom_noPar_Param1
     :members:
     :inherited-members:
     :show-inheritance:
 
-PSPL Parallax
-----------------
 .. autoclass:: model.PSPL_PhotAstrom_Par_Param1
     :members:
     :inherited-members:
     :show-inheritance:
 
-PSPL_parallax2 / PSPL_multiphot_parallax
------------------------------------------
 .. autoclass:: model.PSPL_PhotAstrom_Par_Param2
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.PSPL_PhotAstrom_noPar_Param2
     :members:
     :inherited-members:
     :show-inheritance:
@@ -37,10 +28,21 @@ PSPL_parallax2 / PSPL_multiphot_parallax
     :inherited-members:
     :show-inheritance:
 
+
+PSPL Photometry, with Parallax
+------------------------------
+.. autoclass:: model.PSPL_PhotAstrom_noPar_Param2
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
 .. autoclass:: model.PSPL_PhotAstrom_noPar_Param4
     :members:
     :inherited-members:
     :show-inheritance:
+
+PSPL Astrometry Only, with Parallax
+-----------------------------------
 
 .. autoclass:: model.PSPL_Astrom_Par_Param4
     :members:
@@ -52,8 +54,23 @@ PSPL_parallax2 / PSPL_multiphot_parallax
     :inherited-members:
     :show-inheritance:
 
-PSPL_phot
-------------
+PSPL Photometry Only, with Parallax
+-----------------------------------
+
+.. autoclass:: model.PSPL_Phot_Par_Param1
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+.. autoclass:: model.PSPL_Phot_Par_Param2
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+
+PSPL Photometry Only, no Parallax
+---------------------------------
+
 .. autoclass:: model.PSPL_Phot_noPar_Param1
     :members:
     :inherited-members:
@@ -64,26 +81,8 @@ PSPL_phot
     :inherited-members:
     :show-inheritance:
 
-PSPL_phot_parallax / PSPL_phot_multiphot_parallax
---------------------------------------------------
-.. autoclass:: model.PSPL_Phot_Par_Param1
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-
-.. autoclass:: model.PSPL_Phot_Parold_Param2
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.PSPL_Phot_Par_Param2
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-PSPL Phot parallax with GP
------------------------------
+PSPL Photometry Only, with Parallax, with GP
+--------------------------------------------
 .. autoclass:: model.PSPL_Phot_Par_GP_Param1
     :members:
     :inherited-members:
@@ -116,6 +115,8 @@ PSPL Phot, no parallax with GP
     :inherited-members:
     :show-inheritance:
 
+PSPL Phot, parallax in geocentric-projected coordinates
+
 PSPL PhotAstrom, parallax with GP
 ----------------------------------
 
@@ -140,7 +141,7 @@ PSPL PhotAstrom, parallax with GP
     :show-inheritance:
 
 PSPL PhotAstrom, no parallax with GP
-----------------------------------
+------------------------------------
 
 .. autoclass:: model.PSPL_PhotAstrom_noPar_GP_Param1
     :members:
