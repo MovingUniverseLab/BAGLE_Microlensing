@@ -19931,7 +19931,7 @@ class BSBL_PhotAstrom_noPar_Param1(ModelClassABC,
                                    BSBL_noParallax,
                                    BSBL_PhotAstromParam1):
     """
-    Parameterization with t0 defined between the geometric center of the lens and the source. Takes in lens masses.       No Parallax.
+    Parameterization with t0 defined between the geometric center of the lens and the source; takes in lens masses; No Parallax.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -19961,7 +19961,7 @@ class BSBL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
                                            BSBL_PhotAstrom,
                                            BSBL_noParallax,
                                            BSBL_PhotAstrom_EllOrbs_Param1):
-    """"
+    """
     Parameterization with t0 defined between the lens CoM and source CoM. Takes in lens masses. 
     No Parallax.
     """
