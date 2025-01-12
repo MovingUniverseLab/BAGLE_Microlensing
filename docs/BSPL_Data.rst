@@ -1,5 +1,5 @@
 Data Class Family
-------------------
+----------------------
 
 .. autoclass:: model.BSPL
     :members:

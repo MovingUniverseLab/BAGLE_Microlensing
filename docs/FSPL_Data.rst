@@ -1,17 +1,17 @@
-Data Class Family
+FSPL Data Class Family
 ----------------------
 
-.. autoclass:: model.PSBL
+.. autoclass:: model.FSPL
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSBL_Phot
+.. autoclass:: model.FSPL_Phot
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSBL_PhotAstrom
+.. autoclass:: model.FSPL_PhotAstrom
     :members:
     :inherited-members:
     :show-inheritance:

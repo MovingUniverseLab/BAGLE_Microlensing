@@ -66,35 +66,41 @@ has no parallax, no Guassian Process noise and uses parameterization #2.
 The complete list of instantiable model classes is below.
 
 Point source, point lens, photometry only:
-    - See :ref:`PSPL Details` for details.
-    - :class:`PSPL_Phot_noPar_Param1` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_src
-    - :class:`PSPL_Phot_noPar_Param2`-- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_base
-    - :class:`PSPL_Phot_Par_Param1` -- same as above with parallax
-    - :class:`PSPL_Phot_Par_Param2` -- same as above with parallax
+----------------------------------------------------
+    - See :ref:`PSPL Details` under `API Documentation` for details.
+    - :class:`PSPL_Phot_Par_Param1` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_src, with parallax
+    - :class:`PSPL_Phot_Par_Param2` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_base, with parallax
+    - :class:`PSPL_Phot_Par_Param3`
+    - :class:`PSPL_Phot_noPar_Param1` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_src, no parallax
+    - :class:`PSPL_Phot_noPar_Param2` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_base, no parallax
+    - :class:`PSPL_Phot_noPar_Param3`
     - :class:`PSPL_Phot_Par_Param1_geoproj` -- parameters in geo-projected rather than helio frame
-    - :class:`PSPL_Phot_noPar_GP_Param1` -- same as above but with additional Gaussian Process noise kernel.
-    - :class:`PSPL_Phot_noPar_GP_Param2`
-    - :class:`PSPL_Phot_Par_GP_Param1`
-    - :class:`PSPL_Phot_Par_GP_Param1_2`
+    - :class:`PSPL_Phot_Par_GP_Param1` -- additional Gaussian Process noise kernel
     - :class:`PSPL_Phot_Par_GP_Param2`
+    - :class:`PSPL_Phot_Par_GP_Param3`
+    - :class:`PSPL_Phot_Par_GP_Param1_2`
     - :class:`PSPL_Phot_Par_GP_Param2_2`
     - :class:`PSPL_Phot_Par_GP_Param2_3`
     - :class:`PSPL_Phot_Par_GP_Param2_4`
     - :class:`PSPL_Phot_Par_GP_Param2_5`
     - :class:`PSPL_Phot_Par_GPnoJitter_Param2_2`
     - :class:`PSPL_Phot_Par_GPnoJitter_Param2_3`
+    - :class:`PSPL_Phot_noPar_GP_Param1`
+    - :class:`PSPL_Phot_noPar_GP_Param2`
 
 Point source, point lens, photometry and astrometry:
-    - :class:`PSPL_PhotAstrom_noPar_Param1`
-    - :class:`PSPL_PhotAstrom_noPar_Param2`
-    - :class:`PSPL_PhotAstrom_noPar_Param3`
-    - :class:`PSPL_PhotAstrom_noPar_Param4`
-    - :class:`PSPL_PhotAstrom_Par_Param4_geoproj`
+----------------------------------------------------
     - :class:`PSPL_PhotAstrom_Par_Param1`
     - :class:`PSPL_PhotAstrom_Par_Param2`
     - :class:`PSPL_PhotAstrom_Par_Param3`
     - :class:`PSPL_PhotAstrom_Par_Param4`
     - :class:`PSPL_PhotAstrom_Par_Param5`
+    - :class:`PSPL_PhotAstrom_noPar_Param1`
+    - :class:`PSPL_PhotAstrom_noPar_Param2`
+    - :class:`PSPL_PhotAstrom_noPar_Param3`
+    - :class:`PSPL_PhotAstrom_noPar_Param4`
+    - :class:`PSPL_PhotAstrom_Par_Param1_geoproj` -- parameters in geo-projected rather than helio frame
+    - :class:`PSPL_PhotAstrom_Par_Param4_geoproj` -- parameters in geo-projected rather than helio frame
     - :class:`PSPL_PhotAstrom_noPar_GP_Param1`
     - :class:`PSPL_PhotAstrom_noPar_GP_Param2`
     - :class:`PSPL_PhotAstrom_Par_GP_Param1`
@@ -108,144 +114,158 @@ Point source, point lens, photometry and astrometry:
     - :class:`PSPL_PhotAstrom_Par_GPnoJitter_Param3_1`
 
 Point source, point lens, astrometry only
+-----------------------------------------
     - :class:`PSPL_Astrom_Par_Param4`
     - :class:`PSPL_Astrom_Par_Param3`
 
 Point soruce, binary lens, photometry only
-    - :class:`PSBL_Phot_noPar_Param1`
+------------------------------------------
     - :class:`PSBL_Phot_Par_Param1`
-    - :class:`PSBL_Phot_noPar_GP_Param1`
+    - :class:`PSBL_Phot_noPar_Param1`
     - :class:`PSBL_Phot_Par_GP_Param1`
+    - :class:`PSBL_Phot_noPar_GP_Param1`
 
 Point source, binary lens, photometry and astrometry
-    - :class:`PSBL_PhotAstrom_noPar_Param1`
-    - :class:`PSBL_PhotAstrom_noPar_Param2`
-    - :class:`PSBL_PhotAstrom_noPar_Param3`
+----------------------------------------------------
     - :class:`PSBL_PhotAstrom_Par_Param1`
     - :class:`PSBL_PhotAstrom_Par_Param2`
     - :class:`PSBL_PhotAstrom_Par_Param3`
     - :class:`PSBL_PhotAstrom_Par_Param4`
     - :class:`PSBL_PhotAstrom_Par_Param5`
     - :class:`PSBL_PhotAstrom_Par_Param7`
-    - :class:`PSBL_PhotAstrom_noPar_GP_Param1`
-    - :class:`PSBL_PhotAstrom_noPar_GP_Param2`
+    - :class:`PSBL_PhotAstrom_noPar_Param1`
+    - :class:`PSBL_PhotAstrom_noPar_Param2`
+    - :class:`PSBL_PhotAstrom_noPar_Param3`
+    - :class:`PSBL_PhotAstrom_noPar_Param4`
     - :class:`PSBL_PhotAstrom_Par_GP_Param1`
     - :class:`PSBL_PhotAstrom_Par_GP_Param2`
+    - :class:`PSBL_PhotAstrom_noPar_GP_Param1`
+    - :class:`PSBL_PhotAstrom_noPar_GP_Param2`
+    - :class:`PSBL_PhotAstrom_Par_LinOrbs_Param6`
+    - :class:`PSBL_PhotAstrom_Par_LinOrbs_Param7`
+    - :class:`PSBL_PhotAstrom_Par_AccOrbs_Param6`
+    - :class:`PSBL_PhotAstrom_Par_AccOrbs_Param7`
+    - :class:`PSBL_PhotAstrom_Par_CircOrbs_Param1`
+    - :class:`PSBL_PhotAstrom_Par_CircOrbs_Param3`
+    - :class:`PSBL_PhotAstrom_Par_CircOrbs_Param4`
+    - :class:`PSBL_PhotAstrom_Par_CircOrbs_Param8`
+    - :class:`PSBL_PhotAstrom_Par_EllOrbs_Param1`
+    - :class:`PSBL_PhotAstrom_Par_EllOrbs_Param3`
+    - :class:`PSBL_PhotAstrom_Par_EllOrbs_Param4`
+    - :class:`PSBL_PhotAstrom_Par_EllOrbs_Param8`
+    - :class:`PSBL_PhotAstrom_noPar_LinOrbs_Param6`
+    - :class:`PSBL_PhotAstrom_noPar_LinOrbs_Param7`
+    - :class:`PSBL_PhotAstrom_noPar_AccOrbs_Param6`
+    - :class:`PSBL_PhotAstrom_noPar_AccOrbs_Param7`
+    - :class:`PSBL_PhotAstrom_noPar_CircOrbs_Param1`
+    - :class:`PSBL_PhotAstrom_noPar_CircOrbs_Param3`
+    - :class:`PSBL_PhotAstrom_noPar_CircOrbs_Param4`
+    - :class:`PSBL_PhotAstrom_noPar_CircOrbs_Param8`
+    - :class:`PSBL_PhotAstrom_noPar_EllOrbs_Param1`
+    - :class:`PSBL_PhotAstrom_noPar_EllOrbs_Param3`
+    - :class:`PSBL_PhotAstrom_noPar_EllOrbs_Param4`
+    - :class:`PSBL_PhotAstrom_noPar_EllOrbs_Param8`
 
 Binary source, point lens, photometry and only
-    - :class:`BSPL_Phot_noPar_Param1`
+----------------------------------------------
     - :class:`BSPL_Phot_Par_Param1`
-    - :class:`BSPL_Phot_noPar_GP_Param1`
+    - :class:`BSPL_Phot_noPar_Param1`
     - :class:`BSPL_Phot_Par_GP_Param1`
+    - :class:`BSPL_Phot_noPar_GP_Param1`
 
 Binary source, point lens, photometry and astrometry
-    - :class:`BSPL_PhotAstrom_noPar_Param1`
-    - :class:`BSPL_PhotAstrom_noPar_Param2`
-    - :class:`BSPL_PhotAstrom_noPar_Param3`
+----------------------------------------------------
     - :class:`BSPL_PhotAstrom_Par_Param1`
     - :class:`BSPL_PhotAstrom_Par_Param2`
     - :class:`BSPL_PhotAstrom_Par_Param3`
-    - :class:`BSPL_PhotAstrom_noPar_GP_Param1`
-    - :class:`BSPL_PhotAstrom_noPar_GP_Param2`
-    - :class:`BSPL_PhotAstrom_noPar_GP_Param3`
+    - :class:`BSPL_PhotAstrom_noPar_Param1`
+    - :class:`BSPL_PhotAstrom_noPar_Param2`
+    - :class:`BSPL_PhotAstrom_noPar_Param3`
     - :class:`BSPL_PhotAstrom_Par_GP_Param1`
     - :class:`BSPL_PhotAstrom_Par_GP_Param2`
     - :class:`BSPL_PhotAstrom_Par_GP_Param3`
-    - :class:`PSBL_PhotAstrom_CircOrbs_noPar_Param1`
-    - :class:`PSBL_PhotAstrom_EllOrbs_noPar_Param1`
-    - :class:`PSBL_PhotAstrom_CircOrbs_noPar_Param4`
-    - :class:`PSBL_PhotAstrom_EllOrbs_noPar_Param4`
-    - :class:`PSBL_PhotAstrom_CircOrbs_noPar_Param8`
-    - :class:`PSBL_PhotAstrom_EllOrbs_noPar_Param8`
-    - :class:`PSBL_PhotAstrom_CircOrbs_Par_Param1`
-    - :class:`PSBL_PhotAstrom_EllOrbs_Par_Param1`
-    - :class:`PSBL_PhotAstrom_CircOrbs_Par_Param4`
-    - :class:`PSBL_PhotAstrom_EllOrbs_Par_Param4`
-    - :class:`PSBL_PhotAstrom_CircOrbs_Par_Param8`
-    - :class:`PSBL_PhotAstrom_EllOrbs_Par_Param8`
-    - :class:`PSBL_PhotAstrom_AccOrbs_noPar_Param6`
-    - :class:`PSBL_PhotAstrom_LinOrbs_noPar_Param6`
-    - :class:`PSBL_PhotAstrom_AccOrbs_noPar_Param7`
-    - :class:`PSBL_PhotAstrom_LinOrbs_noPar_Param7`
-    - :class:`PSBL_PhotAstrom_AccOrbs_Par_Param6`
-    - :class:`PSBL_PhotAstrom_LinOrbs_Par_Param6`
-    - :class:`PSBL_PhotAstrom_AccOrbs_Par_Param7`
-    - :class:`PSBL_PhotAstrom_LinOrbs_Par_Param7`
-    - :class:`PSBL_PhotAstrom_noPar_Param1`
-    - :class:`PSBL_PhotAstrom_noPar_Param2`
-    - :class:`PSBL_PhotAstrom_noPar_Param3`
-    - :class:`PSBL_PhotAstrom_Par_Param1`
-    - :class:`PSBL_PhotAstrom_Par_Param2`
-    - :class:`PSBL_PhotAstrom_Par_Param3`
-    - :class:`PSBL_PhotAstrom_Par_Param4`
-    - :class:`PSBL_PhotAstrom_Par_Param5`
-    - :class:`PSBL_PhotAstrom_Par_Param7`
-    - :class:`PSBL_PhotAstrom_noPar_GP_Param1`
-    - :class:`PSBL_PhotAstrom_noPar_GP_Param2`
-    - :class:`PSBL_PhotAstrom_Par_GP_Param1`
-    - :class:`PSBL_PhotAstrom_Par_GP_Param2`
-
-Binary source, point lens, photometry only
-    - :class:`BSPL_Phot_noPar_Param1`
-    - :class:`BSPL_Phot_Par_Param1`
-    - :class:`BSPL_Phot_noPar_GP_Param1`
-    - :class:`BSPL_Phot_Par_GP_Param1`
-
-Binary source, point lens, photometry and astrometry
-    - :class:`BSPL_PhotAstrom_noPar_LinOrbs_Param1`
-    - :class:`BSPL_PhotAstrom_noPar_AccOrbs_Param1`
-    - :class:`BSPL_PhotAstrom_noPar_CircOrbs_Param1`
-    - :class:`BSPL_PhotAstrom_noPar_LinOrbs_Param2`
-    - :class:`BSPL_PhotAstrom_noPar_AccOrbs_Param2`
-    - :class:`BSPL_PhotAstrom_noPar_CircOrbs_Param2`
-    - :class:`BSPL_PhotAstrom_noPar_LinOrbs_Param3`
-    - :class:`BSPL_PhotAstrom_noPar_AccOrbs_Param3`
-    - :class:`BSPL_PhotAstrom_noPar_CircOrbs_Param3`
-    - :class:`BSPL_PhotAstrom_noPar_Param1`
-    - :class:`BSPL_PhotAstrom_noPar_Param2`
-    - :class:`BSPL_PhotAstrom_noPar_Param3`
-
-    - :class:`BSPL_PhotAstrom_Par_LinOrbs_Param1`
-    - :class:`BSPL_PhotAstrom_Par_AccOrbs_Param1`
-    - :class:`BSPL_PhotAstrom_Par_CircOrbs_Param1`
-    - :class:`BSPL_PhotAstrom_Par_LinOrbs_Param2`
-    - :class:`BSPL_PhotAstrom_Par_AccOrbs_Param2`
-    - :class:`BSPL_PhotAstrom_Par_CircOrbs_Param2`
-    - :class:`BSPL_PhotAstrom_Par_LinOrbs_Param3`
-    - :class:`BSPL_PhotAstrom_Par_AccOrbs_Param3`
-    - :class:`BSPL_PhotAstrom_Par_CircOrbs_Param3`
-    - :class:`BSPL_PhotAstrom_Par_Param1`
-    - :class:`BSPL_PhotAstrom_Par_Param2`
-    - :class:`BSPL_PhotAstrom_Par_Param3`
-
-    - :class:`BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1`
-    - :class:`BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2`
-    - :class:`BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3`
     - :class:`BSPL_PhotAstrom_noPar_GP_Param1`
     - :class:`BSPL_PhotAstrom_noPar_GP_Param2`
     - :class:`BSPL_PhotAstrom_noPar_GP_Param3`
-
+    - :class:`BSPL_PhotAstrom_Par_LinOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_Par_LinOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_Par_LinOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_noPar_LinOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_noPar_LinOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_noPar_LinOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_Par_AccOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_Par_AccOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_Par_AccOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_noPar_AccOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_noPar_AccOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_noPar_AccOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_Par_CircOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_Par_CircOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_Par_CircOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_noPar_CircOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_noPar_CircOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_noPar_CircOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_Par_EllOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_Par_EllOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_Par_EllOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_noPar_EllOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_noPar_EllOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_noPar_EllOrbs_Param3`
     - :class:`BSPL_PhotAstrom_Par_GP_LinOrbs_Param1`
     - :class:`BSPL_PhotAstrom_Par_GP_LinOrbs_Param2`
     - :class:`BSPL_PhotAstrom_Par_GP_LinOrbs_Param3`
-    - :class:`BSPL_PhotAstrom_Par_GP_Param1`
-    - :class:`BSPL_PhotAstrom_Par_GP_Param2`
-    - :class:`BSPL_PhotAstrom_Par_GP_Param3`
+    - :class:`BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_Par_GP_AccOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_Par_GP_AccOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_Par_GP_AccOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_Par_GP_CircOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_Par_GP_CircOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_Par_GP_CircOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_noPar_GP_CircOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_noPar_GP_CircOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_noPar_GP_CircOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_Par_GP_EllOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_Par_GP_EllOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_Par_GP_EllOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_noPar_GP_EllOrbs_Param1`
+    - :class:`BSPL_PhotAstrom_noPar_GP_EllOrbs_Param2`
+    - :class:`BSPL_PhotAstrom_noPar_GP_EllOrbs_Param3`
+
 
 Binary source, binary lens, photometry and astrometry
-    - :class:`BSBL_PhotAstrom_noPar_Param1`
-    - :class:`BSBL_PhotAstrom_noPar_Param2`
+-----------------------------------------------------
     - :class:`BSBL_PhotAstrom_Par_Param1`
     - :class:`BSBL_PhotAstrom_Par_Param2`
+    - :class:`BSBL_PhotAstrom_noPar_Param1`
+    - :class:`BSBL_PhotAstrom_noPar_Param2`
+    - :class:`BSBL_PhotAstrom_Par_CircOrbs_Param1`
+    - :class:`BSBL_PhotAstrom_Par_CircOrbs_Param2`
+    - :class:`BSBL_PhotAstrom_noPar_CircOrbs_Param1`
+    - :class:`BSBL_PhotAstrom_noPar_CircOrbs_Param2`
+    - :class:`BSBL_PhotAstrom_Par_EllOrbs_Param1`
+    - :class:`BSBL_PhotAstrom_Par_EllOrbs_Param2`
+    - :class:`BSBL_PhotAstrom_noPar_EllOrbs_Param1`
+    - :class:`BSBL_PhotAstrom_noPar_EllOrbs_Param2`
 
-Finite source, point lens, photometry and astrometry (broken)
-    - :class:`FSPL_Phot_Par_Param1`
+Finite source, point lens, photometry and astrometry
+----------------------------------------------------
     - :class:`FSPL_PhotAstrom_Par_Param1`
+    - :class:`FSPL_PhotAstrom_noPar_Param1`
+
+Finite source, point lens, photometry only
+------------------------------------------
+    - :class:`FSPL_Phot_Par_Param1`
+    - :class:`FSPL_Phot_noPar_Param1`
 
 
 
 For Developers
-=========================
+==============
 
 Each model class is built up from a menu of different features
 by inheriting from multiple base classes, each from a different 'family' of
@@ -322,7 +342,7 @@ generate a RuntimeError.
 The base class is PSPL.
 
 Parallax Class Family
-----------------------
+---------------------
 
 These classes set whether the model uses parallax when calculating
 photometry, calculating astrometry, and fitting data. There are only two
@@ -333,7 +353,7 @@ that do contain parallax have the words `Par` in their names.
 The base class is ParallaxClassABC.
 
 Parameterization Class Family
-------------------------------
+-----------------------------
 
 These classes determine which physical parameters define the model. Currently
 this file supports one parameterization when using only photometry (`Phot`)
@@ -19926,18 +19946,14 @@ class BSBL_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC,
                                          BSBL_PhotAstrom,
                                          BSBL_Parallax,
                                          BSBL_PhotAstrom_EllOrbs_Param1):
-        """
-        Parameterization with t0 defined between the lens CoM and source CoM. Takes in lens masses. 
-        Parallax.
-        """
-
+    """
+    Parameterization with t0 defined between the lens CoM and source CoM. Takes in lens masses.
+    Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
-
-
-        Time of closest approach between source COM and Lens COM (MJD.DDD)
 
 
 @inheritdocstring
@@ -19945,7 +19961,7 @@ class BSBL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
                                            BSBL_PhotAstrom,
                                            BSBL_noParallax,
                                            BSBL_PhotAstrom_EllOrbs_Param1):
-     """
+    """"
     Parameterization with t0 defined between the lens CoM and source CoM. Takes in lens masses. 
     No Parallax.
     """
@@ -19961,10 +19977,10 @@ class BSBL_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC,
                                          BSBL_PhotAstrom,
                                          BSBL_Parallax,
                                          BSBL_PhotAstrom_EllOrbs_Param2):
-        """
-        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in mass ratio of lenses.
-        Parallax.
-        """
+    """
+    Parameterization with t0 defined between the primary source and binary lens CoM. Takes in mass ratio of lenses.
+    Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -19976,10 +19992,10 @@ class BSBL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC,
                                            BSBL_PhotAstrom,
                                            BSBL_noParallax,
                                            BSBL_PhotAstrom_EllOrbs_Param2):
-        """
-        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in mass ratio of lenses.
-        Parallax.
-        """
+    """
+    Parameterization with t0 defined between the primary source and binary lens CoM. Takes in mass ratio of lenses.
+    Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -19992,10 +20008,10 @@ class BSBL_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC,
                                           BSBL_PhotAstrom,
                                           BSBL_Parallax,
                                           BSBL_PhotAstrom_CircOrbs_Param1):
-        """
-        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in masses of lenses.
-        Parallax.
-        """
+    """
+    Parameterization with t0 defined between the primary source and binary lens CoM. Takes in masses of lenses.
+    Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20007,10 +20023,10 @@ class BSBL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
                                             BSBL_PhotAstrom,
                                             BSBL_noParallax,
                                             BSBL_PhotAstrom_CircOrbs_Param1):
-        """
-        Parameterization with t0 defined between the primary source and binary lens CoM. Takes in masses of lenses.
-        No Parallax.
-        """
+    """
+    Parameterization with t0 defined between the primary source and binary lens CoM. Takes in masses of lenses.
+    No Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20023,10 +20039,10 @@ class BSBL_PhotAstrom_Par_CircOrbs_Param2(ModelClassABC,
                                           BSBL_PhotAstrom,
                                           BSBL_Parallax,
                                           BSBL_PhotAstrom_CircOrbs_Param2):
-        """
-        Parameterization with t0 and u0_amp_com defined between the primary source and binary lens center of mass. Takes in mass ratio of lenses.
-        Parallax.
-        """
+    """
+    Parameterization with t0 and u0_amp_com defined between the primary source and binary lens center of mass. Takes in mass ratio of lenses.
+    Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20038,10 +20054,10 @@ class BSBL_PhotAstrom_noPar_CircOrbs_Param2(ModelClassABC,
                                             BSBL_PhotAstrom,
                                             BSBL_noParallax,
                                             BSBL_PhotAstrom_CircOrbs_Param2):
-        """
-        Parameterization with t0 and u0_amp_com defined between the primary source and binary lens center of mass. Takes in mass ratio of lenses. 
-        No Parallax.
-        """
+    """
+    Parameterization with t0 and u0_amp_com defined between the primary source and binary lens center of mass. Takes in mass ratio of lenses.
+    No Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20054,9 +20070,9 @@ class BSBL_PhotAstrom_Par_Param1(ModelClassABC,
                                  BSBL_PhotAstrom,
                                  BSBL_Parallax,
                                  BSBL_PhotAstromParam1):
-        """
-        Parameterization with t0 defined between the geometric center of the lens and the source. Parallax.
-        """
+    """
+    Parameterization with t0 defined between the geometric center of the lens and the source. Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20070,11 +20086,9 @@ class BSBL_PhotAstrom_noPar_Param2(ModelClassABC,
                                    BSBL_PhotAstrom,
                                    BSBL_noParallax,
                                    BSBL_PhotAstromParam2):
-        
     """
     Parameterization with t0 defined between the geometric center of the source and the primary lens. No Parallax.
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -20086,15 +20100,15 @@ class BSBL_PhotAstrom_Par_Param2(ModelClassABC,
                                  BSBL_PhotAstrom,
                                  BSBL_Parallax,
                                  BSBL_PhotAstromParam2):
+    """
+    Parameterization with t0 defined between the geometric center of the source and the primary lens. Parallax.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
  
-    """
-    Parameterization with t0 defined between the geometric center of the source and the primary lens. Parallax.
-    """
-                                     
+
 # =====
 # FSPL Model
 # =====

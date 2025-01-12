@@ -148,9 +148,17 @@ Parameter                  Units             Description
 =========================  ================  ========================================================
 
 
-NEEDS FIXING BELOW HERE
-=======================
 .. toctree::
    :maxdepth: 4 
    
    PSPL_Model.rst
+
+PSPL Developer Classes
+======================
+.. toctree::
+   :maxdepth: 2
+
+   PSPL_Param.rst
+   PSPL_Data.rst
+   PSPL_Parallax.rst
+   PSPL_GP.rst

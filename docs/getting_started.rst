@@ -2,7 +2,7 @@ Getting Started Tutorials
 =========================
 To learn to use BAGLE models, make microlensing events, and make
 photometric or astrometric plots, we have created an `Intro Jupyter Notebook
-<https://github.com/MovingUniverseLab/BAGLE_Microlensing/blob/main/BAGLE_TUTORIAL.ipynb>`_.
+<https://github.com/MovingUniverseLab/BAGLE_Microlensing/blob/main/BAGLE_TUTORIAL.ipynb>`_
 tutorial. A subset of the content is reproduced below.
 
 Using BAGLE

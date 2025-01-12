@@ -1,6 +1,5 @@
-
 Parameterization Class Family
-===============================
+-----------------------------
 
 Here is a subsection of the inheritance diagram for the PSPL Parametrization classes showing the AstromParam, PhotParam, and PhotAstromParam structures.
 
@@ -8,15 +7,10 @@ Here is a subsection of the inheritance diagram for the PSPL Parametrization cla
 .. inheritance-diagram:: model.PSPL_GP_PhotAstromParam1 model.PSPL_GP_PhotParam1 model.PSPL_AstromParam3
 
 
-
-PSPL Models
----------------
-
-.. autoclass:: model.PSPL_Param 
+.. autoclass:: model.PSPL_Param
     :members:
     :inherited-members:
     :show-inheritance:
-
 
 .. autoclass:: model.PSPL_AstromParam4
     :members:
@@ -62,10 +56,6 @@ PSPL Models
     :members:
     :inherited-members:
     :show-inheritance:
-
-
-GP Models
---------------
 
 .. autoclass:: model.PSPL_GP_PhotParam1
     :members:

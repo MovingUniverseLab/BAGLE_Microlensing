@@ -1,6 +1,5 @@
-
 Data Class Family
-------------------
+----------------------
 
 .. autoclass:: model.PSPL
     :members:

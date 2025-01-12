@@ -1,8 +1,5 @@
-Parameterization Class Family - BSPL
-=====================================
-
-BSPL Models
----------------
+Parameterization Class Family
+-----------------------------
 
 .. autoclass:: model.BSPL_PhotParam1
     :members:
@@ -60,9 +57,6 @@ BSPL Models
     :inherited-members:
     :show-inheritance:
 
-GP Models
---------------
-
 .. autoclass:: model.BSPL_GP_PhotParam1
     :members:
     :inherited-members:
@@ -83,9 +77,7 @@ GP Models
     :inherited-members:
     :show-inheritance:
 
-
-
-.. autoclass:: model.BSPL_GP_PhotAstrom_LinOrbs_Param1 
+.. autoclass:: model.BSPL_GP_PhotAstrom_LinOrbs_Param1
     :members:
     :inherited-members:
     :show-inheritance:

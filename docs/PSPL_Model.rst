@@ -83,11 +83,6 @@ PSPL Photometry Only, with Parallax
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSPL_Phot_noPar_Param1_geoproj
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
 
 PSPL Photometry Only, no Parallax
 ---------------------------------
@@ -112,6 +107,11 @@ PSPL Photometry Only, Geocentric-Projected Frame
 ------------------------------------------------
 
 .. autoclass:: model.PSPL_Phot_Par_Param1_geoproj
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+.. autoclass:: model.PSPL_Phot_noPar_Param1_geoproj
     :members:
     :inherited-members:
     :show-inheritance:

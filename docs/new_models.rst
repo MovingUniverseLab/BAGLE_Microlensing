@@ -58,7 +58,7 @@ For example, the `PSPL_PhotAstrom_noPar_Param1` model is declared as::
                                          PSPL_PhotAstromParam1)
 
 Class Families
-=================
+==============
 
 Model Class Family
 ------------------
@@ -96,19 +96,27 @@ The base class is ParallaxClassABC.
 Parameterization Class Family
 ------------------------------
 
-These classes determine which physical parameters define the model. Currently
-this file supports one parameterization when using only photometry (`Phot`)
-and three parametrizations when using photometry and astrometery
-(`PhotAstrom`).
+These classes determine which physical parameters define the model.
+A common need is to make a new parameterization for an existing model.
+First, decide whether your parameterization allows for only photometry (`Phot`),
+only astrometry (`Astrom`) or photometry and astrometry (`PhotAstrom`).
+The base class of all parameterizations is typically `PSPL_Param`.
+A new parameterization class should only implement an ``__init__``
+class. Within this initializer method, the new input parameters should
+be converted to the barycentric variables expected to calculate the
+model throughout (e.g. vector u0, tE, muRel_hat). See other parameterizations to see the complete
+set of expected variables in a model class.
 
-The base class is PSPL_Param.
-
-The parameters for each parameterization are:
+Some example parameterizations with brief explanations of their parameters
+are described below.
 
     PhotParam1 :
         Point source point lens model for microlensing photometry only.
         This model includes the relative proper motion between the lens
-        and the source. Parameters are reduced with the use of piRel
+        and the source. Note, the parameters below are all barycentric
+        (i.e. at the center of the Solar System). Despite the parameterization,
+        models always render lightcurves and astrometric trajectory curves
+        in the observers' reference frame (e.g. Earth or a satellite).
 
         `Parameters`: 
             | t0, u0_amp, tE, 

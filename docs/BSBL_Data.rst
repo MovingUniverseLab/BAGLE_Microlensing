@@ -1,17 +1,17 @@
 Data Class Family
-----------------------
+-----------------
 
-.. autoclass:: model.PSBL
+.. autoclass:: model.BSBL
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSBL_Phot
+.. autoclass:: model.BSBL_Phot
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSBL_PhotAstrom
+.. autoclass:: model.BSBL_PhotAstrom
     :members:
     :inherited-members:
     :show-inheritance:

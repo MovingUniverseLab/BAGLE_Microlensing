@@ -1,12 +1,12 @@
-GP Class Family
-------------------
+Parallax Class Family
+---------------------
 
-.. autoclass:: model.Celerite_GP_Model
+.. autoclass:: model.BSBL_noParallax
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSPL_GP
+.. autoclass:: model.BSBL_Parallax
     :members:
     :inherited-members:
     :show-inheritance:

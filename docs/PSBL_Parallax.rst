@@ -1,12 +1,12 @@
-Parallax Class Family - PSBL
+Parallax Class Family
 -----------------------------
 
-.. autoclass:: model.PSPL_Parallax
+.. autoclass:: model.PSBL_Parallax
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.PSPL_noParallax
+.. autoclass:: model.PSBL_noParallax
     :members:
     :inherited-members:
     :show-inheritance:
