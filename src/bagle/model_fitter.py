@@ -202,7 +202,7 @@ class MicrolensSolver(Solver):
         'piS': ('make_piS', None, None),
         'add_err': ('make_gen', 0, 0.3),
         'mult_err': ('make_gen', 1.0, 3.0),
-        'radius': ('make_gen', 1E-4, 1E-2),
+        'radiusS': ('make_gen', 1E-4, 1E-2),
         'fratio_bin': ('make_gen', 0, 1),
         # We really need to make some normal distributions. All these are junk right now.
         # TODO: I don't think the above comment is accurate any more

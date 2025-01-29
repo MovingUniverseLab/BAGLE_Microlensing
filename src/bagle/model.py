@@ -17687,7 +17687,7 @@ class FSPL_PhotParam2(PSPL_Param):
     paramAstromFlag = False
     paramPhotFlag = True
 
-    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base, radiusS,
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_base,
                  n_outline=10,
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
