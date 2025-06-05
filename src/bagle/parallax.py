@@ -106,7 +106,8 @@ def get_observer_barycentric(body, times, min_ephem_step=1, velocity=False):
 
     times : astropy.time.Time array
         Array of times (astropy.time.core.Time) objects at which to
-        fetch the position of the specified Solar System body.
+        fetch the position of the specified Solar System body. Times
+        should be in the TDB scale.
 
     Optional Inputs
     ---------------
@@ -146,7 +147,7 @@ def get_observer_barycentric(body, times, min_ephem_step=1, velocity=False):
 
         # Fetch the Horizons ephemeris.
         from astroquery.jplhorizons import Horizons
-        obj = Horizons(id=body, epochs={'start':t_min, 'stop':t_max, 'step':step})
+        obj = Horizons(id=body, location="@0", epochs={'start':t_min, 'stop':t_max, 'step':step})
         obj_data = obj.vectors()
 
         ephem_jd = obj_data['datetime_jd']
