@@ -219,10 +219,12 @@ class MicrolensSolver(Solver):
         't0_com': ('make_t0_gen', None, None),
         'u0_amp_com': ('make_gen', -1, 1),
         'thetaE_amp': ('make_lognorm_gen', 0, 1),
-        'x0_system_E': ('make_gen', -10, 10),
-        'x0_system_N': ('make_gen', -10, 10),
+        'xS0_system_E': ('make_gen', -10, 10),
+        'xS0_system_N': ('make_gen', -10, 10),
         'muS_system_E': ('make_gen', -10, 10),
         'muS_system_N': ('make_gen', -10, 10),
+        'acc_E': ('make_gen', -10, 10),
+        'acc_N': ('make_gen', -10, 10),
         'omega': ('make_gen', -180, 180),
         'big_omega': ('make_gen', -180, 180),
         'i':('make_gen', -90, 90),
@@ -6084,4 +6086,3 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                             ax.axhline(truths[i], color=truth_color,
                                        **truth_kwargs)
     return (fig, axes)
-
