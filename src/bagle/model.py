@@ -17210,6 +17210,9 @@ class FSPL(PSPL):
         return images, amps
 
 
+    
+    
+        
     def get_all_arrays_noCI(self, t_obs, filt_idx=0):
         """
         Obtain the image and amplitude arrays for each t_obs. This method does not use contour integration. 
@@ -17240,6 +17243,8 @@ class FSPL(PSPL):
         
         """
         def function_photometry_one(theta, u, rho, parity = '+'):
+            # Equation 39. Term inside integral that gives u2f**2 - u1f**2
+            
             def u1(theta, u, rho):
                 if u<=rho or u>rho and theta>np.arcsin(rho/u):
                     return 0
@@ -17256,11 +17261,13 @@ class FSPL(PSPL):
             u2f = u2(theta, u, rho)
         
             if parity == '+':
-                return 1/2*(u2f**2-u1f**2)
+                return (u2f**2-u1f**2)
             else:
-                return 1/2*(u1f**2-u2f**2)
+                return (u1f**2-u2f**2)
         
         def function_photometry_two(theta, rho, u):
+            # Equation 39. Term inside integral that gives u2f * np.sqrt(u2f**2+4) - u1f * np.sqrt(u1f**2+4)
+
             def u1(theta, rho, u):
                 if u<=rho:
                     return 0
@@ -17281,36 +17288,9 @@ class FSPL(PSPL):
             u2f = u2(theta, rho, u)
             return u2f * np.sqrt(u2f**2+4) - u1f * np.sqrt(u1f**2+4)
         
-        def function_astro(theta, rho, u, parity = '+'):
-            def u1(theta, rho, u):
-                if u<=rho:
-                    return 0
-                else:
-                    if theta <= np.arcsin(rho/u):
-                        return u * np.cos(theta) - np.sqrt(rho**2 - u**2 * np.sin(theta)**2)
-                    else:
-                        return 0
-                        
-            def u2(theta, rho, u):
-                if u<=rho:
-                    return u * np.cos(theta) + np.sqrt(rho**2 - u**2 * np.sin(theta)**2)
-                else:
-                    if theta <= np.arcsin(rho/u):
-                        return u * np.cos(theta) + np.sqrt(rho**2 - u**2 * np.sin(theta)**2)
-                    else:
-                        return 0
-            u1f = u1(theta, rho, u)
-            u2f = u2(theta, rho, u)
-            if parity != '+':
-                #numerator = (u2f**2+1)*np.sqrt(u2f**2+4) - u2f**3 - 3*u2f + (-u1f**2-1)*np.sqrt(u1f**2+4) + u1f**3 + 3*u1f
-                #return 1/6 * numerator       
-                numerator = np.sqrt(u2f**2+4)**3 - u2f**3 - np.sqrt(u1f**2+4)**3 + u1f**3
-                return  -1/6 * numerator
-            else:
-                numerator = np.sqrt(u2f**2+4)**3 + u2f**3 - np.sqrt(u1f**2+4)**3 - u1f**3
-                return  1/6 * numerator
         
         def amplification_uminus(time, rho, u_amp):
+            # Solving Equation 39 (the part dealing with u2f**2 - u1f**2)
             n = 20
             n_two = 2*n
             amplification_uminus = []
@@ -17350,6 +17330,7 @@ class FSPL(PSPL):
             return amplification_uminus
 
         def amplification_uplus(time, rho, u_amp):
+            # Solving Equation 39 (the part dealing with u2f**2 - u1f**2)
             n = 20
             n_two = 2*n
             amplification_uplus = []
@@ -17390,11 +17371,12 @@ class FSPL(PSPL):
             return amplification_uplus
 
             
-        def amplification_lee(time, rho, u_amp):
+        def amplification_lee_full(time, rho, u_amp):
+            # This should be the total amplification from https://iopscience.iop.org/article/10.1088/0004-637X/695/1/200/pdf
+            # Solving Equation 39 (the part dealing with u2f * np.sqrt(u2f**2+4) - u1f * np.sqrt(u1f**2+4))
+            
             n=20
-            amplification_lee =[]
-            
-            
+            amplification_lee_full =[]
             for i in range(0, len(u_amp)):
                 
                 u_check = u_amp[i]
@@ -17419,7 +17401,7 @@ class FSPL(PSPL):
                             argument = ((2*k-1)*np.pi)/(2*n)
                             third_sum.append(function_photometry_two(argument, rho, u_n))
                     third_term = (4/3)*np.sum(third_sum)
-                    amplification_lee.append(factor*(first_term+second_term+third_term))
+                    amplification_lee_full.append(factor*(first_term+second_term+third_term))
                     
                 else:
                     factor = 1/(np.pi*rho**2) * np.arcsin(rho/u_n)/n
@@ -17438,17 +17420,50 @@ class FSPL(PSPL):
                             argument = ((2*k-1)*np.arcsin(rho/u_n))/(n)
                             third_sum.append(function_photometry_two(argument, rho, u_n))
                     third_term = (4/3)*np.sum(third_sum)
-                    amplification_lee.append(factor*(first_term+second_term+third_term))
+                    amplification_lee_full.append(factor*(first_term+second_term+third_term))
             
-            amplification_lee = np.array(amplification_lee) 
-            return amplification_lee
-            
+            amplification_lee_full = np.array(amplification_lee_full) 
+            return amplification_lee_full
+        
+        def function_astro(theta, rho, u, parity = '+'):
+            #Equation 41-43
+            def u1(theta, rho, u):
+                if u<=rho:
+                    return 0
+                else:
+                    if theta <= np.arcsin(rho/u):
+                        return u * np.cos(theta) - np.sqrt(rho**2 - u**2 * np.sin(theta)**2)
+                    else:
+                        return 0
+                        
+            def u2(theta, rho, u):
+                if u<=rho:
+                    return u * np.cos(theta) + np.sqrt(rho**2 - u**2 * np.sin(theta)**2)
+                else:
+                    if theta <= np.arcsin(rho/u):
+                        return u * np.cos(theta) + np.sqrt(rho**2 - u**2 * np.sin(theta)**2)
+                    else:
+                        return 0
+            u1f = u1(theta, rho, u)
+            u2f = u2(theta, rho, u)
+            if parity != '+':
+                #numerator = (u2f**2+1)*np.sqrt(u2f**2+4) - u2f**3 - 3*u2f + (-u1f**2-1)*np.sqrt(u1f**2+4) + u1f**3 + 3*u1f
+                #return 1/6 * numerator       
+                numerator = np.sqrt(u2f**2+4)**3 - u2f**3 - np.sqrt(u1f**2+4)**3 + u1f**3
+                return  -1/6 * numerator
+            else:
+                numerator = np.sqrt(u2f**2+4)**3 + u2f**3 - np.sqrt(u1f**2+4)**3 - u1f**3
+                return  1/6 * numerator
+
+    
         
         def lee_astro(time, rho, u_amp):
+            #Equation 44
             n = 20
             upluspos = []    
             uminuspos = []
-            
+            factor = 1/(np.pi*rho**2)
+
             for i in range(0, len(time)):
                 u_now = u_amp[i]
                 first_term_plus = function_astro(0, rho, u_now) + function_astro(np.pi, rho, u_now)
@@ -17474,8 +17489,8 @@ class FSPL(PSPL):
                     third_term_plus = 2*np.sum(sum_plus)
                     third_term_minus = 2*np.sum(sum_minus)
                     
-                    total_plus = (np.pi)/(3*n) * (first_term_plus+second_term_plus+third_term_plus)
-                    total_minus= (np.pi)/(3*n) * (first_term_minus+second_term_minus+third_term_minus) 
+                    total_plus = factor*(np.pi)/(3*n) * (first_term_plus+second_term_plus+third_term_plus)
+                    total_minus= factor*(np.pi)/(3*n) * (first_term_minus+second_term_minus+third_term_minus) 
             
                 else:
                     sum_plus = []
@@ -17497,8 +17512,8 @@ class FSPL(PSPL):
                     third_term_plus = 2*np.sum(sum_plus)
                     third_term_minus = 2*np.sum(sum_minus)
                     
-                    total_plus = (2* np.arcsin(rho/u_now))/(3*n) * (first_term_plus+second_term_plus+third_term_plus)            
-                    total_minus = (2* np.arcsin(rho/u_now))/(3*n) * (first_term_minus+second_term_minus+third_term_minus)            
+                    total_plus = factor*(2* np.arcsin(rho/u_now))/(3*n) * (first_term_plus+second_term_plus+third_term_plus)            
+                    total_minus = factor*(2* np.arcsin(rho/u_now))/(3*n) * (first_term_minus+second_term_minus+third_term_minus)            
                 
                 
                 upluspos.append(total_plus)
@@ -17517,16 +17532,15 @@ class FSPL(PSPL):
 
         upluspos, uminuspos = lee_astro(t_obs, rho, u_amp)
             
-        factor = 1/(np.pi*rho**2)
         
         #u_vec_h = fspl.get_u(time) #units of thetaE
         #u_amp_h = np.linalg.norm(u_vec_h, axis=1)
         #u_hat = u_vec_h / u_amp_h[:, np.newaxis]
         up_array = np.array(upluspos) * self.thetaE_amp * 1e-3 #arcsec
-        up = factor * up_array[:, np.newaxis] * u_hat #arcsec
+        up = up_array[:, np.newaxis] * u_hat #arcsec
         
         um_array = np.array(uminuspos) * self.thetaE_amp *1e-3 #arcsec
-        um = factor * um_array[:, np.newaxis] * u_hat #arcsec
+        um = um_array[:, np.newaxis] * u_hat #arcsec
         
         xL = self.get_lens_astrometry(t_obs)
         major = xL + up
@@ -17538,7 +17552,7 @@ class FSPL(PSPL):
 
         au = amplification_uplus(t_obs, rho, u_amp)
         am = amplification_uminus(t_obs, rho, u_amp)
-        al = amplification_lee(t_obs, rho, u_amp)
+        al = amplification_lee_full(t_obs, rho, u_amp)
         
         amp_plus = au + 1/2 * al
         amp_minus = am + 1/2 * al
