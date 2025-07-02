@@ -1084,6 +1084,15 @@ class MicrolensSolver(Solver):
 
         `tab = self.load_mnest_results()`
         `smy = self.load_mnest_summary()`
+
+        Optional
+        --------
+        s_idx : int
+            The index of the solution to evaluate (for multi-modal solutions).
+        def_best : str
+            One of 'maxL', 'map', 'mean', 'median'.
+            If mean, then standard deviation uncertainties are also returned.
+            If median, then 1, 2, 3 sigma uncertaintes are also returned.
         """
 
         params = self.all_param_names

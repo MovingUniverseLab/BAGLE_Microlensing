@@ -122,18 +122,18 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
                              resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-1, p_in['t0']+1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
-    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.05, p_in['muL_E']+0.05)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.05, p_in['muL_N']+0.05)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.05, p_in['muS_E']+0.05)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.05, p_in['muS_N']+0.05)
-    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-10, p_in['dL']+10)
-    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.01, p_in['b_sff']+0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.01, p_in['mag_src']+0.01)
+    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0'] - 1, p_in['t0'] + 1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E'] - 1e-4, p_in['xS0_E'] + 1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N'] - 1e-4, p_in['xS0_N'] + 1e-4)
+    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta'] - 0.01, p_in['beta'] + 0.01)
+    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E'] - 0.05, p_in['muL_E'] + 0.05)
+    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N'] - 0.05, p_in['muL_N'] + 0.05)
+    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E'] - 0.05, p_in['muS_E'] + 0.05)
+    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N'] - 0.05, p_in['muS_N'] + 0.05)
+    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL'] - 10, p_in['dL'] + 10)
+    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL'] / p_in['dS']) - 0.01, (p_in['dL'] / p_in['dS']) + 0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff'] - 0.01, p_in['b_sff'] + 0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src'] - 0.01, p_in['mag_src'] + 0.01)
 
     fitter.solve()
 
@@ -171,7 +171,6 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
                                                raL=p_in['raL'],
                                                decL=p_in['decL'])
 
-
     p_in['dL_dS'] = p_in['dL'] / p_in['dS']
     p_in['tE'] = pspl_in.tE
     p_in['thetaE'] = pspl_in.thetaE_amp
@@ -202,7 +201,7 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
     lnL_out = fitter.log_likely(best, verbose=verbose)
     if verbose: print("INPUT:")
     lnL_in = fitter.log_likely(p_in, verbose=verbose)
- 
+
     assert np.abs(lnL_out - lnL_in) < 50
 
     return
