@@ -1,7 +1,7 @@
 import math
 
 import numpy as np
-from joblib import Memory
+import joblib
 import os
 from astropy import units, units as u
 from astropy.coordinates import SkyCoord, get_body_barycentric, get_body_barycentric_posvel, solar_system_ephemeris, \
@@ -16,9 +16,14 @@ try:
     cache_dir = os.environ['PARALLAX_CACHE_DIR']
 except:
     cache_dir = os.path.dirname(__file__) + '/parallax_cache/'
-cache_memory = Memory(cache_dir, verbose=0, bytes_limit='1G')
-# Default cache size is 1 GB
-cache_memory.reduce_size()
+
+# Setup cache with max size of 1 GB
+if joblib.__version__ < '1.5':
+    cache_memory = joblib.Memory(cache_dir, verbose=0, bytes_limit='1G')
+    cache_memory.reduce_size()
+else:
+    cache_memory = joblib.Memory(cache_dir, verbose=0)
+    cache_memory.reduce_size(bytes_limit='1G')
 
 @cache_memory.cache()
 def parallax_in_direction(RA, Dec, mjd, obsLocation='earth'):
