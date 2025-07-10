@@ -15923,8 +15923,6 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
-
-
     muL_E : float
         Lens system proper motion in the RA direction (mas/yr)
     muL_N : float
@@ -15960,9 +15958,6 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         This is the time of the periastron of the system in days.
     sepL: float
         This is the angular separation between the lenses (mas)
-
-
-
     omegaS: float
         The argument of periastron of the primary source's orbit in degrees.
     big_omegaS: float
