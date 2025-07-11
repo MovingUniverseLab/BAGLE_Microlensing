@@ -6,6 +6,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pdb
 
+    
 def get_source_pos(z, m1, m2, z1, z2):
     """
     Get the source position.
@@ -41,7 +42,7 @@ def get_source_pos(z, m1, m2, z1, z2):
 
     return w
 
-def get_magnification_map(psbl, duration=0.05, time_steps=300):
+def get_magnification_map_old(psbl, duration=0.05, time_steps=300):
     """
     For a given PSBL model, plot the source trajectory on top 
     of the magnification map.
@@ -729,3 +730,185 @@ def plot_bsbl(bsbl, zoom, duration = 1000, time_steps=50000, caustic_finder = 'o
     
     return t, img, amp
 
+def get_magnification_map(psbl, grid_size = 0.0312, plot_radius = 0.0156, lim = 0.01, bins=6000, cmap='seismic'):
+    """
+    For a given PSBL/BSBL model, plot the source trajectory on top 
+    of the magnification map at time t0.
+
+    Parameters
+    ----------
+    psbl : model.PSBL object
+        The PSBL model to use for plotting.
+
+    grid_size : float
+        Window size in which the magnification map is generated. 
+
+    plot_radius : float
+        Radius within which the magnification map is generated.
+    
+
+    lim : float
+        Limits on x and y axis for plotting purposes
+
+    bins : int
+        For the resolution of the magnification maps
+    """
+    
+    if cmap != 'seismic':
+        cmap = get_cmap(cmap)
+
+    # An 8000 x 8000 grid takes a few seconds to run.
+
+    # Get lenses info
+    m1 = psbl.m1
+    m2 = psbl.m2
+    xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t_obs=np.array([psbl.t0]))
+
+    z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
+    z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
+
+    # Set up magnification map grid, centered on lens.
+    # zgrid are the image positions, where the shots end.
+    # We want to find where they start (source plane), i.e.
+    # inverse ray shooting
+    grid_center = psbl.xL0_com *1e-3
+    grid_size = grid_size # Probably a better way to do this...
+    plot_radius = plot_radius
+
+    xmin = grid_center[0] - grid_size
+    xmax = grid_center[0] + grid_size
+    ymin = grid_center[1] - grid_size
+    ymax = grid_center[1] + grid_size
+
+    x = np.linspace(xmin, xmax, 8000)
+    y = np.linspace(ymin, ymax, 8000)
+    xgrid, ygrid = np.meshgrid(x,y)
+    zgrid = xgrid + 1j*ygrid
+
+    # Get the source positions 
+    w_points = plot_models.get_source_pos(zgrid, m1, m2, z1, z2) 
+
+    # There's a few points that get shot out far away
+    # This trims them out
+    dist2 = (w_points.real**2 + w_points.imag**2)
+
+    # Separate into real and imaginary componenest for plotting
+    wreal = w_points[np.where(dist2 < plot_radius)].real
+    wimag = w_points[np.where(dist2 < plot_radius)].imag
+
+    plt.figure(1, figsize=(20,20))
+    plt.clf()
+    # magnification map and lenses
+    H, xedges, yedges = np.histogram2d(wreal, wimag, bins=bins)
+    val = plt.imshow(H.T, origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], norm=mpl.colors.CenteredNorm(), cmap=cmap)
+
+
+
+    plt.plot(z1.real, z1.imag, markersize = 20, color = 'green', marker = '.', label = 'Primary Lens')
+    plt.plot(z2.real, z2.imag, markersize = 20, color = 'darkslategrey', marker = 'H', label = 'Secondary Lens')
+
+    
+    plt.ylabel('Dec')
+    plt.xlabel('RA')
+    plt.title('Magnification Map')
+    plt.xlim(lim, -lim)
+    plt.ylim(-lim, lim)
+    plt.colorbar(val)
+    plt.legend(markerscale = 1)
+    plt.show()
+
+def get_magnification_map_timedep_new(psbl, time_skip = 500, time_choice = 1000, grid_size = 0.0312, plot_radius = 0.0156, time_steps=300, cmap = 'seismic', lim = 0.01, bins=6000):
+    """
+    Same as get_magnification_map() but for arbitrary time of your chosing. This function will generate a 2x2 grid with magnification maps for four times. 
+
+    Parameters
+    ----------
+    psbl : model.PSBL object
+        The PSBL model to use for plotting.
+
+    time_choice : int
+        Time before t0 to generate the first magnification map
+    time_skip : int
+        Intervals in the time array. 
+        
+    grid_size : float
+        Window size in which the magnification map is generated. 
+
+    plot_radius : float
+        Radius within which the magnification map is generated.
+    
+    lim : float
+        Limits on x and y axis for plotting purposes
+
+    bins : int
+        For the resolution of the magnification maps
+    """
+
+    # An 8000 x 8000 grid takes a few seconds to run.
+
+    # Get lenses info
+
+    def helper(t_obs, grid_size, plot_radius):
+        m1 = psbl.m1
+        m2 = psbl.m2
+        xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t_obs=np.array([t_obs]))
+        z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
+        z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
+    
+        # Set up magnification map grid, centered on lens.
+        # zgrid are the image positions, where the shots end.
+        # We want to find where they start (source plane), i.e.
+        # inverse ray shooting
+        grid_center = psbl.xL0 *1e-3
+        grid_size = grid_size # Probably a better way to do this...
+        plot_radius = plot_radius
+        print(grid_size)
+        print(plot_radius)
+
+    
+        xmin = grid_center[0] - grid_size
+        xmax = grid_center[0] + grid_size
+        ymin = grid_center[1] - grid_size
+        ymax = grid_center[1] + grid_size
+    
+        x = np.linspace(xmin, xmax, 8000)
+        y = np.linspace(ymin, ymax, 8000)
+        xgrid, ygrid = np.meshgrid(x,y)
+        zgrid = xgrid + 1j*ygrid
+    
+        # Get the source positions 
+        w_points = plot_models.get_source_pos(zgrid, m1, m2, z1, z2)
+    
+        # There's a few points that get shot out far away
+        # This trims them out
+        dist2 = (w_points.real**2 + w_points.imag**2)
+    
+        # Separate into real and imaginary componenest for plotting
+        wreal = w_points[np.where(dist2 < plot_radius)].real
+        wimag = w_points[np.where(dist2 < plot_radius)].imag
+    
+        return z1, z2, wreal, wimag
+
+    fig, ax = plt.subplots(2, 2, figsize=(25, 20))
+    index = 0
+    time = psbl.t0-time_choice
+    count=0
+    time_array = np.array([time, time+time_choice, time+time_choice*2, time+time_choice*3])
+    phot = psbl.get_photometry(time_array)
+
+    plt.title('Magnification Map')
+    for i in range(0,2):
+        for j in range(0,2):
+            z1, z2, wreal, wimag = helper(time, grid_size, plot_radius)
+            H, xedges, yedges = np.histogram2d(wreal, wimag, bins=bins)
+            val = ax[i][j].imshow(H.T, origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], norm=mpl.colors.CenteredNorm(), cmap=cmap)
+            ax[i][j].plot(z1.real, z1.imag, markersize = 30, color = 'black', marker = '.', label = 'Primary Lens')
+            ax[i][j].plot(z2.real, z2.imag, markersize = 20, color = 'darkslategrey', marker = 'H', label = 'Secondary Lens')
+            ax[i][j].set_xlim(-lim, lim)
+            ax[i][j].set_ylim(-lim, lim)
+            ax[i][j].set_title(f'Time:{time}')
+            ax[i][j].set_ylabel('Dec')
+            ax[i][j].set_xlabel('RA')
+            ax[i][j].legend(markerscale = 1)
+            fig.colorbar(val)
+            time = time + time_skip
