@@ -580,3 +580,152 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
 
     return
 
+
+    
+def all_plots(event, t, img, amp):
+    """
+    Get the photometry, centroid shift and astrometric shift plots for PSBL/BSBL events.
+
+    Inputs
+    ----------
+    event : model.PSBL/model.BSBL object
+        The PSBL/BSBL model to use for plotting.
+    duration: float
+        The total time to plot, in units of tE.
+    
+    """
+    
+    fig, ax = plt.subplots(3, 1, figsize=(25,40))
+    
+    centroid = event.get_centroid_shift(t) 
+    if bsbl.parallaxFlag:
+        ax[0].plot(t-event.t0, event.get_photometry(t, amp_arr=amp), linewidth = 4, color = 'deepskyblue')
+        ax[0].set_xlabel('dt')
+        ax[0].set_ylabel('Amplification')
+        ax[0].set_title('Photometric Shift (Parallax)')
+        ax[0].invert_yaxis()
+        #ax[0].set_xlim(-500, 500)
+        
+        ax[1].plot(centroid[:,0], centroid[:,1], linewidth = 4, color = 'purple')
+        ax[1].set_xlabel('RA (arcsec)')
+        ax[1].set_ylabel('Dec (arcsec)')
+        ax[1].set_title('Centroid Shift (Parallax)')
+        ax[1].axis('equal')
+        
+        ax[2].plot(t-event.t0, np.linalg.norm(centroid, axis=1), linewidth = 4, color = 'purple')
+        ax[2].set_xlabel('dt')
+        ax[2].set_ylabel('Astrometric Shift (arcsec)')
+        ax[2].set_title('Astrometric Shift (Parallax)')
+        
+        #ax[2].set_xlim(-5000, 5000)
+        plt.show()
+
+
+def plot_bsbl(bsbl, zoom, duration = 1000, time_steps=50000, caustic_finder = 'off', default = 0):
+    """
+    Get the source and lens trajectories for a BSBL event. 
+
+    Inputs
+    ----------
+    event : model.BSBL object
+        The BSBL model to use for plotting.
+    duration: float
+        The total time to plot, in units of tE.
+    
+    """
+
+    fig, ax = plt.subplots(figsize=(30,25))
+    lim = zoom
+    
+    plt.gca().set_xlim(lim, -lim)
+    plt.gca().set_ylim(-lim, lim)
+    
+    tmin = bsbl.t0 - (duration/2 * bsbl.tE)
+    tmax = bsbl.t0 + (duration/2 * bsbl.tE)
+    
+    t = np.linspace(tmin, tmax, time_steps)
+    img, amp = bsbl.get_all_arrays(t)
+
+    
+    lens1, lens2 = bsbl.get_resolved_lens_astrometry(t)
+
+    xS_resolved = bsbl.get_resolved_astrometry(t, image_arr = img)
+    print(xS_resolved.shape)
+    img_pri = xS_resolved[:, 0, :, :] 
+    img_sec = xS_resolved[:, 1, :, :] 
+
+
+    source_unlensed = bsbl.get_resolved_source_astrometry_unlensed(t)
+
+    srce_pos_primary =source_unlensed[:, 0, :]
+    srce_pos_secondary = source_unlensed[:, 1, :] 
+    
+    
+    x = srce_pos_primary[:, 0]
+    y = srce_pos_primary[:, 1]
+    x2 = srce_pos_secondary[:, 0]
+    y2 = srce_pos_secondary[:, 1]
+    
+
+    phot = bsbl.get_photometry(t, amp_arr=amp)
+    
+    plt.plot(x, y, label = 'Primary Source Position', linewidth = 4, color = 'green')
+    plt.plot(x2, y2, label = 'Secondary Source Position', linewidth = 4, color='hotpink')
+
+    if bsbl.muL[0] ==0 and bsbl.muL[1] ==0:
+        plt.plot(lens1[:, 0], lens1[:, 1],  '.', markersize = 20, label = 'Primary Lens Position', color = 'red')
+        plt.plot(lens2[:, 0], lens2[:, 1],  '.', markersize = 20, label = 'Secondary Lens Position', color = 'blue')
+    else:
+        plt.plot(lens1[:, 0], lens1[:, 1],  linewidth = 4, label = 'Primary Lens Position', color = 'red')
+        plt.plot(lens2[:, 0], lens2[:, 1],  linewidth = 4, label = 'Secondary Lens Position', color = 'blue')
+
+
+
+    for ii in range(5):
+        if ii == 0:
+            label_pri = 'Image Positions'
+            #label_sec = 'Secondary Image Position'
+        else:
+            label_pri = ''
+            label_sec = ''
+        plt.plot(img_pri[:, ii, 0], img_pri[:, ii, 1], '.', linewidth = .1, alpha = 0.5, color = 'orange', label = label_pri)
+        plt.plot(img_sec[:, ii, 0], img_sec[:, ii, 1], '.', linewidth = .1, alpha = 0.5, color = 'orange')
+
+    #plt.title('Change in Primary and Secondary Lens and Source Position (Keplerian Orbit)')
+    
+    plt.xlabel(f'$\Delta$ RA') 
+    plt.ylabel(f'$\Delta$ Dec')
+    
+    labels =['Primary Source Trajectory','Secondary Source Trajectory','Primary Lens Trajectory', 'Secondary Lens Trajectory', 'Images']
+    ps = mpatches.Patch(facecolor='green', edgecolor = 'k') # This will create a red bar with black borders, you can leave out edgecolor if you do not want the borders
+    ss = mpatches.Patch(facecolor='hotpink', edgecolor = 'k')
+    pl = mpatches.Patch(facecolor='red', edgecolor = 'k')
+    sl = mpatches.Patch(facecolor='blue', edgecolor = 'k')
+    im = mpatches.Patch(facecolor='orange', edgecolor = 'k')
+    fig.legend(handles = [ps, ss, pl, sl, im], labels=labels,
+    loc='center left',
+    bbox_to_anchor=(.9, 0.5),
+    borderaxespad=0,
+    frameon=False
+)
+    
+    tright = .92
+    ttop = .65
+    #fig.text(tright, ttop - .1 , 't0 = {0:.2f} (MJD)'.format(bsbl.t0))
+    #fig.text(tright, ttop - .15 , 'u0     = {0:.2f}'.format(bsbl.u0_amp))
+    ##fig.text(tright, ttop - .2 , 'u0_pyL = {0:.3f}'.format(pylima_u0))
+    #fig.text(tright, ttop - .2 , 'tE = {0:.2f} (day)'.format(bsbl.tE))
+    
+   # if bsbl.orbitFlag=='Keplerian':
+        #fig.text(tright, ttop - .25 , 'iL = {0:.2f} (deg)'.format(bsbl.iL))
+        #fig.text(tright, ttop - .3 , 'eL = {0:.2f}'.format(bsbl.eL))
+        #fig.text(tright, ttop - .35 , 'pL = {0:.2f} (days)'.format(bsbl.pL))
+        #fig.text(tright, ttop - .4 , 'iS = {0:.2f} (deg)'.format(bsbl.iS))
+        #fig.text(tright, ttop - .45 , 'eS = {0:.2f}'.format(bsbl.eS))
+        #fig.text(tright, ttop - .5 , 'pS = {0:.2f} (days)'.format(bsbl.pS))
+
+              
+    #plt.legend(loc='lower left') 
+    
+    return t, img, amp
+
