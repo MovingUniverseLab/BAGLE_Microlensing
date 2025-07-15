@@ -13252,7 +13252,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
                           'xS0_E', 'xS0_N',
                           'muL_E', 'muL_N',
-                          'muS_system_E', 'muS_system_N',
+                          'muS_E', 'muS_N',
                           'omega', 'big_omega', 'i', 'e',
                           'p', 'tp', 'aleph', 'aleph_sec'
                           ]
@@ -13269,7 +13269,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
                  muL_E, muL_N,
-                 muS_system_E, muS_system_N,
+                 muS_E, muS_N,
                 omega, big_omega, i,
                  e, p, tp, aleph, aleph_sec,
                  mag_src_pri, mag_src_sec,
@@ -13281,7 +13281,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
-        self.muS = np.array([muS_system_E, muS_system_N])  # mas
+        self.muS = np.array([muS_E, muS_N])  # mas
         self.muS_system = self.muS
         self.dL = dL
         self.dL_dS = dL_dS
@@ -13536,7 +13536,7 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
                            'omega', 'big_omega', 'i', 'e',
-                          'p', 'tp', 'aleph', 'aleph_sec', 'muS_system_E', 'muS_system_N',
+                          'p', 'tp', 'aleph', 'aleph_sec', 'muS_E', 'muS_N',
                           'xS0_E', 'xS0_N']
 
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
@@ -13555,7 +13555,7 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
                  big_omega, i,
                  e, p, tp,
                  aleph, aleph_sec,
-                 muS_system_E, muS_system_N,
+                 muS_E, muS_N,
                  xS0_E, xS0_N,
                  fratio_bin,
                  mag_base, b_sff,
@@ -13567,9 +13567,9 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.piS = piS
         self.piE = np.array([piE_E, piE_N])
         self.xS0 = np.array([xS0_E, xS0_N])
-        self.muS_E = muS_system_E
-        self.muS_N = muS_system_N
-        self.muS = np.array([muS_system_E, muS_system_N])  # mas
+        self.muS_E = muS_E
+        self.muS_N = muS_N
+        self.muS = np.array([muS_E, muS_N])  # mas
         self.muS_system = self.muS
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)
@@ -13776,9 +13776,8 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
                           'piE_E', 'piE_N',
                           'omega', 'big_omega', 'i', 'e', 'p',
                           'tp', 'aleph', 'aleph_sec',
-                          'muS_system_E', 'muS_system_N',
-                          'xS0_E', 'xS0_N',
                           'muS_E', 'muS_N',
+                          'xS0_E', 'xS0_N'
                           ]
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
@@ -13795,7 +13794,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
                  big_omega, i,
                  e, p, tp,
                  aleph, aleph_sec,
-                 muS_system_E, muS_system_N,
+                 muS_E, muS_N,
                  xS0_E, xS0_N,
                  fratio_bin,
                  mag_base, b_sff,
@@ -13807,8 +13806,8 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.piS = piS
         self.piE = np.array([piE_E, piE_N])
         self.xS0 = np.array([xS0_E, xS0_N])
-        self.muS_E = muS_system_E
-        self.muS_N = muS_system_N
+        self.muS_E = muS_E
+        self.muS_N = muS_N
         self.muS = np.array([muS_system_E, muS_system_N])  # mas
         self.x0_system = self.xS0
         self.muS_system = self.muS
@@ -14043,7 +14042,7 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
     fitter_param_names = ['mL', 't0_com', 'beta', 'dL', 'dL_dS',
                           'xS0_E', 'xS0_N',
                           'muL_E', 'muL_N',
-                          'muS_system_E', 'muS_system_N',
+                          'muS_E', 'muS_N',
                           'omega', 'big_omega', 'i',
                           'p', 'tp', 'aleph', 'aleph_sec'
                           ]
@@ -14060,7 +14059,7 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
                  muL_E, muL_N,
-                 muS_system_E, muS_system_N,
+                 muS_E, muS_N,
                   omega, big_omega, i,
                  p, tp, aleph, aleph_sec,
                  mag_src_pri, mag_src_sec,
@@ -14069,7 +14068,7 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         super().__init__(mL, t0, beta, dL, dL_dS,
                          xS0_E, xS0_N,
                          muL_E, muL_N,
-                         muS_system_E, muS_system_N,
+                         muS_E, muS_N,
                           omega, big_omega, i, 0,
                          p, tp, aleph, aleph_sec,
                          mag_src_pri, mag_src_sec,
@@ -14168,7 +14167,7 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'omega', 'big_omega', 'i',
-                          'p', 'tp', 'aleph', 'aleph_sec', 'muS_system_E', 'muS_system_N',
+                          'p', 'tp', 'aleph', 'aleph_sec', 'muS_E', 'muS_N',
                           'xS0_E', 'xS0_N']
 
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
@@ -14187,7 +14186,7 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
                  big_omega, i,
                  p, tp,
                  aleph, aleph_sec,
-                 muS_system_E, muS_system_N,
+                 muS_E, muS_N,
                  xS0_E, xS0_N,
                  fratio_bin,
                  mag_base, b_sff,
@@ -14198,7 +14197,7 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
                          big_omega, i, 0,
                          p, tp,
                          aleph, aleph_sec,
-                         muS_system_E, muS_system_N,
+                         muS_E, muS_N,
                          xS0_E, xS0_N,
                          fratio_bin,
                          mag_base, b_sff,
@@ -14297,7 +14296,7 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
                           'piE_E', 'piE_N',
                           'omega', 'big_omega', 'i', 'p',
                           'tp', 'aleph', 'aleph_sec',
-                          'muS_system_E', 'muS_system_N',
+                          'muS_E', 'muS_N',
                           'xS0_E', 'xS0_N'
                           ]
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
@@ -14315,7 +14314,7 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
                  big_omega, i,
                  p, tp,
                  aleph, aleph_sec,
-                 muS_system_E, muS_system_N,
+                 muS_E, muS_N,
                  xS0_E, xS0_N,
                  fratio_bin,
                  mag_base, b_sff,
@@ -14326,7 +14325,7 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
                          big_omega, i, 0,
                          p, tp,
                          aleph, aleph_sec,
-                         muS_system_E, muS_system_N,
+                         muS_E, muS_N,
                          xS0_E, xS0_N,
                          fratio_bin,
                          mag_base, b_sff,

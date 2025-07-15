@@ -508,7 +508,7 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
             t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par)
 #            u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par
             u0vec_out = u0vec_in + tauhat_in * (t0par - t0_in)/tE_in - tauhat_out * (t0par - t0_out)/tE_out - piE*par_t0par
-            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+            u0_out = np.hypot(u0vec_out[0], u0vec_out[1]) 
 
         except:
             par_t0par = np.tile(par_t0par,(len(t0_in),1)).T
@@ -631,6 +631,8 @@ def convert_piEvec_tE(ra, dec, t0par,
     piEE_out = piE*e_out 
     piEN_out = piE*n_out 
     tE_out = (vtilde_in/vtilde_out) * tE_in
+    import pdb
+#    pdb.set_trace()
     
     return piEE_out, piEN_out, tE_out
 
