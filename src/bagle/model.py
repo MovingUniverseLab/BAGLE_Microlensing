@@ -13222,9 +13222,9 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
 
-    muS_system_E: float
+    muS_E: float
         The RA proper motion of the system in mas/yr.
-    muS_system_N: float
+    muS_N: float
         The Dec proper motion of the system in mas/yr.
 
     xS0_E: float
