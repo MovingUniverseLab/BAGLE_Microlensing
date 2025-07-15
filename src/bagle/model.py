@@ -13503,9 +13503,9 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         This is the semi-major axis of the primary source in mas.
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
-    muS_system_E: float
+    muS_E: float
         The RA proper motion of the system in mas/yr.
-    muS_system_N: float
+    muS_N: float
         The Dec proper motion of the system in mas/yr.
 
     xS0_E: float
@@ -13743,9 +13743,9 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         This is the semi-major axis of the primary source in mas.
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
-    muS_system_E: float
+    muS_E: float
         The RA proper motion of the system in mas/yr.
-    muS_system_N: float
+    muS_N: float
         The Dec proper motion of the system in mas/yr.
     xS0_E: float
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
@@ -13808,7 +13808,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.xS0 = np.array([xS0_E, xS0_N])
         self.muS_E = muS_E
         self.muS_N = muS_N
-        self.muS = np.array([muS_system_E, muS_system_N])  # mas
+        self.muS = np.array([muS_E, muS_N])  # mas
         self.x0_system = self.xS0
         self.muS_system = self.muS
         self.mag_base = np.array(mag_base)
@@ -14013,9 +14013,9 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
 
-    muS_system_E: float
+    muS_E: float
         The RA proper motion of the system in mas/yr.
-    muS_system_N: float
+    muS_N: float
         The Dec proper motion of the system in mas/yr.
 
     xS0_E: float
@@ -14134,9 +14134,9 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
         This is the semi-major axis of the primary source in mas.
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
-    muS_system_E: float
+    muS_E: float
         The RA proper motion of the system in mas/yr.
-    muS_system_N: float
+    muS_N: float
         The Dec proper motion of the system in mas/yr.
 
     xS0_E: float
@@ -14263,9 +14263,9 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
         This is the semi-major axis of the primary source in mas.
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
-    muS_system_E: float
+    muS_E: float
         The RA proper motion of the system in mas/yr.
-    muS_system_N: float
+    muS_N: float
         The Dec proper motion of the system in mas/yr.
     xS0_E: float
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
