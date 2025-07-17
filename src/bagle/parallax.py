@@ -76,6 +76,7 @@ def dparallax_dt_in_direction(RA, Dec, mjd, obsLocation='earth'):
     coord = SkyCoord(RA, Dec, unit=(units.deg, units.deg))
 
     direction = coord.cartesian.xyz.value
+    import pdb
     north = np.array([0., 0., 1.])
     _east_projected = np.cross(north, direction) / np.linalg.norm(np.cross(north, direction))
     _north_projected = np.cross(direction, _east_projected) / np.linalg.norm(np.cross(direction, _east_projected))
@@ -83,6 +84,8 @@ def dparallax_dt_in_direction(RA, Dec, mjd, obsLocation='earth'):
     obs_posvel = get_observer_barycentric(obsLocation, times, velocity=True)[1]
     sun_posvel = get_body_barycentric_posvel('Sun', times)[1]
     sun_obs_vel = sun_posvel - obs_posvel
+    #pdb.set_trace()
+
     vel = sun_obs_vel.xyz.T.to(units.au / units.year)
 
     e = np.dot(vel, _east_projected)
