@@ -125,7 +125,75 @@ def convert_helio_geo_ast(ra, dec,
                           murel_in='SL', murel_out='LS', 
                           coord_in='EN', coord_out='tb', plot=True):
     """
-    NOTE: THIS IS NOT YET TESTED
+    Convert between heliocentric and geocentric-projected parameters.
+    This converts only the subset of parameters in astrometry fits
+    (xS0E, xS0N, muSE, muSN).
+
+    The default conversion assumes that inputs are in
+    source-lens (S - L) and EN coordinate conventions.
+
+    Parameters
+    ----------
+    ra : float
+    ra, dec : str, float
+        Equatorial coordinates of the microlensing event.
+        If string, needs to be of the form
+        'HH:MM:SS.SSSS', 'DD:MM:SS.SSSS'
+    piS : float or array
+        Source parallax (mas)
+    xS0E_in : float or array
+        Source position relative to RA/Dec, East component, in input frame. (arcsec)
+    xS0N_in : float or array
+        Source position relative to RA/Dec, North component, in input frame. (arcsec)
+    muSE_in : float or array
+        Source proper motion, East component, in input frame. (mas/yr)
+    muSN_in : float or array
+        Source proper motion, North component, in input frame. (mas/yr)
+    t0_in : float or array
+        Time at which minimum source-lens projected separation in the rectilinear
+        frame occurs, in input frame. (MJD)
+    u0_in : float or array
+        Minimum source-lens projected separation in the rectilinear frame,
+        in units of the Einstein radius, in input frame.
+    tE_in : float or array
+        Einstein crossing time, in input frame. (days)
+    piEE_in : float or array
+        Microlensing parallax, East component, in input frame.
+    piEN_in : float or array
+        Microlensing parallax, North component, in input frame.
+    t0par : float or array
+        Reference time for the geocentric projected coordinate system. (MJD)
+    in_frame : str
+        'helio' if converting from heliocentric to geocentric projected frame.
+        'geo' if converting from geocentric projected to heliocentric frame.
+    murel_in : str
+        Definition of "relative" for the input relative proper motion.
+        'SL' if relative proper motion in the input parameters is defined as source-lens.
+        'LS' if relative proper motion in the input parameters is defined as lens-source.
+    murel_out : str
+        Definition of "relative" for the output relative proper motion.
+        'SL' if relative proper motion in the output parameters is defined as source-lens.
+        'LS' if relative proper motion in the output parameters is defined as lens-source.
+    coord_in : str
+        Definition of coordinate system used to define input parameters.
+        'EN' if using fixed on-sky East-North coordinate system (Lu)
+        'tb' if using right-handed tau-beta system based on murel and minimum separation (Gould)
+    coord_out : str
+        Definition of coordinate system used to define output parameters.
+        'EN' if using fixed on-sky East-North coordinate system (Lu)
+        'tb' if using right-handed tau-beta system based on murel and minimum separation (Gould)
+    plot : bool
+
+    Returns
+    -------
+    xS0E_out : float or array
+        East component of the source position relative to RA and Dec in the new frame (arcsec).
+    xS0N_out : float or array
+        North component of the source position relative to RA and Dec in the new frame (arcsec).
+    muSE_out : float or array
+        East component of the source proper motion in the new frame (mas/yr).
+    muSN_out : float or array
+        North component of the source proper motion in the new frame (mas/yr).
     """
     day_to_yr = 365.25
 
@@ -227,9 +295,11 @@ def convert_helio_geo_phot(ra, dec,
     This converts only the subset of parameters in photometry fits
     (t0, u0, tE, piEE, piEN).
 
-    The core conversion is assuming that source-lens, using the EN
-    coordinate convention.
+    The default conversion assumes that inputs are in
+    source-lens (S - L) and EN coordinate conventions.
 
+    Parameters
+    ----------
     ra, dec : str, float, or int
         Equatorial coordinates of the microlensing event.
         
@@ -279,6 +349,19 @@ def convert_helio_geo_phot(ra, dec,
         Definition of coordinate system used to define output parameters.
         'EN' if using fixed on-sky East-North coordinate system (Lu)
         'tb' if using right-handed tau-beta system based on murel and minimum separation (Gould)
+
+    Returns
+    -------
+    t0_out : float or array
+        Time of closest approach in the new frame. (MJD)
+    u0_out : float or array
+        Closest approach distance in the new frame. (thetaE)
+    tE_out : float or array
+        Eisntein crossing time in the new frame (MJD)
+    piEE_out : float or array
+        Microlensing parallax in the East direction in the new frame.
+    piEN_out : float or array
+        Microlensing parallax in the North direction in the new frame.
     """
 
     # Check inputs.

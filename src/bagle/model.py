@@ -5494,7 +5494,7 @@ class PSBL(PSPL):
 
         Parameters
         ----------
-        t:
+        t: float or array
             Array of times in MJD.DDD
         filt_idx : int, optional
             Index of the astrometric filter or data set.
@@ -5859,6 +5859,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         """
         # In phot only fits, lens is at rest. So just duplicate to get
         # the right shape.
+
         if self.orbitFlag:
             eccentricity, i, big_omega, little_omega, p, tp = self.get_me_some_orbital_parameters(self.t0, self.sep, self.r_s, self.a_s, self.v_para, self.v_perp, self.v_rad)
             orb = orbits.Orbit()
@@ -5884,6 +5885,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
             xL2 = np.tile(self.xL2_over_theta, (len(t), 1))
         
         return (xL1, xL2)
+      
     def get_lens_astrometry(self, t, filt_idx=0):
         """
         Get the astrometry for the foreground lens at the input times.
@@ -6170,7 +6172,6 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 orb.aleph2 = self.aleph_sec*1e-3 #arcseconds
 
                 (x, y, x2, y2) = orb.oal2xy(t) #Motion of primary and secondary orbits. Returned quantities are in arcseconds.
-
 
                 #self.x = x
                 #self.y = y
@@ -16671,8 +16672,6 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
-
-
     muL_E : float
         Lens system proper motion in the RA direction (mas/yr)
     muL_N : float
@@ -16699,7 +16698,6 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         This is the time of the periastron of the system in days.
     aL: float
         Semi-major axis of the binary lens system in mas. 
-        
     omegaS: float
         The argument of periastron of the primary source's orbit in degrees.
     big_omegaS: float
@@ -17535,12 +17533,8 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         Distance from the observer to the source (pc)
     aL : float
         Semi-Major axis of the binary lens system in mas. 
-
-        
     sepS : float
         Angular separation of the source secondary from the source primary (mas).
-
-        
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
         list or array, with one entry for each photometric filter.
@@ -17611,7 +17605,6 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         flux_sec = mag2flux(self.mag_src_sec)
         self.mag_base = flux2mag(flux_pri + flux_sec) + 2.5 * np.log10(self.b_sff)
 
-        # Calculate the relative parallax
         inv_dist_diff = (1.0 / (dL * units.pc)) - (1.0 / (dS * units.pc))
         piRel = units.rad * units.au * inv_dist_diff
         self.piRel = piRel.to('mas').value
@@ -17677,8 +17670,6 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.alphaS_rad = np.arctan2(x-x2, y-y2)[0]
         self.alphaS = np.rad2deg(self.alphaS_rad)
 
-
-                     
 
         # Calculate the relative proper motion vector.
         # Note that this will be in the direction of theta_hat
@@ -17941,7 +17932,6 @@ class FSPL(PSPL):
             sourcepos.append([center[0] + self.radiusS * np.cos((2 * i * np.pi) / (self.n_outline)),
                               center[1] + self.radiusS * np.sin((2 * i * np.pi) / (self.n_outline))])
         return np.array(sourcepos)
-
 
     def get_all_arrays(self, t, filt_idx=0):
         """
@@ -19642,6 +19632,7 @@ class FSPL_Limb(FSPL):
         -------
         mag_model : array_like
             Magnitude of the unresolved microlensing event at t.
+            
         '''
         mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
         flux_zp = 1.0
@@ -19838,7 +19829,7 @@ class BFSPL(PSPL):
     """Binary Finite-Source, Point-Lens models."""
     
     def get_all_arrays(self, t, filt_idx=0):
-                # We use helper functions photometry_one, photometry_two, integral_top and integral_bottom 
+        # We use helper functions photometry_one, photometry_two, integral_top and integral_bottom 
         # to describe f, g and k functions in the BAGLE paper. 
 
         
@@ -19949,8 +19940,6 @@ class BFSPL(PSPL):
         #solve the numerator and denominator separately in equation 40 of the BAGLE paper. 
         #The helper functions are g and k in the BAGLE paper
         
-        
-
         def astrometry(time, rho, u_amp):
             # Composite rule to solve equation 40 numerator
             n = 20
@@ -20030,7 +20019,6 @@ class BFSPL(PSPL):
             
         def astrometry_bottom(time, rho, u_amp):
             # Composite rule to solve equation 40 denominator
-
             n = 20
             bottomp = []
             bottomm = []
@@ -20110,7 +20098,6 @@ class BFSPL(PSPL):
         u_pri = u_center[:, 0, :] 
         u_sec = u_center[:, 1, :] 
 
-        
         u_amp_pri = np.linalg.norm(u_pri, axis=1)
         u_hat_pri = (u_pri.T / u_amp_pri).T
         
@@ -20120,7 +20107,6 @@ class BFSPL(PSPL):
         rho_pri = self.radiusS_pri * 1e3 / self.thetaE_amp
         rho_sec = self.radiusS_sec * 1e3 / self.thetaE_amp
                     
-
         am, au = amplification_helper(t, rho_pri, u_amp_pri)
         al = amplification_lee_full(t, rho_pri, u_amp_pri)
 
@@ -20151,7 +20137,6 @@ class BFSPL(PSPL):
         major_sec =  xL + mj
         minor_sec = xL + mn
 
-        
         images_pri = np.zeros((len(t), 2, 2), dtype=float)
         images_pri[:, 0, :] = major_pri
         images_pri[:, 1, :] = minor_pri
@@ -20176,7 +20161,6 @@ class BFSPL(PSPL):
 
         return images, amps
 
-        
         
     def get_u(self, t, filt_idx=0):
         """
@@ -20425,7 +20409,6 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
 
         return u_lensed
 
-        
     def get_resolved_amplification(self, t, filt_idx=0, amp_arr=None):
         """Get the photometric amplification term at a set of times, t for both the
         plus and minus images.
@@ -20433,6 +20416,7 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
         Parameters
         ----------
         t: Array of times in MJD.DDD
+
         filt_idx : int, optional
             Index of the astrometric filter or data set.
             
@@ -20791,7 +20775,7 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         # Calculate the Einstein crossing time. (days)
         self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
 
-#####
+        #####
         # Derived binary source parameters.
         #####
         # Primary -- at origin

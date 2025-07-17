@@ -277,7 +277,7 @@ def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     params['b_sff'] = np.array([b_sff_in])
     params['mag_src'] = np.array([mag_src_in])
     params['b_sff1'] = b_sff_in
-    params['mag_sr1c'] = mag_src_in
+    params['mag_src1'] = mag_src_in
 
     # Extra parameters
     params['dL_dS'] = params['dL'] / params['dS']
@@ -461,6 +461,137 @@ def fake_data1(beta_sign=-1, plot=False, verbose=False, outdir='./', target='sim
         ast_figs[2].savefig(outdir + target + '_fake_data_t_vs_N.png')
 
     return data, params
+
+def fake_data2(raL, decL, t0_in, u0_in, tE_in, thetaE_in, piS_in, piE_in, xS0_in,
+               muS_in, b_sff_in, mag_src_in, obsLocation='earth',
+               outdir='', target='Unknown', noise=True, plot=False):
+
+    pspl_par_in = model.PSPL_PhotAstrom_Par_Param2(t0_in,
+                                                   u0_in,
+                                                   tE_in,
+                                                   thetaE_in,
+                                                   piS_in,
+                                                   piE_in[0],
+                                                   piE_in[1],
+                                                   xS0_in[0],
+                                                   xS0_in[1],
+                                                   muS_in[0],
+                                                   muS_in[1],
+                                                   b_sff=[b_sff_in],
+                                                   mag_src=[mag_src_in],
+                                                   raL=raL,
+                                                   decL=decL,
+                                                   obsLocation=obsLocation)
+
+    # Simulate
+    # photometric observations every 1 day and
+    # astrometric observations every 14 days
+    # for the bulge observing window. Observations missed
+    # for 125 days out of 365 days for photometry and missed
+    # for 245 days out of 365 days for astrometry.
+    t_phot = np.array([], dtype=float)
+    t_ast = np.array([], dtype=float)
+    for year_start in np.arange(56000, 58000, 365.25):
+        phot_win = 240.0
+        phot_start = (365.25 - phot_win) / 2.0
+        t_phot_new = np.arange(year_start + phot_start,
+                               year_start + phot_start + phot_win, 1)
+        t_phot = np.concatenate([t_phot, t_phot_new])
+
+        ast_win = 120.0
+        ast_start = (365.25 - ast_win) / 2.0
+        t_ast_new = np.arange(year_start + ast_start,
+                              year_start + ast_start + ast_win, 14)
+        t_ast = np.concatenate([t_ast, t_ast_new])
+
+    # Make the photometric observations.
+    # Assume 0.05 mag photoemtric errors at I=19.
+    # This means Signal = 400 e- at I=19.
+    flux0 = 4000.0
+    imag0 = 19.0
+    ast_err0 = 0.1 * 1e-3  # arcsec error at 19th mag
+    imag_obs = pspl_par_in.get_photometry(t_phot)
+    imag_obs_err = np.zeros(len(t_phot))
+    if noise:
+        imag_obs, imag_obs_err = add_photometric_noise(flux0, imag0, imag_obs)
+
+    # Make the astrometric observations.
+    # Assume 0.10 milli-arcsec astrometric errors in each direction at all epochs.
+    if noise:
+        pos_obs_tmp = pspl_par_in.get_astrometry(t_ast)
+        mag_obs_tmp = pspl_par_in.get_photometry(t_ast)
+        pos_obs, pos_obs_err = add_astrometric_noise(flux0, imag0, ast_err0, mag_obs_tmp, pos_obs_tmp)
+    else:
+        pos_obs = pspl_par_in.get_astrometry(t_ast)
+        pos_obs_err = np.zeros((len(t_ast), 2))
+
+    data = {}
+    data['t_phot1'] = t_phot
+    data['mag1'] = imag_obs
+    data['mag_err1'] = imag_obs_err
+
+    data['phot_files'] = ['fake_data_parallax_phot1']
+    data['ast_files'] = ['fake_data_parallax_ast1']
+
+    data['t_ast1'] = t_ast
+    data['xpos1'] = pos_obs[:, 0]
+    data['ypos1'] = pos_obs[:, 1]
+    data['xpos_err1'] = pos_obs_err[:, 0]
+    data['ypos_err1'] = pos_obs_err[:, 1]
+
+    data['raL'] = raL
+    data['decL'] = decL
+    data['obsLocation'] = obsLocation
+    data['target'] = target
+    data['phot_data'] = 'sim'
+    data['ast_data'] = 'sim'
+
+    params = {}
+    params['raL'] = raL
+    params['decL'] = decL
+    params['obsLocation'] = obsLocation
+    params['t0'] = t0_in
+    params['u0_amp'] = u0_in
+    params['tE'] = tE_in
+    params['thetaE'] = thetaE_in
+    params['piS'] = piS_in
+    params['piE_E'] = piE_in[0]
+    params['piE_N'] = piE_in[1]
+    params['xS0_E'] = xS0_in[0]
+    params['xS0_N'] = xS0_in[1]
+    params['muS_E'] = muS_in[0]
+    params['muS_N'] = muS_in[1]
+    params['b_sff'] = np.array([b_sff_in])
+    params['mag_src'] = np.array([mag_src_in])
+    params['b_sff1'] = b_sff_in
+    params['mag_src1'] = mag_src_in
+
+    # Extra parameters
+    params['piL'] = pspl_par_in.piL
+    params['dL'] = pspl_par_in.dL
+    params['dS'] = pspl_par_in.dS
+    params['mL'] = pspl_par_in.mL
+    params['muL_E'] = pspl_par_in.muL[0]
+    params['muL_N'] = pspl_par_in.muL[1]
+    params['muRel_E'] = pspl_par_in.muRel[0]
+    params['muRel_N'] = pspl_par_in.muRel[1]
+
+    if plot:
+       model_fitter.plot_photometry(data, pspl_par_in, dense_time=True)
+       plt.figure(1)
+       plt.title('Input Data and Model')
+       plt.savefig(f'{outdir}fake_data_phot_{target}.png')
+
+       figs = model_fitter.plot_astrometry(data, pspl_par_in, dense_time=True)
+
+       for ff in range(len(figs)):
+           fig = figs[ff]
+           fig.get_axes()[0].set_title('Input Data and Model')
+           fig.savefig(f'{outdir}fake_data_ast_{ff}.png')
+
+    return data, params
+
+
 
 
 def fake_data_PSBL(outdir='', outroot='psbl_',
@@ -2417,11 +2548,8 @@ def get_times_roman_gbtds(seasons_fast=(0, 1, 2, 7, 8, 9), seasons_slow=(3, 4, 5
                         obstime='J2000', frame='icrs')
 
     # Roman launch and survey window of 5 years.
-    # Until Roman actually launches, subtract a few years and use Gaia.
-    # t_start = Time('2027-01-01', format='isot', scale='utc')
-    # t_end = Time('2031-12-31', format='isot', scale='utc')
-    t_start = Time('2019-01-01', format='isot', scale='utc')
-    t_end = Time('2023-12-31', format='isot', scale='utc')
+    t_start = Time('2027-01-01', format='isot', scale='utc')
+    t_end = Time('2032-12-31', format='isot', scale='utc')
 
     # First, get coarse daily sampling to figure out Roman visibility windows.
     t_daily = Time(np.arange(t_start.jd, t_end.jd, 1), format='jd')

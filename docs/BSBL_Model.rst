@@ -24,41 +24,6 @@ BSBL Photometry + Astrometry with Static Lens Secondary
     :show-inheritance:
 
 
-
-BSBL Photometry + Astrometry, Linear Secondary Lens Motion
-----------------------------------------------------------
-
-.. autoclass:: model.BSBL_PhotAstrom_Par_LinOrbs_Param1
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSBL_PhotAstrom_Par_LinOrbs_Param2
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSBL_PhotAstrom_Par_LinOrbs_Param3
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSBL_PhotAstrom_noPar_LinOrbs_Param1
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSBL_PhotAstrom_noPar_LinOrbs_Param2
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSBL_PhotAstrom_noPar_LinOrbs_Param3
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-
 BSBL Photometry + Astrometry, Circular Orbits for Lens
 ------------------------------------------------------
 
