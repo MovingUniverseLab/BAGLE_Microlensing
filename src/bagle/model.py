@@ -10024,7 +10024,7 @@ class PSBL_PhotParam1(PSPL_Param):
         | Default = 0.0
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'phi', 'dmag_Lp_Ls']
+                          'q', 'sep', 'phi']
     phot_param_names = ['b_sff', 'mag_src']
 
     paramAstromFlag = False
@@ -10033,7 +10033,7 @@ class PSBL_PhotParam1(PSPL_Param):
 
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep, phi,
-                 b_sff, mag_src, dmag_Lp_Ls,
+                 b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0 = t0
         self.u0_amp = u0_amp
@@ -10111,6 +10111,7 @@ class PSBL_PhotParam1(PSPL_Param):
         # Set flux contributions from lens to 0 for some
         # astrometry plots (unblended).
         self.dmag_Lp_Ls = np.zeros(len(self.mag_src))
+
         return
 
 
@@ -19248,6 +19249,8 @@ class FSPL_PhotParam2(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE.
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
+    radiusS: float
+        Apparent radius on the sky of the source star (in thetaE).
     b_sff: numpy array or list
         The ratio of the source flux to the total (source + neighbors + lens)
         :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
@@ -19255,8 +19258,6 @@ class FSPL_PhotParam2(PSPL_Param):
     mag_base: numpy array or list
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
-    radiusS: float
-        Apparent radius on the sky of the source star (in thetaE).
     n_outline: int (optional)
         Number of boundary points to use when approximating the source outline.
         Calculation time scales approximately linearly with 'n_outline'.
