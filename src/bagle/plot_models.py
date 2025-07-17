@@ -762,7 +762,7 @@ def get_magnification_map(psbl, grid_size = 0.0312, plot_radius = 0.0156, lim = 
     # Get lenses info
     m1 = psbl.m1
     m2 = psbl.m2
-    xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t_obs=np.array([psbl.t0]))
+    xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t=np.array([psbl.t0]))
 
     z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
     z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
@@ -780,13 +780,13 @@ def get_magnification_map(psbl, grid_size = 0.0312, plot_radius = 0.0156, lim = 
     ymin = grid_center[1] - grid_size
     ymax = grid_center[1] + grid_size
 
-    x = np.linspace(xmin, xmax, 8000)
-    y = np.linspace(ymin, ymax, 8000)
+    x = np.linspace(xmin, xmax, bins)
+    y = np.linspace(ymin, ymax, bins)
     xgrid, ygrid = np.meshgrid(x,y)
     zgrid = xgrid + 1j*ygrid
 
     # Get the source positions 
-    w_points = plot_models.get_source_pos(zgrid, m1, m2, z1, z2) 
+    w_points = get_source_pos(zgrid, m1, m2, z1, z2) 
 
     # There's a few points that get shot out far away
     # This trims them out

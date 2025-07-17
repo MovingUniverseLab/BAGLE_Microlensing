@@ -9,7 +9,7 @@
 #.. moduleauthor:: Edward Broadberry
 """
 Overview of bagle.model
-=========================
+=========================PSPL_PhotAstrom_Par_Param4_geoproj
 The ``bagle.model`` module contains a collection of classes and functions that
 allow the user to construct microlensing models. The available classes for
 instantiating a microlensing event are shown in the list below.
@@ -672,6 +672,7 @@ class PSPL(ABC):
         u_amp = np.linalg.norm(u, axis=1)
 
         A = (u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4))
+        #pdb.set_trace()
 
         return A
 
@@ -2873,6 +2874,7 @@ class PSPL_PhotParam1(PSPL_Param):
         # usage of the function with u0_amp works exactly the same.
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
+        self.u0_amp = np.linalg.norm(self.u0)
 
         return
 
@@ -2980,6 +2982,7 @@ class PSPL_PhotParam2(PSPL_Param):
         # usage of the function with u0_amp works exactly the same.
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
+        #pdb.set_trace()
 
         return
 
@@ -13270,7 +13273,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
                  xS0_E, xS0_N,
                  muL_E, muL_N,
                  muS_E, muS_N,
-                omega, big_omega, i,
+                 omega, big_omega, i,
                  e, p, tp, aleph, aleph_sec,
                  mag_src_pri, mag_src_sec,
                  b_sff,
@@ -23240,11 +23243,11 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
     which is what we use.
     """
     u0_hat = np.zeros(2, dtype=float)
-    #pdb.set_trace()
+
 
     if beta > 0:
         u0_hat[0] = np.abs(thetaE_hat[1])
-
+        #pdb.set_trace()
         if np.sign(thetaE_hat).prod() > 0:
             u0_hat[1] = -np.abs(thetaE_hat[0])
         else:
