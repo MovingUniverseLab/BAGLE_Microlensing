@@ -8,6 +8,7 @@ from astropy.coordinates import SkyCoord, GCRS
 from astropy.time import Time
 from astropy.table import Table
 import os
+import math
 
 from bagle import parallax
 from bagle import model
@@ -3061,6 +3062,9 @@ def test_u0_hat_thetaE_hat():
     assert u0_hat[0] == u0_hat_in[0]
     assert u0_hat[1] == u0_hat_in[1]
     assert np.sign(u0_hat[0]) == np.sign(u0amp_in)
+    assert np.linalg.norm(u0_hat) == 1.0
+    assert np.linalg.norm(muRel_hat_in) == 1.0
+
 
     ##########
     # Test 2
@@ -3086,6 +3090,8 @@ def test_u0_hat_thetaE_hat():
     assert u0_hat[0] == u0_hat_in[0]
     assert u0_hat[1] == u0_hat_in[1]
     assert np.sign(u0_hat[0]) == np.sign(u0amp_in)
+    assert np.linalg.norm(u0_hat) == 1.0
+    assert np.linalg.norm(muRel_hat_in) == 1.0
 
     ##########
     # Test 3
@@ -3111,6 +3117,8 @@ def test_u0_hat_thetaE_hat():
     assert u0_hat[0] == u0_hat_in[0]
     assert u0_hat[1] == u0_hat_in[1]
     assert np.sign(u0_hat[0]) == np.sign(u0amp_in)
+    assert np.linalg.norm(u0_hat) == 1.0
+    assert np.linalg.norm(muRel_hat_in) == 1.0
 
     ##########
     # Test 4
@@ -3136,6 +3144,52 @@ def test_u0_hat_thetaE_hat():
     assert u0_hat[0] == u0_hat_in[0]
     assert u0_hat[1] == u0_hat_in[1]
     assert np.sign(u0_hat[0]) == np.sign(u0amp_in)
+    assert np.linalg.norm(u0_hat) == 1.0
+    assert np.linalg.norm(muRel_hat_in) == 1.0
+
+    ##########
+    # Test 5 -- Compare N=0 to N=tiny number
+    #   u0 sign:     +, +
+    #   muRel sign:  +, +
+    ##########
+    u0_hatE_in1 = 1.0
+    u0_hatN_in1 = 0.0
+    u0_hatN_in2 = 1.0e-8
+    u0_hatE_in2 = (1.0 - u0_hatN_in2 ** 2) ** 0.5
+    u0_hat_in1 = np.array([u0_hatE_in1, u0_hatN_in1])
+    u0_hat_in2 = np.array([u0_hatE_in2, u0_hatN_in2])
+
+    # direction of relative proper motion vector
+    # Same as thetaE_hat
+    muRel_hatE_in1 = 0.0
+    muRel_hatN_in1 = 1.0
+    muRel_hatN_in2 = 1.0e-8
+    muRel_hatE_in2 = (1.0 - muRel_hatN_in2 ** 2) ** 0.5
+    muRel_hat_in1 = np.array([muRel_hatE_in1, muRel_hatN_in1])
+    muRel_hat_in2 = np.array([muRel_hatE_in2, muRel_hatN_in2])
+
+    # Should be negative.
+    u0amp_in1 = np.hypot(u0_hatE_in1, u0_hatN_in1) * np.cross(u0_hat_in1, N_hat) * 1.0
+    u0amp_in2 = np.hypot(u0_hatE_in2, u0_hatN_in2) * np.cross(u0_hat_in2, N_hat) * 1.0
+
+    # Test
+    u0_hat1 = model.u0_hat_from_thetaE_hat(muRel_hat_in1, u0amp_in1)
+    u0_hat2 = model.u0_hat_from_thetaE_hat(muRel_hat_in2, u0amp_in2)
+
+    assert np.linalg.norm(muRel_hat_in1) == 1.0
+    assert np.linalg.norm(muRel_hat_in2) == 1.0
+    assert np.linalg.norm(u0_hat1) == 1.0
+    assert np.linalg.norm(u0_hat2) == 1.0
+
+    assert math.isclose(u0_hat1[0], u0_hat_in1[0], abs_tol=4)
+    assert math.isclose(u0_hat2[0], u0_hat_in2[0], abs_tol=4)
+    assert math.isclose(u0_hat1[0], u0_hat2[0], abs_tol=4)
+    assert math.isclose(u0_hat1[1], u0_hat_in1[1], abs_tol=4)
+    assert math.isclose(u0_hat2[1], u0_hat_in2[1], abs_tol=4)
+    assert math.isclose(u0_hat1[1], u0_hat2[1], abs_tol=4)
+
+    assert np.sign(u0_hat1[0]) == np.sign(u0amp_in1)
+    assert np.sign(u0_hat2[0]) == np.sign(u0amp_in2)
 
     return
 
@@ -4911,7 +4965,7 @@ def magnification_maps():
             cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#21B1FF", "aqua","cyan","#FFD800", "#FF218C", "fuchsia"]) 
         m1 = psbl.m1
         m2 = psbl.m2
-        xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t_obs=np.array([t_obs]))
+        xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(np.array([t_obs]))
         print(xL1_0)
         z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
         z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
@@ -5526,7 +5580,7 @@ def magnification_maps():
         def helper(t_obs, grid_size, plot_radius):
             m1 = bsbl.m1
             m2 = bsbl.m2
-            xL1_0, xL2_0 = bsbl.get_resolved_lens_astrometry(t_obs=np.array([t_obs]))
+            xL1_0, xL2_0 = bsbl.get_resolved_lens_astrometry(np.array([t_obs]))
             print(xL1_0)
             z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
             z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
