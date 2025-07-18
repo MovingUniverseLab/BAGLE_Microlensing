@@ -2381,6 +2381,7 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     q_prime = (1.0 - q) / (2.0 * (1 + q))
     pylima_u0 = u0_amp + q_prime * sep * np.sin(phi_rad)
     pylima_t0 = t0 + q_prime * sep * tE * np.cos(phi_rad)
+    print(pylima_t0, t0)
 
     # Load up some artificial data for pyLIMA... need this for time array definition.
     tests_dir = os.path.dirname(os.path.realpath(__file__))
@@ -2392,7 +2393,10 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     pylima_tel = telescopes.Telescope(name='OGLE', camera_filter='I',
                                       lightcurve=pylima_data,
                                       lightcurve_names = ['time', 'mag', 'err_mag'],
-                                      lightcurve_units = ['JD', 'mag', 'mag'])
+                                      lightcurve_units = ['JD', 'mag', 'mag'],
+                                      location='Earth',
+                                      altitude=1000, longitude=-109.285399, latitude=-27.130
+                                      )
 
     pylima_ev = event.Event()
     pylima_ev.name = 'Fubar'
@@ -2402,11 +2406,15 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     pylima_mod = generate_model.create_model('PSBL', pylima_ev, fancy_parameters=pylima_fancy)
     pylima_mod.define_model_parameters()
     pylima_mod.blend_flux_ratio = False
+    pylima_mod.blend_flux_parameter = 'fblend'
 
     tmp_params = [pylima_t0 + 2400000.5, pylima_u0, tE, sep, pylima_q, phi_rad]
     pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
     pylima_par.fsource_OGLE = microltoolbox.brightness_transformation.magnitude_to_flux(mag_src)
     pylima_par.fblend_OGLE = pylima_par.fsource_OGLE * (1.0 - b_sff) / b_sff
+    pylima_par['fsource_OGLE'] = microltoolbox.brightness_transformation.magnitude_to_flux(mag_src)
+    pylima_par['fblend_OGLE'] = pylima_par.fsource_OGLE * (1.0 - b_sff) / b_sff
+
     pylima_amp = pylima_mod.model_magnification(pylima_tel, pylima_par)
 
     pylima_mod_out = pylima_mod.compute_the_microlensing_model(pylima_tel, pylima_par)
