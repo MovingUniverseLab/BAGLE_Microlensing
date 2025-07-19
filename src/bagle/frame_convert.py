@@ -874,14 +874,12 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-        
+
         fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_out), fontsize=12)
         fig.text(tleft, ttop - 11*ttstep, '$u_0$ = {0:.2f}'.format(u0_out), fontsize=12)
         fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f} days'.format(tE_out), fontsize=12)
         fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_out), fontsize=12)
         fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
     if in_frame == 'geo':
         fig.text(tleft, ttop - 1*ttstep, 'Geo $t_r$', weight='bold', fontsize=14)
@@ -897,14 +895,12 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-        
+
         fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_out), fontsize=12)
         fig.text(tleft, ttop - 11*ttstep, '$u_0$ = {0:.2f}'.format(u0_out), fontsize=12)
         fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f} days'.format(tE_out), fontsize=12)
         fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_out), fontsize=12)
         fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
     plt.show()
     plt.pause(1)
@@ -1033,8 +1029,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-        
+
         fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_out), fontsize=12)
         # Output is Lu helio, so need to fix those to be in Gould geo.
         if np.sign(u0_out * piEN_out) > 0:
@@ -1045,8 +1040,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f} days'.format(tE_out), fontsize=12)
         fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_out), fontsize=12)
         fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
-    
+
     if in_frame == 'geo':
         fig.text(tleft, ttop - 1*ttstep, 'Geo $t_r$', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
@@ -1056,8 +1050,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-        
+
         fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f}'.format(t0_out), fontsize=12)
         # Output is Lu helio, so need to fix those to be in Gould geo.
         if np.sign(u0_out * piEN_out) > 0:
@@ -1067,7 +1060,6 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f}'.format(tE_out), fontsize=12)
         fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_out), fontsize=12)
         fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
     plt.show()
     plt.pause(1)
@@ -1207,3 +1199,4 @@ def convert_u0_t0_psbl(t0_in, u0_x_in, u0_y_in, tE, theta_E,
     t0_out = t0_in + sign*tE*d*np.cos(phi)
     
     return u0_x_out, u0_y_out, t0_out
+
