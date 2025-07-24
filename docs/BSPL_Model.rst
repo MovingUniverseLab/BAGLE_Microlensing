@@ -245,17 +245,17 @@ BSPL Photometry + Astrometry, Lens Motion, GP
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.BSPL_PhotAstrom_noPar_LinOrbs_Param1
+.. autoclass:: model.BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.BSPL_PhotAstrom_noPar_LinOrbs_Param2
+.. autoclass:: model.BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.BSPL_PhotAstrom_noPar_LinOrbs_Param3
+.. autoclass:: model.BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3
     :members:
     :inherited-members:
     :show-inheritance:
@@ -290,62 +290,3 @@ BSPL Photometry + Astrometry, Lens Motion, GP
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model.BSPL_PhotAstrom_Par_GP_CircOrbs_Param1
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSPL_PhotAstrom_Par_GP_CircOrbs_Param2
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSPL_PhotAstrom_Par_GP_CircOrbs_Param3
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSPL_PhotAstrom_noPar_GP_CircOrbs_Param1
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSPL_PhotAstrom_noPar_GP_CircOrbs_Param2
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSPL_PhotAstrom_noPar_GP_CircOrbs_Param3
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSPL_PhotAstrom_Par_GP_EllOrbs_Param1
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSPL_PhotAstrom_Par_GP_EllOrbs_Param2
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSPL_PhotAstrom_Par_GP_EllOrbs_Param3
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSPL_PhotAstrom_noPar_GP_EllOrbs_Param1
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSPL_PhotAstrom_noPar_GP_EllOrbs_Param2
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
-.. autoclass:: model.BSPL_PhotAstrom_noPar_GP_EllOrbs_Param3
-    :members:
-    :inherited-members:
-    :show-inheritance:
