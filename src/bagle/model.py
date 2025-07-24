@@ -95,6 +95,7 @@ Point source, point lens, photometry and astrometry:
     - :class:`PSPL_PhotAstrom_Par_Param3`
     - :class:`PSPL_PhotAstrom_Par_Param4`
     - :class:`PSPL_PhotAstrom_Par_Param5`
+    - :class:`PSPL_PhotAstrom_Par_Param6`
     - :class:`PSPL_PhotAstrom_noPar_Param1`
     - :class:`PSPL_PhotAstrom_noPar_Param2`
     - :class:`PSPL_PhotAstrom_noPar_Param3`
@@ -4019,6 +4020,168 @@ class PSPL_PhotAstromParam5(PSPL_Param):
 
         # Derived quantities
         self.mag_src = self.mag_base - 2.5 * np.log10(self.b_sff)
+        self.beta = self.u0_amp * self.thetaE_amp
+        self.piE_amp = np.linalg.norm(self.piE)
+        self.piRel = self.piE_amp * self.thetaE_amp
+        self.muRel_amp = self.thetaE_amp / (self.tE / days_per_year)
+
+        kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
+        kappa = kappa_tmp.to(units.mas / units.Msun,
+                             equivalencies=units.dimensionless_angles()).value
+        self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
+
+        self.piL = self.piRel + self.piS
+
+        # Calculate the distance to source and lens.
+        dL = (self.piL * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        dS = (self.piS * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        self.dL = dL.to('pc').value
+        self.dS = dS.to('pc').value
+
+        # Get the directional vectors.
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+        self.thetaE = self.thetaE_amp * self.thetaE_hat
+
+        # Calculate the relative velocity vector. Note that this will be in the
+        # direction of theta_hat
+        self.muRel = self.muRel_amp * self.thetaE_hat
+        self.muRel_E, self.muRel_N = self.muRel
+        self.muL = self.muS - self.muRel
+        self.muL_E, self.muL_N = self.muL
+
+        # Comment on sign conventions:
+        # thetaS0 = xS0 - xL0
+        # (difference in positions on sky, heliocentric, at t0)
+        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
+        # if u0_E > 0 then the Source is to the East of the lens
+        # if u0_E < 0 then the source is to the West of the lens
+        # We adopt the following sign convention (same as Gould:2004):
+        #    u0_amp > 0 means u0_E > 0
+        #    u0_amp < 0 means u0_E < 0
+        # Note that we assume beta = u0_amp (with same signs).
+
+        # Calculate the closest approach vector. Define beta sign convention
+        # same as of Andy Gould does with beta > 0 means u0_E > 0
+        # (lens passes to the right of the source as seen from Earth or Sun).
+        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
+        # the sign of beta is always the same as the sign of u0_amp. Therefore this
+        # usage of the function with u0_amp works exactly the same.
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        # Angular separation vector between source and lens (vector from lens to source)
+        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
+
+        # Calculate the position of the lens on the sky at time, t0
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
+        return
+
+
+class PSPL_PhotAstromParam6(PSPL_Param):
+    """
+    Point Source Point Lens model for microlensing. This model includes
+    proper motions of the source and the source position on the sky.
+    It is uses the same log_piE, phi_murel PSPL_PhotParam3 and the astrometric
+    paremters from PSPL_PhotAstromParam2.
+    
+    Utilizes angle of muRel instead of piEE and pEN. Also
+    fits in log(piE).
+    
+    Attributes
+    ----------
+    t0: float
+        Heliocentric time of closest approach (u0) between source and lens in MJD (MJD.DDD)
+    u0_amp: float
+         Angular distance between the lens and source on the plane of the
+         sky at closest approach in units of thetaE. It can be
+         positive (u0_amp > 0 when u0_hat[0] > 0) or 
+         negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time in days.
+    thetaE: float
+        The size of the Einstein radius in (mas).
+    piS: float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    log_piE : float
+        The log of the microlensing parallax amplitude. 
+    phi_muRel : float
+        The angle of the muRel vector, in degrees. Angle is measured in degrees
+        East of North (counter-clockwise on the sky from North). 
+    xS0_E: float
+        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    xS0_N: float
+        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    muS_E: float
+        RA Source proper motion (mas/yr)
+    muS_N: float
+        Source proper motion (mas/yr)
+    b_sff: numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base: numpy array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
+    """
+
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'log_piE', 'phi_muRel',
+                          'xS0_E', 'xS0_N',
+                          'muS_E', 'muS_N']
+    phot_param_names = ['b_sff', 'mag_base']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 log_piE, phi_muRel, xS0_E, xS0_N,
+                 muS_E, muS_N, b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.t0 = t0
+        self.u0_amp = u0_amp
+        self.tE = tE
+        self.thetaE = thetaE
+        self.log_piE = log_piE
+        self.phi_muRel = phi_muRel  # degrees
+        self.xS0 = np.array([xS0_E, xS0_N])
+        self.muS = np.array([muS_E, muS_N])
+        self.piS = piS
+        self.b_sff = b_sff
+        self.mag_base = mag_base
+        self.raL = raL
+        self.decL = decL
+        self.obsLocation = obsLocation
+
+        # Must call after setting parameters.
+        # This checks for proper parameter formatting.
+        super().__init__()
+
+        # Derived quantities
+        self.tE = 10 ** log_tE
+        self.piE_amp = 10 ** log_piE
+        self.phi_muRel_rad = np.deg2rad(phi_muRel)  # radians
+        self.piE = self.piE_amp * np.array([np.sin(self.phi_muRel_rad),
+                                            np.cos(self.phi_muRel_rad)])
+
+        self.mag_src = self.mag_base - 2.5 * np.log10(self.b_sff)
+
+        # Derived quantities
         self.beta = self.u0_amp * self.thetaE_amp
         self.piE_amp = np.linalg.norm(self.piE)
         self.piRel = self.piE_amp * self.thetaE_amp
@@ -18358,6 +18521,20 @@ class PSPL_PhotAstrom_noPar_Param4(ModelClassABC,
                                    PSPL_PhotAstromParam4):
     """
     Microlensing params with mag_base
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+@inheritdocstring
+class PSPL_PhotAstrom_Par_Param6(ModelClassABC,
+                                   PSPL_PhotAstrom,
+                                   PSPL_Parallax,
+                                   PSPL_PhotAstromParam6):
+    """
+    Microlensing params with log_piE, phi_murel 
+    instead of piEE, piEN and mag_base
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
