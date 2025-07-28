@@ -580,3 +580,166 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
 
     return
 
+def plot_critical_curves(critical_curves, thetaE_amp = None, ax = None, show = True):
+    """
+    Plots critical_curves
+
+    Parameters
+    ----------
+    critical_curves : np.array
+        critical_curve object in units of thetaE generated with get_critical_curves method.
+
+    thetaE_amp : float or None, optional
+        thetaE amplitude. If provided, plot will be in mas, if not, plot will be in thetaE.
+        Default is None.
+
+    ax : matplotlib Axes object or None, optional
+        Axes provided if you would like this to be in a subplot, if not a new figure will be generated.
+        Default is None.
+
+    show : bool
+        Shows plot or not.
+        Default is True.
+    """
+    if ax is None:
+        fig, ax = plt.subplots(1,1)
+
+    # Plot in units of mas
+    if thetaE_amp is not None:
+        ax.scatter(np.real(critical_curves)*thetaE_amp, np.imag(critical_curves)*thetaE_amp, s = 1, label = 'Critical Curves')
+    # Plot in units of thetaE
+    else:
+        ax.scatter(np.real(critical_curves), np.imag(critical_curves), s = 1, label = 'Critical Curves')
+
+    if show:
+        plt.show()
+
+    return ax
+
+def plot_caustics(caustics, thetaE_amp = None, ax = None, show = True):
+    """
+    Plots caustics
+
+    Parameters
+    ----------
+    caustics : np.array
+    caustics object in units of thetaE generated with get_caustics method.
+
+    thetaE_amp : float or None, optional
+        thetaE amplitude. If provided, plot will be in mas, if not, plot will be in thetaE.
+        Default is None.
+
+    ax : matplotlib Axes object or None, optional
+        Axes provided if you would like this to be in a subplot, if not a new figure will be generated.
+        Default is None.
+
+    show : bool
+        Shows plot or not.
+        Default is True.
+
+    Returns
+    -------
+    ax : matplotlib Axes object
+    """
+    if ax is None:
+        fig, ax = plt.subplots(1,1)
+
+    # Plot in units of mas
+    if thetaE_amp is not None:
+        ax.scatter(np.real(caustics)*thetaE_amp, np.imag(caustics)*thetaE_amp, s = 1, label = 'Caustics')
+    # Plot in units of thetaE
+    else:
+        ax.scatter(np.real(caustics), np.imag(caustics), s = 1, label = 'Caustics')
+
+    if show:
+        plt.show()
+
+    return ax
+
+
+def gen_and_plot_caustics_and_critical_curves(mmodel, caustic_time = 't0', show = True, plot_caus = True, plot_cc = True, plot_source_trajectory = True, 
+                                              min_t_trajectory_plot = 'default', max_t_trajectory_plot = 'default'):
+    """
+    Generates and plots caustics, critical curves, and unlensed source trajectory
+
+    Parameters
+    ----------
+    mmodel : BAGLE model object
+        PSBL or BSBL BAGLE model object
+
+    caustic_time : float or 't0', optional
+        Time to plot the caustics and critical curves.
+        If 't0' it will plot it at mmodel.t0 time.
+        Default is 't0'
+
+    show : bool, optional
+        Runs plt.show() if true.
+        Default is True.
+
+    plot_caus : bool, optional
+        Plots caustics if true.
+        Default is True.
+
+    plot_cc : bool, optional
+        Plots critical curves if true.
+        Default is True.
+
+    plot_source_trajectory : bool, optional
+        Plots unlensed source trajectory if true.
+        Default is True.
+
+    min_t_trajectory_plot : float or 'default', optional
+        Minimum time for unlensed source trajectory plot.
+        When 'default' plots t0 - tE as minimum.
+        Default is 'default'.
+
+    max_t_trajectory_plot : float or 'default', optional
+        Maximum time for unlensed source trajectory plot.
+        When 'default' plots t0 + tE as maximum.
+        Default is 'default'.
+
+    Returns
+    -------
+    ax : matplotlib Axes object
+    """
+    
+    if plot_caustics == False and plot_critical_curves == False:
+        raise Exception('Must plot either caustics or critical curves or both with this function')
+        
+    if caustic_time == 't0':
+        caustic_time = mmodel.t0
+        
+    critical_curves = mmodel.get_critical_curves(np.array([caustic_time]))
+    caustics = mmodel.get_caustics(np.array([caustic_time]))
+
+    fig, ax = plt.subplots(1,1)
+
+    if plot_cc:
+        ax_cc = plot_critical_curves(critical_curves, ax = ax, thetaE_amp = mmodel.thetaE_amp, show = False)
+
+    if plot_caus:
+        ax_caus = plot_caustics(caustics, ax = ax, thetaE_amp = mmodel.thetaE_amp, show = False)
+
+    if plot_source_trajectory:
+        if min_t_trajectory_plot == 'default':
+            min_t_trajectory_plot = mmodel.t0 - mmodel.tE
+        if max_t_trajectory_plot == 'default':
+            max_t_trajectory_plot = mmodel.t0 + mmodel.tE
+        times = np.arange(min_t_trajectory_plot, max_t_trajectory_plot)
+        xLS_unlensed = mmodel.get_astrometry_unlensed(times)
+        ax.plot(xLS_unlensed[:,0]*1e3, xLS_unlensed[:,1]*1e3, label = 'Unlensed Source Trajectory', color = 'green')
+        
+    ax.invert_xaxis()
+    plt.axis('equal')
+    ax.set_xlabel('RA')
+    ax.set_ylabel('Dec')
+    plt.legend(fontsize=10)
+    if show:
+        plt.show()
+
+    return ax
+
+    
+    
+    
+
