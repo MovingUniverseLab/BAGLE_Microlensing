@@ -7048,7 +7048,7 @@ class PSBL_PhotAstromParam1(PSPL_Param):
         self.dL = dL
         self.dS = dS
         self.sep = sep
-        self.alpha = alpha
+        self.alpha = alpha 
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
         self.mag_src = mag_src
@@ -7620,12 +7620,12 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
         (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
 
         self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad)
+        self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
 
 
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                 q, sep, self.alpha,
+                 q, self.a, self.alpha,
                  b_sff, mag_base, dmag_Lp_Ls,
                  raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
@@ -8638,7 +8638,7 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
 
         self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad)
+        self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
                      
                      
         # Calculate other angles
@@ -9122,11 +9122,11 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
 
         self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad)
+        self.alpha = np.rad2deg(self.alpha_rad) #Defined at tp
 
         super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                         q, sep, self.alpha,
+                         q, self.a, self.alpha,
                          b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
@@ -9392,7 +9392,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
 
         super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS,
                      piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                     q, sep, self.alpha,
+                     q, self.a, self.alpha,
                      b_sff, mag_src, dmag_Lp_Ls,
                      raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
@@ -9911,6 +9911,10 @@ class PSBL_PhotParamEllOrbs1(PSPL_Param):
     mag_src:  array or list
         Photometric magnitude of the source. This must be passed in as a
         list or array, with one entry for each photometric filter.
+    aleph: float
+        This is the semi-major axis of the primary lens in mas.
+    aleph_sec: float
+        This is the semi-major axis of the secondary lens in mas.
     v_para: float
         Parallel velocity component of the secondary lens relative to the primary lens in units of rad/year
     v_rad: float
@@ -9940,7 +9944,7 @@ class PSBL_PhotParamEllOrbs1(PSPL_Param):
         | Default = 0.0
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep','dmag_Lp_Ls']
+                          'q', 'sep', 'v_para', 'v_rad', 'v_perp', 'r_s', 'a_s', 'dmag_Lp_Ls']
     phot_param_names = ['b_sff', 'mag_src']
 
     paramAstromFlag = False
@@ -10005,7 +10009,7 @@ class PSBL_PhotParamEllOrbs1(PSPL_Param):
 
         (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
         self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad)
+        self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
         self.phi_rho1_rad = self.alpha 
         
         self.phi_piE_rad = np.arctan2(self.piE[0], self.piE[1])
@@ -13506,7 +13510,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
 
         self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad)
+        self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
 
 
 
@@ -13780,7 +13784,7 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
 
         self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad)
+        self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
 
         self.fratio_bin = np.array(fratio_bin)
         self.mag_src_pri = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fratio_bin)
@@ -14021,7 +14025,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
 
         self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad)
+        self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
 
 
         self.fratio_bin = np.array(fratio_bin)
@@ -14135,6 +14139,310 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.xS0_com = self.xS0_pri + com_vec * 1e-3
 
         return
+
+class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
+    """BSPL model for astrometry and photometry - physical parameterization.
+
+    A Binary point Source Point Lens model for microlensing. This model uses a
+    parameterization that depends on only physical quantities such as the
+    lens mass and positions and proper motions of both the lens and source.
+
+    Note the attributes, RA (raL) and Dec (decL) are required
+    if you are calculating a model with parallax.
+
+    Attributes
+    ----------
+    mL: float
+        Mass of the lens (Msun)
+    t0: float
+        Time (MJD.DDD) of closest projected approach between primary source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
+    beta: float
+        Angular distance between the lens and primary source on the
+        plane of the sky (mas). Can be
+            * positive (u0_amp > 0 when u0_hat[0] < 0) or
+            * negative (u0_amp < 0 when u0_hat[0] > 0).
+        Note, since this is a binary source, we are expressing the
+        nominal source position as that of the primary star in the source
+        binary system.
+
+
+    dL: float
+        Distance from the observer to the lens (pc)
+    dL_dS: float
+        Ratio of Distance from the obersver to the lens to
+        Distance from the observer to the source
+
+    omega: float
+        The argument of periastron of the primary star's orbit in degrees.
+        The secondary source will be directly 180 degrees across the primary
+        source's argument of periastron.
+    big_omega: float
+        The longitude of the ascending node of the secondary star's orbit
+        in degrees. Since the primary and secondary sources share the same
+        inclination angle for their orbital planes, they also share the same
+        big_omega
+        
+    i: float
+        Inclination angle of the system in degrees.
+    e: float
+        Eccentricity of the System
+
+    tp: float
+        This is the time of the periastron of the system in days.
+  
+    log10_a : float
+        This is the log10_a of the semi-major axis a, where a is in mas. 
+    
+    mass_source_p: float
+        Mass of the primary source in units of Msun
+
+    mass_source_s: float
+        Mass of the secondary source in units of Msun
+
+        
+    muS_E: float
+        The RA proper motion of the system in mas/yr.
+    muS_N: float
+        The Dec proper motion of the system in mas/yr.
+
+    xS0_E: float
+        The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
+    xS0_N: float
+        The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+
+    mag_src_pri: array or list
+        Photometric magnitude of the first (primary) source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    mag_src_sec: array or list
+        Photometric magnitude of the second (secondary) source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    b_sff: array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = (f_S1 + f_S2) / (f_S1 + f_s2 + f_L + f_N)`.
+        This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    """
+
+    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
+                          'xS0_E', 'xS0_N',
+                          'muL_E', 'muL_N',
+                          'muS_E', 'muS_N',
+                          'omega', 'big_omega', 
+                           'i', 'e', 
+                          'tp', 'log_a', 
+                          'mass_source_p', 'mass_source_s']
+    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    additional_param_names = ['dS', 'tE', 'u0_amp',
+                              'thetaE_E', 'thetaE_N',
+                              'piE_E', 'piE_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'Keplerian'
+
+    def __init__(self, mL, t0, beta, dL, dL_dS,
+                 xS0_E, xS0_N,
+                 muL_E, muL_N,
+                 muS_E, muS_N,
+                 omega, big_omega, i,
+                 e, tp, log_a, mass_source_p, mass_source_s,
+                 mag_src_pri, mag_src_sec,
+                 b_sff,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.t0 = t0  # time of closest approach for system=primary pos
+
+        self.mL = mL
+        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
+        self.beta = beta
+        self.muL = np.array([muL_E, muL_N])
+        self.muS = np.array([muS_E, muS_N])  # mas
+        self.muS_system = self.muS
+        self.dL = dL
+        self.dL_dS = dL_dS
+        self.dS = self.dL / self.dL_dS
+        self.b_sff = np.array(b_sff)
+        self.obsLocation = obsLocation
+        self.raL = raL
+        self.decL = decL
+        self.w = omega
+        self.o = big_omega
+        self.omega = self.w
+        self.big_omega = self.o
+        self.i = i
+        self.e = e
+        self.tp = tp
+        self.a = 10**log_a
+        self.sep = self.a
+
+
+                     
+        self.aleph_sec = (mass_source_p)/(mass_source_p+mass_source_s) * self.a
+        self.aleph = self.a  - self.aleph_sec  # mas
+
+
+        #self.vx = muS_system_E * 1e-3
+        #self.vy = muS_system_N * 1e-3
+
+        #self.x0 = x0_system_E
+        #self.y0 = x0_system_N
+
+        # Binary source parameters.
+        self.mag_src_pri = np.array(mag_src_pri)
+        self.mag_src_sec = np.array(mag_src_sec)
+        self.fratio_bin = 10.0 ** ((self.mag_src_sec - self.mag_src_pri) / -2.5)
+
+
+
+        self.a_AU = self.dS * (self.a * 1e-3) * units.AU # AU semi-major
+                     
+        mass_sources = (mass_source_p + mass_source_s) * units.Msun
+                     
+        p = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mass_sources))).to('day')
+                     
+        self.p = p.value  # Period in Days
+
+                     
+        orb = orbits.Orbit()
+        orb.w = self.omega
+        orb.o = self.big_omega
+        orb.i = self.i
+        orb.e = self.e
+        orb.tp = (self.tp)
+        orb.aleph = self.aleph *1e-3 #arcseconds
+        orb.aleph2 = self.aleph_sec *1e-3
+        orb.p = self.p
+
+        (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
+
+        self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
+        self.alpha = np.rad2deg(self.alpha_rad)
+
+
+
+        # Must call after setting parameters.
+        # This checks for proper parameter formatting.
+        super().__init__()
+
+        flux_pri = mag2flux(self.mag_src_pri)
+        flux_sec = mag2flux(self.mag_src_sec)
+        self.mag_base = flux2mag(flux_pri + flux_sec) + 2.5 * np.log10(self.b_sff)
+
+        # Calculate the relative parallax
+        inv_dist_diff = (1.0 / (self.dL * units.pc)) - (1.0 / (self.dS * units.pc))
+        piRel = units.rad * units.au * inv_dist_diff
+        self.piRel = piRel.to('mas').value
+
+        # Calculate the individual parallax
+        piS = (1.0 / self.dS) * (units.rad * units.au / units.pc)
+        piL = (1.0 / self.dL) * (units.rad * units.au / units.pc)
+        self.piS = piS.to('mas').value
+        self.piL = piL.to('mas').value
+
+        # Calculate the relative proper motion vector.
+        # Note that this will be in the direction of theta_hat
+        self.muRel = self.muS - self.muL
+        self.muRel_E, self.muRel_N = self.muRel
+        self.muRel_amp = np.linalg.norm(self.muRel)  # mas/yr
+
+        self.muS_E, self.muS_N = self.muS
+        self.muL_E, self.muL_N = self.muL
+
+        # Calculate the Einstein radius
+        thetaE = units.rad * np.sqrt(
+            (4.0 * const.G * mL * units.M_sun / const.c ** 2) * inv_dist_diff)
+        self.sun = units.M_sun
+        self.c = const.c
+        self.G = const.G
+        self.inv = inv_dist_diff  # remove later
+        self.thetaE_amp = thetaE.to('mas').value  # mas
+        self.thetaE_hat = self.muRel / self.muRel_amp
+        self.muRel_hat = self.thetaE_hat
+        self.thetaE = self.thetaE_amp * self.thetaE_hat
+        self.thetaE_E, self.thetaE_N = self.thetaE
+
+        # Comment on sign conventions:
+        # thetaS0 = xS0 - xL0
+        # (difference in positions on sky, heliocentric, at t0)
+        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
+        # if u0_E > 0 then the Source is to the East of the lens
+        # if u0_E < 0 then the source is to the West of the lens
+        # We adopt the following sign convention (same as Gould:2004):
+        #    u0_amp > 0 means u0_E > 0
+        #    u0_amp < 0 means u0_E < 0
+        # Note that we assume beta = u0_amp (with same signs).
+
+        # Calculate the closest approach vector. Define beta sign convention
+        # same as of Andy Gould does with beta > 0 means u0_E > 0
+        # (lens passes to the right of the source as seen from Earth or Sun).
+        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
+        # the sign of beta is always the same as the sign of u0_amp. Therefore this
+        # usage of the function with u0_amp works exactly the same.
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
+        self.u0_amp = self.beta / self.thetaE_amp  # in Einstein units
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        # Angular separation vector between source and lens
+        # (vector from lens to source)
+        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
+
+        # Calculate the position of the lens on the sky at time, t0
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
+        # Calculate the microlensing parallax
+        self.piE_amp = self.piRel / self.thetaE_amp
+        self.piE = self.piE_amp * self.thetaE_hat
+        self.piE_E, self.piE_N = self.piE
+
+        # Calculate the Einstein crossing time. (days)
+        self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
+
+        #####
+        # Derived binary source parameters.
+        #####
+        # Primary -- at origin
+        self.t0_pri = self.t0
+        self.xS0_pri = self.xS0
+        self.u0_amp_pri = self.u0_amp
+        self.u0_pri = self.u0
+
+        # Secondary
+        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
+                                       np.cos(self.alpha_rad)))  # mas
+
+        # Closest approach time
+        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
+        self.u0_sec = self.u0_amp_sec * self.u0_hat
+        s_murelhat = np.dot(sep_vec, self.muRel_hat)
+        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+
+        # CoM
+        com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
+                                         np.cos(self.alpha_rad)))  # mas
+
+
+        self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
+        self.sep_AU = self.dS * (self.sep * 1e-3) * units.AU
+        self.mass_sources = ((4 * np.pi ** 2 * self.sep_AU ** 3) / (const.G * (self.p * units.day) ** 2)).to('Msun')
+        self.mass_source_primary = (self.aleph_sec / self.sep) * self.mass_sources.value  # Msun
+        self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary  # Msun
+        q_source = self.mass_source_primary / self.mass_source_secondary
+        qeff_source = (1 - q_source) / (1 + q_source)
+        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
+
+        self.xS0_com = self.xS0_pri + com_vec *1e-3
+
+        return
+
+                     
 
 
 class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
@@ -15199,7 +15507,6 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
             self.acc_hat = self.acc / self.acc_amp
 
         return
-
 
 ######################################################
 ### BINARY SOURCE BINARY LENS (BSBL) CLASSES ###
@@ -16872,7 +17179,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     tpL: float
         This is the time of the periastron of the system in days.
     aL: float
-        Semi-major axis of the binary lens system in mas. 
+        This is the semi-major axis of the binary lens system (mas)
     omegaS: float
         The argument of periastron of the primary source's orbit in degrees.
     big_omegaS: float
@@ -17290,8 +17597,8 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
     tpL: float
         This is the time of the periastron of the system in days.
-    sepL: float
-        This is the angular separation between the lenses (mas)
+    aL: float
+        This is the semi-major axis of the binary lens system (mas)
 
     omegaS: float
         The argument of periastron of the primary source's orbit in degrees.
@@ -17572,18 +17879,7 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     xS0_N : float
         Dec. of primary source position on sky at t = to_com (arcsec) in an
         arbitrary ref. frame.
-
-
-    alphaL : float
-        Angle made between the binary lens axis and North;
-        measured in degrees East of North.
-        Example, alphaL = 90 will place the lens primary to the East
-        and the lens secondary to the West.
-    alphaS : float
-        Angle made between the binary source axis and North;
-        measured in degrees East of North.
-        Example, alphaL = 90 will place the source primary to the East
-        and the source secondary to the West.
+    
 
     omegaL: float
         The argument of periastron of the primary lens's orbit in degrees.
@@ -17592,6 +17888,8 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         in degrees.
     iL: float
         Inclination angle of the system in degrees.
+    eL: float
+        Eccentricity of the System
 
     tpL: float
         This is the time of the periastron of the system in days.
@@ -17605,7 +17903,8 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         in degrees.
     is: float
         Inclination angle of the system in degrees.
-
+    eS: float
+        Eccentricity of the System
     pS: float
         Orbital period of the system in days.
     tpS: float
@@ -17614,7 +17913,6 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         This is the semi-major axis of the primary source in mas.
     aleph_secS: float
         This is the semi-major axis of the secondary source in mas.
-
 
     fratio_bin: float
         Flux ratio of secondary flux / primary flux.
@@ -17706,10 +18004,45 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         Distance from the observer to the lens system (pc)
     dS : float
         Distance from the observer to the source (pc)
-    aL : float
-        Semi-Major axis of the binary lens system in mas. 
-    sepS : float
-        Angular separation of the source secondary from the source primary (mas).
+
+
+
+    omegaL: float
+        The argument of periastron of the primary lens's orbit in degrees.
+    big_omegaL: float
+        The longitude of the ascending node of the secondary lens's orbit
+        in degrees.
+    iL: float
+        Inclination angle of the system in degrees.
+    eL: float
+        Eccentricity of the System
+
+    tpL: float
+        This is the time of the periastron of the system in days.
+    aL: float
+        This is the semi-major axis of the binary lens system (mas)
+
+    omegaS: float
+        The argument of periastron of the primary source's orbit in degrees.
+    big_omegaS: float
+        The longitude of the ascending node of the secondary source's orbit
+        in degrees.
+    is: float
+        Inclination angle of the system in degrees.
+    eS: float
+        Eccentricity of the System
+    pS: float
+        Orbital period of the system in days.
+    tpS: float
+        This is the time of the periastron of the system in days.
+    aS: float
+        This is the semi-major axis of the binary source system 
+        
+    mass_source_p: float
+        Primary source mass in Msun
+    mass_source_s: float
+        Secondary source mass in Msun
+
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
         list or array, with one entry for each photometric filter.
@@ -17740,7 +18073,7 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
                           'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'omegaL', 'big_omegaL', 'iL', 'eL', 'tpL', 'aL',
-                 'omegaS', 'big_omegaS', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+                 'omegaS', 'big_omegaS', 'iS', 'eS', 'tpS', 'aS', 'mass_source_p', 'mass_source_s']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -17749,7 +18082,7 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
                  beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,omegaL, big_omegaL, iL, eL, tpL, aL,
-                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS,
+                 omegaS, big_omegaS, iS, eS, tpS, aS, mass_source_p, mass_source_s,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
@@ -17763,7 +18096,8 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.dS = dS
         self.sepL = aL
         self.aL = aL
-        self.sepS = alephS+aleph_secS
+        self.sepS = aS
+        self.aS = aS
         self.mag_src_pri = np.array([mag_src_pri])
         self.mag_src_sec = np.array([mag_src_sec])
         self.b_sff = b_sff
@@ -17792,9 +18126,9 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
 
         self.mL = mLp + mLs
-        self.sepL_AU = dL * (self.sepL * 1e-3) * units.AU
+        self.aL_AU = dL * (self.sepL * 1e-3) * units.AU
         mL = self.mL * units.Msun
-        pL = (2 * np.pi * np.sqrt(self.sepL_AU ** 3 / (const.G * mL))).to('day')
+        pL = (2 * np.pi * np.sqrt(self.aL_AU ** 3 / (const.G * mL))).to('day')
         self.pL = pL.value  # Period in Days
 
         self.omegaL = omegaL
@@ -17822,14 +18156,31 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.alphaL = np.rad2deg(self.alphaL_rad)
 
 
+                     
+        self.a_AU = self.dS * (self.aS * 1e-3) * units.AU # AU semi-major
+                     
+        mass_sources = (mass_source_p + mass_source_s) * units.Msun
+        pS = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mass_sources))).to('day')
+        self.pS = pS.value
+
+                     
+
         self.omegaS = omegaS
         self.big_omegaS = big_omegaS
         self.iS = iS
         self.eS = eS
-        self.pS = pS
         self.tpS = tpS
-        self.alephS = alephS
-        self.aleph_secS = aleph_secS
+        self.aS = aS
+
+                     
+
+        # Calculate period, and semi-major axes
+        self.aleph_secS = (mass_source_p / (mass_source_p + mass_source_s)) * self.sepS  # mas
+        self.alephS = self.sepS - self.aleph_secS  # mas
+
+                     
+       # self.alephS = alephS
+    #    self.aleph_secS = aleph_secS
                      
         orb = orbits.Orbit()
         orb.w = self.omegaS
@@ -18077,7 +18428,7 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
                  raL, decL, obsLocation, root_tol)
 
         return
-
+                     
 # ==================================================
 #
 # FSPL Models

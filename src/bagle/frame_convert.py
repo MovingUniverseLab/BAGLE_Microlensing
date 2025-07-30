@@ -778,19 +778,29 @@ def convert_helio_geo_phot(ra, dec,
     if coord_in=='EN':
         try:
             # Handle conversion of single values.
-            if np.sign(u0_in * piEN_in) <= 0:
+            if np.sign(u0_in * piEN_in) < 0:
                 u0hatE_in = -tauhatN_in
                 u0hatN_in = tauhatE_in
-            else:
+            elif np.sign(u0_in * piEN_in) > 0:
                 u0hatE_in = tauhatN_in
                 u0hatN_in = -tauhatE_in
+            else:
+                if np.sign(u0_in * piEE_in) > 0:
+                    u0hatE_in = -tauhatN_in
+                    u0hatN_in = tauhatE_in
+                else:
+                    u0hatE_in = tauhatN_in
+                    u0hatN_in = -tauhatE_in
+                
         except:
-            # Handle conversions with array-like inputs.
-            _u0hatE_in = -tauhatN_in
-            _u0hatN_in = tauhatE_in
-            u0hatE_in = np.where(np.sign(u0_in * piEN_in) <= 0, _u0hatE_in, -_u0hatE_in)
-            u0hatN_in = np.where(np.sign(u0_in * piEN_in) <= 0, _u0hatN_in, -_u0hatN_in)
-
+            cond1 = np.sign(u0_in * piEN_in) < 0
+            cond2 = np.sign(u0_in * piEN_in) > 0
+            cond3 = (np.sign(u0_in * piEN_in) == 0) & (np.sign(u0_in * piEE_in) > 0)
+            cond4 = (np.sign(u0_in * piEN_in) == 0) & (np.sign(u0_in * piEE_in) <= 0)
+        
+            u0hatE_in = np.where(cond1, -tauhatN_in, np.where(cond2,  tauhatN_in, np.where(cond3, -tauhatN_in, tauhatN_in)))
+            u0hatN_in = np.where(cond1,  tauhatE_in, np.where(cond2, -tauhatE_in, np.where(cond3,  tauhatE_in, -tauhatE_in)))
+            
     elif coord_in=='tb':
         try:
             # Handle conversion of single values.
