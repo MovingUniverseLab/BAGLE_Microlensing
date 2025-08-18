@@ -2364,12 +2364,11 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     
     Note piEE and piEN should be arbitrary. But might want to check just in case. 
     """
-    from pyLIMA import models as microlmodels
     from pyLIMA import event
     from pyLIMA import telescopes
     from pyLIMA import toolbox as microltoolbox
     from pyLIMA.models import generate_model
-    from pyLIMA.models import USBL_model, pyLIMA_fancy_parameters
+    from pyLIMA.models import pyLIMA_fancy_parameters
 
     phi_rad = np.radians(-phi)
 
@@ -2381,15 +2380,18 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     pylima_q = q
     q_prime = (1.0 - q) / (2.0 * (1 + q))
     pylima_u0 = u0_amp + q_prime * sep * np.sin(phi_rad)
-    pylima_t0 = t0 + q_prime * sep * tE * np.cos(phi_rad)
+    pylima_t0 = t0 + (q_prime * sep * tE * np.cos(phi_rad)) + 2400000.5
+    pylima_t0_par = t0 + 2400000.5  # t0_par in JD
     print(pylima_t0, t0)
 
     # Load up some artificial data for pyLIMA... need this for time array definition.
-    tests_dir = os.path.dirname(os.path.realpath(__file__))
-    pylima_data = np.loadtxt(tests_dir + '/data/OB120169_phot.dat')
-    #pylima_data[:, 1] = 1e5
-    time_jd = pylima_data[:, 0]
-    time_mjd = time_jd - 2400000.5
+    time_mjd = np.arange(t0 - 6 * tE, t0 + 6 * tE)
+    time_jd = time_mjd + 2400000.5
+
+    pylima_data = np.zeros((len(time_jd), 3), dtype=float)
+    pylima_data[:, 0] = time_jd
+    pylima_data[:, 1] = np.ones(len(time_jd)) * 1  # mag
+    pylima_data[:, 2] = np.ones(len(time_jd)) * 0.01  # mag err
 
     pylima_tel = telescopes.Telescope(name='OGLE', camera_filter='I',
                                       lightcurve=pylima_data,
@@ -2403,14 +2405,18 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     pylima_ev.name = 'Fubar'
     pylima_ev.telescopes.append(pylima_tel)
     pylima_fancy = pyLIMA_fancy_parameters.StandardFancyParameters()
+    parallax_model = ['None', pylima_t0_par]
 
-    pylima_mod = generate_model.create_model('PSBL', pylima_ev, fancy_parameters=pylima_fancy)
+    pylima_mod = generate_model.create_model('PSBL', pylima_ev,
+                                             parallax=parallax_model,
+                                             fancy_parameters=pylima_fancy)
     pylima_mod.define_model_parameters()
     pylima_mod.blend_flux_ratio = False
     pylima_mod.blend_flux_parameter = 'fblend'
 
-    tmp_params = [pylima_t0 + 2400000.5, pylima_u0, tE, sep, pylima_q, phi_rad]
+    tmp_params = [pylima_t0, pylima_u0, tE, sep, pylima_q, phi_rad]
     pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
+    print(tmp_params)
     pylima_par.fsource_OGLE = microltoolbox.brightness_transformation.magnitude_to_flux(mag_src)
     pylima_par.fblend_OGLE = pylima_par.fsource_OGLE * (1.0 - b_sff) / b_sff
     pylima_par['fsource_OGLE'] = microltoolbox.brightness_transformation.magnitude_to_flux(mag_src)
@@ -2427,6 +2433,7 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
                                         [b_sff], [mag_src], root_tol=1e-6)
 
     our_mag = psbl.get_photometry(time_mjd)
+    our_amp = psbl.get_amplification(time_mjd)
 
     max_delta = np.max(np.abs(pylima_lcurve_mag - our_mag))
 
@@ -2440,6 +2447,8 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
 
         f1.plot(time_mjd, pylima_lcurve_mag, 'ko', label='pyLIMA')
         f1.plot(time_mjd, our_mag, 'r.', label='Ours')
+#        f1.plot(time_mjd, pylima_amp, 'ko', label='pyLIMA')
+#        f1.plot(time_mjd, our_amp, 'r.', label='Ours')
         f1.invert_yaxis()
         f1.set_xlabel('MJD (day)')
         f1.set_ylabel('I (mag)')
@@ -2635,7 +2644,7 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     print('3', pylima_par)
     pylima_lcurve = pylima_mod_out['photometry']
     pylima_lcurve_mag = microltoolbox.brightness_transformation.flux_to_magnitude(pylima_lcurve)
-    pdb.set_trace()
+    #pdb.set_trace()
 
     max_delta = np.max(np.abs(pylima_lcurve_mag - our_mag))
 

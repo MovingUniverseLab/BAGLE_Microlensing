@@ -46,11 +46,15 @@ def parallax_in_direction(RA, Dec, mjd, obsLocation='earth'):
     _north_projected = np.cross(direction, _east_projected) / np.linalg.norm(np.cross(direction, _east_projected))
 
     obs_pos = get_observer_barycentric(obsLocation, times)
-    sun_pos = get_body_barycentric(body='sun', time=times)
 
-    sun_obs_pos = sun_pos - obs_pos
+    # Old Code for Heliocentric convention
+    #sun_pos = get_body_barycentric(body='sun', time=times)
+    #sun_obs_pos = sun_pos - obs_pos
+    #pos = sun_obs_pos.xyz.T.to(units.au)
 
-    pos = sun_obs_pos.xyz.T.to(units.au)
+    # New Code for Barycentric convention
+    bary_obs_pos = -obs_pos
+    pos = bary_obs_pos.xyz.T.to(units.au)
 
     e = np.dot(pos, _east_projected)
     n = np.dot(pos, _north_projected)
