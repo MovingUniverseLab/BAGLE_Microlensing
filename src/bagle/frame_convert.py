@@ -13,6 +13,7 @@ import math
 from bagle import parallax
 from matplotlib.ticker import MaxNLocator
 
+
 ##############
 #
 # Converters for Different Packages

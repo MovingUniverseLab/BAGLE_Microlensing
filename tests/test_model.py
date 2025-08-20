@@ -2537,12 +2537,10 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
 
     Input parameters are in our conventions and heliocentric coordinate system.
     """
-    from pyLIMA import models as microlmodels
     from pyLIMA import event
     from pyLIMA.models import PSPL_model
     from pyLIMA import telescopes
     from pyLIMA import toolbox as microltoolbox
-    from pyLIMA.models import generate_model
 
     # To convert between pyLIMA (geocentric) and Ours (heliocentric), we will
     # need some info about the Sun's position and velocity.
@@ -2579,6 +2577,7 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
 
     foo = frame_convert.convert_helio_geo_phot(ra, dec, t0, pspl.u0_amp, pspl.tE,
                                                pspl.piE[0], pspl.piE[1], t0_par,
+
                                                murel_in='SL', murel_out='LS',
                                                coord_in='EN', coord_out='tb',
                                                plot=False)

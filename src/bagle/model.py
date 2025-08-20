@@ -11063,7 +11063,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         Returns
         -------
         centroid_shift : numpy array 
-            [shape = len(t), 2]
+            [shape = len(t), 2] in milli-arcseoncds
         """
 
         xS = self.get_astrometry(t, filt_idx=filt_idx)
@@ -19523,7 +19523,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Returns
         -------
         centroid_shift : numpy array
-            [shape = len(t), 2]
+            [shape = len(t), 2] in milliarcseoncds
         """
         # Note that xS is actually the observed centroid position
         # including all light from the source and lens.
@@ -21092,7 +21092,7 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
         Returns
         -------
         centroid_shift : numpy array
-            [shape = len(t), 2]
+            [shape = len(t), 2] in milli-arcseconds.
         """
         # Note that xS is actually the observed centroid position
         # including all light from the source and lens.
