@@ -181,8 +181,8 @@ def get_pylima_model(bagle_model, times_mjd=None):
         piS_pylima = bagle_model.piS
         muSE_pylima = bagle_model.muS[0]
         muSN_pylima = bagle_model.muS[1]
-        xS0N_pylima = bagle_model.xS0[0] / 3600.  # degrees
-        xS0E_pylima = bagle_model.xS0[1] / 3600.  # degrees
+        xS0N_pylima = bagle_model.xS0[1] / 3600.  # degrees
+        xS0E_pylima = bagle_model.xS0[0] / 3600.  # degrees
 
         tmp_params = [t0_pylima, u0_pylima, tE_pylima, thetaE_pylima, piS_pylima, muSN_pylima, muSE_pylima,
                       xS0N_pylima, xS0E_pylima, piEN_pylima, piEE_pylima]
