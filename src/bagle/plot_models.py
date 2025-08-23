@@ -1071,3 +1071,382 @@ def get_magnification_map_timedep_new(psbl, time_skip = 500, time_choice = 1000,
             ax[i][j].legend(markerscale = 1)
             fig.colorbar(val)
             time = time + time_skip
+
+
+def compare_model_pkg_phot_amp(bagle_mod, time_arr, amp_pylima=None, amp_vbmicr=None, amp_mulens=None,
+                          savefile='compare_model_pkg_phot_amp.png'):
+    """
+    Make plots to compare a BAGLE model against PyLIMA, VBM, and MulensModel. This function
+    only produces a plot of the amplifications and residuals.
+    """
+    # Get the BAGLE amplification.
+    amp_bagle = bagle_mod.get_amplification(time_arr)
+
+    # Use the following color table.
+    cmap = plt.cm.get_cmap('tab10')
+    colors = cmap(np.linspace(0, 1, 10))
+
+    ##########
+    # Make the figure
+    ##########
+    plt.close(2)
+    fig, ax = plt.subplots(2, 1, sharex=True, num=2)
+
+    if amp_pylima is not None:
+        ax[0].plot(time_arr, amp_pylima, label='pyLIMA', color=colors[1], ls='-', lw=2, marker='None')
+        ax[1].plot(time_arr, amp_pylima - amp_bagle, 'o', color=colors[1], lw=2, label='pyLIMA - BAGLE')
+    if amp_vbmicr is not None:
+        ax[0].plot(time_arr, amp_vbmicr, label='VBMicrolensing', color=colors[2], ls=':', lw=2, marker='None')
+        ax[1].plot(time_arr, amp_vbmicr - amp_bagle, '^', color=colors[2], lw=2, label='VBMicrolensing - BAGLE')
+    if amp_mulens is not None:
+        ax[0].plot(time_arr, amp_mulens, label='MuLensModel', color=colors[3], ls='-.', lw=2, marker='None')
+        ax[1].plot(time_arr, amp_mulens - amp_bagle, 'x', color=colors[3], lw=2, label='MuLensModel - BAGLE')
+
+    ax[0].plot(time_arr, amp_bagle, label='BAGLE', color=colors[0], ls='-', lw=2, marker='None')
+
+    ax[0].set_ylabel('Amplification')
+    ax[0].legend(loc='upper right', fontsize=12)
+    ax[0].set_title('PSPL, no Parallax')
+
+    ax[1].legend(loc='upper left', fontsize=12)
+    ax[1].set_ylabel('Difference')
+    ax[1].set_xlabel('Time (MJD)')
+
+    fig.savefig(savefile)
+
+    print('compare_model_pkg_amp: BAGLE parameters')
+    print(f"$t_{{E,\\odot}}={bagle_mod.tE:.0f}$ days, " +
+          f"$u_{{0,\\odot}}={bagle_mod.u0_amp:.1f}$, " +
+          f"$t_{{0,\\odot}}={bagle_mod.t0:.0f}$ MJD, " +
+          f"$b_{{sff}}[0]={bagle_mod.b_sff[0]:.0f}$, " +
+          f"$mag_S[0]={bagle_mod.mag_src[0]:.0f}$ mag"
+          )
+
+    return
+
+
+def compare_model_pkg_phot_astrom_amp(time_arr, amp_bagle, amp_pylima=None, amp_vbmicr=None,
+                          savefile='compare_model_pkg_phot_astrom_amp.png'):
+    """
+    Make plots to compare a BAGLE model against PyLIMA and VBM. This function
+    only produces a plot of the amplifications and residuals.
+
+    This function supports all BAGLE photometry + astrometry models.
+    """
+    # Use the following color table.
+    cmap = plt.cm.get_cmap('tab10')
+    colors = cmap(np.linspace(0, 1, 10))
+
+    ##########
+    # Make the figure
+    ##########
+    plt.close(2)
+    fig, ax = plt.subplots(2, 1, sharex=True, num=2)
+
+    if amp_pylima is not None:
+        ax[0].plot(time_arr, amp_pylima, label='pyLIMA', color=colors[1], ls='-', lw=2, marker='None')
+        ax[1].plot(time_arr, amp_pylima - amp_bagle, 'o', color=colors[1], lw=2, label='pyLIMA - BAGLE')
+    if amp_vbmicr is not None:
+        ax[0].plot(time_arr, amp_vbmicr, label='VBMicrolensing', color=colors[2], ls=':', lw=2, marker='None')
+        ax[1].plot(time_arr, amp_vbmicr - amp_bagle, '^', color=colors[2], lw=2, label='VBMicrolensing - BAGLE')
+
+    ax[0].plot(time_arr, amp_bagle, label='BAGLE', color=colors[0], ls='-', lw=2, marker='None')
+
+    ax[0].set_ylabel('Amplification')
+    ax[0].legend(loc='upper right', fontsize=12)
+    ax[0].set_title('PSPL, no Parallax')
+
+    ax[1].legend(loc='upper left', fontsize=12)
+    ax[1].set_ylabel('Difference')
+    ax[1].set_xlabel('Time (MJD)')
+
+    fig.savefig(savefile)
+
+    return
+
+def compare_model_pkg_phot_astrom_uamp(time_arr, uamp_bagle, uamp_pylima=None, uamp_vbmicr=None,
+                                       savefile='compare_model_pkg_phot_astrom_uamp.png'):
+    """
+    Make plot of the amplitude of the u vector for different packages. This plots only
+    photometry + astrometry models from BAGLE, pyLIMA, and VBM.
+    """
+    # Use the following color table.
+    cmap = plt.cm.get_cmap('tab10')
+    colors = cmap(np.linspace(0, 1, 10))
+
+    ##########
+    # Make u-Amplitude Figure
+    ##########
+    fig, ax = plt.subplots(2, 1, sharex=True, num=2)
+
+    if uamp_pylima is not None:
+        ax[0].plot(time_arr, uamp_pylima, label='pyLIMA', color=colors[1], ls='-', lw=2, marker='None')
+        ax[1].plot(time_arr, uamp_pylima - uamp_bagle, color=colors[1], label='pyLIMA - BAGLE', ls='-', lw=2, marker='None')
+    if uamp_vbmicr is not None:
+        ax[0].plot(time_arr, uamp_vbmicr, label='VBMicrolensing', color=colors[2], ls=':', lw=2, marker='None')
+        ax[1].plot(time_arr, uamp_vbmicr - uamp_bagle, color=colors[2], label='VBMicrolensing - BAGLE', ls=':', lw=2, marker='None')
+
+    ax[0].plot(time_arr, uamp_bagle, label='BAGLE', color=colors[0], ls='-', lw=2, marker='None')
+
+    ax[0].set_ylabel('u ($\\theta_E$)')
+    ax[0].legend(loc='upper right', fontsize=12)
+    ax[1].legend(loc='lower right', fontsize=12)
+    ax[1].set_ylabel('Diff')
+    ax[1].set_xlabel('Time (MJD)')
+
+    fig.savefig(savefile)
+
+    return
+
+
+def compare_model_pkg_phot_astrom_uvec(time_arr, uvec_bagle, uvec_pylima=None, uvec_vbmicr=None,
+                                       savefile='compare_model_pkg_phot_astrom_uvec.png'):
+    """
+    Make plot of the amplitude of the u vector for different packages. This plots only
+    photometry + astrometry models from BAGLE, pyLIMA, and VBM.
+    """
+    # Use the following color table.
+    cmap = plt.cm.get_cmap('tab10')
+    colors = cmap(np.linspace(0, 1, 10))
+
+    ##########
+    # Make uvec Astrometry Figure
+    ##########
+    fig, ax = plt.subplots(2, 2, sharex=True, num=3, figsize=(12, 6))
+    plt.subplots_adjust(left=0.12, right=0.98, top=0.98, wspace=0.3)
+
+    if uvec_pylima is not None:
+        ax[0, 0].plot(time_arr, uvec_pylima[:, 0],
+                      color=colors[1], label='pyLIMA',
+                      ls='-', lw=2, marker='None')
+        ax[0, 1].plot(time_arr, uvec_pylima[:, 1],
+                      color=colors[1], label='pyLIMA',
+                      ls='-', lw=2, marker='None')
+        ax[1, 0].plot(time_arr, uvec_pylima[:, 0] - uvec_bagle[:, 0],
+                      color=colors[1], label='pyLIMA - BAGLE',
+                      ls='-', lw=2, marker='None')
+        ax[1, 1].plot(time_arr, uvec_pylima[:, 1] - uvec_bagle[:, 1],
+                      color=colors[1], label='pyLIMA - BAGLE',
+                      ls='-', lw=2, marker='None')
+        
+    if uvec_vbmicr is not None:
+        ax[0, 0].plot(time_arr, uvec_vbmicr[:, 0], 
+                      color=colors[2], label='VBM',  
+                      ls=':', lw=2, marker='None')
+        ax[1, 0].plot(time_arr, uvec_vbmicr[:, 0] - uvec_bagle[:, 0], 
+                      color=colors[2], label='VBM - BAGLE', 
+                      ls=':', lw=2, marker='None')
+        ax[1, 1].plot(time_arr, uvec_vbmicr[:, 1] - uvec_bagle[:, 1], 
+                      color=colors[2], label='VBM - BAGLE', 
+                      ls='-', lw=2, marker='None')
+        ax[0, 1].plot(time_arr, uvec_vbmicr[:, 1], 
+                      color=colors[2], label='VBM', 
+                      ls='-', lw=2, marker='None')
+
+    ax[0, 0].plot(time_arr, uvec_bagle[:, 0], label='BAGLE', color=colors[0], ls='-', lw=2, marker='None')
+    ax[0, 1].plot(time_arr, uvec_bagle[:, 1], label='BAGLE', color=colors[0], ls='-', lw=2, marker='None')
+
+    ax[0, 0].set_ylabel('u$_E$')
+    ax[0, 0].legend(loc='upper right', fontsize=12)
+
+    ax[1, 0].legend(loc='upper left', fontsize=12)
+    ax[1, 0].set_ylabel('Difference')
+    ax[1, 0].set_xlabel('Time (MJD)')
+
+    ax[0, 1].set_ylabel('u$_N$')
+    ax[0, 1].legend(loc='upper right', fontsize=12)
+
+    ax[1, 1].legend(loc='upper left', fontsize=12)
+    ax[1, 1].set_ylabel('Difference')
+    ax[1, 1].set_xlabel('Time (MJD)')
+
+    fig.savefig(savefile)
+
+    return
+
+
+def compare_model_pkg_phot_astrom_xSxL(time_mjd, xS_bagle, xL_bagle,
+                                       xS_pylima=None, xL_pylima=None,
+                                       xS_vbmicr=None, xL_vbmicr=None,
+                                       savefile='compare_model_pkg_phot_astrom_xSxL.png'):
+    """
+    Make plot of the soure and lens position on the sky for different packages. This plots only
+    photometry + astrometry models from BAGLE, pyLIMA, and VBM.
+    """
+    # Use the following color table.
+    cmap = plt.cm.get_cmap('tab10')
+    colors = cmap(np.linspace(0, 1, 10))
+
+    ##########
+    # Make Unlensed Astrometry Figure
+    ##########
+    fig, ax = plt.subplots(2, 2, sharex=True, num=4, figsize=(12, 6))
+    plt.subplots_adjust(left=0.12, right=0.98, top=0.98, wspace=0.3)
+
+    # ax[0, 0] == East vs. time
+    # ax[0, 1] == North vs. time
+    # ax[1, 0] == East residuals vs. time (mod - BAGLE)
+    # ax[1, 1] == North residual vs. time (mod - BAGLE)
+
+    if xS_pylima is not None:
+        ax[0,0].plot(time_mjd, xS_pylima[:, 0] * 1e3,
+                     label='xS$_{pyLIMA}$', color=colors[1],
+                     ls='-', lw=2, marker='None')
+        ax[0,0].plot(time_mjd, xL_pylima[:, 0] * 1e3,
+                     label='xL$_{pyLIMA}$', color=colors[1],
+                     ls=':', lw=2, marker='None')
+
+        ax[0,1].plot(time_mjd, xS_pylima[:, 1] * 1e3,
+                     label='xS$_{pyLIMA}$', color=colors[1],
+                     ls='-', lw=2, marker='None')
+        ax[0,1].plot(time_mjd, xL_pylima[:, 1] * 1e3,
+                     label='xL$_{pyLIMA}$', color=colors[1],
+                     ls=':', lw=2, marker='None')
+
+        ax[1, 0].plot(time_mjd, (xS_pylima[:, 0] - xS_bagle[:, 0]) * 1e3,
+                      label='xS$_{pyLIMA}$ - xS$_{BAGLE}$',
+                      color=colors[1], ls='-', lw=2, marker='None')
+        ax[1, 0].plot(time_mjd, (xL_pylima[:, 0] - xL_bagle[:, 0]) * 1e3,
+                      label='xL$_{pyLIMA}$ - xL$_{BAGLE}$',
+                      color=colors[1], ls=':', lw=2, marker='None')
+
+        ax[1, 1].plot(time_mjd, (xS_pylima[:, 1] - xS_bagle[:, 1]) * 1e3,
+                      label='xS$_{pyLIMA}$ - xS$_{BAGLE}$',
+                      color=colors[1], ls='-', lw=2, marker='None')
+        ax[1, 1].plot(time_mjd, (xL_pylima[:, 1] - xL_bagle[:, 1]) * 1e3,
+                      label='xL$_{pyLIMA}$ - xL$_{BAGLE}$',
+                      color=colors[1], ls=':', lw=2, marker='None')
+
+    if xS_vbmicr is not None:
+        ax[0,0].plot(time_mjd, xS_vbmicr[:, 0] * 1e3,
+                     label='xS$_{VBM}$', color=colors[2],
+                     ls='-', lw=2, marker='None')
+        ax[0, 0].plot(time_mjd, xL_vbmicr[:, 0] * 1e3,
+                      label='xL$_{VBM}$', color=colors[2],
+                      ls=':', lw=2, marker='None')
+
+        ax[0, 1].plot(time_mjd, xS_vbmicr[:, 1] * 1e3,
+                      label='xS$_{VBM}$', color=colors[2],
+                      ls='-', lw=2, marker='None')
+        ax[0, 1].plot(time_mjd, xL_vbmicr[:, 1] * 1e3,
+                      label='xL$_{VBM}$', color=colors[2],
+                      ls=':', lw=2, marker='None')
+
+        ax[1, 0].plot(time_mjd, (xS_vbmicr[:, 0] - xS_bagle[:, 0]) * 1e3,
+                      label='xS$_{VBM}$ - xS$_{BAGLE}$',
+                      color=colors[2], ls='-', lw=2, marker='None')
+        ax[1, 0].plot(time_mjd, (xL_vbmicr[:, 0] - xL_bagle[:, 0]) * 1e3,
+                      label='xL$_{VBM}$ - xL$_{BAGLE}$',
+                      color=colors[2], ls=':', lw=2, marker='None')
+
+        ax[1, 1].plot(time_mjd, (xS_vbmicr[:, 1] - xS_bagle[:, 1]) * 1e3,
+                      label='xS$_{VBM}$ - xS$_{BAGLE}$',
+                      color=colors[2], ls='-', lw=2, marker='None')
+        ax[1, 1].plot(time_mjd, (xL_vbmicr[:, 1] - xL_bagle[:, 1]) * 1e3,
+                      label='xL$_{VBM}$ - xL$_{BAGLE}$',
+                      color=colors[2], ls=':', lw=2, marker='None')
+
+    # E vs. t for BAGLE
+    ax[0,0].plot(time_mjd, xS_bagle[:, 0] * 1e3,
+                 label='xS$_{BAGLE}$', color=colors[0],
+                 ls='-', lw=2, marker='None')
+
+    ax[0,0].plot(time_mjd, xL_bagle[:, 0] * 1e3,
+                 label='xL$_{BAGLE}$', color=colors[0],
+                 ls=':', lw=2, marker='None')
+
+    # N vs. t for BAGLE
+    ax[0,1].plot(time_mjd, xS_bagle[:, 1] * 1e3,
+                 label='xS$_{BAGLE}$', color=colors[0],
+                 ls='-', lw=2, marker='None')
+
+    ax[0,1].plot(time_mjd, xL_bagle[:, 1] * 1e3,
+                 label='xL$_{BAGLE}$', color=colors[0],
+                 ls=':', lw=2, marker='None')
+
+    ax[0,0].legend(fontsize=12)
+    ax[0,0].set_ylabel('$x_{\odot} \cdot \hat{E}$ (mas)')
+    ax[0,1].set_ylabel('$x_{\odot} \cdot \hat{N}$ (mas)')
+    ax[1,0].legend(fontsize=12)
+    ax[1,0].set_ylabel('Difference')
+    ax[1,0].set_xlabel("Time (MJD)")
+    ax[1,1].set_ylabel('Difference')
+    ax[1,1].set_xlabel("Time (MJD)")
+
+    fig.savefig(savefile)
+
+    return
+
+
+def compare_model_pkg_phot_astrom_cent(time_mjd, ast_lensed_bagle,
+                                       ast_lensed_pylima=None, ast_lensed_vbmicr=None,
+                                       savefile='compare_model_pkg_phot_astrom_cent.png'):
+    """
+    Make plot of the lensed centroid on the sky for different packages. This plots only
+    photometry + astrometry models from BAGLE, pyLIMA, and VBM.
+    """
+    # Use the following color table.
+    cmap = plt.cm.get_cmap('tab10')
+    colors = cmap(np.linspace(0, 1, 10))
+
+    ##########
+    # Make Lensed Astrometry Figure
+    ##########
+    fig, ax = plt.subplots(2, 2, sharex=True, num=5, figsize=(12, 6))
+    plt.subplots_adjust(left=0.12, right=0.98, top=0.98, wspace=0.3)
+
+    # ax[0, 0] == East vs. time
+    # ax[0, 1] == North vs. time
+    # ax[1, 0] == East residuals vs. time (mod - BAGLE)
+    # ax[1, 1] == North residual vs. time (mod - BAGLE)
+
+    # PyLIMA
+    if ast_lensed_pylima is not None:
+        ax[0,0].plot(time_mjd, ast_lensed_pylima[:, 0] * 1e3,
+                     label='x$_{lensed,pyLIMA}$',
+                     color=colors[1], ls='-', lw=2, marker='None')
+        ax[0, 1].plot(time_mjd, ast_lensed_pylima[:, 1] * 1e3,
+                      label='x$_{lensed,pyLIMA}$',
+                      color=colors[1], ls='-', lw=2, marker='None')
+        ax[1, 0].plot(time_mjd, (ast_lensed_pylima[:, 0] - ast_lensed_bagle[:, 0]) * 1e3,
+                      label='x$_{lensed,pyLIMA}$ - x$_{lensed,BAGLE}$',
+                      color=colors[1], ls='-', lw=2, marker='None')
+        ax[1, 1].plot(time_mjd, (ast_lensed_pylima[:, 1] - ast_lensed_bagle[:, 1]) * 1e3,
+                      label='x$_{lensed,pyLIMA}$ - x$_{lensed,BAGLE}$',
+                      color=colors[1], ls='-', lw=2, marker='None')
+
+        # VBM
+    if ast_lensed_vbmicr is not None:
+        ax[0,0].plot(time_mjd, ast_lensed_vbmicr[:, 0] * 1e3,
+                     label='x$_{lensed,VBMicrolensing}$',
+                     color=colors[2], ls='-', lw=2, marker='None')
+        ax[0, 1].plot(time_mjd, ast_lensed_vbmicr[:, 1] * 1e3,
+                      label='x$_{lensed,VBMicrolensing}$',
+                      color=colors[2], ls='-', lw=2, marker='None')
+        ax[1, 0].plot(time_mjd, (ast_lensed_vbmicr[:, 0] - ast_lensed_bagle[:, 0]) * 1e3,
+                      label='x$_{lensed,VBM}$ - x$_{lensed,BAGLE}$',
+                      color=colors[2], ls='-', lw=2, marker='None')
+        ax[1, 1].plot(time_mjd, (ast_lensed_vbmicr[:, 1] - ast_lensed_bagle[:, 1]) * 1e3,
+                      label='x$_{lensed,VBM}$ - x$_{lensed,BAGLE}$',
+                      color=colors[2], ls='-', lw=2, marker='None')
+
+    # BAGLE
+    ax[0,0].plot(time_mjd, ast_lensed_bagle[:, 0] * 1e3,
+                 label='x$_{lensed,BAGLE}$',
+                 color=colors[0], ls='-', lw=2, marker='None')
+    ax[0,1].plot(time_mjd, ast_lensed_bagle[:, 1] * 1e3,
+                 label='x$_{lensed,BAGLE}$',
+                 color=colors[0], ls='-', lw=2, marker='None')
+
+    ax[0,0].legend(fontsize=12)
+    ax[0,0].set_ylabel('$x_{\odot} \cdot \hat{E}$ (mas)')
+    ax[0,1].set_ylabel('$x_{\odot} \cdot \hat{N}$ (mas)')
+    ax[1,0].legend(fontsize=12)
+    ax[1,0].set_ylabel('Difference')
+    ax[1,0].set_xlabel("Time (MJD)")
+    ax[1,1].set_ylabel('Difference')
+    ax[1,1].set_xlabel("Time (MJD)")
+
+    fig.savefig(savefile)
+
+    return
