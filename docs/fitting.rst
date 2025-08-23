@@ -8,7 +8,7 @@ We utilize nested sampling to perform the inference (PyMultiNest);
 however, much of the infrastructure can be used with other
 inference packages or methods (e.g. Dynesty, emcee).
 
-The key model fitting object is ``PSPL_Solver``, which is a
+The key model fitting object is ``MicrolensSolver``, which is a
 python object used to organize the data, define the likelihoods and
 prior distributions, and call solvers.
 
@@ -20,7 +20,7 @@ to generate it::
   from bagle import fake_data
   data, p_in = fake_data.fake_data_parallax_lmc()
 
-Now we can setup our ``PSPL_Solver`` and make a directory to save our
+Now we can setup our ``MicrolensSolver`` and make a directory to save our
 fit results. We will be using a ``PSPL_PhotAstrom_Par_Param1`` model
 that will jointly fit both photometric and astrometric data with a
 PSPL model with parallax, using the `Param1` parameterization::
@@ -33,7 +33,7 @@ PSPL model with parallax, using the `Param1` parameterization::
   os.makedirs(outdir, exist_ok=True)
 
 
-  fitter = PSPL_Solver(data,
+  fitter = MicrolensSolver(data,
                        model.PSPL_PhotAstrom_Par_Param1,
                        n_live_points=300,
                        outputfiles_basename=outdir + '/aa_',
@@ -124,7 +124,7 @@ input parameter array::
   p_in['mag_src1'] = p_in['mag_src']
 
   
-The ``PSPL_Solver`` has some convenience functions for summarizing the
+The ``MicrolensSolver`` has some convenience functions for summarizing the
 results::
   
   fitter.summarize_results()
@@ -157,6 +157,6 @@ input model within some tolerance.::
 .. toctree::
    :maxdepth: 3
   
-   PSPL_Solver.rst
+   MicrolensSolver.rst
    Prior_Generator.rst
    Gen_Use_model_fitter.rst

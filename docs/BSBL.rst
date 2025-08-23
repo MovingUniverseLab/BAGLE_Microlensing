@@ -1,18 +1,18 @@
 
 ######################################################
-Binary Source Point Lens (BSPL) Implementation
+Binary Source Binary Lens (BSBL) Implementation
 ######################################################
 
 .. toctree::
    :maxdepth: 4 
 
-   BSPL_Model.rst
+   BSBL_Model.rst
 
-BSPL Developers
-===============
+BSBL Developer Classes
+=======================
 .. toctree::
    :maxdepth: 2
 
-   BSPL_Param.rst
-   BSPL_Data.rst
-   BSPL_Parallax.rst
+   BSBL_Param.rst
+   BSBL_Data.rst
+   BSBL_Parallax.rst

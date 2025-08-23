@@ -1,11 +1,8 @@
 
-Parameterization Class Family - PSBL
-=====================================
+Parameterization Class Family
+------------------------------
 
-PSBL Models
----------------
-
-.. autoclass:: model.PSBL_PhotAstromParam1 
+.. autoclass:: model.PSBL_PhotAstromParam1
     :members:
     :inherited-members:
     :show-inheritance:
@@ -39,9 +36,6 @@ PSBL Models
     :members:
     :inherited-members:
     :show-inheritance:
-
-GP Models
---------------
 
 .. autoclass:: model.PSBL_GP_PhotParam1
     :members:

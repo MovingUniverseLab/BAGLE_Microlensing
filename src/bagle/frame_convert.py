@@ -4,13 +4,382 @@ from astropy import units as u
 import numpy as np 
 from astropy.time import Time
 from astropy.coordinates.builtin_frames.utils import get_jd12
+from astropy.coordinates import EarthLocation
+from astropy.coordinates import SkyCoord
 import erfa
 import matplotlib.pyplot as plt
+import math
 
 from bagle import parallax
 from matplotlib.ticker import MaxNLocator
 
-def convert_bagle_mulens_psbl_phot(ra, dec, 
+
+##############
+#
+# Converters for Different Packages
+#
+##############
+def get_pylima_model(bagle_model, times_mjd=None):
+    """
+    Using an input BAGLE model, return a pyLIMA model. This utility function does
+    all the appropriate frame conversions.
+
+    Input
+    -----
+    bagle_model : BAGLE model instance
+        An instance of a BAGLE model. All PSPL models are supported.
+
+    Optional
+    --------
+    times_mjd : None or array
+        An array of times in MJD that is not really used.
+
+    Returns
+    -------
+    pylima_model:
+        pyLIMA model object.
+    pylima_par:
+        pyLIMA parameter object.
+    pylima_tel:
+        pyLIMA telescope object.
+
+    """
+
+    from pyLIMA import event
+    from pyLIMA.simulations import simulator
+    from pyLIMA.models import generate_model
+    from pyLIMA import telescopes
+    from pyLIMA.toolbox import brightness_transformation
+    from pyLIMA import toolbox as microltoolbox
+
+    # Need to mock up some observation times. Not 100% sure why
+    # pyLIMA needs this.
+    if times_mjd is None:
+        times_mjd = np.arange(bagle_model.t0 - 2 * bagle_model.tE,
+                              bagle_model.t0 + 2 * bagle_model.tE)
+    times_jd = times_mjd + 2400000.5
+
+    # Set up the reference time
+    t0_par_pylima = bagle_model.t0 + 2400000.5  # t0_par in JD
+
+    #####
+    # PyLIMA Data Objects for photometry and astrometry.
+    #####
+    pylima_data = np.zeros((len(times_jd), 3), dtype=float)
+    pylima_data[:, 0] = times_jd
+    pylima_data[:, 1] = np.ones(len(times_jd)) * 1  # mag
+    pylima_data[:, 2] = np.ones(len(times_jd)) * 0.01  # mag err
+
+    pylima_data_ast = np.zeros((len(times_jd), 5), dtype=float)
+    pylima_data_ast[:, 0] = times_jd
+    pylima_data_ast[:, 1] = np.ones(len(times_jd)) * 1.0  # RA
+    pylima_data_ast[:, 2] = np.ones(len(times_jd)) * 0.001  # RA error
+    pylima_data_ast[:, 3] = np.ones(len(times_jd)) * 1.0  # Dec
+    pylima_data_ast[:, 4] = np.ones(len(times_jd)) * 0.001  # Dec error
+
+    #####
+    # PyLIMA Telescope Object
+    #####
+    if bagle_model.astrometryFlag:
+        pylima_tel = telescopes.Telescope(name='OGLE', camera_filter='I',
+                                          lightcurve=pylima_data,
+                                          lightcurve_names=['time', 'mag', 'err_mag'],
+                                          lightcurve_units=['JD', 'mag', 'mag'],
+                                          astrometry=pylima_data_ast,
+                                          astrometry_names=['time', 'ra', 'err_ra', 'dec', 'err_dec'],
+                                          astrometry_units=['JD', 'deg', 'deg', 'deg', 'deg'],
+                                          location='Earth',
+                                          altitude=1000, longitude=-109.285399, latitude=-27.130)
+    else:
+        pylima_tel = telescopes.Telescope(name='OGLE', camera_filter='I',
+                                          lightcurve=pylima_data,
+                                          lightcurve_names=['time', 'mag', 'err_mag'],
+                                          lightcurve_units=['JD', 'mag', 'mag'],
+                                          location='Earth',
+                                          altitude=1000, longitude=-109.285399, latitude=-27.130)
+
+    #####
+    # PyLIMA Event Object
+    #####
+    if bagle_model.parallaxFlag:
+        pylima_ev = event.Event(ra=bagle_model.raL, dec=bagle_model.decL)
+    else:
+        pylima_ev = event.Event()
+    pylima_ev.name = 'Fubar'
+    pylima_ev.telescopes.append(pylima_tel)
+
+    #####
+    # PyLIMA Model Object
+    #####
+    if bagle_model.parallaxFlag:
+        parallax_model = ['Full', t0_par_pylima]  # assumes pylima_t0_par is t0.
+    else:
+        parallax_model = ['None', t0_par_pylima]
+
+    pylima_mod = generate_model.create_model('PSPL', pylima_ev, parallax=parallax_model, fancy_parameters=None)
+    pylima_mod.define_model_parameters()
+    pylima_mod.blend_flux_ratio = False
+    pylima_mod.astrometry = bagle_model.astrometryFlag
+
+    #####
+    # PyLIMA Parameters Object
+    #####
+    ### Photometry-Only and No Parallax
+    if not bagle_model.astrometryFlag and not bagle_model.parallaxFlag:
+        print('PyLIMA: PSPL with Photometry-only, no parallax')
+        u0_pylima = bagle_model.u0_amp
+        t0_pylima = bagle_model.t0 + 2400000.5
+        tE_pylima = bagle_model.tE
+
+        tmp_params = [t0_pylima, u0_pylima, tE_pylima]
+        pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
+
+        pylima_par.fsource_OGLE = microltoolbox.brightness_transformation.magnitude_to_flux(bagle_model.mag_src[0])
+        pylima_par.fblend_OGLE = pylima_par.fsource_OGLE * (1.0 - bagle_model.b_sff[0]) / bagle_model.b_sff[0]
+
+    ### Photometry-Only and With Parallax
+    elif not bagle_model.astrometryFlag and bagle_model.parallaxFlag:
+        print('PyLIMA: PSPL with Photometry-only, with parallax')
+        # Add the RA and Dec to the model
+        pylima_mod.ra = bagle_model.raL
+        pylima_mod.dec = bagle_model.decL
+
+        # Convert from helio to geo-tr coordinates.
+        geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
+                                            bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
+                                            bagle_model.piE[0], bagle_model.piE[1], bagle_model.t0,
+                                            murel_in='SL', murel_out='LS',
+                                            coord_in='EN', coord_out='EN', plot=False)
+        t0_pylima = geo_params[0] + 2400000.5
+        u0_pylima = geo_params[1]
+        tE_pylima = geo_params[2]
+        piEE_pylima = geo_params[3]
+        piEN_pylima = geo_params[4]
+
+        tmp_params = [t0_pylima, u0_pylima, tE_pylima, piEN_pylima, piEE_pylima]
+        pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
+
+        pylima_par.fsource_OGLE = microltoolbox.brightness_transformation.magnitude_to_flux(bagle_model.mag_src[0])
+        pylima_par.fblend_OGLE = pylima_par.fsource_OGLE * (1.0 - bagle_model.b_sff[0]) / bagle_model.b_sff[0]
+
+    ### Photometry and Astrometry
+    else:
+        print('PyLIMA: PSPL with Astrometry and Photometry')
+        # Convert from helio to geo-tr coordinates.
+        geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
+                                            bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
+                                            bagle_model.piE[0], bagle_model.piE[1], bagle_model.t0,
+                                            murel_in='SL', murel_out='LS',
+                                            coord_in='EN', coord_out='EN', plot=False)
+
+        u0_pylima = geo_params[1]
+        t0_pylima = geo_params[0] + 2400000.5
+        tE_pylima = geo_params[2]
+        piEE_pylima = geo_params[3]
+        piEN_pylima = geo_params[4]
+        thetaE_pylima = bagle_model.thetaE_amp
+        piS_pylima = bagle_model.piS
+        muSE_pylima = bagle_model.muS[0]
+        muSN_pylima = bagle_model.muS[1]
+        xS0N_pylima = bagle_model.xS0[1] / 3600.  # degrees
+        xS0E_pylima = bagle_model.xS0[0] / 3600.  # degrees
+
+        tmp_params = [t0_pylima, u0_pylima, tE_pylima, thetaE_pylima, piS_pylima, muSN_pylima, muSE_pylima,
+                      xS0N_pylima, xS0E_pylima, piEN_pylima, piEE_pylima]
+        pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
+
+        pylima_par.fsource_OGLE = microltoolbox.brightness_transformation.magnitude_to_flux(bagle_model.mag_src[0])
+        pylima_par.fblend_OGLE = pylima_par.fsource_OGLE * (1.0 - bagle_model.b_sff[0]) / bagle_model.b_sff[0]
+
+    return pylima_mod, pylima_par, pylima_tel
+
+
+def get_mulens_model(bagle_model):
+    """
+    Return a MuLensModel matched to the input BAGLE model.
+
+    No astrometry supported.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+
+    Returns
+    -------
+    mulens_mod : MuLens model
+    """
+    import MulensModel
+
+    c = SkyCoord(ra=bagle_model.raL * u.deg, dec=bagle_model.decL * u.deg, frame='icrs')
+
+    geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
+                                        bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
+                                        bagle_model.piE[0], bagle_model.piE[1], bagle_model.t0,
+                                        murel_in='SL', murel_out='LS',
+                                        coord_in='EN', coord_out='EN', plot=False)
+
+    if bagle_model.parallaxFlag:
+        t0_mulens = geo_params[0] + 2400000.5
+        u0_mulens = geo_params[1]
+        tE_mulens = geo_params[2]
+        piEE_mulens = geo_params[3]
+        piEN_mulens = geo_params[4]
+
+        # Set up the reference time
+        t0_par_mulens = bagle_model.t0 + 2400000.5  # t0_par in JD
+
+        mulens_mod = MulensModel.Model({'t_0': t0_mulens, 'u_0': u0_mulens, 't_E': tE_mulens,
+                                        'pi_E_N': piEN_mulens, 'pi_E_E': piEE_mulens,
+                                        't_0_par': t0_par_mulens}, coords=c)
+    else:
+        t0_mulens = bagle_model.t0 + 2400000.5
+        u0_mulens = bagle_model.u0_amp
+        tE_mulens = bagle_model.tE
+
+        mulens_mod = MulensModel.Model({'t_0': t0_mulens, 'u_0': u0_mulens, 't_E': tE_mulens})
+
+    mulens_mod.parallax(satellite=False,
+                        earth_orbital=bagle_model.parallaxFlag,
+                        topocentric=bagle_model.parallaxFlag)
+
+    return mulens_mod
+
+
+def get_vbm_model(bagle_model):
+    """
+    Return a VBMicrolensing matched to the input BAGLE model.
+
+    No astrometry supported.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+
+    Returns
+    -------
+    vbm_mod : VBM model
+    """
+    import VBMicrolensing
+
+    #####
+    # Setup VBM model
+    #####
+    vbm_mod = VBMicrolensing.VBMicrolensing()
+
+    if bagle_model.parallaxFlag:
+        c = SkyCoord(ra=bagle_model.raL * u.deg, dec=bagle_model.decL * u.deg, frame='icrs')
+
+        # Convert string with colon separators
+        ra_string = c.ra.to_string(unit=u.hourangle, sep=':')
+        dec_string = c.dec.to_string(unit=u.degree, sep=':', alwayssign=True)
+        full_coord_string = f"{ra_string} {dec_string}"
+        vbm_mod.SetObjectCoordinates(full_coord_string)
+
+    #####
+    # VBM Parameters Object
+    #####
+    ### Photometry-Only and No Parallax
+    if not bagle_model.astrometryFlag and not bagle_model.parallaxFlag:
+        print('VBM with Photometry-Only, no parallax')
+        u0_vbm = float(bagle_model.u0_amp)
+        t0_vbm = float(bagle_model.t0)
+        tE_vbm = float(bagle_model.tE)
+
+        # Params - PSPLLightCurve
+        vbm_par = [math.log(u0_vbm), math.log(tE_vbm), t0_vbm]
+
+    ### Photometry-Only and With Parallax
+    elif not bagle_model.astrometryFlag and bagle_model.parallaxFlag:
+        print('VBM with Photometry-Only, with parallax')
+        # Convert
+        geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
+                                            bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
+                                            bagle_model.piE[0], bagle_model.piE[1], bagle_model.t0,
+                                            murel_in='SL', murel_out='LS',
+                                            coord_in='EN', coord_out='EN', plot=False)
+        u0_vbm = geo_params[1]
+        tE_vbm = geo_params[2]
+        piEE_vbm = geo_params[3]
+        piEN_vbm = geo_params[4]
+
+        t0_vbm = mjd_prime_to_vbm_time(geo_params[0], c)
+        t0_par_vbm = mjd_prime_to_vbm_time(bagle_model.t0, c)
+
+        # Update model
+        vbm_mod.parallaxsystem = 1
+        vbm_mod.t0_par_fixed = 1
+        vbm_mod.t0_par = t0_par_vbm
+
+        # Params - PSPLLightCurveParallax
+        vbm_par = [u0_vbm, math.log(tE_vbm), t0_vbm, piEN_vbm, piEE_vbm]
+
+    # Astrometry
+    else:
+        print('VBM with Astrometry')
+        # Convert
+        geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
+                                            bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
+                                            bagle_model.piE[0], bagle_model.piE[1], bagle_model.t0,
+                                            murel_in='SL', murel_out='LS',
+                                            coord_in='EN', coord_out='EN', plot=False)
+        u0_vbm = geo_params[1]
+        tE_vbm = geo_params[2]
+        piEE_vbm = geo_params[3]
+        piEN_vbm = geo_params[4]
+
+        t0_vbm = mjd_prime_to_vbm_time(geo_params[0], c)
+        t0_par_vbm = mjd_prime_to_vbm_time(bagle_model.t0, c)
+
+        muSE_vbm = bagle_model.muS[0]
+        muSN_vbm = bagle_model.muS[1]
+        piS_vbm = bagle_model.piS
+        thetaE_vbm = bagle_model.thetaE_amp
+
+        # Update model
+        vbm_mod.parallaxsystem = 1
+        vbm_mod.t0_par_fixed = 1
+        vbm_mod.t0_par = t0_par_vbm
+
+        # Params - PSPLAstroLightCurve
+        vbm_par = [u0_vbm, math.log(tE_vbm), t0_vbm, piEN_vbm, piEE_vbm,
+                   muSN_vbm, muSE_vbm, piS_vbm, thetaE_vbm]
+
+    return vbm_mod, vbm_par
+
+
+# Utility to account for light travel time.
+def get_mjd_prime(target_coords, time_mjd):
+    # Converts from JD to HJD Prime
+    location = EarthLocation.of_site('Keck Observatory')
+    time_to_correct = Time(time_mjd, format='mjd', scale='utc', location=location)
+    ltt_helio = time_to_correct.light_travel_time(target_coords, 'heliocentric')
+    time_mjd_prime = (time_to_correct + ltt_helio).value
+    return time_mjd_prime
+
+
+def mjd_prime_to_vbm_time(time_mjd, target_coords):
+    """
+    Convert from MJD to VB Microlensing times (which are in an usual system of
+    HJD' - 2450000). Note, these times are missing 0.5, subtract off an extra 50,000 days,
+    and account for the light-travel time differences for the Earth in different parts of the orbit.
+
+    Inputs
+    ------
+    time_mjd : float or np.array
+        Times in MJD (float or numpy array, not Time objects).
+
+    Returns
+    -------
+    VBM_times : float or np.array
+    """
+    new_time_helio = get_mjd_prime(target_coords, time_mjd)
+
+    time_vbm = new_time_helio - 50000 + 0.5
+
+    return time_vbm
+
+
+def convert_bagle_mulens_psbl_phot(ra, dec,
                                    t0_in, u0_in, tE_in, 
                                    piEE_in, piEN_in, t0par,
                                    q_in, alpha_in, sep,
@@ -115,7 +484,11 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
 
     return t0_out, u0_out, tE_out, piEE_out, piEN_out, q_out, alpha_out
 
-
+##############
+#
+# Converters for Reference Frames
+#
+##############
 def convert_helio_geo_ast(ra, dec,
                           piS, xS0E_in, xS0N_in,
                           muSE_in, muSN_in, 
@@ -125,7 +498,75 @@ def convert_helio_geo_ast(ra, dec,
                           murel_in='SL', murel_out='LS', 
                           coord_in='EN', coord_out='tb', plot=True):
     """
-    NOTE: THIS IS NOT YET TESTED
+    Convert between heliocentric and geocentric-projected parameters.
+    This converts only the subset of parameters in astrometry fits
+    (xS0E, xS0N, muSE, muSN).
+
+    The default conversion assumes that inputs are in
+    source-lens (S - L) and EN coordinate conventions.
+
+    Parameters
+    ----------
+    ra : float
+    ra, dec : str, float
+        Equatorial coordinates of the microlensing event.
+        If string, needs to be of the form
+        'HH:MM:SS.SSSS', 'DD:MM:SS.SSSS'
+    piS : float or array
+        Source parallax (mas)
+    xS0E_in : float or array
+        Source position relative to RA/Dec, East component, in input frame. (arcsec)
+    xS0N_in : float or array
+        Source position relative to RA/Dec, North component, in input frame. (arcsec)
+    muSE_in : float or array
+        Source proper motion, East component, in input frame. (mas/yr)
+    muSN_in : float or array
+        Source proper motion, North component, in input frame. (mas/yr)
+    t0_in : float or array
+        Time at which minimum source-lens projected separation in the rectilinear
+        frame occurs, in input frame. (MJD)
+    u0_in : float or array
+        Minimum source-lens projected separation in the rectilinear frame,
+        in units of the Einstein radius, in input frame.
+    tE_in : float or array
+        Einstein crossing time, in input frame. (days)
+    piEE_in : float or array
+        Microlensing parallax, East component, in input frame.
+    piEN_in : float or array
+        Microlensing parallax, North component, in input frame.
+    t0par : float or array
+        Reference time for the geocentric projected coordinate system. (MJD)
+    in_frame : str
+        'helio' if converting from heliocentric to geocentric projected frame.
+        'geo' if converting from geocentric projected to heliocentric frame.
+    murel_in : str
+        Definition of "relative" for the input relative proper motion.
+        'SL' if relative proper motion in the input parameters is defined as source-lens.
+        'LS' if relative proper motion in the input parameters is defined as lens-source.
+    murel_out : str
+        Definition of "relative" for the output relative proper motion.
+        'SL' if relative proper motion in the output parameters is defined as source-lens.
+        'LS' if relative proper motion in the output parameters is defined as lens-source.
+    coord_in : str
+        Definition of coordinate system used to define input parameters.
+        'EN' if using fixed on-sky East-North coordinate system (Lu)
+        'tb' if using right-handed tau-beta system based on murel and minimum separation (Gould)
+    coord_out : str
+        Definition of coordinate system used to define output parameters.
+        'EN' if using fixed on-sky East-North coordinate system (Lu)
+        'tb' if using right-handed tau-beta system based on murel and minimum separation (Gould)
+    plot : bool
+
+    Returns
+    -------
+    xS0E_out : float or array
+        East component of the source position relative to RA and Dec in the new frame (arcsec).
+    xS0N_out : float or array
+        North component of the source position relative to RA and Dec in the new frame (arcsec).
+    muSE_out : float or array
+        East component of the source proper motion in the new frame (mas/yr).
+    muSN_out : float or array
+        North component of the source proper motion in the new frame (mas/yr).
     """
     day_to_yr = 365.25
 
@@ -227,9 +668,11 @@ def convert_helio_geo_phot(ra, dec,
     This converts only the subset of parameters in photometry fits
     (t0, u0, tE, piEE, piEN).
 
-    The core conversion is assuming that source-lens, using the EN
-    coordinate convention.
+    The default conversion assumes that inputs are in
+    source-lens (S - L) and EN coordinate conventions.
 
+    Parameters
+    ----------
     ra, dec : str, float, or int
         Equatorial coordinates of the microlensing event.
         
@@ -279,6 +722,19 @@ def convert_helio_geo_phot(ra, dec,
         Definition of coordinate system used to define output parameters.
         'EN' if using fixed on-sky East-North coordinate system (Lu)
         'tb' if using right-handed tau-beta system based on murel and minimum separation (Gould)
+
+    Returns
+    -------
+    t0_out : float or array
+        Time of closest approach in the new frame. (MJD)
+    u0_out : float or array
+        Closest approach distance in the new frame. (thetaE)
+    tE_out : float or array
+        Eisntein crossing time in the new frame (MJD)
+    piEE_out : float or array
+        Microlensing parallax in the East direction in the new frame.
+    piEN_out : float or array
+        Microlensing parallax in the North direction in the new frame.
     """
 
     # Check inputs.
@@ -326,16 +782,26 @@ def convert_helio_geo_phot(ra, dec,
             if np.sign(u0_in * piEN_in) < 0:
                 u0hatE_in = -tauhatN_in
                 u0hatN_in = tauhatE_in
-            else:
+            elif np.sign(u0_in * piEN_in) > 0:
                 u0hatE_in = tauhatN_in
                 u0hatN_in = -tauhatE_in
+            else:
+                if np.sign(u0_in * piEE_in) > 0:
+                    u0hatE_in = -tauhatN_in
+                    u0hatN_in = tauhatE_in
+                else:
+                    u0hatE_in = tauhatN_in
+                    u0hatN_in = -tauhatE_in
+                
         except:
-            # Handle conversions with array-like inputs.
-            _u0hatE_in = -tauhatN_in
-            _u0hatN_in = tauhatE_in
-            u0hatE_in = np.where(np.sign(u0_in * piEN_in) < 0, _u0hatE_in, -_u0hatE_in)
-            u0hatN_in = np.where(np.sign(u0_in * piEN_in) < 0, _u0hatN_in, -_u0hatN_in)
-
+            cond1 = np.sign(u0_in * piEN_in) < 0
+            cond2 = np.sign(u0_in * piEN_in) > 0
+            cond3 = (np.sign(u0_in * piEN_in) == 0) & (np.sign(u0_in * piEE_in) > 0)
+            cond4 = (np.sign(u0_in * piEN_in) == 0) & (np.sign(u0_in * piEE_in) <= 0)
+        
+            u0hatE_in = np.where(cond1, -tauhatN_in, np.where(cond2,  tauhatN_in, np.where(cond3, -tauhatN_in, tauhatN_in)))
+            u0hatN_in = np.where(cond1,  tauhatE_in, np.where(cond2, -tauhatE_in, np.where(cond3,  tauhatE_in, -tauhatE_in)))
+            
     elif coord_in=='tb':
         try:
             # Handle conversion of single values.
@@ -508,7 +974,7 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
             t0_out = t0_in - tE_out * np.dot(tauhat_out, u0vec_in - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par)
 #            u0vec_out = u0vec_in + ((t0_out - t0_in)/tE_out)*tauhat_out - piE*par_t0par - (t0_in - t0par)*piE*dp_dt_t0par
             u0vec_out = u0vec_in + tauhat_in * (t0par - t0_in)/tE_in - tauhat_out * (t0par - t0_out)/tE_out - piE*par_t0par
-            u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
+            u0_out = np.hypot(u0vec_out[0], u0vec_out[1]) 
 
         except:
             par_t0par = np.tile(par_t0par,(len(t0_in),1)).T
@@ -631,6 +1097,8 @@ def convert_piEvec_tE(ra, dec, t0par,
     piEE_out = piE*e_out 
     piEN_out = piE*n_out 
     tE_out = (vtilde_in/vtilde_out) * tE_in
+    import pdb
+#    pdb.set_trace()
     
     return piEE_out, piEN_out, tE_out
 
@@ -789,14 +1257,12 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-        
+
         fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_out), fontsize=12)
         fig.text(tleft, ttop - 11*ttstep, '$u_0$ = {0:.2f}'.format(u0_out), fontsize=12)
         fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f} days'.format(tE_out), fontsize=12)
         fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_out), fontsize=12)
         fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
     if in_frame == 'geo':
         fig.text(tleft, ttop - 1*ttstep, 'Geo $t_r$', weight='bold', fontsize=14)
@@ -812,14 +1278,12 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-        
+
         fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_out), fontsize=12)
         fig.text(tleft, ttop - 11*ttstep, '$u_0$ = {0:.2f}'.format(u0_out), fontsize=12)
         fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f} days'.format(tE_out), fontsize=12)
         fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(piEE_out), fontsize=12)
         fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
     plt.show()
     plt.pause(1)
@@ -948,8 +1412,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-        
+
         fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f} MJD'.format(t0_out), fontsize=12)
         # Output is Lu helio, so need to fix those to be in Gould geo.
         if np.sign(u0_out * piEN_out) > 0:
@@ -960,8 +1423,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f} days'.format(tE_out), fontsize=12)
         fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_out), fontsize=12)
         fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
-    
+
     if in_frame == 'geo':
         fig.text(tleft, ttop - 1*ttstep, 'Geo $t_r$', weight='bold', fontsize=14)
         fig.text(tleft, ttop - 9*ttstep, 'Helio', weight='bold', fontsize=14)
@@ -971,8 +1433,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 4*ttstep, '$t_E$ = {0:.1f} days'.format(tE_in), fontsize=12)
         fig.text(tleft, ttop - 5*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_in), fontsize=12)
         fig.text(tleft, ttop - 6*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_in), fontsize=12)
-        fig.text(tleft, ttop - 7*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_in/piEN_in), fontsize=12)
-        
+
         fig.text(tleft, ttop - 10*ttstep, '$t_0$ = {0:.1f}'.format(t0_out), fontsize=12)
         # Output is Lu helio, so need to fix those to be in Gould geo.
         if np.sign(u0_out * piEN_out) > 0:
@@ -982,7 +1443,6 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
         fig.text(tleft, ttop - 12*ttstep, '$t_E$ = {0:.1f}'.format(tE_out), fontsize=12)
         fig.text(tleft, ttop - 13*ttstep, '$\pi_{{E,E}}$ = {0:.2f}'.format(-piEE_out), fontsize=12)
         fig.text(tleft, ttop - 14*ttstep, '$\pi_{{E,N}}$ = {0:.2f}'.format(-piEN_out), fontsize=12)
-        fig.text(tleft, ttop - 15*ttstep, '$\pi_{{E,E}}/\pi_{{E,N}}$ = {0:.2f}'.format(piEE_out/piEN_out), fontsize=12)
 
     plt.show()
     plt.pause(1)
@@ -1122,3 +1582,4 @@ def convert_u0_t0_psbl(t0_in, u0_x_in, u0_y_in, tE, theta_E,
     t0_out = t0_in + sign*tE*d*np.cos(phi)
     
     return u0_x_out, u0_y_out, t0_out
+

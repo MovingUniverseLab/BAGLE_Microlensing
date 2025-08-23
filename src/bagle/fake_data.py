@@ -277,7 +277,7 @@ def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     params['b_sff'] = np.array([b_sff_in])
     params['mag_src'] = np.array([mag_src_in])
     params['b_sff1'] = b_sff_in
-    params['mag_sr1c'] = mag_src_in
+    params['mag_src1'] = mag_src_in
 
     # Extra parameters
     params['dL_dS'] = params['dL'] / params['dS']
@@ -462,6 +462,137 @@ def fake_data1(beta_sign=-1, plot=False, verbose=False, outdir='./', target='sim
 
     return data, params
 
+def fake_data2(raL, decL, t0_in, u0_in, tE_in, thetaE_in, piS_in, piE_in, xS0_in,
+               muS_in, b_sff_in, mag_src_in, obsLocation='earth',
+               outdir='', target='Unknown', noise=True, plot=False):
+
+    pspl_par_in = model.PSPL_PhotAstrom_Par_Param2(t0_in,
+                                                   u0_in,
+                                                   tE_in,
+                                                   thetaE_in,
+                                                   piS_in,
+                                                   piE_in[0],
+                                                   piE_in[1],
+                                                   xS0_in[0],
+                                                   xS0_in[1],
+                                                   muS_in[0],
+                                                   muS_in[1],
+                                                   b_sff=[b_sff_in],
+                                                   mag_src=[mag_src_in],
+                                                   raL=raL,
+                                                   decL=decL,
+                                                   obsLocation=obsLocation)
+
+    # Simulate
+    # photometric observations every 1 day and
+    # astrometric observations every 14 days
+    # for the bulge observing window. Observations missed
+    # for 125 days out of 365 days for photometry and missed
+    # for 245 days out of 365 days for astrometry.
+    t_phot = np.array([], dtype=float)
+    t_ast = np.array([], dtype=float)
+    for year_start in np.arange(56000, 58000, 365.25):
+        phot_win = 240.0
+        phot_start = (365.25 - phot_win) / 2.0
+        t_phot_new = np.arange(year_start + phot_start,
+                               year_start + phot_start + phot_win, 1)
+        t_phot = np.concatenate([t_phot, t_phot_new])
+
+        ast_win = 120.0
+        ast_start = (365.25 - ast_win) / 2.0
+        t_ast_new = np.arange(year_start + ast_start,
+                              year_start + ast_start + ast_win, 14)
+        t_ast = np.concatenate([t_ast, t_ast_new])
+
+    # Make the photometric observations.
+    # Assume 0.05 mag photoemtric errors at I=19.
+    # This means Signal = 400 e- at I=19.
+    flux0 = 4000.0
+    imag0 = 19.0
+    ast_err0 = 0.1 * 1e-3  # arcsec error at 19th mag
+    imag_obs = pspl_par_in.get_photometry(t_phot)
+    imag_obs_err = np.zeros(len(t_phot))
+    if noise:
+        imag_obs, imag_obs_err = add_photometric_noise(flux0, imag0, imag_obs)
+
+    # Make the astrometric observations.
+    # Assume 0.10 milli-arcsec astrometric errors in each direction at all epochs.
+    if noise:
+        pos_obs_tmp = pspl_par_in.get_astrometry(t_ast)
+        mag_obs_tmp = pspl_par_in.get_photometry(t_ast)
+        pos_obs, pos_obs_err = add_astrometric_noise(flux0, imag0, ast_err0, mag_obs_tmp, pos_obs_tmp)
+    else:
+        pos_obs = pspl_par_in.get_astrometry(t_ast)
+        pos_obs_err = np.zeros((len(t_ast), 2))
+
+    data = {}
+    data['t_phot1'] = t_phot
+    data['mag1'] = imag_obs
+    data['mag_err1'] = imag_obs_err
+
+    data['phot_files'] = ['fake_data_parallax_phot1']
+    data['ast_files'] = ['fake_data_parallax_ast1']
+
+    data['t_ast1'] = t_ast
+    data['xpos1'] = pos_obs[:, 0]
+    data['ypos1'] = pos_obs[:, 1]
+    data['xpos_err1'] = pos_obs_err[:, 0]
+    data['ypos_err1'] = pos_obs_err[:, 1]
+
+    data['raL'] = raL
+    data['decL'] = decL
+    data['obsLocation'] = obsLocation
+    data['target'] = target
+    data['phot_data'] = 'sim'
+    data['ast_data'] = 'sim'
+
+    params = {}
+    params['raL'] = raL
+    params['decL'] = decL
+    params['obsLocation'] = obsLocation
+    params['t0'] = t0_in
+    params['u0_amp'] = u0_in
+    params['tE'] = tE_in
+    params['thetaE'] = thetaE_in
+    params['piS'] = piS_in
+    params['piE_E'] = piE_in[0]
+    params['piE_N'] = piE_in[1]
+    params['xS0_E'] = xS0_in[0]
+    params['xS0_N'] = xS0_in[1]
+    params['muS_E'] = muS_in[0]
+    params['muS_N'] = muS_in[1]
+    params['b_sff'] = np.array([b_sff_in])
+    params['mag_src'] = np.array([mag_src_in])
+    params['b_sff1'] = b_sff_in
+    params['mag_src1'] = mag_src_in
+
+    # Extra parameters
+    params['piL'] = pspl_par_in.piL
+    params['dL'] = pspl_par_in.dL
+    params['dS'] = pspl_par_in.dS
+    params['mL'] = pspl_par_in.mL
+    params['muL_E'] = pspl_par_in.muL[0]
+    params['muL_N'] = pspl_par_in.muL[1]
+    params['muRel_E'] = pspl_par_in.muRel[0]
+    params['muRel_N'] = pspl_par_in.muRel[1]
+
+    if plot:
+       model_fitter.plot_photometry(data, pspl_par_in, dense_time=True)
+       plt.figure(1)
+       plt.title('Input Data and Model')
+       plt.savefig(f'{outdir}fake_data_phot_{target}.png')
+
+       figs = model_fitter.plot_astrometry(data, pspl_par_in, dense_time=True)
+
+       for ff in range(len(figs)):
+           fig = figs[ff]
+           fig.get_axes()[0].set_title('Input Data and Model')
+           fig.savefig(f'{outdir}fake_data_ast_{ff}.png')
+
+    return data, params
+
+
+
 
 def fake_data_PSBL(outdir='', outroot='psbl_',
                    raL=259.5, decL=-29.0,
@@ -469,7 +600,7 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
                    xS0_E=0, xS0_N=0, beta=2,
                    muL_E=0, muL_N=0, muS_E=3, muS_N=0,
                    dL=3000, dS=8000, sep=10, alpha=90,
-                   mag_src=14, b_sff=1, parallax=True,
+                   mag_src=14, b_sff=1, dmag_Lp_Ls=20, parallax=True,
                    target='PSBL', animate=False):
     """
     Optional Inputs
@@ -524,6 +655,8 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
         Brightness of the source.
     b_sff : float
         Source flux fraction = fluxS / (fluxS + fluxL1 + fluxL2 + fluxN)
+    dmag_Lp_Ls : float
+        Magnitude difference between primary and secondary lens.
 
     """
 
@@ -531,12 +664,12 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
     if parallax:
         psbl = model.PSBL_PhotAstrom_Par_Param1(mLp, mLs, t0, xS0_E, xS0_N,
                                                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                                                sep, alpha, [b_sff], [mag_src],
+                                                sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
                                                 raL=raL, decL=decL, root_tol=1e-8)
     else:
         psbl = model.PSBL_PhotAstrom_noPar_Param1(mLp, mLs, t0, xS0_E, xS0_N,
                                                   beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                                                  sep, alpha, [b_sff], [mag_src],
+                                                  sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
                                                   root_tol=1e-8)
 
     # Simulate
@@ -635,9 +768,11 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
     params['b_sff'] = [b_sff]
     params['mag_src'] = [mag_src]
     params['mag_base'] = [params['mag_src'] + 2.5 * np.log10(params['b_sff'])]
+    params['dmag_Lp_Ls'] = [dmag_Lp_Ls]
     params['b_sff1'] = b_sff
     params['mag_src1'] = mag_src
     params['mag_base1'] = params['mag_base'][0]
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
     params['thetaE_amp'] = psbl.thetaE_amp
     params['thetaE'] = psbl.thetaE_amp
     params['log10_thetaE'] = np.log10(params['thetaE'])
@@ -677,7 +812,8 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
                                        xS0_E=0, xS0_N=0, beta=5.0,
                                        muL_E=0, muL_N=0, muS_E=1, muS_N=1,
                                        dL=4000, dS=8000, sep=5e-3, alpha=90,
-                                       mag_src=18, b_sff=1, parallax=True,
+                                       mag_src=18, b_sff=1, dmag_Lp_Ls=20,
+                                       parallax=True,
                                        target='PSBL', animate=False):
     """
     Optional Inputs
@@ -739,12 +875,12 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
     if parallax:
         psbl = model.PSBL_PhotAstrom_Par_Param1(mL1, mL2, t0, xS0_E, xS0_N,
                                                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                                                sep, alpha, [b_sff], [mag_src],
+                                                sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
                                                 raL=raL, decL=decL, root_tol=1e-8)
     else:
         psbl = model.PSBL_PhotAstrom_noPar_Param1(mL1, mL2, t0, xS0_E, xS0_N,
                                                   beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                                                  sep, alpha, [b_sff], [mag_src],
+                                                  sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
                                                   root_tol=1e-8)
 
     # Simulate photometric and astrometric observations every day.
@@ -826,8 +962,10 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
     params['dS'] = dS
     params['b_sff'] = [b_sff]
     params['mag_src'] = [mag_src]
+    params['dmag_Lp_Ls'] = [dmag_Lp_Ls]
     params['b_sff1'] = b_sff
     params['mag_src1'] = mag_src
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
 
     out_name = outdir + outroot + '_movie.gif'
     if animate:
@@ -859,6 +997,7 @@ def fake_data_PSBL_phot(outdir='', outroot='psbl',
                         t0=57000.0, u0_amp=0.8, tE=500.0,
                         piE_E=0.02, piE_N=0.02,
                         q=0.5, sep=5.0, phi=75.0, b_sff1=0.5, mag_src1=16.0,
+                        dmag_Lp_Ls=20,
                         parallax=True, target='Unknown', animate=False):
     """
     Optional Inputs
@@ -904,11 +1043,11 @@ def fake_data_PSBL_phot(outdir='', outroot='psbl',
     start = time.time()
     if parallax:
         psbl = model.PSBL_Phot_Par_Param1(t0, u0_amp, tE, piE_E, piE_N, q, sep, phi,
-                                          [b_sff1], [mag_src1],
+                                          [b_sff1], [mag_src1], [dmag_Lp_Ls],
                                           raL=raL, decL=decL, root_tol=1e-8)
     else:
         psbl = model.PSBL_Phot_noPar_Param1(t0, u0_amp, tE, piE_E, piE_N, q, sep, phi,
-                                            [b_sff1], [mag_src1],
+                                            [b_sff1], [mag_src1], [dmag_Lp_Ls],
                                             root_tol=1e-8)
 
     # Simulate
@@ -967,8 +1106,10 @@ def fake_data_PSBL_phot(outdir='', outroot='psbl',
     params['phi'] = phi
     params['b_sff'] = [b_sff1]
     params['mag_src'] = [mag_src1]
+    params['dmag_Lp_Ls'] = [dmag_Lp_Ls]
     params['b_sff1'] = b_sff1
     params['mag_src1'] = mag_src1
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
 
     out_name = outdir + outroot + '_movie.gif'
     if animate:
@@ -1692,7 +1833,7 @@ def fake_data_lumlens_parallax_bulge(outdir='./test_mnest_lumlens_bulge/'):
     muL_in = np.array([0.0, 0.0])
     dL_in = 4000.0  # pc
     dS_in = 8000.0  # pc
-    b_sff = 1.0
+    b_sff = 0.2
     imag_in = 19.0
 
     data, params = fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in,
@@ -1778,21 +1919,21 @@ def fake_data_lumlens_parallax_bulge4(outdir='./test_mnest_lumlens_bulge4_DEBUG/
 def fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
                                muS_in, muL_in, dL_in, dS_in, b_sff_in, mag_src_in,
                                outdir='', target='Unknwon'):
-    pspl_par_in = model.PSPL_PhotAstrom_LumLens_Par_Param1(mL=mL_in,
-                                                           t0=t0_in,
-                                                           beta=beta_in,
-                                                           dL=dL_in,
-                                                           dL_dS=dL_in / dS_in,
-                                                           xS0_E=xS0_in[0],
-                                                           xS0_N=xS0_in[1],
-                                                           muL_E=muL_in[0],
-                                                           muL_N=muL_in[1],
-                                                           muS_E=muS_in[0],
-                                                           muS_N=muS_in[1],
-                                                           raL=raL_in,
-                                                           decL=decL_in,
-                                                           b_sff=[b_sff_in],
-                                                           mag_src=[mag_src_in])
+    pspl_par_in = model.PSPL_PhotAstrom_Par_Param1(mL=mL_in,
+                                                   t0=t0_in,
+                                                   beta=beta_in,
+                                                   dL=dL_in,
+                                                   dL_dS=dL_in / dS_in,
+                                                   xS0_E=xS0_in[0],
+                                                   xS0_N=xS0_in[1],
+                                                   muL_E=muL_in[0],
+                                                   muL_N=muL_in[1],
+                                                   muS_E=muS_in[0],
+                                                   muS_N=muS_in[1],
+                                                   raL=raL_in,
+                                                   decL=decL_in,
+                                                   b_sff=[b_sff_in],
+                                                   mag_src=[mag_src_in])
 
     # Simulate
     # photometric observations every 1 day and
@@ -2407,11 +2548,8 @@ def get_times_roman_gbtds(seasons_fast=(0, 1, 2, 7, 8, 9), seasons_slow=(3, 4, 5
                         obstime='J2000', frame='icrs')
 
     # Roman launch and survey window of 5 years.
-    # Until Roman actually launches, subtract a few years and use Gaia.
-    # t_start = Time('2027-01-01', format='isot', scale='utc')
-    # t_end = Time('2031-12-31', format='isot', scale='utc')
-    t_start = Time('2019-01-01', format='isot', scale='utc')
-    t_end = Time('2023-12-31', format='isot', scale='utc')
+    t_start = Time('2027-01-01', format='isot', scale='utc')
+    t_end = Time('2032-12-31', format='isot', scale='utc')
 
     # First, get coarse daily sampling to figure out Roman visibility windows.
     t_daily = Time(np.arange(t_start.jd, t_end.jd, 1), format='jd')
@@ -2926,14 +3064,196 @@ def fake_dex_data_noPar_BSPL_3(outdir='', outroot='bspl',
                                dL=1000, dL_dS=0.1, xS0_E=0, xS0_N=0,
                                muL_E=0, muL_N=0, muS_E=8, muS_N=3,
                                alpha=70,
-                               omega=30, big_omega=10, i=0,
+                               omega=30, big_omega=10, i=0, e=0.1,
                                p=450, tp=30, aleph=2,
                                aleph_sec=2.5, mag_src_pri=18, mag_src_sec=20, b_sff=1, raL=259.5, decL=-29.0,
                                target='BSPL', animate=False):
     start = time.time()
-    bspl = model.BSPL_PhotAstrom_noPar_CircOrbs_Param1(mL, t0_com, beta, dL, dL_dS, xS0_E, xS0_N, muL_E,
+    bspl = model.BSPL_PhotAstrom_noPar_EllOrbs_Param1(mL, t0_com, beta, dL, dL_dS, xS0_E, xS0_N, muL_E,
                                                        muL_N, muS_E, muS_N,
-                                                       alpha, omega, big_omega, i, p, tp, aleph, aleph_sec,
+                                                       omega, big_omega, i, e, p, tp, aleph, aleph_sec,
+                                                       [mag_src_pri], [mag_src_sec], np.array([b_sff]), raL, decL)
+
+    # Simulate
+    # photometric observations every 1 day and
+    # astrometric observations every 14 days
+    # for the bulge observing window. Observations missed
+    # for 125 days out of 365 days for photometry and missed
+    # for 245 days out of 365 days for astrometry.
+    t_pho = np.array([], dtype=float)
+    t_ast = np.array([], dtype=float)
+    for year_start in np.arange(54000, 60000, 365.25):
+        phot_win = 240.0
+        phot_start = (365.25 - phot_win) / 2.0
+        t_pho_new = np.arange(year_start + phot_start,
+                              year_start + phot_start + phot_win, 1)
+        t_pho = np.concatenate([t_pho, t_pho_new])
+
+        ast_win = 120.0
+        ast_start = (365.25 - ast_win) / 2.0
+        t_ast_new = np.arange(year_start + ast_start,
+                              year_start + ast_start + ast_win, 28)
+        t_ast = np.concatenate([t_ast, t_ast_new])
+
+    t_mod = np.arange(t_pho.min(), t_pho.max(), 1)
+    print(t_mod)
+    imag_pho = bspl.get_photometry(t_pho)
+    imag_mod = bspl.get_photometry(t_mod)
+
+    # Make the photometric observations.
+    # Assume 0.05 mag photoemtric errors at I=19.
+    # This means Signal = 400 e- at I=19.
+    flux0 = 400.0
+    imag0 = 19.0
+
+    flux_pho = flux0 * 10 ** ((imag_pho - imag0) / -2.5)
+    flux_pho_err = flux_pho ** 0.5
+    flux_pho += np.random.randn(len(t_pho)) * flux_pho_err
+    imag_pho = -2.5 * np.log10(flux_pho / flux0) + imag0
+    imag_pho_err = 1.087 / flux_pho_err
+
+    stop = time.time()
+
+    fmt = 'It took {0:.2f} seconds to evaluate the model at {1:d} time steps'
+    print(fmt.format(stop - start, len(t_mod) + len(t_ast) + len(t_pho)))
+
+    ##########
+    # Plot photometry
+    ##########
+    plt.figure(figsize=(20, 10))
+    plt.clf()
+    plt.errorbar(t_pho, imag_pho, yerr=imag_pho_err, fmt='k.', label='Sim Obs',
+                 alpha=0.2)
+    plt.plot(t_mod, imag_mod, color='red', label='Model')
+    plt.gca().invert_yaxis()
+    plt.xlabel('Time (MJD)')
+    plt.ylabel('I (mag)')
+    plt.legend()
+
+    # Make the astrometric observations.
+    # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
+    lens_pos = bspl.get_lens_astrometry(t_mod)
+    srce_pos = bspl.get_astrometry_unlensed(t_mod)
+    srce_pos_lensed_res = bspl.get_resolved_astrometry(t_mod)
+    srce_pos_lensed_unres = bspl.get_astrometry(t_mod)
+
+    srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
+
+    ##########
+    # Plot astrometry
+    ##########
+    plt.figure(figsize=(23, 10))
+    plt.clf()
+    plt.plot(lens_pos[:, 0], lens_pos[:, 1],
+             c='gray', marker='.', linestyle='none', alpha=0.2,
+             label='lens system')
+    plt.scatter(srce_pos[:, 0], srce_pos[:, 1],
+                c=t_mod, marker='.', s=2, alpha=0.2,
+                label='src unlensed')
+
+    colors = ['navy', 'blue', 'slateblue', 'darkslateblue', 'indigo']
+    for ii in range(srce_pos_lensed_res.shape[1]):
+        plt.plot(srce_pos_lensed_res[:, ii, 0], srce_pos_lensed_res[:, ii, 1],
+                 c=colors[ii], linestyle='none', marker='.', markersize=1,
+                 alpha=0.5,
+                 label='src lensed img{0:d}'.format(ii + 1))
+
+    plt.plot(srce_pos_lensed_unres[:, 0], srce_pos_lensed_unres[:, 1],
+             c='red', linestyle='-',
+             label='src lensed unres')
+
+    pos_ast_tmp = bspl.get_astrometry(t_ast)
+    pos_ast_err = np.ones((len(t_ast), 2), dtype=float) * 0.15 * 1e-3
+    pos_ast = pos_ast_tmp + pos_ast_err * np.random.randn(len(t_ast), 2)
+
+    plt.errorbar(pos_ast[:, 0], pos_ast[:, 1],
+                 xerr=pos_ast_err[:, 0], yerr=pos_ast_err[:, 0],
+                 marker='.', color='black', alpha=0.2)
+
+    plt.gca().invert_xaxis()
+    plt.xlabel(r'$\Delta \alpha^*$ (mas)')
+    plt.ylabel(r'$\Delta \delta$ (mas)')
+    plt.legend(fontsize=8)
+    plt.subplots_adjust(left=0.25, top=0.8)
+
+    p2 = plt.gca().get_position().get_points().flatten()
+    ax_cbar = plt.gcf().add_axes([p2[0], 0.82, p2[2] - p2[0], 0.05])
+    plt.colorbar(cax=ax_cbar, orientation='horizontal', label='Time (MJD)',
+                 ticklocation='top')
+
+    data = {}
+    data['target'] = target
+    data['phot_data'] = 'sim'
+    data['ast_data'] = 'sim'
+    data['phot_files'] = ['fake_data_parallax_phot1']
+    data['ast_files'] = ['fake_data_parallax_ast1']
+
+    data['t_phot1'] = t_pho
+    data['mag1'] = imag_pho
+    data['mag_err1'] = imag_pho_err
+
+    data['t_ast1'] = t_ast
+    data['xpos1'] = pos_ast[:, 0]
+    data['ypos1'] = pos_ast[:, 1]
+    data['xpos_err1'] = pos_ast_err[:, 0]
+    data['ypos_err1'] = pos_ast_err[:, 1]
+
+    data['raL'] = raL
+    data['decL'] = decL
+
+    params = {}
+    params['mL'] = mL
+    params['t0_com'] = t0_com
+    params['beta'] = beta
+    params['dL'] = dL
+    params['dL_dS'] = dL_dS
+    params['xS0_E'] = xS0_E
+    params['xS0_N'] = xS0_N
+    params['muL_E'] = muL_E
+    params['muL_N'] = muL_N
+
+    params['muS_E'] = muS_E
+    params['muS_N'] = muS_N
+
+    params['alpha'] = alpha
+    params['omega'] = omega
+    params['big_omega'] = big_omega
+
+    params['i'] = i
+    params['p'] = p
+    params['tp'] = tp
+
+    params['aleph'] = aleph
+    params['aleph_sec'] = aleph_sec
+
+    params['b_sff'] = np.array([b_sff])
+    params['mag_src_pri'] = np.array([mag_src_pri])
+    params['mag_src_sec'] = np.array([mag_src_sec])
+
+    params['raL'] = raL
+    params['decL'] = decL
+
+    if animate == True:
+        ani = bspl.dexanimate(20, 400, 2, 'fake_fit_deceptacon', [20, 20], 0.04, "yes",
+                              "resolved_unlensed_resolved_lensed", loc='upper right')
+    else:
+        ani = None
+    return data, params, bspl, ani
+
+                                   
+def fake_dex_data_noPar_BSPL_3_5(outdir='', outroot='bspl',
+                               mL=20, t0_com=57000.00, beta=7.5,
+                               dL=1000, dL_dS=0.1, xS0_E=0, xS0_N=0,
+                               muL_E=0, muL_N=0, muS_E=8, muS_N=3,
+                               alpha=70,
+                               omega=30, big_omega=10, i=0, e=0.5,
+                               p=450, tp=30, aleph=2,
+                               aleph_sec=2.5, mag_src_pri=18, mag_src_sec=20, b_sff=1, raL=259.5, decL=-29.0,
+                               target='BSPL', animate=False):
+    start = time.time()
+    bspl = model.BSPL_PhotAstrom_noPar_EllOrbs_Param1(mL, t0_com, beta, dL, dL_dS, xS0_E, xS0_N, muL_E,
+                                                       muL_N, muS_E, muS_N,
+                                                       omega, big_omega, i, e, p, tp, aleph, aleph_sec,
                                                        [mag_src_pri], [mag_src_sec], np.array([b_sff]), raL, decL)
 
     # Simulate
@@ -3288,14 +3608,14 @@ def fake_dex_data_noPar_PSBL_1(outdir='', outroot='psbl',
                                mLp=18, mLs=3, t0=5700, xS0_E=0, xS0_N=0,
                                beta=10, muL_E=8, muL_N=0, omega=0, big_omega=0, i=0, p=400, tp=30, aleph=5, aleph_sec=8,
                                muS_E=0, muS_N=4, dL=1000, dS=1500,
-                               alpha=90, b_sff=1, mag_src1=15,
+                               alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls1=20,
                                raL=None, decL=None, root_tol=1e-8,
                                target='PSBL', animate=False):
     start = time.time()
     psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
         beta, muL_E, muL_N, omega, big_omega, i, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
-        alpha, [b_sff], [mag_src1],
+        alpha, [b_sff], [mag_src1], [dmag_Lp_Ls1],
         raL=raL, decL=decL, root_tol=root_tol)
 
     # Simulate
@@ -3455,6 +3775,7 @@ def fake_dex_data_noPar_PSBL_1(outdir='', outroot='psbl',
 
     params['b_sff'] = np.array([b_sff])
     params['mag_src1'] = np.array([mag_src1])
+    params['dmag_Lp_Ls1'] = np.array([dmag_Lp_Ls1])
 
     params['raL'] = raL
     params['decL'] = decL
@@ -3466,14 +3787,14 @@ def fake_dex_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
                                   mLp=18, mLs=3, t0=5700, xS0_E=0, xS0_N=0,
                                   beta=10, muL_E=8, muL_N=0, omega=10, big_omega=10, i=10, p=400, tp=30, aleph=2,
                                   aleph_sec=8, muS_E=0, muS_N=4, dL=1000, dS=1500,
-                                  alpha=90, b_sff=1, mag_src1=15,
+                                  alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls=20,
                                   raL=None, decL=None, root_tol=1e-8,
                                   target='PSBL', animate=False):
     start = time.time()
     psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
         beta, muL_E, muL_N, omega, big_omega, i, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
-        alpha, [b_sff], [mag_src1],
+        alpha, [b_sff], [mag_src1], [dmag_Lp_Ls],
         raL=raL, decL=decL, root_tol=root_tol)
 
     # Simulate
@@ -3633,6 +3954,8 @@ def fake_dex_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
 
     params['b_sff'] = np.array([b_sff])
     params['mag_src1'] = np.array([mag_src1])
+    params['dmag_Lp_Ls'] = np.array([dmag_Lp_Ls])
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
 
     params['raL'] = raL
     params['decL'] = decL
@@ -3644,14 +3967,14 @@ def fake_dex_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
                                    mLp=18, mLs=3, t0=5700, xS0_E=0, xS0_N=0,
                                    beta=10, muL_E=8, muL_N=0, omega=10, big_omega=10, i=10, e=0.3, p=400, tp=30,
                                    aleph=2, aleph_sec=8, muS_E=0, muS_N=4, dL=1000, dS=1500,
-                                   alpha=90, b_sff=1, mag_src1=15,
+                                   alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls1=20,
                                    raL=None, decL=None, root_tol=1e-8,
                                    target='PSBL', animate=False):
     start = time.time()
     psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
         beta, muL_E, muL_N, omega, big_omega, i, e, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
-        alpha, [b_sff], [mag_src1],
+        alpha, [b_sff], [mag_src1], [dmag_Lp_Ls1],
         raL=raL, decL=decL, root_tol=root_tol)
 
     # Simulate
@@ -3812,6 +4135,8 @@ def fake_dex_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
 
     params['b_sff'] = np.array([b_sff])
     params['mag_src1'] = np.array([mag_src1])
+    params['dmag_Lp_Ls'] = np.array([dmag_Lp_Ls])
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
 
     params['raL'] = raL
     params['decL'] = decL
@@ -3824,14 +4149,14 @@ def fake_dex_data_noPar_PSBL_4(outdir='', outroot='psbl',
                                piE_E=0.1, piE_N=0.1, xS0_E=0, xS0_N=0, omega=0, big_omega=0, i=0, p=500, tp=30, aleph=5, sep = 2,
                                aleph_sec=8, muS_E=0, muS_N=5,
                                q=.9, alpha=90,
-                               b_sff=1, mag_src=20,
+                               b_sff=1, mag_src=20, dmag_Lp_Ls=20,
                                raL=None, decL=None, root_tol=1e-8,
                                target='PSBL', animate=False):
     start = time.time()
     psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param4(t0, u0_amp, tE, thetaE, piS,
                      piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, tp, sep, muS_E, muS_N,
                      q, 
-                     b_sff, mag_src,
+                     b_sff, mag_src, dmag_Lp_Ls,
                      raL=raL, decL=decL, root_tol=1e-8)
 
     # Simulate
@@ -3991,6 +4316,7 @@ def fake_dex_data_noPar_PSBL_4(outdir='', outroot='psbl',
     params['alpha'] = alpha
     params['b_sff'] = np.array([b_sff])
     params['mag_src1'] = np.array([mag_src])
+    params['dmag_Lp_Ls'] = np.array([dmag_Lp_Ls])
 
     params['raL'] = raL
     params['decL'] = decL
@@ -4077,7 +4403,7 @@ def fake_dex_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
     lens1_pos, lens2_pos = bsbl.get_resolved_lens_astrometry(t_mod)
 
-    source_unlensed = bsbl.get_resolved_astrometry_unlensed(t_mod)
+    source_unlensed = bsbl.get_resolved_source_astrometry_unlensed(t_mod)
     srce_pos_primary = source_unlensed[:, 0, :]
     srce_pos_secondary = source_unlensed[:, 1, :]
 

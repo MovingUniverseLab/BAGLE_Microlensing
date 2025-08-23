@@ -1,18 +1,17 @@
+Data Class Family
+-----------------
 
-PSPL_Solver
----------------
-
-.. autoclass:: model_fitter.PSPL_Solver
+.. autoclass:: model.BSBL
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model_fitter.PSPL_Solver_weighted
+.. autoclass:: model.BSBL_Phot
     :members:
     :inherited-members:
     :show-inheritance:
 
-.. autoclass:: model_fitter.PSPL_Solver_Hobson_Weighted
+.. autoclass:: model.BSBL_PhotAstrom
     :members:
     :inherited-members:
     :show-inheritance:

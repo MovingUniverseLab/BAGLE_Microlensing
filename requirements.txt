@@ -10,3 +10,6 @@ Pyerfa
 dynesty
 joblib
 jplephem
+graphviz
+numpydoc
+

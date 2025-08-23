@@ -1,3 +1,28 @@
+[project]
+name = "BAGLE"
+version = "1.0"
+description = "BAGLE (Bayesian Analysis of Gravitational Lensing Events) is a package to model and fit microlensing events."
+authors = [
+    {name = "Jessica Lu", email = "jlu.astro@berkeley.edu"},
+    {name = "T. Dex Bhadra"},
+    {name = "Michael Medford"},
+    {name = "Casey Lam"},
+    {name = "Macy Huston"},
+    {name = "Edward Broadberry"},
+    {name = "Jeff Chen"},
+    {name = "Andrew Scharf"},
+    {name = "Sean Terry"},
+    {name = "Nijaid Arredondo"}
+]
+requires-python = ">=3.11"
+readme = "README.md"
+license = "GPL-3"
+license-files = ["LICEN[CS]e*"]
+
+[project.urls]
+Homepage = "https://github.com/MovingUniverseLab/BAGLE_Microlensing/tree/main/src/bagle"
+Issues = "https://github.com/MovingUniverseLab/BAGLE_Microlensing/issues"
+
 [build-system]
 requires = [
     "setuptools>=42",

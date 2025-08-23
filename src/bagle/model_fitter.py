@@ -63,12 +63,13 @@ muS_scale_factor = 100.0
 
 # Global variable to define all array-style parameters (i.e. multiple filters).
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
-                     'mag_src_pri', 'mag_src_sec', 'fratio_bin',
+                     'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
                      'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
                      'add_err', 'mult_err']
 
-class PSPL_Solver(Solver):
+
+class MicrolensSolver(Solver):
     """
     A PyMultiNest solver to find the optimal parameters, given data and
     a microlensing model from model.py.
@@ -187,6 +188,7 @@ class PSPL_Solver(Solver):
         'mag_src_pri': ('make_mag_src_gen', None, None),
         'mag_src_sec': ('make_mag_src_gen', None, None),
         'mag_base': ('make_mag_base_gen', None, None),
+        'dmag_Lp_Ls': ('make_gen', -20, 20),
         'tE': ('make_gen', 1, 400),
         'piE_E': ('make_gen', -1, 1),
         'piE_N': ('make_gen', -1, 1),
@@ -200,7 +202,7 @@ class PSPL_Solver(Solver):
         'piS': ('make_piS', None, None),
         'add_err': ('make_gen', 0, 0.3),
         'mult_err': ('make_gen', 1.0, 3.0),
-        'radius': ('make_gen', 1E-4, 1E-2),
+        'radiusS': ('make_gen', 1E-4, 1E-2),
         'fratio_bin': ('make_gen', 0, 1),
         # We really need to make some normal distributions. All these are junk right now.
         # TODO: I don't think the above comment is accurate any more
@@ -217,10 +219,12 @@ class PSPL_Solver(Solver):
         't0_com': ('make_t0_gen', None, None),
         'u0_amp_com': ('make_gen', -1, 1),
         'thetaE_amp': ('make_lognorm_gen', 0, 1),
-        'x0_system_E': ('make_gen', -10, 10),
-        'x0_system_N': ('make_gen', -10, 10),
+        'xS0_system_E': ('make_gen', -10, 10),
+        'xS0_system_N': ('make_gen', -10, 10),
         'muS_system_E': ('make_gen', -10, 10),
         'muS_system_N': ('make_gen', -10, 10),
+        'acc_E': ('make_gen', -10, 10),
+        'acc_N': ('make_gen', -10, 10),
         'omega': ('make_gen', -180, 180),
         'big_omega': ('make_gen', -180, 180),
         'i':('make_gen', -90, 90),
@@ -1082,6 +1086,15 @@ class PSPL_Solver(Solver):
 
         `tab = self.load_mnest_results()`
         `smy = self.load_mnest_summary()`
+
+        Optional
+        --------
+        s_idx : int
+            The index of the solution to evaluate (for multi-modal solutions).
+        def_best : str
+            One of 'maxL', 'map', 'mean', 'median'.
+            If mean, then standard deviation uncertainties are also returned.
+            If median, then 1, 2, 3 sigma uncertaintes are also returned.
         """
 
         params = self.all_param_names
@@ -2218,7 +2231,7 @@ class PSPL_Solver(Solver):
 
         return chi_x_list, chi_y_list, chi_m_list
         
-class PSPL_Solver_weighted(PSPL_Solver):
+class MicrolensSolverWeighted(MicrolensSolver):
     """
     Soliver where the likelihood function has each data
     set weigthed equally (i.e. not the natural weighting by
@@ -2415,7 +2428,7 @@ class PSPL_Solver_weighted(PSPL_Solver):
         return lnL_phot
 
 
-class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
+class MicrolensSolverHobsonWeighted(MicrolensSolver):
     def log_likely(self, cube, verbose=False):
         """
         Compute a log-likelihood where there is a hyperparameter,
@@ -2632,7 +2645,17 @@ class PSPL_Solver_Hobson_Weighted(PSPL_Solver):
 
         return eff_weights
         
-    
+#########################
+### For backwards compatibility
+#########################
+class PSPL_Solver(MicrolensSolver):
+    pass
+
+class PSPL_Solver_weighted(MicrolensSolverWeighted):
+    pass
+
+class PSPL_Solver_Hobson_weighted(MicrolensSolverHobsonWeighted):
+    pass
 
 #########################
 ### PRIOR GENERATORS  ###
@@ -3041,7 +3064,7 @@ def generate_params_dict(params, fitter_param_names):
 
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
-    multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin']
+    multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls']
     multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0',
                   'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
     
@@ -3912,7 +3935,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     for tt in range(N_traces):
         pos_no_pm_tr = p_tr_lens_tlon[tt] - p_mod_unlens_tlon
         plt.plot(t_long, pos_no_pm_tr[:, 1] * 1e3,
-                color='c', alpha=0.5, linewidth=1, zorder=-1)
+                 color='c', alpha=0.5, linewidth=1, zorder=-1)
 
     plt.xlabel('t - t0 (days)')
     plt.ylabel(r'$\Delta \delta$ (mas) - $\Delta \delta_{unlensed}$')
@@ -6072,4 +6095,3 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                             ax.axhline(truths[i], color=truth_color,
                                        **truth_kwargs)
     return (fig, axes)
-
