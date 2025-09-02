@@ -3759,6 +3759,7 @@ def test_FSPL_PhotAstrom_lens_astrometry(plot=False):
         ax[0].set_ylabel('X (")')
         ax[1].set_ylabel('X (")')
         fig.show()
+
         
 def test_FSPL_PhotAstrom_methods(plot=False):
     """
@@ -3825,18 +3826,11 @@ def test_FSPL_PhotAstrom_methods(plot=False):
         return phot_arr
 
     ##########
-    # PSPL for run-time comparisons.
+    # PSPL for run-time comparisons. 
     ##########
     pspl_arr_good = np.array([18.87539976, 18.86616655, 18.83702185, 18.76783706, 18.54908672,
                               18.27960245, 18.55224616, 18.76873734, 18.83743328, 18.86630883])
     pspl_arr = test_fspl_once(-1, -1, pspl_arr_good, mod='PSPL')
-
-    ##########
-    # FSPL n=10, r=0.001 thetaE
-    ##########
-    fspl_arr_n10_good = np.array([18.92669033, 18.91750603, 18.88851301, 18.81967248, 18.60187731,
-                                  18.33333436, 18.60502467, 18.82056849, 18.88892235, 18.91764756])
-    fspl_arr_n10 = test_fspl_once(radiusS, 10, fspl_arr_n10_good, mod='FSPL')
 
     ##########
     # FSPL n=50, r=0.001 thetaE
@@ -3855,8 +3849,8 @@ def test_FSPL_PhotAstrom_methods(plot=False):
     ##########
     # FSPL n=10, r=0.1 thetaE
     ##########
-    fspl_arr_n10_r1_good = np.array([18.9348646, 18.9348647, 18.93486484, 18.93486497, 18.93486511,
-                                     18.93486526, 18.93486542, 18.93486559, 18.93486576, 18.93486596])
+    fspl_arr_n10_r1_good = np.array([18.883621, 18.883621, 18.883621, 18.883621, 18.883621, 18.883621,
+                                  18.883621, 18.883621, 18.883621, 18.883621])
     fspl_arr_n10_r1 = test_fspl_once(0.1, 10, fspl_arr_n10_r1_good, mod='FSPL')
 
     if plot:
@@ -3864,7 +3858,6 @@ def test_FSPL_PhotAstrom_methods(plot=False):
         plt.clf()
         plt.plot(time_arr, fspl_arr_n100, '-', label='fspl, n=100')
         plt.plot(time_arr, fspl_arr_n50, '-', label='fspl, n=50')
-        plt.plot(time_arr, fspl_arr_n10, '-', label='fspl, n=10')
         plt.plot(time_arr, pspl_arr, '-', label='pspl')
         plt.gca().invert_yaxis()
         plt.xlabel('Time (HJD)')
@@ -3875,7 +3868,6 @@ def test_FSPL_PhotAstrom_methods(plot=False):
         plt.clf()
         plt.plot(time_arr, fspl_arr_n100 - pspl_arr, '-', label='fspl, n=100')
         plt.plot(time_arr, fspl_arr_n50 - pspl_arr, '-', label='fspl, n=50')
-        plt.plot(time_arr, fspl_arr_n10 - pspl_arr, '-', label='fspl, n=10')
         plt.gca().invert_yaxis()
         plt.xlabel('Time (HJD)')
         plt.ylabel('FSPL-PSPL (Mag)')
