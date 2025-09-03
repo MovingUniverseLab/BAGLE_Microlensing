@@ -18459,7 +18459,7 @@ class FSPL(PSPL):
                               center[1] + self.radiusS * np.sin((2 * i * np.pi) / (self.n_outline))])
         return np.array(sourcepos)
 
-    def get_all_arrays(self, t, filt_idx=0):
+    def get_all_arrays_CI(self, t, filt_idx=0):
         """
         Obtain the image and amplitude arrays for each t. These arrays
         contain the positions for each point in the outline for each lensed image.
@@ -18578,9 +18578,35 @@ class FSPL(PSPL):
         amps = np.array((amp_plus, amp_minus)).T  # amplifications
 
         return images, amps
-
         
-    def get_all_arrays_noCI(self, t, filt_idx=0):
+    def im_pos1(self, w, z1):
+        z1 =  z1[0] + 1j * z1[1]
+        z1bar = np.conjugate(z1)
+        return (w+z1)*(1 + np.sqrt(1 + 4/np.abs(w-z1bar)**2))/2
+        
+    def detJac(self, z, z1bar):
+        return 1-1/np.abs(z)**4
+    
+    def cent(self, ims, z1bar):
+        return np.sum(ims/abs(self.detJac(ims, z1bar)),axis=1)/np.sum(1/abs(self.detJac(ims, z1bar)),axis=1)
+
+    def get_all_arrays(self, t, filt_idx=0):
+        u_vectors = np.linalg.norm(self.get_u(t), axis=1)
+        if self.astrometryFlag == True:
+            
+            source_radius = self.radiusS * 1e3 / self.thetaE_amp
+            
+            if self.u0_amp <= source_radius:
+                images, amps = self.get_all_arrays_Lee(t, filt_idx)
+            else:
+                images, amps = self.get_all_arrays_CI(t, filt_idx)
+                
+        else:
+            images, amps = self.get_all_arrays_CI(t, filt_idx)
+        
+        return images, amps 
+        
+    def get_all_arrays_Lee(self, t, filt_idx=0):
         """
         Obtain the image and amplitude arrays for each t. This method does not use contour integration. 
 
@@ -18880,10 +18906,12 @@ class FSPL(PSPL):
         u_center = self.get_u(t)
         u_amp = np.linalg.norm(u_center, axis=1)
         u_hat = (u_center.T / u_amp).T
+        
         if self.astrometryFlag == True:
             rho = self.radiusS * 1e3 / self.thetaE_amp
         else:
             rho = self.radiusS
+            
             
         flat_rho = np.linspace(rho,rho,len(u_center[:, 0]))
         
@@ -18899,13 +18927,19 @@ class FSPL(PSPL):
         bp, bm = astrometry_bottom(t, rho, u_amp)
         plus, minus = astrometry(t, rho, u_amp)
         
-        mj = (np.array(plus)/np.array(bp) * self.thetaE_amp * 1e-3).reshape(u_amp.size, 1) * u_hat 
-        mn = (np.array(minus)/np.array(bm) * self.thetaE_amp *1e-3).reshape(u_amp.size, 1) * u_hat 
+        if self.astrometryFlag == True:
+            mj = (np.array(plus)/np.array(bp) * self.thetaE_amp * 1e-3).reshape(u_amp.size, 1) * u_hat 
+            mn = (np.array(minus)/np.array(bm) * self.thetaE_amp *1e-3).reshape(u_amp.size, 1) * u_hat 
+            xL = self.get_lens_astrometry(t)
+            major =  xL + mj
+            minor = xL + mn
+        else: 
+            mj = (np.array(plus)/np.array(bp)).reshape(u_amp.size, 1) * u_hat 
+            mn = (np.array(minus)/np.array(bm)).reshape(u_amp.size, 1) * u_hat 
+            major = mj
+            minor = mn
         
-        xL = self.get_lens_astrometry(t)
         
-        major =  xL + mj
-        minor = xL + mn
         
         images = np.zeros((len(t), 2, 2), dtype=float)
         images[:, 0, :] = major
@@ -18961,10 +18995,10 @@ class FSPL(PSPL):
         mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
         flux_zp = 1.0
         if amp_arr is None:
-            if self.n_outline != False:
-                    img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
+            #if self.n_outline != False:
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+            #else:
+             #   img_arr, amp_arr = self.get_all_arrays_Lee(t, filt_idx=filt_idx)
         
             # Mask invalid values from the amplification array.
             # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
@@ -19002,11 +19036,7 @@ class FSPL(PSPL):
 
         '''
         if amp_arr is None:
-
-            if self.n_outline != False:
-                    img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
     
         # Mask invalid values from the amplification array.
         # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
@@ -19300,11 +19330,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             Last axis contains East/North positions.
         """
         if (image_arr is None) or (amp_arr is None):
-            if self.n_outline != False:
-                img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
-        
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
         xS_lensed_pos = img_arr
 
         return xS_lensed_pos
@@ -19326,11 +19352,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             Shape = [n_images=2, len(t)]
         """
         if amp_arr is None:
-            if self.n_outline != False:
-                img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
-
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
         return np.swapaxes(amp_arr, 0, 1)
 
@@ -19367,11 +19389,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         flux_zp = 1.0
 
         if amp_arr is None:
-            if self.n_outline != False:
-                img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
-
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
         # Mask invalid values from the amplification array.
         amp_arr_mskd = np.ma.masked_invalid(amp_arr)
 
@@ -19423,11 +19441,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             Magnitude of the centroid at t.
         '''
         if amp_arr is None:
-
-            if self.n_outline != False:
-                img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
                 
         # Mask invalid values from the amplification array.
         # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
@@ -19482,11 +19496,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
         if (image_arr is None) or (amp_arr is None):
-            if self.n_outline != False:
-                image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else: 
-                image_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
-
+            image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+            
             # amp_arr shape = [N_times, [+, -]]
             # image_arr shape = [N_times, [+, -], [E, N]]
 
