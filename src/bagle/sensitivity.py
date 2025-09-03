@@ -167,7 +167,7 @@ def fisher_matrix(t, merr,
     derivs = {}
 
     for i in params.keys():
-        if param_delta is not None:
+        if param_delta is not None and i in param_delta:
             dp = param_delta[i]
         else:
             dp = params[i] * num_deriv_frac  # Step size for differentiation will be 1%
