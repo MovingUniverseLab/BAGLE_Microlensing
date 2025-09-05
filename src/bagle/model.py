@@ -18578,37 +18578,12 @@ class FSPL(PSPL):
         amps = np.array((amp_plus, amp_minus)).T  # amplifications
 
         return images, amps
-        
-    def im_pos1(self, w, z1):
-        z1 =  z1[0] + 1j * z1[1]
-        z1bar = np.conjugate(z1)
-        return (w+z1)*(1 + np.sqrt(1 + 4/np.abs(w-z1bar)**2))/2
-        
-    def detJac(self, z, z1bar):
-        return 1-1/np.abs(z)**4
-    
-    def cent(self, ims, z1bar):
-        return np.sum(ims/abs(self.detJac(ims, z1bar)),axis=1)/np.sum(1/abs(self.detJac(ims, z1bar)),axis=1)
 
-    def get_all_arrays(self, t, filt_idx=0):
-        u_vectors = np.linalg.norm(self.get_u(t), axis=1)
-        if self.astrometryFlag == True:
-            
-            source_radius = self.radiusS * 1e3 / self.thetaE_amp
-            
-            if self.u0_amp <= source_radius:
-                images, amps = self.get_all_arrays_Lee(t, filt_idx)
-            else:
-                images, amps = self.get_all_arrays_CI(t, filt_idx)
-                
-        else:
-            images, amps = self.get_all_arrays_CI(t, filt_idx)
-        
-        return images, amps 
-        
-    def get_all_arrays_Lee(self, t, filt_idx=0):
+
+    def get_all_arrays_amg(self, t, filt_idx=0):
         """
-        Obtain the image and amplitude arrays for each t. This method does not use contour integration. 
+        Obtain the image and amplitude arrays for each t. These arrays
+        contain the positions for each point in the outline for each lensed image.
 
         Parameters
         ----------
@@ -18631,325 +18606,172 @@ class FSPL(PSPL):
 
         Notes
         -----
-        The algorithm uses a numerical approach to find the image and amplitude. It has been adopted from
-        https://iopscience.iop.org/article/10.1088/0004-637X/695/1/200/pdf.
-        
+        The algorithm uses Green's theorem to change an area integral of the
+        image of the source into a path integral around the outline.
+        For the amplification, we perform a first-order contour integral to
+        approximate the area, and include a second-order parabolic correction.
+        For the centroid calculation, we perform only the first-order contour
+        integral with no second-order parabolic correction.
+        Equations for the contour integrals come from Bozza et al. (2021).
         """
-        # We use helper functions photometry_one, photometry_two, integral_top and integral_bottom 
-        # to describe f, g and k functions in the BAGLE paper. 
+        # Lensed positions of each outline point for both plus/minus images.
+        # Note these are positions on the sky. in arcsec
 
+        # Shape = [len(t), N_outline, [+,-], [E,N]]
+        def im_pos1(w, z1):
+            u = w - z1                
+            z_major = u * (1 + np.sqrt(1 + 4/np.abs(u)**2)) / 2
+            return z_major + z1       
         
-        def amplification_helper(time, rho, u_amp):
-            # Solving Equation 39 (the part dealing with u2f**2 - u1f**2). Doing this for the + and - images
-            n = 20
-            n_two = 2*n
-            amplification_uminus = []
-            amplification_uplus = []
-
-            for i in range(0, len(time)):
-                
-                u_now = u_amp[i]
-                
-                if np.round(u_now, 3) <= np.round(rho, 3):
-                    n = n_two
-                    zp = np.pi
-                    z = 1
-                else:
-                    z = np.arcsin(rho/u_now)/np.pi
-                    zp = np.arcsin(rho/u_now)
-            
-                factor = z/(3*rho**2*n)
-                
-                first_term_plus = function_photometry_one(0, u_now, rho)  + function_photometry_one(np.pi, u_now, rho)
-                first_term_minus = function_photometry_one(0, u_now, rho, '-')  + function_photometry_one(np.pi, u_now, rho, '-')
-                
-                sum_plus = []
-                sum_minus = []
-                for k in range(0, int(n/2)):
-                    sum_plus.append(function_photometry_one(2*k/n * zp, u_now, rho))
-                    sum_minus.append(function_photometry_one(2*k/n * zp, u_now, rho, '-'))
-                second_term_plus = 2*np.sum(sum_plus)
-                second_term_minus = 2*np.sum(sum_minus)
-            
-            
-                sum_plus = []
-                sum_minus = []
-                for k in range(0, int(n/2)-1):
-                    sum_plus.append(function_photometry_one((2*k-1)/n * zp, u_now, rho))
-                    sum_minus.append(function_photometry_one((2*k-1)/n * zp, u_now, rho, '-'))
-                third_term_plus = 4*np.sum(sum_plus)
-                third_term_minus = 4*np.sum(sum_minus)
-                
-                amplification_uminus.append(factor*(first_term_minus+second_term_minus+third_term_minus))
-                amplification_uplus.append(factor*(first_term_plus+second_term_plus+third_term_plus))
-                    
-            
-            amplification_uminus = np.array(amplification_uminus)
-            amplification_uplus = np.array(amplification_uplus)
-
-            return amplification_uminus, amplification_uplus
-
-        def amplification_lee_full(time, rho, u_amp):
-            # This should be the total amplification from CH Lee's paper https://iopscience.iop.org/article/10.1088/0004-637X/695/1/200/pdf
-            # Solving Equation 39 (the part dealing with u2f * np.sqrt(u2f**2+4) - u1f * np.sqrt(u1f**2+4))
-            n=20
-            amplification_lee_full =[]
-            for i in range(0, len(u_amp)):
-                
-                u_check = u_amp[i]
-                u_n = u_amp[i]    
-                u_plus_rho = u_n + rho
-                u_minus_rho = u_n - rho
-            
-                if np.round(u_check, 4) <= np.round(rho, 4):
-                    
-                    factor = 1/(np.pi*rho**2) * np.pi/(2*n)
-                    first_term_numerator = u_plus_rho*np.sqrt(u_plus_rho**2+4)-(u_minus_rho)*np.sqrt(u_minus_rho**2+4)
-                    first_term = first_term_numerator/3
-                    
-                    second_sum = []
-                    for k in range(1, n):
-                        argument = (2*k*np.pi)/(2*n)
-                        second_sum.append(function_photometry_two(argument, rho, u_n))
-                    second_term = (2/3)*np.sum(second_sum)
-                
-                    third_sum = []
-                    for k in range(1, n+1):
-                            argument = ((2*k-1)*np.pi)/(2*n)
-                            third_sum.append(function_photometry_two(argument, rho, u_n))
-                    third_term = (4/3)*np.sum(third_sum)
-                    amplification_lee_full.append(factor*(first_term+second_term+third_term))
-                    
-                else:
-                    factor = 1/(np.pi*rho**2) * np.arcsin(rho/u_n)/n
-                    
-                    first_term_numerator = u_plus_rho*np.sqrt(u_plus_rho**2+4)-(u_minus_rho)*np.sqrt(u_minus_rho**2+4)
-                    first_term = first_term_numerator/3
-                    
-                    second_sum = []
-                    for k in range(1, int(n/2)):
-                        argument = (2*k*np.arcsin(rho/u_n))/(n)
-                        second_sum.append(function_photometry_two(argument, rho, u_n))
-                    second_term = (2/3)*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(1, int(n/2)+1):
-                            argument = ((2*k-1)*np.arcsin(rho/u_n))/(n)
-                            third_sum.append(function_photometry_two(argument, rho, u_n))
-                    third_term = (4/3)*np.sum(third_sum)
-                    amplification_lee_full.append(factor*(first_term+second_term+third_term))
-            
-            amplification_lee_full = np.array(amplification_lee_full) 
-            return amplification_lee_full
-
-        #We use helper functions integral_top and integral_bottom to 
-        #solve the numerator and denominator separately in equation 40 of the BAGLE paper. 
-        #The helper functions are g and k in the BAGLE paper
+        def im_pos_all(w, z1):
+            z_major = im_pos1(w, z1)
+            z_minor = -1 / np.conjugate(z_major - z1) + z1
+            return z_major, z_minor
         
+        def detJac(z, z1):
+            return 1.0 - 1.0/np.abs(z - z1)**4
+        
+        days_in_a_year = 365.25
         
 
-        def astrometry(time, rho, u_amp):
-            # Composite rule to solve equation 40 numerator
-            n = 20
-            plus = []
-            minus = []
-            
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                if u_now <= rho:
-                    first_term = integral_top(0, rho, u_now) + integral_top(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_top(k*np.pi/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.pi, rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_top(0, rho, u_now) + integral_top(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_top(2*k*np.arcsin(rho/u_now)/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
+        source_unlensed = self.xS0/self.thetaE_amp
+        #pdb.set_trace()
+        center = (source_unlensed)[0] + 1j * (source_unlensed)[1]
+        rad = self.radiusS/self.thetaE_amp * 1e3
         
-                total = (first_term + second_term + third_term)
-        
-                plus.append(total)
-        
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                if u_now <= rho:
-                    first_term = integral_top(0, rho, u_now, '-') + integral_top(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_top(k*np.pi/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.pi, rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_top(0, rho, u_now, '-') + integral_top(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_top(2*k*np.arcsin(rho/u_now)/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                minus.append(total)
-        
-            
-            return plus, minus
-            
-        def astrometry_bottom(time, rho, u_amp):
-            # Composite rule to solve equation 40 denominator
+        traj = self.muS[0]+ 1j * self.muS[1]   
+        traj = traj/self.thetaE_amp
 
-            n = 20
-            bottomp = []
-            bottomm = []
+        maxsamps = 1000
+        wIms = np.zeros((len(t), maxsamps, 2), dtype=complex)
+        counts = np.zeros(len(t), dtype=int)
         
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                
-                if u_now <= rho:
-                    first_term = integral_bottom(0, rho, u_now) + integral_bottom(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_bottom(k*np.pi/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.pi, rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_bottom(0, rho, u_now) + integral_bottom(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_bottom(2*k*np.arcsin(rho/u_now)/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                bottomp.append(total)
-        
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                
-                if u_now <= rho:
-                    first_term = integral_bottom(0, rho, u_now, '-') + integral_bottom(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_bottom(k*np.pi/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.pi, rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                else:
-                    first_term = integral_bottom(0, rho, u_now, '-') + integral_bottom(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_bottom(2*k*np.arcsin(rho/u_now)/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                bottomm.append(total)
-            
-            return bottomp, bottomm
-        
-        u_center = self.get_u(t)
-        u_amp = np.linalg.norm(u_center, axis=1)
-        u_hat = (u_center.T / u_amp).T
-        
-        if self.astrometryFlag == True:
-            rho = self.radiusS * 1e3 / self.thetaE_amp
-        else:
-            rho = self.radiusS
-            
-            
-        flat_rho = np.linspace(rho,rho,len(u_center[:, 0]))
-        
+        dtheta = 2*np.pi/self.n_outline
+        lens_asts = self.get_lens_astrometry(t)/self.thetaE_amp  * 1e3 #thetaE
 
-        am, au = amplification_helper(t, rho, u_amp)
-        al = amplification_lee_full(t, rho, u_amp)
-        
-        amp_plus = au + 1/2 * al
-        amp_minus = am + 1/2 * al
-        amps = np.array((amp_plus, amp_minus)).T  # Amplifications Resolved
+        t = (t - self.t0)/days_in_a_year
 
 
-        bp, bm = astrometry_bottom(t, rho, u_amp)
-        plus, minus = astrometry(t, rho, u_amp)
+        for i in range(len(t)):
+            z1_int = lens_asts[i]               
+            z1 = z1_int[0] + 1j * z1_int[1]       
+            w_center = center + t[i]*traj
+            theta = 0.0
+            count = 0
+            while (theta < 2*np.pi) and (count < maxsamps):
+                w_now = w_center + rad*np.exp(1j*theta)
+            
+                zp, zm = im_pos_all(w_now, z1)
+                wIms[i, count, 0] = zp
+                wIms[i, count, 1] = zm
+            
+                detp = np.abs(detJac(zp, z1))
+                detm = np.abs(detJac(zm, z1))
+                theta += dtheta * min(detp, detm)
+                count += 1
+            
         
-        if self.astrometryFlag == True:
-            mj = (np.array(plus)/np.array(bp) * self.thetaE_amp * 1e-3).reshape(u_amp.size, 1) * u_hat 
-            mn = (np.array(minus)/np.array(bm) * self.thetaE_amp *1e-3).reshape(u_amp.size, 1) * u_hat 
-            xL = self.get_lens_astrometry(t)
-            major =  xL + mj
-            minor = xL + mn
-        else: 
-            mj = (np.array(plus)/np.array(bp)).reshape(u_amp.size, 1) * u_hat 
-            mn = (np.array(minus)/np.array(bm)).reshape(u_amp.size, 1) * u_hat 
-            major = mj
-            minor = mn
+            counts[i] = count
         
         
+        wIms = (wIms * self.thetaE_amp) * 1e-3
+
+        n_times = len(counts)
+        Aplus = np.zeros(n_times)
+        Aminus = np.zeros(n_times)
+        Cplus_x = np.zeros(n_times)
+        Cplus_y = np.zeros(n_times)
+        Cminus_x = np.zeros(n_times)
+        Cminus_y = np.zeros(n_times)
+        
+        for i in range(n_times):
+            n = counts[i]
+        
+            plus_x = wIms[i, :n, 0].real
+            plus_y = wIms[i, :n, 0].imag
+            minus_x = wIms[i, :n, 1].real
+            minus_y = wIms[i, :n, 1].imag
+        
+            px = np.empty(n+1)
+            py = np.empty(n+1)
+            qx = np.empty(n+1)
+            qy = np.empty(n+1)
+        
+            px[:n], py[:n] = plus_x, plus_y
+            qx[:n], qy[:n] = minus_x, minus_y
+            px[n], py[n] = plus_x[0], plus_y[0]
+            qx[n], qy[n] = minus_x[0], minus_y[0]
+        
+            # derivatives
+            d1_px = np.diff(px)
+            d1_py = np.diff(py)
+            d1_qx = np.diff(qx)
+            d1_qy = np.diff(qy)
+        
+            # Eq 9 areas
+            Aplus[i]  = -0.5 * np.sum((px[:-1]+px[1:]) * d1_py)
+            Aminus[i] =  0.5 * np.sum((qx[:-1]+qx[1:]) * d1_qy)
+        
+            # Eq 19 centroids
+            Cplus_x[i] =  0.125 * np.sum((px[:-1]+px[1:])**2 * d1_py)
+            Cplus_y[i] = -0.125 * np.sum((py[:-1]+py[1:])**2 * d1_px)
+            Cminus_x[i] = -0.125 * np.sum((qx[:-1]+qx[1:])**2 * d1_qy)
+            Cminus_y[i] =  0.125 * np.sum((qy[:-1]+qy[1:])**2 * d1_qx)
+            
+        Aplus = np.array(Aplus)
+        Aminus = np.array(Aminus)
+        Cplus_x, Cplus_y = np.array(Cplus_x), np.array(Cplus_y) 
+        Cminus_x, Cminus_y = np.array(Cminus_x), np.array(Cminus_y)
+        
+        
+        amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
+        amp_minus = np.abs(Aminus) / (np.pi * self.radiusS ** 2)
+        
+        
+        img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])  #Units to mas
+        img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])  #Units to mas
         
         images = np.zeros((len(t), 2, 2), dtype=float)
-        images[:, 0, :] = major
-        images[:, 1, :] = minor
-
+        images[:, 0, :] = img_pos_plus.T
+        images[:, 1, :] = img_pos_minus.T
         
-
+        interim_plus = (Aplus) / (np.pi * self.radiusS ** 2)
+        interim_minus = (Aminus) / (np.pi * self.radiusS ** 2)
+        
+        amps_interim = np.array((interim_plus, interim_minus)).T  
+        amps = np.array((interim_plus,interim_minus)).T
+        
         return images, amps
 
+        
+    def im_pos1(self, w, z1):
+        z1 =  z1[0] + 1j * z1[1]
+        z1bar = np.conjugate(z1)
+        return (w+z1)*(1 + np.sqrt(1 + 4/np.abs(w-z1bar)**2))/2
+        
+    def detJac(self, z, z1bar):
+        return 1-1/np.abs(z)**4
+    
+    def cent(self, ims, z1bar):
+        return np.sum(ims/abs(self.detJac(ims, z1bar)),axis=1)/np.sum(1/abs(self.detJac(ims, z1bar)),axis=1)
 
+    def get_all_arrays(self, t, filt_idx=0):
+        u_vectors = np.linalg.norm(self.get_u(t), axis=1)
+        if self.astrometryFlag == True:
+            if np.abs(self.beta) <= self.radiusS * 1e3:
+                self.n_outline = 15
+                self.amgFlag = True
+                images, amps = self.get_all_arrays_amg(t, filt_idx)
+            else:
+                self.n_outline = 1000
+                self.amgFlag = False
+                images, amps = self.get_all_arrays_CI(t, filt_idx)
+        else:
+            self.n_outline = 1000
+            self.amgFlag = False
+            images, amps = self.get_all_arrays_CI(t, filt_idx)
+        return images, amps 
+  
     def get_u(self, t, filt_idx=0):
         """
         Get the separation vector, \vec{u}(t), which is the unlensed
@@ -18995,18 +18817,11 @@ class FSPL(PSPL):
         mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
         flux_zp = 1.0
         if amp_arr is None:
-            #if self.n_outline != False:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            #else:
-             #   img_arr, amp_arr = self.get_all_arrays_Lee(t, filt_idx=filt_idx)
-        
-            # Mask invalid values from the amplification array.
-            # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-        amp_arr_mskd = amp_arr
-
-        amp = np.sum(amp_arr_mskd, axis=1)
-                        
-
+                img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+                amp_arr_mskd = amp_arr
+                amp = np.sum(amp_arr_mskd, axis=1)
+        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
+            amp = -1 * amp
         return amp
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
@@ -19037,12 +18852,12 @@ class FSPL(PSPL):
         '''
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-    
-        # Mask invalid values from the amplification array.
-        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-        amp_arr_mskd = amp_arr
 
+        amp_arr_mskd = amp_arr
         amp = np.sum(amp_arr_mskd, axis=1)
+        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
+            print("True")
+            amp = -1 * amp
 
         flux_src = mag2flux(self.mag_src[filt_idx])
         flux_model = flux_src * amp
@@ -19442,12 +19257,17 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         '''
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-                
-        # Mask invalid values from the amplification array.
-        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-        amp_arr_mskd = amp_arr
 
+        amp_arr_mskd = np.ma.masked_invalid(amp_arr)
         amp = np.sum(amp_arr_mskd, axis=1)
+        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
+            amp = -1 * amp
+
+            
+        #amp_arr_mskd = amp_arr
+        #amp = np.sum(amp_arr_mskd, axis=1)
+       # Mask invalid values from the amplification array.
+        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
 
         flux_src = mag2flux(self.mag_src[filt_idx])
         flux_model = flux_src * amp
@@ -19507,11 +19327,13 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         # Calculate the total flux from all lensed source images and the lens itself.
         ftot = fL + np.sum(fS * amp_arr, axis=1)
+        pos = np.sum(image_arr * amp_arr[:, :, np.newaxis] * fS, axis=1)
+
 
         # Calculate the flux-weighted centroid. Components are:
         #  - all lensed source images
         #  - luminous lens
-        pos = np.sum(image_arr * amp_arr[:, :, np.newaxis] * fS, axis=1)
+        
         pos += fL * xL
         pos /= ftot[:, np.newaxis]
 
@@ -19818,6 +19640,7 @@ class FSPL_PhotParam2(PSPL_Param):
 
     paramAstromFlag = False
     paramPhotFlag = True
+    LeeFlag = False 
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_base,
                  n_outline=False,
@@ -19943,6 +19766,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    LeeFlag = False
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
@@ -20114,6 +19938,7 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    LeeFlag = False
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,

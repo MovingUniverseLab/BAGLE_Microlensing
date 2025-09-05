@@ -3777,7 +3777,7 @@ def test_FSPL_PhotAstrom_methods(plot=False):
     muS_N = 0.0
     muL_E = 0.0
     muL_N = 0.0
-    radiusS = 1e-6 # arcsec
+    radiusS = 1e-3 # arcsec
     b_sff = 0.9
     mag_src = 19.0
     raL = 17.30 * 15.
@@ -3786,7 +3786,7 @@ def test_FSPL_PhotAstrom_methods(plot=False):
     # Array of times we will sample on.
     time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
 
-    def test_fspl_once(r_in, n_in, phot_arr_good, mod='FSPL', tol=1e-3):
+    def test_fspl_once(n_in, phot_arr_good, mod='FSPL', tol=1e-3):
         # Make the model
         tstart = time.time()
 
@@ -3795,7 +3795,7 @@ def test_FSPL_PhotAstrom_methods(plot=False):
                                                        xS0_E, xS0_N,
                                                        muL_E, muL_N,
                                                        muS_E, muS_N,
-                                                       r_in,
+                                                       radiusS,
                                                        b_sff, mag_src, n_in,
                                                        raL=raL, decL=decL)
         else:
@@ -3815,7 +3815,7 @@ def test_FSPL_PhotAstrom_methods(plot=False):
 
         tdelta = time.time() - tstart
 
-        print(f'Eval time for {mod:s}: {tdelta:.4f} sec, n = {n_in:d}, r = {r_in:.3f}')
+        print(f'Eval time for {mod:s}: {tdelta:.4f} sec, n = {n_in:d}, r = {radiusS:.3f}')
 
         # When working, fetch 10 points, evenly distributed and
         # save as the "right answer" in the individual tests below.
@@ -3830,34 +3830,28 @@ def test_FSPL_PhotAstrom_methods(plot=False):
     ##########
     pspl_arr_good = np.array([18.87539976, 18.86616655, 18.83702185, 18.76783706, 18.54908672,
                               18.27960245, 18.55224616, 18.76873734, 18.83743328, 18.86630883])
-    pspl_arr = test_fspl_once(-1, -1, pspl_arr_good, mod='PSPL')
+    pspl_arr = test_fspl_once(-1, pspl_arr_good, mod='PSPL')
 
     ##########
     # FSPL n=50, r=0.001 thetaE
     ##########
-    fspl_arr_n50_good = np.array([18.87797024, 18.86873943, 18.83960216, 18.77043423, 18.55173065,
-                                  18.28229242, 18.55488948, 18.7713343, 18.84001349, 18.86888168])
-    fspl_arr_n50 = test_fspl_once(radiusS, 50, fspl_arr_n50_good, mod='FSPL')
+    fspl_arr_n500_good = np.array([18.875286, 18.865879, 18.836015, 18.764603, 18.535831, 18.245649,
+                               18.539061, 18.765503, 18.836429, 18.866023])
+    fspl_arr_n500 = test_fspl_once(500, fspl_arr_n500_good, mod='FSPL')
 
     ##########
     # FSPL n=100, r=0.001 thetaE
     ##########
-    fspl_arr_n100_good = np.array([18.87604328, 18.86681067, 18.83766782, 18.76848725, 18.5497486,
-                                   18.28027583, 18.55290789, 18.76938749, 18.83807923, 18.86695294])
-    fspl_arr_n100 = test_fspl_once(radiusS, 100, fspl_arr_n100_good, mod='FSPL')
+    fspl_arr_n1000_good = np.array([18.875286, 18.865879, 18.836015, 18.764603, 18.535831, 18.245649,
+                               18.539061, 18.765503, 18.836429, 18.866023])
+    fspl_arr_n1000 = test_fspl_once(1000, fspl_arr_n1000_good, mod='FSPL')
 
-    ##########
-    # FSPL n=10, r=0.1 thetaE
-    ##########
-    fspl_arr_n10_r1_good = np.array([18.883621, 18.883621, 18.883621, 18.883621, 18.883621, 18.883621,
-                                  18.883621, 18.883621, 18.883621, 18.883621])
-    fspl_arr_n10_r1 = test_fspl_once(0.1, 10, fspl_arr_n10_r1_good, mod='FSPL')
 
     if plot:
         plt.figure(1)
         plt.clf()
-        plt.plot(time_arr, fspl_arr_n100, '-', label='fspl, n=100')
-        plt.plot(time_arr, fspl_arr_n50, '-', label='fspl, n=50')
+        plt.plot(time_arr, fspl_arr_n1000, '-', label='fspl, n=1000')
+        plt.plot(time_arr, fspl_arr_n500, '-', label='fspl, n=500')
         plt.plot(time_arr, pspl_arr, '-', label='pspl')
         plt.gca().invert_yaxis()
         plt.xlabel('Time (HJD)')
@@ -3866,17 +3860,12 @@ def test_FSPL_PhotAstrom_methods(plot=False):
 
         plt.figure(2)
         plt.clf()
-        plt.plot(time_arr, fspl_arr_n100 - pspl_arr, '-', label='fspl, n=100')
-        plt.plot(time_arr, fspl_arr_n50 - pspl_arr, '-', label='fspl, n=50')
+        plt.plot(time_arr, fspl_arr_n1000 - pspl_arr, '-', label='fspl, n=1000')
+        plt.plot(time_arr, fspl_arr_n500 - pspl_arr, '-', label='fspl, n=500')
         plt.gca().invert_yaxis()
         plt.xlabel('Time (HJD)')
         plt.ylabel('FSPL-PSPL (Mag)')
         plt.legend()
-
-        plt.figure(3)
-        plt.clf()
-        plt.plot(time_arr, fspl_arr_n10_r1 - fspl_arr_n10, '.')
-        plt.title('Different radii')
 
     return
 
@@ -3898,7 +3887,7 @@ def test_FSPL_Phot_methods(plot=False):
     # Array of times we will sample on.
     time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
 
-    def test_fspl_phot_once(r_in, n_in, phot_arr_good, mod='FSPL', tol=1e-3):
+    def test_fspl_phot_once(n_in, phot_arr_good, mod='FSPL', tol=1e-3):
         # Make the model
         tstart = time.time()
 
@@ -3932,7 +3921,7 @@ def test_FSPL_Phot_methods(plot=False):
 
         tdelta = time.time() - tstart
 
-        print(f'Eval time for {mod:s}: {tdelta:.4f} sec, n = {n_in:d}, r = {r_in:.3f}')
+        print(f'Eval time for {mod:s}: {tdelta:.4f} sec, n = {n_in:d}, r = {radiusS:.3f}')
 
         # When working, fetch 10 points, evenly distributed and
         # save as the "right answer" in the individual tests below.
@@ -3947,42 +3936,36 @@ def test_FSPL_Phot_methods(plot=False):
     ##########
     pspl_arr_good = np.array([18.99936395, 18.99866471, 18.99557563, 18.98404853, 18.86796675,
                               17.3799675, 18.87199099, 18.9841648, 18.99564001, 18.99867367])
-    pspl_arr = test_fspl_phot_once(-1, -1, pspl_arr_good, mod='PSPL')
-
-    ##########
-    # FSPL n=10, r=0.001
-    ##########
-    fspl_arr_n10_good = np.array([19.05060339, 19.0499079, 19.04683536, 19.03536958, 18.9198703,
-                                  17.43573262, 18.92387548, 19.03548521, 19.04689939, 19.04991681])
-    fspl_arr_n10 = test_fspl_phot_once(radiusS, 10, fspl_arr_n10_good, mod='FSPL')
-
-    ##########
-    # FSPL n=50, r=0.001
-    ##########
-    fspl_arr_n50_good = np.array([19.00193193, 19.00123287, 18.9981446, 18.98662051, 18.87056724,
-                                  17.38275375, 18.87459054, 18.98673675, 18.99820897, 19.00124183])
-    fspl_arr_n50 = test_fspl_phot_once(radiusS, 50, fspl_arr_n50_good, mod='FSPL')
+    pspl_arr = test_fspl_phot_once(-1, pspl_arr_good, mod='PSPL')
 
     ##########
     # FSPL n=100, r=0.001
     ##########
-    fspl_arr_n100_good = np.array([19.00000684, 18.99930765, 18.99621877, 18.98469243, 18.86861775,
-                                   17.38066274, 18.87264176, 18.98480869, 18.99628315, 18.99931661])
-    fspl_arr_n100 = test_fspl_phot_once(radiusS, 100, fspl_arr_n100_good, mod='FSPL')
+    fspl_arr_n100_good = np.array([18.99937 , 18.998671, 18.995582, 18.984057, 18.868018, 17.380096,
+                  18.87193 , 18.984165, 18.995645, 18.99868 ])
+    fspl_arr_n100 = test_fspl_phot_once(100, fspl_arr_n100_good, mod='FSPL')
 
     ##########
-    # FSPL n=10, r=1
+    # FSPL n=500, r=0.001
     ##########
-    fspl_arr_n10_r1_good = np.array([19.05060339, 19.0499079, 19.04683536, 19.03536958, 18.9198703,
-                                     17.43573262, 18.92387548, 19.03548521, 19.04689939, 19.04991681])
-    fspl_arr_n10_r1 = test_fspl_phot_once(1, 10, fspl_arr_n10_r1_good, mod='FSPL')
+    fspl_arr_n500_good = np.array([19.00193193, 19.00123287, 18.9981446, 18.98662051, 18.87056724,
+                                  17.38275375, 18.87459054, 18.98673675, 18.99820897, 19.00124183])
+    fspl_arr_n500 = test_fspl_phot_once(500, fspl_arr_n500_good, mod='FSPL')
+
+    ##########
+    # FSPL n=1000, r=0.001
+    ##########
+    fspl_arr_n1000_good = np.array([19.00000684, 18.99930765, 18.99621877, 18.98469243, 18.86861775,
+                                   17.38066274, 18.87264176, 18.98480869, 18.99628315, 18.99931661])
+    fspl_arr_n1000 = test_fspl_phot_once(1000, fspl_arr_n1000_good, mod='FSPL')
+
 
     if plot:
         plt.figure(1)
         plt.clf()
         plt.plot(time_arr, fspl_arr_n100, '-', label='fspl, n=100')
-        plt.plot(time_arr, fspl_arr_n50, '-', label='fspl, n=50')
-        plt.plot(time_arr, fspl_arr_n10, '-', label='fspl, n=10')
+        plt.plot(time_arr, fspl_arr_n500, '-', label='fspl, n=500')
+        plt.plot(time_arr, fspl_arr_n1000, '-', label='fspl, n=1000')
         plt.plot(time_arr, pspl_arr, '-', label='pspl')
         plt.gca().invert_yaxis()
         plt.xlabel('Time (HJD)')
@@ -3992,17 +3975,13 @@ def test_FSPL_Phot_methods(plot=False):
         plt.figure(2)
         plt.clf()
         plt.plot(time_arr, fspl_arr_n100 - pspl_arr, '-', label='fspl, n=100')
-        plt.plot(time_arr, fspl_arr_n50 - pspl_arr, '-', label='fspl, n=50')
-        plt.plot(time_arr, fspl_arr_n10 - pspl_arr, '-', label='fspl, n=10')
+        plt.plot(time_arr, fspl_arr_n500 - pspl_arr, '-', label='fspl, n=500')
+        plt.plot(time_arr, fspl_arr_n1000 - pspl_arr, '-', label='fspl, n=1000')
         plt.gca().invert_yaxis()
         plt.xlabel('Time (HJD)')
         plt.ylabel('FSPL-PSPL (Mag)')
         plt.legend()
 
-        plt.figure(3)
-        plt.clf()
-        plt.plot(time_arr, fspl_arr_n10_r1 - fspl_arr_n10, '.')
-        plt.title('Different radii')
 
     return
 
