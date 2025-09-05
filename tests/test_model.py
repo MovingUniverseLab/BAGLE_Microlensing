@@ -3696,6 +3696,97 @@ def test_FSPL_PhotAstrom_source_astrometry(plot=False):
     return
 
 
+def test_FSPL_boundary(plot=False):
+    """
+    Make sure we get good photometry when source boundary is touching the lens.
+    """
+    mL = 10
+    t0 = 57755
+    dL = 8000
+    dL_dS = .1
+    xS0_E = 0.000
+    xS0_N = 0.000
+    muL_E = 0
+    muL_N = 0
+    ra=259
+    dec = 30
+    muS_E = 2
+    muS_N = 0
+    radiusS_pri = 0.0004
+    b_sff = np.array([1])
+    mag_src = np.array([18])
+
+
+
+    ##########
+    # Test 1:  FSPL correct amplification array when u0 > rho
+    ##########    
+    n_outline = 1500     
+    beta =  .41 
+    fspl = model.FSPL_PhotAstrom_noPar_Param1(mL, t0, beta, dL, dL_dS,
+                 xS0_E, xS0_N,
+                 muL_E, muL_N,
+                 muS_E, muS_N,
+                 radiusS_pri,
+                b_sff, mag_src, n_outline, raL=ra, decL=dec)
+    
+    # Array of times we will sample on.
+    time_mjd = np.arange(fspl.t0 - fspl.tE, fspl.t0 +  fspl.tE)
+    
+    #####
+    # Get the amplification and make sure none of them are less than 1.
+    #####
+    amp_bagle = fspl.get_amplification(time_mjd)
+    np.testing.assert_equal(np.min(amp_bagle) >= 1, True)
+
+    
+    ##########
+    # Test 2:  FSPL correct amplification array when u0 = rho
+    ##########    
+    n_outline = 15
+    beta = 0.4
+    fspl_two = model.FSPL_PhotAstrom_noPar_Param1(mL, t0, beta, dL, dL_dS,
+                 xS0_E, xS0_N,
+                 muL_E, muL_N,
+                 muS_E, muS_N,
+                 radiusS_pri,
+                b_sff, mag_src, n_outline, raL=ra, decL=dec)
+    
+    # Array of times we will sample on.
+    time_mjd = np.arange(fspl_two.t0 - fspl_two.tE, fspl_two.t0 +  fspl_two.tE)
+    #####
+    # Get the amplification and make sure none of them are less than 1.
+    #####
+    amp_bagle_two = fspl_two.get_amplification(time_mjd)
+    np.testing.assert_equal(np.min(amp_bagle_two) >= 1, True)
+
+    
+    ##########
+    # Test 3:  FSPL correct amplification array when u0 = rho
+    ##########    
+    n_outline = 15
+    beta = 0.38
+    fspl_three = model.FSPL_PhotAstrom_noPar_Param1(mL, t0, beta, dL, dL_dS,
+                 xS0_E, xS0_N,
+                 muL_E, muL_N,
+                 muS_E, muS_N,
+                 radiusS_pri,
+                b_sff, mag_src, n_outline, raL=ra, decL=dec)
+    
+    # Array of times we will sample on.
+    time_mjd = np.arange(fspl_three.t0 - fspl_three.tE, fspl_three.t0 +  fspl_three.tE)
+    #####
+    # Get the amplification and make sure none of them are less than 1.
+    #####
+    amp_bagle_three = fspl_three.get_amplification(time_mjd)
+    np.testing.assert_equal(np.min(amp_bagle_three) >= 1, True)
+
+    
+    return
+    
+    
+
+
 def test_FSPL_PhotAstrom_lens_astrometry(plot=False):
     """
     Test FSPL lens astrometry with a really really small source.
