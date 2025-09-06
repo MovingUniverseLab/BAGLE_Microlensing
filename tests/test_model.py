@@ -3924,17 +3924,17 @@ def test_FSPL_PhotAstrom_methods(plot=False):
     pspl_arr = test_fspl_once(-1, pspl_arr_good, mod='PSPL')
 
     ##########
-    # FSPL n=50, r=0.001 thetaE
+    # FSPL n=500, r=0.001 thetaE
     ##########
-    fspl_arr_n500_good = np.array([18.875286, 18.865879, 18.836015, 18.764603, 18.535831, 18.245649,
-                               18.539061, 18.765503, 18.836429, 18.866023])
+    fspl_arr_n500_good = np.array([18.874854, 18.866577, 18.833519, 18.766592, 18.520295, 18.203633,
+                                   18.523634, 18.767137, 18.833927, 18.866705])
     fspl_arr_n500 = test_fspl_once(500, fspl_arr_n500_good, mod='FSPL')
 
     ##########
-    # FSPL n=100, r=0.001 thetaE
+    # FSPL n=1000, r=0.001 thetaE
     ##########
-    fspl_arr_n1000_good = np.array([18.875286, 18.865879, 18.836015, 18.764603, 18.535831, 18.245649,
-                               18.539061, 18.765503, 18.836429, 18.866023])
+    fspl_arr_n1000_good = np.array([18.874835, 18.866558, 18.8335  , 18.766575, 18.520282, 18.203624,
+                                   18.523621, 18.767119, 18.833909, 18.866686])
     fspl_arr_n1000 = test_fspl_once(1000, fspl_arr_n1000_good, mod='FSPL')
 
 

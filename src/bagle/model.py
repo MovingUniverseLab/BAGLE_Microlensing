@@ -18585,6 +18585,9 @@ class FSPL(PSPL):
         Obtain the image and amplitude arrays for each t. These arrays
         contain the positions for each point in the outline for each lensed image.
 
+        Adaptive mesh grid creates more boundary points around the source only
+        when it enters the Einstein ring.
+        
         Parameters
         ----------
         t : array_like
@@ -18643,9 +18646,13 @@ class FSPL(PSPL):
         traj = traj/self.thetaE_amp
 
         maxsamps = 1000
+        
+        if self.n_outline >= maxsamps/4:
+            maxsamps = maxsamps * 5
+        
         wIms = np.zeros((len(t), maxsamps, 2), dtype=complex)
         counts = np.zeros(len(t), dtype=int)
-        
+            
         dtheta = 2*np.pi/self.n_outline
         lens_asts = self.get_lens_astrometry(t)/self.thetaE_amp  * 1e3 #thetaE
 
@@ -18758,14 +18765,8 @@ class FSPL(PSPL):
     def get_all_arrays(self, t, filt_idx=0):
         u_vectors = np.linalg.norm(self.get_u(t), axis=1)
         if self.astrometryFlag == True:
-            if np.abs(self.beta) <= self.radiusS * 1e3:
-                self.n_outline = 15
-                self.amgFlag = True
-                images, amps = self.get_all_arrays_amg(t, filt_idx)
-            else:
-                self.n_outline = 1000
-                self.amgFlag = False
-                images, amps = self.get_all_arrays_CI(t, filt_idx)
+            self.amgFlag = True
+            images, amps = self.get_all_arrays_amg(t, filt_idx)
         else:
             self.n_outline = 1000
             self.amgFlag = False
@@ -19774,7 +19775,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
                  muS_E, muS_N,
                  radiusS,
                  b_sff, mag_src,
-                 n_outline=False,
+                 n_outline=50,
                  raL=None, decL=None, obsLocation='earth'):
         # Initialised variables
         self.t0 = t0
@@ -19945,7 +19946,7 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  radiusS,
-                 b_sff, mag_src, n_outline=False,
+                 b_sff, mag_src, n_outline=50,
                  raL=None, decL=None, obsLocation='earth'):
                      
         super().__init__(t0, u0_amp, tE, thetaE, piS,
