@@ -18768,7 +18768,7 @@ class FSPL(PSPL):
             self.amgFlag = True
             images, amps = self.get_all_arrays_amg(t, filt_idx)
         else:
-            self.n_outline = 1000
+            #self.n_outline = 1000
             self.amgFlag = False
             images, amps = self.get_all_arrays_CI(t, filt_idx)
         return images, amps 
