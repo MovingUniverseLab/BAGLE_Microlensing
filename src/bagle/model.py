@@ -6309,6 +6309,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         offset = 0.5 * self.sep * np.array([np.sin(self.alpha_rad),
                                             np.cos(self.alpha_rad)])
         offset *= 1e-3  # convert to arcsec
+        print('offset = ', offset)
 
         if self.orbitFlag == False:
             xL = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)  # parallax applied

@@ -19,7 +19,7 @@ from matplotlib.ticker import MaxNLocator
 # Converters for Different Packages
 #
 ##############
-def get_pylima_model(bagle_model, times_mjd=None):
+def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
     """
     Using an input BAGLE model, return a pyLIMA model. This utility function does
     all the appropriate frame conversions.
@@ -126,7 +126,7 @@ def get_pylima_model(bagle_model, times_mjd=None):
     #####
     ### Photometry-Only and No Parallax
     if not bagle_model.astrometryFlag and not bagle_model.parallaxFlag:
-        print('PyLIMA: PSPL with Photometry-only, no parallax')
+        if verbose: print('PyLIMA: PSPL with Photometry-only, no parallax')
         u0_pylima = bagle_model.u0_amp
         t0_pylima = bagle_model.t0 + 2400000.5
         tE_pylima = bagle_model.tE
@@ -139,7 +139,7 @@ def get_pylima_model(bagle_model, times_mjd=None):
 
     ### Photometry-Only and With Parallax
     elif not bagle_model.astrometryFlag and bagle_model.parallaxFlag:
-        print('PyLIMA: PSPL with Photometry-only, with parallax')
+        if verbose: print('PyLIMA: PSPL with Photometry-only, with parallax')
         # Add the RA and Dec to the model
         pylima_mod.ra = bagle_model.raL
         pylima_mod.dec = bagle_model.decL
@@ -164,7 +164,7 @@ def get_pylima_model(bagle_model, times_mjd=None):
 
     ### Photometry and Astrometry
     else:
-        print('PyLIMA: PSPL with Astrometry and Photometry')
+        if verbose: print('PyLIMA: PSPL with Astrometry and Photometry')
         # Convert from helio to geo-tr coordinates.
         geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
                                             bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
@@ -245,7 +245,7 @@ def get_mulens_model(bagle_model):
     return mulens_mod
 
 
-def get_vbm_model(bagle_model):
+def get_vbm_model(bagle_model, verbose=False):
     """
     Return a VBMicrolensing matched to the input BAGLE model.
 
@@ -280,7 +280,7 @@ def get_vbm_model(bagle_model):
     #####
     ### Photometry-Only and No Parallax
     if not bagle_model.astrometryFlag and not bagle_model.parallaxFlag:
-        print('VBM with Photometry-Only, no parallax')
+        if verbose: print('VBM with Photometry-Only, no parallax')
         u0_vbm = float(bagle_model.u0_amp)
         t0_vbm = float(bagle_model.t0)
         tE_vbm = float(bagle_model.tE)
@@ -290,7 +290,7 @@ def get_vbm_model(bagle_model):
 
     ### Photometry-Only and With Parallax
     elif not bagle_model.astrometryFlag and bagle_model.parallaxFlag:
-        print('VBM with Photometry-Only, with parallax')
+        if verbose: print('VBM with Photometry-Only, with parallax')
         # Convert
         geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
                                             bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
@@ -315,7 +315,7 @@ def get_vbm_model(bagle_model):
 
     # Astrometry
     else:
-        print('VBM with Astrometry')
+        if verbose: print('VBM with Astrometry')
         # Convert
         geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
                                             bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
