@@ -6903,7 +6903,7 @@ class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
         super().__init__(mLp, mLs, t0, xS0_E, xS0_N,
                          beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                          sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         raL = raK, decL = decK, obsLocation = obsLocation, root_tol = root_tol)
+                         raL = raL, decL = decK, obsLocation = obsLocation, root_tol = root_tol)
 
         self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
         self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
