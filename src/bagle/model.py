@@ -13489,6 +13489,8 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
         return
 
 
+
+
 class BSPL_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstromParam1):
     """BSPL model for astrometry and photometry - physical parameterization - for linear orbits.
 
@@ -13506,8 +13508,6 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
         as seen in heliocentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
-    t: float
-        Time of Observation
     beta: float
         Angular distance between the lens and primary source on the
         plane of the sky (mas). Can be
@@ -13561,6 +13561,11 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
@@ -13628,8 +13633,6 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
         as seen in heliocentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
-    t: float
-        Time of Observation
     beta: float
         Angular distance between the lens and primary source on the
         plane of the sky (mas). Can be
@@ -13687,6 +13690,11 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
     fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
                           'xS0_E', 'xS0_N',
@@ -13813,6 +13821,11 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
@@ -13871,86 +13884,87 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
 
     Attributes
     ----------
-    mL: float
-        Mass of the lens (Msun)
-    t0: float
+     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
         as seen in heliocentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
-    t: float
-        Time of Observation
-    beta: float
-        Angular distance between the lens and primary source on the
-        plane of the sky (mas). Can be
-            * positive (u0_amp > 0 when u0_hat[0] < 0) or
-            * negative (u0_amp < 0 when u0_hat[0] > 0).
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
         Note, since this is a binary source, we are expressing the
         nominal source position as that of the primary star in the source
         binary system.
-    dL: float
-        Distance from the observer to the lens (pc)
-    dL_dS: float
-        Ratio of Distance from the obersver to the lens to
-        Distance from the observer to the source
-    xS0_E: float
-        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-        This should be the position of the source primary.
-    xS0_N: float
-        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-        This should be the position of the source primary.
-    acc_E: Acceleration of the secondary source in the direction of RA (mas/yr^2)
-    acc_N: Acceleration of the secondary source in the direction of DEC (mas/yr^2)
-    muL_E: float
-        RA Lens proper motion (mas/yr)
-    muL_N: float
-        Dec Lens proper motion (mas/yr)
-    muS_E: float
-        RA Source proper motion (mas/yr) for primary source.
-    muS_N: float
-        Dec Source proper motion (mas/yr) for primary source.
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame. This should be the position of the source primary.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+        Identical proper motions are assumed for the source primary and secondary.
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+        Identical proper motions are assumed for the source primary and secondary.
     delta_muS_sec_E: float
         RA secondary source proper motion with respect to the primary source (mas/yr)
     delta_muS_sec_N: float
         Dec secondary source proper motion with respect to the primary source (mas/yr)
-    acc_E:
-        Acceleration of the secondary source in the direction of RA (mas/yr^2)
-    acc_N:
-        Acceleration of the secondary source in the direction of DEC (mas/yr^2)
+    acc_E: Acceleration of the secondary source in the direction of RA (mas/yr^2)
+    acc_N: Acceleration of the secondary source in the direction of DEC (mas/yr^2)
     sep: float
         Angular separation of the source scondary from the
         source primary (mas).
     alpha: float
         Angle made between the binary source axis and North;
         measured in degrees East of North.
-    mag_src_pri: array or list
-        Photometric magnitude of the first (primary) source. This must be passed in as a
+    fratio_bin: float
+        Flux ratio of secondary flux / primary flux.
+    mag_base : array or list
+        Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
-    mag_src_sec: array or list
-        Photometric magnitude of the second (secondary) source. This must be passed in as a
-        list or array, with one entry for each photometric filter.
+        Note that
+            :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
+        such that
+            :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
         The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = (f_S1 + f_S2) / (f_S1 + f_s2 + f_L + f_N)`.
+        :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
-
-    fitter_param_names = ['mL', 't0', 't', 'beta', 'dL', 'dL_dS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N',
                           'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
                           'muS_E', 'muS_N',
                           'delta_muS_sec_E', 'delta_muS_sec_N',
                           'acc_E', 'acc_N',
                           'sep', 'alpha']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
-    additional_param_names = ['dS', 'tE', 'u0_amp',
-                              'thetaE_E', 'thetaE_N',
-                              'piE_E', 'piE_N',
+    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
 
     paramAstromFlag = True
@@ -14062,6 +14076,11 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
@@ -14188,6 +14207,11 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
@@ -14271,6 +14295,16 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
 
+    muL_E: float
+        RA Lens proper motion (mas/yr)
+    muL_N: float
+        Dec Lens proper motion (mas/yr)
+
+    muS_E: float
+        The RA proper motion of the system in mas/yr.
+    muS_N: float
+        The Dec proper motion of the system in mas/yr.
+
     omega: float
         The argument of periastron of the primary star's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
@@ -14293,11 +14327,6 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
 
-    muS_E: float
-        The RA proper motion of the system in mas/yr.
-    muS_N: float
-        The Dec proper motion of the system in mas/yr.
-
     xS0_E: float
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
     xS0_N: float
@@ -14318,6 +14347,11 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
@@ -14588,11 +14622,7 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
         The ratio of the source flux to the total (source + neighbors + lens)
         :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
@@ -14602,6 +14632,11 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
@@ -14827,11 +14862,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_base = f_{src1{ + f_{src2{ + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1} + f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
         The ratio of the source flux to the total (source + neighbors + lens)
         :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
@@ -14841,6 +14872,11 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
@@ -15063,7 +15099,22 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
 
-    omega: float
+    
+    muS_E: float
+        The RA proper motion of the system in mas/yr.
+    muS_N: float
+        The Dec proper motion of the system in mas/yr.
+
+    xS0_E: float
+        The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
+    xS0_N: float
+        The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+
+    muL_E: float
+        RA Lens proper motion (mas/yr)
+    muL_N: float
+        Dec Lens proper motion (mas/yr)
+        omega: float
         The argument of periastron of the primary star's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
@@ -15090,17 +15141,6 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
     mass_source_s: float
         Mass of the secondary source in units of Msun
 
-        
-    muS_E: float
-        The RA proper motion of the system in mas/yr.
-    muS_N: float
-        The Dec proper motion of the system in mas/yr.
-
-    xS0_E: float
-        The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
-        The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
-
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
         list or array, with one entry for each photometric filter.
@@ -15116,6 +15156,11 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
@@ -15368,6 +15413,16 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
 
+    muL_E: float
+        RA Lens proper motion (mas/yr)
+    muL_N: float
+        Dec Lens proper motion (mas/yr)
+
+    muS_E: float
+        The RA proper motion of the system in mas/yr.
+    muS_N: float
+        The Dec proper motion of the system in mas/yr.
+
     omega: float
         The argument of periastron of the primary star's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
@@ -15387,11 +15442,6 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         This is the semi-major axis of the primary source in mas.
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
-
-    muS_E: float
-        The RA proper motion of the system in mas/yr.
-    muS_N: float
-        The Dec proper motion of the system in mas/yr.
 
     xS0_E: float
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
@@ -15413,7 +15463,13 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
+    
     fitter_param_names = ['mL', 't0_com', 'beta', 'dL', 'dL_dS',
                           'xS0_E', 'xS0_N',
                           'muL_E', 'muL_N',
@@ -15523,20 +15579,21 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
-        The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
+        The ratio of the source flux to the total (source + neighbors + lens):math:`b_sff = (f_S1 + f_S2) / (f_S1 + f_s2 + f_L + f_N)`.
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
+    
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
@@ -15651,11 +15708,7 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_base = f_{src1{ + f_{src2{ + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1} + f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
         The ratio of the source flux to the total (source + neighbors + lens)
         :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
@@ -15665,6 +15718,11 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
@@ -16394,8 +16452,7 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
         else:
             self.acc_hat = self.acc / self.acc_amp
 
-        return
-
+        returng
 ######################################################
 ### BINARY SOURCE BINARY LENS (BSBL) CLASSES ###
 ######################################################
