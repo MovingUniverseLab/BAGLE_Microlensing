@@ -4549,8 +4549,8 @@ def test_psbl_noparallax():
         i = i
         e=e
         a = a
-        omega = 90
-        big_omega = 0
+        omega_pri = 90
+        big_omega_sec = 0
         tp = 40
         dL = 1000 #parsecs
         dS = 1200
@@ -4562,7 +4562,7 @@ def test_psbl_noparallax():
         dec_L = -29
         
         psbl = model.PSBL_PhotAstrom_noPar_EllOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
-                                                          beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
+                                                          beta_com, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
                                                           b_sff, mag_src, dmag_Lp_Ls,
                                                           raL=ra_L, decL=dec_L, root_tol=1e-8)
         assert psbl.t0_com == t0_com
@@ -4574,8 +4574,8 @@ def test_psbl_noparallax():
         assert psbl.i == i
         assert psbl.e == e
         assert psbl.a == a
-        assert psbl.omega == omega
-        assert psbl.big_omega == big_omega
+        assert psbl.omega_pri == omega_pri
+        assert psbl.big_omega_sec == big_omega_sec
             
     
         time_setting = 1600
@@ -4710,8 +4710,8 @@ def test_psbl_parallax():
         i = i
         e=e
         a = a
-        omega = 90
-        big_omega = 0
+        omega_pri = 90
+        big_omega_sec = 0
         tp = 40
         dL = 1000 #parsecs
         dS = 1200
@@ -4724,7 +4724,7 @@ def test_psbl_parallax():
     
         psbl = model.PSBL_PhotAstrom_Par_EllOrbs_Param1(
         mLp, mLs, t0_com, xS0_E, xS0_N,
-             beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
+             beta_com, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
              b_sff, mag_src, dmag_Lp_Ls,
              raL=ra_L, decL=dec_L, root_tol=1e-8
     )
@@ -4737,8 +4737,8 @@ def test_psbl_parallax():
         assert psbl.i == i
         assert psbl.e == e
         assert psbl.a == a
-        assert psbl.omega == omega
-        assert psbl.big_omega == big_omega
+        assert psbl.omega_pri == omega_pri
+        assert psbl.big_omega_sec == big_omega_sec
         
 
         time_setting = 1600
@@ -4874,8 +4874,8 @@ def test_psbl_nopropermotion():
         i = i
         e=e
         a = a
-        omega = 90
-        big_omega = 0
+        omega_pri = 90
+        big_omega_sec = 0
         tp = 40
         dL = 1000 #parsecs
         dS = 1200
@@ -4889,7 +4889,7 @@ def test_psbl_nopropermotion():
     
         psbl = model.PSBL_PhotAstrom_noPar_EllOrbs_Param1(
         mLp, mLs, t0_com, xS0_E, xS0_N,
-             beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
+             beta_com, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
              b_sff, mag_src, dmag_Lp_Ls,
              raL=ra_L, decL=dec_L, root_tol=1e-8
     )
@@ -4902,8 +4902,8 @@ def test_psbl_nopropermotion():
         assert psbl.i == i
         assert psbl.e == e
         assert psbl.a == a
-        assert psbl.omega == omega
-        assert psbl.big_omega == big_omega
+        assert psbl.omega_pri == omega_pri
+        assert psbl.big_omega_sec == big_omega_sec
         
 
         time_setting = 1600
@@ -5076,8 +5076,8 @@ def magnification_maps():
     muS_E = 0
     muS_N = 5
     i = 0
-    omega = 0
-    big_omega = 0
+    omega_pri = 0
+    big_omega_sec = 0
     arat = 0.9
     #p = 2000
     #aleph=5
@@ -5097,7 +5097,7 @@ def magnification_maps():
     mag_src = [10]
     root_tol = 1e-8
     psbl_nopar = model.PSBL_PhotAstrom_noPar_CircOrbs_Param4(t0, u0_amp, tE, thetaE, piS,
-                                                             piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, tp, a, muS_E, muS_N,
+                                                             piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N,
                                                              q,
                                                              b_sff, mag_src,
                                                              raL=ra_L, decL=dec_L, root_tol=1e-8)
@@ -6257,8 +6257,8 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
     # xS0_N = np.random.uniform(-1, 1, size=n_events)
     xS0_E = np.zeros(nevents, dtype=float)
     xS0_N = np.zeros(nevents, dtype=float)
-    omega = np.random.uniform(0, 360, size=nevents)
-    big_omega = np.random.uniform(0, 180, size=nevents)
+    omega_pri = np.random.uniform(0, 360, size=nevents)
+    big_omega_sec = np.random.uniform(0, 180, size=nevents)
     i = np.random.uniform(0, 180, size=nevents)
     e = np.random.uniform(0, 0.9, size=nevents)
     tp = np.random.choice(t_w149, size=nevents)
@@ -6286,7 +6286,7 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
                              tE[nn], log10_thetaE[nn],
                              piS[nn], piE_E[nn], piE_N[nn],
                              xS0_E[nn], xS0_N[nn],
-                             omega[nn], big_omega[nn],
+                             omega_pri[nn], big_omega_sec[nn],
                              i[nn], e[nn], tp[nn], a[nn],
                              muS_E[nn], muS_N[nn],
                              q[nn], alpha[nn],
@@ -6408,7 +6408,7 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
 
         # Print out all the parameters to the screen and in a YAML file.
         params_mod = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
-                      'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'a',
+                      'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
                       'muS_E', 'muS_N',
                       'q', 'alpha', 'b_sff', 'mag_src']
         params_mod_fix = ['raL', 'decL', 'obsLocation']
