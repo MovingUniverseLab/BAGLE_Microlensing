@@ -4561,10 +4561,10 @@ def test_psbl_noparallax():
         arat = 1
         dec_L = -29
         
-        psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
-                 beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
-                 b_sff, mag_src, dmag_Lp_Ls,
-                 raL=ra_L, decL=dec_L, root_tol=1e-8)
+        psbl = model.PSBL_PhotAstrom_noPar_EllOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
+                                                          beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
+                                                          b_sff, mag_src, dmag_Lp_Ls,
+                                                          raL=ra_L, decL=dec_L, root_tol=1e-8)
         assert psbl.t0_com == t0_com
         assert psbl.beta_com == beta_com
         assert psbl.mLp == mLp
@@ -4722,7 +4722,7 @@ def test_psbl_parallax():
         arat = 1
         dec_L = -29
     
-        psbl = model.PSBL_PhotAstrom_EllOrbs_Par_Param1(
+        psbl = model.PSBL_PhotAstrom_Par_EllOrbs_Param1(
         mLp, mLs, t0_com, xS0_E, xS0_N,
              beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
              b_sff, mag_src, dmag_Lp_Ls,
@@ -4887,7 +4887,7 @@ def test_psbl_nopropermotion():
         dec_L = -29
 
     
-        psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(
+        psbl = model.PSBL_PhotAstrom_noPar_EllOrbs_Param1(
         mLp, mLs, t0_com, xS0_E, xS0_N,
              beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
              b_sff, mag_src, dmag_Lp_Ls,
@@ -5096,11 +5096,11 @@ def magnification_maps():
     b_sff = [1]
     mag_src = [10]
     root_tol = 1e-8
-    psbl_nopar = model.PSBL_PhotAstrom_CircOrbs_noPar_Param4(t0, u0_amp, tE, thetaE, piS,
-                     piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, tp, a, muS_E, muS_N,
-                     q,
-                     b_sff, mag_src,
-                     raL=ra_L, decL=dec_L, root_tol=1e-8)
+    psbl_nopar = model.PSBL_PhotAstrom_noPar_CircOrbs_Param4(t0, u0_amp, tE, thetaE, piS,
+                                                             piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, tp, a, muS_E, muS_N,
+                                                             q,
+                                                             b_sff, mag_src,
+                                                             raL=ra_L, decL=dec_L, root_tol=1e-8)
     
     fig, ax = plt.subplots(2, 2, figsize=(25, 20))
     index = 0
@@ -6281,7 +6281,7 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
         ff = nstart + nn
         print(f'Event {ff}')
 
-        mod_class = model.PSBL_PhotAstrom_EllOrbs_Par_Param8
+        mod_class = model.PSBL_PhotAstrom_Par_EllOrbs_Param8
         psbl_par = mod_class(t0_com[nn], u0_amp_com[nn],
                              tE[nn], log10_thetaE[nn],
                              piS[nn], piE_E[nn], piE_N[nn],

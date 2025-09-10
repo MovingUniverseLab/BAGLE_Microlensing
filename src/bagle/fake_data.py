@@ -3612,7 +3612,7 @@ def fake_dex_data_noPar_PSBL_1(outdir='', outroot='psbl',
                                raL=None, decL=None, root_tol=1e-8,
                                target='PSBL', animate=False):
     start = time.time()
-    psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param1(
+    psbl = model.PSBL_PhotAstrom_noPar_CircOrbs_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
         beta, muL_E, muL_N, omega, big_omega, i, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
         alpha, [b_sff], [mag_src1], [dmag_Lp_Ls1],
@@ -3791,7 +3791,7 @@ def fake_dex_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
                                   raL=None, decL=None, root_tol=1e-8,
                                   target='PSBL', animate=False):
     start = time.time()
-    psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param1(
+    psbl = model.PSBL_PhotAstrom_noPar_CircOrbs_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
         beta, muL_E, muL_N, omega, big_omega, i, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
         alpha, [b_sff], [mag_src1], [dmag_Lp_Ls],
@@ -3971,7 +3971,7 @@ def fake_dex_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
                                    raL=None, decL=None, root_tol=1e-8,
                                    target='PSBL', animate=False):
     start = time.time()
-    psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(
+    psbl = model.PSBL_PhotAstrom_noPar_EllOrbs_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
         beta, muL_E, muL_N, omega, big_omega, i, e, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
         alpha, [b_sff], [mag_src1], [dmag_Lp_Ls1],
@@ -4153,11 +4153,11 @@ def fake_dex_data_noPar_PSBL_4(outdir='', outroot='psbl',
                                raL=None, decL=None, root_tol=1e-8,
                                target='PSBL', animate=False):
     start = time.time()
-    psbl = model.PSBL_PhotAstrom_CircOrbs_noPar_Param4(t0, u0_amp, tE, thetaE, piS,
-                     piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, tp, sep, muS_E, muS_N,
-                     q, 
-                     b_sff, mag_src, dmag_Lp_Ls,
-                     raL=raL, decL=decL, root_tol=1e-8)
+    psbl = model.PSBL_PhotAstrom_noPar_CircOrbs_Param4(t0, u0_amp, tE, thetaE, piS,
+                                                       piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, tp, sep, muS_E, muS_N,
+                                                       q,
+                                                       b_sff, mag_src, dmag_Lp_Ls,
+                                                       raL=raL, decL=decL, root_tol=1e-8)
 
     # Simulate
     # photometric observations every 1 day and

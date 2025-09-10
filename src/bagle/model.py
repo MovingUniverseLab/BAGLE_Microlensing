@@ -7069,8 +7069,8 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     """
     fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N',
-                          'omega', 'big_omega', 'i', 'e', 'tp', 'a', 'muS_E',
-                          'muS_N', 'dL', 'dS']
+                          'omega', 'big_omega', 'i', 'e', 'tp', 'a',
+                          'muS_E', 'muS_N', 'dL', 'dS']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -22202,10 +22202,10 @@ class PSPL_PhotAstrom_Par_Param1(ModelClassABC,
 
 # PSPL_parallax2 / PSPL_multiphot_parallax
 @inheritdocstring
-class PSPL_PhotAstrom_Par_Param2(ModelClassABC,
-                                 PSPL_PhotAstrom,
-                                 PSPL_Parallax,
-                                 PSPL_PhotAstromParam2):
+class PSPL_PhotAstrom_noPar_Param2(ModelClassABC,
+                                   PSPL_PhotAstrom,
+                                   PSPL_noParallax,
+                                   PSPL_PhotAstromParam2):
     """
     Microlensing params with mag_src
     """
@@ -22217,10 +22217,10 @@ class PSPL_PhotAstrom_Par_Param2(ModelClassABC,
 
 # PSPL_parallax2 / PSPL_multiphot_parallax
 @inheritdocstring
-class PSPL_PhotAstrom_noPar_Param2(ModelClassABC,
-                                   PSPL_PhotAstrom,
-                                   PSPL_noParallax,
-                                   PSPL_PhotAstromParam2):
+class PSPL_PhotAstrom_Par_Param2(ModelClassABC,
+                                 PSPL_PhotAstrom,
+                                 PSPL_Parallax,
+                                 PSPL_PhotAstromParam2):
     """
     Microlensing params with mag_src
     """
@@ -22251,6 +22251,20 @@ class PSPL_PhotAstrom_Par_Param3(ModelClassABC,
                                  PSPL_PhotAstromParam3):
     """
     Microlensing params with mag_base and log10_thetaE
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_noPar_Param4(ModelClassABC,
+                                   PSPL_PhotAstrom,
+                                   PSPL_noParallax,
+                                   PSPL_PhotAstromParam4):
+    """
+    Microlensing params with mag_base
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22298,19 +22312,6 @@ class PSPL_PhotAstrom_Par_Param5(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
-
-@inheritdocstring
-class PSPL_PhotAstrom_noPar_Param4(ModelClassABC,
-                                   PSPL_PhotAstrom,
-                                   PSPL_noParallax,
-                                   PSPL_PhotAstromParam4):
-    """
-    Microlensing params with mag_base
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
 
 @inheritdocstring
 class PSPL_PhotAstrom_Par_Param6(ModelClassABC,
@@ -22732,138 +22733,6 @@ class PSPL_PhotAstrom_noPar_GP_Param2(ModelClassABC,
 # PSBL
 
 @inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_noPar_Param1(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_EllOrbs_Param1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param1(ModelClassABC,
-                                            PSBL_PhotAstrom,
-                                            PSBL_noParallax,
-                                            PSBL_PhotAstrom_CircOrbs_Param1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_AccOrbs_noPar_Param7(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_AccOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_AccOrbs_noPar_Param6(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_AccOrbs_Param6):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_LinOrbs_noPar_Param7(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_LinOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_LinOrbs_noPar_Param6(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_LinOrbs_Param6):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_Par_Param1(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_EllOrbs_Param1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param1(ModelClassABC,
-                                          PSBL_PhotAstrom,
-                                          PSBL_Parallax,
-                                          PSBL_PhotAstrom_CircOrbs_Param1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_AccOrbs_Par_Param7(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_AccOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_AccOrbs_Par_Param6(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_AccOrbs_Param6):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_LinOrbs_Par_Param7(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_LinOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_LinOrbs_Par_Param6(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_LinOrbs_Param6):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
 class PSBL_PhotAstrom_noPar_Param1(ModelClassABC,
                                    PSBL_PhotAstrom,
                                    PSBL_noParallax,
@@ -22911,17 +22780,6 @@ class PSBL_PhotAstrom_Par_Param2(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_Par_Param3(ModelClassABC,
-                                 PSBL_PhotAstrom,
-                                 PSBL_Parallax,
-                                 PSBL_PhotAstromParam3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
 class PSBL_PhotAstrom_noPar_Param3(ModelClassABC,
                                    PSBL_PhotAstrom,
                                    PSBL_noParallax,
@@ -22933,159 +22791,10 @@ class PSBL_PhotAstrom_noPar_Param3(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_noPar_Param4(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_EllOrbs_Param4):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_Par_Param4(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_EllOrbs_Param4):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_noPar_Param7(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_EllOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_Par_Param7(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_EllOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-        
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param7(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_CircOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param7(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_CircOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param4(ModelClassABC,
-                                            PSBL_PhotAstrom,
-                                            PSBL_noParallax,
-                                            PSBL_PhotAstrom_CircOrbs_Param4):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param4(ModelClassABC,
-                                          PSBL_PhotAstrom,
-                                          PSBL_Parallax,
-                                          PSBL_PhotAstrom_CircOrbs_Param4):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_noPar_Param3(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_EllOrbs_Param3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_Par_Param3(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_EllOrbs_Param3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param3(ModelClassABC,
-                                            PSBL_PhotAstrom,
-                                            PSBL_noParallax,
-                                            PSBL_PhotAstrom_CircOrbs_Param3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param3(ModelClassABC,
-                                          PSBL_PhotAstrom,
-                                          PSBL_Parallax,
-                                          PSBL_PhotAstrom_CircOrbs_Param3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param3(ModelClassABC,
-                                            PSBL_PhotAstrom,
-                                            PSBL_noParallax,
-                                            PSBL_PhotAstrom_CircOrbs_Param3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param3(ModelClassABC,
-                                          PSBL_PhotAstrom,
-                                          PSBL_Parallax,
-                                          PSBL_PhotAstrom_CircOrbs_Param3):
+class PSBL_PhotAstrom_Par_Param3(ModelClassABC,
+                                 PSBL_PhotAstrom,
+                                 PSBL_Parallax,
+                                 PSBL_PhotAstromParam3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -23137,7 +22846,183 @@ class PSBL_PhotAstrom_Par_Param7(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_noPar_Param8(ModelClassABC,
+class PSBL_PhotAstrom_noPar_LinOrbs_Param1(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_LinOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_LinOrbs_Param6(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_LinOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_LinOrbs_Param7(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_LinOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_LinOrbs_Param1(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_LinOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_LinOrbs_Param6(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_LinOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_LinOrbs_Param7(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_LinOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_AccOrbs_Param1(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_AccOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_AccOrbs_Param6(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_AccOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_AccOrbs_Param7(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_AccOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_AccOrbs_Param1(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_AccOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_AccOrbs_Param6(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_AccOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_AccOrbs_Param7(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_AccOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param3(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param4(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param7(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param8(ModelClassABC,
                                            PSBL_PhotAstrom,
                                            PSBL_noParallax,
                                            PSBL_PhotAstrom_EllOrbs_Param8):
@@ -23148,7 +23033,54 @@ class PSBL_PhotAstrom_EllOrbs_noPar_Param8(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_Par_Param8(ModelClassABC,
+class PSBL_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_EllOrbs_Param3(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_EllOrbs_Param4(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_EllOrbs_Param7(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+        
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_EllOrbs_Param8(ModelClassABC,
                                          PSBL_PhotAstrom,
                                          PSBL_Parallax,
                                          PSBL_PhotAstrom_EllOrbs_Param8):
@@ -23159,7 +23091,51 @@ class PSBL_PhotAstrom_EllOrbs_Par_Param8(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param8(ModelClassABC,
+class PSBL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_CircOrbs_Param3(ModelClassABC,
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_CircOrbs_Param4(ModelClassABC,
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_CircOrbs_Param7(ModelClassABC,
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_CircOrbs_Param8(ModelClassABC,
                                             PSBL_PhotAstrom,
                                             PSBL_noParallax,
                                             PSBL_PhotAstrom_CircOrbs_Param8):
@@ -23170,7 +23146,53 @@ class PSBL_PhotAstrom_CircOrbs_noPar_Param8(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param8(ModelClassABC,
+class PSBL_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC,
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_CircOrbs_Param7(ModelClassABC,
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_CircOrbs_Param4(ModelClassABC,
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_CircOrbs_Param3(ModelClassABC,
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_CircOrbs_Param8(ModelClassABC,
                                           PSBL_PhotAstrom,
                                           PSBL_Parallax,
                                           PSBL_PhotAstrom_CircOrbs_Param8):
@@ -23192,20 +23214,9 @@ class PSBL_Phot_noPar_Param1(ModelClassABC,
         checkconflicts(self)
 
 
-# PSBL_photom_parallax
-@inheritdocstring
-class PSBL_Phot_EllOrbs_Par_Param1(ModelClassABC,
-                                   PSBL_Phot,
-                                   PSBL_Parallax,
-                                   PSBL_Phot_EllOrbs_Param):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
 # PSBL_photom
 @inheritdocstring
-class PSBL_Phot_EllOrbs_noPar_Param1(ModelClassABC,
+class PSBL_Phot_noPar_EllOrbs_Param1(ModelClassABC,
                                      PSBL_Phot,
                                      PSBL_noParallax,
                                      PSBL_Phot_EllOrbs_Param):
@@ -23217,23 +23228,12 @@ class PSBL_Phot_EllOrbs_noPar_Param1(ModelClassABC,
 
 
         
-# PSBL_photom_parallax
-@inheritdocstring
-class PSBL_PhotCircOrbs_Par_Param1(ModelClassABC,
-                                   PSBL_Phot,
-                                   PSBL_Parallax,
-                                   PSBL_Phot_CircOrbs_Param1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
 # PSBL_photom
 @inheritdocstring
-class PSBL_PhotCircOrbs_noPar_Param1(ModelClassABC,
-                                     PSBL_Phot,
-                                     PSBL_noParallax,
-                                     PSBL_Phot_CircOrbs_Param1):
+class PSBL_Phot_noPar_CircOrbs_Param1(ModelClassABC,
+                                      PSBL_Phot,
+                                      PSBL_noParallax,
+                                      PSBL_Phot_CircOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -23247,6 +23247,30 @@ class PSBL_Phot_Par_Param1(ModelClassABC,
                            PSBL_Phot,
                            PSBL_Parallax,
                            PSBL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+# PSBL_photom_parallax
+@inheritdocstring
+class PSBL_Phot_Par_EllOrbs_Param1(ModelClassABC,
+                                   PSBL_Phot,
+                                   PSBL_Parallax,
+                                   PSBL_Phot_EllOrbs_Param):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+# PSBL_photom_parallax
+@inheritdocstring
+class PSBL_Phot_Par_CircOrbs_Param1(ModelClassABC,
+                                    PSBL_Phot,
+                                    PSBL_Parallax,
+                                    PSBL_Phot_CircOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
