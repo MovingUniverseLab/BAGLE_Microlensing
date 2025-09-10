@@ -18063,7 +18063,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     iL: float
         Inclination angle of the system in degrees.
     eL: float
-        Eccentricity of the System
+        Eccentricity of the Lens System
     tpL: float
         This is the time of the periastron of the system in days.
     aL: float
@@ -18076,7 +18076,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     is: float
         Inclination angle of the system in degrees.
     eS: float
-        Eccentricity of the System
+        Eccentricity of the Source System
     pS: float
         Orbital period of the system in days.
     tpS: float
@@ -18100,16 +18100,18 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL', 'big_omegaL', 'iL', 'eL', 'pL', 'tpL', 'aL',
+                          'dL', 'dS', 'omegaL', 'big_omegaL', 'iL', 'eL', 'tpL', 'aL',
                           'omegaS', 'big_omegaS', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
@@ -18400,12 +18402,14 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
@@ -18472,7 +18476,11 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         Dec. of primary source position on sky at t = to_com (arcsec) in an
         arbitrary ref. frame.
 
-
+    muS_E : float
+        Source system proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source system proper motion in the Dec. direction (mas/yr)
+        
     omegaL: float
         The argument of periastron of the primary lens's orbit in degrees.
     big_omegaL: float
@@ -18481,7 +18489,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     iL: float
         Inclination angle of the system in degrees.
     eL: float
-        Eccentricity of the System
+        Eccentricity of the Lens System
 
     tpL: float
         This is the time of the periastron of the system in days.
@@ -18496,7 +18504,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     is: float
         Inclination angle of the system in degrees.
     eS: float
-        Eccentricity of the System
+        Eccentricity of the Source System
     pS: float
         Orbital period of the system in days.
     tpS: float
@@ -18511,14 +18519,9 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
-    b_sff: array or list
-        The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+    b_sff : array or list
+        The ratio of the source flux to the total (source + neighbors + lens):math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     dmag_Lp_Ls : numpy array or list
@@ -18527,17 +18530,18 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
-    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E',
-                          'muS_N',
-                           'omegaL', 'big_omegaL', 'iL', 'tpL', 'aL',
-                          'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 
+                          'xS0_N', 'muS_E', 'muS_N', 'omegaL', 'big_omegaL', 'iL', 'eL', 'tpL', 'aL',
+                          'omegaS', 'big_omegaS', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
     paramPhotFlag = True
@@ -18767,6 +18771,10 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     xS0_N : float
         Dec. of primary source position on sky at t = to_com (arcsec) in an
         arbitrary ref. frame.
+    muS_E : float
+        Source system proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source system proper motion in the Dec. direction (mas/yr)
     
 
     omegaL: float
@@ -18776,8 +18784,6 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         in degrees.
     iL: float
         Inclination angle of the system in degrees.
-    eL: float
-        Eccentricity of the System
 
     tpL: float
         This is the time of the periastron of the system in days.
@@ -18791,8 +18797,7 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         in degrees.
     is: float
         Inclination angle of the system in degrees.
-    eS: float
-        Eccentricity of the System
+
     pS: float
         Orbital period of the system in days.
     tpS: float
@@ -18806,14 +18811,9 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
-        The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
+        The ratio of the source flux to the total (source + neighbors + lens):math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     dmag_Lp_Ls : numpy array or list
@@ -18822,15 +18822,17 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
 
-    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
+    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                  'omegaL', 'big_omegaL', 'iL',  'tpL', 'sepL',
                  'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
 
@@ -18839,14 +18841,14 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
                  omegaL, big_omegaL, iL, tpL, sepL,
                  omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
                          omegaL, big_omegaL, iL, 0, tpL, sepL,
                          omegaS, big_omegaS, iS, 0, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
-                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
 
         # Super handles checking for properly formatted variables.
         PSPL_Param().__init__()
@@ -18903,7 +18905,7 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     iL: float
         Inclination angle of the system in degrees.
     eL: float
-        Eccentricity of the System
+        Eccentricity of the  Lens System
 
     tpL: float
         This is the time of the periastron of the system in days.
@@ -18915,12 +18917,11 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     big_omegaS: float
         The longitude of the ascending node of the secondary source's orbit
         in degrees.
-    is: float
+    iS: float
         Inclination angle of the system in degrees.
     eS: float
-        Eccentricity of the System
-    pS: float
-        Orbital period of the system in days.
+        Eccentricity of the Source System
+
     tpS: float
         This is the time of the periastron of the system in days.
     aS: float
@@ -19258,14 +19259,39 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
         Distance from the observer to the lens system (pc)
     dS : float
         Distance from the observer to the source (pc)
-    aL : float
-        Semi-Major axis of the binary lens system in mas. 
 
-        
-    sepS : float
-        Angular separation of the source secondary from the source primary (mas).
+   
+    omegaL: float
+        The argument of periastron of the primary lens's orbit in degrees.
+    big_omegaL: float
+        The longitude of the ascending node of the secondary lens's orbit
+        in degrees.
+    iL: float
+        Inclination angle of the system in degrees.
 
+    tpL: float
+        This is the time of the periastron of the system in days.
+    aL: float
+        This is the semi-major axis of the binary lens system (mas)
+
+    omegaS: float
+        The argument of periastron of the primary source's orbit in degrees.
+    big_omegaS: float
+        The longitude of the ascending node of the secondary source's orbit
+        in degrees.
+    iS: float
+        Inclination angle of the system in degrees.
+
+    tpS: float
+        This is the time of the periastron of the system in days.
+    aS: float
+        This is the semi-major axis of the binary source system 
         
+    mass_source_p: float
+        Primary source mass in Msun
+    mass_source_s: float
+        Secondary source mass in Msun
+
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
         list or array, with one entry for each photometric filter.
@@ -19313,10 +19339,10 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
                  beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,omegaL, big_omegaL, iL, eL, tpL, aL,
                  omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
-                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+                 raL, decL, obsLocation, root_tol)
 
         return
-                     
+                        
 # ==================================================
 #
 # FSPL Models
