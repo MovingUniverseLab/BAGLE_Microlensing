@@ -10028,7 +10028,7 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
         self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
         self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
         self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
-        self.accL = np.array([accLsec_E, delta_muSsec_N])
+        self.accL = np.array([accLsec_E, accLsec_N])
 
         return
 
@@ -16673,7 +16673,7 @@ class BSBL(PSBL):
                 xL2 += np.outer(dt_in_years, self.muL_sec - self.muL) * 1e-3
                 # Apply acceleration difference.
                 if self.orbitFlag == 'accelerated':
-                    xL2 += np.outer((0.5 * (dt_in_years ** 2)), self.acc) * 1e-3
+                    xL2 += np.outer((0.5 * (dt_in_years ** 2)), self.accL) * 1e-3
 
             elif self.orbitFlag == 'Keplerian':
                 dt_in_years = (t - self.t0_com) / days_per_year  # About Center of Mass
@@ -17414,7 +17414,13 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         # Equation of motion for just the background source.
         dt1_in_years = (t - self.t0) / days_per_year
 
-        if self.orbitFlag == 'Keplerian':
+        if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
+            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
+            if self.orbitFlag == 'accelerated':
+                xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.accS) * 1e-3
+
+        elif self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
             xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass. xS0_com is the initial source CoM position at t0=t0_p.
 
@@ -17836,8 +17842,6 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -17847,6 +17851,8 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         such as 'jwst' or 'spitzer'. Can be a single string if all observer
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
+     root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
@@ -18046,6 +18052,10 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
         RA Source proper motion (mas/yr) for secondary source.
     delta_muS_sec_N: float
         Dec Source proper motion (mas/yr) for secondary source.
+    delta_muL_sec_E: float
+        RA Source proper motion (mas/yr) for secondary source.
+    delta_muL_sec_N: float
+        Dec Source proper motion (mas/yr) for secondary source.
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
         list or array, with one entry for each photometric filter.
@@ -18061,8 +18071,6 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -18072,11 +18080,15 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
         such as 'jwst' or 'spitzer'. Can be a single string if all observer
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
+     root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS',
-                          'delta_muS_sec_E', 'delta_muS_sec_N']
+                          'delta_muS_sec_E', 'delta_muS_sec_N',
+                         'delta_muLsec_E', 'delta_muLsec_N']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -18087,6 +18099,7 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sepL, alphaL, sepS, alphaS,
                  delta_muS_sec_E, delta_muS_sec_N,
+                 delta_muLsec_E, delta_muLsec_N,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
@@ -18098,6 +18111,12 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
 
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E, self.delta_muS_sec_N = self.delta_muS_sec
+        self.muS_sec = np.array([muS_E + delta_muS_sec_E, muS_N + delta_muS_sec_N])
+            
+
+        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
+        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
 
         return
 
