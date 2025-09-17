@@ -18121,7 +18121,8 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
         return
 
 
-class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstromParam1):
+
+class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
     """BSBL model for astrometry and photometry - physical parameterization.
 
     A binary source binary lens model for microlensing. This model uses a
@@ -18177,10 +18178,18 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstromParam1):
         RA Source proper motion (mas/yr) for secondary source.
     delta_muS_sec_N: float
         Dec Source proper motion (mas/yr) for secondary source.
+    delta_muL_sec_E: float
+        RA Source proper motion (mas/yr) for secondary source.
+    delta_muL_sec_N: float
+        Dec Source proper motion (mas/yr) for secondary source.
     accS_E:
         Acceleration of the secondary source in the direction of RA (mas/yr^2)
     accS_N:
         Acceleration of the secondary source in the direction of DEC (mas/yr^2)
+    accL_E:
+        Acceleration of the secondary lens in the direction of RA (mas/yr^2)
+    accL_N:
+        Acceleration of the secondary lens in the direction of DEC (mas/yr^2)
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
         list or array, with one entry for each photometric filter.
@@ -18196,8 +18205,6 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstromParam1):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -18207,11 +18214,15 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstromParam1):
         such as 'jwst' or 'spitzer'. Can be a single string if all observer
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
+     root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS',
-                          'delta_muS_sec_E', 'delta_muS_sec_N', 'accS_E', 'accS_N']
+                          'delta_muS_sec_E', 'delta_muS_sec_N',
+                         'delta_muLsec_E', 'delta_muLsec_N', 'accS_E', 'accS_N', 'accL_E', 'accL_N']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -18221,29 +18232,42 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstromParam1):
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sepL, alphaL, sepS, alphaS,
-                 delta_muS_sec_E, delta_muS_sec_N, accS_E, accS_N,
+                 delta_muS_sec_E, delta_muS_sec_N,
+                 delta_muLsec_E, delta_muLsec_N,accS_E, accS_N, accL_E, accL_N,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-                     
-        super().__init__(mLp, mLs, t0, xS0_E, xS0_N,
-                         beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                         sepL, alphaL, sepS, alphaS,
-                         mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
-                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
-        self.delta_muS_sec_E, self.delta_muS_sec_N = self.delta_muS_sec
-                     
-        self.acc = np.array([accS_E, accS_N])
-        self.acc_E, self.acc_N = self.acc
-        self.acc_amp = np.linalg.norm(self.acc)
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N,
+                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                 sepL, alphaL, sepS, alphaS,
+                 delta_muS_sec_E, delta_muS_sec_N,
+                 delta_muLsec_E, delta_muLsec_N,
+                 mag_src_pri, mag_src_sec, b_sff,
+                  dmag_Lp_Ls,
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        
+        self.accS = np.array([accS_E, accS_N])
+        self.accS_E, self.accS_N = self.accS
+        self.accS_amp = np.linalg.norm(self.accS)
         # self.acc_hat = self.muRel_sec_hat
-        if self.acc_E == 0.0 and self.acc_N == 0.0:
-            self.acc_hat = np.array([0.0, 0.0])
+        if self.accS_E == 0.0 and self.accS_N == 0.0:
+            self.accS_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc / self.acc_amp
+            self.accS_hat = self.accS / self.accS_amp
+
+        self.accL = np.array([accL_E, accL_N])
+        self.accL_E, self.accL_N = self.accL
+        self.accL_amp = np.linalg.norm(self.accL)
+        # self.acc_hat = self.muRel_sec_hat
+        if self.accL_E == 0.0 and self.accL_N == 0.0:
+            self.accL_hat = np.array([0.0, 0.0])
+        else:
+            self.accL_hat = self.accL / self.accL_amp
+
 
         return
+
 
 
 class BSBL_PhotAstromParam2(PSPL_Param):
