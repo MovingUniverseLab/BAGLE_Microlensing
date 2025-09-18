@@ -6320,7 +6320,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
             if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
                 dt_in_years = (t - self.t0) / days_per_year
                 # Get positions assuming binary origin at primary.
-                xL1 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)  # parallax applied
+                xL1 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx) - offset  # parallax applied
                 xL2 = xL1 + (2 * offset)
                 # Apply velocity difference.
                 xL2 += np.outer(dt_in_years, self.muL_sec - self.muL) * 1e-3
@@ -6916,7 +6916,7 @@ class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
                          sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL = raL, decL = decL, obsLocation = obsLocation, root_tol = root_tol)
 
-        self.delta_muL_sec = np.array([accLsec_E, delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
         self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
         self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
 
@@ -16667,7 +16667,7 @@ class BSBL(PSBL):
             if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
                 dt_in_years = (t - self.t0) / days_per_year
                 # Get positions assuming binary origin at primary.
-                xL1 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)  # parallax applied
+                xL1 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx) - offset # parallax applied
                 xL2 = xL1 + (2 * offset)
                 # Apply velocity difference.
                 xL2 += np.outer(dt_in_years, self.muL_sec - self.muL) * 1e-3
@@ -17421,8 +17421,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
                 xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.accS) * 1e-3
 
         elif self.orbitFlag == 'Keplerian':
-            dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
-            xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass. xS0_com is the initial source CoM position at t0=t0_p.
+            dt_in_years = (t - self.t0_com) / days_per_year
+            xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 
 
             orb = orbits.Orbit()
             orb.w = self.omegaS
@@ -18789,6 +18789,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.q = self.mLs / self.mLp
         qeff_lens = (1 - self.q) / (1 + self.q)
         t0_geom_temp = t0_com - self.tE * self.sepL / self.thetaE_amp * qeff_lens * np.cos(self.phi_radL)
+        self.t0_geo = t0_geom_temp
         self.phi_radS = self.alphaS_rad - np.arctan2(self.piE_E, self.piE_N)
         self.sepS_AU = self.dS * (self.sepS * 1e-3) * units.AU
         self.mass_sources = ((4 * np.pi ** 2 * self.sepS_AU ** 3) / (const.G * (self.pS * units.day) ** 2)).to('Msun')
