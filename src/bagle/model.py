@@ -244,6 +244,10 @@ Binary source, binary lens, photometry and astrometry
     - :class:`BSBL_PhotAstrom_Par_Param2`
     - :class:`BSBL_PhotAstrom_noPar_Param1`
     - :class:`BSBL_PhotAstrom_noPar_Param2`
+    - :class:`BSBL_PhotAstrom_Par_LinOrbs_Param1`
+    - :class:`BSBL_PhotAstrom_noPar_LinOrbs_Param1`
+    - :class:`BSBL_PhotAstrom_Par_AccOrbs_Param1`
+    - :class:`BSBL_PhotAstrom_noPar_AccOrbs_Param1`
     - :class:`BSBL_PhotAstrom_Par_CircOrbs_Param1`
     - :class:`BSBL_PhotAstrom_Par_CircOrbs_Param2`
     - :class:`BSBL_PhotAstrom_noPar_CircOrbs_Param1`
@@ -6661,8 +6665,7 @@ class PSBL_noParallax(PSPL_noParallax):
 class PSBL_PhotAstromParam1(PSPL_Param):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
+    Note that this is a STATIC binary lens, i.e.
     there is no orbital motion.
 
     Attributes
@@ -6832,9 +6835,8 @@ class PSBL_PhotAstromParam1(PSPL_Param):
 class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period).
 
     Attributes
     ----------
@@ -6857,9 +6859,9 @@ class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
         Lens system proper motion in the RA direction (mas/yr)
     muL_N : float
         Lens system proper motion in the Dec. direction (mas/yr)
-    delta_muLsec_E: float
+    delta_muL_sec_E: float
         Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
+    delta_muL_sec_N: float
         Secondary Lens System proper motion in the Dec. direction (mas/yr)
     muS_E : float
         Source proper motion in the RA direction (mas/yr)
@@ -6896,7 +6898,7 @@ class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N',
+                          'beta', 'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N',
                           'muS_E', 'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
@@ -6906,7 +6908,7 @@ class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
     orbitFlag = 'linear'
 
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta,
-                 muL_E, muL_N, delta_muLsec_E, delta_muLsec_N,
+                 muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N,
                  muS_E, muS_N, dL, dS,
                  sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
@@ -6916,9 +6918,9 @@ class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
                          sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL = raL, decL = decL, obsLocation = obsLocation, root_tol = root_tol)
 
-        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
-        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
 
         return
 
@@ -6926,9 +6928,8 @@ class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
 class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
 
     Attributes
     ----------
@@ -6951,9 +6952,9 @@ class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
         Lens system proper motion in the RA direction (mas/yr)
     muL_N : float
         Lens system proper motion in the Dec. direction (mas/yr)
-    delta_muLsec_E: float
+    delta_muL_sec_E: float
         Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
+    delta_muL_sec_N: float
         Secondary Lens System proper motion in the Dec. direction (mas/yr)
     accLsec_E:
         Acceleration of the secondary lens in the direction of RA (mas/yr^2)
@@ -6994,7 +6995,7 @@ class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N', 'beta',
-                          'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'accLsec_E', 'accLsec_N',
+                          'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
                           'muS_E', 'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
@@ -7004,7 +7005,7 @@ class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
     orbitFlag = 'accelerated'
 
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta,
-                 muL_E, muL_N, delta_muLsec_E, delta_muLsec_N, accLsec_E, accLsec_N,
+                 muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N,
                  muS_E, muS_N, dL, dS,
                  sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
@@ -7014,9 +7015,9 @@ class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
                          sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
-        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
         self.accL = np.array([accLsec_E, accLsec_N])
 
         return
@@ -7025,7 +7026,8 @@ class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
 class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     """
     Point source binary lens.
-    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
+    Note that this is a non-STATIC binary lens, 
+    i.e. there is orbital motion.
 
     Attributes
     ----------
@@ -7260,7 +7262,8 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
     """
     Point source binary lens.
-    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
+    Note that this is a non-STATIC binary lens, 
+    i.e. there is orbital motion.
 
     Attributes
     ----------
@@ -7526,8 +7529,7 @@ class PSBL_PhotAstromParam2(PSPL_Param):
 class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a binary lens with the
+    Note that this is a binary lens with the
     secondary lens moving linearly (a good approximation for times << orbital period).
 
     Attributes
@@ -7566,9 +7568,9 @@ class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
     alpha : float
         Angle made between the binary axis and North;
         measured in degrees East of North.
-    delta_muLsec_E: float
+    delta_muL_sec_E: float
         Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
+    delta_muL_sec_N: float
         Secondary Lens System proper motion in the Dec. direction (mas/yr)
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
@@ -7594,7 +7596,7 @@ class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                           'q', 'sep', 'alpha',
-                          'delta_muLsec_E', 'delta_muLsec_N']
+                          'delta_muL_sec_E', 'delta_muL_sec_N']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -7607,7 +7609,7 @@ class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 delta_muLsec_E, delta_muLsec_N,
+                 delta_muL_sec_E, delta_muL_sec_N,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
@@ -7617,9 +7619,9 @@ class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
-        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
 
         return
 
@@ -7627,9 +7629,8 @@ class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
 class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a binary lens with the
-    secondary lens moving linearly (a good approximation for times << orbital period).
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
 
     Attributes
     ----------
@@ -7665,9 +7666,9 @@ class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
     alpha : float
         Angle made between the binary axis and North;
         measured in degrees East of North.
-    delta_muLsec_E: float
+    delta_muL_sec_E: float
         Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
+    delta_muL_sec_N: float
         Secondary Lens System proper motion in the Dec. direction (mas/yr)
     accLsec_E: float
         Secondary Lens System's acceleration in the RA. direction (mas/yr^2)
@@ -7697,7 +7698,7 @@ class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                           'q', 'sep', 'alpha',
-                          'delta_muLsec_E', 'delta_muLsec_N', 'accLsec_E', 'accLsec_N']
+                          'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -7710,7 +7711,7 @@ class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 delta_muLsec_E, delta_muLsec_N, accLsec_E, accLsec_N,
+                 delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0, u0_amp, tE, thetaE, piS,
@@ -7719,9 +7720,9 @@ class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
                          b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
-        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
         self.accL = np.array([accLsec_E, accLsec_N])
 
         return
@@ -7730,8 +7731,7 @@ class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
 class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a NON-STATIC binary lens with
+    Note that this is a NON-STATIC binary lens with
     orbital motion.
 
     Attributes
@@ -7944,9 +7944,8 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 class PSBL_PhotAstrom_CircOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a NON-STATIC binary lens with
-    circuarl orbital motion.
+    Note that this is a NON-STATIC binary lens with
+    circular orbital motion.
 
     Attributes
     ----------
@@ -8227,9 +8226,9 @@ class PSBL_PhotAstromParam3(PSPL_Param):
 class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period).
+
 
     Attributes
     ----------
@@ -8268,9 +8267,9 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
     alpha : float
         Angle made between the binary axis and North;
         measured in degrees East of North.
-    delta_muLsec_E: float
+    delta_muL_sec_E: float
         Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
+    delta_muL_sec_N: float
         Secondary Lens System proper motion in the Dec. direction (mas/yr)
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
@@ -8301,7 +8300,7 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
                           'xS0_E', 'xS0_N',
                           'muS_E', 'muS_N',
                           'q', 'sep', 'alpha',
-                          'delta_muLsec_E', 'delta_muLsec_N']
+                          'delta_muL_sec_E', 'delta_muL_sec_N']
     phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -8315,7 +8314,7 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 delta_muLsec_E, delta_muLsec_N,
+                 delta_muL_sec_E, delta_muL_sec_N,
                  b_sff, mag_base, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
@@ -8324,9 +8323,9 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
                  b_sff, mag_base, dmag_Lp_Ls,
                  raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
-        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
 
         return
 
@@ -8334,9 +8333,9 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
 class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
+     Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
+
 
     Attributes
     ----------
@@ -8375,9 +8374,9 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
     alpha : float
         Angle made between the binary axis and North;
         measured in degrees East of North.
-    delta_muLsec_E: float
+    delta_muL_sec_E: float
         Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
+    delta_muL_sec_N: float
         Secondary Lens System proper motion in the Dec. direction (mas/yr)
     accLsec_E: float
         Secondary Lens System's acceleration in the RA. direction (mas/yr^2)
@@ -8412,7 +8411,7 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
                           'xS0_E', 'xS0_N',
                           'muS_E', 'muS_N',
                           'q', 'sep', 'alpha',
-                          'delta_muLsec_E', 'delta_muLsec_N', 'accLsec_E', 'accLsec_N']
+                          'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N']
     phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -8426,7 +8425,7 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 delta_muLsec_E, delta_muLsec_N, accLsec_E, accLsec_N,
+                 delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N,
                  b_sff, mag_base, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
@@ -8435,9 +8434,9 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
                        b_sff, mag_base, dmag_Lp_Ls,
                        raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
-        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
         self.accL = np.array([accLsec_E, accLsec_N])
 
         return
@@ -8446,8 +8445,7 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
 class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
+    Note that this is a non-STATIC binary lens, i.e.
     there is orbital motion.
 
     Attributes
@@ -8623,8 +8621,7 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
 class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
+    Note that this is a non-STATIC binary lens, i.e.
     there is orbital motion.
 
     Attributes
@@ -8915,8 +8912,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
 class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
+    Note that this is a non-STATIC binary lens, i.e.
     there is orbital motion.
 
     Attributes
@@ -9083,8 +9079,7 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
 class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
+    Note that this is a non-STATIC binary lens, i.e.
     there is orbital motion.
 
     Attributes
@@ -9559,9 +9554,9 @@ class PSBL_PhotAstromParam6(PSPL_Param):
 class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
+
 
     Attributes
     ----------
@@ -9584,9 +9579,9 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
         Primary Lens System proper motion in the RA direction (mas/yr)
     muL_N : float
         Primary Lens System proper motion in the Dec. direction (mas/yr)
-    delta_muLsec_E: float
+    delta_muL_sec_E: float
         Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
+    delta_muL_sec_N: float
         Secondary Lens System proper motion in the Dec. direction (mas/yr)
     accLsec_E: float
         Secondary Lens System's acceleration in the RA. direction (mas/yr^2)
@@ -9626,7 +9621,7 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muLsec_E', 'delta_muLsec_N', 'accLsec_E', 'accLsec_N',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
                           'muS_E', 'muS_N',
                           'q', 'sep', 'alpha']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
@@ -9640,7 +9635,7 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
 
     def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
-                 delta_muLsec_E, delta_muLsec_N, accLsec_E, accLsec_N, muS_E, muS_N,
+                 delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N,
                  q, sep, alpha,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
@@ -9650,9 +9645,9 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
                          b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
-        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([self.muL_E + delta_muLsec_E, self.muL_N + delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([self.muL_E + delta_muL_sec_E, self.muL_N + delta_muL_sec_N])
         self.accL = np.array([accLsec_E, accLsec_N])
 
         return
@@ -9661,9 +9656,8 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
 class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period).
 
     Attributes
     ----------
@@ -9686,9 +9680,9 @@ class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
         Primary Lens System proper motion in the RA direction (mas/yr)
     muL_N : float
         Primary Lens System proper motion in the Dec. direction (mas/yr)
-    delta_muLsec_E: float
+    delta_muL_sec_E: float
         Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
+    delta_muL_sec_N: float
         Secondary Lens System proper motion in the Dec. direction (mas/yr)
     muS_E : float
         Source proper motion in the RA direction (mas/yr)
@@ -9724,7 +9718,7 @@ class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muLsec_E', 'delta_muLsec_N', 'muS_E', 'muS_N',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'muS_E', 'muS_N',
                           'q', 'sep', 'alpha']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
     additional_param_names = ['mL', 'piL', 'piRel',
@@ -9737,13 +9731,13 @@ class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
-                 delta_muLsec_E, delta_muLsec_N, muS_E, muS_N,
+                 delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N,
                  q, sep, alpha,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0, u0_amp, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N,
-                         delta_muLsec_E, delta_muLsec_N, 0, 0, muS_E, muS_N,
+                         delta_muL_sec_E, delta_muL_sec_N, 0, 0, muS_E, muS_N,
                          q, sep, alpha,
                          b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
@@ -9939,9 +9933,8 @@ class PSBL_PhotAstromParam7(PSPL_Param):
 class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
 
     Attributes
     ----------
@@ -9964,9 +9957,9 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
         Primary Lens System proper motion in the RA direction (mas/yr)
     muL_N : float
         Primary Lens System proper motion in the Dec. direction (mas/yr)
-    delta_muLsec_E: float
+    delta_muL_sec_E: float
         Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
+    delta_muL_sec_N: float
         Secondary Lens System proper motion in the Dec. direction (mas/yr)
     accLsec_E: float
         Secondary Lens System's acceleration in the RA. direction (mas/yr^2)
@@ -10006,7 +9999,7 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N', 'beta_p',
-                          'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'accLsec_E', 'accLsec_N',
+                          'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
                           'muS_E', 'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
@@ -10016,7 +10009,7 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
     orbitFlag = 'accelerated'
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p,
-                 muL_E, muL_N, delta_muLsec_E, delta_muLsec_N, accLsec_E, accLsec_N,
+                 muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N,
                  muS_E, muS_N, dL, dS,
                  sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
@@ -10025,9 +10018,9 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
                          sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
-        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
         self.accL = np.array([accLsec_E, accLsec_N])
 
         return
@@ -10036,9 +10029,8 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
 class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period).
 
     Attributes
     ----------
@@ -10061,9 +10053,9 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
         Primary Lens System proper motion in the RA direction (mas/yr)
     muL_N : float
         Primary Lens System proper motion in the Dec. direction (mas/yr)
-    delta_muLsec_E: float
+    delta_muL_sec_E: float
         Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
+    delta_muL_sec_N: float
         Secondary Lens System proper motion in the Dec. direction (mas/yr)
     muS_E : float
         Source proper motion in the RA direction (mas/yr)
@@ -10099,7 +10091,7 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'muS_E', 'muS_N',
+                          'beta_p', 'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'sep', 'alpha']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
@@ -10109,12 +10101,12 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
                  beta_p, muL_E, muL_N,
-                 delta_muLsec_E, delta_muLsec_N, muS_E, muS_N, dL, dS,
+                 delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS,
                  sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
-                         beta, muL_E, muL_N, delta_muLsec_E,
-                         delta_muLsec_N, 0, 0, muS_E, muS_N, dL, dS,
+                         beta, muL_E, muL_N, delta_muL_sec_E,
+                         delta_muL_sec_N, 0, 0, muS_E, muS_N, dL, dS,
                          sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
         return
@@ -10123,8 +10115,9 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
 class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). 
+    Note that this is a non-STATIC binary lens, i.e.
+    there is orbital motion.
+
     Attributes
     ----------
     mLp, mLs : float
@@ -10365,8 +10358,8 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
 class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). 
+    Note that this is a non-STATIC binary lens, i.e.
+    there is orbital motion.
 
     Attributes
     ----------
@@ -10643,8 +10636,7 @@ class PSBL_PhotAstromParam8(PSPL_Param):
 class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
+    Note that this is a non-STATIC binary lens, i.e.
     there is orbital motion.
 
     Attributes
@@ -10807,8 +10799,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
 class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
+    Note that this is a non-STATIC binary lens, i.e.
     there is orbital motion.
 
     Attributes
@@ -11063,14 +11054,9 @@ class PSBL_PhotParam1(PSPL_Param):
         return
 
 
-class PSBL_Phot_EllOrbs_Param(PSPL_Param):
+class PSBL_Phot_EllOrbs_Param1(PSPL_Param):
     """
     Point source binary lens, photometry only with orbital motion.
-
-    It has 3 more parameters than PSPL_PhotParam1:
-       * mass ratio
-       * separation -- in units of thetaE
-       * angle of approach
        
     Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
 
@@ -11239,14 +11225,10 @@ class PSBL_Phot_EllOrbs_Param(PSPL_Param):
 
 
 
-class PSBL_Phot_CircOrbs_Param1(PSBL_Phot_EllOrbs_Param):
+class PSBL_Phot_CircOrbs_Param1(PSBL_Phot_EllOrbs_Param1):
     """
     Point source binary lens, photometry only.
 
-    It has 3 more parameters than PSPL_PhotParam1:
-       * mass ratio
-       * separation -- in units of thetaE
-       * angle of approach
     Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
 
     Attributes
@@ -12434,9 +12416,6 @@ class BSPL_PhotParam1(PSPL_Param):
         :math:`b_sff = (f_S1 + f_S2) / (f_S1 + f_s2 + f_L + f_N)`.
         This must be passed in as a list or
         array, with one entry for each photometric filter.
-    mag_src:  array or list
-        Photometric magnitude of the source. This must be passed in as a
-        list or array, with one entry for each photometric filter.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -13627,7 +13606,9 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
 class BSPL_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstromParam1):
     """BSPL model for astrometry and photometry - physical parameterization - for linear orbits.
 
-A Binary Point Source Point Lens model for microlensing. This model uses a parameterization that depends on only physical quantities such as the proper motions of the lens, the primary source and the secondary source. This is a linear orbit model.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period).
+
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -13752,7 +13733,9 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
 class BSPL_PhotAstrom_AccOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
     """BSPL model for astrometry and photometry - physical parameterization - for linear orbits.
 
-A Binary Point Source Point Lens model for microlensing. This model uses a parameterization that depends on only physical quantities such as the proper motions of the lens, the primary source and the secondary source. This is a linear orbit model.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period) with acceleration.
+
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -13882,9 +13865,9 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
 class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period).
+
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14010,7 +13993,8 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
 class BSPL_PhotAstrom_AccOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
     """BSPL model for astrometry and photometry - physical parameterization - for linear orbits.
 
-A Binary Point Source Point Lens model for microlensing. This model uses a parameterization that depends on only physical quantities such as the proper motions of the lens, the primary source and the secondary source. This is a linear orbit model.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period) with acceleration.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14139,9 +14123,8 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
 class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period).
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14266,9 +14249,8 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
 class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period) with acceleration.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14398,9 +14380,8 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
 class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14688,9 +14669,8 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14927,9 +14907,8 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -15196,9 +15175,8 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -15243,7 +15221,7 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         RA Lens proper motion (mas/yr)
     muL_N: float
         Dec Lens proper motion (mas/yr)
-        omega_pri: float
+    omega_pri: float
         The argument of periastron of the primary star's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
@@ -15508,9 +15486,8 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
 class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -15642,9 +15619,8 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
 class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -15771,9 +15747,8 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
 class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -15902,9 +15877,8 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
 class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -16023,9 +15997,8 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
 class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -16150,9 +16123,8 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
 class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+     Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -16271,9 +16243,8 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
 class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -16396,10 +16367,13 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
 
 class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
     """
-    Point Source Point Lens with GP model for microlensing. This model includes
-    proper motions of the source and the source position on the sky.
-    It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
-    instead of thetaE.
+    BSPL model for astrometry and photometry with GP - physical parameterization.
+
+     Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
+
+    Note the attributes, RA (raL) and Dec (decL) are required
+    if you are calculating a model with parallax.
 
     Attributes
     ----------
@@ -16507,10 +16481,13 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
 
 class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
     """
-    Point Source Point Lens with GP model for microlensing. This model includes
-    proper motions of the source and the source position on the sky.
-    It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
-    instead of thetaE.
+    BSPL model for astrometry and photometry with GP - physical parameterization.
+
+     Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
+
+    Note the attributes, RA (raL) and Dec (decL) are required
+    if you are calculating a model with parallax.
 
     Attributes
     ----------
@@ -18002,7 +17979,10 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
     A binary source binary lens model for microlensing. This model uses a
     parameterization that depends on only physical quantities such as the
     lens masses and positions and proper motions.
-    Note that this is a STATIC binary lens, i.e. there is no orbital motion.
+    
+    Note that this is a binary source and binay lens with the
+    secondary source and secondary lens moving linearly (a good approximation for times << orbital period).
+
 
     Attributes
     ----------
@@ -18088,7 +18068,7 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS',
                           'delta_muS_sec_E', 'delta_muS_sec_N',
-                         'delta_muLsec_E', 'delta_muLsec_N']
+                         'delta_muL_sec_E', 'delta_muL_sec_N']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -18099,7 +18079,7 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sepL, alphaL, sepS, alphaS,
                  delta_muS_sec_E, delta_muS_sec_N,
-                 delta_muLsec_E, delta_muLsec_N,
+                 delta_muL_sec_E, delta_muL_sec_N,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
@@ -18114,9 +18094,9 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
         self.muS_sec = np.array([muS_E + delta_muS_sec_E, muS_N + delta_muS_sec_N])
             
 
-        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
-        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
 
         return
 
@@ -18128,7 +18108,10 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
     A binary source binary lens model for microlensing. This model uses a
     parameterization that depends on only physical quantities such as the
     lens masses and positions and proper motions.
-    Note that this is a STATIC binary lens, i.e. there is no orbital motion.
+    
+    Note that this is a binary source and binay lens with the
+    secondary source and secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
+
 
     Attributes
     ----------
@@ -18222,7 +18205,7 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS',
                           'delta_muS_sec_E', 'delta_muS_sec_N',
-                         'delta_muLsec_E', 'delta_muLsec_N', 'accS_E', 'accS_N', 'accL_E', 'accL_N']
+                         'delta_muL_sec_E', 'delta_muL_sec_N', 'accS_E', 'accS_N', 'accL_E', 'accL_N']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -18233,7 +18216,7 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sepL, alphaL, sepS, alphaS,
                  delta_muS_sec_E, delta_muS_sec_N,
-                 delta_muLsec_E, delta_muLsec_N,accS_E, accS_N, accL_E, accL_N,
+                 delta_muL_sec_E, delta_muL_sec_N,accS_E, accS_N, accL_E, accL_N,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
@@ -18241,7 +18224,7 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sepL, alphaL, sepS, alphaS,
                  delta_muS_sec_E, delta_muS_sec_N,
-                 delta_muLsec_E, delta_muLsec_N,
+                 delta_muL_sec_E, delta_muL_sec_N,
                  mag_src_pri, mag_src_sec, b_sff,
                   dmag_Lp_Ls,
                  raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
@@ -18520,7 +18503,8 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     A binary source binary lens model for microlensing. This model uses a
     parameterization that depends on only physical quantities such as the
     lens masses and positions and proper motions.
-    Note that this is a STATIC binary lens, i.e. there is no orbital motion.
+    
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -18825,7 +18809,8 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     A binary source binary lens model for microlensing. This model uses a
     parameterization that depends on only physical quantities such as the
     lens masses and positions and proper motions.
-    Note that this is a STATIC binary lens, i.e. there is no orbital motion.
+    
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -18942,7 +18927,8 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     A binary source binary lens model for microlensing. This model uses a
     parameterization that depends on only physical quantities such as the
     lens masses and positions and proper motions.
-    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
+    
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -19238,7 +19224,8 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     A binary source binary lens model for microlensing. This model uses a
     parameterization that depends on only physical quantities such as the
     lens masses and positions and proper motions.
-    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
+    
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -19359,9 +19346,10 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     with primary lens and primary source center. 
     
     A binary source binary lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the 
-    lens masses and positions and proper motions. 
-    Note that this is a STATIC binary lens, i.e. there is no orbital motion.
+    parameterization that depends on only physical quantities such as the
+    lens masses and positions and proper motions.
+    
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -19722,9 +19710,10 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
     with primary lens and primary source center. 
     
     A binary source binary lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the 
-    lens masses and positions and proper motions. 
-    Note that this is a STATIC binary lens, i.e. there is no orbital motion.
+    parameterization that depends on only physical quantities such as the
+    lens masses and positions and proper motions.
+    
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -23715,7 +23704,7 @@ class PSBL_Phot_noPar_Param1(ModelClassABC,
 class PSBL_Phot_noPar_EllOrbs_Param1(ModelClassABC,
                                      PSBL_Phot,
                                      PSBL_noParallax,
-                                     PSBL_Phot_EllOrbs_Param):
+                                     PSBL_Phot_EllOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -23754,7 +23743,7 @@ class PSBL_Phot_Par_Param1(ModelClassABC,
 class PSBL_Phot_Par_EllOrbs_Param1(ModelClassABC,
                                    PSBL_Phot,
                                    PSBL_Parallax,
-                                   PSBL_Phot_EllOrbs_Param):
+                                   PSBL_Phot_EllOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
