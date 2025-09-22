@@ -2404,25 +2404,28 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     pylima_ev = event.Event()
     pylima_ev.name = 'Fubar'
     pylima_ev.telescopes.append(pylima_tel)
-    pylima_fancy = pyLIMA_fancy_parameters.StandardFancyParameters()
+    #pylima_fancy = pyLIMA_fancy_parameters.StandardFancyParameters()
     parallax_model = ['None', pylima_t0_par]
 
     pylima_mod = generate_model.create_model('PSBL', pylima_ev,
                                              parallax=parallax_model,
-                                             fancy_parameters=pylima_fancy)
+                                             fancy_parameters=None)#pylima_fancy)
     pylima_mod.define_model_parameters()
     pylima_mod.blend_flux_ratio = False
+    pylima_mod.astrometry = False
     pylima_mod.blend_flux_parameter = 'fblend'
 
     tmp_params = [pylima_t0, pylima_u0, tE, sep, pylima_q, phi_rad]
     pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
     print(tmp_params)
+
+    pylima_amp = pylima_mod.model_magnification(pylima_tel, pylima_par)
+
+    pylima_mod.derive_telescope_flux(pylima_tel, pylima_par, pylima_amp)
     pylima_par.fsource_OGLE = microltoolbox.brightness_transformation.magnitude_to_flux(mag_src)
     pylima_par.fblend_OGLE = pylima_par.fsource_OGLE * (1.0 - b_sff) / b_sff
     pylima_par['fsource_OGLE'] = microltoolbox.brightness_transformation.magnitude_to_flux(mag_src)
     pylima_par['fblend_OGLE'] = pylima_par.fsource_OGLE * (1.0 - b_sff) / b_sff
-
-    pylima_amp = pylima_mod.model_magnification(pylima_tel, pylima_par)
 
     pylima_mod_out = pylima_mod.compute_the_microlensing_model(pylima_tel, pylima_par)
     pylima_lcurve = pylima_mod_out['photometry']
@@ -2447,14 +2450,16 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
 
         f1.plot(time_mjd, pylima_lcurve_mag, 'ko', label='pyLIMA')
         f1.plot(time_mjd, our_mag, 'r.', label='Ours')
-#        f1.plot(time_mjd, pylima_amp, 'ko', label='pyLIMA')
-#        f1.plot(time_mjd, our_amp, 'r.', label='Ours')
+
+        #f1.plot(time_mjd, pylima_amp, 'ko', label='pyLIMA')
+        #f1.plot(time_mjd, our_amp, 'r.', label='Ours')
         f1.invert_yaxis()
         f1.set_xlabel('MJD (day)')
         f1.set_ylabel('I (mag)')
         f1.legend()
 
         f2.plot(time_mjd, pylima_lcurve_mag - our_mag, 'k.')
+        #f2.plot(time_mjd, pylima_amp - our_amp, 'k.')
         f2.set_xlabel('MJD (day)')
         f2.set_ylabel('PyL-Ours')
 
