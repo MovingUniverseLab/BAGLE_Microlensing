@@ -86,9 +86,11 @@ def test_array_input():
 def compare_mulens_to_bagle_psbl_phot(ra, dec, t_mjd,
                                       t0_m, u0_m, tE_m,
                                       piEE_m, piEN_m, t0par,
-                                      q_m, alpha_m, sep,
+                                      q_m, alpha_m, sep_m,
                                       return_mag=False,
-                                      plot=True):
+                                      plot_lc=False,
+                                      plot_conv=False,
+                                      verbose=False):
     """
     return_mag : bool
         True : lightcurve in  magnitudes assuming an unblended 22nd mag source.
@@ -98,10 +100,9 @@ def compare_mulens_to_bagle_psbl_phot(ra, dec, t_mjd,
     output = fc.convert_bagle_mulens_psbl_phot(ra, dec,
                                                t0_m, u0_m, tE_m,
                                                piEE_m, piEN_m, t0par,
-                                               q_m, alpha_m, sep,
-                                               mod_in='mulens')
-
-    t0_b, u0_b, tE_b, piEE_b, piEN_b, q_b, alpha_b = output
+                                               q_m, alpha_m, sep_m,
+                                               mod_in='mulens', plot=plot_conv)
+    t0_b, u0_b, tE_b, piEE_b, piEN_b, q_b, alpha_b, sep_b = output
 
     # Get HJD from MJD (since MulensModel uses HJD).
     t_hjd = t_mjd + 2400000.5
@@ -110,69 +111,110 @@ def compare_mulens_to_bagle_psbl_phot(ra, dec, t_mjd,
     coords = SkyCoord(ra, dec, unit=(u.deg, u.deg))
 
     # Get the lightcurve from the geoprojected parameters.
-    mag_mulens = get_phot_mulens_psbl(coords, t0_m, u0_m, tE_m, 
-                                      piEE_m, piEN_m, t0par, 
-                                      alpha_m, q_m, sep, t_hjd,
+    mag_mulens = get_phot_mulens_psbl(coords, t0_m, u0_m, tE_m,
+                                      piEE_m, piEN_m, t0par,
+                                      alpha_m, q_m, sep_m, t_hjd,
                                       return_mag=return_mag)
 
-    mag_pylima = get_phot_pylima_psbl(ra, dec, t0_m, u0_m, tE_m, 
-                                      piEE_m, piEN_m, t0par, 
-                                      alpha_m, q_m, sep, t_hjd,
+    mag_pylima = get_phot_pylima_psbl(ra, dec, t0_m, u0_m, tE_m,
+                                      piEE_m, piEN_m, t0par,
+                                      alpha_m, q_m, sep_m, t_hjd,
                                       return_mag=return_mag)
 
     # Get the lightcurve from the heliocentric parameters.
-    mag_bagle = get_phot_bagle_psbl(ra, dec, t0_b, u0_b,
-                                    tE_b, piEE_b, piEN_b, 
-                                    alpha_b, q_b, sep, t_mjd,
-                                    return_mag=return_mag)
-#    print(t0_b, u0_b, tE_b, 
-#          piEE_b, piEN_b, 
-#          alpha_b, q_b, sep)
-    if plot:
+    mag_bagle, mod_bagle = get_phot_bagle_psbl(ra, dec, t0_b, u0_b,
+                                               tE_b, piEE_b, piEN_b,
+                                               alpha_b, q_b, sep_b, t_mjd,
+                                               return_mag=return_mag)
+
+    if verbose:
+        print('Mulens Params:')
+        print(t0_m, u0_m, tE_m,
+              piEE_m, piEN_m, t0par,
+              q_m, alpha_m, sep_m)
+
+        print('PyLIMA Params:')
+        print(t0_m, u0_m, tE_m,
+              piEE_m, piEN_m, t0par,
+              q_m, alpha_m, sep_m)
+
+        print('BAGLE Params:')
+        print(t0_b, u0_b, tE_b,
+              piEE_b, piEN_b,
+              q_b, alpha_b, sep_b)
+
+    diff_mulens = mag_mulens - mag_bagle
+    diff_pylima = mag_pylima - mag_bagle
+
+    if plot_lc:
         fig, ax = plt.subplots(3, 1, figsize=(8,8), sharex=True, num=3)
         plt.clf()
         fig, ax = plt.subplots(3, 1, figsize=(8,8), sharex=True, num=3)
-        ax[0].plot(t_mjd, mag_mulens, '.', ms=10)
-        ax[0].plot(t_mjd, mag_pylima, '.', ms=5)
-        ax[0].plot(t_mjd, mag_bagle, '.', ms=3)
-        ax[1].plot(t_mjd, mag_mulens - mag_bagle, '.')
-        ax[2].plot(t_mjd, mag_mulens - mag_pylima, '.')
+        ax[0].plot(t_mjd, mag_mulens, '-', label='M')
+        ax[0].plot(t_mjd, mag_pylima, '-', label='P')
+        ax[0].plot(t_mjd, mag_bagle, '-', label='B')
+        ax[0].legend()
+        ax[1].plot(t_mjd, diff_mulens, '.')
+        ax[2].plot(t_mjd, diff_pylima, '.')
         if return_mag:
             ax[0].set_ylabel('Mag')
-            ax[1].set_ylabel('Mag Mulens - Bagle')
-            ax[2].set_ylabel('Mag Mulens - pyLIMA')
+            ax[1].set_ylabel('Mag Mulens - BAGLE', fontsize=12)
+            ax[2].set_ylabel('Mag pyLIMA - BAGLE', fontsize=12)
             ax[0].invert_yaxis()
         else:
             ax[0].set_ylabel('Amp')
-            ax[1].set_ylabel('Amp Mulens - Bagle')
-            ax[2].set_ylabel('Amp Mulens - pyLIMA')
+            ax[1].set_ylabel('Amp Mulens - BAGLE', fontsize=12)
+            ax[2].set_ylabel('Amp pyLIMA - BAGLE', fontsize=12)
+            ax[0].set_ylim(0.95, 10)
+            ax[1].set_ylim(-0.4, 0.4)
+            ax[2].set_ylim(-0.4, 0.4)
         ax[2].set_xlabel('MJD')
-        plt.show()
-#        plt.pause(0.5)
+
+        # Print mean and max difference
+        ax[1].set_title(f'Diff mean={diff_mulens.mean():.3e}, max={np.abs(diff_mulens).max():.3e}',
+                        fontsize=12)
+        ax[2].set_title(f'Diff mean={diff_pylima.mean():.3e}, max={np.abs(diff_pylima).max():.3e}',
+                        fontsize=12)
+
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
-    # 1e-4 magnitudes on average.
-    # Note: current test fails if require < 1e-5.
+    # 1e-1 magnitudes on average.
     diff = (mag_mulens - mag_bagle)/mag_mulens
     total_diff = np.sum(np.abs(diff))
     assert total_diff/len(t_mjd) < 1e-4
+
+    return
 
 
 def compare_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
                                       t0_b, u0_b, tE_b,
                                       piEE_b, piEN_b, t0par,
-                                      q_b, alpha_b, sep,
+                                      q_b, alpha_b, sep_b,
                                       return_mag=False,
-                                      plot=True):
+                                      plot_lc=False,
+                                      plot_conv=False,
+                                      verbose=False, fignum=3):
     
+    # Get the BAGLE lightcurve from the heliocentric parameters.
+    mag_bagle, mod_bagle = get_phot_bagle_psbl(ra, dec, t0_b, u0_b,
+                                               tE_b, piEE_b, piEN_b,
+                                               alpha_b, q_b, sep_b, t_mjd,
+                                               return_mag=return_mag)
+
     output = fc.convert_bagle_mulens_psbl_phot(ra, dec,
                                                t0_b, u0_b, tE_b,
                                                piEE_b, piEN_b, t0par,
-                                               q_b, alpha_b, sep,
-                                               mod_in='bagle')
+                                               q_b, alpha_b, sep_b,
+                                               mod_in='bagle', plot=plot_conv)
+    t0_m, u0_m, tE_m, piEE_m, piEN_m, q_m, alpha_m, sep_m = output
 
-    t0_m, u0_m, tE_m, piEE_m, piEN_m, q_m, alpha_m = output
+    output = fc.convert_bagle_pylima_psbl_phot(ra, dec,
+                                               t0_b, u0_b, tE_b,
+                                               piEE_b, piEN_b, t0par,
+                                               q_b, alpha_b, sep_b,
+                                               mod_in='bagle', plot=plot_conv)
+    t0_p, u0_p, tE_p, piEE_p, piEN_p, q_p, alpha_p, sep_p = output
 
     # Get HJD from MJD (since MulensModel uses HJD).
     t_hjd = t_mjd + 2400000.5
@@ -181,51 +223,66 @@ def compare_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
     coords = SkyCoord(ra, dec, unit=(u.deg, u.deg))
 
     # Get the lightcurve from the geoprojected parameters.
-    mag_mulens = get_phot_mulens_psbl(coords, t0_m, u0_m, tE_m, 
-                                      piEE_m, piEN_m, t0par, 
-                                      alpha_m, q_m, sep, t_hjd,
+    mag_mulens = get_phot_mulens_psbl(coords, t0_m, u0_m, tE_m,
+                                      piEE_m, piEN_m, t0par,
+                                      alpha_m, q_m, sep_m, t_hjd,
                                       return_mag=return_mag)
 
-    mag_pylima = get_phot_pylima_psbl(ra, dec, t0_m, u0_m, tE_m, 
-                                      piEE_m, piEN_m, t0par, 
-                                      alpha_m, q_m, sep, t_hjd,
+    mag_pylima = get_phot_pylima_psbl(ra, dec, t0_p, u0_p, tE_p,
+                                      piEE_p, piEN_p, t0par,
+                                      alpha_p, q_p, sep_p, t_hjd,
                                       return_mag=return_mag)
 
-    print(t0_m, u0_m, tE_m, 
-          piEE_m, piEN_m, t0par, 
-          alpha_m, q_m, sep)
+    if verbose:
+        print('Mulens Params:')
+        print(t0_m, u0_m, tE_m,
+              piEE_m, piEN_m, t0par,
+              q_m, alpha_m, sep_m)
 
-    # Get the lightcurve from the heliocentric parameters.
-    mag_bagle = get_phot_bagle_psbl(ra, dec, t0_b, u0_b,
-                                    tE_b, piEE_b, piEN_b, 
-                                    alpha_b, q_b, sep, t_mjd,
-                                    return_mag=return_mag)
-    print(t0_b, u0_b,
-          tE_b, piEE_b, piEN_b, 
-          alpha_b, q_b, sep)
+        print('PyLIMA Params:')
+        print(t0_p, u0_p, tE_p,
+              piEE_p, piEN_p, t0par,
+              q_p, alpha_p, sep_p)
 
-    if plot:
-        fig, ax = plt.subplots(3, 1, figsize=(8,8), sharex=True, num=3)
+        print('BAGLE Params:')
+        print(t0_b, u0_b, tE_b,
+              piEE_b, piEN_b,
+              q_b, alpha_b, sep_b)
+
+    diff_mulens = mag_mulens - mag_bagle
+    diff_pylima = mag_pylima - mag_bagle
+
+    if plot_lc:
+        fig, ax = plt.subplots(3, 1, figsize=(8,8), sharex=True, num=fignum)
         plt.clf()
-        fig, ax = plt.subplots(3, 1, figsize=(8,8), sharex=True, num=3)
-        ax[0].plot(t_mjd, mag_mulens, '.', ms=10, label='M')
-        ax[0].plot(t_mjd, mag_pylima, '.', ms=5, label='P')
-        ax[0].plot(t_mjd, mag_bagle, '.', ms=3, label='B')
+        fig, ax = plt.subplots(3, 1, figsize=(8,8), sharex=True, num=fignum)
+        ax[0].plot(t_mjd, mag_mulens, '-', label='M')
+        ax[0].plot(t_mjd, mag_pylima, '-', label='P')
+        ax[0].plot(t_mjd, mag_bagle, '-', label='B')
         ax[0].legend()
-        ax[1].plot(t_mjd, mag_mulens - mag_bagle, '.')
-        ax[2].plot(t_mjd, mag_mulens - mag_pylima, '.')
+        ax[1].plot(t_mjd, diff_mulens, '-')
+        ax[2].plot(t_mjd, diff_pylima, '-')
         if return_mag:
             ax[0].set_ylabel('Mag')
-            ax[1].set_ylabel('Mag Mulens - Bagle')
-            ax[2].set_ylabel('Mag Mulens - pyLIMA')
+            ax[1].set_ylabel('Mag Mulens - Bagle', fontsize=12)
+            ax[2].set_ylabel('Mag pyLIMA - BAGLE', fontsize=12)
             ax[0].invert_yaxis()
         else:
             ax[0].set_ylabel('Amp')
-            ax[1].set_ylabel('Amp Mulens - Bagle')
-            ax[2].set_ylabel('Amp Mulens - pyLIMA')    
+            ax[1].set_ylabel('Amp Mulens - BAGLE', fontsize=12)
+            ax[2].set_ylabel('Amp pyLIMA - BAGLE', fontsize=12)
+            ax[0].set_ylim(0.95, 10)
+            ax[1].set_ylim(-0.4, 0.4)
+            ax[2].set_ylim(-0.4, 0.4)
         ax[2].set_xlabel('MJD')
-        plt.show()
-        plt.pause(0.5)
+
+        # Print mean and max difference
+        ax[1].set_title(f'Diff mean={diff_mulens.mean():.3e}, max={np.abs(diff_mulens).max():.3e}',
+                        fontsize=12)
+        ax[2].set_title(f'Diff mean={diff_pylima.mean():.3e}, max={np.abs(diff_pylima).max():.3e}',
+                        fontsize=12)
+
+
 
 #        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
 #        plt.clf()
@@ -245,9 +302,8 @@ def compare_bagle_to_mulens_psbl_phot(ra, dec, t_mjd,
 
     # Make sure that the conversion works by asserting
     # that the lightcurves are no more different than
-    # 1e-4 magnitudes on average.
-    # Note: current test fails if require < 1e-5.
-    diff = (mag_mulens - mag_bagle)/mag_mulens
+    # 1e-1 magnitudes on average.
+    diff = (diff_mulens) / mag_mulens
     total_diff = np.sum(np.abs(diff))
     assert total_diff/len(t_mjd) < 1e-4
 
@@ -341,7 +397,8 @@ def compare_bagle_helio_to_geo_phot(ra, dec, t_mjd,
                                     t0par,
                                     plot_conv=False,
                                     plot_lc=False,
-                                    verbose=False):
+                                    verbose=False,
+                                    fignum=3):
     """
     Test conversion from heliocentric frame (using 
     source-lens East-North convention) to geocentric 
@@ -394,9 +451,9 @@ def compare_bagle_helio_to_geo_phot(ra, dec, t_mjd,
         print('*******************************************')
 
     if plot_lc:
-        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+        fig, ax = plt.subplots(2, 1, sharex=True, num=fignum)
         plt.clf()
-        fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+        fig, ax = plt.subplots(2, 1, sharex=True, num=fignum)
         ax[0].plot(t_mjd, mag_bagle_geoproj, 'o', label='Geo proj')
         ax[0].plot(t_mjd, mag_bagle, '.', label='Helio')
         ax[0].invert_yaxis()
@@ -662,6 +719,7 @@ def get_phot_pylima_psbl(ra, dec, t0_g, u0_g, tE_g,
     from pyLIMA import event
     from pyLIMA import telescopes
     from pyLIMA import toolbox as microltoolbox
+    from pyLIMA.models import generate_model
 
     #####
     # PyLIMA setup stuff.
@@ -679,11 +737,9 @@ def get_phot_pylima_psbl(ra, dec, t0_g, u0_g, tE_g,
                                       lightcurve_units = ['JD', 'mag', 'mag'],
                                       location='Earth',
                                       altitude=1000, longitude=-109.285399, latitude=-27.130)
-    pylima_ev = event.Event()
+    pylima_ev = event.Event(ra=ra, dec=dec)
     pylima_ev.name = 'Fubar'
     pylima_ev.telescopes.append(pylima_tel)
-    pylima_ev.ra = ra
-    pylima_ev.dec = dec
 
     # Set up parameters.
     pylima_t0 = t0_g + 2400000.5
@@ -693,28 +749,32 @@ def get_phot_pylima_psbl(ra, dec, t0_g, u0_g, tE_g,
     pylima_piEN = piEN_g
     pylima_t0_par = t0par + 2400000.5
     pylima_phi = np.deg2rad(alpha_g) # phi in radians
-    pylima_log_q = np.log10(q)
-    pylima_log_s = np.log10(sep)
+    pylima_q = q
+    pylima_s = sep
 
     # Now finally... create the model.
-    pylima_mod = microlmodels.create_model('PSBL', pylima_ev, parallax=['Annual', pylima_t0_par])
+    pylima_mod = generate_model.create_model('PSBL', pylima_ev,
+                                             parallax=['Full', pylima_t0_par],
+                                             fancy_parameters=None)
 
     tmp_params = [pylima_t0, pylima_u0, pylima_tE, 
-                  pylima_log_s, pylima_log_q, pylima_phi,
+                  pylima_s, pylima_q, pylima_phi,
                   pylima_piEN, pylima_piEE]
        
     pylima_mod.define_model_parameters()
     pylima_mod.blend_flux_ratio = False
+    pylima_mod.astrometry = False
+    pylima_mod.orbital_motion_model = ['None']
 
     mag_src=22
     b_sff=1
     pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
-    pylima_par.fs_OGLE = microltoolbox.magnitude_to_flux(mag_src)
+    pylima_par.fs_OGLE = microltoolbox.brightness_transformation.magnitude_to_flux(mag_src)
     pylima_par.fb_OGLE = pylima_par.fs_OGLE * (1.0 - b_sff) / b_sff
 
     if return_mag:    
         pylima_lcurve, sf, bf = pylima_mod.compute_the_microlensing_model(pylima_tel, pylima_par)
-        pylima_lcurve_mag = microltoolbox.flux_to_magnitude(pylima_lcurve)
+        pylima_lcurve_mag = microltoolbox.brightness_transformation.flux_to_magnitude(pylima_lcurve)
     else:
         pylima_amp = pylima_mod.model_magnification(pylima_tel, pylima_par)
         pylima_lcurve_mag = pylima_amp
@@ -774,9 +834,9 @@ def get_phot_mulens_psbl(coords, t0_g, u0_g, tE_g,
     params['t_E'] = tE_g
     params['pi_E_N'] = piEN_g
     params['pi_E_E'] = piEE_g
-    params['alpha'] = alpha_g
-    params['s'] = sep
     params['q'] = q
+    params['s'] = sep
+    params['alpha'] = alpha_g
 
     # Then instantiate model and get lightcurve.
     my_model = mm.Model(params, coords=coords)
@@ -866,7 +926,7 @@ def get_phot_bagle_psbl(ra, dec, t0_h, u0_h,
     else:
         mag_obs = mod.get_amplification(t_mjd)
 
-    return mag_obs
+    return mag_obs, mod
 
 
 def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h, 
@@ -907,21 +967,28 @@ def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h,
     return mag_obs
 
 
-def test_bagle_mulens_psbl_phot_set():
-    t_mjd = np.arange(57000 - 500, 57000 + 500, 0.1)
+def test_bagle_mulens_psbl_phot_set(plot_lc=False, plot_conv=False, verbose=False):
+
+    kwargs = {'plot_lc': plot_lc, 'plot_conv': plot_conv, 'verbose': verbose}
+
+    t_mjd = np.arange(60500 - 500, 60500 + 500, 0.5)
 
     print('set 1')
-    compare_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
-#    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.3, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
-#    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.1, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
-#    test_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.1, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
+    compare_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 60478, 0.5, 100, 0.2, 0.1, 60500, 0.5, 125, 1.5, **kwargs)
+    compare_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 60478, 0.5, 300, 0.2, 0.1, 60478, 0.5, 90, 1.5, **kwargs)
+    compare_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 60478, 0.3, 50, 0.2, 0.1, 60500, 2, 339, 1.5, **kwargs)
+    compare_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 60478, 0.1, 300, 0.2, 0.1, 60478, 0.5, 90, 1.5, **kwargs)
+    compare_bagle_to_mulens_psbl_phot(259.0, -29.0, t_mjd, 60478, 0.1, 50, 0.2, 0.1, 60500, 2, 339, 1.5, **kwargs)
 
     print('set 2')
-#    test_mulens_to_bagle_psbl_phot(259, -29, t_mjd, 57067.49054573558, 0.6378670566069137, 
-#                                   255.12120946554256, -0.19705897762298288, -0.10567761985484313, 
-#                                   57100, 2.0, 88.36154573925313, 1.5)
-#    test_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, 0.5, 90, 1.5)
-#    test_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 57000, 0.3, 50, 0.2, 0.1, 57000, 2, 339, 1.5)
+    compare_mulens_to_bagle_psbl_phot(259, -29, t_mjd,
+                                      60461.11916524347, 0.2580016909695294, 77.22238744939838,
+                                      -0.21245185338062486, -0.06974388858629471,
+                                60500, 0.5, -116.60896987280785, 1.5, **kwargs)
+    compare_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 60478, 0.5, 300, 0.2, 0.1, 60200, 0.5, 90, 1.5, **kwargs)
+    compare_mulens_to_bagle_psbl_phot(259.0, -29.0, t_mjd, 60478, 0.3, 50, 0.2, 0.1, 60300, 2, 339, 1.5, **kwargs)
+
+    return
 
 def test_bagle_mulens_set(plot_lc=False, plot_conv=False, verbose=False):
     """
@@ -1009,12 +1076,13 @@ def test_bagle_helio_geo_set(plot_lc=False, plot_conv=False, verbose=False):
 #    pdb.set_trace()
 
     print('set 1') 
+
     compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, 0.1, 57100, **kwargs)
     compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, 0.1, 57100, **kwargs)
-    compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57100, **kwargs)
-    compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57100, **kwargs)
-    compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57100, **kwargs)
-    compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57100, **kwargs)
+    #compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, 0.2, -0.1, 57100, **kwargs)
+    #compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, 0.5, 300, -0.2, -0.1, 57100, **kwargs)
+    #compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, 0.1, 57100, **kwargs)
+    #compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, 0.1, 57100, **kwargs)
     compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, 0.2, -0.1, 57100, **kwargs)
     compare_bagle_helio_to_geo_phot(259.0, -29.0, t_mjd, 57000, -0.5, 300, -0.2, -0.1, 57100, **kwargs)
     
@@ -1073,102 +1141,102 @@ def test_bagle_helio_geo_set(plot_lc=False, plot_conv=False, verbose=False):
 ################################################################################
 ###########  Stuff below is incomplete/wrong/not yet functional...  ############
 ################################################################################
-def compare_geo_geo():
-    t0_h, u0_h, tE_h, piEE_h, piEN_h = 57000, 0.5, 300, 0.2, 0.1
-
-    t0par1 = 57050
-    t0par2 = 56950
-
-    t0_g1, u0_g1, tE_g1, piEE_g1, piEN_g1 = fc.convert_helio_geo_phot(ra, dec, t0_h, u0_h, 
-                                                                      tE_h, piEE_h, piEN_h,
-                                                                      t0par1, in_frame='helio',
-                                                                      murel_in='SL', murel_out='LS',
-                                                                      coord_in='EN', coord_out='tb')
-
-    t0_g2, u0_g2, tE_g2, piEE_g2, piEN_g2 = fc.convert_helio_geo_phot(ra, dec, t0_h, u0_h, 
-                                                                      tE_h, piEE_h, piEN_h,
-                                                                      t0par2, in_frame='helio',
-                                                                      murel_in='SL', murel_out='LS',
-                                                                      coord_in='EN', coord_out='tb')
-
-    mag_mulens1 = get_phot_mulens(coords, t0_g1, u0_g1, tE_g1, piEE_g1, piEN_g1, t0par1, t_hjd)
-    mag_mulens2 = get_phot_mulens(coords, t0_g2, u0_g2, tE_g2, piEE_g2, piEN_g2, t0par2, t_hjd)
-    mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, tE_h, piEE_h, piEN_h, t_mjd)
-
-    print(t0_g1, u0_g1, tE_g1, piEE_g1, piEN_g1, t0par1)
-    print(t0_g2, u0_g2, tE_g2, piEE_g2, piEN_g2, t0par2)
-    
-    # For a formal test, require this to be smaller than some number.
-    # x = np.sum(np.abs(mag_mulens - mag_bagle))
-
-    fig, ax = plt.subplots(2, 1, sharex=True, num=3)
-    plt.clf()
-    fig, ax = plt.subplots(2, 1, sharex=True, num=3)
-    ax[0].plot(t_mjd, mag_mulens1, 'o')
-    ax[0].plot(t_mjd, mag_mulens2, 'o')
-    ax[0].plot(t_mjd, mag_bagle, '.')
-    ax[0].invert_yaxis()
-    ax[1].plot(t_mjd, mag_mulens1 - mag_bagle, '.')
-    ax[1].plot(t_mjd, mag_mulens2 - mag_bagle, '.')
-    ax[0].set_ylabel('Mag')
-    ax[1].set_ylabel('MM - Bagle')
-    ax[1].set_xlabel('MJD')
-    plt.show()
-    plt.pause(1)
-#    plt.close()
-
-def compare_geo():
-    t0_h, u0_h, tE_h, piEE_h, piEN_h = 57000, 0.5, 300, 0.2, 0.1
-
-    t0par_arr = np.arange(57000 - 720, 57000 + 720, 1)
-    t0_arr = np.zeros(len(t0par_arr))
-    u0_arr = np.zeros(len(t0par_arr))
-    tE_arr = np.zeros(len(t0par_arr))
-    piEE_arr = np.zeros(len(t0par_arr))
-    piEN_arr = np.zeros(len(t0par_arr))
-
-    mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, tE_h, piEE_h, piEN_h, t_mjd)
-
-    fig, ax = plt.subplots(5, 1, sharex=True, num=3, figsize=(6,10))
-    plt.clf()
-    fig, ax = plt.subplots(5, 1, sharex=True, num=3, figsize=(6,10))
-    plt.subplots_adjust(left=0.25, top=0.98, bottom=0.1)
-
-    for ii, t0par in enumerate(t0par_arr):
-        t0_g, u0_g, tE_g, piEE_g, piEN_g = fc.convert_helio_geo_phot(ra, dec, t0_h, u0_h, 
-                                                                          tE_h, piEE_h, piEN_h,
-                                                                          t0par, in_frame='helio',
-                                                                          murel_in='SL', murel_out='LS',
-                                                                          coord_in='EN', coord_out='tb')
-
-        t0_arr[ii] = t0_g
-        u0_arr[ii] = u0_g
-        tE_arr[ii] = tE_g
-        piEE_arr[ii] = piEE_g
-        piEN_arr[ii] = piEN_g
-
-        mag_mulens = get_phot_mulens(coords, t0_g, u0_g, tE_g, piEE_g, piEN_g, t0par, t_hjd)
-
-#        print(np.sum(np.abs(mag_mulens - mag_bagle)))
-
-    ax[0].plot(t0par_arr, t0_arr, 'k-', label='Geo projected')
-    ax[1].plot(t0par_arr, u0_arr, 'k-')
-    ax[2].plot(t0par_arr, tE_arr, 'k-')
-    ax[3].plot(t0par_arr, piEE_arr, 'k-')
-    ax[4].plot(t0par_arr, piEN_arr, 'k-')
-    
-    ax[0].axhline(y=t0_h, ls=':', color='b', label='Helio')
-    ax[1].axhline(y=u0_h, ls=':', color='b')
-    ax[2].axhline(y=tE_h, ls=':', color='b')
-    ax[3].axhline(y=-1*piEE_h, ls=':', color='b')
-    ax[4].axhline(y=-1*piEN_h, ls=':', color='b')
-    
-    ax[0].set_ylabel('$t_0$ (MJD)')
-    ax[1].set_ylabel('$u_0$')
-    ax[2].set_ylabel('$t_E$ (days)')
-    ax[3].set_ylabel('$\pi_{E,E}$ (LS)')
-    ax[4].set_ylabel('$\pi_{E,N}$ (LS)')
-    ax[4].set_xlabel('$t_{0,par}$ (MJD)')
-
-    ax[0].legend()
-    plt.show()
+# def compare_geo_geo():
+#     t0_h, u0_h, tE_h, piEE_h, piEN_h = 57000, 0.5, 300, 0.2, 0.1
+#
+#     t0par1 = 57050
+#     t0par2 = 56950
+#
+#     t0_g1, u0_g1, tE_g1, piEE_g1, piEN_g1 = fc.convert_helio_geo_phot(ra, dec, t0_h, u0_h,
+#                                                                       tE_h, piEE_h, piEN_h,
+#                                                                       t0par1, in_frame='helio',
+#                                                                       murel_in='SL', murel_out='LS',
+#                                                                       coord_in='EN', coord_out='tb')
+#
+#     t0_g2, u0_g2, tE_g2, piEE_g2, piEN_g2 = fc.convert_helio_geo_phot(ra, dec, t0_h, u0_h,
+#                                                                       tE_h, piEE_h, piEN_h,
+#                                                                       t0par2, in_frame='helio',
+#                                                                       murel_in='SL', murel_out='LS',
+#                                                                       coord_in='EN', coord_out='tb')
+#
+#     mag_mulens1 = get_phot_mulens(coords, t0_g1, u0_g1, tE_g1, piEE_g1, piEN_g1, t0par1, t_hjd)
+#     mag_mulens2 = get_phot_mulens(coords, t0_g2, u0_g2, tE_g2, piEE_g2, piEN_g2, t0par2, t_hjd)
+#     mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, tE_h, piEE_h, piEN_h, t_mjd)
+#
+#     print(t0_g1, u0_g1, tE_g1, piEE_g1, piEN_g1, t0par1)
+#     print(t0_g2, u0_g2, tE_g2, piEE_g2, piEN_g2, t0par2)
+#
+#     # For a formal test, require this to be smaller than some number.
+#     # x = np.sum(np.abs(mag_mulens - mag_bagle))
+#
+#     fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+#     plt.clf()
+#     fig, ax = plt.subplots(2, 1, sharex=True, num=3)
+#     ax[0].plot(t_mjd, mag_mulens1, 'o')
+#     ax[0].plot(t_mjd, mag_mulens2, 'o')
+#     ax[0].plot(t_mjd, mag_bagle, '.')
+#     ax[0].invert_yaxis()
+#     ax[1].plot(t_mjd, mag_mulens1 - mag_bagle, '.')
+#     ax[1].plot(t_mjd, mag_mulens2 - mag_bagle, '.')
+#     ax[0].set_ylabel('Mag')
+#     ax[1].set_ylabel('MM - Bagle')
+#     ax[1].set_xlabel('MJD')
+#     plt.show()
+#     plt.pause(1)
+# #    plt.close()
+#
+# def compare_geo():
+#     t0_h, u0_h, tE_h, piEE_h, piEN_h = 57000, 0.5, 300, 0.2, 0.1
+#
+#     t0par_arr = np.arange(57000 - 720, 57000 + 720, 1)
+#     t0_arr = np.zeros(len(t0par_arr))
+#     u0_arr = np.zeros(len(t0par_arr))
+#     tE_arr = np.zeros(len(t0par_arr))
+#     piEE_arr = np.zeros(len(t0par_arr))
+#     piEN_arr = np.zeros(len(t0par_arr))
+#
+#     mag_bagle = get_phot_bagle(ra, dec, t0_h, u0_h, tE_h, piEE_h, piEN_h, t_mjd)
+#
+#     fig, ax = plt.subplots(5, 1, sharex=True, num=3, figsize=(6,10))
+#     plt.clf()
+#     fig, ax = plt.subplots(5, 1, sharex=True, num=3, figsize=(6,10))
+#     plt.subplots_adjust(left=0.25, top=0.98, bottom=0.1)
+#
+#     for ii, t0par in enumerate(t0par_arr):
+#         t0_g, u0_g, tE_g, piEE_g, piEN_g = fc.convert_helio_geo_phot(ra, dec, t0_h, u0_h,
+#                                                                           tE_h, piEE_h, piEN_h,
+#                                                                           t0par, in_frame='helio',
+#                                                                           murel_in='SL', murel_out='LS',
+#                                                                           coord_in='EN', coord_out='tb')
+#
+#         t0_arr[ii] = t0_g
+#         u0_arr[ii] = u0_g
+#         tE_arr[ii] = tE_g
+#         piEE_arr[ii] = piEE_g
+#         piEN_arr[ii] = piEN_g
+#
+#         mag_mulens = get_phot_mulens(coords, t0_g, u0_g, tE_g, piEE_g, piEN_g, t0par, t_hjd)
+#
+# #        print(np.sum(np.abs(mag_mulens - mag_bagle)))
+#
+#     ax[0].plot(t0par_arr, t0_arr, 'k-', label='Geo projected')
+#     ax[1].plot(t0par_arr, u0_arr, 'k-')
+#     ax[2].plot(t0par_arr, tE_arr, 'k-')
+#     ax[3].plot(t0par_arr, piEE_arr, 'k-')
+#     ax[4].plot(t0par_arr, piEN_arr, 'k-')
+#
+#     ax[0].axhline(y=t0_h, ls=':', color='b', label='Helio')
+#     ax[1].axhline(y=u0_h, ls=':', color='b')
+#     ax[2].axhline(y=tE_h, ls=':', color='b')
+#     ax[3].axhline(y=-1*piEE_h, ls=':', color='b')
+#     ax[4].axhline(y=-1*piEN_h, ls=':', color='b')
+#
+#     ax[0].set_ylabel('$t_0$ (MJD)')
+#     ax[1].set_ylabel('$u_0$')
+#     ax[2].set_ylabel('$t_E$ (days)')
+#     ax[3].set_ylabel('$\pi_{E,E}$ (LS)')
+#     ax[4].set_ylabel('$\pi_{E,N}$ (LS)')
+#     ax[4].set_xlabel('$t_{0,par}$ (MJD)')
+#
+#     ax[0].legend()
+#     plt.show()

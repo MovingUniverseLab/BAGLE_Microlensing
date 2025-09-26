@@ -46,7 +46,6 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
     """
 
     from pyLIMA import event
-    from pyLIMA.simulations import simulator
     from pyLIMA.models import generate_model
     from pyLIMA import telescopes
     from pyLIMA.toolbox import brightness_transformation
@@ -116,7 +115,14 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
     else:
         parallax_model = ['None', t0_par_pylima]
 
-    pylima_mod = generate_model.create_model('PSPL', pylima_ev, parallax=parallax_model, fancy_parameters=None)
+    bagle_class_name = str(bagle_model.__class__)
+    if 'PSPL' in bagle_class_name:
+        pylima_mod = generate_model.create_model('PSPL', pylima_ev, parallax=parallax_model, fancy_parameters=None)
+    elif 'PSBL' in bagle_class_name:
+        pylima_mod = generate_model.create_model('PSBL', pylima_ev, parallax=parallax_model, fancy_parameters=None)
+    else:
+        raise Exception('pyLIMA does not support models with BAGLE type: ' + bagle_class_name)
+
     pylima_mod.define_model_parameters()
     pylima_mod.blend_flux_ratio = False
     pylima_mod.astrometry = bagle_model.astrometryFlag
@@ -127,13 +133,24 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
     ### Photometry-Only and No Parallax
     if not bagle_model.astrometryFlag and not bagle_model.parallaxFlag:
         if verbose: print('PyLIMA: PSPL with Photometry-only, no parallax')
+
         u0_pylima = bagle_model.u0_amp
         t0_pylima = bagle_model.t0 + 2400000.5
         tE_pylima = bagle_model.tE
 
-        tmp_params = [t0_pylima, u0_pylima, tE_pylima]
-        pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
+        # Singles
+        if 'PSPL' in bagle_class_name:
+            tmp_params = [t0_pylima, u0_pylima, tE_pylima]
+        # Binary Lens
+        elif 'PSBL' in bagle_class_name:
+            log_s_pylima = np.log10(bagle_model.sep) # sep in thetaE
+            log_q_pylima = np.log10(bagle_model.q)   # mass ratio (low-mass / high-mass)
+            phi_pylima = bagle_model.alpha_rad       # angle between bin axis and muRel vec in radians
 
+            tmp_params = [t0_pylima, u0_pylima, tE_pylima,
+                          log_s_pylima, log_q_pylima, phi_pylima]
+
+        pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
         pylima_par.fsource_OGLE = microltoolbox.brightness_transformation.magnitude_to_flux(bagle_model.mag_src[0])
         pylima_par.fblend_OGLE = pylima_par.fsource_OGLE * (1.0 - bagle_model.b_sff[0]) / bagle_model.b_sff[0]
 
@@ -144,19 +161,44 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
         pylima_mod.ra = bagle_model.raL
         pylima_mod.dec = bagle_model.decL
 
-        # Convert from helio to geo-tr coordinates.
-        geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
-                                            bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
-                                            bagle_model.piE[0], bagle_model.piE[1], bagle_model.t0,
-                                            murel_in='SL', murel_out='LS',
-                                            coord_in='EN', coord_out='EN', plot=False)
-        t0_pylima = geo_params[0] + 2400000.5
-        u0_pylima = geo_params[1]
-        tE_pylima = geo_params[2]
-        piEE_pylima = geo_params[3]
-        piEN_pylima = geo_params[4]
+        if 'PSPL' in bagle_class_name:
 
-        tmp_params = [t0_pylima, u0_pylima, tE_pylima, piEN_pylima, piEE_pylima]
+            # Convert from helio to geo-tr coordinates.
+            geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
+                                                bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
+                                                bagle_model.piE[0], bagle_model.piE[1], bagle_model.t0,
+                                                murel_in='SL', murel_out='LS',
+                                                coord_in='EN', coord_out='EN', plot=False)
+            t0_pylima = geo_params[0] + 2400000.5
+            u0_pylima = geo_params[1]
+            tE_pylima = geo_params[2]
+            piEE_pylima = geo_params[3]
+            piEN_pylima = geo_params[4]
+
+            tmp_params = [t0_pylima, u0_pylima, tE_pylima, piEN_pylima, piEE_pylima]
+
+        # Binary Lens
+        elif 'PSBL' in bagle_class_name:
+            geo_params = convert_bagle_pylima_psbl_phot(bagle_model.raL, bagle_model.decL,
+                                                        bagle_model.t0, bagle_model.u0_amp, balgle_model.tE,
+                                                        bagle_model.piEE, bagle_model.piEN, bagle_model.t0,
+                                                        murel_in='SL', murel_out='LS',
+                                                        coord_in='EN', coord_out='tb',
+                                                        plot=False)
+
+            t0_pylima = geo_params[0] + 2400000.5
+            u0_pylima = geo_params[1]
+            tE_pylima = geo_params[2]
+            piEE_pylima = geo_params[3]
+            piEN_pylima = geo_params[4]
+            q_pylima = geo_params[5]
+            phi_pylima = geo_params[6]
+            s_pylima = geo_params[7]
+
+            tmp_params = [t0_pylima, u0_pylima, tE_pylima,
+                          s_pylima, q_pylima, np.deg2rad(phi_pylima),
+                          piEN_pylima, piEE_pylima]
+
         pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
 
         pylima_par.fsource_OGLE = microltoolbox.brightness_transformation.magnitude_to_flux(bagle_model.mag_src[0])
@@ -183,6 +225,10 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
         muSN_pylima = bagle_model.muS[1]
         xS0N_pylima = bagle_model.xS0[1] / 3600.  # degrees
         xS0E_pylima = bagle_model.xS0[0] / 3600.  # degrees
+
+        # Check for PSBL, which isn't supported with astrometry in BAGLE.
+        if 'PSBL' in bagle_class_name:
+            raise Exception('pyLIMA does not support models with BAGLE type: ' + bagle_class_name)
 
         tmp_params = [t0_pylima, u0_pylima, tE_pylima, thetaE_pylima, piS_pylima, muSN_pylima, muSE_pylima,
                       xS0N_pylima, xS0E_pylima, piEN_pylima, piEE_pylima]
@@ -380,9 +426,9 @@ def mjd_prime_to_vbm_time(time_mjd, target_coords):
 
 
 def convert_bagle_mulens_psbl_phot(ra, dec,
-                                   t0_in, u0_in, tE_in, 
+                                   t0_in, u0_in, tE_in,
                                    piEE_in, piEN_in, t0par,
-                                   q_in, alpha_in, sep,
+                                   q_in, alpha_in, sep_in,
                                    mod_in='bagle', plot=True):
     """
     Convert between the native fit parameters of BAGLE and MulensModel
@@ -422,12 +468,127 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
     alpha_in : float or array (deg)
         Angle between relative proper motion vector and the binary axis, in input frame.
     
-    sep : float or array (thetaE)
+    sep_in : float or array (thetaE)
         Separation between the binary lens components.
     
     mod_in : str
         'bagle' if converting from BAGLE to MulensModel parameters
         'mulens' if converting from MulensModel to BAGLE paramters
+
+    plot : bool
+        Plot the conversion figures if true.
+    """
+    ##########
+    # Convert between helio and geo projected.
+    #
+    # Calculate the trajectory made by the source-lens relative the
+    # binary axis (this is different, because the source-lens relative motion
+    # changes across the two frames).
+    ##########
+    if mod_in == 'bagle':
+        output = convert_helio_geo_phot(ra, dec, t0_in, u0_in,
+                                        tE_in, piEE_in, piEN_in,
+                                        t0par, in_frame='helio',
+                                        murel_in='SL', murel_out='LS',
+                                        coord_in='EN', coord_out='tb',
+                                        plot=plot)
+
+        t0_out, u0_out, tE_out, piEE_out, piEN_out = output
+
+        sep_out = sep_in
+        q_out = q_in
+
+        phi_murel_in = np.rad2deg(np.arctan2(piEN_in, piEE_in))
+        phi_murel_out = np.rad2deg(np.arctan2(piEN_out, piEE_out))
+        delta_alpha = phi_murel_out - phi_murel_in + 180
+
+        # BAGLE actually gives phi_bagle as angle between binary and muRel vector
+        alpha_out = -(alpha_in + delta_alpha)
+
+        q_prime = (1.0 - q_in) / (2.0 * (1 + q_in))
+        t0_out += q_prime * sep_in * tE_out * np.cos(np.deg2rad(alpha_out))
+        u0_out += q_prime * sep_in * np.sin(np.deg2rad(alpha_out))
+
+    elif mod_in == 'mulens':
+        q_prime = (1.0 - q_in) / (2.0 * (1 + q_in))
+        t0_in -= q_prime * sep_in * tE_in * np.cos(np.deg2rad(alpha_in))
+        u0_in -= q_prime * sep_in * np.sin(np.deg2rad(alpha_in))
+
+        output = convert_helio_geo_phot(ra, dec, t0_in, u0_in,
+                                        tE_in, piEE_in, piEN_in,
+                                        t0par, in_frame='geo',
+                                        murel_in='LS', murel_out='SL',
+                                        coord_in='tb', coord_out='EN',
+                                        plot=plot)
+
+        t0_out, u0_out, tE_out, piEE_out, piEN_out = output
+
+        sep_out = sep_in
+        q_out = q_in
+
+        phi_murel_in = np.rad2deg(np.arctan2(piEN_in, piEE_in))
+        phi_murel_out = np.rad2deg(np.arctan2(piEN_out, piEE_out))
+        delta_alpha = phi_murel_in - phi_murel_out + 180  # note the sign flip compared to above.
+
+        alpha_out = -(alpha_in + delta_alpha)
+
+    else:
+        raise Exception("mod_in must be 'bagle' or 'mulens'")
+
+
+
+    return t0_out, u0_out, tE_out, piEE_out, piEN_out, q_out, alpha_out, sep_out
+
+
+def convert_bagle_pylima_psbl_phot(ra, dec,
+                                   t0_in, u0_in, tE_in,
+                                   piEE_in, piEN_in, t0par,
+                                   q_in, alpha_in, sep_in,
+                                   mod_in='bagle', plot=True):
+    """
+    Convert between the native fit parameters of BAGLE and pyLIMA
+    for a point source binary lens photometry model.
+
+    Parameters
+    ----------
+    t0_in, u0_in, tE_in, piEE_in, piEN_in, q_in, alpha_in, sep can be either be
+    floats or arrays. If they are arrays, they must be the same length.
+
+    ra, dec : str, float, or int
+        Equatorial coordinates of the microlensing event.
+
+        If string, needs to be of the form
+        'HH:MM:SS.SSSS', 'DD:MM:SS.SSSS'
+
+    t0_in : float or array (MJD)
+        Time at which minimum source-lens projected separation in the rectilinear
+        frame occurs, in input frame.
+
+    u0_in : float or array (thetaE)
+        Minimum source-lens projected separation in the rectilinear frame,
+        in units of the Einstein radius, in input frame.
+
+    tE_in : float or array (days)
+        Einstein crossing time, in input frame.
+
+    piEE_in : float or array
+        Microlensing parallax, East component, in input frame.
+
+    piEN_in : float or array
+        Microlensing parallax, North component, in input frame.
+
+    q_in : float or array
+        Binary lens mass ratio.
+
+    alpha_in : float or array (deg)
+        Angle between relative proper motion vector and the binary axis, in input frame.
+
+    sep : float or array (thetaE)
+        Separation between the binary lens components.
+
+    mod_in : str
+        'bagle' if converting from BAGLE to pyLIMA parameters
+        'pylima' if converting from pyLIMA to BAGLE paramters
 
     plot : bool
         Plot the conversion figures if true.
@@ -443,46 +604,51 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
                                         coord_in='EN', coord_out='tb',
                                         plot=plot)
 
-    elif mod_in == 'mulens':
+        t0_out, u0_out, tE_out, piEE_out, piEN_out = output
+
+        sep_out = sep_in
+        q_out = q_in
+
+        phi_murel_in = np.rad2deg(np.arctan2(piEN_in, piEE_in))
+        phi_murel_out = np.rad2deg(np.arctan2(piEN_out, piEE_out))
+        delta_alpha = phi_murel_out - phi_murel_in + 180
+
+        # BAGLE actually gives phi_bagle as angle between binary and muRel vector
+        alpha_out = -(alpha_in + delta_alpha)
+
+        q_prime = (1.0 - q_in) / (2.0 * (1 + q_in))
+        t0_out += q_prime * sep_in * tE_out * np.cos(np.deg2rad(alpha_out))
+        u0_out += q_prime * sep_in * np.sin(np.deg2rad(alpha_out))
+
+    elif mod_in == 'pylima':
+        q_prime = (1.0 - q_in) / (2.0 * (1 + q_in))
+        t0_in -= q_prime * sep_in * tE_in * np.cos(np.deg2rad(alpha_in))
+        u0_in -= q_prime * sep_in * np.sin(np.deg2rad(alpha_in))
+
         output = convert_helio_geo_phot(ra, dec, t0_in, u0_in,
                                         tE_in, piEE_in, piEN_in,
                                         t0par, in_frame='geo',
                                         murel_in='LS', murel_out='SL',
                                         coord_in='tb', coord_out='EN',
                                         plot=plot)
-        
+
+        t0_out, u0_out, tE_out, piEE_out, piEN_out = output
+
+        sep_out = sep_in
+        q_out = q_in
+
+        phi_murel_in = np.rad2deg(np.arctan2(piEN_in, piEE_in))
+        phi_murel_out = np.rad2deg(np.arctan2(piEN_out, piEE_out))
+        delta_alpha = phi_murel_in - phi_murel_out + 180  # note the sign flip compared to above.
+
+        alpha_out = -(alpha_in + delta_alpha)
+
+
     else:
-        raise Exception("mod_in must be 'bagle' or 'mulens'")
+        raise Exception("mod_in must be 'bagle' or 'pylima'")
 
-    t0_out, u0_out, tE_out, piEE_out, piEN_out = output
+    return t0_out, u0_out, tE_out, piEE_out, piEN_out, q_out, alpha_out, sep_out
 
-    ##########
-    # Calculate the trajectory made by the source-lens relative the 
-    # binary axis (this is different, because the source-lens relative motion
-    # changes across the two frames).
-    ##########
-    murel_in = np.rad2deg(np.arctan2(piEN_in, piEE_in))
-    murel_out = np.rad2deg(np.arctan2(piEN_out, piEE_out))
-    # The +180 in delta_alpha is because one is source-lens and the other is lens-source.
-    if mod_in == 'bagle':
-        delta_alpha = murel_out - murel_in + 180
-        alpha_out = alpha_in - delta_alpha
-        
-        q_out = 1.0/q_in
-        q_prime = 0.5 * (1 - q_in) / (1 + q_in)
-        t0_out += q_prime * sep * tE_out * np.cos(np.deg2rad(alpha_out))
-        u0_out += q_prime * sep * np.sin(np.deg2rad(alpha_out))
-    elif mod_in == 'mulens': 
-        delta_alpha = murel_out - murel_in + 180
-        alpha_out = alpha_in + delta_alpha
-        
-        q_out = 1.0/q_in
-        q_prime = 0.5 * (1 - q_out) / (1 + q_out)
-        t0_out -= q_prime * sep * tE_out * np.cos(np.deg2rad(alpha_out))
-        u0_out += q_prime * sep * np.sin(np.deg2rad(alpha_out))
-        
-
-    return t0_out, u0_out, tE_out, piEE_out, piEN_out, q_out, alpha_out
 
 ##############
 #
