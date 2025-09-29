@@ -1868,8 +1868,7 @@ def test_plot_model_and_data_GP_err():
     print(dat_me[0:5])
     
     print(mag_model[0:5], mag_model_var[0:5])
-    pdb.set_trace()
-    
+
     # Make models.
     # Decide if we sample the models at a denser time, or just the
     # same times as the measurements.
