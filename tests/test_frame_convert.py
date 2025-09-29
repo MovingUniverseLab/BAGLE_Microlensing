@@ -953,7 +953,7 @@ def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h,
     params['t0par'] = t0par
 
     # Then instantiate model and get lightcurve.
-    mod = model.PSPL_Phot_Par_Param1_geoproj(params['t0'], params['u0_amp'], 
+    mod = model.PSPL_Phot_Par_Param1_geoproj(params['t0'], params['u0_amp'],
                                              params['tE'],
                                              params['piE_E'], params['piE_N'],
                                              params['b_sff'], params['mag_src'],

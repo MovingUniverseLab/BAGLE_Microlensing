@@ -9,7 +9,7 @@
 #.. moduleauthor:: Edward Broadberry
 """
 Overview of bagle.model
-=========================PSPL_PhotAstrom_Par_Param4_geoproj
+=========================
 The ``bagle.model`` module contains a collection of classes and functions that
 allow the user to construct microlensing models. The available classes for
 instantiating a microlensing event are shown in the list below.
@@ -1807,152 +1807,6 @@ class PSPL_Parallax(ParallaxClassABC):
         return xS0E_g, xS0N_g, muSE_g, muSN_g
 
 
-class PSPL_Parallax_geoproj(PSPL_Parallax):
-    """
-    This is following the geocentric projected formalism
-    based on P. Mroz's code which is based on MulensModel.
-    FIXME: Broken for Satellite parallax cases.
-    """
-    fixed_param_names = ['raL', 'decL', 't0par']
-    fixed_phot_param_names = ['obsLocation']
-
-    def geta(self, ra, dec, t0par, t):
-        """
-        idk why it's called "geta"
-        times are in MJD.
-        """
-        if type(ra) == str:
-            coord = SkyCoord(ra, dec, unit=(units.hourangle, units.deg))
-        if ((type(ra) == float) or (type(ra) == int)):
-            coord = SkyCoord(ra, dec, unit=(units.deg, units.deg))
-
-        direction = coord.cartesian.xyz.value
-        north = np.array([0., 0., 1.])
-        _east_projected = np.cross(north, direction) / np.linalg.norm(np.cross(north, direction))
-        _north_projected = np.cross(direction, _east_projected) / np.linalg.norm(np.cross(direction, _east_projected))
-
-        t = t + 2400000.5
-        t0par = t0par + 2400000.5
-        _t0par = Time(t0par, format='jd', scale='tdb')
-        _t = Time(t, format='jd', scale='tdb')
-        (jd1, jd2) = get_jd12(_t0par, 'tdb')
-        (earth_pv_helio, earth_pv_bary) = erfa.epv00(jd1, jd2)  # this is earth-sun
-        velocity = np.asarray(earth_pv_bary[1])
-
-        position = get_body_barycentric(body='earth', time=_t)
-        position_ref = get_body_barycentric(body='earth', time=_t0par)
-
-        delta_s = (position_ref.xyz.T - position.xyz.T).to(units.au).value
-        delta_s += np.outer(t - t0par, velocity)
-
-        out_e = np.dot(delta_s, _east_projected)
-        out_n = np.dot(delta_s, _north_projected)
-
-        return out_e, out_n
-
-    def get_amplification(self, t, filt_idx=0):
-        """
-        Get an array of the photometric amplifications at the input times.
-        Parallax is included.
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times in MJD.DDD
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-
-        """
-        qe, qn = self.geta(self.raL, self.decL, self.t0par, t)
-
-        tau = (t - self.t0) / self.tE
-        dtau = self.piE[1] * qn + self.piE[0] * qe
-        dbeta = self.piE[1] * qe - self.piE[0] * qn
-
-        taup = tau + dtau
-        betap = self.u0_amp + dbeta
-
-        u_amp = np.hypot(taup, betap)
-
-        A = (u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4))
-
-        return A
-
-    def get_centroid_shift(self, t, filt_idx=0):
-        """
-        Get the centroid shift (in mas) at the input times. The centroid shift
-        is the difference between the
-        lensed, unresolved position (with lensed source + lens light) and the
-        unlensed, unresolved position (with unlensed source + lens light).
-        Parallax is included. The returned array is in arcsec and
-        has a shape of [len(t), 2] where the second dimension includes
-        [RA, Dec] positions in arcsec.
-
-        Parameters
-        ----------
-        t : array_like
-            Time (in MJD).
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        """
-        qe, qn = self.geta(self.raL, self.decL, self.t0par, t)
-
-        tau = (t - self.t0) / self.tE
-        dtau = self.piE[1] * qn + self.piE[0] * qe
-        dbeta = self.piE[1] * qe - self.piE[0] * qn
-
-        # Assume all neighbor flux is in the lens. Define g = f_L / f_s
-        g = (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-
-        taup = tau + dtau
-        betap = self.u0_amp + dbeta
-
-        # Build the u vector over time.
-        u_N = -betap * self.muRel_hat[0] + taup * self.muRel_hat[1]
-        u_E = betap * self.muRel_hat[1] + taup * self.muRel_hat[0]
-        u_vec = np.array([u_E, u_N]).T
-        print('u_vec.shape = ', u_vec.shape)
-
-        # Define u^2 and u variables for ease.
-        u2 = tau**2 + self.u0_amp**2
-        u_amp = np.hypot(taup, betap)
-
-        # u^2 +3 - u\sqrt{u^2 + 4}
-        numer_u = u2 + 3 - u_amp * np.sqrt(u2 + 4)
-
-        # u^2 + 2 + gu\sqrt{u^2+4}
-        denom_u = u2 + 2 + g * u_amp * np.sqrt(u2 + 4)
-
-        # \vec{\theta}_S - \vec{\theta}_L = theta_E \vec{u}
-        thetaSL = u_vec * self.thetaE_amp
-
-        # Lens-induced astrometric shift of the sum of all source images (in mas)
-        numer = (1 + g * numer_u)[:, np.newaxis] * thetaSL
-        denom = (1 + g) * denom_u
-
-        # Lens-induced astrometric shift of the sum of all source images (in mas)
-        shift = numer / denom.reshape(numer.shape[0], 1)
-
-        # Old assuming no lens light.
-        #delta_N = u_N / (u_amp ** 2 + 2.0)
-        #delta_E = u_E / (u_amp ** 2 + 2.0)
-        #shift = self.thetaE_amp * np.vstack((delta_E, delta_N)).T
-
-        return shift
-
-    def get_helio_params(self, plot=False):
-        t0_h, u0_h, tE_h, piEE_h, piEN_h = fc.convert_helio_geo_phot(self.raL, self.decL,
-                                                                     self.t0, self.u0_amp,
-                                                                     self.tE, self.piE[0], self.piE[1],
-                                                                     self.t0par, in_frame='geo',
-                                                                     murel_in='LS', murel_out='SL',
-                                                                     coord_in='tb', coord_out='EN',
-                                                                     plot=plot)
-
-        return t0_h, u0_h, tE_h, piEE_h, piEN_h
-
 # --------------------------------------------------
 #
 # GP Class Family
@@ -3097,36 +2951,34 @@ class PSPL_PhotParam3(PSPL_Param):
 
         return
 
-
 class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
     """PSPL model for photometry only.
 
     Point source point lens model for microlensing photometry only
-    in geocentric-projected coordinates.
-    This model includes the relative proper motion between the lens
-    and the source. Parameters are reduced with the use of piRel
-    (rather than dL and dS) and muRel (rather than muL and muS).
+    in geocentric-projected coordinates. The geocentric projection
+    converts into a rectilinear reference frame that is consistent with
+    the Earth's position and velocity at time t0par.
 
     Note the attributes, RA (raL) and Dec (decL) are required
-    if you are calculating a model with parallax. 
+    if you are calculating a model with parallax.
 
     Attributes
     ----------
-    t0: float
+    t0_geotr: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in geocentric coordinates. This should be well aligned with the
+        as seen in geocentric-projected coordinates. This should be well aligned with the
         photometric peak.
-    u0_amp: float
+    u0_amp_geotr: float
          Angular distance between the lens and source on the plane of the
          sky at closest approach in units of thetaE. It can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
          Note, this is the geocentric-projected u0.
-    tE: float
+    tE_geotr: float
         Einstein crossing time in days in the geocentric-projected frame.
-    piE_E: float
+    piE_E_geotr: float
         The microlensing parallax in the East direction in units of thetaE.
-    piE_N: float
+    piE_N_geotr: float
         The microlensing parallax in the North direction in units of thetaE
     b_sff: numpy array or list
         The ratio of the source flux to the total (source + neighbors + lens)
@@ -3149,28 +3001,39 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
         or b_sff (e.g. other photometric parameters).
     """
 
-    def __init__(self, t0, u0_amp, tE,
-                 piE_E, piE_N, b_sff, mag_src,
+    def __init__(self, t0_geotr, u0_amp_geotr, tE_geotr,
+                 piE_E_geotr, piE_N_geotr, b_sff, mag_src,
                  t0par,
                  raL=None, decL=None, obsLocation='earth'):
-        self.t0par = t0par
-        self.t0 = t0
-        self.u0_amp = u0_amp
-        self.tE = tE
-        self.piE = np.array([piE_E, piE_N])
+        self.t0_geotr = t0_geotr
+        self.u0_amp_geotr = u0_amp_geotr
+        self.tE_geotr = tE_geotr
+        self.piE_geotr = np.array([piE_E_geotr, piE_N_geotr])
         self.b_sff = b_sff
         self.mag_src = mag_src
+        self.t0par = t0par
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
 
+        # Convert the parameters back into heliocentric (actually SSB) for our use.
+        t0, u0, tE, piEE, piEN = fc.convert_helio_geo_phot(self.raL, self.decL,
+                                                           self.t0_geotr, self.u0_amp_geotr,
+                                                           self.tE_geotr, self.piE_geotr[0], self.piE_geotr[1],
+                                                           self.t0par, in_frame='geo',
+                                                           murel_in='LS', murel_out='SL',
+                                                           coord_in='tb', coord_out='EN',
+                                                           plot=False)
+
+
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
-        super().__init__(t0, u0_amp, tE,
-                         piE_E, piE_N, b_sff, mag_src,
+        super().__init__(t0, u0, tE,
+                         piEE, piEN, b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
         return
+
 
 
 class PSPL_PhotAstromParam1(PSPL_Param):
@@ -3832,14 +3695,17 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
     It is the same as PSPL_PhotAstromParam2 except it fits for baseline instead
     of source magnitude.
 
+    The input photometric parameters are in a geocentric-projected reference frame.
+    Note that the input astrometric parameters are in the Solar System Barycentric frame.
+
     Parameters
     ----------
 
-    t0 : float
+    t0_geotr : float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in geocentric coordinates. This should be well aligned with the
+        as seen in geocentric-projected coordinates. This should be well aligned with the
         photometric peak.
-    u0_amp : float
+    u0_amp_geotr : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can be
 
@@ -3847,26 +3713,26 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
            * negative (u0_amp < 0 when u0_hat[0] < 0).
 
          Note, this is the geocentric-projected u0.
-    tE : float
+    tE_geotr : float
         Einstein crossing time in days in the geocentric-projected frame.
     thetaE:
         The size of the Einstein radius in (mas).
     piS : float
         Amplitude of the parallax (1AU/dS) of the source. (mas)
-    piE_E : float
-        The microlensing parallax in the East direction in units of thetaE
-    piE_N : float
-        The microlensing parallax in the North direction in units of thetaE
+    piE_E_geotr : float
+        The microlensing parallax in the East direction in units of thetaE. In the geocentric-projected frame.
+    piE_N_geotr : float
+        The microlensing parallax in the North direction in units of thetaE. In the geocentric-projected frame.
     xS0_E : float
         R.A. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+        arbitrary ref. frame. In the Solar-System Barycentric frame.
     xS0_N : float
         Dec. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+        arbitrary ref. frame. In the Solar-System Barycentric frame.
     muS_E : float
-        RA Source proper motion (mas/yr)
+        RA Source proper motion (mas/yr). In the Solar-System Barycentric frame.
     muS_N : float
-        Dec Source proper motion (mas/yr)
+        Dec Source proper motion (mas/yr). In the Solar-System Barycentric frame.
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
         for each filter.
@@ -3891,28 +3757,41 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
                        or b_sff (e.g. other photometric parameters).
     """
 
-    def __init__(self, t0, u0_amp, tE, thetaE, piS,
-                 piE_E, piE_N,
+    def __init__(self, t0_geotr, u0_amp_geotr, tE_geotr, thetaE, piS,
+                 piE_E_geotr, piE_N_geotr,
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  b_sff, mag_base,
                  t0par,
                  raL=None, decL=None, obsLocation='earth'):
-        self.t0par = t0par
-        self.t0 = t0
-        self.u0_amp = u0_amp
-        self.tE = tE
-        self.piE = np.array([piE_E, piE_N])
+
+        self.t0_geotr = t0_geotr
+        self.u0_amp_geotr = u0_amp_geotr
+        self.tE_geotr = tE_geotr
+        self.piE_geotr = np.array([piE_E_geotr, piE_N_geotr])
         self.thetaE_amp = thetaE
         self.xS0 = np.array([xS0_E, xS0_N])
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
         self.mag_base = mag_base
+        self.t0par = t0par
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
 
+        # Convert the parameters back into heliocentric (actually SSB) for our use.
+        t0, u0_amp, tE, piE_E, piE_N = fc.convert_helio_geo_phot(self.raL, self.decL,
+                                                                 self.t0_geotr, self.u0_amp_geotr,
+                                                                 self.tE_geotr, self.piE_geotr[0], self.piE_geotr[1],
+                                                                 self.t0par, in_frame='geo',
+                                                                 murel_in='LS', murel_out='SL',
+                                                                 coord_in='tb', coord_out='EN',
+                                                                 plot=False)
+
+
+        # Must call after setting parameters.
+        # This checks for proper parameter formatting.
         super().__init__(t0, u0_amp, tE, thetaE, piS,
                          piE_E, piE_N,
                          xS0_E, xS0_N,
@@ -22785,7 +22664,7 @@ class PSPL_PhotAstrom_Par_Param4(ModelClassABC,
 # get the right "get_amplification" routine inherited.
 @inheritdocstring
 class PSPL_PhotAstrom_Par_Param4_geoproj(ModelClassABC,
-                                         PSPL_Parallax_geoproj,
+                                         PSPL_Parallax,
                                          PSPL_PhotAstrom,
                                          PSPL_PhotAstromParam4_geoproj):
     def __init__(self, *args, **kwargs):
@@ -22908,7 +22787,7 @@ class PSPL_Phot_Par_Param1(ModelClassABC,
 
 @inheritdocstring
 class PSPL_Phot_Par_Param1_geoproj(ModelClassABC,
-                                   PSPL_Parallax_geoproj,
+                                   PSPL_Parallax,
                                    PSPL_Phot,
                                    PSPL_PhotParam1_geoproj):
     def __init__(self, *args, **kwargs):

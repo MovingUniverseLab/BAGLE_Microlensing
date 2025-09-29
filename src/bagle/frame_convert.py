@@ -1308,7 +1308,7 @@ def v_Earth_proj(ra, dec, mjd):
     jd = mjd+2400000.5
     time = Time(jd, format='jd', scale='tdb')
     (jd1, jd2) = get_jd12(time, 'tdb')
-    (earth_pv_helio, earth_pv_bary) = erfa.epv00(jd1, jd2) # this is earth-sun
+    (earth_pv_helio, earth_pv_bary) = erfa.epv00(jd1, jd2) # this is earth-sun. or is it earth - SSB?
     # erfa returns things in a weird format... 
     # recast results into numpy array so we can use broadcasting.
     try:
