@@ -3603,6 +3603,72 @@ def test_FSPL_PhotAstrom_lens_astrometry(plot=False):
         ax[1].set_ylabel('X (")')
         fig.show()
 
+
+
+def test_FSPL_PhotAstrom_lens_astrometry_origin(plot=False):
+    """
+    Test FSPL lens astrometry with a really really small source.
+    Should converge to the same value. The source origin is far away at [0.1, 0.1]
+    """
+    mL = 10
+    t0 = 57000
+    beta = 2
+    dL = 4000
+    dS = 8000
+    xS0_E = 0.1
+    xS0_N = 0.1
+    muS_E = -4.0
+    muS_N = 0.0
+    muL_E = 0.0
+    muL_N = 0.0
+    radiusS = 1e-6 # arcsec
+    b_sff = 0.9
+    mag_src = 19.0
+    raL = 17.30 * 15.
+    decL = -29.0
+
+    # Array of times we will sample on.
+    time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
+
+    ##########
+    # Test 1: Compare FSPL and PSPL lens astrometry.
+    ##########
+    n_outline = 100
+    fspl = model.FSPL_PhotAstrom_Par_Param1(mL, t0, beta, dL, dL / dS,
+                                            xS0_E, xS0_N,
+                                            muL_E, muL_N,
+                                            muS_E, muS_N,
+                                            radiusS,
+                                            b_sff, mag_src, n_outline,
+                                            raL=raL, decL=decL)
+
+    pspl = model.PSPL_PhotAstrom_Par_Param1(mL, t0, beta, dL, dL / dS,
+                                            xS0_E, xS0_N,
+                                            muL_E, muL_N,
+                                            muS_E, muS_N,
+                                            b_sff, mag_src,
+                                            raL=raL, decL=decL)
+
+    # Compare the lens astrometry.
+    fspl_lens_ast = fspl.get_lens_astrometry(time_arr)
+    pspl_lens_ast = pspl.get_lens_astrometry(time_arr)
+
+    np.testing.assert_allclose(fspl_lens_ast[::100], pspl_lens_ast[::100], rtol=1e-6)
+
+    if plot:
+        plt.figure(4)
+        plt.clf()
+        fig, ax = plt.subplots(2, 1, sharex=True, num=4)
+        ax[0].plot(time_arr, pspl_lens_ast[:, 0], 'ko', label='pspl')
+        ax[1].plot(time_arr, pspl_lens_ast[:, 1], 'ko')
+        ax[0].plot(time_arr, fspl_lens_ast[:, 0], 'r.', label='fspl')
+        ax[1].plot(time_arr, fspl_lens_ast[:, 1], 'r.')
+        ax[0].legend()
+        ax[1].set_xlabel('Time (MJD)')
+        ax[0].set_ylabel('X (")')
+        ax[1].set_ylabel('X (")')
+        fig.show()
+
         
 def test_FSPL_PhotAstrom_methods(plot=False):
     """
@@ -3678,15 +3744,15 @@ def test_FSPL_PhotAstrom_methods(plot=False):
     ##########
     # FSPL n=500, r=0.001 thetaE
     ##########
-    fspl_arr_n500_good = np.array([18.874854, 18.866577, 18.833519, 18.766592, 18.520295, 18.203633,
-                                   18.523634, 18.767137, 18.833927, 18.866705])
+    fspl_arr_n500_good = np.array([18.874904, 18.866692, 18.834059, 18.768458, 18.532153, 18.23993, 
+                                   18.535248, 18.769008, 18.834454, 18.866821])
     fspl_arr_n500 = test_fspl_once(500, fspl_arr_n500_good, mod='FSPL')
 
     ##########
     # FSPL n=1000, r=0.001 thetaE
     ##########
-    fspl_arr_n1000_good = np.array([18.874835, 18.866558, 18.8335  , 18.766575, 18.520282, 18.203624,
-                                   18.523621, 18.767119, 18.833909, 18.866686])
+    fspl_arr_n1000_good = np.array([18.874885, 18.866673, 18.834041, 18.768441, 18.53214 ,18.23992, 
+                                    18.535234, 18.76899 , 18.834436, 18.866802])
     fspl_arr_n1000 = test_fspl_once(1000, fspl_arr_n1000_good, mod='FSPL')
 
 

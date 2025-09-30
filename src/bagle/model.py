@@ -19926,7 +19926,7 @@ class FSPL(PSPL):
         days_in_a_year = 365.25
         
 
-        source_unlensed = self.xS0 / self.thetaE_amp
+        source_unlensed = (self.xS0 *1e3) / self.thetaE_amp
         #pdb.set_trace()
         center = (source_unlensed)[0] + 1j * (source_unlensed)[1]
         rad = self.radiusS / self.thetaE_amp * 1e3
