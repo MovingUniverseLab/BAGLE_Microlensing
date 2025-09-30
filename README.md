@@ -13,6 +13,7 @@ All models support fitting data with single or multi-band photometry only, astro
 The documentation to the BAGLE code can be found [here](https://bagle.readthedocs.io/en/latest/)
 
 ## Installation Instructions
+
 ### Install required modules:
 Before you can use BAGLE, you will need to install the following modules:
 
