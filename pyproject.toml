@@ -1,7 +1,7 @@
 [project]
 name = "BAGLE"
 description = "BAGLE (Bayesian Analysis of Gravitational Lensing Events) is a package to model and fit microlensing events."
-dynamic = ["version"]
+version = "1.0.1rc1"
 authors = [
     {name = "Jessica Lu", email = "jlu.astro@berkeley.edu"},
     {name = "T. Dex Bhadra"},
@@ -17,7 +17,7 @@ authors = [
 requires-python = ">=3.11"
 readme = "README.md"
 license = "GPL-3.0-or-later"
-license-files = ["LICEN[CS]e*"]
+license-files = ["LICENSE*"]
 
 dependencies = ["numpy>=1.24",
                 "pymultinest",
@@ -30,7 +30,7 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3.11",
     "Operating System :: OS Independent",
-    "Intended Audience :: Astronomers"
+    "Intended Audience :: Developers"
 ]
 
 
