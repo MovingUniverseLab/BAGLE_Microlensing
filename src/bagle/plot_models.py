@@ -1106,8 +1106,6 @@ def compare_model_pkg_phot_amp(bagle_mod, time_arr, amp_pylima=None, amp_vbmicr=
 
     ax[0].set_ylabel('Amplification')
     ax[0].legend(loc='upper right', fontsize=12)
-    ax[0].set_title('PSPL, no Parallax')
-
     ax[1].legend(loc='upper left', fontsize=12)
     ax[1].set_ylabel('Difference')
     ax[1].set_xlabel('Time (MJD)')
@@ -1154,7 +1152,6 @@ def compare_model_pkg_phot_astrom_amp(time_arr, amp_bagle, amp_pylima=None, amp_
 
     ax[0].set_ylabel('Amplification')
     ax[0].legend(loc='upper right', fontsize=12)
-    ax[0].set_title('PSPL, no Parallax')
 
     ax[1].legend(loc='upper left', fontsize=12)
     ax[1].set_ylabel('Difference')

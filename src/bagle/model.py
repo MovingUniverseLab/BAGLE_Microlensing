@@ -9,7 +9,7 @@
 #.. moduleauthor:: Edward Broadberry
 """
 Overview of bagle.model
-=========================PSPL_PhotAstrom_Par_Param4_geoproj
+=========================
 The ``bagle.model`` module contains a collection of classes and functions that
 allow the user to construct microlensing models. The available classes for
 instantiating a microlensing event are shown in the list below.
@@ -244,6 +244,10 @@ Binary source, binary lens, photometry and astrometry
     - :class:`BSBL_PhotAstrom_Par_Param2`
     - :class:`BSBL_PhotAstrom_noPar_Param1`
     - :class:`BSBL_PhotAstrom_noPar_Param2`
+    - :class:`BSBL_PhotAstrom_Par_LinOrbs_Param1`
+    - :class:`BSBL_PhotAstrom_noPar_LinOrbs_Param1`
+    - :class:`BSBL_PhotAstrom_Par_AccOrbs_Param1`
+    - :class:`BSBL_PhotAstrom_noPar_AccOrbs_Param1`
     - :class:`BSBL_PhotAstrom_Par_CircOrbs_Param1`
     - :class:`BSBL_PhotAstrom_Par_CircOrbs_Param2`
     - :class:`BSBL_PhotAstrom_noPar_CircOrbs_Param1`
@@ -630,7 +634,7 @@ class PSPL(ABC):
         A_minus = 0.5 * (
                 (u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4)) - 1)
 
-        return (A_plus, A_minus)
+        return np.stack((A_plus, A_minus))
 
     def get_amplification(self, t, filt_idx=0):
         """
@@ -729,7 +733,7 @@ class PSPL(ABC):
         xS_plus = xL + (xSL_plus * 1e-3)  # arcsec
         xS_minus = xL + (xSL_minus * 1e-3)  # arcsec
 
-        return (xS_plus, xS_minus)
+        return np.stack((xS_plus, xS_minus))
 
     def get_astrometry(self, t, filt_idx=0):
         """
@@ -1802,152 +1806,6 @@ class PSPL_Parallax(ParallaxClassABC):
 
         return xS0E_g, xS0N_g, muSE_g, muSN_g
 
-
-class PSPL_Parallax_geoproj(PSPL_Parallax):
-    """
-    This is following the geocentric projected formalism
-    based on P. Mroz's code which is based on MulensModel.
-    FIXME: Broken for Satellite parallax cases.
-    """
-    fixed_param_names = ['raL', 'decL', 't0par']
-    fixed_phot_param_names = ['obsLocation']
-
-    def geta(self, ra, dec, t0par, t):
-        """
-        idk why it's called "geta"
-        times are in MJD.
-        """
-        if type(ra) == str:
-            coord = SkyCoord(ra, dec, unit=(units.hourangle, units.deg))
-        if ((type(ra) == float) or (type(ra) == int)):
-            coord = SkyCoord(ra, dec, unit=(units.deg, units.deg))
-
-        direction = coord.cartesian.xyz.value
-        north = np.array([0., 0., 1.])
-        _east_projected = np.cross(north, direction) / np.linalg.norm(np.cross(north, direction))
-        _north_projected = np.cross(direction, _east_projected) / np.linalg.norm(np.cross(direction, _east_projected))
-
-        t = t + 2400000.5
-        t0par = t0par + 2400000.5
-        _t0par = Time(t0par, format='jd', scale='tdb')
-        _t = Time(t, format='jd', scale='tdb')
-        (jd1, jd2) = get_jd12(_t0par, 'tdb')
-        (earth_pv_helio, earth_pv_bary) = erfa.epv00(jd1, jd2)  # this is earth-sun
-        velocity = np.asarray(earth_pv_bary[1])
-
-        position = get_body_barycentric(body='earth', time=_t)
-        position_ref = get_body_barycentric(body='earth', time=_t0par)
-
-        delta_s = (position_ref.xyz.T - position.xyz.T).to(units.au).value
-        delta_s += np.outer(t - t0par, velocity)
-
-        out_e = np.dot(delta_s, _east_projected)
-        out_n = np.dot(delta_s, _north_projected)
-
-        return out_e, out_n
-
-    def get_amplification(self, t, filt_idx=0):
-        """
-        Get an array of the photometric amplifications at the input times.
-        Parallax is included.
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times in MJD.DDD
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-
-        """
-        qe, qn = self.geta(self.raL, self.decL, self.t0par, t)
-
-        tau = (t - self.t0) / self.tE
-        dtau = self.piE[1] * qn + self.piE[0] * qe
-        dbeta = self.piE[1] * qe - self.piE[0] * qn
-
-        taup = tau + dtau
-        betap = self.u0_amp + dbeta
-
-        u_amp = np.hypot(taup, betap)
-
-        A = (u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4))
-
-        return A
-
-    def get_centroid_shift(self, t, filt_idx=0):
-        """
-        Get the centroid shift (in mas) at the input times. The centroid shift
-        is the difference between the
-        lensed, unresolved position (with lensed source + lens light) and the
-        unlensed, unresolved position (with unlensed source + lens light).
-        Parallax is included. The returned array is in arcsec and
-        has a shape of [len(t), 2] where the second dimension includes
-        [RA, Dec] positions in arcsec.
-
-        Parameters
-        ----------
-        t : array_like
-            Time (in MJD).
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        """
-        qe, qn = self.geta(self.raL, self.decL, self.t0par, t)
-
-        tau = (t - self.t0) / self.tE
-        dtau = self.piE[1] * qn + self.piE[0] * qe
-        dbeta = self.piE[1] * qe - self.piE[0] * qn
-
-        # Assume all neighbor flux is in the lens. Define g = f_L / f_s
-        g = (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-
-        taup = tau + dtau
-        betap = self.u0_amp + dbeta
-
-        # Build the u vector over time.
-        u_N = -betap * self.muRel_hat[0] + taup * self.muRel_hat[1]
-        u_E = betap * self.muRel_hat[1] + taup * self.muRel_hat[0]
-        u_vec = np.array([u_E, u_N]).T
-        print('u_vec.shape = ', u_vec.shape)
-
-        # Define u^2 and u variables for ease.
-        u2 = tau**2 + self.u0_amp**2
-        u_amp = np.hypot(taup, betap)
-
-        # u^2 +3 - u\sqrt{u^2 + 4}
-        numer_u = u2 + 3 - u_amp * np.sqrt(u2 + 4)
-
-        # u^2 + 2 + gu\sqrt{u^2+4}
-        denom_u = u2 + 2 + g * u_amp * np.sqrt(u2 + 4)
-
-        # \vec{\theta}_S - \vec{\theta}_L = theta_E \vec{u}
-        thetaSL = u_vec * self.thetaE_amp
-
-        # Lens-induced astrometric shift of the sum of all source images (in mas)
-        numer = (1 + g * numer_u)[:, np.newaxis] * thetaSL
-        denom = (1 + g) * denom_u
-
-        # Lens-induced astrometric shift of the sum of all source images (in mas)
-        shift = numer / denom.reshape(numer.shape[0], 1)
-
-        # Old assuming no lens light.
-        #delta_N = u_N / (u_amp ** 2 + 2.0)
-        #delta_E = u_E / (u_amp ** 2 + 2.0)
-        #shift = self.thetaE_amp * np.vstack((delta_E, delta_N)).T
-
-        return shift
-
-    def get_helio_params(self, plot=False):
-        t0_h, u0_h, tE_h, piEE_h, piEN_h = fc.convert_helio_geo_phot(self.raL, self.decL,
-                                                                     self.t0, self.u0_amp,
-                                                                     self.tE, self.piE[0], self.piE[1],
-                                                                     self.t0par, in_frame='geo',
-                                                                     murel_in='LS', murel_out='SL',
-                                                                     coord_in='tb', coord_out='EN',
-                                                                     plot=plot)
-
-        return t0_h, u0_h, tE_h, piEE_h, piEN_h
 
 # --------------------------------------------------
 #
@@ -3093,36 +2951,34 @@ class PSPL_PhotParam3(PSPL_Param):
 
         return
 
-
 class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
     """PSPL model for photometry only.
 
     Point source point lens model for microlensing photometry only
-    in geocentric-projected coordinates.
-    This model includes the relative proper motion between the lens
-    and the source. Parameters are reduced with the use of piRel
-    (rather than dL and dS) and muRel (rather than muL and muS).
+    in geocentric-projected coordinates. The geocentric projection
+    converts into a rectilinear reference frame that is consistent with
+    the Earth's position and velocity at time t0par.
 
     Note the attributes, RA (raL) and Dec (decL) are required
-    if you are calculating a model with parallax. 
+    if you are calculating a model with parallax.
 
     Attributes
     ----------
-    t0: float
+    t0_geotr: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in geocentric coordinates. This should be well aligned with the
+        as seen in geocentric-projected coordinates. This should be well aligned with the
         photometric peak.
-    u0_amp: float
+    u0_amp_geotr: float
          Angular distance between the lens and source on the plane of the
          sky at closest approach in units of thetaE. It can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
          Note, this is the geocentric-projected u0.
-    tE: float
+    tE_geotr: float
         Einstein crossing time in days in the geocentric-projected frame.
-    piE_E: float
+    piE_E_geotr: float
         The microlensing parallax in the East direction in units of thetaE.
-    piE_N: float
+    piE_N_geotr: float
         The microlensing parallax in the North direction in units of thetaE
     b_sff: numpy array or list
         The ratio of the source flux to the total (source + neighbors + lens)
@@ -3145,28 +3001,39 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
         or b_sff (e.g. other photometric parameters).
     """
 
-    def __init__(self, t0, u0_amp, tE,
-                 piE_E, piE_N, b_sff, mag_src,
+    def __init__(self, t0_geotr, u0_amp_geotr, tE_geotr,
+                 piE_E_geotr, piE_N_geotr, b_sff, mag_src,
                  t0par,
                  raL=None, decL=None, obsLocation='earth'):
-        self.t0par = t0par
-        self.t0 = t0
-        self.u0_amp = u0_amp
-        self.tE = tE
-        self.piE = np.array([piE_E, piE_N])
+        self.t0_geotr = t0_geotr
+        self.u0_amp_geotr = u0_amp_geotr
+        self.tE_geotr = tE_geotr
+        self.piE_geotr = np.array([piE_E_geotr, piE_N_geotr])
         self.b_sff = b_sff
         self.mag_src = mag_src
+        self.t0par = t0par
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
 
+        # Convert the parameters back into heliocentric (actually SSB) for our use.
+        t0, u0, tE, piEE, piEN = fc.convert_helio_geo_phot(self.raL, self.decL,
+                                                           self.t0_geotr, self.u0_amp_geotr,
+                                                           self.tE_geotr, self.piE_geotr[0], self.piE_geotr[1],
+                                                           self.t0par, in_frame='geo',
+                                                           murel_in='LS', murel_out='SL',
+                                                           coord_in='tb', coord_out='EN',
+                                                           plot=False)
+
+
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
-        super().__init__(t0, u0_amp, tE,
-                         piE_E, piE_N, b_sff, mag_src,
+        super().__init__(t0, u0, tE,
+                         piEE, piEN, b_sff, mag_src,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
         return
+
 
 
 class PSPL_PhotAstromParam1(PSPL_Param):
@@ -3828,14 +3695,17 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
     It is the same as PSPL_PhotAstromParam2 except it fits for baseline instead
     of source magnitude.
 
+    The input photometric parameters are in a geocentric-projected reference frame.
+    Note that the input astrometric parameters are in the Solar System Barycentric frame.
+
     Parameters
     ----------
 
-    t0 : float
+    t0_geotr : float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in geocentric coordinates. This should be well aligned with the
+        as seen in geocentric-projected coordinates. This should be well aligned with the
         photometric peak.
-    u0_amp : float
+    u0_amp_geotr : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can be
 
@@ -3843,26 +3713,26 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
            * negative (u0_amp < 0 when u0_hat[0] < 0).
 
          Note, this is the geocentric-projected u0.
-    tE : float
+    tE_geotr : float
         Einstein crossing time in days in the geocentric-projected frame.
     thetaE:
         The size of the Einstein radius in (mas).
     piS : float
         Amplitude of the parallax (1AU/dS) of the source. (mas)
-    piE_E : float
-        The microlensing parallax in the East direction in units of thetaE
-    piE_N : float
-        The microlensing parallax in the North direction in units of thetaE
+    piE_E_geotr : float
+        The microlensing parallax in the East direction in units of thetaE. In the geocentric-projected frame.
+    piE_N_geotr : float
+        The microlensing parallax in the North direction in units of thetaE. In the geocentric-projected frame.
     xS0_E : float
         R.A. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+        arbitrary ref. frame. In the Solar-System Barycentric frame.
     xS0_N : float
         Dec. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+        arbitrary ref. frame. In the Solar-System Barycentric frame.
     muS_E : float
-        RA Source proper motion (mas/yr)
+        RA Source proper motion (mas/yr). In the Solar-System Barycentric frame.
     muS_N : float
-        Dec Source proper motion (mas/yr)
+        Dec Source proper motion (mas/yr). In the Solar-System Barycentric frame.
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
         for each filter.
@@ -3887,28 +3757,41 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
                        or b_sff (e.g. other photometric parameters).
     """
 
-    def __init__(self, t0, u0_amp, tE, thetaE, piS,
-                 piE_E, piE_N,
+    def __init__(self, t0_geotr, u0_amp_geotr, tE_geotr, thetaE, piS,
+                 piE_E_geotr, piE_N_geotr,
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  b_sff, mag_base,
                  t0par,
                  raL=None, decL=None, obsLocation='earth'):
-        self.t0par = t0par
-        self.t0 = t0
-        self.u0_amp = u0_amp
-        self.tE = tE
-        self.piE = np.array([piE_E, piE_N])
+
+        self.t0_geotr = t0_geotr
+        self.u0_amp_geotr = u0_amp_geotr
+        self.tE_geotr = tE_geotr
+        self.piE_geotr = np.array([piE_E_geotr, piE_N_geotr])
         self.thetaE_amp = thetaE
         self.xS0 = np.array([xS0_E, xS0_N])
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
         self.mag_base = mag_base
+        self.t0par = t0par
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
 
+        # Convert the parameters back into heliocentric (actually SSB) for our use.
+        t0, u0_amp, tE, piE_E, piE_N = fc.convert_helio_geo_phot(self.raL, self.decL,
+                                                                 self.t0_geotr, self.u0_amp_geotr,
+                                                                 self.tE_geotr, self.piE_geotr[0], self.piE_geotr[1],
+                                                                 self.t0par, in_frame='geo',
+                                                                 murel_in='LS', murel_out='SL',
+                                                                 coord_in='tb', coord_out='EN',
+                                                                 plot=False)
+
+
+        # Must call after setting parameters.
+        # This checks for proper parameter formatting.
         super().__init__(t0, u0_amp, tE, thetaE, piS,
                          piE_E, piE_N,
                          xS0_E, xS0_N,
@@ -4354,7 +4237,7 @@ class PSPL_GP_PhotParam2_2(PSPL_PhotParam2):
         self.gp_log_omega0 = gp_log_omega0
 
         super().__init__(t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
-                         raL=raL, decL=decL)
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         self.gp_log_rho = {}
         for key, val in self.gp_rho.items():
@@ -5294,7 +5177,7 @@ class PSBL(PSPL):
         mag_Lp = flux2mag(flux_Lp)
         mag_Ls = flux2mag(flux_Ls)
 
-        return (mag_Lp, mag_Ls)
+        return np.stack((mag_Lp, mag_Ls))
 
     def get_lens_photometry(self, filt_idx=0):
         """
@@ -5347,8 +5230,10 @@ class PSBL(PSPL):
         # print(z_arr)
         # print(z1)
         # print(z2)
+        np.seterr(divide='ignore', invalid='ignore')  # Turn off /0 warnings. NaNs are fine.
         dwbardz = self.m1 / (z_arr - z1.reshape((N_times, 1))) ** 2
         dwbardz += self.m2 / (z_arr - z2.reshape((N_times, 1))) ** 2
+        np.seterr(divide='warn', invalid='warn') # Turn off /0 warnings. NaNs are fine.
         jacobian = 1 - np.absolute(dwbardz) ** 2
         amp_arr = 1.0 / np.absolute(jacobian)  # Absolute value of J
 
@@ -5535,8 +5420,8 @@ class PSBL(PSPL):
         # Solve the lens equation and find all 5 roots.
         # Loop through different time steps and solve each one.
         N_times = len(w)
-        z_arr = np.zeros((N_times, 5), dtype=np.complex_)
-        # ai_arr = np.zeros((N_times, 6), dtype=np.complex_)
+        z_arr = np.zeros((N_times, 5), dtype=np.complex128)
+        # ai_arr = np.zeros((N_times, 6), dtype=np.complex128)
         for i in range(N_times):
             # ai_arr[i] = np.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
             z_arr[i] = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
@@ -5996,7 +5881,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         y_basis = np.cross(z_basis, x_basis)
     
         i = np.rad2deg(np.arccos(z_basis[1])) 
-        big_omega = np.rad2deg(np.arctan2(-z_basis[0], z_basis[2]))
+        big_omega_sec = np.rad2deg(np.arctan2(-z_basis[0], z_basis[2]))
         little_omega = np.rad2deg(np.arctan2(x_basis[2],y_basis[2]))
         p = 2*np.pi/n # years
         p_days = p * 365.25
@@ -6014,7 +5899,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         tp = t0 - (E-eccentricity*np.sin(E))/n * 365.25
 
 
-        return eccentricity, i, big_omega, little_omega, p_days, tp
+        return eccentricity, i, big_omega_sec, little_omega, p_days, tp
      
     def get_resolved_lens_astrometry(self, t, filt_idx=0):
         """Equation of motion for just the foreground lenses, individually.
@@ -6035,10 +5920,10 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         # the right shape.
 
         if self.orbitFlag:
-            eccentricity, i, big_omega, little_omega, p, tp = self.get_me_some_orbital_parameters(self.t0, self.sep, self.r_s, self.a_s, self.v_para, self.v_perp, self.v_rad)
+            eccentricity, i, big_omega_sec, little_omega, p, tp = self.get_me_some_orbital_parameters(self.t0, self.sep, self.r_s, self.a_s, self.v_para, self.v_perp, self.v_rad)
             orb = orbits.Orbit()
             orb.w = little_omega
-            orb.o = big_omega
+            orb.o = big_omega_sec
             orb.i = i
             orb.e = eccentricity
             orb.tp = tp
@@ -6058,7 +5943,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
             xL1 = np.tile(self.xL1_over_theta, (len(t), 1))
             xL2 = np.tile(self.xL2_over_theta, (len(t), 1))
         
-        return (xL1, xL2)
+        return np.stack((xL1, xL2))
       
     def get_lens_astrometry(self, t, filt_idx=0):
         """
@@ -6320,13 +6205,13 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
             if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
                 dt_in_years = (t - self.t0) / days_per_year
                 # Get positions assuming binary origin at primary.
-                xL1 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)  # parallax applied
+                xL1 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx) - offset  # parallax applied
                 xL2 = xL1 + (2 * offset)
                 # Apply velocity difference.
                 xL2 += np.outer(dt_in_years, self.muL_sec - self.muL) * 1e-3
                 # Apply acceleration difference.
                 if self.orbitFlag == 'accelerated':
-                    xL2 += np.outer((0.5 * (dt_in_years ** 2)), self.acc) * 1e-3
+                    xL2 += np.outer((0.5 * (dt_in_years ** 2)), self.accL) * 1e-3
 
             elif self.orbitFlag == 'Keplerian':
                 dt_in_years = (t - self.t0_com) / days_per_year  # About Center of Mass
@@ -6336,8 +6221,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
 
                 orb = orbits.Orbit()
-                orb.w = self.omega
-                orb.o = self.big_omega
+                orb.w = self.omega_pri
+                orb.o = self.big_omega_sec
                 orb.i = self.i
                 orb.e = self.e
                 orb.p = self.p
@@ -6365,7 +6250,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                     xL1 += (self.piL * parallax_vec) * 1e-3  # arcsec
                     xL2 += (self.piL * parallax_vec) * 1e-3  # arcsec
 
-        return (xL1, xL2)
+        return np.stack((xL1, xL2))
 
     def get_lens_astrometry(self, t, filt_idx=0):
         """Equation of motion for just the foreground lens system.
@@ -6658,10 +6543,372 @@ class PSBL_noParallax(PSPL_noParallax):
 # Parameterization Class Family - PSBL
 #
 # --------------------------------------------------
+class PSBL_PhotAstromParam1(PSPL_Param):
+    """
+    Point source binary lens.
+    Note that this is a STATIC binary lens, i.e.
+    there is no orbital motion.
+
+    Attributes
+    ----------
+    mLp, mLs : float
+        Masses of the lenses (Msun)
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    beta : float
+        Angular distance between the source and the GEOMETRIC center
+        of the lenses on the plane of the sky (mas). Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    muL_E : float
+        Lens system proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Lens system proper motion in the Dec. direction (mas/yr)
+    muS_E : float
+        Source proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source proper motion in the Dec. direction (mas/yr)
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source (pc)
+    sep : float
+        Angular separation of the two lenses (mas)
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
+        then dmag_Lp_Ls=0 and b_sff=1.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
+                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
+                          'dL', 'dS', 'sep', 'alpha']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = False
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
+                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        self.mLp = mLp  # Msun
+        self.mLs = mLs  # Msun
+
+        self.t0 = t0
+        self.xS0 = np.array([xS0_E, xS0_N])
+        self.beta = beta
+        self.muL = np.array([muL_E, muL_N])
+        self.muS = np.array([muS_E, muS_N])
+        self.dL = dL
+        self.dS = dS
+        self.sep = sep
+        self.alpha = alpha
+        self.alpha_rad = self.alpha * np.pi / 180.0
+        self.b_sff = b_sff
+        self.mag_src = mag_src
+        self.dmag_Lp_Ls = dmag_Lp_Ls
+        self.raL = raL
+        self.decL = decL
+        self.obsLocation = obsLocation
+        self.root_tol = root_tol
+
+        # Super handles checking for properly formatted variables.
+        super().__init__()
+
+        # Calculate the relative parallax
+        inv_dist_diff = (1.0 / (dL * units.pc)) - (1.0 / (dS * units.pc))
+        piRel = units.rad * units.au * inv_dist_diff
+        self.piRel = piRel.to('mas').value
+
+        # Calculate the individual parallax
+        piS = (1.0 / self.dS) * (units.rad * units.au / units.pc)
+        piL = (1.0 / self.dL) * (units.rad * units.au / units.pc)
+        self.piS = piS.to('mas').value
+        self.piL = piL.to('mas').value
+
+        # Calculate the relative proper motion vector.
+        # Note that this will be in the direction of theta_hat
+        self.muRel = self.muS - self.muL
+        self.muRel_amp = np.linalg.norm(self.muRel)  # mas/yr
+
+        # Calculate the Einstein radius
+        # AFAICT, thetaE for binary lenses is calculated from the total lens mass.
+        # Checked using Shin+17 (OB160168) and Jung+19 (OB160156)
+        self.mL = self.mLp + self.mLs  # Total lens mass
+        thetaE = units.rad * np.sqrt((4.0 * const.G * self.mL * units.M_sun / const.c ** 2) * inv_dist_diff)
+        self.thetaE_amp = thetaE.to('mas').value  # mas
+        self.thetaE_hat = self.muRel / self.muRel_amp
+        self.muRel_hat = self.thetaE_hat
+        self.thetaE = self.thetaE_amp * self.thetaE_hat
+
+        # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
+        self.m2 = m2.to(units.arcsec ** 2).value
+
+        # Calculate the microlensing parallax
+        self.piE = (self.piRel / self.thetaE_amp) * self.thetaE_hat
+
+        # Comment on sign conventions:
+        # thetaS0 = xS0 - xL0
+        # (difference in positions on sky, heliocentric, at t0)
+        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
+        # if u0_E > 0 then the Source is to the East of the lens
+        # if u0_E < 0 then the source is to the West of the lens
+        # We adopt the following sign convention (same as Gould:2004):
+        #    u0_amp > 0 means u0_E > 0
+        #    u0_amp < 0 means u0_E < 0
+        # Note that we assume beta = u0_amp (with same signs).
+
+        # Calculate the closest approach vector. Define beta sign convention
+        # same as of Andy Gould does with beta > 0 means u0_E > 0
+        # (lens passes to the right of the source as seen from Earth or Sun).
+        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
+        # the sign of beta is always the same as the sign of u0_amp. Therefore this
+        # usage of the function with u0_amp works exactly the same.
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
+        self.u0_amp = self.beta / self.thetaE_amp  # in Einstein units
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        # Angular separation vector between source and lens (vector from lens to source)
+        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
+
+        # Calculate the position of the lens on the sky at time, t0
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
+        # Calculate the microlensing parallax
+        self.piE_amp = self.piRel / self.thetaE_amp
+        self.piE = self.piE_amp * self.thetaE_hat
+
+        # Calculate the Einstein crossing time. (days)
+        self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
+
+        return
+
+
+class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
+    """
+    Point source binary lens.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period).
+
+    Attributes
+    ----------
+    mLp, mLs : float
+        Masses of the lenses (Msun)
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    beta : float
+        Angular distance between the source and the GEOMETRIC center
+        of the lenses on the plane of the sky (mas). Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    muL_E : float
+        Lens system proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Lens system proper motion in the Dec. direction (mas/yr)
+    delta_muL_sec_E: float
+        Secondary Lens System proper motion in the RA direction (mas/yr)
+    delta_muL_sec_N: float
+        Secondary Lens System proper motion in the Dec. direction (mas/yr)
+    muS_E : float
+        Source proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source proper motion in the Dec. direction (mas/yr)
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source (pc)
+    sep : float
+        Angular separation of the two lenses (mas)
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
+        then dmag_Lp_Ls=0 and b_sff=1.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
+                          'beta', 'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N',
+                          'muS_E', 'muS_N',
+                          'dL', 'dS', 'sep', 'alpha']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'linear'
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta,
+                 muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N,
+                 muS_E, muS_N, dL, dS,
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N,
+                         beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                         sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         raL = raL, decL = decL, obsLocation = obsLocation, root_tol = root_tol)
+
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+
+        return
+
+
+class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
+    """
+    Point source binary lens.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
+
+    Attributes
+    ----------
+    mLp, mLs : float
+        Masses of the lenses (Msun)
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    beta : float
+        Angular distance between the source and the GEOMETRIC center
+        of the lenses on the plane of the sky (mas). Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    muL_E : float
+        Lens system proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Lens system proper motion in the Dec. direction (mas/yr)
+    delta_muL_sec_E: float
+        Secondary Lens System proper motion in the RA direction (mas/yr)
+    delta_muL_sec_N: float
+        Secondary Lens System proper motion in the Dec. direction (mas/yr)
+    accLsec_E:
+        Acceleration of the secondary lens in the direction of RA (mas/yr^2)
+    accLsec_N:
+        Acceleration of the secondary lens in the direction of DEC (mas/yr^2)
+    muS_E : float
+        Source proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source proper motion in the Dec. direction (mas/yr)
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source (pc)
+    sep : float
+        Angular separation of the two lenses (mas)
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
+        then dmag_Lp_Ls=0 and b_sff=1.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N', 'beta',
+                          'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
+                          'muS_E', 'muS_N',
+                          'dL', 'dS', 'sep', 'alpha']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'accelerated'
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta,
+                 muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N,
+                 muS_E, muS_N, dL, dS,
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N,
+                         beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                         sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+        self.accL = np.array([accLsec_E, accLsec_N])
+
+        return
+
+
 class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     """
     Point source binary lens.
-    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
+    Note that this is a non-STATIC binary lens,
+    i.e. there is orbital motion.
 
     Attributes
     ----------
@@ -6697,7 +6944,8 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     tp: float
         This is the time of the periastron of the system in days.
     a: float
-        The semi-major axis of the binary system in mas. 
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
     muS_E : float
         Source proper motion in the RA direction (mas/yr)
     muS_N : float
@@ -6717,12 +6965,19 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'e', 'tp', 'a', 'muS_E',
-                          'muS_N', 'dL', 'dS']
+                          'beta', 'muL_E', 'muL_N',
+                          'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
+                          'muS_E', 'muS_N', 'dL', 'dS']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -6730,7 +6985,8 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     orbitFlag = 'Keplerian'
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
-                 beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
+                 beta_com, muL_E, muL_N,
+                 omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
@@ -6740,8 +6996,8 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.beta_com = beta_com
 
         self.muL = np.array([muL_E, muL_N])
-        self.omega = omega
-        self.big_omega = big_omega
+        self.omega_pri = omega_pri
+        self.big_omega_sec = big_omega_sec
         self.i = i
         self.e = e
         self.tp = tp
@@ -6790,8 +7046,8 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.p = p.value  # Period in Days
 
         orb = orbits.Orbit()
-        orb.w = self.omega
-        orb.o = self.big_omega
+        orb.w = self.omega_pri
+        orb.o = self.big_omega_sec
         orb.i = self.i
         orb.e = self.e
         orb.tp = (self.tp)
@@ -6887,7 +7143,8 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
     """
     Point source binary lens.
-    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
+    Note that this is a non-STATIC binary lens,
+    i.e. there is orbital motion.
 
     Attributes
     ----------
@@ -6920,8 +7177,9 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         The inclination angle of the system in degrees.
     tp: float
         This is the time of the periastron of the system in days.
-    sep: float
-        The angular separation between the lenses (mas). Also, the projected semi-major axis. 
+    a: float
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
     muS_E : float
         Source proper motion in the RA direction (mas/yr)
     muS_N : float
@@ -6941,12 +7199,18 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
-
     """
     fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'tp', 'sep', 'muS_E', 'muS_N',
+                          'beta', 'muL_E', 'muL_N',
+                          'omega_pri', 'big_omega_sec', 'i', 'tp', 'a', 'muS_E', 'muS_N',
                           'dL', 'dS']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
@@ -6956,179 +7220,15 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta_com, muL_E, muL_N,
-                 omega, big_omega, i, tp, sep, muS_E, muS_N, dL, dS,
+                 omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        e = 0
         super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N,
                          beta_com, muL_E, muL_N,
-                         omega, big_omega, i, 0, tp, sep, muS_E, muS_N, dL, dS,
+                         omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
                          b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-
-        return
-
-
-class PSBL_PhotAstromParam1(PSPL_Param):
-    """
-    Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
-
-    Attributes
-    ----------
-    mLp, mLs : float
-        Masses of the lenses (Msun)
-    t0 : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-    xS0_E : float
-        R.A. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    xS0_N : float
-        Dec. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    beta : float
-        Angular distance between the source and the GEOMETRIC center
-        of the lenses on the plane of the sky (mas). Can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
-          * negative (u0_amp < 0 when u0_hat[0] < 0).
-    muL_E : float
-        Lens system proper motion in the RA direction (mas/yr)
-    muL_N : float
-        Lens system proper motion in the Dec. direction (mas/yr)
-    muS_E : float
-        Source proper motion in the RA direction (mas/yr)
-    muS_N : float
-        Source proper motion in the Dec. direction (mas/yr)
-    dL : float
-        Distance from the observer to the lens system (pc)
-    dS : float
-        Distance from the observer to the source (pc)
-    sep : float
-        Angular separation of the two lenses (mas)
-    alpha : float
-        Angle made between the binary axis and North;
-        measured in degrees East of North.
-    b_sff : numpy array or list
-        The ratio of the source flux to the total (source + neighbors + lenses). One
-        for each filter.
-    mag_src : numpy array or list
-        Source magnitude, unlensed. One in each filter.
-    dmag_Lp_Ls : numpy array or list
-        Magnitude difference of lens primary - lens secondary. If the primary lens
-        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
-        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
-        then dmag_Lp_Ls=0 and b_sff=1.
-        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
-        comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
-    """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
-
-    paramAstromFlag = True
-    paramPhotFlag = True
-    orbitFlag = False
-
-    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
-                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        self.mLp = mLp  # Msun
-        self.mLs = mLs  # Msun
-
-        self.t0 = t0
-        self.xS0 = np.array([xS0_E, xS0_N])
-        self.beta = beta
-        self.muL = np.array([muL_E, muL_N])
-        self.muS = np.array([muS_E, muS_N])
-        self.dL = dL
-        self.dS = dS
-        self.sep = sep
-        self.alpha = alpha 
-        self.alpha_rad = self.alpha * np.pi / 180.0
-        self.b_sff = b_sff
-        self.mag_src = mag_src
-        self.dmag_Lp_Ls = dmag_Lp_Ls
-        self.raL = raL
-        self.decL = decL
-        self.obsLocation = obsLocation
-        self.root_tol = root_tol
-
-        # Super handles checking for properly formatted variables.
-        super().__init__()
-
-        # Calculate the relative parallax
-        inv_dist_diff = (1.0 / (dL * units.pc)) - (1.0 / (dS * units.pc))
-        piRel = units.rad * units.au * inv_dist_diff
-        self.piRel = piRel.to('mas').value
-
-        # Calculate the individual parallax
-        piS = (1.0 / self.dS) * (units.rad * units.au / units.pc)
-        piL = (1.0 / self.dL) * (units.rad * units.au / units.pc)
-        self.piS = piS.to('mas').value
-        self.piL = piL.to('mas').value
-
-        # Calculate the relative proper motion vector.
-        # Note that this will be in the direction of theta_hat
-        self.muRel = self.muS - self.muL
-        self.muRel_amp = np.linalg.norm(self.muRel)  # mas/yr
-
-        # Calculate the Einstein radius
-        # AFAICT, thetaE for binary lenses is calculated from the total lens mass.
-        # Checked using Shin+17 (OB160168) and Jung+19 (OB160156)
-        self.mL = self.mLp + self.mLs  # Total lens mass
-        thetaE = units.rad * np.sqrt((4.0 * const.G * self.mL * units.M_sun / const.c ** 2) * inv_dist_diff)
-        self.thetaE_amp = thetaE.to('mas').value  # mas
-        self.thetaE_hat = self.muRel / self.muRel_amp
-        self.muRel_hat = self.thetaE_hat
-        self.thetaE = self.thetaE_amp * self.thetaE_hat
-
-        # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
-        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
-        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
-        self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
-        self.m2 = m2.to(units.arcsec ** 2).value
-
-        # Calculate the microlensing parallax
-        self.piE = (self.piRel / self.thetaE_amp) * self.thetaE_hat
-
-        # Comment on sign conventions:
-        # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
-        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
-        # if u0_E > 0 then the Source is to the East of the lens
-        # if u0_E < 0 then the source is to the West of the lens
-        # We adopt the following sign convention (same as Gould:2004):
-        #    u0_amp > 0 means u0_E > 0
-        #    u0_amp < 0 means u0_E < 0
-        # Note that we assume beta = u0_amp (with same signs).
-
-        # Calculate the closest approach vector. Define beta sign convention
-        # same as of Andy Gould does with beta > 0 means u0_E > 0
-        # (lens passes to the right of the source as seen from Earth or Sun).
-        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
-        # the sign of beta is always the same as the sign of u0_amp. Therefore this
-        # usage of the function with u0_amp works exactly the same.
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0_amp = self.beta / self.thetaE_amp  # in Einstein units
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
-
-        # Angular separation vector between source and lens (vector from lens to source)
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
-
-        # Calculate the position of the lens on the sky at time, t0
-        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-
-        # Calculate the microlensing parallax
-        self.piE_amp = self.piRel / self.thetaE_amp
-        self.piE = self.piE_amp * self.thetaE_hat
-
-        # Calculate the Einstein crossing time. (days)
-        self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
 
         return
 
@@ -7146,8 +7246,8 @@ class PSBL_PhotAstromParam2(PSPL_Param):
         Time of photometric peak, as seen from Earth (MJD.DDD)
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
-        on the plane of the sky at closest approach in units of thetaE. Can be 
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+        on the plane of the sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
     tE : float
         Einstein crossing time (days).
@@ -7188,6 +7288,12 @@ class PSBL_PhotAstromParam2(PSPL_Param):
         then dmag_Lp_Ls=0 and b_sff=1.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -7301,6 +7407,520 @@ class PSBL_PhotAstromParam2(PSPL_Param):
         return
 
 
+class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
+    """
+    Point source binary lens.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period).
+
+    Attributes
+    ----------
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    q : float
+        Mass ratio (M2 / M1)
+    sep : float
+        Angular separation of the two lenses (mas)
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    delta_muL_sec_E: float
+        Secondary Lens System proper motion in the RA direction (mas/yr)
+    delta_muL_sec_N: float
+        Secondary Lens System proper motion in the Dec. direction (mas/yr)
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_Lp_Ls should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
+        then dmag_Lp_Ls=0 and b_sff=1.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
+                          'q', 'sep', 'alpha',
+                          'delta_muL_sec_E', 'delta_muL_sec_N']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'linear'
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q, sep, alpha,
+                 delta_muL_sec_E, delta_muL_sec_N,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q, sep, alpha,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+
+        return
+
+
+class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
+    """
+    Point source binary lens.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
+
+    Attributes
+    ----------
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    q : float
+        Mass ratio (M2 / M1)
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    delta_muL_sec_E: float
+        Secondary Lens System proper motion in the RA direction (mas/yr)
+    delta_muL_sec_N: float
+        Secondary Lens System proper motion in the Dec. direction (mas/yr)
+    accLsec_E: float
+        Secondary Lens System's acceleration in the RA. direction (mas/yr^2)
+    accLsec_N: float
+        Secondary Lens System's acceleration in the Dec. direction (mas/yr^2)
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_Lp_Ls should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
+        then dmag_Lp_Ls=0 and b_sff=1.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
+                          'q', 'sep', 'alpha',
+                          'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'accelerated'
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q, sep, alpha,
+                 delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                         piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                         q, sep, alpha,
+                         b_sff, mag_src, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+        self.accL = np.array([accLsec_E, accLsec_N])
+
+        return
+
+
+class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
+    """
+    Point source binary lens.
+    Note that this is a NON-STATIC binary lens with
+    orbital motion.
+
+    Attributes
+    ----------
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    q : float
+        Mass ratio (M2 / M1)
+    a: float
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
+    big_omega_sec: float
+        The longitude of the ascending node of the secondary lens's orbit
+        in degrees.
+    omega_pri: float
+        The argument of periastron of the primary lens's orbit in degrees.
+        omega_sec = omega_pri + 180 deg
+    i: float
+        The inclination angle of the system in degrees.
+    e: float
+        The eccentricity of the System
+    tp: float
+        This is the time of the periastron of the system in days.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_Lp_Ls should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
+        then dmag_Lp_Ls=0 and b_sff=1.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
+                          'q', 'a', 'big_omega_sec', 'omega_pri', 'i', 'e', 'tp']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'Keplarian'
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q, a, big_omega_sec, omega_pri, i, e, tp,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+        self.t0 = t0
+        self.u0_amp = u0_amp
+        self.tE = tE
+        self.piE = np.array([piE_E, piE_N])
+        self.thetaE_amp = thetaE
+        self.xS0 = np.array([xS0_E, xS0_N])
+        self.muS = np.array([muS_E, muS_N])
+        self.piS = piS
+        self.q = q
+        self.a = a
+        self.big_omega_sec = big_omega_sec
+        self.omega_pri = omega_pri
+        self.i = i
+        self.e = e
+        self.tp = tp
+        self.b_sff = b_sff
+        self.mag_src = mag_src
+        self.dmag_Lp_Ls = dmag_Lp_Ls
+        self.raL = raL
+        self.decL = decL
+        self.obsLocation = obsLocation
+        self.root_tol = root_tol
+
+        # Check variable formatting.
+        super().__init__()
+
+        # Derived quantities
+        self.beta = self.u0_amp * self.thetaE_amp
+        self.piE_amp = np.linalg.norm(self.piE)
+        self.piRel = self.piE_amp * self.thetaE_amp
+        self.muRel_amp = self.thetaE_amp / (self.tE / days_per_year)
+        self.piL = self.piRel + self.piS
+
+        kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
+        kappa = kappa_tmp.to(units.mas / units.Msun,
+                             equivalencies=units.dimensionless_angles()).value
+        self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
+        self.mLp = self.mL / (1.0 + self.q)
+        self.mLs = self.mLp * self.q
+
+        # Calculate the distance to source and lens.
+        dL = (self.piL * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        dS = (self.piS * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        self.dL = dL.to('pc').value
+        self.dS = dS.to('pc').value
+
+        # Get the directional vectors.
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+        self.thetaE = self.thetaE_amp * self.thetaE_hat
+
+        # Calculate the relative velocity vector. Note that this will be in the
+        # direction of theta_hat
+        self.muRel = self.muRel_amp * self.thetaE_hat
+        self.muRel_E, self.muRel_N = self.muRel
+        self.muL = self.muS - self.muRel
+        self.muL_E, self.muL_N = self.muL
+
+        # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
+        inv_dist_diff = (1.0 / dL) - (1.0 / dS)
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
+        self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
+        self.m2 = m2.to(units.arcsec ** 2).value
+
+        # Comment on sign conventions:
+        # thetaS0 = xS0 - xL0
+        # (difference in positions on sky, heliocentric, at t0)
+        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
+        # if u0_E > 0 then the Source is to the East of the lens
+        # if u0_E < 0 then the source is to the West of the lens
+        # We adopt the following sign convention (same as Gould:2004):
+        #    u0_amp > 0 means u0_E > 0
+        #    u0_amp < 0 means u0_E < 0
+        # Note that we assume beta = u0_amp (with same signs).
+
+        # Calculate the closest approach vector. Define beta sign convention
+        # same as of Andy Gould does with beta > 0 means u0_E > 0
+        # (lens passes to the right of the source as seen from Earth or Sun).
+        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
+        # the sign of beta is always the same as the sign of u0_amp. Therefore this
+        # usage of the function with u0_amp works exactly the same.
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        # Angular separation vector between source and lens (vector from lens to source)
+        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
+
+        # Calculate the position of the lens on the sky at time, t0
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
+        # Orbital Parameters
+        self.sep = a # mas
+        self.a = a
+        self.aleph_sec = (self.mLp / (self.mLp + self.mLs)) * self.a  # mas
+        self.aleph = self.a - self.aleph_sec  # mas
+        self.a_AU = dL * (self.a * 1e-3) * units.AU
+        mL = self.mL * units.Msun
+        p = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mL))).to('day')
+        self.p = p.value  # Period in Days
+
+        orb = orbits.Orbit()
+        orb.w = self.omega_pri
+        orb.o = self.big_omega_sec
+        orb.i = self.i
+        orb.e = self.e
+        orb.tp = (self.tp)
+        orb.aleph = self.aleph *1e-3 #arcseconds
+        orb.aleph2 = self.aleph_sec *1e-3
+        orb.p = self.p
+
+        (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
+
+        self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
+        self.alpha = np.rad2deg(self.alpha_rad)
+        self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
+
+        return
+
+
+class PSBL_PhotAstrom_CircOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
+    """
+    Point source binary lens.
+    Note that this is a NON-STATIC binary lens with
+    circular orbital motion.
+
+    Attributes
+    ----------
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    q : float
+        Mass ratio (M2 / M1)
+    a: float
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
+    big_omega_sec: float
+        The longitude of the ascending node of the secondary lens's orbit
+        in degrees.
+    omega_pri: float
+        The argument of periastron of the primary lens's orbit in degrees.
+        omega_sec = omega_pri + 180 deg
+    i: float
+        The inclination angle of the system in degrees.
+    tp: float
+        This is the time of the periastron of the system in days.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_Lp_Ls should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
+        then dmag_Lp_Ls=0 and b_sff=1.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
+                          'q', 'a', 'big_omega_sec', 'omega_pri', 'i', 'tp']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'Keplarian'
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q, a, big_omega_sec, omega_pri, i, tp,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+        e = 0  # no eccentricity
+        super().__init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q, a, big_omega_sec, omega_pri, i, e, tp,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return
+
+
 class PSBL_PhotAstromParam3(PSPL_Param):
     """
     Point source binary lens.
@@ -7316,7 +7936,7 @@ class PSBL_PhotAstromParam3(PSPL_Param):
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
     tE : float
         Einstein crossing time (days).
@@ -7348,7 +7968,7 @@ class PSBL_PhotAstromParam3(PSPL_Param):
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
         for each filter.
-           :math:`b_sff = f_S / (f_S + f_L + f_N)`. 
+           :math:`b_sff = f_S / (f_S + f_L + f_N)`.
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     mag_base : numpy array or list
@@ -7360,6 +7980,12 @@ class PSBL_PhotAstromParam3(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -7478,11 +8104,229 @@ class PSBL_PhotAstromParam3(PSPL_Param):
         return
 
 
+class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
+    """
+    Point source binary lens.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period).
+
+
+    Attributes
+    ----------
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+        FIXME: THIS IS NOT RIGHT
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE : float
+        Einstein crossing time (days).
+    log10_thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    q : float
+        Mass ratio (M2 / M1)
+    sep : float
+        Angular separation of the two lenses (mas)
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    delta_muL_sec_E: float
+        Secondary Lens System proper motion in the RA direction (mas/yr)
+    delta_muL_sec_N: float
+        Secondary Lens System proper motion in the Dec. direction (mas/yr)
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+           :math:`b_sff = f_S / (f_S + f_L + f_N)`.
+        This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base : numpy array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+                          'piE_E', 'piE_N',
+                          'xS0_E', 'xS0_N',
+                          'muS_E', 'muS_N',
+                          'q', 'sep', 'alpha',
+                          'delta_muL_sec_E', 'delta_muL_sec_N']
+    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N',
+                              'mag_src']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'linear'
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q, sep, alpha,
+                 delta_muL_sec_E, delta_muL_sec_N,
+                 b_sff, mag_base, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q, sep, alpha,
+                 b_sff, mag_base, dmag_Lp_Ls,
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+
+        return
+
+
+class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
+    """
+    Point source binary lens.
+     Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
+
+
+    Attributes
+    ----------
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+        FIXME: THIS IS NOT RIGHT
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE : float
+        Einstein crossing time (days).
+    log10_thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    q : float
+        Mass ratio (M2 / M1)
+    sep : float
+        Angular separation of the two lenses (mas)
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    delta_muL_sec_E: float
+        Secondary Lens System proper motion in the RA direction (mas/yr)
+    delta_muL_sec_N: float
+        Secondary Lens System proper motion in the Dec. direction (mas/yr)
+    accLsec_E: float
+        Secondary Lens System's acceleration in the RA. direction (mas/yr^2)
+    accLsec_N: float
+        Secondary Lens System's acceleration in the Dec. direction (mas/yr^2)
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+           :math:`b_sff = f_S / (f_S + f_L + f_N)`.
+        This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base : numpy array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+                          'piE_E', 'piE_N',
+                          'xS0_E', 'xS0_N',
+                          'muS_E', 'muS_N',
+                          'q', 'sep', 'alpha',
+                          'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N']
+    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N',
+                              'mag_src']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'linear'
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q, sep, alpha,
+                 delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N,
+                 b_sff, mag_base, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
+                       piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                       q, sep, alpha,
+                       b_sff, mag_base, dmag_Lp_Ls,
+                       raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+        self.accL = np.array([accLsec_E, accLsec_N])
+
+        return
+
+
 class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
+    Note that this is a non-STATIC binary lens, i.e.
     there is orbital motion.
 
     Attributes
@@ -7510,15 +8354,15 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
     xS0_N : float
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    omega: float
+    omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         The inclination angle of the system in degrees.
     e: float
@@ -7526,7 +8370,8 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
     tp: float
         This is the time of the periastron of the system in days.
     a: float
-        The semi-major axis of the binary system in mas. 
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -7545,11 +8390,17 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'a',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
                           'muS_E', 'muS_N',
                           'q']
     phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
@@ -7565,7 +8416,7 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
-                 omega, big_omega, i, e, tp, a, muS_E, muS_N,
+                 omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,
                  q,
                  b_sff, mag_base, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
@@ -7601,15 +8452,15 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
         mL = mL * units.Msun
         p = (2 * np.pi * np.sqrt(self.al_AU ** 3 / (const.G * mL))).to('day')
         self.p = p.value  # Period in Days
-        self.omega = omega
-        self.big_omega = big_omega
+        self.omega_pri = omega_pri
+        self.big_omega_sec = big_omega_sec
         self.i = i
         self.e = e
         self.tp = tp
 
         orb = orbits.Orbit()
-        orb.w = self.omega
-        orb.o = self.big_omega
+        orb.w = self.omega_pri
+        orb.o = self.big_omega_sec
         orb.i = self.i
         orb.e = self.e
         orb.tp = (self.tp)
@@ -7651,8 +8502,7 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
 class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
+    Note that this is a non-STATIC binary lens, i.e.
     there is orbital motion.
 
     Attributes
@@ -7681,23 +8531,22 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
     xS0_N : float
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    omega: float
+    omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         The inclination angle of the system in degrees.
-    e: float
-        The eccentricity of the System
     tp: float
         This is the time of the periastron of the system in days.
-    sep : float
-        Angular separation of the two lenses (mas)
+    a: float
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -7717,11 +8566,17 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'tp', 'sep',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega_pri', 'big_omega_sec', 'i', 'tp', 'a',
                           'muS_E', 'muS_N',
                           'q']
     phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
@@ -7736,14 +8591,14 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
-                 omega, big_omega, i,tp, sep, muS_E, muS_N,
+                 omega_pri, big_omega_sec, i,tp, a, muS_E, muS_N,
                  q,
                  b_sff, mag_base, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-
+        e=0
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
-                 omega, big_omega, i, 0, tp, sep, muS_E, muS_N,
+                 omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,
                  q,
                  b_sff, mag_base, dmag_Lp_Ls,
                  raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
@@ -7811,6 +8666,12 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -7929,6 +8790,282 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         return
 
 
+class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
+    """
+    Point source binary lens.
+    Note that this is a non-STATIC binary lens, i.e.
+    there is orbital motion.
+
+    Attributes
+    ----------
+    t0_com : float
+        Time of closest approach between the source and the CoM of the lenses, as seen from Earth (MJD.DDD)
+    u0_amp_com : float
+        Angular distance between the source and the binary lens COM
+        on the plane of the sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+
+    xS0_E : float
+        R.A. of source position on sky at t = t0_com (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0_com (arcsec) in an
+        arbitrary ref. frame.
+
+    omega_pri: float
+        The argument of periastron of the primary lens's orbit in degrees.
+        The secondary source will be directly 180 degrees across the primary
+        source's argument of periastron.
+    big_omega_sec: float
+        The longitude of the ascending node of the secondary lens's orbit
+        in degrees. Since the primary and secondary sources share the same
+        inclination angle for their orbital planes, they also share the same
+        big_omega_sec
+    i: float
+        Inclination angle of the system in degrees.
+    e: float
+        Eccentricity of the System
+    tp: float
+        This is the time of the periastron of the system in days.
+    a: float
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    q : float
+        Mass ratio (M2 / M1)
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N',
+                          'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
+                          'muS_E', 'muS_N',
+                          'q']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'Keplerian'
+
+
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,
+                 q,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+
+        thetaE_amp = thetaE
+        piE = np.array([piE_E, piE_N])
+        piE_amp = np.linalg.norm(piE)
+        kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
+        kappa = kappa_tmp.to(units.mas / units.Msun,
+                             equivalencies=units.dimensionless_angles()).value
+        piRel = piE_amp * thetaE_amp
+        piL = piRel + piS
+        mL = thetaE_amp ** 2 / (piRel * kappa)
+        mLp = mL / (1.0 + q)
+        mLs = mLp * q
+        # Calculate the distance to source and lens.
+        dL = (piL * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        dS = (piS * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        dL = dL.to('pc').value
+        dS = dS.to('pc').value
+
+                     # Calculate period, and semi-major axes
+        self.sep = a  # mas
+        #self.sep_AU = self.dL * (self.sep *1e-3) Uncomment this line when test_roman_lightcurve freezing thing is solved
+        self.a = a
+        self.aleph_sec = (mLp / (mLp + mLs)) * self.a  # mas
+        self.aleph = self.a - self.aleph_sec  # mas
+        self.al_AU = dL * (self.a * 1e-3) * units.AU
+        mL = mL * units.Msun
+        p = (2 * np.pi * np.sqrt(self.al_AU ** 3 / (const.G * mL))).to('day')
+        self.p = p.value  # Period in Days
+        self.omega_pri = omega_pri
+        self.big_omega_sec = big_omega_sec
+        self.i = i
+        self.e = e
+        self.tp = tp
+
+        orb = orbits.Orbit()
+        orb.w = self.omega_pri
+        orb.o = self.big_omega_sec
+        orb.i = self.i
+        orb.e = self.e
+        orb.tp = (self.tp)
+        orb.aleph = self.aleph *1e-3 #arcseconds
+        orb.aleph2 = self.aleph_sec *1e-3
+        orb.p = self.p
+
+        (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
+
+        self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
+        self.alpha = np.rad2deg(self.alpha_rad) #Defined at tp
+
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
+                         piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                         q, self.a, self.alpha,
+                         b_sff, mag_src, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        # Orbital parameters
+        self.beta_com = self.u0_amp_com * self.thetaE_amp
+        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
+        self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
+        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
+        self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3) #arcseconds
+
+        PSPL_Param().__init__()
+        return
+
+
+class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
+    """
+    Point source binary lens.
+    Note that this is a non-STATIC binary lens, i.e.
+    there is orbital motion.
+
+    Attributes
+    ----------
+    t0_com : float
+        Time of closest approach between the source and the CoM of the lenses, as seen from Earth (MJD.DDD)
+    u0_amp_com : float
+        Angular distance between the source and the binary lens COM
+        on the plane of the sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+
+    xS0_E : float
+        R.A. of source position on sky at t = t0_com (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0_com (arcsec) in an
+        arbitrary ref. frame.
+
+    omega_pri: float
+        The argument of periastron of the primary lens's orbit in degrees.
+        The secondary source will be directly 180 degrees across the primary
+        source's argument of periastron.
+    big_omega_sec: float
+        The longitude of the ascending node of the secondary lens's orbit
+        in degrees. Since the primary and secondary sources share the same
+        inclination angle for their orbital planes, they also share the same
+        big_omega_sec
+    i: float
+        Inclination angle of the system in degrees.
+    tp: float
+        This is the time of the periastron of the system in days.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+
+    a: float
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
+    q : float
+        Mass ratio (M2 / M1)
+
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega_pri', 'big_omega_sec', 'i', 'tp', 'a'
+                         , 'muS_E', 'muS_N',
+                          'q']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'Keplerian'
+
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N,
+                 omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N,
+                 q,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        e=0
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
+                         piE_E, piE_N, xS0_E, xS0_N,
+                         omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,
+                         q,
+                         b_sff, mag_src, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        PSPL_Param().__init__()
+        return
+
+
 class PSBL_PhotAstromParam5(PSPL_Param):
     """
     Point source binary lens.
@@ -7986,6 +9123,12 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -8162,6 +9305,12 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -8283,6 +9432,200 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         return
 
 
+class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
+    """
+    Point source binary lens.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
+
+
+    Attributes
+    ----------
+    mLp, mLs : float
+        Masses of the lenses (Msun)
+    t0_p : float
+        Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    beta : float
+        Angular distance between the source and the GEOMETRIC center
+        of the lenses on the plane of the sky (mas). Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    muL_E : float
+        Primary Lens System proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Primary Lens System proper motion in the Dec. direction (mas/yr)
+    delta_muL_sec_E: float
+        Secondary Lens System proper motion in the RA direction (mas/yr)
+    delta_muL_sec_N: float
+        Secondary Lens System proper motion in the Dec. direction (mas/yr)
+    accLsec_E: float
+        Secondary Lens System's acceleration in the RA. direction (mas/yr^2)
+    accLsec_N: float
+        Secondary Lens System's acceleration in the Dec. direction (mas/yr^2)
+    muS_E : float
+        Source proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source proper motion in the Dec. direction (mas/yr)
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source (pc)
+    sep : float
+        Initial angular separation of the two lenses (mas)
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
+                          'muS_E', 'muS_N',
+                          'q', 'sep', 'alpha']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'accelerated'
+
+    def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N,
+                 delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N,
+                 q, sep, alpha,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS,
+                         piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                         q, sep, alpha,
+                         b_sff, mag_src, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([self.muL_E + delta_muL_sec_E, self.muL_N + delta_muL_sec_N])
+        self.accL = np.array([accLsec_E, accLsec_N])
+
+        return
+
+
+class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
+    """
+    Point source binary lens.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period).
+
+    Attributes
+    ----------
+    mLp, mLs : float
+        Masses of the lenses (Msun)
+    t0_p : float
+        Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
+    xS0_E : float
+        R.A. of source position on the sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on the sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    beta : float
+        Angular distance between the source and the GEOMETRIC center
+        of the lenses on the plane of the sky (mas). Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    muL_E : float
+        Primary Lens System proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Primary Lens System proper motion in the Dec. direction (mas/yr)
+    delta_muL_sec_E: float
+        Secondary Lens System proper motion in the RA direction (mas/yr)
+    delta_muL_sec_N: float
+        Secondary Lens System proper motion in the Dec. direction (mas/yr)
+    muS_E : float
+        Source proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source proper motion in the Dec. direction (mas/yr)
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source (pc)
+    sep : float
+        Initial angular separation of the two lenses (mas)
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'muS_E', 'muS_N',
+                          'q', 'sep', 'alpha']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'linear'
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N,
+                 delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N,
+                 q, sep, alpha,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                         piE_E, piE_N, xS0_E, xS0_N,
+                         delta_muL_sec_E, delta_muL_sec_N, 0, 0, muS_E, muS_N,
+                         q, sep, alpha,
+                         b_sff, mag_src, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return
+
+
 class PSBL_PhotAstromParam7(PSPL_Param):
     """
     Point source binary lens.
@@ -8335,6 +9678,12 @@ class PSBL_PhotAstromParam7(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -8461,12 +9810,194 @@ class PSBL_PhotAstromParam7(PSPL_Param):
 
         return
 
+
+class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
+    """
+    Point source binary lens.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
+
+    Attributes
+    ----------
+    mLp, mLs : float
+        Masses of the lenses (Msun)
+    t0_p : float
+        Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    beta_p : float
+        Angular distance between the source and the GEOMETRIC center
+        of the lenses on the plane of the sky (mas). Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    muL_E : float
+        Primary Lens System proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Primary Lens System proper motion in the Dec. direction (mas/yr)
+    delta_muL_sec_E: float
+        Secondary Lens System proper motion in the RA direction (mas/yr)
+    delta_muL_sec_N: float
+        Secondary Lens System proper motion in the Dec. direction (mas/yr)
+    accLsec_E: float
+        Secondary Lens System's acceleration in the RA. direction (mas/yr^2)
+    accLsec_N: float
+        Secondary Lens System's acceleration in the Dec. direction (mas/yr^2)
+    muS_E : float
+        Source proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source proper motion in the Dec. direction (mas/yr)
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source (pc)
+    sep : float
+        Initial angular separation of the two lenses (mas)
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N', 'beta_p',
+                          'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
+                          'muS_E', 'muS_N',
+                          'dL', 'dS', 'sep', 'alpha']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'accelerated'
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p,
+                 muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N,
+                 muS_E, muS_N, dL, dS,
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
+                         beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                         sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+        self.accL = np.array([accLsec_E, accLsec_N])
+
+        return
+
+
+class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
+    """
+    Point source binary lens.
+    Note that this is a binary lens with the
+    secondary lens moving linearly (a good approximation for times << orbital period).
+
+    Attributes
+    ----------
+    mLp, mLs : float
+        Masses of the lenses (Msun)
+    t0_p : float
+        Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
+    xS0_E : float
+        R.A. of source position on the sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on the sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    beta_p : float
+        Angular distance between the source and the GEOMETRIC center
+        of the lenses on the plane of the sky (mas). Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    muL_E : float
+        Primary Lens System proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Primary Lens System proper motion in the Dec. direction (mas/yr)
+    delta_muL_sec_E: float
+        Secondary Lens System proper motion in the RA direction (mas/yr)
+    delta_muL_sec_N: float
+        Secondary Lens System proper motion in the Dec. direction (mas/yr)
+    muS_E : float
+        Source proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source proper motion in the Dec. direction (mas/yr)
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source (pc)
+    sep : float
+        Initial angular separation of the two lenses (mas)
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
+                          'beta_p', 'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'muS_E', 'muS_N',
+                          'dL', 'dS', 'sep', 'alpha']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'linear'
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
+                 beta_p, muL_E, muL_N,
+                 delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS,
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
+                         beta, muL_E, muL_N, delta_muL_sec_E,
+                         delta_muL_sec_N, 0, 0, muS_E, muS_N, dL, dS,
+                         sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        return
+
+
 class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
+    Note that this is a non-STATIC binary lens, i.e.
+    there is orbital motion.
 
     Attributes
     ----------
@@ -8487,15 +10018,15 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
           * negative (u0_amp < 0 when u0_hat[0] < 0).
 
     
-    omega: float
+    omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         Inclination angle of the system in degrees.
     e: float
@@ -8503,10 +10034,8 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
     tp: float
         This is the time of the periastron of the system in days.
     a: float
-        Semi-major axis of the binary system in mas.
-
-
-        
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
     muL_E : float
         Lens system proper motion in the RA direction (mas/yr)
     muL_N : float
@@ -8519,11 +10048,6 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         Distance from the observer to the lens system (pc)
     dS : float
         Distance from the observer to the source (pc)
-    sep : float
-        Angular separation of the two lenses (mas)
-    alpha : float
-        Angle made between the binary axis and North;
-        measured in degrees East of North.
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
         for each filter.
@@ -8535,12 +10059,18 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
+                          'beta_p', 'muL_E', 'muL_N', 'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a', 'muS_E', 'muS_N',
+                          'dL', 'dS']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -8548,7 +10078,7 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
     paramPhotFlag = True
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
+                 beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
                      
@@ -8620,14 +10150,14 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         mL = self.mL * units.Msun
         p = (2 * np.pi * np.sqrt(self.al_AU ** 3 / (const.G * mL))).to('day')
         self.p = p.value  # Period in Days
-        self.omega = omega
-        self.big_omega = big_omega
+        self.omega_pri = omega_pri
+        self.big_omega_sec = big_omega_sec
         self.i = i
         self.e = e
         self.tp = tp
         orb = orbits.Orbit()
-        orb.w = self.omega
-        orb.o = self.big_omega
+        orb.w = self.omega_pri
+        orb.o = self.big_omega_sec
         orb.i = self.i
         orb.e = self.e
         orb.tp = (self.tp)
@@ -8702,16 +10232,15 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
         self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3) #arcseconds
 
-                     
+
 
         return
 
 class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
+    Note that this is a non-STATIC binary lens, i.e.
+    there is orbital motion.
 
     Attributes
     ----------
@@ -8731,25 +10260,23 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
           * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
 
-    
-    omega: float
+
+    omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         Inclination angle of the system in degrees.
     tp: float
         This is the time of the periastron of the system in days.
     a: float
-        Semi-major axis of the binary system in mas.
-
-
-        
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
     muL_E : float
         Lens system proper motion in the RA direction (mas/yr)
     muL_N : float
@@ -8762,11 +10289,6 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
         Distance from the observer to the lens system (pc)
     dS : float
         Distance from the observer to the source (pc)
-    sep : float
-        Angular separation of the two lenses (mas)
-    alpha : float
-        Angle made between the binary axis and North;
-        measured in degrees East of North.
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
         for each filter.
@@ -8778,12 +10300,18 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'tp', 'sep', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
+                          'beta_p', 'muL_E', 'muL_N', 'omega_pri', 'big_omega_sec', 'i', 'tp', 'a', 'muS_E', 'muS_N',
+                          'dL', 'dS']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -8791,17 +10319,17 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
     paramPhotFlag = True
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N, omega, big_omega, i, tp, sep, muS_E, muS_N, dL, dS,
+                 beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-                     
+        e=0
         super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N, omega, big_omega, i, 0, tp, sep, muS_E, muS_N, dL, dS,
+                 beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, a, tp, sep, muS_E, muS_N, dL, dS,
                  b_sff, mag_src, dmag_Lp_Ls,
-                 raL, decL, obsLocation, root_tol)
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return
-                     
+
 class PSBL_PhotAstromParam8(PSPL_Param):
     """
     Point source binary lens.
@@ -8860,6 +10388,12 @@ class PSBL_PhotAstromParam8(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
@@ -8980,278 +10514,10 @@ class PSBL_PhotAstromParam8(PSPL_Param):
         return
 
 
-class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
-    """
-    Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
-    there is orbital motion.
-
-    Attributes
-    ----------
-    t0_com : float
-        Time of closest approach between the source and the CoM of the lenses, as seen from Earth (MJD.DDD)
-    u0_amp_com : float
-        Angular distance between the source and the binary lens COM
-        on the plane of the sky at closest approach in units of thetaE. Can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or
-          * negative (u0_amp < 0 when u0_hat[0] < 0).
-
-    tE : float
-        Einstein crossing time (days).
-    thetaE : float
-        The size of the Einstein radius in (mas).
-    piS : float
-        Amplitude of the parallax (1AU/dS) of the source. (mas)
-    piE_E : float
-        The microlensing parallax in the East direction in units of thetaE
-    piE_N : float
-        The microlensing parallax in the North direction in units of thetaE
-
-    xS0_E : float
-        R.A. of source position on sky at t = t0_com (arcsec) in an
-        arbitrary ref. frame.
-    xS0_N : float
-        Dec. of source position on sky at t = t0_com (arcsec) in an
-        arbitrary ref. frame.
-
-    omega: float
-        The argument of periastron of the primary lens's orbit in degrees.
-        The secondary source will be directly 180 degrees across the primary
-        source's argument of periastron.
-    big_omega: float
-        The longitude of the ascending node of the secondary lens's orbit
-        in degrees. Since the primary and secondary sources share the same
-        inclination angle for their orbital planes, they also share the same
-        big_omega
-    i: float
-        Inclination angle of the system in degrees.
-    e: float
-        Eccentricity of the System
-    tp: float
-        This is the time of the periastron of the system in days.
-    a: float
-        Semi-major axis of the binary system in mas.
-    muS_E : float
-        RA Source proper motion (mas/yr)
-    muS_N : float
-        Dec Source proper motion (mas/yr)
-    q : float
-        Mass ratio (M2 / M1)
-    b_sff : numpy array or list
-        The ratio of the source flux to the total (source + neighbors + lenses). One
-        for each filter.
-    mag_src : numpy array or list
-        Source magnitude, unlensed. One in each filter.
-    dmag_Lp_Ls : numpy array or list
-        Magnitude difference of lens primary - lens secondary. If the primary lens
-        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
-        If the secondary lens 2 is dark, then it should be set to -20.
-        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
-        comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
-    """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N',
-                          'omega', 'big_omega', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
-    additional_param_names = ['mL', 'piL', 'piRel',
-                              'muL_E', 'muL_N',
-                              'muRel_E', 'muRel_N']
-
-    paramAstromFlag = True
-    paramPhotFlag = True
-    orbitFlag = 'Keplerian'
-
-
-    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
-                 piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, e, tp, a, muS_E, muS_N,
-                 q,
-                 b_sff, mag_src, dmag_Lp_Ls,
-                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-
-
-        thetaE_amp = thetaE
-        piE = np.array([piE_E, piE_N])
-        piE_amp = np.linalg.norm(piE)
-        kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
-        kappa = kappa_tmp.to(units.mas / units.Msun,
-                             equivalencies=units.dimensionless_angles()).value
-        piRel = piE_amp * thetaE_amp
-        piL = piRel + piS
-        mL = thetaE_amp ** 2 / (piRel * kappa)
-        mLp = mL / (1.0 + q)
-        mLs = mLp * q
-        # Calculate the distance to source and lens.
-        dL = (piL * units.mas).to(units.parsec,
-                                       equivalencies=units.parallax())
-        dS = (piS * units.mas).to(units.parsec,
-                                       equivalencies=units.parallax())
-        dL = dL.to('pc').value
-        dS = dS.to('pc').value
-
-                     # Calculate period, and semi-major axes
-        self.sep = a  # mas
-        #self.sep_AU = self.dL * (self.sep *1e-3) Uncomment this line when test_roman_lightcurve freezing thing is solved
-        self.a = a
-        self.aleph_sec = (mLp / (mLp + mLs)) * self.a  # mas
-        self.aleph = self.a - self.aleph_sec  # mas
-        self.al_AU = dL * (self.a * 1e-3) * units.AU
-        mL = mL * units.Msun
-        p = (2 * np.pi * np.sqrt(self.al_AU ** 3 / (const.G * mL))).to('day')
-        self.p = p.value  # Period in Days
-        self.omega = omega
-        self.big_omega = big_omega
-        self.i = i
-        self.e = e
-        self.tp = tp
-
-        orb = orbits.Orbit()
-        orb.w = self.omega
-        orb.o = self.big_omega
-        orb.i = self.i
-        orb.e = self.e
-        orb.tp = (self.tp)
-        orb.aleph = self.aleph *1e-3 #arcseconds
-        orb.aleph2 = self.aleph_sec *1e-3
-        orb.p = self.p
-
-        (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
-
-        self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad) #Defined at tp
-
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
-                         piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                         q, self.a, self.alpha,
-                         b_sff, mag_src, dmag_Lp_Ls,
-                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-
-        # Orbital parameters
-        self.beta_com = self.u0_amp_com * self.thetaE_amp
-        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
-        self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
-        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
-        self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3) #arcseconds
-
-        PSPL_Param().__init__()
-        return
-
-
-class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
-    """
-    Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
-    there is orbital motion.
-
-    Attributes
-    ----------
-    t0_com : float
-        Time of closest approach between the source and the CoM of the lenses, as seen from Earth (MJD.DDD)
-    u0_amp_com : float
-        Angular distance between the source and the binary lens COM
-        on the plane of the sky at closest approach in units of thetaE. Can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or
-          * negative (u0_amp < 0 when u0_hat[0] < 0).
-
-    tE : float
-        Einstein crossing time (days).
-    thetaE : float
-        The size of the Einstein radius in (mas).
-    piS : float
-        Amplitude of the parallax (1AU/dS) of the source. (mas)
-    piE_E : float
-        The microlensing parallax in the East direction in units of thetaE
-    piE_N : float
-        The microlensing parallax in the North direction in units of thetaE
-
-    xS0_E : float
-        R.A. of source position on sky at t = t0_com (arcsec) in an
-        arbitrary ref. frame.
-    xS0_N : float
-        Dec. of source position on sky at t = t0_com (arcsec) in an
-        arbitrary ref. frame.
-
-    omega: float
-        The argument of periastron of the primary lens's orbit in degrees.
-        The secondary source will be directly 180 degrees across the primary
-        source's argument of periastron.
-    big_omega: float
-        The longitude of the ascending node of the secondary lens's orbit
-        in degrees. Since the primary and secondary sources share the same
-        inclination angle for their orbital planes, they also share the same
-        big_omega
-    i: float
-        Inclination angle of the system in degrees.
-    e: float
-        Eccentricity of the System
-    tp: float
-        This is the time of the periastron of the system in days.
-    muS_E : float
-        RA Source proper motion (mas/yr)
-    muS_N : float
-        Dec Source proper motion (mas/yr)
-
-    sep: float
-        Distance between lenses in mas. Also, the projected semi-major axis.
-
-    q : float
-        Mass ratio (M2 / M1)
-
-    b_sff : numpy array or list
-        The ratio of the source flux to the total (source + neighbors + lenses). One
-        for each filter.
-    mag_src : numpy array or list
-        Source magnitude, unlensed. One in each filter.
-    dmag_Lp_Ls : numpy array or list
-        Magnitude difference of lens primary - lens secondary. If the primary lens
-        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
-        If the secondary lens 2 is dark, then it should be set to -20.
-        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
-        comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
-    """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega', 'big_omega', 'i', 'tp', 'sep'
-        , 'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
-    additional_param_names = ['mL', 'piL', 'piRel',
-                              'muL_E', 'muL_N',
-                              'muRel_E', 'muRel_N']
-
-    paramAstromFlag = True
-    paramPhotFlag = True
-    orbitFlag = 'Keplerian'
-
-    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
-                 piE_E, piE_N, xS0_E, xS0_N,
-                 omega, big_omega, i, tp, sep, muS_E, muS_N,
-                 q,
-                 b_sff, mag_src, dmag_Lp_Ls,
-                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
-                         piE_E, piE_N, xS0_E, xS0_N,
-                         omega, big_omega, i, 0, tp, sep, muS_E, muS_N,
-                         q,
-                         b_sff, mag_src, dmag_Lp_Ls,
-                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-
-        PSPL_Param().__init__()
-        return
-
-
 class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
+    Note that this is a non-STATIC binary lens, i.e.
     there is orbital motion.
 
     Attributes
@@ -9280,23 +10546,24 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     xS0_N : float
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    omega: float
+    omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         The inclination angle of the system in degrees.
     e: float
         The eccentricity of the System
     tp: float
         This is the time of the periastron of the system in days.
-    a : float
-        Semi-major axis of the binary system in mas
+    a: float
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -9314,11 +10581,17 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'a', 
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
                           'muS_E', 'muS_N',
                           'q']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
@@ -9330,14 +10603,12 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-
     def __init__(self, t0_com, u0_amp_com, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
-                 omega, big_omega, i, e, tp, a, muS_E, muS_N,
+                 omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,
                  q,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-                     
         self.a = a
         self.sep = a  # mas
 
@@ -9354,49 +10625,48 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         mLs = mLp * q
         # Calculate the distance to source and lens.
         dL = (piL * units.mas).to(units.parsec,
-                                       equivalencies=units.parallax())
+                                  equivalencies=units.parallax())
         dS = (piS * units.mas).to(units.parsec,
-                                       equivalencies=units.parallax())
+                                  equivalencies=units.parallax())
         dL = dL.to('pc').value
         dS = dS.to('pc').value
 
-                     # Calculate period, and semi-major axes
-        #self.sep_AU = self.dL * (self.sep *1e-3) Uncomment this line when test_roman_lightcurve freezing thing is solved
+        # Calculate period, and semi-major axes
+        # self.sep_AU = self.dL * (self.sep *1e-3) Uncomment this line when test_roman_lightcurve freezing thing is solved
         self.aleph_sec = (mLp / (mLp + mLs)) * self.a  # mas
         self.aleph = self.a - self.aleph_sec  # mas
         self.al_AU = dL * (self.a * 1e-3) * units.AU
         mL = mL * units.Msun
         p = (2 * np.pi * np.sqrt(self.al_AU ** 3 / (const.G * mL))).to('day')
         self.p = p.value  # Period in Days
-        self.omega = omega
-        self.big_omega = big_omega
+        self.omega_pri = omega_pri
+        self.big_omega_sec = big_omega_sec
         self.i = i
         self.e = e
         self.tp = tp
 
         orb = orbits.Orbit()
-        orb.w = self.omega
-        orb.o = self.big_omega
+        orb.w = self.omega_pri
+        orb.o = self.big_omega_sec
         orb.i = self.i
         orb.e = self.e
         orb.tp = (self.tp)
-        orb.aleph = self.aleph *1e-3 #arcseconds
-        orb.aleph2 = self.aleph_sec *1e-3
+        orb.aleph = self.aleph * 1e-3  # arcseconds
+        orb.aleph2 = self.aleph_sec * 1e-3
         orb.p = self.p
 
         (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
 
-        self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
+        self.alpha_rad = np.arctan2(x - x2, y - y2)[0]
         self.alpha = np.rad2deg(self.alpha_rad)
 
-
         super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS,
-                     piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                     q, self.a, self.alpha,
-                     b_sff, mag_src, dmag_Lp_Ls,
-                     raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+                         piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                         q, self.a, self.alpha,
+                         b_sff, mag_src, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        #Orbital parameters
+        # Orbital parameters
         self.beta_com = self.u0_amp_com * self.thetaE_amp
         self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
         self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
@@ -9407,366 +10677,10 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         return
 
 
-class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
-    """
-    Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
-
-    Attributes
-    ----------
-    mLp, mLs : float
-        Masses of the lenses (Msun)
-    t0_p : float
-        Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
-        R.A. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    xS0_N : float
-        Dec. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    beta : float
-        Angular distance between the source and the GEOMETRIC center
-        of the lenses on the plane of the sky (mas). Can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or
-          * negative (u0_amp < 0 when u0_hat[0] < 0).
-    muL_E : float
-        Primary Lens System proper motion in the RA direction (mas/yr)
-    muL_N : float
-        Primary Lens System proper motion in the Dec. direction (mas/yr)
-    delta_muLsec_E: float
-        Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
-        Secondary Lens System proper motion in the Dec. direction (mas/yr)
-    acc_E: float
-        Secondary Lens System's acceleration in the RA. direction (mas/yr^2)
-    acc_N: float
-        Secondary Lens System's acceleration in the Dec. direction (mas/yr^2)
-    muS_E : float
-        Source proper motion in the RA direction (mas/yr)
-    muS_N : float
-        Source proper motion in the Dec. direction (mas/yr)
-    dL : float
-        Distance from the observer to the lens system (pc)
-    dS : float
-        Distance from the observer to the source (pc)
-    sep : float
-        Initial angular separation of the two lenses (mas)
-    alpha : float
-        Angle made between the binary axis and North;
-        measured in degrees East of North.
-    b_sff : numpy array or list
-        The ratio of the source flux to the total (source + neighbors + lenses). One
-        for each filter.
-    mag_src : numpy array or list
-        Source magnitude, unlensed. One in each filter.
-    dmag_Lp_Ls : numpy array or list
-        Magnitude difference of lens primary - lens secondary. If the primary lens
-        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
-        If the secondary lens 2 is dark, then it should be set to -20.
-        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
-        comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
-    """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muLsec_E', 'delta_muLsec_N', 'acc_E', 'acc_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
-    additional_param_names = ['mL', 'piL', 'piRel',
-                              'muL_E', 'muL_N',
-                              'muRel_E', 'muRel_N']
-    
-
-    paramAstromFlag = True
-    paramPhotFlag = True
-    orbitFlag = 'accelerated'
-
-    def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS,
-                 piE_E, piE_N, xS0_E, xS0_N,
-                 delta_muLsec_E, delta_muLsec_N, acc_E, acc_N, muS_E, muS_N,
-                 q, sep, alpha,
-                 b_sff, mag_src, dmag_Lp_Ls,
-                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS,
-                         piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                         q, sep, alpha,
-                         b_sff, mag_src, dmag_Lp_Ls,
-                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
-
-        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
-        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([self.muL_E + delta_muLsec_E, self.muL_N + delta_muLsec_N])
-        self.acc = np.array([acc_E, acc_N])
-
-        return
-
-
-class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
-    """
-    Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
-
-    Attributes
-    ----------
-    mLp, mLs : float
-        Masses of the lenses (Msun)
-    t0_p : float
-        Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
-        R.A. of source position on the sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    xS0_N : float
-        Dec. of source position on the sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    beta : float
-        Angular distance between the source and the GEOMETRIC center
-        of the lenses on the plane of the sky (mas). Can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or
-          * negative (u0_amp < 0 when u0_hat[0] < 0).
-    muL_E : float
-        Primary Lens System proper motion in the RA direction (mas/yr)
-    muL_N : float
-        Primary Lens System proper motion in the Dec. direction (mas/yr)
-    delta_muLsec_E: float
-        Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
-        Secondary Lens System proper motion in the Dec. direction (mas/yr)
-    muS_E : float
-        Source proper motion in the RA direction (mas/yr)
-    muS_N : float
-        Source proper motion in the Dec. direction (mas/yr)
-    dL : float
-        Distance from the observer to the lens system (pc)
-    dS : float
-        Distance from the observer to the source (pc)
-    sep : float
-        Initial angular separation of the two lenses (mas)
-    alpha : float
-        Angle made between the binary axis and North;
-        measured in degrees East of North.
-    b_sff : numpy array or list
-        The ratio of the source flux to the total (source + neighbors + lenses). One
-        for each filter.
-    mag_src : numpy array or list
-        Source magnitude, unlensed. One in each filter.
-    dmag_Lp_Ls : numpy array or list
-        Magnitude difference of lens primary - lens secondary. If the primary lens
-        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
-        If the secondary lens 2 is dark, then it should be set to -20.
-        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
-        comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
-    """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muLsec_E', 'delta_muLsec_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
-    additional_param_names = ['mL', 'piL', 'piRel',
-                              'muL_E', 'muL_N',
-                              'muRel_E', 'muRel_N']
-
-    paramAstromFlag = True
-    paramPhotFlag = True
-    orbitFlag = 'linear'
-
-    def __init__(self, t0, u0_amp, tE, thetaE, piS,
-                 piE_E, piE_N, xS0_E, xS0_N,
-                 delta_muLsec_E, delta_muLsec_N, muS_E, muS_N,
-                 q, sep, alpha,
-                 b_sff, mag_src, dmag_Lp_Ls,
-                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        super().__init__(t0, u0_amp, tE, thetaE, piS,
-                         piE_E, piE_N, xS0_E, xS0_N,
-                         delta_muLsec_E, delta_muLsec_N, 0, 0, muS_E, muS_N,
-                         q, sep, alpha,
-                         b_sff, mag_src, dmag_Lp_Ls,
-                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
-
-        return
-
-
-class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
-    """
-    Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
-
-    Attributes
-    ----------
-    mLp, mLs : float
-        Masses of the lenses (Msun)
-    t0_p : float
-        Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
-        R.A. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    xS0_N : float
-        Dec. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    beta : float
-        Angular distance between the source and the GEOMETRIC center
-        of the lenses on the plane of the sky (mas). Can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or
-          * negative (u0_amp < 0 when u0_hat[0] < 0).
-    muL_E : float
-        Primary Lens System proper motion in the RA direction (mas/yr)
-    muL_N : float
-        Primary Lens System proper motion in the Dec. direction (mas/yr)
-    delta_muLsec_E: float
-        Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
-        Secondary Lens System proper motion in the Dec. direction (mas/yr)
-    acc_E: float
-        Secondary Lens System's acceleration in the RA. direction (mas/yr^2)
-    acc_N: float
-        Secondary Lens System's acceleration in the Dec. direction (mas/yr^2)
-    muS_E : float
-        Source proper motion in the RA direction (mas/yr)
-    muS_N : float
-        Source proper motion in the Dec. direction (mas/yr)
-    dL : float
-        Distance from the observer to the lens system (pc)
-    dS : float
-        Distance from the observer to the source (pc)
-    sep : float
-        Initial angular separation of the two lenses (mas)
-    alpha : float
-        Angle made between the binary axis and North;
-        measured in degrees East of North.
-    b_sff : numpy array or list
-        The ratio of the source flux to the total (source + neighbors + lenses). One
-        for each filter.
-    mag_src : numpy array or list
-        Source magnitude, unlensed. One in each filter.
-    dmag_Lp_Ls : numpy array or list
-        Magnitude difference of lens primary - lens secondary. If the primary lens
-        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
-        If the secondary lens 2 is dark, then it should be set to -20.
-        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
-        comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
-    """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'acc_E', 'acc_N', 'muS_E',
-                          'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
-
-    paramAstromFlag = True
-    paramPhotFlag = True
-    orbitFlag = 'accelerated'
-
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N,
-                 delta_muLsec_E, delta_muLsec_N, acc_E, acc_N, muS_E, muS_N, dL, dS,
-                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
-                         beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                         sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-
-        self.delta_muL_sec = np.array([delta_muLsec_E, delta_muLsec_N])
-        self.delta_muLsec_E, self.delta_muLsec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muLsec_E, muL_N + delta_muLsec_N])
-        self.acc = np.array([acc_E, acc_N])
-
-        return
-
-
-class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
-    """
-    Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a STATIC binary lens, i.e.
-    there is no orbital motion.
-
-    Attributes
-    ----------
-    mLp, mLs : float
-        Masses of the lenses (Msun)
-    t0_p : float
-        Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
-        R.A. of source position on the sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    xS0_N : float
-        Dec. of source position on the sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    beta : float
-        Angular distance between the source and the GEOMETRIC center
-        of the lenses on the plane of the sky (mas). Can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or
-          * negative (u0_amp < 0 when u0_hat[0] < 0).
-    muL_E : float
-        Primary Lens System proper motion in the RA direction (mas/yr)
-    muL_N : float
-        Primary Lens System proper motion in the Dec. direction (mas/yr)
-    delta_muLsec_E: float
-        Secondary Lens System proper motion in the RA direction (mas/yr)
-    delta_muLsec_N: float
-        Secondary Lens System proper motion in the Dec. direction (mas/yr)
-    muS_E : float
-        Source proper motion in the RA direction (mas/yr)
-    muS_N : float
-        Source proper motion in the Dec. direction (mas/yr)
-    dL : float
-        Distance from the observer to the lens system (pc)
-    dS : float
-        Distance from the observer to the source (pc)
-    sep : float
-        Initial angular separation of the two lenses (mas)
-    alpha : float
-        Angle made between the binary axis and North;
-        measured in degrees East of North.
-    b_sff : numpy array or list
-        The ratio of the source flux to the total (source + neighbors + lenses). One
-        for each filter.
-    mag_src : numpy array or list
-        Source magnitude, unlensed. One in each filter.
-    dmag_Lp_Ls : numpy array or list
-        Magnitude difference of lens primary - lens secondary. If the primary lens
-        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
-        If the secondary lens 2 is dark, then it should be set to -20.
-        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
-        comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
-    """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'delta_muLsec_E', 'delta_muLsec_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
-
-    paramAstromFlag = True
-    paramPhotFlag = True
-    orbitFlag = 'linear'
-
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta, muL_E, muL_N,
-                 delta_muLsec_E, delta_muLsec_N, muS_E, muS_N, dL, dS,
-                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
-                         beta, muL_E, muL_N, delta_muLsec_E,
-                         delta_muLsec_N, 0, 0, muS_E, muS_N, dL, dS,
-                         sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-        return
-
-
 class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
     """
     Point source binary lens.
-    It has 3 more parameters than PSPL (additional mass term, separation,
-    and angle of approach). Note that this is a non-STATIC binary lens, i.e.
+    Note that this is a non-STATIC binary lens, i.e.
     there is orbital motion.
 
     Attributes
@@ -9797,15 +10711,15 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
 
-    omega: float
+    omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         The inclination angle of the system in degrees.
     tp: float
@@ -9817,9 +10731,9 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         Dec Source proper motion (mas/yr)
 
 
-    sep: float
-        Distance between lenses in mas. Also, the projected semi-major axis.
-
+    a: float
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
     q : float
         Mass ratio (M2 / M1)
 
@@ -9834,14 +10748,21 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'tp', 'sep',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega_pri', 'big_omega_sec', 'i', 'tp', 'a',
                           'muS_E', 'muS_N',
-                          'q', 'alpha']
+                          'q']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -9853,289 +10774,19 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
 
     def __init__(self, t0_com, u0_amp_com, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N,
-                 omega, big_omega, i, tp, sep, muS_E, muS_N,
+                 omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N,
                  q,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-
+        e=0
         super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N,
-                         omega, big_omega, i, 0, tp, sep, muS_E, muS_N,
+                         omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,
                          q,
                          b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         PSPL_Param().__init__()
-        return
-
-
-
-class PSBL_PhotParamEllOrbs1(PSPL_Param):
-    """
-    Point source binary lens, photometry only with orbital motion.
-
-    It has 3 more parameters than PSPL_PhotParam1:
-       * mass ratio
-       * separation -- in units of thetaE
-       * angle of approach
-       
-    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
-
-    Attributes
-    ----------
-    t0: float
-        Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
-        but not exactly aligned with the photometric peak, as seen
-        from Earth or a Solar System satellite.
-    u0_amp: float
-        Angular distance between the lens and source on the plane of the
-        sky at closest approach in units of thetaE. It can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or
-          * negative (u0_amp < 0 when u0_hat[0] < 0).
-    tE: float
-        Einstein crossing time based on the system mass. [MJD]
-    piE_E: float
-        The microlensing parallax in the East direction in units of thetaE
-    piE_N: float
-        The microlensing parallax in the North direction in units of thetaE
-    q: float
-        Mass ratio (low-mass / high-mass)
-    sep: float
-        Angular separation of the two lenses in units of thetaE where
-        thetaE is defined with the total binary mass.
-    b_sff: array or list
-        The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
-        array, with one entry for each photometric filter.
-    mag_src:  array or list
-        Photometric magnitude of the source. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-    aleph: float
-        This is the semi-major axis of the primary lens in mas.
-    aleph_sec: float
-        This is the semi-major axis of the secondary lens in mas.
-    v_para: float
-        Parallel velocity component of the secondary lens relative to the primary lens in units of rad/year
-    v_rad: float
-        Radial velocity component of the secondary lens relative to the primary lens in units of rad/year
-    v_perp: float
-        Perpendicular velocity component of the secondary lens relative to the primary lens in units of rad/year
-    r_s:
-        The ratio of radial separation with projected separation.        
-    a_s: 
-        The ratio of the semimajor axis with the current separation at t0.
-
-    Other Parameters
-    ----------------
-    raL: float
-        Right ascension of the lens in decimal degrees.
-        Required if calculating with parallax
-    decL: float
-        Declination of the lens in decimal degrees.
-        Required if calculating with parallax
-    obsLocation: str or list[str], optional
-        The observers location for each photometric dataset (def=['earth'])
-        such as 'jwst' or 'spitzer'. Can be a single string if all observer
-        locations are identical. Otherwise, array of same length as mag_src
-        or b_sff (e.g. other photometric parameters).
-    root_tol: float
-        | Tolerance in comparing the polynomial roots to the physical solutions.
-        | Default = 0.0
-    """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'v_para', 'v_rad', 'v_perp', 'r_s', 'a_s', 'dmag_Lp_Ls']
-    phot_param_names = ['b_sff', 'mag_src']
-
-    paramAstromFlag = False
-    paramPhotFlag = True
-    orbitFlag=True
-
-
-    def __init__(self, t0, aleph, aleph_sec, r_s, a_s, v_para, v_perp, v_rad, u0_amp, tE, piE_E, piE_N, q,
-                 b_sff, mag_src,dmag_Lp_Ls,
-                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        self.t0 = t0
-        self.aleph = aleph
-        self.aleph_sec = aleph_sec
-        self.r_s = r_s
-        self.a_s = a_s 
-        self.v_para = v_para
-        self.v_perp = v_perp
-        self.v_rad = v_rad
-            
-        self.u0_amp = u0_amp
-        self.tE = tE
-        self.piE = np.array([piE_E, piE_N])
-        self.q = q
-        self.sep = aleph+aleph_sec
-        self.b_sff = b_sff
-        self.mag_src = mag_src
-
-        self.raL = raL
-        self.decL = decL
-        self.obsLocation = obsLocation
-        self.root_tol = root_tol
-
-        # Check variable formatting.
-        super().__init__()
-
-        # Calculate the microlensing parallax amplitude
-        self.piE_amp = np.linalg.norm(self.piE)
-
-
-
-        eccentricity, i, big_omega, little_omega, p, tp = self.get_me_some_orbital_parameters(self.t0, self.sep, self.r_s, self.a_s, self.v_para, self.v_perp, self.v_rad)
-
-        orb = orbits.Orbit()
-        orb.w = little_omega
-        orb.o = big_omega
-        orb.i = i
-        orb.e = eccentricity
-        orb.tp = tp
-        orb.aleph2 = self.aleph_sec
-        orb.aleph = self.aleph
-        orb.p = p
-
-        self.w = little_omega
-        self.o = big_omega
-        self.i = i
-        self.e = eccentricity
-        self.tp = tp
-        self.aleph2 = self.aleph_sec
-        self.aleph = self.aleph
-        self.p = p
-
-
-        (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
-        self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
-        self.phi_rho1_rad = self.alpha 
-        
-        self.phi_piE_rad = np.arctan2(self.piE[0], self.piE[1])
-
-        # Calculate the angle between muRel and the binary axis
-        # in radians.
-
-        self.phi_rad = self.phi_rho1_rad - self.phi_piE_rad
-        self.phi = np.rad2deg(self.phi_rad)
-        self.thetaE_hat = self.piE / self.piE_amp
-        self.muRel_hat = self.thetaE_hat
-
-        # Comment on sign conventions:
-        # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
-        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
-        # if u0_E > 0 then the Source is to the East of the lens
-        # if u0_E < 0 then the source is to the West of the lens
-        # We adopt the following sign convention (same as Gould:2004):
-        #    u0_amp > 0 means u0_E > 0
-        #    u0_amp < 0 means u0_E < 0
-        # Note that we assume beta = u0_amp (with same signs).
-
-        # Calculate the closest approach vector. Define beta sign convention
-        # same as of Andy Gould does with beta > 0 means u0_E > 0
-        # (lens passes to the right of the source as seen from Earth or Sun).
-        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
-        # the sign of beta is always the same as the sign of u0_amp. Therefore this
-        # usage of the function with u0_amp works exactly the same.
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
-
-        # Calculate m1 and m2 (see PSBL writeup). Note this is no longer the
-        # individual einstein radius**2... but rather the fractional
-        # einstein radius for each component of the binary. Thus these
-        # should only be used in phot models where everything has been
-        # divided by the Einstein radius.
-        self.m1 = 1.0 / (1.0 + self.q)
-        self.m2 = self.q / (1.0 + self.q)
-        self.dmag_Lp_Ls = np.zeros(len(self.mag_src))
-
-        return
-
-
-
-class PSBL_PhotParamCircOrbs1(PSBL_PhotParamEllOrbs1):
-    """
-    Point source binary lens, photometry only.
-
-    It has 3 more parameters than PSPL_PhotParam1:
-       * mass ratio
-       * separation -- in units of thetaE
-       * angle of approach
-    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
-
-    Attributes
-    ----------
-    t0: float
-        Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
-        but not exactly aligned with the photometric peak, as seen
-        from Earth or a Solar System satellite.
-    u0_amp: float
-        Angular distance between the lens and source on the plane of the
-        sky at closest approach in units of thetaE. It can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or
-          * negative (u0_amp < 0 when u0_hat[0] < 0).
-    tE: float
-        Einstein crossing time based on the system mass. [MJD]
-    piE_E: float
-        The microlensing parallax in the East direction in units of thetaE
-    piE_N: float
-        The microlensing parallax in the North direction in units of thetaE
-    q: float
-        Mass ratio (low-mass / high-mass)
-    sep: float
-        Angular separation of the two lenses in units of thetaE where
-        thetaE is defined with the total binary mass.
-    b_sff: array or list
-        The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
-        array, with one entry for each photometric filter.
-    mag_src:  array or list
-        Photometric magnitude of the source. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-    v_para: float
-        Parallel velocity component of the secondary lens relative to the primary lens in units of rad/year
-    v_rad: float
-        Radial velocity component of the secondary lens relative to the primary lens in units of rad/year
-    v_perp: float
-        Perpendicular velocity component of the secondary lens relative to the primary lens in units of rad/year
-
-    Other Parameters
-    ----------------
-    raL: float
-        Right ascension of the lens in decimal degrees.
-        Required if calculating with parallax
-    decL: float
-        Declination of the lens in decimal degrees.
-        Required if calculating with parallax
-    obsLocation: str or list[str], optional
-        The observers location for each photometric dataset (def=['earth'])
-        such as 'jwst' or 'spitzer'. Can be a single string if all observer
-        locations are identical. Otherwise, array of same length as mag_src
-        or b_sff (e.g. other photometric parameters).
-    root_tol: float
-        | Tolerance in comparing the polynomial roots to the physical solutions.
-        | Default = 0.0
-    """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep','dmag_Lp_Ls']
-    phot_param_names = ['b_sff', 'mag_src']
-
-    paramAstromFlag = False
-    paramPhotFlag = True
-    orbitFlag=True
-
-
-    def __init__(self, t0, aleph, aleph_sec, v_para, v_perp, v_rad, u0_amp, tE, piE_E, piE_N, q,
-                 b_sff, mag_src,dmag_Lp_Ls,
-                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-
-        super().__init__(t0, aleph, aleph_sec, -v_para/v_rad, 1, v_para, v_perp, v_rad, u0_amp, tE, piE_E, piE_N, q,
-                 b_sff, mag_src,dmag_Lp_Ls,raL, decL, obsLocation, root_tol)
-
-
         return
 
 
@@ -10183,23 +10834,14 @@ class PSBL_PhotParam1(PSPL_Param):
     mag_src:  array or list
         Photometric magnitude of the source. This must be passed in as a
         list or array, with one entry for each photometric filter.
-
-    Other Parameters
-    ----------------
-    raL: float
+    raL: float, optional
         Right ascension of the lens in decimal degrees.
-        Required if calculating with parallax
-    decL: float
+    decL: float, optional
         Declination of the lens in decimal degrees.
-        Required if calculating with parallax
     obsLocation: str or list[str], optional
         The observers location for each photometric dataset (def=['earth'])
-        such as 'jwst' or 'spitzer'. Can be a single string if all observer
-        locations are identical. Otherwise, array of same length as mag_src
-        or b_sff (e.g. other photometric parameters).
-    root_tol: float
-        | Tolerance in comparing the polynomial roots to the physical solutions.
-        | Default = 0.0
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
                           'q', 'sep', 'phi']
@@ -10291,6 +10933,256 @@ class PSBL_PhotParam1(PSPL_Param):
         self.dmag_Lp_Ls = np.zeros(len(self.mag_src))
 
         return
+
+
+class PSBL_Phot_EllOrbs_Param1(PSPL_Param):
+    """
+    Point source binary lens, photometry only with orbital motion.
+
+    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
+
+    Attributes
+    ----------
+    t0: float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
+    u0_amp: float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. It can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time based on the system mass. [MJD]
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    q: float
+        Mass ratio (low-mass / high-mass)
+    sep: float
+        Angular separation of the two lenses in units of thetaE where
+        thetaE is defined with the total binary mass.
+    b_sff: array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_src:  array or list
+        Photometric magnitude of the source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    aleph: float
+        This is the semi-major axis of the primary lens in mas.
+    aleph_sec: float
+        This is the semi-major axis of the secondary lens in mas.
+    v_para: float
+        Parallel velocity component of the secondary lens relative to the primary lens in units of rad/year
+    v_rad: float
+        Radial velocity component of the secondary lens relative to the primary lens in units of rad/year
+    v_perp: float
+        Perpendicular velocity component of the secondary lens relative to the primary lens in units of rad/year
+    r_s:
+        The ratio of radial separation with projected separation.
+    a_s:
+        The ratio of the semimajor axis with the current separation at t0.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
+                          'q', 'sep', 'v_para', 'v_rad', 'v_perp', 'r_s', 'a_s', 'dmag_Lp_Ls']
+    phot_param_names = ['b_sff', 'mag_src']
+
+    paramAstromFlag = False
+    paramPhotFlag = True
+    orbitFlag=True
+
+
+    def __init__(self, t0, aleph, aleph_sec, r_s, a_s, v_para, v_perp, v_rad, u0_amp, tE, piE_E, piE_N, q,
+                 b_sff, mag_src,dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        self.t0 = t0
+        self.aleph = aleph
+        self.aleph_sec = aleph_sec
+        self.r_s = r_s
+        self.a_s = a_s
+        self.v_para = v_para
+        self.v_perp = v_perp
+        self.v_rad = v_rad
+
+        self.u0_amp = u0_amp
+        self.tE = tE
+        self.piE = np.array([piE_E, piE_N])
+        self.q = q
+        self.sep = aleph+aleph_sec
+        self.b_sff = b_sff
+        self.mag_src = mag_src
+
+        self.raL = raL
+        self.decL = decL
+        self.obsLocation = obsLocation
+        self.root_tol = root_tol
+
+        # Check variable formatting.
+        super().__init__()
+
+        # Calculate the microlensing parallax amplitude
+        self.piE_amp = np.linalg.norm(self.piE)
+
+
+
+        eccentricity, i, big_omega_sec, little_omega, p, tp = self.get_me_some_orbital_parameters(self.t0, self.sep, self.r_s, self.a_s, self.v_para, self.v_perp, self.v_rad)
+
+        orb = orbits.Orbit()
+        orb.w = little_omega
+        orb.o = big_omega_sec
+        orb.i = i
+        orb.e = eccentricity
+        orb.tp = tp
+        orb.aleph2 = self.aleph_sec
+        orb.aleph = self.aleph
+        orb.p = p
+
+        self.w = little_omega
+        self.o = big_omega_sec
+        self.i = i
+        self.e = eccentricity
+        self.tp = tp
+        self.aleph2 = self.aleph_sec
+        self.aleph = self.aleph
+        self.p = p
+
+
+        (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
+        self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
+        self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
+        self.phi_rho1_rad = self.alpha
+
+        self.phi_piE_rad = np.arctan2(self.piE[0], self.piE[1])
+
+        # Calculate the angle between muRel and the binary axis
+        # in radians.
+
+        self.phi_rad = self.phi_rho1_rad - self.phi_piE_rad
+        self.phi = np.rad2deg(self.phi_rad)
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+
+        # Comment on sign conventions:
+        # thetaS0 = xS0 - xL0
+        # (difference in positions on sky, heliocentric, at t0)
+        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
+        # if u0_E > 0 then the Source is to the East of the lens
+        # if u0_E < 0 then the source is to the West of the lens
+        # We adopt the following sign convention (same as Gould:2004):
+        #    u0_amp > 0 means u0_E > 0
+        #    u0_amp < 0 means u0_E < 0
+        # Note that we assume beta = u0_amp (with same signs).
+
+        # Calculate the closest approach vector. Define beta sign convention
+        # same as of Andy Gould does with beta > 0 means u0_E > 0
+        # (lens passes to the right of the source as seen from Earth or Sun).
+        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
+        # the sign of beta is always the same as the sign of u0_amp. Therefore this
+        # usage of the function with u0_amp works exactly the same.
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        # Calculate m1 and m2 (see PSBL writeup). Note this is no longer the
+        # individual einstein radius**2... but rather the fractional
+        # einstein radius for each component of the binary. Thus these
+        # should only be used in phot models where everything has been
+        # divided by the Einstein radius.
+        self.m1 = 1.0 / (1.0 + self.q)
+        self.m2 = self.q / (1.0 + self.q)
+        self.dmag_Lp_Ls = np.zeros(len(self.mag_src))
+
+        return
+
+
+
+class PSBL_Phot_CircOrbs_Param1(PSBL_Phot_EllOrbs_Param1):
+    """
+    Point source binary lens, photometry only.
+
+    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
+
+    Attributes
+    ----------
+    t0: float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
+    u0_amp: float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. It can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time based on the system mass. [MJD]
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    q: float
+        Mass ratio (low-mass / high-mass)
+    sep: float
+        Angular separation of the two lenses in units of thetaE where
+        thetaE is defined with the total binary mass.
+    b_sff: array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_src:  array or list
+        Photometric magnitude of the source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    aleph: float
+        This is the semi-major axis of the primary lens in mas.
+    aleph_sec: float
+        This is the semi-major axis of the secondary lens in mas.
+    v_para: float
+        Parallel velocity component of the secondary lens relative to the primary lens in units of rad/year
+    v_rad: float
+        Radial velocity component of the secondary lens relative to the primary lens in units of rad/year
+    v_perp: float
+        Perpendicular velocity component of the secondary lens relative to the primary lens in units of rad/year
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
+                          'q', 'sep', 'v_para', 'v_rad', 'v_perp', 'dmag_Lp_Ls']
+    phot_param_names = ['b_sff', 'mag_src']
+
+    paramAstromFlag = False
+    paramPhotFlag = True
+    orbitFlag=True
+
+
+    def __init__(self, t0, aleph, aleph_sec, v_para, v_perp, v_rad, u0_amp, tE, piE_E, piE_N, q,
+                 b_sff, mag_src,dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        r_s = -v_para/v_rad
+        a_s = 1
+        super().__init__(t0, aleph, aleph_sec, r_s, a_s, v_para, v_perp, v_rad,
+                         u0_amp, tE, piE_E, piE_N, q,
+                         b_sff, mag_src,dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+
+        return
+
 
 
 class PSBL_GP_PhotParam1(PSBL_PhotParam1):
@@ -10446,23 +11338,23 @@ class BSPL(PSPL):
 
         Returns
         -------
-        A_resolved : numpy array 
+        A_resolved : numpy array
             [shape = len(t), len(sources), 2]
-            
+
         Notes
         -----
         For each time t and each source, we have:
             * A_plus is the amplification for the plus image.
             * A_minus is the amplification for the minus image.
 
-        In other words, 
-            xS[0, 0, 0] returns the amplification of the 
-            first source's "plus" image at the first time. 
-        Similarly, 
-            xS[0, 0, 1] returns the amplification of the 
-            first source's "minus" image at the first time. 
+        In other words,
+            xS[0, 0, 0] returns the amplification of the
+            first source's "plus" image at the first time.
+        Similarly,
+            xS[0, 0, 1] returns the amplification of the
+            first source's "minus" image at the first time.
         """
-        # Get u for the primary and secondary at all times. 
+        # Get u for the primary and secondary at all times.
         u_vec = self.get_u(t, filt_idx=filt_idx)
 
         u_vec1 = u_vec[:, 0, :]
@@ -10489,11 +11381,11 @@ class BSPL(PSPL):
     def get_amplification(self, t, filt_idx=0):
         """Parallax: Get the photometric amplification term at a set of times, t.
 
-        Note that this is a convenience function that combines amplifications from 
+        Note that this is a convenience function that combines amplifications from
         multiple sources. The returned amplification is
 
         ..math::
-        
+
             A = (f1 * A1 + f2 * A2) / (f1 + f2)
 
         where the fluxes are the intrinsic source flux in the specified filter.
@@ -10507,7 +11399,7 @@ class BSPL(PSPL):
         Returns
         -------
         A : numpy array
-            | Array of combined amplifications in the specified filter. 
+            | Array of combined amplifications in the specified filter.
             | Shape = [len(t)]
         """
         u_vec = self.get_u(t, filt_idx=filt_idx)
@@ -10568,7 +11460,7 @@ class BSPL(PSPL):
         if hasattr(self, 'fdfdt_pri'):
             f1 += f1 * (self.fdfdt_pri / 100) * (t - self.t0_pri)
         if hasattr(self, 'fdfdt_sec'):
-            f2 += f2 * (self.fdfdt_sec / 100) * (t - self.t0_sec)
+            f2 += f2 * (self.fdfdt_sec / 100) * (t - self.t0_pri)
 
         # Amplify and combine together.
         flux_lensed1 = f1 * A1
@@ -10798,22 +11690,21 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         """
         # Equation of motion for just the background source.
         dt1_in_years = (t - self.t0_pri) / days_per_year
-        #dt2_in_years = (t - self.t0_sec) / days_per_year
 
         # Calculate position vs. time in arcsec
         if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
             xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
             xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
             if self.orbitFlag == 'accelerated':
-                xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.acc) * 1e-3
+                xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.accS) * 1e-3
 
         elif self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
             xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass. xS0_com is the initial source CoM position at t0=t0_p.
 
             orb = orbits.Orbit()
-            orb.w = self.omega
-            orb.o = self.big_omega
+            orb.w = self.omega_pri
+            orb.o = self.big_omega_sec
             orb.i = self.i
             orb.e = self.e
             orb.p = self.p
@@ -11055,14 +11946,14 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
         Parameters
         ----------
-        t: 
+        t:
             Array of times in MJD.DDD
         filt_idx : int, optional
             Index of the astrometric filter or data set.
 
         Returns
         -------
-        centroid_shift : numpy array 
+        centroid_shift : numpy array
             [shape = len(t), 2] in milli-arcseoncds
         """
 
@@ -11406,16 +12297,9 @@ class BSPL_PhotParam1(PSPL_Param):
         :math:`b_sff = (f_S1 + f_S2) / (f_S1 + f_s2 + f_L + f_N)`.
         This must be passed in as a list or
         array, with one entry for each photometric filter.
-    mag_src:  array or list
-        Photometric magnitude of the source. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-
-    Other Parameters
-    ----------------
-    raL: float
+    raL: float, optional
         Right ascension of the lens in decimal degrees.
-        Required if calculating with parallax
-    decL: float
+    decL: float, optional
         Declination of the lens in decimal degrees.
     obsLocation: str or list[str], optional
         The observers location for each photometric dataset (def=['earth'])
@@ -11715,8 +12599,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
         sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
                                        np.cos(self.alpha_rad)))  # mas
 
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
 
         return
 
@@ -11917,8 +12800,7 @@ class BSPL_PhotAstromParam2(PSPL_Param):
                                        np.cos(self.alpha_rad)))  # mas
 
         # Closest approach time and distance
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
 
         return
 
@@ -12125,8 +13007,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
                                        np.cos(self.alpha_rad)))  # mas
 
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
 
         return
 
@@ -12601,10 +13482,14 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
         return
 
 
+
+
 class BSPL_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstromParam1):
     """BSPL model for astrometry and photometry - physical parameterization - for linear orbits.
 
-A Binary Point Source Point Lens model for microlensing. This model uses a parameterization that depends on only physical quantities such as the proper motions of the lens, the primary source and the secondary source. This is a linear orbit model.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period).
+
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -12618,8 +13503,6 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
         as seen in heliocentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
-    t: float
-        Time of Observation
     beta: float
         Angular distance between the lens and primary source on the
         plane of the sky (mas). Can be
@@ -12673,6 +13556,11 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
@@ -12713,12 +13601,12 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
         self.delta_muS_sec_E, self.delta_muS_sec_N = self.delta_muS_sec
         self.muS_sec = self.muS + self.delta_muS_sec
 
-        self.muRel_sec = self.muS + self.delta_muS_sec - self.muL
-        self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
-        self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
+        #self.muRel_sec = self.muS + self.delta_muS_sec - self.muL
+        #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
+        #self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
+        #self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
 
-        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
+        #self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
         return
 
@@ -12726,7 +13614,9 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
 class BSPL_PhotAstrom_AccOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
     """BSPL model for astrometry and photometry - physical parameterization - for linear orbits.
 
-A Binary Point Source Point Lens model for microlensing. This model uses a parameterization that depends on only physical quantities such as the proper motions of the lens, the primary source and the secondary source. This is a linear orbit model.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period) with acceleration.
+
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -12740,8 +13630,6 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
         as seen in heliocentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
-    t: float
-        Time of Observation
     beta: float
         Angular distance between the lens and primary source on the
         plane of the sky (mas). Can be
@@ -12770,9 +13658,9 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
         RA Source proper motion (mas/yr) for primary source.
     muS_N: float
         Dec Source proper motion (mas/yr) for primary source.
-    acc_E:
+    accSsec_E:
         Acceleration of the secondary source in the direction of RA (mas/yr^2)
-    acc_N:
+    accSsec_N:
         Acceleration of the secondary source in the direction of DEC (mas/yr^2)
     delta_muS_sec_E: float
         RA Source proper motion (mas/yr) for secondary source.
@@ -12799,13 +13687,18 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
     fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
                           'xS0_E', 'xS0_N',
                           'muL_E', 'muL_N',
                           'muS_E', 'muS_N',
                           'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'acc_E', 'acc_N',
+                          'accSsec_E', 'accSsec_N',
                           'sep', 'alpha']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
     additional_param_names = ['dS', 'tE', 'u0_amp',
@@ -12822,7 +13715,7 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
                  muL_E, muL_N,
                  muS_E, muS_N,
                  delta_muS_sec_E, delta_muS_sec_N,
-                 acc_E, acc_N,
+                 accSsec_E, accSsec_N,
                  sep, alpha,
                  mag_src_pri, mag_src_sec,
                  b_sff,
@@ -12838,14 +13731,14 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
                          b_sff,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
-        self.acc = np.array([acc_E, acc_N])
-        self.acc_E, self.acc_N = self.acc
-        self.acc_amp = np.linalg.norm(self.acc)
-        # self.acc_hat = self.muRel_sec_hat
-        if self.acc_E == 0.0 and self.acc_N == 0.0:
-            self.acc_hat = np.array([0.0, 0.0])
+        self.accS = np.array([accSsec_E, accSsec_N])
+        self.accSsec_E, self.accSsec_N = self.accS
+        self.acc_amp = np.linalg.norm(self.accS)
+        if self.accSsec_E == 0.0 and self.accSsec_E == 0.0:
+            self.accS_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc / self.acc_amp
+            self.accS_hat = self.accS / self.acc_amp
+
 
         return
 
@@ -12853,9 +13746,9 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
 class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period).
+
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -12925,6 +13818,11 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
@@ -12963,12 +13861,12 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
         self.delta_muS_sec_N = delta_muS_sec_N
         self.muS_sec = self.muS + self.delta_muS_sec
 
-        self.muRel_sec = self.muS_sec - self.muL
-        self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
-        self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
+        #self.muRel_sec = self.muS_sec - self.muL
+        #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
+        #self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
+        #self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
 
-        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
+#        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
         return
 
@@ -12976,58 +13874,56 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
 class BSPL_PhotAstrom_AccOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
     """BSPL model for astrometry and photometry - physical parameterization - for linear orbits.
 
-A Binary Point Source Point Lens model for microlensing. This model uses a parameterization that depends on only physical quantities such as the proper motions of the lens, the primary source and the secondary source. This is a linear orbit model.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period) with acceleration.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
 
     Attributes
     ----------
-    mL: float
-        Mass of the lens (Msun)
-    t0: float
+     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
         as seen in heliocentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
-    t: float
-        Time of Observation
-    beta: float
-        Angular distance between the lens and primary source on the
-        plane of the sky (mas). Can be
-            * positive (u0_amp > 0 when u0_hat[0] < 0) or
-            * negative (u0_amp < 0 when u0_hat[0] > 0).
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
         Note, since this is a binary source, we are expressing the
         nominal source position as that of the primary star in the source
         binary system.
-    dL: float
-        Distance from the observer to the lens (pc)
-    dL_dS: float
-        Ratio of Distance from the obersver to the lens to
-        Distance from the observer to the source
-    xS0_E: float
-        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-        This should be the position of the source primary.
-    xS0_N: float
-        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-        This should be the position of the source primary.
-    acc_E: Acceleration of the secondary source in the direction of RA (mas/yr^2)
-    acc_N: Acceleration of the secondary source in the direction of DEC (mas/yr^2)
-    muL_E: float
-        RA Lens proper motion (mas/yr)
-    muL_N: float
-        Dec Lens proper motion (mas/yr)
-    muS_E: float
-        RA Source proper motion (mas/yr) for primary source.
-    muS_N: float
-        Dec Source proper motion (mas/yr) for primary source.
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame. This should be the position of the source primary.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+        Identical proper motions are assumed for the source primary and secondary.
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+        Identical proper motions are assumed for the source primary and secondary.
     delta_muS_sec_E: float
         RA secondary source proper motion with respect to the primary source (mas/yr)
     delta_muS_sec_N: float
         Dec secondary source proper motion with respect to the primary source (mas/yr)
-    acc_E:
+    accSsec_E:
         Acceleration of the secondary source in the direction of RA (mas/yr^2)
-    acc_N:
+    accSsec_N:
         Acceleration of the secondary source in the direction of DEC (mas/yr^2)
     sep: float
         Angular separation of the source scondary from the
@@ -13035,34 +13931,40 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
     alpha: float
         Angle made between the binary source axis and North;
         measured in degrees East of North.
-    mag_src_pri: array or list
-        Photometric magnitude of the first (primary) source. This must be passed in as a
+    fratio_bin: float
+        Flux ratio of secondary flux / primary flux.
+    mag_base : array or list
+        Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
-    mag_src_sec: array or list
-        Photometric magnitude of the second (secondary) source. This must be passed in as a
-        list or array, with one entry for each photometric filter.
+        Note that
+            :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
+        such that
+            :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
         The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = (f_S1 + f_S2) / (f_S1 + f_s2 + f_L + f_N)`.
+        :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
-
-    fitter_param_names = ['mL', 't0', 't', 'beta', 'dL', 'dL_dS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N',
                           'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
                           'muS_E', 'muS_N',
                           'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'acc_E', 'acc_N',
+                          'accSsec_E', 'accSsec_N',
                           'sep', 'alpha']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
-    additional_param_names = ['dS', 'tE', 'u0_amp',
-                              'thetaE_E', 'thetaE_N',
-                              'piE_E', 'piE_N',
+    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
 
     paramAstromFlag = True
@@ -13074,7 +13976,7 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  delta_muS_sec_E, delta_muS_sec_N,
-                 acc_E, acc_N,
+                 accSsec_E, accSsec_N,
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
                  raL=None, decL=None, obsLocation='earth'):
@@ -13088,13 +13990,13 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
                          mag_base, b_sff,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
-        self.acc = np.array([acc_E, acc_N])
-        self.acc_E, self.acc_N = self.acc
-        self.acc_amp = np.linalg.norm(self.acc)
-        if self.acc_E == 0.0 and self.acc_N == 0.0:
-            self.acc_hat = np.array([0.0, 0.0])
+        self.accS = np.array([accSsec_E, accSsec_N])
+        self.accSsec_E, self.accSsec_N = self.accS
+        self.acc_amp = np.linalg.norm(self.accS)
+        if self.accSsec_E == 0.0 and self.accSsec_E == 0.0:
+            self.accS_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc / self.acc_amp
+            self.accS_hat = self.accS / self.acc_amp
 
         return
 
@@ -13102,9 +14004,8 @@ A Binary Point Source Point Lens model for microlensing. This model uses a param
 class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period).
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -13174,6 +14075,11 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
@@ -13212,11 +14118,11 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
         self.delta_muS_sec_N = delta_muS_sec_N
         self.muS_sec = self.muS + self.delta_muS_sec
 
-        self.muRel_sec = self.muRel + self.delta_muS_sec
-        self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
-        self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
-        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
+        #self.muRel_sec = self.muRel + self.delta_muS_sec
+        #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
+        #self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
+        #self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
+        #self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
         return
 
@@ -13224,9 +14130,8 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
 class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a binary source with the
+    secondary source moving linearly (a good approximation for times << orbital period) with acceleration.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -13272,9 +14177,9 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
         RA secondary source proper motion with respect to the primary source (mas/yr)
     delta_muS_sec_N: float
         Dec secondary source proper motion with respect to the primary source (mas/yr)
-    acc_E:
+    accSsec_E:
         Acceleration of the secondary source in the direction of RA (mas/yr^2)
-    acc_N:
+    accSsec_N:
         Acceleration of the secondary source in the direction of DEC (mas/yr^2)
     sep: float
         Angular separation of the source scondary from the
@@ -13300,6 +14205,11 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
@@ -13307,7 +14217,7 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
                           'xS0_E', 'xS0_N',
                           'muS_E', 'muS_N',
                           'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'acc_E', 'acc_N',
+                          'accSsec_E', 'accSsec_N',
                           'sep', 'alpha']
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
@@ -13323,7 +14233,7 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  delta_muS_sec_E, delta_muS_sec_N,
-                 acc_E, acc_N,
+                 accSsec_E, accSsec_N,
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
                  raL=None, decL=None, obsLocation='earth'):
@@ -13337,13 +14247,13 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
                          mag_base, b_sff,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
-        self.acc = np.array([acc_E, acc_N])
-        self.acc_E, self.acc_N = self.acc
-        self.acc_amp = np.linalg.norm(self.acc)
-        if self.acc_E == 0.0 and self.acc_N == 0.0:
-            self.acc_hat = np.array([0.0, 0.0])
+        self.accS = np.array([accSsec_E, accSsec_N])
+        self.accSsec_E, self.accSsec_N = self.accS
+        self.acc_amp = np.linalg.norm(self.accS)
+        if self.accSsec_E == 0.0 and self.accSsec_E == 0.0:
+            self.accS_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc / self.acc_amp
+            self.accS_hat = self.accS / self.acc_amp
 
         return
 
@@ -13351,9 +14261,8 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
 class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -13383,15 +14292,25 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
 
-    omega: float
+    muL_E: float
+        RA Lens proper motion (mas/yr)
+    muL_N: float
+        Dec Lens proper motion (mas/yr)
+
+    muS_E: float
+        The RA proper motion of the system in mas/yr.
+    muS_N: float
+        The Dec proper motion of the system in mas/yr.
+
+    omega_pri: float
         The argument of periastron of the primary star's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary star's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         Inclination angle of the system in degrees.
     e: float
@@ -13404,11 +14323,6 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         This is the semi-major axis of the primary source in mas.
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
-
-    muS_E: float
-        The RA proper motion of the system in mas/yr.
-    muS_N: float
-        The Dec proper motion of the system in mas/yr.
 
     xS0_E: float
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
@@ -13430,13 +14344,18 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
                           'xS0_E', 'xS0_N',
                           'muL_E', 'muL_N',
                           'muS_E', 'muS_N',
-                          'omega', 'big_omega', 'i', 'e',
+                          'omega_pri', 'big_omega_sec', 'i', 'e',
                           'p', 'tp', 'aleph', 'aleph_sec'
                           ]
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
@@ -13453,7 +14372,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
                  xS0_E, xS0_N,
                  muL_E, muL_N,
                  muS_E, muS_N,
-                 omega, big_omega, i,
+                 omega_pri, big_omega_sec, i,
                  e, p, tp, aleph, aleph_sec,
                  mag_src_pri, mag_src_sec,
                  b_sff,
@@ -13473,10 +14392,10 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.obsLocation = obsLocation
         self.raL = raL
         self.decL = decL
-        self.w = omega
-        self.o = big_omega
-        self.omega = self.w
-        self.big_omega = self.o
+        self.w = omega_pri
+        self.o = big_omega_sec
+        self.omega_pri = self.w
+        self.big_omega_sec = self.o
         self.i = i
         self.e = e
         self.p = p
@@ -13498,8 +14417,8 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
 
         orb = orbits.Orbit()
-        orb.w = self.omega
-        orb.o = self.big_omega
+        orb.w = self.omega_pri
+        orb.o = self.big_omega_sec
         orb.i = self.i
         orb.e = self.e
         orb.tp = (self.tp)
@@ -13607,9 +14526,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         # Closest approach time
         self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
         self.u0_sec = self.u0_amp_sec * self.u0_hat
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
 
         # CoM
         com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
@@ -13633,9 +14550,8 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -13665,15 +14581,15 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    omega: float
+    omega_pri: float
         The argument of periastron of the primary star's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary star's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         Inclination angle of the system in degrees.
     e: float
@@ -13700,11 +14616,7 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
         The ratio of the source flux to the total (source + neighbors + lens)
         :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
@@ -13714,11 +14626,16 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
-                           'omega', 'big_omega', 'i', 'e',
+                           'omega_pri', 'big_omega_sec', 'i', 'e',
                           'p', 'tp', 'aleph', 'aleph_sec', 'muS_E', 'muS_N',
                           'xS0_E', 'xS0_N']
 
@@ -13734,8 +14651,8 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
-                 omega,
-                 big_omega, i,
+                 omega_pri,
+                 big_omega_sec, i,
                  e, p, tp,
                  aleph, aleph_sec,
                  muS_E, muS_N,
@@ -13759,10 +14676,10 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.obsLocation = obsLocation
         self.raL = raL
         self.decL = decL
-        self.w = omega
-        self.o = big_omega
-        self.omega = self.w
-        self.big_omega = self.o
+        self.w = omega_pri
+        self.o = big_omega_sec
+        self.omega_pri = self.w
+        self.big_omega_sec = self.o
         self.i = i
         self.e = e
         self.p = p
@@ -13772,8 +14689,8 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
 
         orb = orbits.Orbit()
-        orb.w = self.omega
-        orb.o = self.big_omega
+        orb.w = self.omega_pri
+        orb.o = self.big_omega_sec
         orb.i = self.i
         orb.e = self.e
         orb.tp = (self.tp)
@@ -13857,9 +14774,7 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         # Closest approach time
         self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
         self.u0_sec = self.u0_amp_sec * self.u0_hat
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
 
         # CoM
         com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
@@ -13873,9 +14788,8 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -13905,15 +14819,15 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    omega: float
+    omega_pri: float
         The argument of periastron of the primary star's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary star's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         Inclination angle of the system in degrees.
     e: float
@@ -13939,11 +14853,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_base = f_{src1{ + f_{src2{ + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1} + f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
         The ratio of the source flux to the total (source + neighbors + lens)
         :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
@@ -13953,11 +14863,16 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
-                          'omega', 'big_omega', 'i', 'e', 'p',
+                          'omega_pri', 'big_omega_sec', 'i', 'e', 'p',
                           'tp', 'aleph', 'aleph_sec',
                           'muS_E', 'muS_N',
                           'xS0_E', 'xS0_N'
@@ -13973,8 +14888,8 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
-                 omega,
-                 big_omega, i,
+                 omega_pri,
+                 big_omega_sec, i,
                  e, p, tp,
                  aleph, aleph_sec,
                  muS_E, muS_N,
@@ -13999,10 +14914,10 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
-        self.w = omega
-        self.o = big_omega
-        self.omega = self.w
-        self.big_omega = self.o
+        self.w = omega_pri
+        self.o = big_omega_sec
+        self.omega_pri = self.w
+        self.big_omega_sec = self.o
         self.i = i
         self.e = e
         self.p = p
@@ -14013,8 +14928,8 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
 
         orb = orbits.Orbit()
-        orb.w = self.omega
-        orb.o = self.big_omega
+        orb.w = self.omega_pri
+        orb.o = self.big_omega_sec
         orb.i = self.i
         orb.e = self.e
         orb.tp = (self.tp)
@@ -14128,9 +15043,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         # Closest approach time
         self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
         self.u0_sec = self.u0_amp_sec * self.u0_hat
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
 
         # CoM
         com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
@@ -14143,9 +15056,8 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14175,34 +15087,7 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
 
-    omega: float
-        The argument of periastron of the primary star's orbit in degrees.
-        The secondary source will be directly 180 degrees across the primary
-        source's argument of periastron.
-    big_omega: float
-        The longitude of the ascending node of the secondary star's orbit
-        in degrees. Since the primary and secondary sources share the same
-        inclination angle for their orbital planes, they also share the same
-        big_omega
-        
-    i: float
-        Inclination angle of the system in degrees.
-    e: float
-        Eccentricity of the System
 
-    tp: float
-        This is the time of the periastron of the system in days.
-  
-    log10_a : float
-        This is the log10_a of the semi-major axis a, where a is in mas. 
-    
-    mass_source_p: float
-        Mass of the primary source in units of Msun
-
-    mass_source_s: float
-        Mass of the secondary source in units of Msun
-
-        
     muS_E: float
         The RA proper motion of the system in mas/yr.
     muS_N: float
@@ -14212,6 +15097,37 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
     xS0_N: float
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+
+    muL_E: float
+        RA Lens proper motion (mas/yr)
+    muL_N: float
+        Dec Lens proper motion (mas/yr)
+    omega_pri: float
+        The argument of periastron of the primary star's orbit in degrees.
+        The secondary source will be directly 180 degrees across the primary
+        source's argument of periastron.
+    big_omega_sec: float
+        The longitude of the ascending node of the secondary star's orbit
+        in degrees. Since the primary and secondary sources share the same
+        inclination angle for their orbital planes, they also share the same
+        big_omega_sec
+
+    i: float
+        Inclination angle of the system in degrees.
+    e: float
+        Eccentricity of the System
+
+    tp: float
+        This is the time of the periastron of the system in days.
+
+    log10_a : float
+        This is the log10_a of the semi-major axis a, where a is in mas.
+
+    mass_source_p: float
+        Mass of the primary source in units of Msun
+
+    mass_source_s: float
+        Mass of the secondary source in units of Msun
 
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
@@ -14228,15 +15144,20 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
                           'xS0_E', 'xS0_N',
                           'muL_E', 'muL_N',
                           'muS_E', 'muS_N',
-                          'omega', 'big_omega', 
-                           'i', 'e', 
-                          'tp', 'log_a', 
+                          'omega_pri', 'big_omega_sec',
+                           'i', 'e',
+                          'tp', 'log_a',
                           'mass_source_p', 'mass_source_s']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
     additional_param_names = ['dS', 'tE', 'u0_amp',
@@ -14252,7 +15173,7 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
                  xS0_E, xS0_N,
                  muL_E, muL_N,
                  muS_E, muS_N,
-                 omega, big_omega, i,
+                 omega_pri, big_omega_sec, i,
                  e, tp, log_a, mass_source_p, mass_source_s,
                  mag_src_pri, mag_src_sec,
                  b_sff,
@@ -14272,10 +15193,10 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         self.obsLocation = obsLocation
         self.raL = raL
         self.decL = decL
-        self.w = omega
-        self.o = big_omega
-        self.omega = self.w
-        self.big_omega = self.o
+        self.w = omega_pri
+        self.o = big_omega_sec
+        self.omega_pri = self.w
+        self.big_omega_sec = self.o
         self.i = i
         self.e = e
         self.tp = tp
@@ -14283,7 +15204,7 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         self.sep = self.a
 
 
-                     
+
         self.aleph_sec = (mass_source_p)/(mass_source_p+mass_source_s) * self.a
         self.aleph = self.a  - self.aleph_sec  # mas
 
@@ -14302,17 +15223,17 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
 
 
         self.a_AU = self.dS * (self.a * 1e-3) * units.AU # AU semi-major
-                     
+
         mass_sources = (mass_source_p + mass_source_s) * units.Msun
-                     
+
         p = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mass_sources))).to('day')
-                     
+
         self.p = p.value  # Period in Days
 
-                     
+
         orb = orbits.Orbit()
-        orb.w = self.omega
-        orb.o = self.big_omega
+        orb.w = self.omega_pri
+        orb.o = self.big_omega_sec
         orb.i = self.i
         orb.e = self.e
         orb.tp = (self.tp)
@@ -14420,9 +15341,7 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         # Closest approach time
         self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
         self.u0_sec = self.u0_amp_sec * self.u0_hat
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
 
         # CoM
         com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
@@ -14442,15 +15361,14 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
 
         return
 
-                     
+
 
 
 class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14480,15 +15398,25 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
 
-    omega: float
+    muL_E: float
+        RA Lens proper motion (mas/yr)
+    muL_N: float
+        Dec Lens proper motion (mas/yr)
+
+    muS_E: float
+        The RA proper motion of the system in mas/yr.
+    muS_N: float
+        The Dec proper motion of the system in mas/yr.
+
+    omega_pri: float
         The argument of periastron of the primary star's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary star's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         Inclination angle of the system in degrees.
     p: float
@@ -14499,11 +15427,6 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         This is the semi-major axis of the primary source in mas.
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
-
-    muS_E: float
-        The RA proper motion of the system in mas/yr.
-    muS_N: float
-        The Dec proper motion of the system in mas/yr.
 
     xS0_E: float
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
@@ -14525,12 +15448,18 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
+
     fitter_param_names = ['mL', 't0_com', 'beta', 'dL', 'dL_dS',
                           'xS0_E', 'xS0_N',
                           'muL_E', 'muL_N',
                           'muS_E', 'muS_N',
-                          'omega', 'big_omega', 'i',
+                          'omega_pri', 'big_omega_sec', 'i',
                           'p', 'tp', 'aleph', 'aleph_sec'
                           ]
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
@@ -14547,16 +15476,17 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
                  xS0_E, xS0_N,
                  muL_E, muL_N,
                  muS_E, muS_N,
-                  omega, big_omega, i,
+                  omega_pri, big_omega_sec, i,
                  p, tp, aleph, aleph_sec,
                  mag_src_pri, mag_src_sec,
                  b_sff,
                  raL=None, decL=None, obsLocation='earth'):
+        e=0
         super().__init__(mL, t0, beta, dL, dL_dS,
                          xS0_E, xS0_N,
                          muL_E, muL_N,
                          muS_E, muS_N,
-                          omega, big_omega, i, 0,
+                          omega_pri, big_omega_sec, i, e,
                          p, tp, aleph, aleph_sec,
                          mag_src_pri, mag_src_sec,
                          b_sff,
@@ -14570,9 +15500,8 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
 class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14602,15 +15531,15 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    omega: float
+    omega_pri: float
         The argument of periastron of the primary star's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary star's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         Inclination angle of the system in degrees.
     p: float
@@ -14635,25 +15564,26 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
-        The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
+        The ratio of the source flux to the total (source + neighbors + lens):math:`b_sff = (f_S1 + f_S2) / (f_S1 + f_s2 + f_L + f_N)`.
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
+
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
-                          'omega', 'big_omega', 'i',
+                          'omega_pri', 'big_omega_sec', 'i',
                           'p', 'tp', 'aleph', 'aleph_sec', 'muS_E', 'muS_N',
                           'xS0_E', 'xS0_N']
 
@@ -14669,8 +15599,8 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
-                 omega,
-                 big_omega, i,
+                 omega_pri,
+                 big_omega_sec, i,
                  p, tp,
                  aleph, aleph_sec,
                  muS_E, muS_N,
@@ -14678,10 +15608,11 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
                  fratio_bin,
                  mag_base, b_sff,
                  raL=None, decL=None, obsLocation='earth'):
+        e=0
         super().__init__(t0, u0_amp, tE, thetaE, piS,
                          piE_E, piE_N,
-                         omega,
-                         big_omega, i, 0,
+                         omega_pri,
+                         big_omega_sec, i, e,
                          p, tp,
                          aleph, aleph_sec,
                          muS_E, muS_N,
@@ -14697,9 +15628,8 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
 class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
     """BSPL model for astrometry and photometry - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14729,15 +15659,15 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    omega: float
+    omega_pri: float
         The argument of periastron of the primary star's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
         source's argument of periastron.
-    big_omega: float
+    big_omega_sec: float
         The longitude of the ascending node of the secondary star's orbit
         in degrees. Since the primary and secondary sources share the same
         inclination angle for their orbital planes, they also share the same
-        big_omega
+        big_omega_sec
     i: float
         Inclination angle of the system in degrees.
     e: float
@@ -14763,11 +15693,7 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_base = f_{src1{ + f_{src2{ + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1} + f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
         The ratio of the source flux to the total (source + neighbors + lens)
         :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
@@ -14777,11 +15703,16 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
-                          'omega', 'big_omega', 'i', 'p',
+                          'omega_pri', 'big_omega_sec', 'i', 'p',
                           'tp', 'aleph', 'aleph_sec',
                           'muS_E', 'muS_N',
                           'xS0_E', 'xS0_N'
@@ -14797,8 +15728,8 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
-                 omega,
-                 big_omega, i,
+                 omega_pri,
+                 big_omega_sec, i,
                  p, tp,
                  aleph, aleph_sec,
                  muS_E, muS_N,
@@ -14806,10 +15737,11 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
                  fratio_bin,
                  mag_base, b_sff,
                  raL=None, decL=None, obsLocation='earth'):
+        e=0
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                          piE_E, piE_N,
-                         omega,
-                         big_omega, i, 0,
+                         omega_pri,
+                         big_omega_sec, i, e,
                          p, tp,
                          aleph, aleph_sec,
                          muS_E, muS_N,
@@ -14826,9 +15758,8 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
 class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14901,6 +15832,11 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     orbitFlag = 'linear'
@@ -14930,11 +15866,11 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
 
-        self.muRel_sec = self.muRel + self.delta_muS_sec
-        self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
-        self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
-        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
+        #self.muRel_sec = self.muRel + self.delta_muS_sec
+        #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
+        #self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
+        #self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
+        #self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
         return
 
@@ -14942,9 +15878,8 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
 class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -14988,6 +15923,10 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
         RA Source proper motion (mas/yr) for secondary source.
     delta_muS_sec_N: float
         Dec Source proper motion (mas/yr) for secondary source.
+    accSsec_E:
+        Acceleration of the secondary source in the direction of RA (mas/yr^2)
+    accSsec_N:
+        Acceleration of the secondary source in the direction of DEC (mas/yr^2)
     sep: float
         Angular separation of the source scondary from the
         source primary (mas).
@@ -15017,6 +15956,11 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
 
     orbitFlag = 'accelerated'
@@ -15027,7 +15971,7 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
                  muL_E, muL_N,
                  muS_E, muS_N,
                  delta_muS_sec_E, delta_muS_sec_N,
-                 acc_E, acc_N,
+                 accSsec_E, accSsec_N,
                  sep, alpha,
                  mag_src_pri, mag_src_sec,
                  b_sff,
@@ -15045,13 +15989,14 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
                          gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
-        self.acc = np.array([acc_E, acc_N])
-        self.acc_E, self.acc_N = self.acc
-        self.acc_amp = np.linalg.norm(self.acc)
-        if self.acc_E == 0.0 and self.acc_N == 0.0:
-            self.acc_hat = np.array([0.0, 0.0])
+        self.accS = np.array([accSsec_E, accSsec_N])
+        self.accSsec_E, self.accSsec_N = self.accS
+        self.acc_amp = np.linalg.norm(self.accS)
+        if self.accSsec_E == 0.0 and self.accSsec_E == 0.0:
+            self.accS_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc / self.acc_amp
+            self.accS_hat = self.accS / self.acc_amp
+
 
         return
 
@@ -15059,9 +16004,8 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
 class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+     Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -15137,6 +16081,11 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
     orbitFlag = 'linear'
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
@@ -15163,11 +16112,11 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
 
-        self.muRel_sec = self.muRel + self.delta_muS_sec
-        self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
-        self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
-        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
+        #self.muRel_sec = self.muRel + self.delta_muS_sec
+        #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
+        #self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
+        #self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
+        #self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
         return
 
@@ -15175,9 +16124,8 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
 class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
     """BSPL model for astrometry and photometry with GP - physical parameterization.
 
-    A Binary point Source Point Lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the
-    lens mass and positions and proper motions of both the lens and source.
+    Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
 
     Note the attributes, RA (raL) and Dec (decL) are required
     if you are calculating a model with parallax.
@@ -15220,6 +16168,10 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
         RA Source proper motion (mas/yr) for secondary source.
     delta_muS_sec_N: float
         Dec Source proper motion (mas/yr) for secondary source.
+    accSsec_E:
+        Acceleration of the secondary source in the direction of RA (mas/yr^2)
+    accSsec_N:
+        Acceleration of the secondary source in the direction of DEC (mas/yr^2)
 
     sep: float
         Angular separation of the source scondary from the
@@ -15253,6 +16205,11 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
     orbitFlag = 'accelerated'
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
@@ -15262,7 +16219,7 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  delta_muS_sec_E, delta_muS_sec_N,
-                 acc_E, acc_N,
+                 accSsec_E, accSsec_N,
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
@@ -15278,23 +16235,26 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
                          gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
-        self.acc = np.array([acc_E, acc_N])
-        self.acc_E, self.acc_N = self.acc
-        self.acc_amp = np.linalg.norm(self.acc)
-        if self.acc_E == 0.0 and self.acc_N == 0.0:
-            self.acc_hat = np.array([0.0, 0.0])
+        self.accS = np.array([accSsec_E, accSsec_N])
+        self.accSsec_E, self.accSsec_N = self.accS
+        self.acc_amp = np.linalg.norm(self.accS)
+        if self.accSsec_E == 0.0 and self.accSsec_E == 0.0:
+            self.accS_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc / self.acc_amp
+            self.accS_hat = self.accS / self.acc_amp
 
         return
 
 
 class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
     """
-    Point Source Point Lens with GP model for microlensing. This model includes
-    proper motions of the source and the source position on the sky.
-    It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
-    instead of thetaE.
+    BSPL model for astrometry and photometry with GP - physical parameterization.
+
+     Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
+
+    Note the attributes, RA (raL) and Dec (decL) are required
+    if you are calculating a model with parallax.
 
     Attributes
     ----------
@@ -15355,14 +16315,15 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
         Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
         Guassian process :math:`log(\omega_0)` from the SHO kernel.
-
-    Other Parameters
-    ----------------
-    Note: Required if calculating with parallax
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
     orbitFlag = 'linear'
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
@@ -15389,22 +16350,25 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
 
-        self.muRel_sec = self.muRel + self.delta_muS_sec
-        self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
-        self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
-        self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
+        #self.muRel_sec = self.muRel + self.delta_muS_sec
+        #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
+        #self.muRel_sec_amp = np.linalg.norm(self.muRel_sec)  # mas/yr
+        #self.muRel_sec_hat = self.muRel_sec / self.muRel_sec_amp
 
-        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
+#        self.tE_sec = self.thetaE_amp / self.muRel_sec_amp * days_per_year
 
         return
 
 
 class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
     """
-    Point Source Point Lens with GP model for microlensing. This model includes
-    proper motions of the source and the source position on the sky.
-    It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
-    instead of thetaE.
+    BSPL model for astrometry and photometry with GP - physical parameterization.
+
+     Note that this is a non-STATIC binary source, i.e.
+    there is orbital motion.
+
+    Note the attributes, RA (raL) and Dec (decL) are required
+    if you are calculating a model with parallax.
 
     Attributes
     ----------
@@ -15437,6 +16401,11 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
         RA Source proper motion (mas/yr) for secondary source.
     delta_muS_sec_N: float
         Dec Source proper motion (mas/yr) for secondary source.
+    accSsec_E:
+        Acceleration of the secondary source in the direction of RA (mas/yr^2)
+    accSsec_N:
+        Acceleration of the secondary source in the direction of DEC (mas/yr^2)
+
     sep: float
         Angular separation of the source scondary from the
         source primary (mas).
@@ -15465,14 +16434,15 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
         Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
         Guassian process :math:`log(\omega_0)` from the SHO kernel.
-
-    Other Parameters
-    ----------------
-    Note: Required if calculating with parallax
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
     """
     orbitFlag = 'accelerated'
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
@@ -15482,7 +16452,7 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  delta_muS_sec_E, delta_muS_sec_N,
-                 acc_E, acc_N,
+                 accSsec_E, accSsec_N,
                  sep, alpha, fratio_bin,
                  mag_base, b_sff,
                  gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
@@ -15498,16 +16468,15 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
                          gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
-        self.acc = np.array([acc_E, acc_N])
-        self.acc_E, self.acc_N = self.acc
-        self.acc_amp = np.linalg.norm(self.acc)
-        if self.acc_E == 0.0 and self.acc_N == 0.0:
-            self.acc_hat = np.array([0.0, 0.0])
+        self.accS = np.array([accSsec_E, accSsec_N])
+        self.accSsec_E, self.accSsec_N = self.accS
+        self.acc_amp = np.linalg.norm(self.accS)
+        if self.accSsec_E == 0.0 and self.accSsec_E == 0.0:
+            self.accS_hat = np.array([0.0, 0.0])
         else:
-            self.acc_hat = self.acc / self.acc_amp
+            self.accS_hat = self.accS / self.acc_amp
 
         return
-
 ######################################################
 ### BINARY SOURCE BINARY LENS (BSBL) CLASSES ###
 ######################################################
@@ -15556,13 +16525,13 @@ class BSBL(PSBL):
             if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
                 dt_in_years = (t - self.t0) / days_per_year
                 # Get positions assuming binary origin at primary.
-                xL1 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)  # parallax applied
+                xL1 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx) - offset # parallax applied
                 xL2 = xL1 + (2 * offset)
                 # Apply velocity difference.
                 xL2 += np.outer(dt_in_years, self.muL_sec - self.muL) * 1e-3
                 # Apply acceleration difference.
                 if self.orbitFlag == 'accelerated':
-                    xL2 += np.outer((0.5 * (dt_in_years ** 2)), self.acc) * 1e-3
+                    xL2 += np.outer((0.5 * (dt_in_years ** 2)), self.accL) * 1e-3
 
             elif self.orbitFlag == 'Keplerian':
                 dt_in_years = (t - self.t0_com) / days_per_year  # About Center of Mass
@@ -15601,7 +16570,7 @@ class BSBL(PSBL):
                     xL1 += (self.piL * parallax_vec) * 1e-3  # arcsec
                     xL2 += (self.piL * parallax_vec) * 1e-3  # arcsec
 
-        return (xL1, xL2)
+        return np.stack((xL1, xL2))
 
     def get_resolved_lens_photometry(self, filt_idx=0):
         """
@@ -15647,7 +16616,7 @@ class BSBL(PSBL):
         mag_Lp = flux2mag(flux_Lp)
         mag_Ls = flux2mag(flux_Ls)
 
-        return (mag_Lp, mag_Ls)
+        return np.stack((mag_Lp, mag_Ls))
 
     def get_u(self, t, filt_idx=0):
         """
@@ -15808,7 +16777,7 @@ class BSBL(PSBL):
         # Setup the output array with the right shape.
         N_times = w.shape[0]
         N_sources = w.shape[1]
-        z_arr = np.zeros((N_times, N_sources, 5), dtype=np.complex_)
+        z_arr = np.zeros((N_times, N_sources, 5), dtype=np.complex128)
 
         # Loop through each of the sources and just call the parent class.
         for ss in range(N_sources):
@@ -15851,7 +16820,7 @@ class BSBL(PSBL):
         # Setup the output array with the right shape.
         N_times = w.shape[0]
         N_sources = w.shape[1]
-        z_arr = np.zeros((N_times, N_sources, 5), dtype=np.complex_)
+        z_arr = np.zeros((N_times, N_sources, 5), dtype=np.complex128)
 
         # Loop through each of the sources and just call the parent class.
         for ss in range(N_sources):
@@ -16303,9 +17272,15 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         # Equation of motion for just the background source.
         dt1_in_years = (t - self.t0) / days_per_year
 
-        if self.orbitFlag == 'Keplerian':
-            dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
-            xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass. xS0_com is the initial source CoM position at t0=t0_p.
+        if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
+            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
+            if self.orbitFlag == 'accelerated':
+                xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.accS) * 1e-3
+
+        elif self.orbitFlag == 'Keplerian':
+            dt_in_years = (t - self.t0_com) / days_per_year
+            xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3
 
             orb = orbits.Orbit()
             orb.w = self.omegaS
@@ -16660,10 +17635,10 @@ class BSBL_PhotParam1(PSPL_Param):
 
 class BSBL_PhotAstromParam1(PSPL_Param):
     """BSBL model for astrometry and photometry - physical parameterization.
-    
+
     A binary source binary lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the 
-    lens masses and positions and proper motions. 
+    parameterization that depends on only physical quantities such as the
+    lens masses and positions and proper motions.
     Note that this is a STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
@@ -16680,9 +17655,9 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         arbitrary ref. frame.
     beta: float
         Angular distance between the source PRIMARY position
-        and the GEOMETRIC center of the lenses on the plane of the sky (mas). 
+        and the GEOMETRIC center of the lenses on the plane of the sky (mas).
         Can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
     muL_E : float
         Lens system proper motion in the RA direction (mas/yr)
@@ -16699,16 +17674,16 @@ class BSBL_PhotAstromParam1(PSPL_Param):
     sepL : float
         Angular separation of the lens secondary from the lens primary (mas).
     alphaL : float
-        Angle made between the binary lens axis and North; 
-        measured in degrees East of North. 
-        Example, alphaL = 90 will place the lens primary to the East 
+        Angle made between the binary lens axis and North;
+        measured in degrees East of North.
+        Example, alphaL = 90 will place the lens primary to the East
         and the lens secondary to the West.
     sepS : float
         Angular separation of the source secondary from the source primary (mas).
     alphaS : float
-        Angle made between the binary source axis and North; 
+        Angle made between the binary source axis and North;
         measured in degrees East of North.
-        Example, alphaL = 90 will place the source primary to the East 
+        Example, alphaL = 90 will place the source primary to the East
         and the source secondary to the West.
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
@@ -16725,8 +17700,6 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -16736,6 +17709,8 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         such as 'jwst' or 'spitzer'. Can be a single string if all observer
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
+     root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
@@ -16875,11 +17850,298 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         # Closest approach time
         self.u0_amp_sec = self.u0_amp_pri + (np.dot(sepS_vec, self.u0_hat) / self.thetaE_amp)
         self.u0_sec = self.u0_amp_sec * self.u0_hat
-        s_murelhat = np.dot(sepS_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
-        self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+        self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3)
 
         return
+
+class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
+    """BSBL model for astrometry and photometry - physical parameterization.
+
+    A binary source binary lens model for microlensing. This model uses a
+    parameterization that depends on only physical quantities such as the
+    lens masses and positions and proper motions.
+
+    Note that this is a binary source and binay lens with the
+    secondary source and secondary lens moving linearly (a good approximation for times << orbital period).
+
+
+    Attributes
+    ----------
+    mLp, mLs : float
+        Masses of the lenses (Msun)
+    t0 : float
+        Time of closest approach between the geometric center of source and geometric center of the lens, as seen from Earth (MJD.DDD)
+    xS0_E : float
+        R.A. of source primary position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source primary position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    beta: float
+        Angular distance between the source PRIMARY position
+        and the GEOMETRIC center of the lenses on the plane of the sky (mas).
+        Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    muL_E : float
+        Lens system proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Lens system proper motion in the Dec. direction (mas/yr)
+    muS_E : float
+        Source system proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source system proper motion in the Dec. direction (mas/yr)
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source (pc)
+    sepL : float
+        Angular separation of the lens secondary from the lens primary (mas).
+    alphaL : float
+        Angle made between the binary lens axis and North;
+        measured in degrees East of North.
+        Example, alphaL = 90 will place the lens primary to the East
+        and the lens secondary to the West.
+    sepS : float
+        Angular separation of the source secondary from the source primary (mas).
+    alphaS : float
+        Angle made between the binary source axis and North;
+        measured in degrees East of North.
+        Example, alphaL = 90 will place the source primary to the East
+        and the source secondary to the West.
+    delta_muL_sec_E: float
+        RA lens proper motion (mas/yr) for secondary lens.
+    delta_muL_sec_N: float
+        Dec lens proper motion (mas/yr) for secondary lens.
+    delta_muS_sec_E: float
+        RA Source proper motion (mas/yr) for secondary source.
+    delta_muS_sec_N: float
+        Dec Source proper motion (mas/yr) for secondary source.
+    delta_muL_sec_E: float
+        RA Source proper motion (mas/yr) for secondary source.
+    delta_muL_sec_N: float
+        Dec Source proper motion (mas/yr) for secondary source.
+    mag_src_pri: array or list
+        Photometric magnitude of the first (primary) source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    mag_src_sec: array or list
+        Photometric magnitude of the second (secondary) source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    b_sff : numpy array or list
+        The ratio of the combined source flux to the total (sources + neighbors + lenses). One
+        for each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
+     root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+
+    """
+    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
+                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
+                          'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS',
+                          'delta_muS_sec_E', 'delta_muS_sec_N',
+                         'delta_muL_sec_E', 'delta_muL_sec_N']
+    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'linear'
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
+                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                 sepL, alphaL, sepS, alphaS,
+                 delta_muL_sec_E, delta_muL_sec_N,
+                 delta_muS_sec_E, delta_muS_sec_N,
+                 mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N,
+                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                 sepL, alphaL, sepS, alphaS,
+                 mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
+        self.delta_muS_sec_E, self.delta_muS_sec_N = self.delta_muS_sec
+        self.muS_sec = np.array([muS_E + delta_muS_sec_E, muS_N + delta_muS_sec_N])
+
+
+        self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
+        self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+
+        return
+
+
+
+class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
+    """BSBL model for astrometry and photometry - physical parameterization.
+
+    A binary source binary lens model for microlensing. This model uses a
+    parameterization that depends on only physical quantities such as the
+    lens masses and positions and proper motions.
+
+    Note that this is a binary source and binay lens with the
+    secondary source and secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
+
+
+    Attributes
+    ----------
+    mLp, mLs : float
+        Masses of the lenses (Msun)
+    t0 : float
+        Time of closest approach between the geometric center of source and geometric center of the lens, as seen from Earth (MJD.DDD)
+    xS0_E : float
+        R.A. of source primary position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source primary position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    beta: float
+        Angular distance between the source PRIMARY position
+        and the GEOMETRIC center of the lenses on the plane of the sky (mas).
+        Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    muL_E : float
+        Lens system proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Lens system proper motion in the Dec. direction (mas/yr)
+    muS_E : float
+        Source system proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source system proper motion in the Dec. direction (mas/yr)
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source (pc)
+    sepL : float
+        Angular separation of the lens secondary from the lens primary (mas).
+    alphaL : float
+        Angle made between the binary lens axis and North;
+        measured in degrees East of North.
+        Example, alphaL = 90 will place the lens primary to the East
+        and the lens secondary to the West.
+    sepS : float
+        Angular separation of the source secondary from the source primary (mas).
+    alphaS : float
+        Angle made between the binary source axis and North;
+        measured in degrees East of North.
+        Example, alphaL = 90 will place the source primary to the East
+        and the source secondary to the West.
+    delta_muL_sec_E: float
+        RA Lens proper motion (mas/yr) for secondary Lens.
+    delta_muL_sec_N: float
+        Dec Lens proper motion (mas/yr) for secondary Lens.
+    delta_muS_sec_E: float
+        RA Source proper motion (mas/yr) for secondary source.
+    delta_muS_sec_N: float
+        Dec Source proper motion (mas/yr) for secondary source.
+    delta_muL_sec_E: float
+        RA Source proper motion (mas/yr) for secondary source.
+    delta_muL_sec_N: float
+        Dec Source proper motion (mas/yr) for secondary source.
+    accS_E:
+        Acceleration of the secondary source in the direction of RA (mas/yr^2)
+    accS_N:
+        Acceleration of the secondary source in the direction of DEC (mas/yr^2)
+    accL_E:
+        Acceleration of the secondary lens in the direction of RA (mas/yr^2)
+    accL_N:
+        Acceleration of the secondary lens in the direction of DEC (mas/yr^2)
+    mag_src_pri: array or list
+        Photometric magnitude of the first (primary) source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    mag_src_sec: array or list
+        Photometric magnitude of the second (secondary) source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    b_sff : numpy array or list
+        The ratio of the combined source flux to the total (sources + neighbors + lenses). One
+        for each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
+     root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+
+    """
+    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
+                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
+                          'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS',
+                          'delta_muS_sec_E', 'delta_muS_sec_N',
+                         'delta_muL_sec_E', 'delta_muL_sec_N', 'accS_E', 'accS_N', 'accL_E', 'accL_N']
+    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'accelerated'
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
+                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                 sepL, alphaL, sepS, alphaS,
+                 delta_muS_sec_E, delta_muS_sec_N,
+                 delta_muL_sec_E, delta_muL_sec_N,accS_E, accS_N, accL_E, accL_N,
+                 mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N,
+                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                 sepL, alphaL, sepS, alphaS,
+                 delta_muS_sec_E, delta_muS_sec_N,
+                 delta_muL_sec_E, delta_muL_sec_N,
+                 mag_src_pri, mag_src_sec, b_sff,
+                  dmag_Lp_Ls,
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+
+        self.accS = np.array([accS_E, accS_N])
+        self.accS_E, self.accS_N = self.accS
+        self.accS_amp = np.linalg.norm(self.accS)
+        # self.acc_hat = self.muRel_sec_hat
+        if self.accS_E == 0.0 and self.accS_N == 0.0:
+            self.accS_hat = np.array([0.0, 0.0])
+        else:
+            self.accS_hat = self.accS / self.accS_amp
+
+        self.accL = np.array([accL_E, accL_N])
+        self.accL_E, self.accL_N = self.accL
+        self.accL_amp = np.linalg.norm(self.accL)
+        # self.acc_hat = self.muRel_sec_hat
+        if self.accL_E == 0.0 and self.accL_N == 0.0:
+            self.accL_hat = np.array([0.0, 0.0])
+        else:
+            self.accL_hat = self.accL / self.accL_amp
+
+
+        return
+
 
 
 class BSBL_PhotAstromParam2(PSPL_Param):
@@ -17119,9 +18381,7 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         # Closest approach time
         self.u0_amp_sec = self.u0_amp_pri + (np.dot(sepS_vec, self.u0_hat) / self.thetaE_amp)
         self.u0_sec = self.u0_amp_sec * self.u0_hat
-        s_murelhat = np.dot(sepS_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
-        self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+        self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3)
 
         return
 
@@ -17134,7 +18394,8 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     A binary source binary lens model for microlensing. This model uses a
     parameterization that depends on only physical quantities such as the
     lens masses and positions and proper motions.
-    Note that this is a STATIC binary lens, i.e. there is no orbital motion.
+
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -17175,7 +18436,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     iL: float
         Inclination angle of the system in degrees.
     eL: float
-        Eccentricity of the System
+        Eccentricity of the Lens System
     tpL: float
         This is the time of the periastron of the system in days.
     aL: float
@@ -17188,7 +18449,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     is: float
         Inclination angle of the system in degrees.
     eS: float
-        Eccentricity of the System
+        Eccentricity of the Source System
     pS: float
         Orbital period of the system in days.
     tpS: float
@@ -17212,16 +18473,18 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
     fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL', 'big_omegaL', 'iL', 'eL', 'pL', 'tpL', 'aL',
+                          'dL', 'dS', 'omegaL', 'big_omegaL', 'iL', 'eL', 'tpL', 'aL',
                           'omegaS', 'big_omegaS', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
@@ -17401,6 +18664,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.q = self.mLs / self.mLp
         qeff_lens = (1 - self.q) / (1 + self.q)
         t0_geom_temp = t0_com - self.tE * self.sepL / self.thetaE_amp * qeff_lens * np.cos(self.phi_radL)
+        self.t0_geo = t0_geom_temp
         self.phi_radS = self.alphaS_rad - np.arctan2(self.piE_E, self.piE_N)
         self.sepS_AU = self.dS * (self.sepS * 1e-3) * units.AU
         self.mass_sources = ((4 * np.pi ** 2 * self.sepS_AU ** 3) / (const.G * (self.pS * units.day) ** 2)).to('Msun')
@@ -17436,7 +18700,8 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     A binary source binary lens model for microlensing. This model uses a
     parameterization that depends on only physical quantities such as the
     lens masses and positions and proper motions.
-    Note that this is a STATIC binary lens, i.e. there is no orbital motion.
+
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -17512,12 +18777,14 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
     fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
@@ -17551,7 +18818,8 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     A binary source binary lens model for microlensing. This model uses a
     parameterization that depends on only physical quantities such as the
     lens masses and positions and proper motions.
-    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
+
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -17584,7 +18852,11 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         Dec. of primary source position on sky at t = to_com (arcsec) in an
         arbitrary ref. frame.
 
-
+    muS_E : float
+        Source system proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source system proper motion in the Dec. direction (mas/yr)
+        
     omegaL: float
         The argument of periastron of the primary lens's orbit in degrees.
     big_omegaL: float
@@ -17593,7 +18865,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     iL: float
         Inclination angle of the system in degrees.
     eL: float
-        Eccentricity of the System
+        Eccentricity of the Lens System
 
     tpL: float
         This is the time of the periastron of the system in days.
@@ -17608,7 +18880,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     is: float
         Inclination angle of the system in degrees.
     eS: float
-        Eccentricity of the System
+        Eccentricity of the Source System
     pS: float
         Orbital period of the system in days.
     tpS: float
@@ -17623,14 +18895,9 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
-    b_sff: array or list
-        The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+    b_sff : array or list
+        The ratio of the source flux to the total (source + neighbors + lens):math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     dmag_Lp_Ls : numpy array or list
@@ -17639,17 +18906,18 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
-    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E',
-                          'muS_N',
-                           'omegaL', 'big_omegaL', 'iL', 'tpL', 'aL',
-                          'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 
+                          'xS0_N', 'muS_E', 'muS_N', 'omegaL', 'big_omegaL', 'iL', 'eL', 'tpL', 'aL',
+                          'omegaS', 'big_omegaS', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
     paramPhotFlag = True
@@ -17847,7 +19115,8 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     A binary source binary lens model for microlensing. This model uses a
     parameterization that depends on only physical quantities such as the
     lens masses and positions and proper motions.
-    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
+
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -17879,6 +19148,10 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     xS0_N : float
         Dec. of primary source position on sky at t = to_com (arcsec) in an
         arbitrary ref. frame.
+    muS_E : float
+        Source system proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source system proper motion in the Dec. direction (mas/yr)
     
 
     omegaL: float
@@ -17888,8 +19161,6 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         in degrees.
     iL: float
         Inclination angle of the system in degrees.
-    eL: float
-        Eccentricity of the System
 
     tpL: float
         This is the time of the periastron of the system in days.
@@ -17903,8 +19174,7 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         in degrees.
     is: float
         Inclination angle of the system in degrees.
-    eS: float
-        Eccentricity of the System
+
     pS: float
         Orbital period of the system in days.
     tpS: float
@@ -17918,14 +19188,9 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         Flux ratio of secondary flux / primary flux.
     mag_base : array or list
         Photometric magnitude of the base. This must be passed in as a
-        list or array, with one entry for each photometric filter.
-        Note that
-            :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}`
-        such that
-            :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+        list or array, with one entry for each photometric filter. Note that :math:`flux_{base} = f_{src1} + f_{src2} + f_{blend}` such that :math:`b_sff = (f_{src1}+ f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
     b_sff: array or list
-        The ratio of the source flux to the total (source + neighbors + lens)
-        :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
+        The ratio of the source flux to the total (source + neighbors + lens):math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     dmag_Lp_Ls : numpy array or list
@@ -17934,15 +19199,17 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
-    root_tol : float
-        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
         Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
 
-    fitter_param_names = ['t0_com', 'u0_amp', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
+    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
                  'omegaL', 'big_omegaL', 'iL',  'tpL', 'sepL',
                  'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
 
@@ -17951,7 +19218,7 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
                  omegaL, big_omegaL, iL, tpL, sepL,
                  omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
@@ -17970,9 +19237,10 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     with primary lens and primary source center. 
     
     A binary source binary lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the 
-    lens masses and positions and proper motions. 
-    Note that this is a STATIC binary lens, i.e. there is no orbital motion.
+    parameterization that depends on only physical quantities such as the
+    lens masses and positions and proper motions.
+
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -18015,7 +19283,7 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     iL: float
         Inclination angle of the system in degrees.
     eL: float
-        Eccentricity of the System
+        Eccentricity of the  Lens System
 
     tpL: float
         This is the time of the periastron of the system in days.
@@ -18027,12 +19295,11 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     big_omegaS: float
         The longitude of the ascending node of the secondary source's orbit
         in degrees.
-    is: float
+    iS: float
         Inclination angle of the system in degrees.
     eS: float
-        Eccentricity of the System
-    pS: float
-        Orbital period of the system in days.
+        Eccentricity of the Source System
+
     tpS: float
         This is the time of the periastron of the system in days.
     aS: float
@@ -18302,9 +19569,7 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         # Closest approach time
         self.u0_amp_sec = self.u0_amp_pri + (np.dot(sepS_vec, self.u0_hat) / self.thetaE_amp)
         self.u0_sec = self.u0_amp_sec * self.u0_hat
-        s_murelhat = np.dot(sepS_vec, self.muRel_hat)
-        self.t0_sec = self.t0_pri - (s_murelhat * days_per_year / self.muRel_amp)
-        self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+        self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3)
 
 
         u0_x_com, u0_y_com, t0_com = fc.convert_u0_t0_psbl(t0_in=self.t0, u0_x_in=self.u0[0], u0_y_in=self.u0[1],
@@ -18336,9 +19601,10 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
     with primary lens and primary source center. 
     
     A binary source binary lens model for microlensing. This model uses a
-    parameterization that depends on only physical quantities such as the 
-    lens masses and positions and proper motions. 
-    Note that this is a STATIC binary lens, i.e. there is no orbital motion.
+    parameterization that depends on only physical quantities such as the
+    lens masses and positions and proper motions.
+
+    Note that this is a non-STATIC binary lens, i.e. there is no orbital motion.
 
     Attributes
     ----------
@@ -18370,14 +19636,39 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
         Distance from the observer to the lens system (pc)
     dS : float
         Distance from the observer to the source (pc)
-    aL : float
-        Semi-Major axis of the binary lens system in mas. 
 
-        
-    sepS : float
-        Angular separation of the source secondary from the source primary (mas).
+   
+    omegaL: float
+        The argument of periastron of the primary lens's orbit in degrees.
+    big_omegaL: float
+        The longitude of the ascending node of the secondary lens's orbit
+        in degrees.
+    iL: float
+        Inclination angle of the system in degrees.
 
+    tpL: float
+        This is the time of the periastron of the system in days.
+    aL: float
+        This is the semi-major axis of the binary lens system (mas)
+
+    omegaS: float
+        The argument of periastron of the primary source's orbit in degrees.
+    big_omegaS: float
+        The longitude of the ascending node of the secondary source's orbit
+        in degrees.
+    iS: float
+        Inclination angle of the system in degrees.
+
+    tpS: float
+        This is the time of the periastron of the system in days.
+    aS: float
+        This is the semi-major axis of the binary source system 
         
+    mass_source_p: float
+        Primary source mass in Msun
+    mass_source_s: float
+        Secondary source mass in Msun
+
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
         list or array, with one entry for each photometric filter.
@@ -18428,7 +19719,7 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
                  raL, decL, obsLocation, root_tol)
 
         return
-                     
+                        
 # ==================================================
 #
 # FSPL Models
@@ -18459,7 +19750,7 @@ class FSPL(PSPL):
                               center[1] + self.radiusS * np.sin((2 * i * np.pi) / (self.n_outline))])
         return np.array(sourcepos)
 
-    def get_all_arrays(self, t, filt_idx=0):
+    def get_all_arrays_CI(self, t, filt_idx=0):
         """
         Obtain the image and amplitude arrays for each t. These arrays
         contain the positions for each point in the outline for each lensed image.
@@ -18579,11 +19870,15 @@ class FSPL(PSPL):
 
         return images, amps
 
-        
-    def get_all_arrays_noCI(self, t, filt_idx=0):
-        """
-        Obtain the image and amplitude arrays for each t. This method does not use contour integration. 
 
+    def get_all_arrays_amg(self, t, filt_idx=0):
+        """
+        Obtain the image and amplitude arrays for each t. These arrays
+        contain the positions for each point in the outline for each lensed image.
+
+        Adaptive mesh grid creates more boundary points around the source only
+        when it enters the Einstein ring.
+        
         Parameters
         ----------
         t : array_like
@@ -18605,317 +19900,170 @@ class FSPL(PSPL):
 
         Notes
         -----
-        The algorithm uses a numerical approach to find the image and amplitude. It has been adopted from
-        https://iopscience.iop.org/article/10.1088/0004-637X/695/1/200/pdf.
-        
+        The algorithm uses Green's theorem to change an area integral of the
+        image of the source into a path integral around the outline.
+        For the amplification, we perform a first-order contour integral to
+        approximate the area, and include a second-order parabolic correction.
+        For the centroid calculation, we perform only the first-order contour
+        integral with no second-order parabolic correction.
+        Equations for the contour integrals come from Bozza et al. (2021).
         """
-        # We use helper functions photometry_one, photometry_two, integral_top and integral_bottom 
-        # to describe f, g and k functions in the BAGLE paper. 
+        # Lensed positions of each outline point for both plus/minus images.
+        # Note these are positions on the sky. in arcsec
 
+        # Shape = [len(t), N_outline, [+,-], [E,N]]
+        def im_pos1(w, z1):
+            u = w - z1                
+            z_major = u * (1 + np.sqrt(1 + 4/np.abs(u)**2)) / 2
+            return z_major + z1       
         
-        def amplification_helper(time, rho, u_amp):
-            # Solving Equation 39 (the part dealing with u2f**2 - u1f**2). Doing this for the + and - images
-            n = 20
-            n_two = 2*n
-            amplification_uminus = []
-            amplification_uplus = []
-
-            for i in range(0, len(time)):
-                
-                u_now = u_amp[i]
-                
-                if np.round(u_now, 3) <= np.round(rho, 3):
-                    n = n_two
-                    zp = np.pi
-                    z = 1
-                else:
-                    z = np.arcsin(rho/u_now)/np.pi
-                    zp = np.arcsin(rho/u_now)
-            
-                factor = z/(3*rho**2*n)
-                
-                first_term_plus = function_photometry_one(0, u_now, rho)  + function_photometry_one(np.pi, u_now, rho)
-                first_term_minus = function_photometry_one(0, u_now, rho, '-')  + function_photometry_one(np.pi, u_now, rho, '-')
-                
-                sum_plus = []
-                sum_minus = []
-                for k in range(0, int(n/2)):
-                    sum_plus.append(function_photometry_one(2*k/n * zp, u_now, rho))
-                    sum_minus.append(function_photometry_one(2*k/n * zp, u_now, rho, '-'))
-                second_term_plus = 2*np.sum(sum_plus)
-                second_term_minus = 2*np.sum(sum_minus)
-            
-            
-                sum_plus = []
-                sum_minus = []
-                for k in range(0, int(n/2)-1):
-                    sum_plus.append(function_photometry_one((2*k-1)/n * zp, u_now, rho))
-                    sum_minus.append(function_photometry_one((2*k-1)/n * zp, u_now, rho, '-'))
-                third_term_plus = 4*np.sum(sum_plus)
-                third_term_minus = 4*np.sum(sum_minus)
-                
-                amplification_uminus.append(factor*(first_term_minus+second_term_minus+third_term_minus))
-                amplification_uplus.append(factor*(first_term_plus+second_term_plus+third_term_plus))
-                    
-            
-            amplification_uminus = np.array(amplification_uminus)
-            amplification_uplus = np.array(amplification_uplus)
-
-            return amplification_uminus, amplification_uplus
-
-        def amplification_lee_full(time, rho, u_amp):
-            # This should be the total amplification from CH Lee's paper https://iopscience.iop.org/article/10.1088/0004-637X/695/1/200/pdf
-            # Solving Equation 39 (the part dealing with u2f * np.sqrt(u2f**2+4) - u1f * np.sqrt(u1f**2+4))
-            n=20
-            amplification_lee_full =[]
-            for i in range(0, len(u_amp)):
-                
-                u_check = u_amp[i]
-                u_n = u_amp[i]    
-                u_plus_rho = u_n + rho
-                u_minus_rho = u_n - rho
-            
-                if np.round(u_check, 4) <= np.round(rho, 4):
-                    
-                    factor = 1/(np.pi*rho**2) * np.pi/(2*n)
-                    first_term_numerator = u_plus_rho*np.sqrt(u_plus_rho**2+4)-(u_minus_rho)*np.sqrt(u_minus_rho**2+4)
-                    first_term = first_term_numerator/3
-                    
-                    second_sum = []
-                    for k in range(1, n):
-                        argument = (2*k*np.pi)/(2*n)
-                        second_sum.append(function_photometry_two(argument, rho, u_n))
-                    second_term = (2/3)*np.sum(second_sum)
-                
-                    third_sum = []
-                    for k in range(1, n+1):
-                            argument = ((2*k-1)*np.pi)/(2*n)
-                            third_sum.append(function_photometry_two(argument, rho, u_n))
-                    third_term = (4/3)*np.sum(third_sum)
-                    amplification_lee_full.append(factor*(first_term+second_term+third_term))
-                    
-                else:
-                    factor = 1/(np.pi*rho**2) * np.arcsin(rho/u_n)/n
-                    
-                    first_term_numerator = u_plus_rho*np.sqrt(u_plus_rho**2+4)-(u_minus_rho)*np.sqrt(u_minus_rho**2+4)
-                    first_term = first_term_numerator/3
-                    
-                    second_sum = []
-                    for k in range(1, int(n/2)):
-                        argument = (2*k*np.arcsin(rho/u_n))/(n)
-                        second_sum.append(function_photometry_two(argument, rho, u_n))
-                    second_term = (2/3)*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(1, int(n/2)+1):
-                            argument = ((2*k-1)*np.arcsin(rho/u_n))/(n)
-                            third_sum.append(function_photometry_two(argument, rho, u_n))
-                    third_term = (4/3)*np.sum(third_sum)
-                    amplification_lee_full.append(factor*(first_term+second_term+third_term))
-            
-            amplification_lee_full = np.array(amplification_lee_full) 
-            return amplification_lee_full
-
-        #We use helper functions integral_top and integral_bottom to 
-        #solve the numerator and denominator separately in equation 40 of the BAGLE paper. 
-        #The helper functions are g and k in the BAGLE paper
+        def im_pos_all(w, z1):
+            z_major = im_pos1(w, z1)
+            z_minor = -1 / np.conjugate(z_major - z1) + z1
+            return z_major, z_minor
         
+        def detJac(z, z1):
+            return 1.0 - 1.0/np.abs(z - z1)**4
+        
+        days_in_a_year = 365.25
         
 
-        def astrometry(time, rho, u_amp):
-            # Composite rule to solve equation 40 numerator
-            n = 20
-            plus = []
-            minus = []
-            
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                if u_now <= rho:
-                    first_term = integral_top(0, rho, u_now) + integral_top(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_top(k*np.pi/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.pi, rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_top(0, rho, u_now) + integral_top(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_top(2*k*np.arcsin(rho/u_now)/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
+        source_unlensed = (self.xS0 *1e3) / self.thetaE_amp
+        #pdb.set_trace()
+        center = (source_unlensed)[0] + 1j * (source_unlensed)[1]
+        rad = self.radiusS / self.thetaE_amp * 1e3
         
-                total = (first_term + second_term + third_term)
-        
-                plus.append(total)
-        
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                if u_now <= rho:
-                    first_term = integral_top(0, rho, u_now, '-') + integral_top(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_top(k*np.pi/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.pi, rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_top(0, rho, u_now, '-') + integral_top(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_top(2*k*np.arcsin(rho/u_now)/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                minus.append(total)
-        
-            
-            return plus, minus
-            
-        def astrometry_bottom(time, rho, u_amp):
-            # Composite rule to solve equation 40 denominator
+        traj = self.muS[0]+ 1j * self.muS[1]   
+        traj = traj / self.thetaE_amp
 
-            n = 20
-            bottomp = []
-            bottomm = []
+        maxsamps = 1000
         
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                
-                if u_now <= rho:
-                    first_term = integral_bottom(0, rho, u_now) + integral_bottom(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_bottom(k*np.pi/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.pi, rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_bottom(0, rho, u_now) + integral_bottom(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_bottom(2*k*np.arcsin(rho/u_now)/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
+        if self.n_outline >= maxsamps/4:
+            maxsamps = maxsamps * 5
         
-                total = (first_term + second_term + third_term)
-        
-                bottomp.append(total)
-        
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                
-                if u_now <= rho:
-                    first_term = integral_bottom(0, rho, u_now, '-') + integral_bottom(np.pi, rho, u_now, '-')
+        wIms = np.zeros((len(t), maxsamps, 2), dtype=complex)
+        counts = np.zeros(len(t), dtype=int)
             
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_bottom(k*np.pi/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.pi, rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                else:
-                    first_term = integral_bottom(0, rho, u_now, '-') + integral_bottom(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_bottom(2*k*np.arcsin(rho/u_now)/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                bottomm.append(total)
-            
-            return bottomp, bottomm
-        
-        u_center = self.get_u(t)
-        u_amp = np.linalg.norm(u_center, axis=1)
-        u_hat = (u_center.T / u_amp).T
-        if self.astrometryFlag == True:
-            rho = self.radiusS * 1e3 / self.thetaE_amp
-        else:
-            rho = self.radiusS
-            
-        flat_rho = np.linspace(rho,rho,len(u_center[:, 0]))
-        
+        dtheta = 2*np.pi/self.n_outline
+        lens_asts = self.get_lens_astrometry(t) / self.thetaE_amp  * 1e3 #thetaE
 
-        am, au = amplification_helper(t, rho, u_amp)
-        al = amplification_lee_full(t, rho, u_amp)
-        
-        amp_plus = au + 1/2 * al
-        amp_minus = am + 1/2 * al
-        amps = np.array((amp_plus, amp_minus)).T  # Amplifications Resolved
+        t = (t - self.t0)/days_in_a_year
 
 
-        bp, bm = astrometry_bottom(t, rho, u_amp)
-        plus, minus = astrometry(t, rho, u_amp)
+        for i in range(len(t)):
+            z1_int = lens_asts[i]               
+            z1 = z1_int[0] + 1j * z1_int[1]       
+            w_center = center + t[i]*traj
+            theta = 0.0
+            count = 0
+            while (theta < 2*np.pi) and (count < maxsamps):
+                w_now = w_center + rad*np.exp(1j*theta)
+            
+                zp, zm = im_pos_all(w_now, z1)
+                wIms[i, count, 0] = zp
+                wIms[i, count, 1] = zm
+            
+                detp = np.abs(detJac(zp, z1))
+                detm = np.abs(detJac(zm, z1))
+                theta += dtheta * min(detp, detm)
+                count += 1
+            
         
-        mj = (np.array(plus)/np.array(bp) * self.thetaE_amp * 1e-3).reshape(u_amp.size, 1) * u_hat 
-        mn = (np.array(minus)/np.array(bm) * self.thetaE_amp *1e-3).reshape(u_amp.size, 1) * u_hat 
+            counts[i] = count
         
-        xL = self.get_lens_astrometry(t)
         
-        major =  xL + mj
-        minor = xL + mn
+        wIms = (wIms * self.thetaE_amp) * 1e-3
+
+        n_times = len(counts)
+        Aplus = np.zeros(n_times)
+        Aminus = np.zeros(n_times)
+        Cplus_x = np.zeros(n_times)
+        Cplus_y = np.zeros(n_times)
+        Cminus_x = np.zeros(n_times)
+        Cminus_y = np.zeros(n_times)
+        
+        for i in range(n_times):
+            n = counts[i]
+        
+            plus_x = wIms[i, :n, 0].real
+            plus_y = wIms[i, :n, 0].imag
+            minus_x = wIms[i, :n, 1].real
+            minus_y = wIms[i, :n, 1].imag
+        
+            px = np.empty(n+1)
+            py = np.empty(n+1)
+            qx = np.empty(n+1)
+            qy = np.empty(n+1)
+        
+            px[:n], py[:n] = plus_x, plus_y
+            qx[:n], qy[:n] = minus_x, minus_y
+            px[n], py[n] = plus_x[0], plus_y[0]
+            qx[n], qy[n] = minus_x[0], minus_y[0]
+        
+            # derivatives
+            d1_px = np.diff(px)
+            d1_py = np.diff(py)
+            d1_qx = np.diff(qx)
+            d1_qy = np.diff(qy)
+        
+            # Eq 9 areas
+            Aplus[i]  = -0.5 * np.sum((px[:-1]+px[1:]) * d1_py)
+            Aminus[i] =  0.5 * np.sum((qx[:-1]+qx[1:]) * d1_qy)
+        
+            # Eq 19 centroids
+            Cplus_x[i] =  0.125 * np.sum((px[:-1]+px[1:])**2 * d1_py)
+            Cplus_y[i] = -0.125 * np.sum((py[:-1]+py[1:])**2 * d1_px)
+            Cminus_x[i] = -0.125 * np.sum((qx[:-1]+qx[1:])**2 * d1_qy)
+            Cminus_y[i] =  0.125 * np.sum((qy[:-1]+qy[1:])**2 * d1_qx)
+            
+        Aplus = np.array(Aplus)
+        Aminus = np.array(Aminus)
+        Cplus_x, Cplus_y = np.array(Cplus_x), np.array(Cplus_y) 
+        Cminus_x, Cminus_y = np.array(Cminus_x), np.array(Cminus_y)
+        
+        
+        amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
+        amp_minus = np.abs(Aminus) / (np.pi * self.radiusS ** 2)
+        
+        
+        img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])  #Units to mas
+        img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])  #Units to mas
         
         images = np.zeros((len(t), 2, 2), dtype=float)
-        images[:, 0, :] = major
-        images[:, 1, :] = minor
-
+        images[:, 0, :] = img_pos_plus.T
+        images[:, 1, :] = img_pos_minus.T
         
-
+        interim_plus = (Aplus) / (np.pi * self.radiusS ** 2)
+        interim_minus = (Aminus) / (np.pi * self.radiusS ** 2)
+        
+        amps_interim = np.array((interim_plus, interim_minus)).T  
+        amps = np.array((interim_plus,interim_minus)).T
+        
         return images, amps
 
+        
+    def im_pos1(self, w, z1):
+        z1 =  z1[0] + 1j * z1[1]
+        z1bar = np.conjugate(z1)
+        return (w+z1)*(1 + np.sqrt(1 + 4/np.abs(w-z1bar)**2))/2
+        
+    def detJac(self, z, z1bar):
+        return 1-1/np.abs(z)**4
+    
+    def cent(self, ims, z1bar):
+        return np.sum(ims/abs(self.detJac(ims, z1bar)),axis=1)/np.sum(1/abs(self.detJac(ims, z1bar)),axis=1)
 
+    def get_all_arrays(self, t, filt_idx=0):
+        u_vectors = np.linalg.norm(self.get_u(t), axis=1)
+        if self.astrometryFlag == True:
+            self.amgFlag = True
+            images, amps = self.get_all_arrays_amg(t, filt_idx)
+        else:
+            #self.n_outline = 1000
+            self.amgFlag = False
+            images, amps = self.get_all_arrays_CI(t, filt_idx)
+        return images, amps 
+  
     def get_u(self, t, filt_idx=0):
         """
         Get the separation vector, \vec{u}(t), which is the unlensed
@@ -18961,18 +20109,11 @@ class FSPL(PSPL):
         mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
         flux_zp = 1.0
         if amp_arr is None:
-            if self.n_outline != False:
-                    img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
-        
-            # Mask invalid values from the amplification array.
-            # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-        amp_arr_mskd = amp_arr
-
-        amp = np.sum(amp_arr_mskd, axis=1)
-                        
-
+                img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+                amp_arr_mskd = amp_arr
+                amp = np.sum(amp_arr_mskd, axis=1)
+        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
+            amp = -1 * amp
         return amp
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
@@ -19002,17 +20143,13 @@ class FSPL(PSPL):
 
         '''
         if amp_arr is None:
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-            if self.n_outline != False:
-                    img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
-    
-        # Mask invalid values from the amplification array.
-        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
         amp_arr_mskd = amp_arr
-
         amp = np.sum(amp_arr_mskd, axis=1)
+        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
+            print("True")
+            amp = -1 * amp
 
         flux_src = mag2flux(self.mag_src[filt_idx])
         flux_model = flux_src * amp
@@ -19300,11 +20437,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             Last axis contains East/North positions.
         """
         if (image_arr is None) or (amp_arr is None):
-            if self.n_outline != False:
-                img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
-        
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
         xS_lensed_pos = img_arr
 
         return xS_lensed_pos
@@ -19326,11 +20459,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             Shape = [n_images=2, len(t)]
         """
         if amp_arr is None:
-            if self.n_outline != False:
-                img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
-
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
         return np.swapaxes(amp_arr, 0, 1)
 
@@ -19367,11 +20496,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         flux_zp = 1.0
 
         if amp_arr is None:
-            if self.n_outline != False:
-                img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
-
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
         # Mask invalid values from the amplification array.
         amp_arr_mskd = np.ma.masked_invalid(amp_arr)
 
@@ -19423,17 +20548,18 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             Magnitude of the centroid at t.
         '''
         if amp_arr is None:
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-            if self.n_outline != False:
-                img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else:
-                img_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
-                
-        # Mask invalid values from the amplification array.
-        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-        amp_arr_mskd = amp_arr
-
+        amp_arr_mskd = np.ma.masked_invalid(amp_arr)
         amp = np.sum(amp_arr_mskd, axis=1)
+        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
+            amp = -1 * amp
+
+            
+        #amp_arr_mskd = amp_arr
+        #amp = np.sum(amp_arr_mskd, axis=1)
+       # Mask invalid values from the amplification array.
+        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
 
         flux_src = mag2flux(self.mag_src[filt_idx])
         flux_model = flux_src * amp
@@ -19482,11 +20608,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
         if (image_arr is None) or (amp_arr is None):
-            if self.n_outline != False:
-                image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            else: 
-                image_arr, amp_arr = self.get_all_arrays_noCI(t, filt_idx=filt_idx)
-
+            image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+            
             # amp_arr shape = [N_times, [+, -]]
             # image_arr shape = [N_times, [+, -], [E, N]]
 
@@ -19496,11 +20619,13 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         # Calculate the total flux from all lensed source images and the lens itself.
         ftot = fL + np.sum(fS * amp_arr, axis=1)
+        pos = np.sum(image_arr * amp_arr[:, :, np.newaxis] * fS, axis=1)
+
 
         # Calculate the flux-weighted centroid. Components are:
         #  - all lensed source images
         #  - luminous lens
-        pos = np.sum(image_arr * amp_arr[:, :, np.newaxis] * fS, axis=1)
+        
         pos += fL * xL
         pos /= ftot[:, np.newaxis]
 
@@ -19807,6 +20932,7 @@ class FSPL_PhotParam2(PSPL_Param):
 
     paramAstromFlag = False
     paramPhotFlag = True
+    LeeFlag = False 
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_base,
                  n_outline=False,
@@ -19932,6 +21058,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    LeeFlag = False
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
@@ -19939,7 +21066,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
                  muS_E, muS_N,
                  radiusS,
                  b_sff, mag_src,
-                 n_outline=False,
+                 n_outline=50,
                  raL=None, decL=None, obsLocation='earth'):
         # Initialised variables
         self.t0 = t0
@@ -20103,13 +21230,14 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
 
     paramAstromFlag = True
     paramPhotFlag = True
+    LeeFlag = False
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
                  xS0_E, xS0_N,
                  muS_E, muS_N,
                  radiusS,
-                 b_sff, mag_src, n_outline=False,
+                 b_sff, mag_src, n_outline=50,
                  raL=None, decL=None, obsLocation='earth'):
                      
         super().__init__(t0, u0_amp, tE, thetaE, piS,
@@ -20117,7 +21245,7 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
                      xS0_E, xS0_N,
                      muS_E, muS_N, 
                      b_sff, mag_src,
-                     raL, decL, obsLocation)
+                     raL=raL, decL=decL, obsLocation=obsLocation)
                      
         self.n_outline = n_outline
         self.radiusS = radiusS
@@ -21315,8 +22443,7 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
                                        np.cos(self.alpha_rad)))  # mas
 
         # Closest approach time and distance
-        s_murelhat = np.dot(sep_vec, self.muRel_hat)
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3) - (s_murelhat * 1e-3 * self.muRel_hat)
+        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
         self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
         self.u0_sec = self.u0_amp_sec * self.u0_hat
 
@@ -21451,10 +22578,10 @@ class PSPL_PhotAstrom_Par_Param1(ModelClassABC,
 
 # PSPL_parallax2 / PSPL_multiphot_parallax
 @inheritdocstring
-class PSPL_PhotAstrom_Par_Param2(ModelClassABC,
-                                 PSPL_PhotAstrom,
-                                 PSPL_Parallax,
-                                 PSPL_PhotAstromParam2):
+class PSPL_PhotAstrom_noPar_Param2(ModelClassABC,
+                                   PSPL_PhotAstrom,
+                                   PSPL_noParallax,
+                                   PSPL_PhotAstromParam2):
     """
     Microlensing params with mag_src
     """
@@ -21466,10 +22593,10 @@ class PSPL_PhotAstrom_Par_Param2(ModelClassABC,
 
 # PSPL_parallax2 / PSPL_multiphot_parallax
 @inheritdocstring
-class PSPL_PhotAstrom_noPar_Param2(ModelClassABC,
-                                   PSPL_PhotAstrom,
-                                   PSPL_noParallax,
-                                   PSPL_PhotAstromParam2):
+class PSPL_PhotAstrom_Par_Param2(ModelClassABC,
+                                 PSPL_PhotAstrom,
+                                 PSPL_Parallax,
+                                 PSPL_PhotAstromParam2):
     """
     Microlensing params with mag_src
     """
@@ -21508,6 +22635,20 @@ class PSPL_PhotAstrom_Par_Param3(ModelClassABC,
 
 
 @inheritdocstring
+class PSPL_PhotAstrom_noPar_Param4(ModelClassABC,
+                                   PSPL_PhotAstrom,
+                                   PSPL_noParallax,
+                                   PSPL_PhotAstromParam4):
+    """
+    Microlensing params with mag_base
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
 class PSPL_PhotAstrom_Par_Param4(ModelClassABC,
                                  PSPL_PhotAstrom,
                                  PSPL_Parallax,
@@ -21525,7 +22666,7 @@ class PSPL_PhotAstrom_Par_Param4(ModelClassABC,
 # get the right "get_amplification" routine inherited.
 @inheritdocstring
 class PSPL_PhotAstrom_Par_Param4_geoproj(ModelClassABC,
-                                         PSPL_Parallax_geoproj,
+                                         PSPL_Parallax,
                                          PSPL_PhotAstrom,
                                          PSPL_PhotAstromParam4_geoproj):
     def __init__(self, *args, **kwargs):
@@ -21547,19 +22688,6 @@ class PSPL_PhotAstrom_Par_Param5(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
-
-@inheritdocstring
-class PSPL_PhotAstrom_noPar_Param4(ModelClassABC,
-                                   PSPL_PhotAstrom,
-                                   PSPL_noParallax,
-                                   PSPL_PhotAstromParam4):
-    """
-    Microlensing params with mag_base
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
 
 @inheritdocstring
 class PSPL_PhotAstrom_Par_Param6(ModelClassABC,
@@ -21661,7 +22789,7 @@ class PSPL_Phot_Par_Param1(ModelClassABC,
 
 @inheritdocstring
 class PSPL_Phot_Par_Param1_geoproj(ModelClassABC,
-                                   PSPL_Parallax_geoproj,
+                                   PSPL_Parallax,
                                    PSPL_Phot,
                                    PSPL_PhotParam1_geoproj):
     def __init__(self, *args, **kwargs):
@@ -21981,138 +23109,6 @@ class PSPL_PhotAstrom_noPar_GP_Param2(ModelClassABC,
 # PSBL
 
 @inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_noPar_Param1(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_EllOrbs_Param1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param1(ModelClassABC,
-                                            PSBL_PhotAstrom,
-                                            PSBL_noParallax,
-                                            PSBL_PhotAstrom_CircOrbs_Param1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_AccOrbs_noPar_Param7(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_AccOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_AccOrbs_noPar_Param6(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_AccOrbs_Param6):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_LinOrbs_noPar_Param7(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_LinOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_LinOrbs_noPar_Param6(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_LinOrbs_Param6):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_Par_Param1(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_EllOrbs_Param1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param1(ModelClassABC,
-                                          PSBL_PhotAstrom,
-                                          PSBL_Parallax,
-                                          PSBL_PhotAstrom_CircOrbs_Param1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_AccOrbs_Par_Param7(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_AccOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_AccOrbs_Par_Param6(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_AccOrbs_Param6):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_LinOrbs_Par_Param7(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_LinOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_LinOrbs_Par_Param6(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_LinOrbs_Param6):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
 class PSBL_PhotAstrom_noPar_Param1(ModelClassABC,
                                    PSBL_PhotAstrom,
                                    PSBL_noParallax,
@@ -22160,17 +23156,6 @@ class PSBL_PhotAstrom_Par_Param2(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_Par_Param3(ModelClassABC,
-                                 PSBL_PhotAstrom,
-                                 PSBL_Parallax,
-                                 PSBL_PhotAstromParam3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
 class PSBL_PhotAstrom_noPar_Param3(ModelClassABC,
                                    PSBL_PhotAstrom,
                                    PSBL_noParallax,
@@ -22182,159 +23167,10 @@ class PSBL_PhotAstrom_noPar_Param3(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_noPar_Param4(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_EllOrbs_Param4):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_Par_Param4(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_EllOrbs_Param4):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_noPar_Param7(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_EllOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_Par_Param7(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_EllOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-        
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param7(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_CircOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param7(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_CircOrbs_Param7):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param4(ModelClassABC,
-                                            PSBL_PhotAstrom,
-                                            PSBL_noParallax,
-                                            PSBL_PhotAstrom_CircOrbs_Param4):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param4(ModelClassABC,
-                                          PSBL_PhotAstrom,
-                                          PSBL_Parallax,
-                                          PSBL_PhotAstrom_CircOrbs_Param4):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_noPar_Param3(ModelClassABC,
-                                           PSBL_PhotAstrom,
-                                           PSBL_noParallax,
-                                           PSBL_PhotAstrom_EllOrbs_Param3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_Par_Param3(ModelClassABC,
-                                         PSBL_PhotAstrom,
-                                         PSBL_Parallax,
-                                         PSBL_PhotAstrom_EllOrbs_Param3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param3(ModelClassABC,
-                                            PSBL_PhotAstrom,
-                                            PSBL_noParallax,
-                                            PSBL_PhotAstrom_CircOrbs_Param3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param3(ModelClassABC,
-                                          PSBL_PhotAstrom,
-                                          PSBL_Parallax,
-                                          PSBL_PhotAstrom_CircOrbs_Param3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param3(ModelClassABC,
-                                            PSBL_PhotAstrom,
-                                            PSBL_noParallax,
-                                            PSBL_PhotAstrom_CircOrbs_Param3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param3(ModelClassABC,
-                                          PSBL_PhotAstrom,
-                                          PSBL_Parallax,
-                                          PSBL_PhotAstrom_CircOrbs_Param3):
+class PSBL_PhotAstrom_Par_Param3(ModelClassABC,
+                                 PSBL_PhotAstrom,
+                                 PSBL_Parallax,
+                                 PSBL_PhotAstromParam3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -22386,7 +23222,183 @@ class PSBL_PhotAstrom_Par_Param7(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_noPar_Param8(ModelClassABC,
+class PSBL_PhotAstrom_noPar_LinOrbs_Param1(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_LinOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_LinOrbs_Param6(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_LinOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_LinOrbs_Param7(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_LinOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_LinOrbs_Param1(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_LinOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_LinOrbs_Param6(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_LinOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_LinOrbs_Param7(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_LinOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_AccOrbs_Param1(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_AccOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_AccOrbs_Param6(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_AccOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_AccOrbs_Param7(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_AccOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_AccOrbs_Param1(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_AccOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_AccOrbs_Param6(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_AccOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_AccOrbs_Param7(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_AccOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param3(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param4(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param7(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param8(ModelClassABC,
                                            PSBL_PhotAstrom,
                                            PSBL_noParallax,
                                            PSBL_PhotAstrom_EllOrbs_Param8):
@@ -22397,7 +23409,54 @@ class PSBL_PhotAstrom_EllOrbs_noPar_Param8(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_EllOrbs_Par_Param8(ModelClassABC,
+class PSBL_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_EllOrbs_Param3(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_EllOrbs_Param4(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_EllOrbs_Param7(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+        
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_EllOrbs_Param8(ModelClassABC,
                                          PSBL_PhotAstrom,
                                          PSBL_Parallax,
                                          PSBL_PhotAstrom_EllOrbs_Param8):
@@ -22408,7 +23467,51 @@ class PSBL_PhotAstrom_EllOrbs_Par_Param8(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_noPar_Param8(ModelClassABC,
+class PSBL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_CircOrbs_Param3(ModelClassABC,
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_CircOrbs_Param4(ModelClassABC,
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_CircOrbs_Param7(ModelClassABC,
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_CircOrbs_Param8(ModelClassABC,
                                             PSBL_PhotAstrom,
                                             PSBL_noParallax,
                                             PSBL_PhotAstrom_CircOrbs_Param8):
@@ -22419,7 +23522,53 @@ class PSBL_PhotAstrom_CircOrbs_noPar_Param8(ModelClassABC,
 
 
 @inheritdocstring
-class PSBL_PhotAstrom_CircOrbs_Par_Param8(ModelClassABC,
+class PSBL_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC,
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_CircOrbs_Param7(ModelClassABC,
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_CircOrbs_Param4(ModelClassABC,
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_CircOrbs_Param3(ModelClassABC,
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_CircOrbs_Param8(ModelClassABC,
                                           PSBL_PhotAstrom,
                                           PSBL_Parallax,
                                           PSBL_PhotAstrom_CircOrbs_Param8):
@@ -22441,23 +23590,12 @@ class PSBL_Phot_noPar_Param1(ModelClassABC,
         checkconflicts(self)
 
 
-# PSBL_photom_parallax
-@inheritdocstring
-class PSBL_PhotEllOrbs_Par_Param1(ModelClassABC,
-                           PSBL_Phot,
-                           PSBL_Parallax,
-                           PSBL_PhotParamEllOrbs1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
 # PSBL_photom
 @inheritdocstring
-class PSBL_PhotEllOrbs_noPar_Param1(ModelClassABC,
-                             PSBL_Phot,
-                             PSBL_noParallax,
-                             PSBL_PhotParamEllOrbs1):
+class PSBL_Phot_noPar_EllOrbs_Param1(ModelClassABC,
+                                     PSBL_Phot,
+                                     PSBL_noParallax,
+                                     PSBL_Phot_EllOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -22466,23 +23604,12 @@ class PSBL_PhotEllOrbs_noPar_Param1(ModelClassABC,
 
 
         
-# PSBL_photom_parallax
-@inheritdocstring
-class PSBL_PhotCircOrbs_Par_Param1(ModelClassABC,
-                           PSBL_Phot,
-                           PSBL_Parallax,
-                           PSBL_PhotParamCircOrbs1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
 # PSBL_photom
 @inheritdocstring
-class PSBL_PhotCircOrbs_noPar_Param1(ModelClassABC,
-                             PSBL_Phot,
-                             PSBL_noParallax,
-                             PSBL_PhotParamCircOrbs1):
+class PSBL_Phot_noPar_CircOrbs_Param1(ModelClassABC,
+                                      PSBL_Phot,
+                                      PSBL_noParallax,
+                                      PSBL_Phot_CircOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -22496,6 +23623,30 @@ class PSBL_Phot_Par_Param1(ModelClassABC,
                            PSBL_Phot,
                            PSBL_Parallax,
                            PSBL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+# PSBL_photom_parallax
+@inheritdocstring
+class PSBL_Phot_Par_EllOrbs_Param1(ModelClassABC,
+                                   PSBL_Phot,
+                                   PSBL_Parallax,
+                                   PSBL_Phot_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+# PSBL_photom_parallax
+@inheritdocstring
+class PSBL_Phot_Par_CircOrbs_Param1(ModelClassABC,
+                                    PSBL_Phot,
+                                    PSBL_Parallax,
+                                    PSBL_Phot_CircOrbs_Param1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -23210,7 +24361,7 @@ class BSPL_PhotAstrom_Par_GP_Param3(ModelClassABC,
 
 
 # =====
-# PSBL Model Classes
+# BSBL Model Classes
 # =====
 # BSBL
 @inheritdocstring
@@ -23218,6 +24369,63 @@ class BSBL_PhotAstrom_noPar_Param1(ModelClassABC,
                                    BSBL_PhotAstrom,
                                    BSBL_noParallax,
                                    BSBL_PhotAstromParam1):
+    """
+    Parameterization with t0 defined between the geometric center of the lens and the source; takes in lens masses; No Parallax.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+
+@inheritdocstring
+class BSBL_PhotAstrom_noPar_LinOrbs_Param1(ModelClassABC,
+                                   BSBL_PhotAstrom,
+                                   BSBL_noParallax,
+                                   BSBL_PhotAstrom_LinOrbs_Param1):
+    """
+    Parameterization with t0 defined between the geometric center of the lens and the source; takes in lens masses; No Parallax.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class BSBL_PhotAstrom_Par_LinOrbs_Param1(ModelClassABC,
+                                   BSBL_PhotAstrom,
+                                   BSBL_Parallax,
+                                   BSBL_PhotAstrom_LinOrbs_Param1):
+    """
+    Parameterization with t0 defined between the geometric center of the lens and the source; takes in lens masses; No Parallax.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class BSBL_PhotAstrom_noPar_AccOrbs_Param1(ModelClassABC,
+                                   BSBL_PhotAstrom,
+                                   BSBL_noParallax,
+                                   BSBL_PhotAstrom_AccOrbs_Param1):
+    """
+    Parameterization with t0 defined between the geometric center of the lens and the source; takes in lens masses; No Parallax.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class BSBL_PhotAstrom_Par_AccOrbs_Param1(ModelClassABC,
+                                   BSBL_PhotAstrom,
+                                   BSBL_Parallax,
+                                   BSBL_PhotAstrom_AccOrbs_Param1):
     """
     Parameterization with t0 defined between the geometric center of the lens and the source; takes in lens masses; No Parallax.
     """
@@ -23709,13 +24917,18 @@ def mag2flux(mag):
     flux = flux_zp * 10 ** ((mag - mag_zp) / -2.5)
 
     flux = np.nan_to_num(flux, nan=0)
-
+    
     # Catch the edge case where we exceed the zeropoint.
-    bad = np.where(flux < 0)[0]
-    if len(bad) > 0:
-        print('!!!!!!!!!! Warning: get_photometry: bad flux encountered.')
-        print('')
-        flux[bad] = np.nan
+    if isinstance(flux, (list, tuple, np.ndarray)):
+        bad = np.where(np.atleast_1d(flux) < 0)[0]
+        if len(bad) > 0:
+            print('!!!!!!!!!! Warning: get_photometry: bad flux encountered.')
+            print('')
+            flux[bad] = np.nan
+    else:
+        # Handle for scalars
+        if flux < 0:
+            flux = np.nan
 
     return flux
 

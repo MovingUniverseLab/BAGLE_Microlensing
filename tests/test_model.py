@@ -1,15 +1,4 @@
-import numpy as np
-import pylab as plt
-from scipy.signal import find_peaks
-from astropy.io import fits
-from astropy import constants as c
-from astropy import units as u
-from astropy.coordinates import SkyCoord, GCRS
-from astropy.time import Time
-from astropy.table import Table
-import os
 import math
-
 from bagle import parallax
 from bagle import model
 from bagle import model_fitter
@@ -17,15 +6,14 @@ from bagle import frame_convert as fc
 from bagle.fake_data import *
 from bagle import frame_convert
 import time
-import pdb
-import yaml, pickle
+import pickle
 import pytest
 import inspect, sys
 import matplotlib
 
 from astropy.time import Time
-from astropy.coordinates import solar_system_ephemeris, EarthLocation, spherical_to_cartesian, cartesian_to_spherical
-from astropy.coordinates import get_body_barycentric, get_body, get_moon, get_body_barycentric_posvel
+from astropy.coordinates import solar_system_ephemeris
+from astropy.coordinates import get_body_barycentric_posvel
 
 # Always generate the same fake data.
 np.random.seed(0)
@@ -1033,7 +1021,7 @@ def test_pspl_parallax2_bulge():
             if isinstance(members1[kk], str):
                 assert members1[kk] == members2[kk]
             else:
-                if isinstance(members1[kk], np.ndarray) and members1[kk].dtype.type in [np.string_, np.str_]:
+                if isinstance(members1[kk], np.ndarray) and members1[kk].dtype.type in [np.bytes_, np.str_]:
                     # Compare strings individually for exact matches.
                     assert np.all(members1[kk] == members2[kk])
                 else:
@@ -2404,25 +2392,28 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     pylima_ev = event.Event()
     pylima_ev.name = 'Fubar'
     pylima_ev.telescopes.append(pylima_tel)
-    pylima_fancy = pyLIMA_fancy_parameters.StandardFancyParameters()
+    #pylima_fancy = pyLIMA_fancy_parameters.StandardFancyParameters()
     parallax_model = ['None', pylima_t0_par]
 
     pylima_mod = generate_model.create_model('PSBL', pylima_ev,
                                              parallax=parallax_model,
-                                             fancy_parameters=pylima_fancy)
+                                             fancy_parameters=None)#pylima_fancy)
     pylima_mod.define_model_parameters()
     pylima_mod.blend_flux_ratio = False
+    pylima_mod.astrometry = False
     pylima_mod.blend_flux_parameter = 'fblend'
 
     tmp_params = [pylima_t0, pylima_u0, tE, sep, pylima_q, phi_rad]
     pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
     print(tmp_params)
+
+    pylima_amp = pylima_mod.model_magnification(pylima_tel, pylima_par)
+
+    pylima_mod.derive_telescope_flux(pylima_tel, pylima_par, pylima_amp)
     pylima_par.fsource_OGLE = microltoolbox.brightness_transformation.magnitude_to_flux(mag_src)
     pylima_par.fblend_OGLE = pylima_par.fsource_OGLE * (1.0 - b_sff) / b_sff
     pylima_par['fsource_OGLE'] = microltoolbox.brightness_transformation.magnitude_to_flux(mag_src)
     pylima_par['fblend_OGLE'] = pylima_par.fsource_OGLE * (1.0 - b_sff) / b_sff
-
-    pylima_amp = pylima_mod.model_magnification(pylima_tel, pylima_par)
 
     pylima_mod_out = pylima_mod.compute_the_microlensing_model(pylima_tel, pylima_par)
     pylima_lcurve = pylima_mod_out['photometry']
@@ -2447,14 +2438,16 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
 
         f1.plot(time_mjd, pylima_lcurve_mag, 'ko', label='pyLIMA')
         f1.plot(time_mjd, our_mag, 'r.', label='Ours')
-#        f1.plot(time_mjd, pylima_amp, 'ko', label='pyLIMA')
-#        f1.plot(time_mjd, our_amp, 'r.', label='Ours')
+
+        #f1.plot(time_mjd, pylima_amp, 'ko', label='pyLIMA')
+        #f1.plot(time_mjd, our_amp, 'r.', label='Ours')
         f1.invert_yaxis()
         f1.set_xlabel('MJD (day)')
         f1.set_ylabel('I (mag)')
         f1.legend()
 
         f2.plot(time_mjd, pylima_lcurve_mag - our_mag, 'k.')
+        #f2.plot(time_mjd, pylima_amp - our_amp, 'k.')
         f2.set_xlabel('MJD (day)')
         f2.set_ylabel('PyL-Ours')
 
@@ -2704,261 +2697,6 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     return (time_mjd, pylima_lcurve_mag, our_mag, max_delta)
 
 
-def test_bagle_self_conversion(plot=False):
-    """
-    Test whether our helio --> geotr converesions are
-    self-consistent.
-    """
-    model.parallax.solar_system_ephemeris.set('builtin')
-
-    raL = 260.0
-    decL = -30.0
-
-    t0 = 56000.0
-    u0_amp = 0.2
-    tE = 135.0
-    piE_E = 0.1
-    piE_N = 0.1
-    b_sff = 1
-    mag_src = 18
-    t0par = 56050.0
-
-    t_obs = np.arange(t0 - 3 * tE, t0 + 3 * tE, 0.1)
-
-    ########## 
-    # Test Setup: (1) Helio model --> (2) convert to geotr params --> (3) geotr model
-    ##########
-    pspl_h = model.PSPL_Phot_Par_Param1(t0, u0_amp, tE,
-                                        piE_E, piE_N, b_sff, mag_src,
-                                        raL, decL)
-
-    t0_g, u0_amp_g, tE_g, piE_E_g, piE_N_g = pspl_h.get_geoproj_params(t0par, plot=False)
-
-    pspl_g = model.PSPL_Phot_Par_Param1_geoproj(t0_g, u0_amp_g, tE_g,
-                                                piE_E_g, piE_N_g, b_sff, mag_src,
-                                                t0par,
-                                                raL, decL)
-
-    mag_h = pspl_h.get_photometry(t_obs)
-    mag_g = pspl_g.get_photometry(t_obs)
-
-    amp_h = pspl_h.get_amplification(t_obs)
-    amp_g = pspl_g.get_amplification(t_obs)
-
-    if plot:
-        # Plot the amplification
-        plt.figure(8)
-        plt.clf()
-        fig1, ax1 = plt.subplots(2, 1, num=8, sharex=True)
-        ax1[0].plot(t_obs - t0, mag_h, 'ko', label='helio', alpha=0.5)
-        ax1[0].plot(t_obs - t0, mag_g, 'r.', label='geotr', alpha=0.5)
-        ax1[1].plot(t_obs - t0, mag_h - mag_g, 'b.')
-        ax1[1].set_xlabel('t - t0 (MJD)')
-        ax1[0].set_ylabel('Mag')
-        ax1[1].set_ylabel('helio - geotr')
-        ax1[0].legend()
-        ax1[0].invert_yaxis()
-        ax1[0].set_title('helio --> geotr')
-        
-
-    # Loose tolerance because this is a JPL vs. erfa.epv00 ephemeris problem.
-    assert np.abs(mag_h - mag_g).max() < 1e-2
-
-    ##########
-    # Test Setup: (1) Geotr model --> (2) convert to helio params --> (3) helio model
-    ##########
-    t0_h, u0_amp_h, tE_h, piE_E_h, piE_N_h = pspl_g.get_helio_params(plot=False)
-
-    pspl_h_from_g = model.PSPL_Phot_Par_Param1(t0_h, u0_amp_h, tE_h,
-                                               piE_E_h, piE_N_h, b_sff, mag_src,
-                                               raL, decL)
-
-    mag_h_from_g = pspl_h_from_g.get_photometry(t_obs)
-
-    amp_h_from_g = pspl_h_from_g.get_amplification(t_obs)
-
-    if plot:
-        # Plot the magnitudes of helio vs. geo
-        plt.figure(9)
-        plt.clf()
-        fig1, ax1 = plt.subplots(2, 1, num=9, sharex=True)
-        ax1[0].plot(t_obs - t0, mag_h_from_g, 'ko', label='helio_convert', alpha=0.5)
-        ax1[0].plot(t_obs - t0, mag_g, 'r.', label='geotr', alpha=0.5)
-        ax1[1].plot(t_obs - t0, mag_h_from_g - mag_g, 'b.')
-        ax1[1].set_xlabel('t - t0 (MJD)')
-        ax1[0].set_ylabel('Mag')
-        ax1[1].set_ylabel('helio_convert - geotr')
-        ax1[0].legend()
-        ax1[0].invert_yaxis()
-        ax1[0].set_title('geotr --> helio')
-
-        # Compare helio vs. helio after conversion
-        plt.figure(10)
-        plt.clf()
-        fig1, ax1 = plt.subplots(2, 1, num=10, sharex=True)
-        ax1[0].plot(t_obs - t0, mag_h, 'ko', label='helio_orig', alpha=0.5)
-        ax1[0].plot(t_obs - t0, mag_h, 'r.', label='helio_convert', alpha=0.5)
-        ax1[1].plot(t_obs - t0, mag_h_from_g - mag_h, 'b.')
-        ax1[1].set_xlabel('t - t0 (MJD)')
-        ax1[0].set_ylabel('Mag')
-        ax1[1].set_ylabel('helio_convert - helio')
-        ax1[0].legend()
-        ax1[0].invert_yaxis()
-        ax1[0].set_title('helio --> geotr --> helio')
-
-    assert np.abs(mag_h - mag_h_from_g).max() < 1e-9
-
-    model.parallax.solar_system_ephemeris.set('jpl')
-
-    return
-
-
-
-def test_PSPL_Phot_Par_Param1_geoproj(plot=False):
-    t0par = 56000
-    t0 = 56026.03
-    u0_amp = -0.222
-    tE = 135.0
-    piE_E = -0.058
-    piE_N = 0.11
-    b_sff = 1.0
-    mag_src = 19.266
-
-    raL = (17.0 + (49.0 / 60.) + (51.38 / 3600.0)) * 15.0  # degrees
-    decL = -35 + (22.0 / 60.0) + (28.0 / 3600.0)
-
-    pspl = run_test_PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE,
-                                                 piE_E, piE_N, b_sff, mag_src,
-                                                 t0par,
-                                                 raL, decL, outdir='', plot=plot)
-
-    return
-
-def test_PSPL_PhotAstrom_Par_Param4_geoproj():
-    t0par = 56000
-    t0 = 56026.03
-    u0_amp = -0.222
-    tE = 135.0
-    piE_E = -0.058
-    piE_N = 0.11
-    b_sff = 1.0
-    mag_base = 19.266
-
-    thetaE = 3
-    piS = 0.125
-    xS0_E = 0.1
-    xS0_N = -0.1
-    muS_E = 2
-    muS_N = 1
-
-    raL = (17.0 + (49.0 / 60.) + (51.38 / 3600.0)) * 15.0  # degrees
-    decL = -35 + (22.0 / 60.0) + (28.0 / 3600.0)
-
-    run_test_PSPL_PhotAstrom_Par_Param4_geoproj(t0, u0_amp, tE, thetaE, piS,
-                                                piE_E, piE_N,
-                                                xS0_E, xS0_N,
-                                                muS_E, muS_N,
-                                                b_sff, mag_base,
-                                                t0par,
-                                                raL, decL,
-                                                outdir='')
-    return
-
-
-def run_test_PSPL_PhotAstrom_Par_Param4_geoproj(t0, u0_amp, tE, thetaE, piS,
-                                                piE_E, piE_N,
-                                                xS0_E, xS0_N,
-                                                muS_E, muS_N,
-                                                b_sff, mag_base,
-                                                t0par,
-                                                raL, decL,
-                                                plot=False,
-                                                outdir=''):
-    if (outdir != '') and (outdir != None):
-        os.makedirs(outdir, exist_ok=True)
-
-    pspl = model.PSPL_PhotAstrom_Par_Param4_geoproj(t0, u0_amp, tE, thetaE, piS,
-                                                    piE_E, piE_N,
-                                                    xS0_E, xS0_N,
-                                                    muS_E, muS_N,
-                                                    b_sff, mag_base,
-                                                    t0par,
-                                                    raL, decL)
-
-    assert pspl.t0 == pytest.approx(t0)
-    assert pspl.u0_amp == pytest.approx(u0_amp)
-
-    t = np.arange(t0 - 1000, t0 + 1000, 1)
-    dt = t - pspl.t0
-
-    A = pspl.get_amplification(t)
-    pos = pspl.get_astrometry(t)
-    shift = pspl.get_centroid_shift(t)
-
-    if plot:
-        # Plot the amplification
-        plt.figure(1)
-        plt.clf()
-        plt.plot(dt, 2.5 * np.log10(A), 'k.')
-        plt.xlabel('t - t0 (MJD)')
-        plt.ylabel('2.5 * log(A)')
-        plt.savefig(outdir + 'amp_v_time.png')
-        plt.show()
-
-        # Plot the position
-        plt.figure(2)
-        plt.clf()
-        plt.plot(pos[:, 0], pos[:, 1], 'k.')
-        plt.xlabel('RA (arcsec)')
-        plt.ylabel('Dec (arcsec)')
-        plt.savefig(outdir + 'pos.png')
-        plt.show()
-
-        # Plot the shift
-        plt.figure(3)
-        plt.clf()
-        plt.plot(shift[:, 0], shift[:, 1], 'k.')
-        plt.xlabel('RA (mas)')
-        plt.ylabel('Dec (mas)')
-        plt.savefig(outdir + 'shift.png')
-        plt.show()
-        
-    return pspl
-
-
-def run_test_PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE,
-                                          piE_E, piE_N, b_sff, mag_src,
-                                          t0par,
-                                          raL, decL,
-                                          plot=False, outdir=''):
-    if (outdir != '') and (outdir != None):
-        os.makedirs(outdir, exist_ok=True)
-
-    pspl = model.PSPL_Phot_Par_Param1_geoproj(t0, u0_amp, tE,
-                                              piE_E, piE_N, b_sff, mag_src,
-                                              t0par,
-                                              raL, decL)
-
-    t = np.arange(t0 - 500, t0 + 500, 1)
-    dt = t - pspl.t0
-
-    A = pspl.get_amplification(t)
-
-    if plot:
-        # Plot the amplification
-        plt.figure(1)
-        plt.clf()
-        plt.plot(dt, 2.5 * np.log10(A), 'k.')
-        plt.xlabel('t - t0 (MJD)')
-        plt.ylabel('2.5 * log(A)')
-        plt.savefig(outdir + 'amp_v_time.png')
-        plt.show()
-
-    assert pspl.t0 == pytest.approx(t0, rel=1e-3)
-    assert np.abs(pspl.u0_amp) == pytest.approx(np.abs(u0_amp), rel=1e-4)
-
-    return pspl
-
 @pytest.mark.skip(reason="package dependency")
 def test_geoproj_mm(plot=False):
     """
@@ -2971,6 +2709,8 @@ def test_geoproj_mm(plot=False):
 
     diff = compare_geoproj_mm(260, -30, 56000, 56050, 0.02, 135, 0.058, 0.01, plot=True)
     assert np.abs(diff).max() < 1e-10
+
+    return
 
 
 def compare_geoproj_mm(raL, decL, t0par, t0, u0_amp, tE, piE_E, piE_N, plot=False):
@@ -3696,6 +3436,97 @@ def test_FSPL_PhotAstrom_source_astrometry(plot=False):
     return
 
 
+def test_FSPL_boundary(plot=False):
+    """
+    Make sure we get good photometry when source boundary is touching the lens.
+    """
+    mL = 10
+    t0 = 57755
+    dL = 8000
+    dL_dS = .1
+    xS0_E = 0.000
+    xS0_N = 0.000
+    muL_E = 0
+    muL_N = 0
+    ra=259
+    dec = 30
+    muS_E = 2
+    muS_N = 0
+    radiusS_pri = 0.0004
+    b_sff = np.array([1])
+    mag_src = np.array([18])
+
+
+
+    ##########
+    # Test 1:  FSPL correct amplification array when u0 > rho
+    ##########    
+    n_outline = 1500     
+    beta =  .41 
+    fspl = model.FSPL_PhotAstrom_noPar_Param1(mL, t0, beta, dL, dL_dS,
+                 xS0_E, xS0_N,
+                 muL_E, muL_N,
+                 muS_E, muS_N,
+                 radiusS_pri,
+                b_sff, mag_src, n_outline, raL=ra, decL=dec)
+    
+    # Array of times we will sample on.
+    time_mjd = np.arange(fspl.t0 - fspl.tE, fspl.t0 +  fspl.tE)
+    
+    #####
+    # Get the amplification and make sure none of them are less than 1.
+    #####
+    amp_bagle = fspl.get_amplification(time_mjd)
+    np.testing.assert_equal(np.min(amp_bagle) >= 1, True)
+
+    
+    ##########
+    # Test 2:  FSPL correct amplification array when u0 = rho
+    ##########    
+    n_outline = 15
+    beta = 0.4
+    fspl_two = model.FSPL_PhotAstrom_noPar_Param1(mL, t0, beta, dL, dL_dS,
+                 xS0_E, xS0_N,
+                 muL_E, muL_N,
+                 muS_E, muS_N,
+                 radiusS_pri,
+                b_sff, mag_src, n_outline, raL=ra, decL=dec)
+    
+    # Array of times we will sample on.
+    time_mjd = np.arange(fspl_two.t0 - fspl_two.tE, fspl_two.t0 +  fspl_two.tE)
+    #####
+    # Get the amplification and make sure none of them are less than 1.
+    #####
+    amp_bagle_two = fspl_two.get_amplification(time_mjd)
+    np.testing.assert_equal(np.min(amp_bagle_two) >= 1, True)
+
+    
+    ##########
+    # Test 3:  FSPL correct amplification array when u0 = rho
+    ##########    
+    n_outline = 15
+    beta = 0.38
+    fspl_three = model.FSPL_PhotAstrom_noPar_Param1(mL, t0, beta, dL, dL_dS,
+                 xS0_E, xS0_N,
+                 muL_E, muL_N,
+                 muS_E, muS_N,
+                 radiusS_pri,
+                b_sff, mag_src, n_outline, raL=ra, decL=dec)
+    
+    # Array of times we will sample on.
+    time_mjd = np.arange(fspl_three.t0 - fspl_three.tE, fspl_three.t0 +  fspl_three.tE)
+    #####
+    # Get the amplification and make sure none of them are less than 1.
+    #####
+    amp_bagle_three = fspl_three.get_amplification(time_mjd)
+    np.testing.assert_equal(np.min(amp_bagle_three) >= 1, True)
+
+    
+    return
+    
+    
+
+
 def test_FSPL_PhotAstrom_lens_astrometry(plot=False):
     """
     Test FSPL lens astrometry with a really really small source.
@@ -3759,6 +3590,73 @@ def test_FSPL_PhotAstrom_lens_astrometry(plot=False):
         ax[0].set_ylabel('X (")')
         ax[1].set_ylabel('X (")')
         fig.show()
+
+
+
+def test_FSPL_PhotAstrom_lens_astrometry_origin(plot=False):
+    """
+    Test FSPL lens astrometry with a really really small source.
+    Should converge to the same value. The source origin is far away at [0.1, 0.1]
+    """
+    mL = 10
+    t0 = 57000
+    beta = 2
+    dL = 4000
+    dS = 8000
+    xS0_E = 0.1
+    xS0_N = 0.1
+    muS_E = -4.0
+    muS_N = 0.0
+    muL_E = 0.0
+    muL_N = 0.0
+    radiusS = 1e-6 # arcsec
+    b_sff = 0.9
+    mag_src = 19.0
+    raL = 17.30 * 15.
+    decL = -29.0
+
+    # Array of times we will sample on.
+    time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
+
+    ##########
+    # Test 1: Compare FSPL and PSPL lens astrometry.
+    ##########
+    n_outline = 100
+    fspl = model.FSPL_PhotAstrom_Par_Param1(mL, t0, beta, dL, dL / dS,
+                                            xS0_E, xS0_N,
+                                            muL_E, muL_N,
+                                            muS_E, muS_N,
+                                            radiusS,
+                                            b_sff, mag_src, n_outline,
+                                            raL=raL, decL=decL)
+
+    pspl = model.PSPL_PhotAstrom_Par_Param1(mL, t0, beta, dL, dL / dS,
+                                            xS0_E, xS0_N,
+                                            muL_E, muL_N,
+                                            muS_E, muS_N,
+                                            b_sff, mag_src,
+                                            raL=raL, decL=decL)
+
+    # Compare the lens astrometry.
+    fspl_lens_ast = fspl.get_lens_astrometry(time_arr)
+    pspl_lens_ast = pspl.get_lens_astrometry(time_arr)
+
+    np.testing.assert_allclose(fspl_lens_ast[::100], pspl_lens_ast[::100], rtol=1e-6)
+
+    if plot:
+        plt.figure(4)
+        plt.clf()
+        fig, ax = plt.subplots(2, 1, sharex=True, num=4)
+        ax[0].plot(time_arr, pspl_lens_ast[:, 0], 'ko', label='pspl')
+        ax[1].plot(time_arr, pspl_lens_ast[:, 1], 'ko')
+        ax[0].plot(time_arr, fspl_lens_ast[:, 0], 'r.', label='fspl')
+        ax[1].plot(time_arr, fspl_lens_ast[:, 1], 'r.')
+        ax[0].legend()
+        ax[1].set_xlabel('Time (MJD)')
+        ax[0].set_ylabel('X (")')
+        ax[1].set_ylabel('X (")')
+        fig.show()
+
         
 def test_FSPL_PhotAstrom_methods(plot=False):
     """
@@ -3776,7 +3674,7 @@ def test_FSPL_PhotAstrom_methods(plot=False):
     muS_N = 0.0
     muL_E = 0.0
     muL_N = 0.0
-    radiusS = 1e-6 # arcsec
+    radiusS = 1e-3 # arcsec
     b_sff = 0.9
     mag_src = 19.0
     raL = 17.30 * 15.
@@ -3785,7 +3683,7 @@ def test_FSPL_PhotAstrom_methods(plot=False):
     # Array of times we will sample on.
     time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
 
-    def test_fspl_once(r_in, n_in, phot_arr_good, mod='FSPL', tol=1e-3):
+    def test_fspl_once(n_in, phot_arr_good, mod='FSPL', tol=1e-3):
         # Make the model
         tstart = time.time()
 
@@ -3794,7 +3692,7 @@ def test_FSPL_PhotAstrom_methods(plot=False):
                                                        xS0_E, xS0_N,
                                                        muL_E, muL_N,
                                                        muS_E, muS_N,
-                                                       r_in,
+                                                       radiusS,
                                                        b_sff, mag_src, n_in,
                                                        raL=raL, decL=decL)
         else:
@@ -3814,7 +3712,7 @@ def test_FSPL_PhotAstrom_methods(plot=False):
 
         tdelta = time.time() - tstart
 
-        print(f'Eval time for {mod:s}: {tdelta:.4f} sec, n = {n_in:d}, r = {r_in:.3f}')
+        print(f'Eval time for {mod:s}: {tdelta:.4f} sec, n = {n_in:d}, r = {radiusS:.3f}')
 
         # When working, fetch 10 points, evenly distributed and
         # save as the "right answer" in the individual tests below.
@@ -3825,46 +3723,32 @@ def test_FSPL_PhotAstrom_methods(plot=False):
         return phot_arr
 
     ##########
-    # PSPL for run-time comparisons.
+    # PSPL for run-time comparisons. 
     ##########
     pspl_arr_good = np.array([18.87539976, 18.86616655, 18.83702185, 18.76783706, 18.54908672,
                               18.27960245, 18.55224616, 18.76873734, 18.83743328, 18.86630883])
-    pspl_arr = test_fspl_once(-1, -1, pspl_arr_good, mod='PSPL')
+    pspl_arr = test_fspl_once(-1, pspl_arr_good, mod='PSPL')
 
     ##########
-    # FSPL n=10, r=0.001 thetaE
+    # FSPL n=500, r=0.001 thetaE
     ##########
-    fspl_arr_n10_good = np.array([18.92669033, 18.91750603, 18.88851301, 18.81967248, 18.60187731,
-                                  18.33333436, 18.60502467, 18.82056849, 18.88892235, 18.91764756])
-    fspl_arr_n10 = test_fspl_once(radiusS, 10, fspl_arr_n10_good, mod='FSPL')
+    fspl_arr_n500_good = np.array([18.874904, 18.866692, 18.834059, 18.768458, 18.532153, 18.23993, 
+                                   18.535248, 18.769008, 18.834454, 18.866821])
+    fspl_arr_n500 = test_fspl_once(500, fspl_arr_n500_good, mod='FSPL')
 
     ##########
-    # FSPL n=50, r=0.001 thetaE
+    # FSPL n=1000, r=0.001 thetaE
     ##########
-    fspl_arr_n50_good = np.array([18.87797024, 18.86873943, 18.83960216, 18.77043423, 18.55173065,
-                                  18.28229242, 18.55488948, 18.7713343, 18.84001349, 18.86888168])
-    fspl_arr_n50 = test_fspl_once(radiusS, 50, fspl_arr_n50_good, mod='FSPL')
+    fspl_arr_n1000_good = np.array([18.874885, 18.866673, 18.834041, 18.768441, 18.53214 ,18.23992, 
+                                    18.535234, 18.76899 , 18.834436, 18.866802])
+    fspl_arr_n1000 = test_fspl_once(1000, fspl_arr_n1000_good, mod='FSPL')
 
-    ##########
-    # FSPL n=100, r=0.001 thetaE
-    ##########
-    fspl_arr_n100_good = np.array([18.87604328, 18.86681067, 18.83766782, 18.76848725, 18.5497486,
-                                   18.28027583, 18.55290789, 18.76938749, 18.83807923, 18.86695294])
-    fspl_arr_n100 = test_fspl_once(radiusS, 100, fspl_arr_n100_good, mod='FSPL')
-
-    ##########
-    # FSPL n=10, r=0.1 thetaE
-    ##########
-    fspl_arr_n10_r1_good = np.array([18.9348646, 18.9348647, 18.93486484, 18.93486497, 18.93486511,
-                                     18.93486526, 18.93486542, 18.93486559, 18.93486576, 18.93486596])
-    fspl_arr_n10_r1 = test_fspl_once(0.1, 10, fspl_arr_n10_r1_good, mod='FSPL')
 
     if plot:
         plt.figure(1)
         plt.clf()
-        plt.plot(time_arr, fspl_arr_n100, '-', label='fspl, n=100')
-        plt.plot(time_arr, fspl_arr_n50, '-', label='fspl, n=50')
-        plt.plot(time_arr, fspl_arr_n10, '-', label='fspl, n=10')
+        plt.plot(time_arr, fspl_arr_n1000, '-', label='fspl, n=1000')
+        plt.plot(time_arr, fspl_arr_n500, '-', label='fspl, n=500')
         plt.plot(time_arr, pspl_arr, '-', label='pspl')
         plt.gca().invert_yaxis()
         plt.xlabel('Time (HJD)')
@@ -3873,18 +3757,12 @@ def test_FSPL_PhotAstrom_methods(plot=False):
 
         plt.figure(2)
         plt.clf()
-        plt.plot(time_arr, fspl_arr_n100 - pspl_arr, '-', label='fspl, n=100')
-        plt.plot(time_arr, fspl_arr_n50 - pspl_arr, '-', label='fspl, n=50')
-        plt.plot(time_arr, fspl_arr_n10 - pspl_arr, '-', label='fspl, n=10')
+        plt.plot(time_arr, fspl_arr_n1000 - pspl_arr, '-', label='fspl, n=1000')
+        plt.plot(time_arr, fspl_arr_n500 - pspl_arr, '-', label='fspl, n=500')
         plt.gca().invert_yaxis()
         plt.xlabel('Time (HJD)')
         plt.ylabel('FSPL-PSPL (Mag)')
         plt.legend()
-
-        plt.figure(3)
-        plt.clf()
-        plt.plot(time_arr, fspl_arr_n10_r1 - fspl_arr_n10, '.')
-        plt.title('Different radii')
 
     return
 
@@ -3906,7 +3784,7 @@ def test_FSPL_Phot_methods(plot=False):
     # Array of times we will sample on.
     time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
 
-    def test_fspl_phot_once(r_in, n_in, phot_arr_good, mod='FSPL', tol=1e-3):
+    def test_fspl_phot_once(n_in, phot_arr_good, mod='FSPL', tol=1e-3):
         # Make the model
         tstart = time.time()
 
@@ -3940,7 +3818,7 @@ def test_FSPL_Phot_methods(plot=False):
 
         tdelta = time.time() - tstart
 
-        print(f'Eval time for {mod:s}: {tdelta:.4f} sec, n = {n_in:d}, r = {r_in:.3f}')
+        print(f'Eval time for {mod:s}: {tdelta:.4f} sec, n = {n_in:d}, r = {radiusS:.3f}')
 
         # When working, fetch 10 points, evenly distributed and
         # save as the "right answer" in the individual tests below.
@@ -3955,42 +3833,36 @@ def test_FSPL_Phot_methods(plot=False):
     ##########
     pspl_arr_good = np.array([18.99936395, 18.99866471, 18.99557563, 18.98404853, 18.86796675,
                               17.3799675, 18.87199099, 18.9841648, 18.99564001, 18.99867367])
-    pspl_arr = test_fspl_phot_once(-1, -1, pspl_arr_good, mod='PSPL')
-
-    ##########
-    # FSPL n=10, r=0.001
-    ##########
-    fspl_arr_n10_good = np.array([19.05060339, 19.0499079, 19.04683536, 19.03536958, 18.9198703,
-                                  17.43573262, 18.92387548, 19.03548521, 19.04689939, 19.04991681])
-    fspl_arr_n10 = test_fspl_phot_once(radiusS, 10, fspl_arr_n10_good, mod='FSPL')
-
-    ##########
-    # FSPL n=50, r=0.001
-    ##########
-    fspl_arr_n50_good = np.array([19.00193193, 19.00123287, 18.9981446, 18.98662051, 18.87056724,
-                                  17.38275375, 18.87459054, 18.98673675, 18.99820897, 19.00124183])
-    fspl_arr_n50 = test_fspl_phot_once(radiusS, 50, fspl_arr_n50_good, mod='FSPL')
+    pspl_arr = test_fspl_phot_once(-1, pspl_arr_good, mod='PSPL')
 
     ##########
     # FSPL n=100, r=0.001
     ##########
-    fspl_arr_n100_good = np.array([19.00000684, 18.99930765, 18.99621877, 18.98469243, 18.86861775,
-                                   17.38066274, 18.87264176, 18.98480869, 18.99628315, 18.99931661])
-    fspl_arr_n100 = test_fspl_phot_once(radiusS, 100, fspl_arr_n100_good, mod='FSPL')
+    fspl_arr_n100_good = np.array([18.99937 , 18.998671, 18.995582, 18.984057, 18.868018, 17.380096,
+                  18.87193 , 18.984165, 18.995645, 18.99868 ])
+    fspl_arr_n100 = test_fspl_phot_once(100, fspl_arr_n100_good, mod='FSPL')
 
     ##########
-    # FSPL n=10, r=1
+    # FSPL n=500, r=0.001
     ##########
-    fspl_arr_n10_r1_good = np.array([19.05060339, 19.0499079, 19.04683536, 19.03536958, 18.9198703,
-                                     17.43573262, 18.92387548, 19.03548521, 19.04689939, 19.04991681])
-    fspl_arr_n10_r1 = test_fspl_phot_once(1, 10, fspl_arr_n10_r1_good, mod='FSPL')
+    fspl_arr_n500_good = np.array([19.00193193, 19.00123287, 18.9981446, 18.98662051, 18.87056724,
+                                  17.38275375, 18.87459054, 18.98673675, 18.99820897, 19.00124183])
+    fspl_arr_n500 = test_fspl_phot_once(500, fspl_arr_n500_good, mod='FSPL')
+
+    ##########
+    # FSPL n=1000, r=0.001
+    ##########
+    fspl_arr_n1000_good = np.array([19.00000684, 18.99930765, 18.99621877, 18.98469243, 18.86861775,
+                                   17.38066274, 18.87264176, 18.98480869, 18.99628315, 18.99931661])
+    fspl_arr_n1000 = test_fspl_phot_once(1000, fspl_arr_n1000_good, mod='FSPL')
+
 
     if plot:
         plt.figure(1)
         plt.clf()
         plt.plot(time_arr, fspl_arr_n100, '-', label='fspl, n=100')
-        plt.plot(time_arr, fspl_arr_n50, '-', label='fspl, n=50')
-        plt.plot(time_arr, fspl_arr_n10, '-', label='fspl, n=10')
+        plt.plot(time_arr, fspl_arr_n500, '-', label='fspl, n=500')
+        plt.plot(time_arr, fspl_arr_n1000, '-', label='fspl, n=1000')
         plt.plot(time_arr, pspl_arr, '-', label='pspl')
         plt.gca().invert_yaxis()
         plt.xlabel('Time (HJD)')
@@ -4000,17 +3872,13 @@ def test_FSPL_Phot_methods(plot=False):
         plt.figure(2)
         plt.clf()
         plt.plot(time_arr, fspl_arr_n100 - pspl_arr, '-', label='fspl, n=100')
-        plt.plot(time_arr, fspl_arr_n50 - pspl_arr, '-', label='fspl, n=50')
-        plt.plot(time_arr, fspl_arr_n10 - pspl_arr, '-', label='fspl, n=10')
+        plt.plot(time_arr, fspl_arr_n500 - pspl_arr, '-', label='fspl, n=500')
+        plt.plot(time_arr, fspl_arr_n1000 - pspl_arr, '-', label='fspl, n=1000')
         plt.gca().invert_yaxis()
         plt.xlabel('Time (HJD)')
         plt.ylabel('FSPL-PSPL (Mag)')
         plt.legend()
 
-        plt.figure(3)
-        plt.clf()
-        plt.plot(time_arr, fspl_arr_n10_r1 - fspl_arr_n10, '.')
-        plt.title('Different radii')
 
     return
 
@@ -4109,7 +3977,6 @@ def test_ABC_MRO():
     parallax_classes_good = ['BSPL_Parallax', 'BSPL_noParallax', 'FSPL_Limb_Parallax',
                              'FSPL_Limb_noParallax', 'FSPL_Parallax', 'FSPL_noParallax',
                              'PSBL_Parallax', 'PSBL_noParallax', 'PSPL_Parallax',
-                             'PSPL_Parallax_geoproj',
                              'PSPL_noParallax']
     for pcls in parallax_classes_good:
         assert pcls in parallax_classes
@@ -4487,8 +4354,8 @@ def test_psbl_noparallax():
         i = i
         e=e
         a = a
-        omega = 90
-        big_omega = 0
+        omega_pri = 90
+        big_omega_sec = 0
         tp = 40
         dL = 1000 #parsecs
         dS = 1200
@@ -4499,10 +4366,10 @@ def test_psbl_noparallax():
         arat = 1
         dec_L = -29
         
-        psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
-                 beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
-                 b_sff, mag_src, dmag_Lp_Ls,
-                 raL=ra_L, decL=dec_L, root_tol=1e-8)
+        psbl = model.PSBL_PhotAstrom_noPar_EllOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
+                                                          beta_com, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
+                                                          b_sff, mag_src, dmag_Lp_Ls,
+                                                          raL=ra_L, decL=dec_L, root_tol=1e-8)
         assert psbl.t0_com == t0_com
         assert psbl.beta_com == beta_com
         assert psbl.mLp == mLp
@@ -4512,8 +4379,8 @@ def test_psbl_noparallax():
         assert psbl.i == i
         assert psbl.e == e
         assert psbl.a == a
-        assert psbl.omega == omega
-        assert psbl.big_omega == big_omega
+        assert psbl.omega_pri == omega_pri
+        assert psbl.big_omega_sec == big_omega_sec
             
     
         time_setting = 1600
@@ -4648,8 +4515,8 @@ def test_psbl_parallax():
         i = i
         e=e
         a = a
-        omega = 90
-        big_omega = 0
+        omega_pri = 90
+        big_omega_sec = 0
         tp = 40
         dL = 1000 #parsecs
         dS = 1200
@@ -4660,9 +4527,9 @@ def test_psbl_parallax():
         arat = 1
         dec_L = -29
     
-        psbl = model.PSBL_PhotAstrom_EllOrbs_Par_Param1(
+        psbl = model.PSBL_PhotAstrom_Par_EllOrbs_Param1(
         mLp, mLs, t0_com, xS0_E, xS0_N,
-             beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
+             beta_com, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
              b_sff, mag_src, dmag_Lp_Ls,
              raL=ra_L, decL=dec_L, root_tol=1e-8
     )
@@ -4675,8 +4542,8 @@ def test_psbl_parallax():
         assert psbl.i == i
         assert psbl.e == e
         assert psbl.a == a
-        assert psbl.omega == omega
-        assert psbl.big_omega == big_omega
+        assert psbl.omega_pri == omega_pri
+        assert psbl.big_omega_sec == big_omega_sec
         
 
         time_setting = 1600
@@ -4812,8 +4679,8 @@ def test_psbl_nopropermotion():
         i = i
         e=e
         a = a
-        omega = 90
-        big_omega = 0
+        omega_pri = 90
+        big_omega_sec = 0
         tp = 40
         dL = 1000 #parsecs
         dS = 1200
@@ -4825,9 +4692,9 @@ def test_psbl_nopropermotion():
         dec_L = -29
 
     
-        psbl = model.PSBL_PhotAstrom_EllOrbs_noPar_Param1(
+        psbl = model.PSBL_PhotAstrom_noPar_EllOrbs_Param1(
         mLp, mLs, t0_com, xS0_E, xS0_N,
-             beta_com, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
+             beta_com, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
              b_sff, mag_src, dmag_Lp_Ls,
              raL=ra_L, decL=dec_L, root_tol=1e-8
     )
@@ -4840,8 +4707,8 @@ def test_psbl_nopropermotion():
         assert psbl.i == i
         assert psbl.e == e
         assert psbl.a == a
-        assert psbl.omega == omega
-        assert psbl.big_omega == big_omega
+        assert psbl.omega_pri == omega_pri
+        assert psbl.big_omega_sec == big_omega_sec
         
 
         time_setting = 1600
@@ -5014,8 +4881,8 @@ def magnification_maps():
     muS_E = 0
     muS_N = 5
     i = 0
-    omega = 0
-    big_omega = 0
+    omega_pri = 0
+    big_omega_sec = 0
     arat = 0.9
     #p = 2000
     #aleph=5
@@ -5029,16 +4896,15 @@ def magnification_maps():
     dec_L = -29
     beta = 1
     q = 0.7
-    s
     a = 10
     b_sff = [1]
     mag_src = [10]
     root_tol = 1e-8
-    psbl_nopar = model.PSBL_PhotAstrom_CircOrbs_noPar_Param4(t0, u0_amp, tE, thetaE, piS,
-                     piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, tp, a, muS_E, muS_N,
-                     q,
-                     b_sff, mag_src,
-                     raL=ra_L, decL=dec_L, root_tol=1e-8)
+    psbl_nopar = model.PSBL_PhotAstrom_noPar_CircOrbs_Param4(t0, u0_amp, tE, thetaE, piS,
+                                                             piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N,
+                                                             q,
+                                                             b_sff, mag_src,
+                                                             raL=ra_L, decL=dec_L, root_tol=1e-8)
     
     fig, ax = plt.subplots(2, 2, figsize=(25, 20))
     index = 0
@@ -6195,8 +6061,8 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
     # xS0_N = np.random.uniform(-1, 1, size=n_events)
     xS0_E = np.zeros(nevents, dtype=float)
     xS0_N = np.zeros(nevents, dtype=float)
-    omega = np.random.uniform(0, 360, size=nevents)
-    big_omega = np.random.uniform(0, 180, size=nevents)
+    omega_pri = np.random.uniform(0, 360, size=nevents)
+    big_omega_sec = np.random.uniform(0, 180, size=nevents)
     i = np.random.uniform(0, 180, size=nevents)
     e = np.random.uniform(0, 0.9, size=nevents)
     tp = np.random.choice(t_w149, size=nevents)
@@ -6219,12 +6085,12 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
         ff = nstart + nn
         print(f'Event {ff}')
 
-        mod_class = model.PSBL_PhotAstrom_EllOrbs_Par_Param8
+        mod_class = model.PSBL_PhotAstrom_Par_EllOrbs_Param8
         psbl_par = mod_class(t0_com[nn], u0_amp_com[nn],
                              tE[nn], log10_thetaE[nn],
                              piS[nn], piE_E[nn], piE_N[nn],
                              xS0_E[nn], xS0_N[nn],
-                             omega[nn], big_omega[nn],
+                             omega_pri[nn], big_omega_sec[nn],
                              i[nn], e[nn], tp[nn], a[nn],
                              muS_E[nn], muS_N[nn],
                              q[nn], alpha[nn],
@@ -6346,7 +6212,7 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
 
         # Print out all the parameters to the screen and in a YAML file.
         params_mod = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
-                      'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega', 'big_omega', 'i', 'e', 'tp', 'a',
+                      'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
                       'muS_E', 'muS_N',
                       'q', 'alpha', 'b_sff', 'mag_src']
         params_mod_fix = ['raL', 'decL', 'obsLocation']
