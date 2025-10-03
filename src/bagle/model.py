@@ -997,7 +997,7 @@ class PSPL(ABC):
         """
         Get the natural log of the constant normalization terms of the likelihood.
 
-        .. math:: -0.5 * \ln{2 \pi \sigma_{obs}^2}
+        .. math:: -0.5 * \\ln{2 \\pi \\sigma_{obs}^2}
 
         Parameters
         ----------
@@ -1251,15 +1251,15 @@ class PSPL(ABC):
             def update(i, source, lens, plus, minus, astrometry, tau,
                        magnification, line):
                 # print(str(i) + ", ", end='', flush=True)
-                line[0].set_data(source[i, 0], source[i, 1])
+                line[0].set_data([source[i, 0]], [source[i, 1]])
                 line[1].set_data(source[:i + 1, 0], source[:i + 1, 1])
-                line[2].set_data(lens[i, 0], lens[i, 1])
+                line[2].set_data([lens[i, 0]], [lens[i, 1]])
                 line[3].set_data(lens[:i + 1, 0], lens[:i + 1, 1])
-                line[4].set_data(plus[i, 0], plus[i, 1])
+                line[4].set_data([plus[i, 0]], [plus[i, 1]])
                 line[5].set_data(plus[:i + 1, 0], plus[:i + 1, 1])
-                line[6].set_data(minus[i, 0], minus[i, 1])
+                line[6].set_data([minus[i, 0]], [minus[i, 1]])
                 line[7].set_data(minus[:i + 1, 0], minus[:i + 1, 1])
-                line[8].set_data(astrometry[i, 0], astrometry[i, 1])
+                line[8].set_data([astrometry[i, 0]], [astrometry[i, 1]])
                 line[9].set_data(astrometry[:i + 1, 0], astrometry[:i + 1, 1])
                 line[10].set_data(tau[:i + 1], magnification[:i + 1])
                 return line
@@ -1377,7 +1377,7 @@ class PSPL_Phot(PSPL):
         Returns
         -------
         xS_unlensed : numpy array, dtype=float, shape = len(t) x 2
-            The unlensed positions of the source in Einstein radii (i.e. \vec{u})
+            The unlensed positions of the source in Einstein radii (i.e. \\vec{u})
         """
         u = self.get_u(t, filt_idx=filt_idx)
 
@@ -1553,7 +1553,7 @@ class PSPL_PhotAstrom(PSPL):
         """
         Get the natural log of the constant normalization terms of the likelihood.
 
-        .. math:: -0.5 * \ln{2 \pi \sigma_{obs}^2}
+        .. math:: -0.5 * \\ln{2 \\pi \\sigma_{obs}^2}
 
         Parameters
         ----------
@@ -4523,13 +4523,13 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel. 
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel. 
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the DDSHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -4625,13 +4625,13 @@ class PSPL_GP_PhotAstromParam3_1(PSPL_PhotAstromParam3):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega0_S0: float
-        Guassian process :math:`log(\omega_0 * S_0)` from the variance of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0 * S_0)` from the variance of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -4728,13 +4728,13 @@ class PSPL_GP_PhotAstromParam3_2(PSPL_PhotAstromParam3):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega0_S0: float
-        Guassian process :math:`log(\omega_0 * S_0)` from the variance of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0 * S_0)` from the variance of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     gp_log_jit_sigma: float
         Gaussian process for jitter term
     raL: float, optional
@@ -4837,13 +4837,13 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel. 
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel. 
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
 
     raL: float, optional
         Right ascension of the lens in decimal degrees.
@@ -4943,13 +4943,13 @@ class PSPL_GP_PhotAstromParam4_1(PSPL_PhotAstromParam4):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega0_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
 
     raL: float, optional
         Right ascension of the lens in decimal degrees.
@@ -5050,13 +5050,13 @@ class PSPL_GP_PhotAstromParam4_2(PSPL_PhotAstromParam4):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega0_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     gp_log_jit_sigma: float
         Gaussian process for jitter term
 
@@ -13059,13 +13059,13 @@ class BSPL_GP_PhotParam1(BSPL_PhotParam1):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
 
     raL: float, optional
         Right ascension of the lens in decimal degrees.
@@ -13178,13 +13178,13 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -13306,13 +13306,13 @@ class BSPL_GP_PhotAstromParam2(BSPL_PhotAstromParam2):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -13421,13 +13421,13 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
 
     Other Parameters
     ----------------
@@ -15821,13 +15821,13 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -15945,13 +15945,13 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -16070,13 +16070,13 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -16194,13 +16194,13 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -16308,13 +16308,13 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -16427,13 +16427,13 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -20066,9 +20066,9 @@ class FSPL(PSPL):
   
     def get_u(self, t, filt_idx=0):
         """
-        Get the separation vector, \vec{u}(t), which is the unlensed
+        Get the separation vector, \\vec{u}(t), which is the unlensed
         source - lens separation vector on the  plane of the sky
-        in units of \theta_E.
+        in units of \\theta_E.
 
         Parameters
         ----------
@@ -20080,7 +20080,7 @@ class FSPL(PSPL):
         Returns
         -------
         u : array, float, shape = [len(t), 2]
-            Separation vector in East, North on the sky in units of \theta_E.
+            Separation vector in East, North on the sky in units of \\theta_E.
         """
         tau = (t - self.t0) / self.tE
 
@@ -20259,9 +20259,9 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
     def get_u_outline(self, t, filt_idx=0):
         """
-        Get the separation vector, \vec{u}(t), which is the unlensed
+        Get the separation vector, \\vec{u}(t), which is the unlensed
         source - lens separation vector for each point of the source
-        outline. Positions are on the plane of the sky in units of \theta_E.
+        outline. Positions are on the plane of the sky in units of \\theta_E.
 
         Parameters
         ----------
@@ -20273,7 +20273,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Returns
         -------
         u : array, float, shape = [len(t), n_outline, [E, N]]
-            Separation vector in East, North on the sky in units of \theta_E.
+            Separation vector in East, North on the sky in units of \\theta_E.
         """
         if self.n_outline!=False:
             u_vec = self.get_u(t, filt_idx=filt_idx)
@@ -20779,9 +20779,9 @@ class FSPL_Phot(FSPL):
 
     def get_u_outline(self, t, filt_idx=0):
         """
-        Get the separation vector, \vec{u}(t), which is the unlensed
+        Get the separation vector, \\vec{u}(t), which is the unlensed
         source - lens separation vector for each point of the source
-        outline. Positions are  on the plane of the sky in units of \theta_E.
+        outline. Positions are  on the plane of the sky in units of \\theta_E.
 
         Parameters
         ----------
@@ -20793,7 +20793,7 @@ class FSPL_Phot(FSPL):
         Returns
         -------
         u : array, float, shape = [len(t), n_outline, [E, N]]
-            Separation vector in East, North on the sky in units of \theta_E.
+            Separation vector in East, North on the sky in units of \\theta_E.
         """
         if self.n_outline != False:
             u_vec = self.get_u(t, filt_idx=filt_idx)
@@ -21818,9 +21818,9 @@ class BFSPL(PSPL):
         
     def get_u(self, t, filt_idx=0):
         """
-        Get the separation vector, \vec{u}(t), which is the unlensed
+        Get the separation vector, \\vec{u}(t), which is the unlensed
         source - lens separation vector on the  plane of the sky
-        in units of \theta_E.
+        in units of \\theta_E.
 
         Parameters
         ----------
@@ -21832,7 +21832,7 @@ class BFSPL(PSPL):
         Returns
         -------
         u : array, float, shape = [len(t), 2]
-            Separation vector in East, North on the sky in units of \theta_E.
+            Separation vector in East, North on the sky in units of \\theta_E.
         """
         tau = (t - self.t0) / self.tE
 

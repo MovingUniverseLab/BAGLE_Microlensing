@@ -240,8 +240,8 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie'):
     plt.figtext(0.805, 0.75-7*dy, fmt7.format(psbl.muS[0], psbl.muS[1]), fontsize=12)
     plt.figtext(0.805, 0.75-8*dy, fmt8.format(psbl.dL), fontsize=12)
     plt.figtext(0.805, 0.75-9*dy, fmt9.format(psbl.dS), fontsize=12)
-    for ff in range(len(psbl.mag_src)):
-        plt.figtext(0.805, 0.75-(10+ff*2)*dy, fmt10.format(psbl.mag_src[ff]), fontsize=12)
+    for ff, mag_src_val in enumerate(psbl.mag_src):
+        plt.figtext(0.805, 0.75-(10+ff*2)*dy, fmt10.format(mag_src_val), fontsize=12)
         plt.figtext(0.805, 0.75-(11+ff*2)*dy, fmt11.format(psbl.b_sff[ff]), fontsize=12)
 
 
@@ -249,14 +249,14 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie'):
     # with i being the number of the frame that it's currently on
     def update(i, t, rL_1, rL_2, rS, rS_img, rS_img_all, pS, lines):
         lines[0].set_data(rS[:i+1, 0], rS[:i+1, 1])
-        lines[1].set_data(rL_1[i, 0], rL_1[i, 1])
-        lines[2].set_data(rL_2[i, 0], rL_2[i, 1])
+        lines[1].set_data([rL_1[i, 0]], [rL_1[i, 1]])
+        lines[2].set_data([rL_2[i, 0]], [rL_2[i, 1]])
         lines[3].set_data(rS_img[:i+1, 0], rS_img[:i+1, 1])
         lines[4].set_data(t[:i+1] - psbl.t0, pS[:i+1])
         lines[5].set_text('time = {0:.0f} days'.format(t[i] - psbl.t0))
 
         for jj in range(5):
-            lines[6+jj].set_data(rS_img_all[i, jj, 0], rS_img_all[i, jj, 1])
+            lines[6+jj].set_data([rS_img_all[i, jj, 0]], [rS_img_all[i, jj, 1]])
         
         return lines
     
@@ -397,13 +397,13 @@ def animate_PSPL(pspl, duration=10, time_steps=300, outfile='pspl_movie.gif'):
     # with i being the number of the frame that it's currently on
     def update(i, t, rL, rS, rS_img, rS_img_all, pS, lines):
         lines[0].set_data(rS[:i+1, 0], rS[:i+1, 1])
-        lines[1].set_data(rL[i, 0], rL[i, 1])
+        lines[1].set_data([rL[i, 0]], [rL[i, 1]])
         lines[2].set_data(rS_img[:i+1, 0], rS_img[:i+1, 1])
         lines[3].set_data(t[:i+1] - pspl.t0, pS[:i+1])
         lines[4].set_text('time = {0:.0f} days'.format(t[i] - pspl.t0))
 
         for jj in range(2):
-            lines[5+jj].set_data(rS_img_all[jj][i, 0], rS_img_all[jj][i, 1])
+            lines[5+jj].set_data([rS_img_all[jj][i, 0]], [rS_img_all[jj][i, 1]])
         
         return lines
     
