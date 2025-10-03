@@ -1,7 +1,7 @@
 [project]
 name = "BAGLE"
-version = "1.0"
 description = "BAGLE (Bayesian Analysis of Gravitational Lensing Events) is a package to model and fit microlensing events."
+version = "1.0.1rc1"
 authors = [
     {name = "Jessica Lu", email = "jlu.astro@berkeley.edu"},
     {name = "T. Dex Bhadra"},
@@ -16,16 +16,34 @@ authors = [
 ]
 requires-python = ">=3.11"
 readme = "README.md"
-license = "GPL-3"
-license-files = ["LICEN[CS]e*"]
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE*"]
+
+dependencies = ["numpy>=1.24",
+                "pymultinest",
+                "matplotlib",
+                "astropy>=5.3",
+                "celerite>=0.4.2",
+                "scipy>=1.10"]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers"
+]
+
 
 [project.urls]
-Homepage = "https://github.com/MovingUniverseLab/BAGLE_Microlensing/tree/main/src/bagle"
+Homepage = "https://github.com/MovingUniverseLab/BAGLE_Microlensing"
 Issues = "https://github.com/MovingUniverseLab/BAGLE_Microlensing/issues"
 
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=61.0",
     "wheel"
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

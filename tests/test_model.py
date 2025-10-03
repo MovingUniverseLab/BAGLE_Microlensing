@@ -1,15 +1,4 @@
-import numpy as np
-import pylab as plt
-from scipy.signal import find_peaks
-from astropy.io import fits
-from astropy import constants as c
-from astropy import units as u
-from astropy.coordinates import SkyCoord, GCRS
-from astropy.time import Time
-from astropy.table import Table
-import os
 import math
-
 from bagle import parallax
 from bagle import model
 from bagle import model_fitter
@@ -17,15 +6,14 @@ from bagle import frame_convert as fc
 from bagle.fake_data import *
 from bagle import frame_convert
 import time
-import pdb
-import yaml, pickle
+import pickle
 import pytest
 import inspect, sys
 import matplotlib
 
 from astropy.time import Time
-from astropy.coordinates import solar_system_ephemeris, EarthLocation, spherical_to_cartesian, cartesian_to_spherical
-from astropy.coordinates import get_body_barycentric, get_body, get_moon, get_body_barycentric_posvel
+from astropy.coordinates import solar_system_ephemeris
+from astropy.coordinates import get_body_barycentric_posvel
 
 # Always generate the same fake data.
 np.random.seed(0)
@@ -1033,7 +1021,7 @@ def test_pspl_parallax2_bulge():
             if isinstance(members1[kk], str):
                 assert members1[kk] == members2[kk]
             else:
-                if isinstance(members1[kk], np.ndarray) and members1[kk].dtype.type in [np.string_, np.str_]:
+                if isinstance(members1[kk], np.ndarray) and members1[kk].dtype.type in [np.bytes_, np.str_]:
                     # Compare strings individually for exact matches.
                     assert np.all(members1[kk] == members2[kk])
                 else:
