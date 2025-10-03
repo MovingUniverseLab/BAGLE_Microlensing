@@ -3448,6 +3448,62 @@ def test_FSPL_PhotAstrom_source_astrometry(plot=False):
     return
 
 
+def test_FSPL_PhotAstrom_source_centroid_shift(plot=False):
+    """
+    Make sure the centroid shift is above the lens when the lens is inside the source boundary
+    """
+    mL = 5     # Msun
+    t0 = 57755  # MJD
+    beta = 0.25   # milli-arcsecond
+    dL = 4000   # pc
+    dL_dS = .5
+    xS0_E = 0.000 # arcsec
+    xS0_N = 0.000 # arcsec
+    muL_E = 0     # mas/yr
+    muL_N = 0     # mas/yr
+    ra = 17.5 * 15. # deg
+    dec = -30       # deg
+    muS_E = 4       # mas/yr
+    muS_N = 0      # mas/yr
+    radiusS_pri = 0.5e-3  # arcsec
+    b_sff = np.array([1])
+    mag_src = np.array([18])
+
+    tests_dir = os.path.dirname(os.path.realpath(__file__))
+    outdir = tests_dir + '/test_FSPL_source_astrometry/'
+
+    if (outdir != '') and (outdir != None):
+        os.makedirs(outdir, exist_ok=True)
+
+    # Array of times we will sample on.
+    time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
+
+    ##########
+    # Test 1: Create FSPL model and get source centroid shift.
+    ##########
+    fspl = model.FSPL_PhotAstrom_noPar_Param1(mL, t0, beta, dL, dL_dS,
+                 xS0_E, xS0_N,
+                 muL_E, muL_N,
+                 muS_E, muS_N,
+                 radiusS_pri,
+                 b_sff, mag_src, n_outline=20, raL=ra, decL=dec)
+
+    fspl_src_cent = fspl.get_centroid_shift(time_arr)
+    fspl_lens_ast = fspl.get_lens_astrometry(time_arr) * 1e3 # Convert to mas
+    
+    # The lens's y position should be below the source's lensed position.
+    np.testing.assert_array_less(fspl_lens_ast[:, 1], fspl_src_cent[:, 1])
+
+    if plot:
+        plt.figure(1)
+        plt.clf()
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax[0].set_title('Centroid Shift Comparison')
+        ax[0].plot(fspl_src_cent[:, 0], fspl_src_cent[:, 1], 'ko', label='fspl cent_shift')
+        ax[0].plot(fspl_lens_ast[:, 0], fspl_lens_ast[:, 1], 'ko', label='lens')
+        ax[0].legend()
+    return
+    
 def test_FSPL_boundary(plot=False):
     """
     Make sure we get good photometry when source boundary is touching the lens.
@@ -4350,7 +4406,7 @@ def test_PSPL_Phot_Param2_vs_Param3():
     plt.legend()
 
     return
-def test_psbl_noparallax():
+def test_psbl_noparallax(plot=False):
     def plots(i, e, a):
         #Prepares plots
         mLp = 15
@@ -4379,7 +4435,7 @@ def test_psbl_noparallax():
         dec_L = -29
         
         psbl = model.PSBL_PhotAstrom_noPar_EllOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
-                                                          beta_com, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
+                                                          beta_com, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,                                                           dL, dS,
                                                           b_sff, mag_src, dmag_Lp_Ls,
                                                           raL=ra_L, decL=dec_L, root_tol=1e-8)
         assert psbl.t0_com == t0_com
@@ -4413,7 +4469,7 @@ def test_psbl_noparallax():
 
         return lens1, lens2, source_unlensed, source_resolved, i, e, a, psbl.p
     
-    def sep_test(): 
+    def sep_test(plot=False): 
                 #At long periods, these orbits should behave linearly.
                 #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
                 #At short periods, the primary and secondary should have intersecting y-coordinates. 
@@ -4444,10 +4500,11 @@ def test_psbl_noparallax():
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with period {np.round(p, 2)} days')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Period_test_nopar.png')
+        if plot:
+            plt.savefig('Period_test_nopar.png')
     
         
-    def e_test(): 
+    def e_test(plot=False): 
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(0, 0, 10), 
         plots(90, 0.3, 10), 
@@ -4478,9 +4535,10 @@ def test_psbl_noparallax():
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Eccentricity_test_nopar.png')
+        if plot:
+            plt.savefig('Eccentricity_test_nopar.png')
 
-    def i_test():
+    def i_test(plot=False):
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(0, 0.3, 10), 
         plots(30, 0.3, 10), 
@@ -4504,14 +4562,15 @@ def test_psbl_noparallax():
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with inclination {i} degrees')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('inclination_test_nopar.png')
-    sep_test()
-    e_test()
-    i_test()
+        if plot:
+            plt.savefig('inclination_test_nopar.png')
+    sep_test(plot)
+    e_test(plot)
+    i_test(plot)
 
     return
 
-def test_psbl_parallax():
+def test_psbl_parallax(plot=False):
     def plots(i, e, a):
         #Prepares plots
         mLp = 15
@@ -4576,7 +4635,7 @@ def test_psbl_parallax():
 
         return lens1, lens2, source_unlensed, source_resolved, i, e, a, psbl.p
 
-    def a_test():
+    def a_test(plot=False):
             #At long periods, these orbits should behave linearly.
             #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
             #At short periods, the primary and secondary should have intersecting y-coordinates. 
@@ -4608,10 +4667,11 @@ def test_psbl_parallax():
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with period {np.round(p, 2)} days')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Period_test_par.png')
+        if plot:
+            plt.savefig('Period_test_par.png')
 
         
-    def e_test(): 
+    def e_test(plot=False): 
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(0, 0, 10), 
         plots(90, 0.3, 10), 
@@ -4642,9 +4702,10 @@ def test_psbl_parallax():
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Eccentricity_test_par.png')
+        if plot:
+            plt.savefig('Eccentricity_test_par.png')
     
-    def i_test():
+    def i_test(plot=False):
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(0, 0.3, 10), 
         plots(30, 0.3, 10), 
@@ -4668,14 +4729,15 @@ def test_psbl_parallax():
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with inclination {i} degrees')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('inclination_test_par.png')
-    a_test()
-    e_test()
-    i_test()
+        if plot:
+            plt.savefig('inclination_test_par.png')
+    a_test(plot)
+    e_test(plot)
+    i_test(plot)
 
     return
 
-def test_psbl_nopropermotion():
+def test_psbl_nopropermotion(plot=False):
     def plots(i, e, a):
         #Prepares plots
         mLp = 15
@@ -4741,7 +4803,7 @@ def test_psbl_nopropermotion():
 
         return lens1, lens2, source_unlensed, source_resolved, i, e, a, psbl.p
 
-    def a_test():
+    def a_test(plot=False):
                 #At long periods, these orbits should behave linearly.
                 #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
                 #At short periods, the primary and secondary should have intersecting y-coordinates. 
@@ -4773,10 +4835,11 @@ def test_psbl_nopropermotion():
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with period {np.round(p, 2)} days')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Period_test_nopropmo.png')
+        if plot:
+                plt.savefig('Period_test_nopropmo.png')
 
         
-    def e_test(): 
+    def e_test(plot=False): 
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(0, 0, 10), 
         plots(0, 0.3, 10), 
@@ -4807,9 +4870,10 @@ def test_psbl_nopropermotion():
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Eccentricity_test_nopropmo.png')
+        if plot:
+            plt.savefig('Eccentricity_test_nopropmo.png')
     
-    def i_test():
+    def i_test(plot=False):
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(0, 0.3, 10), 
         plots(30, 0.3, 10), 
@@ -4833,10 +4897,11 @@ def test_psbl_nopropermotion():
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with inclination {i} degrees')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('inclination_test_nopropmo.png')
-    a_test()
-    e_test()
-    i_test()
+        if plot:
+            plt.savefig('inclination_test_nopropmo.png')
+    a_test(plot)
+    e_test(plot)
+    i_test(plot)
 
     return
 
@@ -4908,7 +4973,6 @@ def magnification_maps():
     dec_L = -29
     beta = 1
     q = 0.7
-    s
     a = 10
     b_sff = [1]
     mag_src = [10]
@@ -4941,7 +5005,7 @@ def magnification_maps():
 
     return
 
-def test_bsbl_noparallax():
+def test_bsbl_noparallax(plot=False):
     def plots(iL, eL, aL, iS, eS, pS):
         t0_com = 57000.00
         u0_amp_com = .4
@@ -5022,7 +5086,7 @@ def test_bsbl_noparallax():
         return lens1, lens2, source_unlensed, source_resolved, iL, eL, bsbl.pL, iS, eS, pS, aL
 
     
-    def P_test_lens(): 
+    def P_test_lens(plot=False): 
             #At long periods, these orbits should behave linearly.
             #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
             #At short periods, the primary and secondary should have intersecting y-coordinates. 
@@ -5056,11 +5120,12 @@ def test_bsbl_noparallax():
                 ax[k][j].set_title(f'Elliptical Orbits with lens period {np.round(pL,2)} days')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Period_test_lens_nopar.png')
+        if plot:
+            plt.savefig('Period_test_lens_nopar.png')
     
 
     
-    def P_test_source(): 
+    def P_test_source(plot=False): 
             #At long periods, these orbits should behave linearly.
             #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
             #At short periods, the primary and secondary should have intersecting y-coordinates. 
@@ -5096,11 +5161,12 @@ def test_bsbl_noparallax():
                 ax[k][j].set_title(f'Elliptical Orbits with source period {np.round(pS,2)} days')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Period_test_source_nopar.png')
+        if plot:
+            plt.savefig('Period_test_source_nopar.png')
 
 
 
-    def e_test_lens(): 
+    def e_test_lens(plot=False): 
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(0, 0, 10,  90, 0.3, 3700), 
         plots(90, 0.3, 10, 90, 0.3, 3700), 
@@ -5125,9 +5191,10 @@ def test_bsbl_noparallax():
                 ax[k][j].set_title(f'Elliptical Orbits with lens eccentricity {eL} ')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Eccentricity_test_lens_nopar.png')
+        if plot:
+            plt.savefig('Eccentricity_test_lens_nopar.png')
 
-    def e_test_source(): 
+    def e_test_source(plot=False): 
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(90, 0.3, 3700, 0, 0, 500), 
         plots(90, 0.3, 3700, 90, 0.3, 500), 
@@ -5156,10 +5223,11 @@ def test_bsbl_noparallax():
                 ax[k][j].set_title(f'Elliptical Orbits  with source eccentricity {eS} ')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Eccentricity_test_source_nopar.png')
+        if plot:
+            plt.savefig('Eccentricity_test_source_nopar.png')
         
     
-    def i_test_vis(): 
+    def i_test_vis(plot=False): 
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(0, 0, 10, 0, 0, 2000), 
         plots(90, 0, 10, 30, 0, 2000), 
@@ -5184,18 +5252,19 @@ def test_bsbl_noparallax():
                 ax[k][j].set_title(f'Elliptical Orbits with lens eccentricity {eL} and source eccentricity {eS}', fontsize = 15)
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Inc_test_vis_nopar.png')
+        if plot:
+            plt.savefig('Inc_test_vis_nopar.png')
         
-    P_test_lens()
-    P_test_source()
+    P_test_lens(plot)
+    P_test_source(plot)
 
-    e_test_lens()
-    e_test_source()
-    i_test_vis()
+    e_test_lens(plot)
+    e_test_source(plot)
+    i_test_vis(plot)
 
     return
 
-def test_bsbl_parallax():
+def test_bsbl_parallax(plot=False):
     def plots(iL, eL, aL, iS, eS, pS):
         t0_com = 57000.00
         u0_amp_com = .4
@@ -5276,7 +5345,7 @@ def test_bsbl_parallax():
         return lens1, lens2, source_unlensed, source_resolved, iL, eL, bsbl.pL, iS, eS, pS, aL
 
     
-    def P_test_lens(): 
+    def P_test_lens(plot=False): 
             #At long periods, these orbits should behave linearly.
             #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
             #At short periods, the primary and secondary should have intersecting y-coordinates. 
@@ -5310,11 +5379,12 @@ def test_bsbl_parallax():
                 ax[k][j].set_title(f'Elliptical Orbits with lens period {np.round(pL,2)} days')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Period_test_lens_par.png')
+        if plot:
+            plt.savefig('Period_test_lens_par.png')
     
 
     
-    def P_test_source(): 
+    def P_test_source(plot=False): 
             #At long periods, these orbits should behave linearly.
             #At long periods, the intersection of the primary's and secondary's declination (y-coordinate) should be null.
             #At short periods, the primary and secondary should have intersecting y-coordinates. 
@@ -5350,11 +5420,12 @@ def test_bsbl_parallax():
                 ax[k][j].set_title(f'Elliptical Orbits with source period {np.round(pS,2)} days')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Period_test_source_par.png')
+        if plot:
+            plt.savefig('Period_test_source_par.png')
 
 
 
-    def e_test_lens(): 
+    def e_test_lens(plot=False): 
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(0, 0, 10,  90, 0.3, 3700), 
         plots(90, 0.3, 10, 90, 0.3, 3700), 
@@ -5379,9 +5450,10 @@ def test_bsbl_parallax():
                 ax[k][j].set_title(f'Elliptical Orbits with lens eccentricity {eL} ')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Eccentricity_test_lens_par.png')
+        if plot:
+            plt.savefig('Eccentricity_test_lens_par.png')
 
-    def e_test_source(): 
+    def e_test_source(plot=False): 
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(90, 0.3, 3700, 0, 0, 500), 
         plots(90, 0.3, 3700, 90, 0.3, 500), 
@@ -5410,10 +5482,11 @@ def test_bsbl_parallax():
                 ax[k][j].set_title(f'Elliptical Orbits  with source eccentricity {eS} ')
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Eccentricity_test_source_par.png')
+        if plot:
+            plt.savefig('Eccentricity_test_source_par.png')
         
     
-    def i_test_vis(): 
+    def i_test_vis(plot=False): 
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
         tests=[plots(0, 0, 10, 0, 0, 2000), 
         plots(90, 0, 10, 30, 0, 2000), 
@@ -5438,14 +5511,15 @@ def test_bsbl_parallax():
                 ax[k][j].set_title(f'Elliptical Orbits with lens eccentricity {eL} and source eccentricity {eS}', fontsize = 15)
                 ax[k][j].legend(loc="best")
                 count +=1
-        plt.savefig('Inc_test_vis_par.png')
+        if plot:
+            plt.savefig('Inc_test_vis_par.png')
         
-    P_test_lens()
-    P_test_source()
+    P_test_lens(plot)
+    P_test_source(plot)
 
-    e_test_lens()
-    e_test_source()
-    i_test_vis()
+    e_test_lens(plot)
+    e_test_source(plot)
+    i_test_vis(plot)
 
     return
 # Plot Some Magnification Maps

@@ -5230,8 +5230,10 @@ class PSBL(PSPL):
         # print(z_arr)
         # print(z1)
         # print(z2)
+        np.seterr(divide='ignore', invalid='ignore')  # Turn off /0 warnings. NaNs are fine.
         dwbardz = self.m1 / (z_arr - z1.reshape((N_times, 1))) ** 2
         dwbardz += self.m2 / (z_arr - z2.reshape((N_times, 1))) ** 2
+        np.seterr(divide='warn', invalid='warn') # Turn off /0 warnings. NaNs are fine.
         jacobian = 1 - np.absolute(dwbardz) ** 2
         amp_arr = 1.0 / np.absolute(jacobian)  # Absolute value of J
 
@@ -5418,8 +5420,8 @@ class PSBL(PSPL):
         # Solve the lens equation and find all 5 roots.
         # Loop through different time steps and solve each one.
         N_times = len(w)
-        z_arr = np.zeros((N_times, 5), dtype=np.complex_)
-        # ai_arr = np.zeros((N_times, 6), dtype=np.complex_)
+        z_arr = np.zeros((N_times, 5), dtype=np.complex128)
+        # ai_arr = np.zeros((N_times, 6), dtype=np.complex128)
         for i in range(N_times):
             # ai_arr[i] = np.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
             z_arr[i] = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
@@ -16775,7 +16777,7 @@ class BSBL(PSBL):
         # Setup the output array with the right shape.
         N_times = w.shape[0]
         N_sources = w.shape[1]
-        z_arr = np.zeros((N_times, N_sources, 5), dtype=np.complex_)
+        z_arr = np.zeros((N_times, N_sources, 5), dtype=np.complex128)
 
         # Loop through each of the sources and just call the parent class.
         for ss in range(N_sources):
@@ -16818,7 +16820,7 @@ class BSBL(PSBL):
         # Setup the output array with the right shape.
         N_times = w.shape[0]
         N_sources = w.shape[1]
-        z_arr = np.zeros((N_times, N_sources, 5), dtype=np.complex_)
+        z_arr = np.zeros((N_times, N_sources, 5), dtype=np.complex128)
 
         # Loop through each of the sources and just call the parent class.
         for ss in range(N_sources):
@@ -20607,7 +20609,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            
+        
             # amp_arr shape = [N_times, [+, -]]
             # image_arr shape = [N_times, [+, -], [E, N]]
 
@@ -20616,6 +20618,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         fL = fS * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
 
         # Calculate the total flux from all lensed source images and the lens itself.
+        amp_arr = np.abs(amp_arr)
         ftot = fL + np.sum(fS * amp_arr, axis=1)
         pos = np.sum(image_arr * amp_arr[:, :, np.newaxis] * fS, axis=1)
 
@@ -24915,13 +24918,18 @@ def mag2flux(mag):
     flux = flux_zp * 10 ** ((mag - mag_zp) / -2.5)
 
     flux = np.nan_to_num(flux, nan=0)
-
+    
     # Catch the edge case where we exceed the zeropoint.
-    bad = np.where(flux < 0)[0]
-    if len(bad) > 0:
-        print('!!!!!!!!!! Warning: get_photometry: bad flux encountered.')
-        print('')
-        flux[bad] = np.nan
+    if isinstance(flux, (list, tuple, np.ndarray)):
+        bad = np.where(np.atleast_1d(flux) < 0)[0]
+        if len(bad) > 0:
+            print('!!!!!!!!!! Warning: get_photometry: bad flux encountered.')
+            print('')
+            flux[bad] = np.nan
+    else:
+        # Handle for scalars
+        if flux < 0:
+            flux = np.nan
 
     return flux
 
