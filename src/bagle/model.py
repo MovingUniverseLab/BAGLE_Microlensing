@@ -19943,6 +19943,7 @@ class FSPL(PSPL):
         
         wIms = np.zeros((len(t), maxsamps, 2), dtype=complex)
         counts = np.zeros(len(t), dtype=int)
+        thetas = np.zeros((len(t), maxsamps))   
             
         dtheta = 2*np.pi/self.n_outline
         lens_asts = self.get_lens_astrometry(t) / self.thetaE_amp  * 1e3 #thetaE
@@ -19962,6 +19963,8 @@ class FSPL(PSPL):
                 zp, zm = im_pos_all(w_now, z1)
                 wIms[i, count, 0] = zp
                 wIms[i, count, 1] = zm
+                thetas[i, count] = theta
+
             
                 detp = np.abs(detJac(zp, z1))
                 detm = np.abs(detJac(zm, z1))
@@ -19981,7 +19984,8 @@ class FSPL(PSPL):
         Cplus_y = np.zeros(n_times)
         Cminus_x = np.zeros(n_times)
         Cminus_y = np.zeros(n_times)
-        
+
+
         for i in range(n_times):
             n = counts[i]
         
@@ -20005,10 +20009,28 @@ class FSPL(PSPL):
             d1_py = np.diff(py)
             d1_qx = np.diff(qx)
             d1_qy = np.diff(qy)
-        
+            d2_px = np.diff(np.append(d1_px, d1_px[0]))
+            d2_py = np.diff(np.append(d1_py, d1_py[0]))
+            d2_qx = np.diff(np.append(d1_qx, d1_qx[0]))
+            d2_qy = np.diff(np.append(d1_qy, d1_qy[0]))
             # Eq 9 areas
             Aplus[i]  = -0.5 * np.sum((px[:-1]+px[1:]) * d1_py)
             Aminus[i] =  0.5 * np.sum((qx[:-1]+qx[1:]) * d1_qy)
+
+            angles = (np.arange(n) / n) * 2 * np.pi
+            d_angles = np.diff(angles)
+            d_angles3 = d_angles ** 3
+            
+            #pdb.set_trace()
+            # Eq 10 areas
+
+            wp_d1_d2_i_plus = d1_px[:-1] * d2_py[:-1] - d1_py[:-1] * d2_px[:-1]
+            wp_d1_d2_ip1_plus = d1_px[1:] * d2_py[1:] - d1_py[1:] * d2_px[1:]
+            wp_d1_d2_i_minus = d1_qx[:-1] * d2_qy[:-1] - d1_qy[:-1] * d2_qx[:-1]
+            wp_d1_d2_ip1_minus = d1_qx[1:] * d2_qy[1:] - d1_qy[1:] * d2_qx[1:]
+    
+            Aplus[i] += (1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus))
+            Aplus[i] += -(1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus))
         
             # Eq 19 centroids
             Cplus_x[i] =  0.125 * np.sum((px[:-1]+px[1:])**2 * d1_py)
