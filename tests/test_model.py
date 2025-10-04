@@ -5008,14 +5008,14 @@ def test_bsbl_noparallax(plot=False):
         muS_E = 0
         muS_N = 4
         
-        omegaL = 0
-        big_omegaL = 0
+        omegaL_pri = 0
+        big_omegaL_sec = 0
         iL = iL
         eL = eL
         aL = aL
         tpL = 100
-        omegaS = 0
-        big_omegaS = 90
+        omegaS_pri = 0
+        big_omegaS_sec = 90
         iS = iS
         eS = eS
         pS = pS
@@ -5030,22 +5030,22 @@ def test_bsbl_noparallax(plot=False):
         raL = 30
         decL = 20
         bsbl = model.BSBL_PhotAstrom_noPar_EllOrbs_Param2(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
-                                                          omegaL, big_omegaL, iL, eL, tpL, aL,
-                                                          omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
+                                                          omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                                                          omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                                                           raL=raL, decL=decL, root_tol=1e-8)
         
         assert bsbl.t0_com == t0_com
         assert bsbl.u0_amp_com == u0_amp_com
         assert bsbl.iL == iL
         assert bsbl.eL == eL
-        assert bsbl.omegaL == omegaL
-        assert bsbl.big_omegaL == big_omegaL
+        assert bsbl.omegaL_pri == omegaL_pri
+        assert bsbl.big_omegaL_sec == big_omegaL_sec
         assert bsbl.aL == aL
         assert bsbl.iS == iS
         assert bsbl.eS == eS
         assert bsbl.pS == pS
-        assert bsbl.omegaS == omegaS
-        assert bsbl.big_omegaS == big_omegaS
+        assert bsbl.omegaS_pri == omegaS_pri
+        assert bsbl.big_omegaS_sec == big_omegaS_sec
         assert bsbl.alephS == alephS
         assert bsbl.aleph_secS == aleph_secS
 
@@ -5267,14 +5267,14 @@ def test_bsbl_parallax(plot=False):
         muS_E = 0
         muS_N = 4
         
-        omegaL = 0
-        big_omegaL = 0
+        omegaL_pri = 0
+        big_omegaL_sec = 0
         iL = iL
         eL = eL
         aL = aL
         tpL = 100
-        omegaS = 0
-        big_omegaS = 90
+        omegaS_pri = 0
+        big_omegaS_sec = 90
         iS = iS
         eS = eS
         pS = pS
@@ -5289,22 +5289,22 @@ def test_bsbl_parallax(plot=False):
         raL = 30
         decL = 20
         bsbl = model.BSBL_PhotAstrom_Par_EllOrbs_Param2(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
-                                                        omegaL, big_omegaL, iL, eL, tpL, aL,
-                                                        omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
+                                                        omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                                                        omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                                                         raL=raL, decL=decL, root_tol=1e-8)
         
         assert bsbl.t0_com == t0_com
         assert bsbl.u0_amp_com == u0_amp_com
         assert bsbl.iL == iL
         assert bsbl.eL == eL
-        assert bsbl.omegaL == omegaL
-        assert bsbl.big_omegaL == big_omegaL
+        assert bsbl.omegaL_pri == omegaL_pri
+        assert bsbl.big_omegaL_sec == big_omegaL_sec
         assert bsbl.aL == aL
         assert bsbl.iS == iS
         assert bsbl.eS == eS
         assert bsbl.pS == pS
-        assert bsbl.omegaS == omegaS
-        assert bsbl.big_omegaS == big_omegaS
+        assert bsbl.omegaS_pri == omegaS_pri
+        assert bsbl.big_omegaS_sec == big_omegaS_sec
         assert bsbl.alephS == alephS
         assert bsbl.aleph_secS == aleph_secS
 
@@ -5602,8 +5602,8 @@ def magnification_maps():
     
     alphaL = 90
     alphaS = 90
-    omegaL = 0
-    big_omegaL = 0
+    omegaL_pri = 0
+    big_omegaL_sec = 0
     iL = 0
     eL = 0 
     pL = 410
@@ -5611,8 +5611,8 @@ def magnification_maps():
     tpL = 100
     alephL = 5
     aleph_secL = 5
-    omegaS = 0
-    big_omegaS = 90
+    omegaS_pri = 0
+    big_omegaS_sec = 90
     iS = 0
     eS = 0
     pS = 430
@@ -5628,8 +5628,8 @@ def magnification_maps():
 
     
     bsbl_nopar = model.BSBL_PhotAstrom_noPar_EllOrbs_Param2(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
-                alphaL, alphaS, omegaL, big_omegaL, iL, eL, tpL, aL,
-                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff,
+                alphaL, alphaS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                 omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff,
                  raL=raL, decL=decL, root_tol=1e-8)
     
     get_magnification_map_timedep(bsbl_nopar,bins=8000, grid_size = 0.05, plot_radius = 0.04,lim = 0.025, cmap = 'pans')
