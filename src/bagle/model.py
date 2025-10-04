@@ -24275,6 +24275,25 @@ class BSPL_PhotAstrom_noPar_EllOrbs_Param3(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+class BSPL_PhotAstrom_Par_EllOrbs_Param4(ModelClassABC,
+                                         BSPL_PhotAstrom,
+                                         BSPL_Parallax,
+                                         BSPL_PhotAstrom_EllOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+class BSPL_PhotAstrom_noPar_EllOrbs_Param4(ModelClassABC,
+                                           BSPL_PhotAstrom,
+                                           BSPL_noParallax,
+                                           BSPL_PhotAstrom_EllOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
 
 # =====
 # BSPL + GP Model Classes
