@@ -16,3 +16,8 @@ numpydoc
 Pyerfa
 graphviz
 
+# Required in the Tutorial notebooks:
+# conda install -c conda-forge ffmpeg
+# pyLIMA==1.9.8
+# VBMicrolensing==5.3.3
+# MulensModel==3.3.1
