@@ -217,8 +217,8 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie'):
     # Print out all of the parameters.
     plt.figtext(0.802, 0.8, 'PSBL Model')
 
-    fmt0 = r'M$_{{L1}}$ = {0:.2f} M$_\odot$'
-    fmt1 = r'M$_{{L2}}$ = {0:.2f} M$_\odot$'
+    fmt0 = r'M$_{{L1}}$ = {0:.2f} M$_\\odot$'
+    fmt1 = r'M$_{{L2}}$ = {0:.2f} M$_\\odot$'
     fmt2 = r'sep = {0:.1e} arcsec'
     fmt3 = r'$\alpha$ = {0:.2f} deg'
     fmt4 = r'$\beta$ = {0:.1f} mas'
@@ -368,7 +368,7 @@ def animate_PSPL(pspl, duration=10, time_steps=300, outfile='pspl_movie.gif'):
     # Print out all of the parameters.
     plt.figtext(0.802, 0.8, 'PSPL Model')
 
-    fmt0 = r'M$_L$ = {0:.2f} M$_\odot$'
+    fmt0 = r'M$_L$ = {0:.2f} M$_\\odot$'
     fmt1 = r'R.A. = {0:.5f} deg'
     fmt2 = r'Dec. = {0:.5f} deg'
     fmt3 = r'$\beta$ = {0:.1f} mas'
@@ -533,8 +533,8 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     # Print out all of the parameters.
     plt.figtext(0.802, 0.8, 'PSBL Model')
 
-    fmt_dict = {'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\odot$',
-                'mLs': r'M$_{{L2}}$ = {0:.3f} M$_\odot$',
+    fmt_dict = {'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\\odot$',
+                'mLs': r'M$_{{L2}}$ = {0:.3f} M$_\\odot$',
                 'sep': r'sep = {0:.4f} arcsec or $\theta_E$',
                 'alpha': r'$\alpha$ = {0:.2f} deg',
                 'beta': r'$\beta$ = {0:.1f} mas',
@@ -853,8 +853,8 @@ def plot_bsbl(bsbl, zoom, duration = 1000, time_steps=50000, caustic_finder = 'o
 
     #plt.title('Change in Primary and Secondary Lens and Source Position (Keplerian Orbit)')
     
-    plt.xlabel(f'$\Delta$ RA') 
-    plt.ylabel(f'$\Delta$ Dec')
+    plt.xlabel(f'$\\Delta$ RA') 
+    plt.ylabel(f'$\\Delta$ Dec')
     
     labels =['Primary Source Trajectory','Secondary Source Trajectory','Primary Lens Trajectory', 'Secondary Lens Trajectory', 'Images']
     ps = mpatches.Patch(facecolor='green', edgecolor = 'k') # This will create a red bar with black borders, you can leave out edgecolor if you do not want the borders
@@ -1362,8 +1362,8 @@ def compare_model_pkg_phot_astrom_xSxL(time_mjd, xS_bagle, xL_bagle,
                  ls=':', lw=2, marker='None')
 
     ax[0,0].legend(fontsize=12)
-    ax[0,0].set_ylabel('$x_{\odot} \cdot \hat{E}$ (mas)')
-    ax[0,1].set_ylabel('$x_{\odot} \cdot \hat{N}$ (mas)')
+    ax[0,0].set_ylabel('$x_{\\odot} \\cdot \\hat{E}$ (mas)')
+    ax[0,1].set_ylabel('$x_{\\odot} \\cdot \\hat{N}$ (mas)')
     ax[1,0].legend(fontsize=12)
     ax[1,0].set_ylabel('Difference')
     ax[1,0].set_xlabel("Time (MJD)")
@@ -1436,8 +1436,8 @@ def compare_model_pkg_phot_astrom_cent(time_mjd, ast_lensed_bagle,
                  color=colors[0], ls='-', lw=2, marker='None')
 
     ax[0,0].legend(fontsize=12)
-    ax[0,0].set_ylabel('$x_{\odot} \cdot \hat{E}$ (mas)')
-    ax[0,1].set_ylabel('$x_{\odot} \cdot \hat{N}$ (mas)')
+    ax[0,0].set_ylabel('$x_{\\odot} \\cdot \\hat{E}$ (mas)')
+    ax[0,1].set_ylabel('$x_{\\odot} \\cdot \\hat{N}$ (mas)')
     ax[1,0].legend(fontsize=12)
     ax[1,0].set_ylabel('Difference')
     ax[1,0].set_xlabel("Time (MJD)")
