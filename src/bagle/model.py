@@ -20951,7 +20951,7 @@ class FSPL_PhotParam2(PSPL_Param):
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE',
-                          'piE_E', 'piE_N, radiusS']
+                          'piE_E', 'piE_N', 'radiusS']
     phot_param_names = ['b_sff', 'mag_base']
     additional_param_names = ['mag_src']
 
@@ -20960,7 +20960,7 @@ class FSPL_PhotParam2(PSPL_Param):
     LeeFlag = False 
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_base,
-                 n_outline=False,
+                 n_outline=50,
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
