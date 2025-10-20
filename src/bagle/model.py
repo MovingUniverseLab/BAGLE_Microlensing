@@ -18788,7 +18788,7 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
+    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'tpL', 'sepL',
                           'omegaS_pri', 'big_omegaS_sec', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']

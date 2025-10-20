@@ -213,8 +213,10 @@ class MicrolensSolver(Solver):
         'gp_log_omega0_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega04_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega0':('make_norm_gen', 0, 5),
-        'delta_muS_sec_E':('make_gen', -1, 1),
-        'delta_muS_sec_N':('make_gen', -1, 1),
+        'delta_muS_sec_E':('make_gen', -5, 5),
+        'delta_muS_sec_N':('make_gen', -5, 5),
+        'delta_muL_sec_E':('make_gen', -5, 5),
+        'delta_muL_sec_N':('make_gen', -5, 5),
         #dex new priors
         't0_com': ('make_t0_gen', None, None),
         'u0_amp_com': ('make_gen', -1, 1),
@@ -242,6 +244,8 @@ class MicrolensSolver(Solver):
         'aleph': ('make_gen', 1, 10),
         'aleph_sec':('make_gen', 1, 10),
         'alphaL': ('make_gen', 0, 360),
+        'sepL': ('make_gen', 1e-4, 2e-2),
+        'aL': ('make_gen', 1e-4, 2e-2),
         'alphaS': ('make_gen', 0, 360),
         'omegaL': ('make_gen', -180, 180),
         'big_omegaL': ('make_gen', -180, 180),

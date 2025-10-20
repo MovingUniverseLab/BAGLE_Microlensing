@@ -4338,10 +4338,9 @@ def fake_dex_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
     start = time.time()
     bsbl = model.BSBL_PhotAstrom_noPar_CircOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
                                                        beta_com, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                                                       alphaL, alphaS, omegaL, big_omegaL, iL, pL, tpL, alephL,
-                                                       aleph_secL,
+                                                       omegaL, big_omegaL, iL, tpL, alephL + aleph_secL,
                                                        omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS,
-                                                       mag_src_pri, mag_src_sec, b_sff,
+                                                       mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls=20,
                                                        raL=raL, decL=decL, root_tol=root_tol)
 
     # Simulate
@@ -4509,18 +4508,15 @@ def fake_dex_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
     params['dL'] = dL
     params['dS'] = dS
 
-    params['alphaL'] = alphaL
-    params['omegaL'] = omegaL
-    params['big_omegaL'] = big_omegaL
+    params['omegaL_pri'] = omegaL
+    params['big_omegaL_sec'] = big_omegaL
     params['iL'] = iL
     params['pL'] = pL
     params['tpL'] = tpL
-    params['alephL'] = alephL
-    params['aleph_secL'] = aleph_secL
+    params['sepL'] = alephL + aleph_secL
 
-    params['alphaS'] = alphaS
-    params['omegaS'] = omegaS
-    params['big_omegaS'] = big_omegaS
+    params['omegaS_pri'] = omegaS
+    params['big_omegaS_sec'] = big_omegaS
     params['iS'] = iS
     params['pS'] = pS
     params['tpS'] = tpS
