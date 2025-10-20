@@ -2508,7 +2508,9 @@ def fake_data_parallax_multi_location_bulge(outdir='test_mnest_bulge_multiLoc/',
 def get_times_roman_gbtds(seasons_fast=(0, 1, 2, 7, 8, 9), seasons_slow=(3, 4, 5, 6),
                           seasons_fast_len=70, n_fields_per_set=7,
                           n_sets_f087_fast=1, n_sets_f146_fast=44, dt_gap_fast=0,
-                          n_sets_f087_slow=0, n_sets_f146_slow=1, dt_gap_slow=10):
+                          n_sets_f087_slow=0, n_sets_f146_slow=1, dt_gap_slow=10,
+                          t_start = Time('2027-01-01', format='isot', scale='utc'),
+                          t_end = Time('2032-01-01', format='isot', scale='utc')):
     """
     Optional
     --------
@@ -2548,8 +2550,8 @@ def get_times_roman_gbtds(seasons_fast=(0, 1, 2, 7, 8, 9), seasons_slow=(3, 4, 5
                         obstime='J2000', frame='icrs')
 
     # Roman launch and survey window of 5 years.
-    t_start = Time('2027-01-01', format='isot', scale='utc')
-    t_end = Time('2032-12-31', format='isot', scale='utc')
+    # t_start =  see input 
+    # t_end =  see input
 
     # First, get coarse daily sampling to figure out Roman visibility windows.
     t_daily = Time(np.arange(t_start.jd, t_end.jd, 1), format='jd')
