@@ -18,6 +18,74 @@ from astropy.coordinates import get_body_barycentric_posvel
 # Always generate the same fake data.
 np.random.seed(0)
 
+def test_default_priors():
+    all_classes_pspl = [model.PSPL_PhotAstromParam1, model.PSPL_PhotAstromParam2, 
+                        model.PSPL_PhotAstromParam1, model.PSPL_PhotAstromParam4, 
+                        model.PSPL_PhotAstromParam5, model.PSPL_PhotAstromParam6,
+                        model.PSPL_GP_PhotAstromParam3, model.PSPL_GP_PhotAstromParam4]
+
+    
+
+    all_classes_psbl = [model.PSBL_PhotAstrom_LinOrbs_Param6, model.PSBL_PhotAstrom_LinOrbs_Param7,
+                        model.PSBL_PhotAstrom_AccOrbs_Param6, model.PSBL_PhotAstrom_AccOrbs_Param7,
+                        model.PSBL_PhotAstrom_CircOrbs_Param1, model.PSBL_PhotAstrom_CircOrbs_Param3,
+                        model.PSBL_PhotAstrom_CircOrbs_Param4, model.PSBL_PhotAstrom_CircOrbs_Param8,
+                        model.PSBL_PhotAstrom_EllOrbs_Param1, model.PSBL_PhotAstrom_EllOrbs_Param3,
+                        model.PSBL_PhotAstrom_EllOrbs_Param4, model.PSBL_PhotAstrom_EllOrbs_Param8,
+                        model.PSBL_PhotAstrom_LinOrbs_Param6, model.PSBL_PhotAstrom_LinOrbs_Param7,
+                        model.PSBL_PhotAstrom_AccOrbs_Param6, model.PSBL_PhotAstrom_AccOrbs_Param7,
+                        model.PSBL_PhotAstrom_CircOrbs_Param1, model.PSBL_PhotAstrom_CircOrbs_Param3,
+                        model.PSBL_PhotAstrom_CircOrbs_Param4, model.PSBL_PhotAstrom_CircOrbs_Param8,
+                        model.PSBL_PhotAstrom_EllOrbs_Param1, model.PSBL_PhotAstrom_EllOrbs_Param3,
+                        model.PSBL_PhotAstrom_EllOrbs_Param4, model.PSBL_PhotAstrom_EllOrbs_Param8]
+    
+    all_classes_bsbl =[model.BSBL_PhotAstromParam1,model.BSBL_PhotAstromParam2,
+                       model.BSBL_PhotAstrom_LinOrbs_Param1, model.BSBL_PhotAstrom_AccOrbs_Param1,
+                        model.BSBL_PhotAstrom_CircOrbs_Param1, model.BSBL_PhotAstrom_CircOrbs_Param2,
+                        model.BSBL_PhotAstrom_CircOrbs_Param1, model.BSBL_PhotAstrom_CircOrbs_Param2,
+                        model.BSBL_PhotAstrom_EllOrbs_Param1, model.BSBL_PhotAstrom_EllOrbs_Param2,
+                        model.BSBL_PhotAstrom_EllOrbs_Param1, model.BSBL_PhotAstrom_EllOrbs_Param2]
+    
+    all_classes_bspl = [model.BSPL_PhotAstrom_LinOrbs_Param1, model.BSPL_PhotAstrom_LinOrbs_Param2, model.BSPL_PhotAstrom_LinOrbs_Param3,
+        model.BSPL_PhotAstrom_LinOrbs_Param1, model.BSPL_PhotAstrom_LinOrbs_Param2, model.BSPL_PhotAstrom_LinOrbs_Param3,
+        model.BSPL_PhotAstrom_AccOrbs_Param1, model.BSPL_PhotAstrom_AccOrbs_Param2, model.BSPL_PhotAstrom_AccOrbs_Param3,
+        model.BSPL_PhotAstrom_AccOrbs_Param1, model.BSPL_PhotAstrom_AccOrbs_Param2, model.BSPL_PhotAstrom_AccOrbs_Param3,
+        model.BSPL_PhotAstrom_CircOrbs_Param1, model.BSPL_PhotAstrom_CircOrbs_Param2, model.BSPL_PhotAstrom_CircOrbs_Param3,
+        model.BSPL_PhotAstrom_CircOrbs_Param1, model.BSPL_PhotAstrom_CircOrbs_Param2, model.BSPL_PhotAstrom_CircOrbs_Param3,
+        model.BSPL_PhotAstrom_EllOrbs_Param1, model.BSPL_PhotAstrom_EllOrbs_Param2, model.BSPL_PhotAstrom_EllOrbs_Param3,
+        model.BSPL_PhotAstrom_EllOrbs_Param1, model.BSPL_PhotAstrom_EllOrbs_Param2, model.BSPL_PhotAstrom_EllOrbs_Param3]
+    
+    import re
+    import inspect
+    
+    check_keys = model_fitter.MicrolensSolver.default_priors.keys()
+    
+    def check_lengths(carg):
+        fitter_params = carg.fitter_param_names + carg.phot_param_names
+        #print("Fitter count :", len(fitter_params)) 
+    
+        missing_params = [i for i in fitter_params if i not in check_keys]
+    
+        if missing_params:
+            print(f"Missing {len(missing_params)} parameters in default_priors:")
+            for p in missing_params:
+                print(f"- {p}")
+            unmatched.append((carg, missing_params))
+    
+    
+    for i in all_classes_pspl:
+        check_lengths(i)
+    
+    for i in all_classes_psbl:
+        check_lengths(i)
+    
+    for i in all_classes_bsbl:
+        check_lengths(i)
+    
+    
+    for i in all_classes_bspl:
+        check_lengths(i)
+        
 
 def test_PSPL_other(plot=False):
     mL = 10.0  # msun
