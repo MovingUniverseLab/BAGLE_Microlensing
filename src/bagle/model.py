@@ -19837,18 +19837,19 @@ class FSPL(PSPL):
         d_angles3 = d_angles ** 3
 
         # Do the contour integrals.
-        # Equations from Bozza+ 2021 (Eq 9)
+        # Equations from Bozza+ 2021 (Eq 9). EQ38 in BAGLE paper (big omega)
         Aplus = -(1. / 2) * np.sum(b2_plus[:, :, 1] * d1_plus[:, :, 0], axis=1)
         Aminus = (1. / 2) * np.sum(b2_minus[:, :, 1] * d1_minus[:, :, 0], axis=1)
 
-        # Parabolic correction (Eq 10)
+        # Parabolic correction (Eq 10). EQ39 in BAGLE paper (d-Big Omega)
         Aplus += (1. / 24) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus), axis=1)
         Aminus += -(1. / 24) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus), axis=1)
 
-        # Centroid equations (Eq. 19)
+        # Centroid equations (Eq. 19). EQ42 in BAGLE paper
         Cplus_x = (1. / 8.0) * np.sum(b2_plus[:, :, 0] ** 2 * d1_plus[:, :, 1], axis=1)
         Cplus_y = -(1. / 8.0) * np.sum(b2_plus[:, :, 1] ** 2 * d1_plus[:, :, 0], axis=1)
 
+        # Centroid equations (Eq. 19). EQ43 in BAGLE paper
         Cminus_x = -(1. / 8.0) * np.sum(b2_minus[:, :, 0] ** 2 * d1_minus[:, :, 1], axis=1)
         Cminus_y = (1. / 8.0) * np.sum(b2_minus[:, :, 1] ** 2 * d1_minus[:, :, 0], axis=1)
 
@@ -19930,19 +19931,24 @@ class FSPL(PSPL):
         days_in_a_year = 365.25
         
 
+        # Convert to imaginary numbers with East = real, North = imag
+        # Put everything in units of thetaE
         source_unlensed = (self.xS0 *1e3) / self.thetaE_amp
-        #pdb.set_trace()
+
         center = (source_unlensed)[0] + 1j * (source_unlensed)[1]
         rad = self.radiusS / self.thetaE_amp * 1e3
-        
-        traj = self.muS[0]+ 1j * self.muS[1]   
+
+        # Convert the proper motion to complex
+        traj = self.muS[0] + 1j * self.muS[1]   
         traj = traj / self.thetaE_amp
 
         maxsamps = 1000
         
         if self.n_outline >= maxsamps/4:
             maxsamps = maxsamps * 5
-        
+
+        # wIms is the lensed image positions for the + and - image.
+        # Shape = N_times, N_outline, [+/-]
         wIms = np.zeros((len(t), maxsamps, 2), dtype=complex)
         counts = np.zeros(len(t), dtype=int)
         thetas = np.zeros((len(t), maxsamps))   
@@ -19952,7 +19958,7 @@ class FSPL(PSPL):
 
         t = (t - self.t0)/days_in_a_year
 
-
+        # Calculate the lensed outline positions.
         for i in range(len(t)):
             z1_int = lens_asts[i]               
             z1 = z1_int[0] + 1j * z1_int[1]       
@@ -19975,8 +19981,9 @@ class FSPL(PSPL):
             
         
             counts[i] = count
-        
-        
+
+
+        # Convert back to arcsec
         wIms = (wIms * self.thetaE_amp) * 1e-3
 
         n_times = len(counts)
@@ -20045,14 +20052,12 @@ class FSPL(PSPL):
         Cplus_x, Cplus_y = np.array(Cplus_x), np.array(Cplus_y) 
         Cminus_x, Cminus_y = np.array(Cminus_x), np.array(Cminus_y)
         
-        
         amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
         amp_minus = np.abs(Aminus) / (np.pi * self.radiusS ** 2)
         
-        
         img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])  #Units to mas
         img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])  #Units to mas
-        
+
         images = np.zeros((len(t), 2, 2), dtype=float)
         images[:, 0, :] = img_pos_plus.T
         images[:, 1, :] = img_pos_minus.T
@@ -20062,6 +20067,7 @@ class FSPL(PSPL):
         
         amps_interim = np.array((interim_plus, interim_minus)).T  
         amps = np.array((interim_plus,interim_minus)).T
+
         
         return images, amps
 
