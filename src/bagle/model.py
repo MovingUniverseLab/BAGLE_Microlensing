@@ -20010,6 +20010,8 @@ class FSPL(PSPL):
         
             px[:n], py[:n] = plus_x, plus_y
             qx[:n], qy[:n] = minus_x, minus_y
+            # Temporarily duplicate the first point as the last point
+            # to speed up our contour integrals.
             px[n], py[n] = plus_x[0], plus_y[0]
             qx[n], qy[n] = minus_x[0], minus_y[0]
         
@@ -20022,7 +20024,8 @@ class FSPL(PSPL):
             d2_py = np.diff(np.append(d1_py, d1_py[0]))
             d2_qx = np.diff(np.append(d1_qx, d1_qx[0]))
             d2_qy = np.diff(np.append(d1_qy, d1_qy[0]))
-            # Eq 9 areas
+            
+            # Eq 9 areas Bozza 2021.
             Aplus[i]  = -0.5 * np.sum((px[:-1]+px[1:]) * d1_py)
             Aminus[i] =  0.5 * np.sum((qx[:-1]+qx[1:]) * d1_qy)
 
@@ -20031,7 +20034,7 @@ class FSPL(PSPL):
             d_angles3 = d_angles ** 3
             
             #pdb.set_trace()
-            # Eq 10 areas
+            # Eq 10 areas Bozza 2021.
 
             wp_d1_d2_i_plus = d1_px[:-1] * d2_py[:-1] - d1_py[:-1] * d2_px[:-1]
             wp_d1_d2_ip1_plus = d1_px[1:] * d2_py[1:] - d1_py[1:] * d2_px[1:]
@@ -20039,14 +20042,21 @@ class FSPL(PSPL):
             wp_d1_d2_ip1_minus = d1_qx[1:] * d2_qy[1:] - d1_qy[1:] * d2_qx[1:]
     
             Aplus[i] += (1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus))
-            Aplus[i] += -(1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus))
+            Aminus[i] += -(1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus))
         
-            # Eq 19 centroids
+            # Eq 19 Bozza centroids
             Cplus_x[i] =  0.125 * np.sum((px[:-1]+px[1:])**2 * d1_py)
             Cplus_y[i] = -0.125 * np.sum((py[:-1]+py[1:])**2 * d1_px)
             Cminus_x[i] = -0.125 * np.sum((qx[:-1]+qx[1:])**2 * d1_qy)
             Cminus_y[i] =  0.125 * np.sum((qy[:-1]+qy[1:])**2 * d1_qx)
-            
+
+            #Eq 21 and 22 Bozza 2021. Parabolic corrections
+
+            Cplus_x[i] += (1.0 / 24.0) * np.sum(d_angles3 * (d1_px[:-1]**2 * d1_py[:-1] + d1_px[:-1] * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus)))
+            Cplus_y[i] += -(1.0 / 24.0) * np.sum(d_angles3 * (d1_py[:-1]**2 * d1_px[:-1] + d1_py[:-1] * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus)))
+            Cminus_x[i] += -(1.0 / 24.0) * np.sum(d_angles3 * (d1_qx[:-1]**2 * d1_qy[:-1] + d1_qx[:-1] * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus)))
+            Cminus_y[i] += (1.0 / 24.0) * np.sum(d_angles3 * (d1_qy[:-1]**2 * d1_qx[:-1] + d1_qy[:-1] * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus)))
+        
         Aplus = np.array(Aplus)
         Aminus = np.array(Aminus)
         Cplus_x, Cplus_y = np.array(Cplus_x), np.array(Cplus_y) 
