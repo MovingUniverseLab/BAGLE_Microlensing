@@ -19729,29 +19729,7 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
 # ==================================================
 class FSPL(PSPL):
     """Finite-Source, Point-Lens models."""
-    def get_source_outline_astrometry(self, center):
-        """Return astrometric points that outline the outer circumference of the
-        source star. The outline is described as a circle of radius
-        self.radiusS and is evaluated at self.n_outline number of points.
-
-        Parameters
-        ----------
-        center : numpy array
-            Center position of the source. Shape = [2, len(time)]
-
-        Returns
-        -------
-        source_points : numpy array
-            Returns an array of ``shape = [2, self.n_outline, len(time)]``
-
-        """
-        sourcepos = []
-        for i in range(self.n_outline):
-            # (rcosa, rsina), # n positions of the boundary of the star equally spaced
-            sourcepos.append([center[0] + self.radiusS * np.cos((2 * i * np.pi) / (self.n_outline)),
-                              center[1] + self.radiusS * np.sin((2 * i * np.pi) / (self.n_outline))])
-        return np.array(sourcepos)
-
+    
     def get_all_arrays_CI(self, t, filt_idx=0):
         """
         Obtain the image and amplitude arrays for each t. These arrays
@@ -19851,12 +19829,19 @@ class FSPL(PSPL):
 
         # Centroid equations (Eq. 19). EQ43 in BAGLE paper
         Cminus_x = -(1. / 8.0) * np.sum(b2_minus[:, :, 0] ** 2 * d1_minus[:, :, 1], axis=1)
-        Cminus_y = (1. / 8.0) * np.sum(b2_minus[:, :, 1] ** 2 * d1_minus[:, :, 0], axis=1)
+        Cminus_y =  (1. / 8.0) * np.sum(b2_minus[:, :, 1] ** 2 * d1_minus[:, :, 0], axis=1)
 
         # Parabolic Correction
-        # Cplus_x +=  (1. / 24.) * np.sum((d1_plus[:, :, 0]**2 * d1_plus[:, :, 1]
-        #                                +d1_plus[:, :, 0] * wp_d1_d2_i_plus) + \
-        #                                (d1_plus[:, :])
+        #Eq 21 and 22 Bozza 2021. Parabolic corrections
+        Cplus_x  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_plus[:, :-1, 0]**2 * d1_plus[:, :-1, 1] + d1_plus[:, :-1, 0] * wp_d1_d2_i_plus) +
+                                                      (d1_plus[:, 1: , 0]**2 * d1_plus[:, 1: , 1] + d1_plus[:, 1:,  0] * wp_d1_d2_ip1_plus)), axis=1)
+        Cplus_y  += -(1. / 24.) * np.sum(d_angles3 * ((d1_plus[:, :-1, 1]**2 * d1_plus[:, :-1, 0] + d1_plus[:, :-1, 1] * wp_d1_d2_i_plus) +
+                                                      (d1_plus[:, 1:,  1]**2 * d1_plus[:, 1: , 0] + d1_plus[:, 1: , 1] * wp_d1_d2_ip1_plus)), axis=1)
+        Cminus_x += -(1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 0]**2 * d1_minus[:, :-1, 1] + d1_minus[:, :-1, 0] * wp_d1_d2_i_minus) +
+                                                      (d1_minus[:, 1: , 0]**2 * d1_minus[:, 1: , 1] + d1_minus[:, 1: , 0] * wp_d1_d2_ip1_minus)), axis=1)
+        Cminus_y +=  (1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 1]**2 * d1_minus[:, :-1, 0] + d1_minus[:, :-1, 1] * wp_d1_d2_i_minus) +
+                                                      (d1_minus[:, 1: , 1]**2 * d1_minus[:, 1: , 0] + d1_minus[:, 1: , 1] * wp_d1_d2_ip1_minus)), axis=1)
+        
 
         amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
         amp_minus = np.abs(Aminus) / (np.pi * self.radiusS ** 2)
@@ -19917,7 +19902,7 @@ class FSPL(PSPL):
         # Shape = [len(t), N_outline, [+,-], [E,N]]
         def im_pos1(w, z1):
             u = w - z1                
-            z_major = u * (1 + np.sqrt(1 + 4/np.abs(u)**2)) / 2
+            z_major = u * (1 + np.sqrt(1 + 4 / np.abs(u)**2)) / 2
             return z_major + z1       
         
         def im_pos_all(w, z1):
@@ -19926,73 +19911,78 @@ class FSPL(PSPL):
             return z_major, z_minor
         
         def detJac(z, z1):
-            return 1.0 - 1.0/np.abs(z - z1)**4
+            return 1.0 - 1.0 / np.abs(z - z1)**4
         
         days_in_a_year = 365.25
 
-        # Convert to imaginary numbers with East = real, North = imag
         # Put everything in units of thetaE
-        source_unlensed = (self.xS0 *1e3) / self.thetaE_amp
+        xS0 = (self.xS0 * 1e3) / self.thetaE_amp   # unit = thetaE
+        radiusS = self.radiusS * 1e3 / self.thetaE_amp # unit = thetaE
 
-        center = (source_unlensed)[0] + 1j * (source_unlensed)[1]
-        rad = self.radiusS / self.thetaE_amp * 1e3
-
-        # Convert the proper motion to complex
-        traj = self.muS[0] + 1j * self.muS[1]   
-        traj = traj / self.thetaE_amp
+        # Convert to imaginary numbers with East = real, North = imag
+        xS0_cplx = xS0[0] + 1j * xS0[1]
+        muS_cplx = (self.muS[0] + 1j * self.muS[1]) / self.thetaE_amp
 
         maxsamps = 1000
         
-        if self.n_outline >= maxsamps/4:
+        if self.n_outline >= maxsamps / 4:
             maxsamps = maxsamps * 5
 
         # wIms is the lensed image positions for the + and - image.
         # Shape = N_times, N_outline, [+/-]
-        wIms = np.zeros((len(t), maxsamps, 2), dtype=complex)
+        wIms   = np.zeros((len(t), maxsamps, 2), dtype=complex)
         counts = np.zeros(len(t), dtype=int)
-        thetas = np.zeros((len(t), maxsamps))   
+        thetas = np.zeros((len(t), maxsamps))
             
         dtheta = 2 * np.pi / self.n_outline
         lens_asts = self.get_lens_astrometry(t) / self.thetaE_amp  * 1e3 #thetaE
 
-        t = (t - self.t0) / days_in_a_year
+        t_year = (t - self.t0) / days_in_a_year
 
         # Calculate the number of points that should be used
         # to do the contour integration with good accuracy.
+        z1 = lens_asts[:, 0] + 1j * lens_asts[:, 1]
+        w_center = xS0_cplx + t_year * muS_cplx
+
         for i in range(len(t)):
-            z1_int = lens_asts[i]               
-            z1 = z1_int[0] + 1j * z1_int[1]
-            w_center = center + t[i] * traj
             theta = 0.0
             count = 0
             while (theta < 2*np.pi) and (count < maxsamps):
-                w_now = w_center + rad * np.exp(1j*theta)
+                w_now = w_center[i] + radiusS * np.exp(1j * theta)
             
-                zp, zm = im_pos_all(w_now, z1)
+                zp, zm = im_pos_all(w_now, z1[i])
                 wIms[i, count, 0] = zp
                 wIms[i, count, 1] = zm
                 thetas[i, count] = theta
-
             
-                detp = np.abs(detJac(zp, z1))
-                detm = np.abs(detJac(zm, z1))
+                detp = np.abs(detJac(zp, z1[i]))
+                detm = np.abs(detJac(zm, z1[i]))
                 theta += dtheta * min(detp, detm)
                 count += 1
         
             counts[i] = count
 
+        # Digitize counts into a few unique bins. (N_c_bins
+        # This speeds up the calculations later.
+        # cmin = counts.min()
+        # cmax = counts.max()
+        # N_c_bins = 4
+        # cnt_bins = np.geomspace(cmin, cmax+1, num=N_c_bins).astype('int')
+        # cnt_bins = np.insert(cnt_bins, 0, 1)  # append a left bin in prep for digitize
+        #
+        # idx = np.digitize(counts, cnt_bins, right=True)
+        # counts = cnt_bins[idx]
 
         # Convert back to arcsec
         wIms = (wIms * self.thetaE_amp) * 1e-3
 
         n_times = len(counts)
-        Aplus = np.zeros(n_times)
-        Aminus = np.zeros(n_times)
-        Cplus_x = np.zeros(n_times)
-        Cplus_y = np.zeros(n_times)
-        Cminus_x = np.zeros(n_times)
-        Cminus_y = np.zeros(n_times)
-
+        Aplus = np.zeros(n_times, dtype=float)
+        Aminus = np.zeros(n_times, dtype=float)
+        Cplus_x = np.zeros(n_times, dtype=float)
+        Cplus_y = np.zeros(n_times, dtype=float)
+        Cminus_x = np.zeros(n_times, dtype=float)
+        Cminus_y = np.zeros(n_times, dtype=float)
 
         for i in range(n_times):
             n = counts[i]
@@ -20044,20 +20034,20 @@ class FSPL(PSPL):
             Aminus[i] += -(1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus))
         
             # Eq 19 Bozza centroids
-            Cplus_x[i]  =  0.125 * np.sum((px[:-1]+px[1:])**2 * d1_py)
-            Cplus_y[i]  = -0.125 * np.sum((py[:-1]+py[1:])**2 * d1_px)
-            Cminus_x[i] = -0.125 * np.sum((qx[:-1]+qx[1:])**2 * d1_qy)
-            Cminus_y[i] =  0.125 * np.sum((qy[:-1]+qy[1:])**2 * d1_qx)
+            Cplus_x[i]  =  0.125 * np.sum((px[:-1] + px[1:])**2 * d1_py)
+            Cplus_y[i]  = -0.125 * np.sum((py[:-1] + py[1:])**2 * d1_px)
+            Cminus_x[i] = -0.125 * np.sum((qx[:-1] + qx[1:])**2 * d1_qy)
+            Cminus_y[i] =  0.125 * np.sum((qy[:-1] + qy[1:])**2 * d1_qx)
 
             #Eq 21 and 22 Bozza 2021. Parabolic corrections
-            Cplus_x[i]  +=  (1.0 / 24.0) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + d1_px[:-1] * wp_d1_d2_i_plus) +
-                                                               (d1_px[1:]**2  * d1_py[1:]  + d1_px[1:]  * wp_d1_d2_ip1_plus)))
-            Cplus_y[i]  += -(1.0 / 24.0) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + d1_py[:-1] * wp_d1_d2_i_plus) +
-                                                               (d1_py[1:]**2  * d1_px[1:]  + d1_py[1:]  * wp_d1_d2_ip1_plus)))
-            Cminus_x[i] += -(1.0 / 24.0) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + d1_qx[:-1] * wp_d1_d2_i_minus) +
-                                                               (d1_qx[1:]**2  * d1_qy[1:]  + d1_qx[1:]  * wp_d1_d2_ip1_minus)))
-            Cminus_y[i] +=  (1.0 / 24.0) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + d1_qy[:-1] * wp_d1_d2_i_minus) +
-                                                               (d1_qy[1:]**2  * d1_qx[1:]  + d1_qy[1:]  * wp_d1_d2_ip1_minus)))
+            Cplus_x[i]  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + d1_px[:-1] * wp_d1_d2_i_plus) +
+                                                             (d1_px[1: ]**2 * d1_py[1: ] + d1_px[1: ] * wp_d1_d2_ip1_plus)))
+            Cplus_y[i]  += -(1. / 24.) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + d1_py[:-1] * wp_d1_d2_i_plus) +
+                                                             (d1_py[1: ]**2 * d1_px[1: ] + d1_py[1: ] * wp_d1_d2_ip1_plus)))
+            Cminus_x[i] += -(1. / 24.) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + d1_qx[:-1] * wp_d1_d2_i_minus) +
+                                                             (d1_qx[1: ]**2 * d1_qy[1: ] + d1_qx[1: ] * wp_d1_d2_ip1_minus)))
+            Cminus_y[i] +=  (1. / 24.) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + d1_qy[:-1] * wp_d1_d2_i_minus) +
+                                                             (d1_qy[1: ]**2 * d1_qx[1: ] + d1_qy[1: ] * wp_d1_d2_ip1_minus)))
         
         Aplus = np.array(Aplus)
         Aminus = np.array(Aminus)
@@ -20278,7 +20268,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             of the circular source. The last axis contains East/North positions.
         """
        
-        if self.n_outline!=False:
+        if self.n_outline != False:
         
             xS_unlensed_center = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)  # arcsec
     

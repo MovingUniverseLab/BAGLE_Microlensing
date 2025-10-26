@@ -3553,11 +3553,10 @@ def test_FSPL_PhotAstrom_source_centroid_shift(plot=False):
     if plot:
         plt.figure(1)
         plt.clf()
-        fig, ax = plt.subplots(figsize=(10, 10))
-        ax[0].set_title('Centroid Shift Comparison')
-        ax[0].plot(fspl_src_cent[:, 0], fspl_src_cent[:, 1], 'ko', label='fspl cent_shift')
-        ax[0].plot(fspl_lens_ast[:, 0], fspl_lens_ast[:, 1], 'ko', label='lens')
-        ax[0].legend()
+        plt.title('Centroid Shift Comparison')
+        plt.plot(fspl_src_cent[:, 0], fspl_src_cent[:, 1], 'ko', label='fspl cent_shift')
+        plt.plot(fspl_lens_ast[:, 0], fspl_lens_ast[:, 1], 'ks', label='lens')
+        plt.legend()
     return
     
 def test_FSPL_boundary(plot=False):
