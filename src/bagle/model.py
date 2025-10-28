@@ -538,6 +538,13 @@ class PSPL(ABC):
 
             xL += (self.piL * parallax_vec) * 1e-3  # arcsec
 
+        if self.ref_frame_parallax_flag:
+            # Get the parallax vector for each date.
+            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
+                                                          obsLocation=self.obsLocation[filt_idx])
+            xL += (self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
+            
+
         return xL
 
     def get_source_astrometry_unlensed(self, t, filt_idx=0):
@@ -1808,6 +1815,10 @@ class PSPL_Parallax(ParallaxClassABC):
 
         return xS0E_g, xS0N_g, muSE_g, muSN_g
 
+class PSPL_Parallax_RefFrame(PSPL_Parallax):
+    parallaxFlag = True
+    ref_frame_parallax_flag = True
+    
 
 # --------------------------------------------------
 #
@@ -3523,6 +3534,101 @@ class PSPL_PhotAstromParam3(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
+        return
+
+class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
+    """
+    Point Source Point Lens model for microlensing. This model includes
+    proper motions of the source and the source position on the sky.
+    It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
+    instead of thetaE.
+
+
+    Attributes	
+    ----------
+
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can be
+
+           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+           * negative (u0_amp < 0 when u0_hat[0] < 0).
+
+    tE : float
+        Einstein crossing time (days).
+    log10_thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+           :math:`b_sff = f_S / (f_S + f_L + f_N)`. 
+        This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base : numpy array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+
+    Notes
+    -----
+    
+    .. note:: Required parameters if calculating with parallax
+    
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location for each photometric
+                       dataset (def=['earth']) such as 'jwst' or 'spitzer'.
+                       Can be a single string if all observer locations are
+                       identical. Otherwise, array of same length as mag_src
+                       or b_sff (e.g. other photometric parameters).
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+                          'piE_E', 'piE_N',
+                          'xS0_E', 'xS0_N',
+                          'muS_E', 'muS_N', 'pi_ref_frame']
+    phot_param_names = ['b_sff', 'mag_base']
+    additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N',
+                              'mag_src']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 pi_ref_frame,
+                 b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth'):
+
+        self.super.__init__(t0, u0_amp, tE, log10_thetaE, piS,
+                            piE_E, piE_N,
+                            xS0_E, xS0_N,
+                            muS_E, muS_N,
+                            b_sff, mag_base,
+                            raL=raL, decL=decL, obsLocation=obsLocation)
+
+        self.pi_ref_frame = pi_ref_frame
 
         return
 
@@ -19833,14 +19939,14 @@ class FSPL(PSPL):
 
         # Parabolic Correction
         #Eq 21 and 22 Bozza 2021. Parabolic corrections
-        Cplus_x  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_plus[:, :-1, 0]**2 * d1_plus[:, :-1, 1] + d1_plus[:, :-1, 0] * wp_d1_d2_i_plus) +
-                                                      (d1_plus[:, 1: , 0]**2 * d1_plus[:, 1: , 1] + d1_plus[:, 1:,  0] * wp_d1_d2_ip1_plus)), axis=1)
-        Cplus_y  += -(1. / 24.) * np.sum(d_angles3 * ((d1_plus[:, :-1, 1]**2 * d1_plus[:, :-1, 0] + d1_plus[:, :-1, 1] * wp_d1_d2_i_plus) +
-                                                      (d1_plus[:, 1:,  1]**2 * d1_plus[:, 1: , 0] + d1_plus[:, 1: , 1] * wp_d1_d2_ip1_plus)), axis=1)
-        Cminus_x += -(1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 0]**2 * d1_minus[:, :-1, 1] + d1_minus[:, :-1, 0] * wp_d1_d2_i_minus) +
-                                                      (d1_minus[:, 1: , 0]**2 * d1_minus[:, 1: , 1] + d1_minus[:, 1: , 0] * wp_d1_d2_ip1_minus)), axis=1)
-        Cminus_y +=  (1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 1]**2 * d1_minus[:, :-1, 0] + d1_minus[:, :-1, 1] * wp_d1_d2_i_minus) +
-                                                      (d1_minus[:, 1: , 1]**2 * d1_minus[:, 1: , 0] + d1_minus[:, 1: , 1] * wp_d1_d2_ip1_minus)), axis=1)
+        Cplus_x  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_plus[:, :-1, 0]**2 * d1_plus[:, :-1, 1] + plus[:, :-2,   0] * wp_d1_d2_i_plus) +
+                                                      (d1_plus[:, 1: , 0]**2 * d1_plus[:, 1: , 1] + plus[:, 1:-1,  0] * wp_d1_d2_ip1_plus)), axis=1)
+        Cplus_y  += -(1. / 24.) * np.sum(d_angles3 * ((d1_plus[:, :-1, 1]**2 * d1_plus[:, :-1, 0] + plus[:, :-2,   1] * wp_d1_d2_i_plus) +
+                                                      (d1_plus[:, 1:,  1]**2 * d1_plus[:, 1: , 0] + plus[:, 1:-1 , 1] * wp_d1_d2_ip1_plus)), axis=1)
+        Cminus_x += -(1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 0]**2 * d1_minus[:, :-1, 1] + minus[:, :-2,  0] * wp_d1_d2_i_minus) +
+                                                      (d1_minus[:, 1: , 0]**2 * d1_minus[:, 1: , 1] + minus[:, 1:-1, 0] * wp_d1_d2_ip1_minus)), axis=1)
+        Cminus_y +=  (1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 1]**2 * d1_minus[:, :-1, 0] + minus[:, :-2,   1] * wp_d1_d2_i_minus) +
+                                                      (d1_minus[:, 1: , 1]**2 * d1_minus[:, 1: , 0] + minus[:, 1:-1 , 1] * wp_d1_d2_ip1_minus)), axis=1)
         
 
         amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
@@ -20040,14 +20146,14 @@ class FSPL(PSPL):
             Cminus_y[i] =  0.125 * np.sum((qy[:-1] + qy[1:])**2 * d1_qx)
 
             #Eq 21 and 22 Bozza 2021. Parabolic corrections
-            Cplus_x[i]  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + d1_px[:-1] * wp_d1_d2_i_plus) +
-                                                             (d1_px[1: ]**2 * d1_py[1: ] + d1_px[1: ] * wp_d1_d2_ip1_plus)))
-            Cplus_y[i]  += -(1. / 24.) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + d1_py[:-1] * wp_d1_d2_i_plus) +
-                                                             (d1_py[1: ]**2 * d1_px[1: ] + d1_py[1: ] * wp_d1_d2_ip1_plus)))
-            Cminus_x[i] += -(1. / 24.) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + d1_qx[:-1] * wp_d1_d2_i_minus) +
-                                                             (d1_qx[1: ]**2 * d1_qy[1: ] + d1_qx[1: ] * wp_d1_d2_ip1_minus)))
-            Cminus_y[i] +=  (1. / 24.) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + d1_qy[:-1] * wp_d1_d2_i_minus) +
-                                                             (d1_qy[1: ]**2 * d1_qx[1: ] + d1_qy[1: ] * wp_d1_d2_ip1_minus)))
+            Cplus_x[i]  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + px[:-2]  * wp_d1_d2_i_plus) +
+                                                             (d1_px[1: ]**2 * d1_py[1: ] + px[1:-1] * wp_d1_d2_ip1_plus)))
+            Cplus_y[i]  += -(1. / 24.) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + py[:-2]  * wp_d1_d2_i_plus) +
+                                                             (d1_py[1: ]**2 * d1_px[1: ] + py[1:-1] * wp_d1_d2_ip1_plus)))
+            Cminus_x[i] += -(1. / 24.) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + qx[:-2]  * wp_d1_d2_i_minus) +
+                                                             (d1_qx[1: ]**2 * d1_qy[1: ] + qx[1:-1] * wp_d1_d2_ip1_minus)))
+            Cminus_y[i] +=  (1. / 24.) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + qy[:-2]  * wp_d1_d2_i_minus) +
+                                                             (d1_qy[1: ]**2 * d1_qx[1: ] + qy[1:-1] * wp_d1_d2_ip1_minus)))
         
         Aplus = np.array(Aplus)
         Aminus = np.array(Aminus)
@@ -22660,6 +22766,20 @@ class PSPL_PhotAstrom_Par_Param3(ModelClassABC,
                                  PSPL_PhotAstromParam3):
     """
     Microlensing params with mag_base and log10_thetaE
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+@inheritdocstring
+class PSPL_PhotAstrom_RefPar_Param3(ModelClassABC,
+                                    PSPL_PhotAstrom,
+                                    PSPL_Parallax_RefFrame,
+                                    PSPL_PhotAstromParam3_RefPar):
+    """
+    Microlensing params with mag_base and log10_thetaE and a reference frame
+    parallax shift.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
