@@ -544,7 +544,6 @@ class PSPL(ABC):
                                                           obsLocation=self.obsLocation[filt_idx])
             xL += (self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
             
-
         return xL
 
     def get_source_astrometry_unlensed(self, t, filt_idx=0):
@@ -575,6 +574,13 @@ class PSPL(ABC):
                                                           obsLocation=self.obsLocation[filt_idx])
 
             xS_unlensed += (self.piS * parallax_vec) * 1e-3  # arcsec
+            
+        if self.ref_frame_parallax_flag:
+            # Get the parallax vector for each date.
+            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
+                                                          obsLocation=self.obsLocation[filt_idx])
+
+            xS_unlensed += (self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
 
         return xS_unlensed
 
@@ -782,6 +788,12 @@ class PSPL(ABC):
                                                           obsLocation=self.obsLocation[filt_idx])
             xS_unlensed += np.squeeze(self.piS * parallax_vec) * 1e-3  # arcsec
             xL_unlensed += np.squeeze(self.piL * parallax_vec) * 1e-3  # arcsec
+        if self.ref_frame_parallax_flag:
+            # Get the parallax vector for each date.
+            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
+                                                          obsLocation=self.obsLocation[filt_idx])
+            xS_unlensed += np.squeeze(self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
+            xL_unlensed += np.squeeze(self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
 
         # Equation of motion for the relative angular separation between the background source and lens.
         # Note, we don't just call get_centroid_shift() because parallax_vec calculation is repeated.
@@ -1665,6 +1677,7 @@ class ParallaxClassABC(ABC):
 
 class PSPL_noParallax(ParallaxClassABC):
     parallaxFlag = False
+    ref_frame_parallax_flag = False
 
     def calc_piE_ecliptic(self, filt_idx=0):
         """Not supported on this object."""
@@ -1675,6 +1688,7 @@ class PSPL_noParallax(ParallaxClassABC):
 
 class PSPL_Parallax(ParallaxClassABC):
     parallaxFlag = True
+    ref_frame_parallax_flag = False
     fixed_param_names = ['raL', 'decL']
     fixed_phot_param_names = ['obsLocation']
 
@@ -3577,6 +3591,8 @@ class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
         RA Source proper motion (mas/yr)
     muS_N : float
         Dec Source proper motion (mas/yr)
+    pi_ref_frame : float
+        parallax offset in the astrometric reference frame (mas)
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
         for each filter.
@@ -3621,7 +3637,7 @@ class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
                  b_sff, mag_base,
                  raL=None, decL=None, obsLocation='earth'):
 
-        self.super.__init__(t0, u0_amp, tE, log10_thetaE, piS,
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                             piE_E, piE_N,
                             xS0_E, xS0_N,
                             muS_E, muS_N,
@@ -6638,11 +6654,13 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 # --------------------------------------------------
 class PSBL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+    ref_frame_parallax_flag = False
     pass
 
 
 class PSBL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+    ref_frame_parallax_flag = False
     pass
 
 
@@ -12325,6 +12343,7 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
 class BSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+    ref_frame_parallax_flag = False
 
     def get_amplification(self, t):
         u_vec = self.get_u(t)
@@ -12342,6 +12361,7 @@ class BSPL_Parallax(PSPL_Parallax):
 
 class BSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+    ref_frame_parallax_flag = False
 
     def get_amplification(self, t):
         u_vec = self.get_u(t)
@@ -17560,11 +17580,13 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
 
 class BSBL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+    ref_frame_parallax_flag = False
 
     pass
 
 class BSBL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+    ref_frame_parallax_flag = False
 
     pass
 
@@ -21005,10 +21027,12 @@ class FSPL_Phot(FSPL):
 
 class FSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+    ref_frame_parallax_flag = False
 
 
 class FSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+    ref_frame_parallax_flag = False
 
 
 class FSPL_PhotParam2(PSPL_Param):
@@ -21553,10 +21577,12 @@ class FSPL_Limb(FSPL):
 
 class FSPL_Limb_noParallax(FSPL_noParallax):
     parallaxFlag = False
+    ref_frame_parallax_flag = False
 
 
 class FSPL_Limb_Parallax(FSPL_Parallax):
     parallaxFlag = True
+    ref_frame_parallax_flag = False
 
 
 # FIXME: Use super here
@@ -22374,10 +22400,12 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
 
 class BFSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+    ref_frame_parallax_flag = False
 
 
 class BFSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+    ref_frame_parallax_flag = False
 
 
 class BFSPL_PhotAstromParam1(PSPL_Param):
