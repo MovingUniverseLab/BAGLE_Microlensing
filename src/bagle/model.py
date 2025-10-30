@@ -119,7 +119,7 @@ Point source, point lens, astrometry only
     - :class:`PSPL_Astrom_Par_Param4`
     - :class:`PSPL_Astrom_Par_Param3`
 
-Point soruce, binary lens, photometry only
+Point source, binary lens, photometry only
 ------------------------------------------
     - :class:`PSBL_Phot_Par_Param1`
     - :class:`PSBL_Phot_noPar_Param1`
@@ -3555,9 +3555,9 @@ class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
     """
     Point Source Point Lens model for microlensing. This model includes
     proper motions of the source and the source position on the sky.
-    It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
-    instead of thetaE.
-
+    It is the same as PSPL_PhotAstromParam4_RefPar except it fits for log10(thetaE)
+    instead of thetaE. 
+    The RefPar version includes a term for a parallax reference frame offset.
 
     Attributes	
     ----------
@@ -3592,7 +3592,9 @@ class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
     muS_N : float
         Dec Source proper motion (mas/yr)
     pi_ref_frame : float
-        parallax offset in the astrometric reference frame (mas)
+        parallax offset in the astrometric reference frame (mas).
+        This is useful for astrometry derived from FlyStar w/ Parallax motion model
+        where absolute parallax reference frame could not be established.
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
         for each filter.
@@ -3807,6 +3809,105 @@ class PSPL_PhotAstromParam4(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
+        return
+
+class PSPL_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4):
+    """
+    Point Source Point Lens model for microlensing. This model includes
+    proper motions of the source and the source position on the sky.
+    It is the same as PSPL_PhotAstromParam3_RefPar except it fits for thetaE
+    instead of log10(thetaE). 
+    The RefPar version includes a term for a parallax reference frame offset.
+
+    Attributes  
+    ----------
+
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can be
+
+           * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+           * negative (u0_amp < 0 when u0_hat[0] < 0).
+
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    pi_ref_frame : float
+        parallax offset in the astrometric reference frame (mas).
+        This is useful for astrometry derived from FlyStar w/ Parallax motion model
+        where absolute parallax reference frame could not be established.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+           :math:`b_sff = f_S / (f_S + f_L + f_N)`. 
+        This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base : numpy array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+
+    Notes
+    -----
+    
+    .. note:: Required parameters if calculating with parallax
+    
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location for each photometric
+                       dataset (def=['earth']) such as 'jwst' or 'spitzer'.
+                       Can be a single string if all observer locations are
+                       identical. Otherwise, array of same length as mag_src
+                       or b_sff (e.g. other photometric parameters).
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE_amp', 'piS',
+                          'piE_E', 'piE_N',
+                          'xS0_E', 'xS0_N',
+                          'muS_E', 'muS_N', 'pi_ref_frame']
+    phot_param_names = ['b_sff', 'mag_base']
+    additional_param_names = ['log10_thetaE', 'mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N',
+                              'mag_src']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 pi_ref_frame,
+                 b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth'):
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                            piE_E, piE_N,
+                            xS0_E, xS0_N,
+                            muS_E, muS_N,
+                            b_sff, mag_base,
+                            raL=raL, decL=decL, obsLocation=obsLocation)
+
+        self.pi_ref_frame = pi_ref_frame
 
         return
 
@@ -22800,6 +22901,7 @@ class PSPL_PhotAstrom_Par_Param3(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+
 @inheritdocstring
 class PSPL_PhotAstrom_RefPar_Param3(ModelClassABC,
                                     PSPL_PhotAstrom,
@@ -22836,6 +22938,21 @@ class PSPL_PhotAstrom_Par_Param4(ModelClassABC,
                                  PSPL_PhotAstromParam4):
     """
     Microlensing params with mag_base
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_RefPar_Param4(ModelClassABC,
+                                    PSPL_PhotAstrom,
+                                    PSPL_Parallax_RefFrame,
+                                    PSPL_PhotAstromParam4_RefPar):
+    """
+    Microlensing params with mag_base and thetaE and a reference frame
+    parallax shift.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
