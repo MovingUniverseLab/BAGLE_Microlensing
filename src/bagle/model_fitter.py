@@ -19,7 +19,7 @@ import numpy as np
 import pylab as plt
 import scipy.stats
 import pymultinest
-import bagle.model as mmodel 
+import bagle.model as mmodel
 import bagle.frame_convert as fconv
 from astropy.table import Table
 from astropy.table import Row
@@ -130,7 +130,7 @@ class MicrolensSolver(Solver):
         data, uses parallax, and uses a parameterization that includes the
         distance to the source and the lens is: `PSPL_PhotAstrom_Par_Param1`.
 
-    custom_additional_param_names : list, optional 
+    custom_additional_param_names : list, optional
         If provided, the fitter will override the default
         `additional_param_names` of the model_class. These are the parameters,
         besides those that are being fitted for, that are written out to disk
@@ -213,7 +213,7 @@ class MicrolensSolver(Solver):
         # TODO: I don't think the above comment is accurate any more
         'gp_log_rho': ('make_norm_gen', 0, 5),
         'gp_log_S0': ('make_norm_gen', 0, 5),
-        'gp_log_sigma': ('make_norm_gen', 0, 5), 
+        'gp_log_sigma': ('make_norm_gen', 0, 5),
         'gp_rho':('make_invgamma_gen', None, None),
         'gp_log_omega0_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega04_S0':('make_norm_gen', 0, 5), # FIX... get from data
@@ -304,7 +304,7 @@ class MicrolensSolver(Solver):
         ----------
 
         use_phot_optional_params : bool, or list of bools, optional
-	    optional photometry parameters
+        optional photometry parameters
 
         single_gp: bool, optional
         Set as true if there are multiple datasets but only a single set
@@ -370,7 +370,7 @@ class MicrolensSolver(Solver):
 
         # Use "default" string to indicate default callback.
         # Otherwise, user specified and can be None for no dumping.
-        # The latter is important for NERSC runs. 
+        # The latter is important for NERSC runs.
         if dump_callback == 'default':
             self.dump_callback = self.callback_plotter
         else:
@@ -445,7 +445,7 @@ class MicrolensSolver(Solver):
                                 continue
                             else:
                                 phot_params.append(opt_phot_name + str(n_phot_sets))
-                    # Case: single value -- set for all filters. 
+                    # Case: single value -- set for all filters.
                     else:
                         if self.use_phot_optional_params:
                             if self.single_gp is True and n_phot_sets > 1:
@@ -464,7 +464,7 @@ class MicrolensSolver(Solver):
                     if isinstance(self.add_error_on_photometry, (list, np.ndarray)):
                         if self.add_error_on_photometry[n_phot_sets-1]:
                             phot_params.append('add_err' + str(n_phot_sets))
-                    # Case: single value -- set for all filters. 
+                    # Case: single value -- set for all filters.
                     else:
                         phot_params.append('add_err' + str(n_phot_sets))
                     
@@ -474,7 +474,7 @@ class MicrolensSolver(Solver):
                     if isinstance(self.multiply_error_on_photometry, (list, np.ndarray)):
                         if self.multiply_error_on_photometry[n_phot_sets-1]:
                             phot_params.append('mult_err' + str(n_phot_sets))
-                    # Case: single value -- set for all filters. 
+                    # Case: single value -- set for all filters.
                     else:
                         phot_params.append('mult_err' + str(n_phot_sets))
 
@@ -486,7 +486,7 @@ class MicrolensSolver(Solver):
                     if isinstance(self.use_ast_optional_params, (list, np.ndarray)):
                         if self.use_ast_optional_params[n_ast_sets-1]:
                             ast_params.append(opt_ast_name + str(n_ast_sets))
-                    # Case: single value -- set for all filters. 
+                    # Case: single value -- set for all filters.
                     else:
                         if self.use_ast_optional_params:
                             ast_params.append(opt_ast_name + str(n_ast_sets))
@@ -524,7 +524,7 @@ class MicrolensSolver(Solver):
             self.additional_param_names = []
             for cc, param_name in enumerate(self.custom_additional_param_names):
                 if param_name in self.multi_filt_params:
-                    # Special handling for gp params 
+                    # Special handling for gp params
                     if param_name in self.gp_params:
                         if self.use_phot_optional_params is True:
                             for ff in range(n_phot_sets):
@@ -545,8 +545,8 @@ class MicrolensSolver(Solver):
         else:
             self.additional_param_names = []
             for i, param_name in enumerate(self.model_class.additional_param_names):
-                if param_name in self.multi_filt_params:  
-                    # Special handling for gp params 
+                if param_name in self.multi_filt_params:
+                    # Special handling for gp params
                     if param_name in self.gp_params:
                         if self.use_phot_optional_params is True:
                             for nn in range(self.n_phot_sets):
@@ -617,7 +617,7 @@ class MicrolensSolver(Solver):
                 self.priors[param_name] = make_lognorm_gen(prior_mean, prior_std)
 
             if prior_type == 'make_truncnorm_gen':
-                prior_mean = foo[1] 
+                prior_mean = foo[1]
                 prior_std = foo[2]
                 prior_lo_cut = foo[3]
                 prior_hi_cut = foo[4]
@@ -625,7 +625,7 @@ class MicrolensSolver(Solver):
 
             if prior_type == 'make_invgamma_gen':
                 n_digits = len(param_name) - len(priors_name)
-                # Get the right indices. 
+                # Get the right indices.
                 num = int(param_name[-n_digits:])
                 self.priors[param_name] = make_invgamma_gen(self.data['t_phot' + str(num)])
 
@@ -671,8 +671,8 @@ class MicrolensSolver(Solver):
         params_dict = generate_params_dict(params,
                                            self.fitter_param_names)
         if self.fixed_param_names is not None:
-            fixed_params_dict = generate_fixed_params_dict(self.data, 
-                                                           self.fixed_param_names)        
+            fixed_params_dict = generate_fixed_params_dict(self.data,
+                                                           self.fixed_param_names)
 
             mod = self.model_class(*params_dict.values(), **fixed_params_dict)
 
@@ -714,20 +714,20 @@ class MicrolensSolver(Solver):
         cube_copy = np.append(cube_copy, add_params)
         # Strangely, get_model does the parameter updating for the additional parameters.
         # This should really be elsewhere FIXME.
-        model = self.get_model(cube_copy)  
+        model = self.get_model(cube_copy)
             
         return cube_copy
     
     # FIXME: I pass in ndim and nparams since that's what's done in Prior, but I don't think they're necessary?
     def Prior_from_post(self, cube, ndim=None, nparams=None):
         """Get the bin midpoints
-	"""
+        """
         binmids = []
         for bb in np.arange(len(self.post_param_bins)):
             binmids.append((self.post_param_bins[bb][:-1] + self.post_param_bins[bb][1:])/2)
 
         # Draw a random sample from the posteriors.
-        post_params = self.sample_post(binmids, self.post_param_cdf, self.post_param_bininds) 
+        post_params = self.sample_post(binmids, self.post_param_cdf, self.post_param_bininds)
 
         # Make the cube by combining the posterior draws and the 1-D priors.
         for i, param_name in enumerate(self.fitter_param_names):
@@ -739,7 +739,7 @@ class MicrolensSolver(Solver):
 
         return cube
 
-    def sample_post(self, binmids, cdf, bininds):  
+    def sample_post(self, binmids, cdf, bininds):
         """Randomly sample from a multinest posterior distribution.
 
         Parameters
@@ -770,9 +770,9 @@ class MicrolensSolver(Solver):
         for i in range(Npars):
             pars[i] = binmids[i][int(bininds[idx,i])]
             # Sample randomly within the bin width, so not just discreet points.
-            pars[i] += np.random.uniform() * (binmids[i][1] - binmids[i][0]) 
+            pars[i] += np.random.uniform() * (binmids[i][1] - binmids[i][0])
 
-        return pars 
+        return pars
 
     def LogLikelihood(self, cube, ndim=None, n_params=None):
         """This is just a wrapper because PyMultinest requires passing in
@@ -807,7 +807,7 @@ class MicrolensSolver(Solver):
                                                             self.data['xpos_err' + str(i+1)],
                                                             self.data['ypos_err' + str(i+1)],
                                                             filt_idx = i)
-                    lnL_ast += lnL_ast_i.sum() 
+                    lnL_ast += lnL_ast_i.sum()
 
             # If photometry
             else:
@@ -818,7 +818,7 @@ class MicrolensSolver(Solver):
                                                             self.data['xpos_err' + str(i+1)],
                                                             self.data['ypos_err' + str(i+1)],
                                                             filt_idx = self.map_phot_idx_to_ast_idx[i])
-                    lnL_ast += lnL_ast_i.sum() 
+                    lnL_ast += lnL_ast_i.sum()
         else:
             lnL_ast = 0
 
@@ -855,7 +855,7 @@ class MicrolensSolver(Solver):
 #        def get_cache_size():
 #            """Print out the cache size"""
 #            cache_file = mmodel.cache_dir + '/joblib/microlens/jlu/model/parallax_in_direction/'
-#            
+#
 #            size = 0
 #            for path, dirs, files in os.walk(cache_file):
 #                for f in files:
@@ -863,7 +863,7 @@ class MicrolensSolver(Solver):
 #                    size += os.path.getsize(fp)
 #
 #            return size
-#        
+#
 #        print(f'Cache size = {get_cache_size()}')
 
         lnL_phot = self.log_likely_photometry(model, cube)
@@ -919,7 +919,7 @@ class MicrolensSolver(Solver):
     # Code for randomly sampling prior
 #    def log_likely0(self, cube, verbose=False):
 #        """
-#	 Parameters
+#        Parameters
 #        _____________
 #        cube : list or dict
 #            The dictionary or cube of the model parameters.
@@ -937,7 +937,7 @@ class MicrolensSolver(Solver):
 #        with open("piEN.txt", "a") as f:
 #            t = cube[6]
 #            f.write(str(t) + '\n')
-#            
+#
 #        return -1
 
 
@@ -962,13 +962,13 @@ class MicrolensSolver(Solver):
                 mult_err = cube[mult_err_idx]
             mag_err *= mult_err
 
-        return mag_err        
+        return mag_err
 
 
     def write_params_yaml(self):
         """
         Write a YAML file that contains the parameters to re-initialize
-        this object, if desired. 
+        this object, if desired.
         """
         params = {}
 
@@ -1203,8 +1203,8 @@ class MicrolensSolver(Solver):
 
         Returns
         -------
-        Either a dicitonary or a tuple of length=2 holding 
-        two dictionaries, one for values and one for uncertainty ranges. 
+        Either a dicitonary or a tuple of length=2 holding
+        two dictionaries, one for values and one for uncertainty ranges.
         See calc_best_fit() for details.
         """
         tab = self.load_mnest_results()
@@ -1226,7 +1226,7 @@ class MicrolensSolver(Solver):
         -------
         Either a list of dicitonaries or a list where each entry is
         a tuple of length=2 holding two dictionaries, one for values
-        and one for uncertainty ranges. 
+        and one for uncertainty ranges.
         See calc_best_fit() for details.
         """
         tab_list = self.load_mnest_modes()
@@ -1384,7 +1384,7 @@ class MicrolensSolver(Solver):
         stats = self.load_mnest_summary(remake_fits=remake_fits)
         stats = stats[0]
 
-        # Load up all of the parameters. 
+        # Load up all of the parameters.
         data_tab = self.load_mnest_results(remake_fits=remake_fits)
             
         # Sort the samples by increasing log-like.
@@ -1411,8 +1411,8 @@ class MicrolensSolver(Solver):
 
 
     def load_mnest_modes_results_for_dynesty(self, remake_fits=False):
-        """Make a Dynesty-style results object that can 
-        be used in the nicer plotting codes. 
+        """Make a Dynesty-style results object that can
+        be used in the nicer plotting codes.
         """
         results_list = []
 
@@ -1420,7 +1420,7 @@ class MicrolensSolver(Solver):
         stats = self.load_mnest_summary(remake_fits=remake_fits)
         stats = stats[1:]
 
-        # Load up all of the parameters. 
+        # Load up all of the parameters.
         modes_list = self.load_mnest_modes(remake_fits=remake_fits)
 
         for num, data_tab in enumerate(modes_list, start=0):
@@ -1435,7 +1435,7 @@ class MicrolensSolver(Solver):
             for ff in range(len(self.all_param_names)):
                 samples[:, ff] = data_tab[self.all_param_names[ff]].astype(np.float64)
 
-            logZ = stats['logZ'][num] # are these in the same order? 
+            logZ = stats['logZ'][num] # are these in the same order?
             logvol = np.log(weights) - loglike + logZ
             logvol = logvol - logvol.max()
             
@@ -1451,7 +1451,7 @@ class MicrolensSolver(Solver):
         Parameters
         ----------
         sim_vals : dict
-            Dictionary of simulated input or comparison values to 
+            Dictionary of simulated input or comparison values to
             overplot on posteriors.
 
         fit_vals : str
@@ -1521,7 +1521,7 @@ class MicrolensSolver(Solver):
         Parameters
         ----------
         sim_vals : dict
-            Dictionary of simulated input or comparison values to 
+            Dictionary of simulated input or comparison values to
             overplot on posteriors.
 
         fit_vals : str
@@ -1659,7 +1659,7 @@ class MicrolensSolver(Solver):
                     fig = plot_photometry(self.data, model, input_model=input_model,
                                           dense_time=True, residuals=True,
                                           filt_index=i, mnest_results=mnest_results,
-                                          zoomx=zoomxi, zoomy=zoomyi, zoomy_res=zoomy_resi, 
+                                          zoomx=zoomxi, zoomy=zoomyi, zoomy_res=zoomy_resi,
                                           gp=gp, fitter=fitter, N_traces=N_traces)
                     fig.savefig(self.outputfiles_basename
                                 + 'phot_and_residuals_'
@@ -2209,7 +2209,7 @@ class MicrolensSolver(Solver):
             chi_x_list = []
             chi_y_list = []
 
-            for nn in range(self.n_ast_sets):                        
+            for nn in range(self.n_ast_sets):
                 t_ast = self.data['t_ast' + str(nn + 1)]
                 x_obs = self.data['xpos' + str(nn + 1)]
                 y_obs = self.data['ypos' + str(nn + 1)]
@@ -2259,7 +2259,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
     Soliver where the likelihood function has each data
     set weigthed equally (i.e. not the natural weighting by
     the number of points; but rather each contributes
-    1/n_k where n is the number of data points and k is the data set. 
+    1/n_k where n is the number of data points and k is the data set.
     """
     def __init__(self, data, model_class,
                  custom_additional_param_names=None,
@@ -2325,7 +2325,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
     
     def calc_weights(self, weights):
         """
-        order of weight_arr is 
+        order of weight_arr is
         `[phot_1, phot_2, ... phot_n, ast_1, ast_2, ... ast_n]`
         """
         weights_arr = np.ones(self.n_phot_sets + self.n_ast_sets)
@@ -2376,13 +2376,13 @@ class MicrolensSolverWeighted(MicrolensSolver):
             for i in range(self.n_phot_sets):
                 n_i = len(self.data['t_phot' + str(i + 1)])
                 weights_arr[i] = (1.0 / n_i)
-                weights_sum += weights_arr[i]
+                weights_sum += (1.0 / n_i)
                 
             # Astrometry weight
             for i in range(self.n_ast_sets):
                 n_i = 2*len(self.data['t_ast' + str(i + 1)])
                 weights_arr[self.n_phot_sets + i] = (1.0 / n_i)
-                weights_sum += weights_arr[i]
+                weights_sum += (1.0 / n_i)
 
             return weights_arr * n_sets / weights_sum
 
@@ -2456,7 +2456,7 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
     def log_likely(self, cube, verbose=False):
         """
         Compute a log-likelihood where there is a hyperparameter,
-        alpha_k, that controls the weighting between each data k set. 
+        alpha_k, that controls the weighting between each data k set.
         This algorithm is described in Hobson et al. 2002.
        
         Specifically, we are implementing Eq. 35.
@@ -2561,7 +2561,7 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
     def hobson_weight_log_likely(self, ln_prob_dk_giv_ak_1):
         """
         Implement a data-set-specific weighting scheme by using
-        a hyperparameter, alpha_k, for the kth data set as 
+        a hyperparameter, alpha_k, for the kth data set as
         described in Hobson et al. 2002.
 
         Specifically, we are implementing Eq. 16 and 23-27, with the
@@ -2707,7 +2707,7 @@ def make_log10norm_gen(mean_in_log10, std_in_log10):
     ----------
     mean:
         mean of the underlying log10 gaussian (i.e. a log10 quantity)
-    std: 
+    std:
         variance of underlying log10 gaussian
     """
     # Convert mean and std from log10 to ln.
@@ -2773,7 +2773,7 @@ def make_mag_src_gen(mag):
     """
     mean, med, std = sigma_clipped_stats(mag, sigma_lower=2, sigma_upper=4)
 
-    gen = make_gen(mean - 1, mean + 5) 
+    gen = make_gen(mean - 1, mean + 5)
 
     return gen
 
@@ -2807,9 +2807,9 @@ def make_muS_EN_gen(t, pos, scale_factor=100.0, verbose = False):
 
     Parameters
     ----------
-    t: 
+    t:
         array of times in days
-    pos: 
+    pos:
         array of positions in arcsec
 
     Returns
@@ -2845,9 +2845,9 @@ def make_muS_EN_norm_gen(t, pos, n_use=None, scale_factor=10.0):
 
     Parameters
     ----------
-    t: 
+    t:
         array of times in days
-    pos: 
+    pos:
         array of positions in arcsec
 
     Returns
@@ -2905,7 +2905,7 @@ def make_invgamma_gen(t_arr):
 
     Parameters
     ----------
-    t_arr: 
+    t_arr:
         time array
 
     """
@@ -2991,15 +2991,15 @@ def weighted_quantile(values, quantiles, sample_weight=None,
     
     Parameters
     ----------
-    values: 
+    values:
         numplt.array with data
-    quantiles: 
+    quantiles:
         array-like with many quantiles needed
-    sample_weight: 
+    sample_weight:
         array-like of the same length as `array`
-    values_sorted: bool, 
+    values_sorted: bool,
         if True, then will avoid sorting of initial array
-    old_style: 
+    old_style:
         if True, will correct output to be consistent with numplt.percentile.
    
     Returns
@@ -3007,7 +3007,7 @@ def weighted_quantile(values, quantiles, sample_weight=None,
     arr:
         numplt.array with computed quantiles.
 
-    Notes 
+    Notes
     -----
 
     .. note:: quantiles should be in [0, 1]!
@@ -3061,7 +3061,7 @@ def split_param_filter_index1(s):
 def generate_params_dict(params, fitter_param_names):
     """
     Take a list, dictionary, or astropy Row of fit parameters
-    and extra parameters and convert it into a well-formed dictionary 
+    and extra parameters and convert it into a well-formed dictionary
     that can be fed straight into a model object.
 
     The output object will only contain parameters specified
@@ -3074,12 +3074,12 @@ def generate_params_dict(params, fitter_param_names):
     params : list, dict, Row
         Contains values of parameters. Note that if the
         params are in a list, they need to be in the same
-        order as fitter_param_names. If the params are in 
+        order as fitter_param_names. If the params are in
         a dict or Row, then order is irrelevant.
 
     fitter_param_names : list
         The names of the parameters that will be
-        delivered, in order, in the output. 
+        delivered, in order, in the output.
 
     Returns
     -------
@@ -3112,7 +3112,7 @@ def generate_params_dict(params, fitter_param_names):
             # Handle filter dependent parameters... 2 cases (list=required vs. dict=optional)
             
             if filt_param in multi_list:
-                # Handle the filter-dependent fit parameters (required params).  
+                # Handle the filter-dependent fit parameters (required params).
                 # They need to be grouped as a list for input into a model.
                 if filt_param not in params_dict:
                     params_dict[filt_param] = []
@@ -3120,7 +3120,7 @@ def generate_params_dict(params, fitter_param_names):
                 # Add this filter to our list.
                 params_dict[filt_param].append(params[key])
             if filt_param in multi_dict:
-                # Handle the optional filter-dependent fit parameters (required params).  
+                # Handle the optional filter-dependent fit parameters (required params).
                 # They need to be grouped as a dicionary for input into a model.
                 if filt_param not in params_dict:
                     params_dict[filt_param] = {}
@@ -3363,7 +3363,7 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
         f1.plot(mod_t, mod_m_in, 'g-', label='Input')
     f1.plot(mod_t, mod_m_out, 'r-', label='Model')
     if gp and mod_m_out_std is not None:
-        f1.fill_between(mod_t, mod_m_out+mod_m_out_std, mod_m_out-mod_m_out_std, 
+        f1.fill_between(mod_t, mod_m_out+mod_m_out_std, mod_m_out-mod_m_out_std,
                         color='r', alpha=0.3, edgecolor="none")
     f1.set_ylabel('I (mag)')
     f1.invert_yaxis()
@@ -3392,7 +3392,7 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
 #            # FIXME 2: there needs to be a way to deal with multiples in additional_param_names
 #            params_dict = generate_params_dict(mnest_results[idx],
 #                                               mnest_results.colnames)
-#            
+#
 #            trace_mod = model.__class__(**params_dict,
 #                                        raL=model.raL,
 #                                        decL=model.decL)
@@ -3445,7 +3445,7 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
                        N_traces=50, gp=False, fitter=None):
 
     gs_kw = dict(height_ratios=[1,2,1])
-    fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, sharex=True, 
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, sharex=True,
                                         figsize=(15,15),
                                         gridspec_kw=gs_kw)
 #    plt.clf()
@@ -3542,7 +3542,7 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
             ax3.set_ylim(zoomy_res[0], zoomy_res[1])
     
         return fig
-    else:    
+    else:
         return None
 
 def plot_astrometry(data, model, input_model=None, dense_time=True,
@@ -3585,7 +3585,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     else:
         t_mod = dat_t
 
-    # Long time    
+    # Long time
     # baseline = np.max((2*(dat_t.max() - dat_t.min()), 5*model.tE))
     # longtime = np.arange(model.t0 - baseline, model.t0 + baseline, 1)
     baseline = 3*(dat_t.max() - dat_t.min())
@@ -3965,7 +3965,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     plt.ylabel(r'$\Delta \delta$ (mas) - $\Delta \delta_{unlensed}$')
     plt.legend()
 
-    # Astrometry on sky, proper motion removed, in Color-time    
+    # Astrometry on sky, proper motion removed, in Color-time
     # Prep some colorbar stuff
     cmap = plt.cm.viridis
     norm = plt.Normalize(vmin=t_long.min(), vmax=t_long.max())
@@ -4006,7 +4006,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
 
 def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
-    """Astrometry on the sky in all available filters. 
+    """Astrometry on the sky in all available filters.
     """
     # Setup all the figures
     N_figures = 6
@@ -4022,7 +4022,7 @@ def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
     #
     # Decide if we sample the models at a denser time, or just the
     # same times as the measurements.
-    t_dat = []  # Temporary to get all times. 
+    t_dat = []  # Temporary to get all times.
     for ff in range(fitter.n_ast_sets):
         t_dat = np.append(t_dat, data['t_ast' + str(ff + 1)].tolist())
     tdat_min = t_dat.min()
@@ -4092,7 +4092,7 @@ def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
     
 
     #####
-    # Plot On-Sky Astrometry 
+    # Plot On-Sky Astrometry
     #####
     fig = fig_list[0]
     ax = fig.gca()
@@ -4248,7 +4248,7 @@ def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
                    cmap=cmap, norm=norm, s=50,
                      label=f'Data {ff+1}')
         ax.errorbar(p_dat[ff][:, 0] - p_mod_unlens_tdat[ff][:, 0],
-                     p_dat[ff][:, 1] - p_mod_unlens_tdat[ff][:, 1],                        
+                     p_dat[ff][:, 1] - p_mod_unlens_tdat[ff][:, 1],
                      xerr=pe_dat[ff][:, 0], yerr=pe_dat[ff][:, 1],
                      fmt='none', ecolor=smap.to_rgba(t_dat[ff]), alpha=alphas[ff])
         
@@ -4312,7 +4312,7 @@ def plot_astrometry_on_sky(data, model, data_filt_index=0):
         suff = str(ii+1)
         plt.errorbar(data['t_ast'+suff], data['xpos'+suff]*1e3,
                      yerr=data['xpos_err'+suff]*1e3,
-                     marker='.', color=ast_colors[ii], ls='none', 
+                     marker='.', color=ast_colors[ii], ls='none',
                      label=data['ast_data'][ii])
 
     plt.plot(t_mod, pos_out[:, 0]*1e3, 'r-', label='Src-Lensed')
@@ -4410,7 +4410,7 @@ def plot_astrometry_proper_motion_removed(data, model, data_filt_index=0):
         x = data['xpos'+suff] - (model.muS[0] * 1e-3 * (data['t_ast'+suff] - model.t0) / 365.25)
         plt.errorbar(data['t_ast'+suff], x*1e3,
                      yerr=data['xpos_err'+suff]*1e3,
-                     marker='.', color=ast_colors[ii], 
+                     marker='.', color=ast_colors[ii],
                      ls='none', label=data['ast_data'][ii])
 
     plt.plot(t_mod, pos_out[:, 0]*1e3, 'r-', label='Src-Lensed')
@@ -4590,7 +4590,7 @@ def postplot(results, span=None, quantiles=[0.025, 0.5, 0.975], q_color = 'gray'
              labels=None, label_kwargs=None,
              show_titles=False, title_fmt=".2f", title_kwargs=None,
              truths1=None, truths2=None, truth_color1='red', truth_color2='blue',
-             truth_kwargs1=None, truth_kwargs2=None, 
+             truth_kwargs1=None, truth_kwargs2=None,
              verbose=False, fig=None):
     """
     Plot marginalized posteriors for each parameter.
@@ -4804,8 +4804,8 @@ def postplot(results, span=None, quantiles=[0.025, 0.5, 0.975], q_color = 'gray'
                              "for plotting samples.")
 
     # Format figure.
-    fig.subplots_adjust(bottom=0.05, top=0.95, 
-                        left = 0.1, right = 0.9, 
+    fig.subplots_adjust(bottom=0.05, top=0.95,
+                        left = 0.1, right = 0.9,
                         hspace=0.7)
 
     # Plot marginalized 1-D posterior.
@@ -5300,14 +5300,14 @@ def cornerplot_2truth(results, dims=None, span=None, quantiles=[0.025, 0.5, 0.97
     return (fig, axes)
 
 def contour2d_alpha(x, y, smooth=0.02, span=None, weights=None, sigma_levels=[1, 2, 3],
-                    ax=None, color='gray', 
+                    ax=None, color='gray',
                     plot_density=True,
-                    plot_contours=True, 
-                    contour_kwargs=None, 
+                    plot_contours=True,
+                    contour_kwargs=None,
                     **kwargs):
     """
     Simplified/modified from dynesty's plotting._hist2d function.
-    Plots non-filled 2D contours, where the contours are the 
+    Plots non-filled 2D contours, where the contours are the
     0.5, 1, 1.5, 2 sigma contours (note this)
 
     Parameters
@@ -5445,7 +5445,7 @@ def contour2d_alpha(x, y, smooth=0.02, span=None, weights=None, sigma_levels=[1,
         while np.any(m):
             V[np.where(m)[0][0]] *= 1.0 - 1e-4
             m = (np.diff(V) == 0)
-        V.sort()        
+        V.sort()
         Vs.append(V)
 
     # Compute the bin centers.
@@ -5476,7 +5476,7 @@ def contour2d_alpha(x, y, smooth=0.02, span=None, weights=None, sigma_levels=[1,
             alphas = np.linspace(0.2, 1, len(levels))[::-1]
             for ii, V in enumerate(Vs):
 #                contour_kwargs['alpha'] = contour_kwargs.get('alpha', alphas[ii])
-#                ax.contour(X2, Y2, H2.T, V, colors = color, contour_kwargs=contour_kwargs, **kwargs) # alpha = alphas[ii], 
+#                ax.contour(X2, Y2, H2.T, V, colors = color, contour_kwargs=contour_kwargs, **kwargs) # alpha = alphas[ii],
                 ax.contour(X2, Y2, H2.T, V, colors = color, alpha = alphas[ii])
 
         else:
@@ -5979,7 +5979,7 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
             # Label axes.
             sf = ScalarFormatter(useMathText=use_math_text)
             ax.xaxis.set_major_formatter(sf)
-            ax.tick_params(axis='both', which='major', labelsize=number_fontsize) 
+            ax.tick_params(axis='both', which='major', labelsize=number_fontsize)
             if i < ndim - 1:
                 if top_ticks:
                     ax.xaxis.set_ticks_position("top")
@@ -6119,3 +6119,4 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                             ax.axhline(truths[i], color=truth_color,
                                        **truth_kwargs)
     return (fig, axes)
+    
