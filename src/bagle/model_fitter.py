@@ -2376,13 +2376,13 @@ class MicrolensSolverWeighted(MicrolensSolver):
             for i in range(self.n_phot_sets):
                 n_i = len(self.data['t_phot' + str(i + 1)])
                 weights_arr[i] = (1.0 / n_i)
-                weights_sum += weights_arr[i]
+                weights_sum += (1.0 / n_i)
                 
             # Astrometry weight
             for i in range(self.n_ast_sets):
                 n_i = 2*len(self.data['t_ast' + str(i + 1)])
                 weights_arr[self.n_phot_sets + i] = (1.0 / n_i)
-                weights_sum += weights_arr[i]
+                weights_sum += (1.0 / n_i)
 
             return weights_arr * n_sets / weights_sum
 
