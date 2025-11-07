@@ -198,6 +198,7 @@ class MicrolensSolver(Solver):
         'thetaE': ('make_lognorm_gen', 0, 1),
         'log10_thetaE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
         'log_piE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
+        'pi_ref_frame': ('make_norm_gen', 0.0, 1.0),
         'q': ('make_gen', 0.001, 1),
         'alpha': ('make_gen', 0, 360),
         'phi': ('make_gen', 0, 360),
@@ -303,7 +304,7 @@ class MicrolensSolver(Solver):
         ----------
 
         use_phot_optional_params : bool, or list of bools, optional
-	    optional photometry parameters
+        optional photometry parameters
 
         single_gp: bool, optional
         Set as true if there are multiple datasets but only a single set
@@ -720,7 +721,7 @@ class MicrolensSolver(Solver):
     # FIXME: I pass in ndim and nparams since that's what's done in Prior, but I don't think they're necessary?
     def Prior_from_post(self, cube, ndim=None, nparams=None):
         """Get the bin midpoints
-	"""
+        """
         binmids = []
         for bb in np.arange(len(self.post_param_bins)):
             binmids.append((self.post_param_bins[bb][:-1] + self.post_param_bins[bb][1:])/2)
@@ -918,7 +919,7 @@ class MicrolensSolver(Solver):
     # Code for randomly sampling prior
 #    def log_likely0(self, cube, verbose=False):
 #        """
-#	 Parameters
+#        Parameters
 #        _____________
 #        cube : list or dict
 #            The dictionary or cube of the model parameters.
@@ -2338,7 +2339,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
         # Calculate the number of photometry and astrometry data points
         n_ast_data = 0
         for nn in range(self.n_ast_sets):
-                n_ast_data += 2 * len(self.data['t_ast' + str(nn + 1)])
+            n_ast_data += 2 * len(self.data['t_ast' + str(nn + 1)])
         n_phot_data = 0
         for i in range(self.n_phot_sets):
             n_phot_data += len(self.data['t_phot' + str(i + 1)])
@@ -2356,13 +2357,11 @@ class MicrolensSolverWeighted(MicrolensSolver):
             
             # Photometry weights
             for i in range(self.n_phot_sets):
-                n_i = len(self.data['t_phot' + str(i + 1)])
-                weights_arr[i] = (n_data / n_sets) * n_ast_data / denom
+                weights_arr[i] = n_sets * n_ast_data / denom
 
             # Astrometry weights
             for i in range(self.n_ast_sets):
-                n_i = len(self.data['t_ast' + str(i + 1)])
-                weights_arr[self.n_phot_sets + i] = (n_data / n_sets) * n_phot_data / denom
+                weights_arr[self.n_phot_sets + i] = n_sets * n_phot_data / denom
             
             return weights_arr
         
@@ -2371,18 +2370,21 @@ class MicrolensSolverWeighted(MicrolensSolver):
         # or astrometry.
         #####
         if weights == 'all_equal':
+            weights_sum = 0.0
             
             # Photometry weights
             for i in range(self.n_phot_sets):
                 n_i = len(self.data['t_phot' + str(i + 1)])
-                weights_arr[i] = (1e-3 * n_data / n_sets) * (1.0 / n_i)
+                weights_arr[i] = (1.0 / n_i)
+                weights_sum += (1.0 / n_i)
                 
             # Astrometry weight
             for i in range(self.n_ast_sets):
-                n_i = len(self.data['t_ast' + str(i + 1)])
-                weights_arr[self.n_phot_sets + i] = (1e-3 * n_data / n_sets) * (1.0 / n_i)
+                n_i = 2*len(self.data['t_ast' + str(i + 1)])
+                weights_arr[self.n_phot_sets + i] = (1.0 / n_i)
+                weights_sum += (1.0 / n_i)
 
-            return weights_arr
+            return weights_arr * n_sets / weights_sum
 
         #####
         # Custom weights.
@@ -6117,3 +6119,4 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                             ax.axhline(truths[i], color=truth_color,
                                        **truth_kwargs)
     return (fig, axes)
+    
