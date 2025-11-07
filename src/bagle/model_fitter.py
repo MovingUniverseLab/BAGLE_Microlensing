@@ -171,11 +171,13 @@ class MicrolensSolver(Solver):
         'mLs': ('make_gen', 0, 100),
         't0': ('make_t0_gen', None, None),
         't0_prim': ('make_t0_gen', None, None),
+        't0_p': ('make_t0_gen', None, None),
         'xS0_E': ('make_xS0_gen', None, None),
         'xS0_N': ('make_xS0_gen', None, None),
         'u0_amp': ('make_gen', -1, 1),
         'u0_amp_prim': ('make_gen', -1, 1),
         'beta': ('make_gen', -2, 2),
+        'beta_p': ('make_gen', -2, 2),
         'muL_E': ('make_gen', -20, 20),
         'muL_N': ('make_gen', -20, 20),
         'muS_E': ('make_muS_EN_gen', None, None),
@@ -195,9 +197,12 @@ class MicrolensSolver(Solver):
         'piEN_piEE' : ('make_gen', -10, 10),
         'thetaE': ('make_lognorm_gen', 0, 1),
         'log10_thetaE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
+        'log_piE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
+        'pi_ref_frame': ('make_norm_gen', 0.0, 1.0),
         'q': ('make_gen', 0.001, 1),
         'alpha': ('make_gen', 0, 360),
         'phi': ('make_gen', 0, 360),
+        'phi_muRel': ('make_gen', 0, 360),
         'sep': ('make_gen', 1e-4, 2e-2),
         'piS': ('make_piS', None, None),
         'add_err': ('make_gen', 0, 0.3),
@@ -213,9 +218,11 @@ class MicrolensSolver(Solver):
         'gp_log_omega0_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega04_S0':('make_norm_gen', 0, 5), # FIX... get from data
         'gp_log_omega0':('make_norm_gen', 0, 5),
-        'delta_muS_sec_E':('make_gen', -1, 1),
-        'delta_muS_sec_N':('make_gen', -1, 1),
-        #dex new priors
+        'delta_muS_sec_E':('make_gen', -5, 5),
+        'delta_muS_sec_N':('make_gen', -5, 5),
+        'delta_muL_sec_E':('make_gen', -5, 5),
+        'delta_muL_sec_N':('make_gen', -5, 5),
+        #orbital motion new priors
         't0_com': ('make_t0_gen', None, None),
         'u0_amp_com': ('make_gen', -1, 1),
         'thetaE_amp': ('make_lognorm_gen', 0, 1),
@@ -223,10 +230,18 @@ class MicrolensSolver(Solver):
         'xS0_system_N': ('make_gen', -10, 10),
         'muS_system_E': ('make_gen', -10, 10),
         'muS_system_N': ('make_gen', -10, 10),
-        'acc_E': ('make_gen', -10, 10),
-        'acc_N': ('make_gen', -10, 10),
+        'accS_E': ('make_gen', -10, 10),
+        'accS_N': ('make_gen', -10, 10),
+        'accL_E': ('make_gen', -10, 10),
+        'accL_N': ('make_gen', -10, 10),
+        'accSsec_E': ('make_gen', -10, 10),
+        'accSsec_N': ('make_gen', -10, 10),
+        'accLsec_E': ('make_gen', -10, 10),
+        'accLsec_N': ('make_gen', -10, 10),
         'omega': ('make_gen', -180, 180),
         'big_omega': ('make_gen', -180, 180),
+        'omega_pri': ('make_gen', -180, 180),
+        'big_omega_sec': ('make_gen', -180, 180),
         'i':('make_gen', -90, 90),
         'e':('make_gen', 0, 0.9),
         'p': ('make_gen', 0, 10000),
@@ -234,9 +249,15 @@ class MicrolensSolver(Solver):
         'aleph': ('make_gen', 1, 10),
         'aleph_sec':('make_gen', 1, 10),
         'alphaL': ('make_gen', 0, 360),
+        'sepS': ('make_gen', 1e-4, 2e-2),
+        'sepL': ('make_gen', 1e-4, 2e-2),
+        'a': ('make_gen', 1e-4, 2e-2),
+        'aL': ('make_gen', 1e-4, 2e-2),
         'alphaS': ('make_gen', 0, 360),
         'omegaL': ('make_gen', -180, 180),
         'big_omegaL': ('make_gen', -180, 180),
+        'omegaL_pri': ('make_gen', -180, 180),
+        'big_omegaL_sec': ('make_gen', -180, 180),
         'iL':('make_gen', -90, 90),
         'eL':('make_gen', 0, 0.9),
         'pL': ('make_gen', 0, 10000),
@@ -245,6 +266,8 @@ class MicrolensSolver(Solver):
         'aleph_secL':('make_gen', 1, 10),
         'omegaS': ('make_gen', -180, 180),
         'big_omegaS': ('make_gen', -180, 180),
+        'omegaS_pri': ('make_gen', -180, 180),
+        'big_omegaS_sec': ('make_gen', -180, 180),
         'iS':('make_gen', -90, 90),
         'eS':('make_gen', 0, 0.9),
         'pS': ('make_gen', 0, 10000),
@@ -281,7 +304,7 @@ class MicrolensSolver(Solver):
         ----------
 
         use_phot_optional_params : bool, or list of bools, optional
-	    optional photometry parameters
+        optional photometry parameters
 
         single_gp: bool, optional
         Set as true if there are multiple datasets but only a single set
@@ -698,7 +721,7 @@ class MicrolensSolver(Solver):
     # FIXME: I pass in ndim and nparams since that's what's done in Prior, but I don't think they're necessary?
     def Prior_from_post(self, cube, ndim=None, nparams=None):
         """Get the bin midpoints
-	"""
+        """
         binmids = []
         for bb in np.arange(len(self.post_param_bins)):
             binmids.append((self.post_param_bins[bb][:-1] + self.post_param_bins[bb][1:])/2)
@@ -896,7 +919,7 @@ class MicrolensSolver(Solver):
     # Code for randomly sampling prior
 #    def log_likely0(self, cube, verbose=False):
 #        """
-#	 Parameters
+#        Parameters
 #        _____________
 #        cube : list or dict
 #            The dictionary or cube of the model parameters.
@@ -2316,7 +2339,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
         # Calculate the number of photometry and astrometry data points
         n_ast_data = 0
         for nn in range(self.n_ast_sets):
-                n_ast_data += 2 * len(self.data['t_ast' + str(nn + 1)])
+            n_ast_data += 2 * len(self.data['t_ast' + str(nn + 1)])
         n_phot_data = 0
         for i in range(self.n_phot_sets):
             n_phot_data += len(self.data['t_phot' + str(i + 1)])
@@ -2334,13 +2357,11 @@ class MicrolensSolverWeighted(MicrolensSolver):
             
             # Photometry weights
             for i in range(self.n_phot_sets):
-                n_i = len(self.data['t_phot' + str(i + 1)])
-                weights_arr[i] = (n_data / n_sets) * n_ast_data / denom
+                weights_arr[i] = n_sets * n_ast_data / denom
 
             # Astrometry weights
             for i in range(self.n_ast_sets):
-                n_i = len(self.data['t_ast' + str(i + 1)])
-                weights_arr[self.n_phot_sets + i] = (n_data / n_sets) * n_phot_data / denom
+                weights_arr[self.n_phot_sets + i] = n_sets * n_phot_data / denom
             
             return weights_arr
         
@@ -2349,18 +2370,21 @@ class MicrolensSolverWeighted(MicrolensSolver):
         # or astrometry.
         #####
         if weights == 'all_equal':
+            weights_sum = 0.0
             
             # Photometry weights
             for i in range(self.n_phot_sets):
                 n_i = len(self.data['t_phot' + str(i + 1)])
-                weights_arr[i] = (1e-3 * n_data / n_sets) * (1.0 / n_i)
+                weights_arr[i] = (1.0 / n_i)
+                weights_sum += (1.0 / n_i)
                 
             # Astrometry weight
             for i in range(self.n_ast_sets):
-                n_i = len(self.data['t_ast' + str(i + 1)])
-                weights_arr[self.n_phot_sets + i] = (1e-3 * n_data / n_sets) * (1.0 / n_i)
+                n_i = 2*len(self.data['t_ast' + str(i + 1)])
+                weights_arr[self.n_phot_sets + i] = (1.0 / n_i)
+                weights_sum += (1.0 / n_i)
 
-            return weights_arr
+            return weights_arr * n_sets / weights_sum
 
         #####
         # Custom weights.
@@ -6095,3 +6119,4 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                             ax.axhline(truths[i], color=truth_color,
                                        **truth_kwargs)
     return (fig, axes)
+    

@@ -889,15 +889,15 @@ def plot_bsbl(bsbl, zoom, duration = 1000, time_steps=50000, caustic_finder = 'o
     
     return t, img, amp
 
-def get_magnification_map(psbl, grid_size = 0.0312, plot_radius = 0.0156, lim = 0.01, bins=6000, cmap='seismic'):
+def get_magnification_map(chosen_model, grid_size = 0.0312, plot_radius = 0.0156, lim = 0.01, bins=6000, cmap='seismic'):
     """
     For a given PSBL/BSBL model, plot the source trajectory on top 
     of the magnification map at time t0.
 
     Parameters
     ----------
-    psbl : model.PSBL object
-        The PSBL model to use for plotting.
+    chosen_model : model object
+        The  model to use for plotting.
 
     grid_size : float
         Window size in which the magnification map is generated. 
@@ -919,9 +919,9 @@ def get_magnification_map(psbl, grid_size = 0.0312, plot_radius = 0.0156, lim = 
     # An 8000 x 8000 grid takes a few seconds to run.
 
     # Get lenses info
-    m1 = psbl.m1
-    m2 = psbl.m2
-    xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t=np.array([psbl.t0]))
+    m1 = chosen_model.m1
+    m2 = chosen_model.m2
+    xL1_0, xL2_0 = chosen_model.get_resolved_lens_astrometry(t=np.array([chosen_model.t0]))
 
     z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
     z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
@@ -930,7 +930,7 @@ def get_magnification_map(psbl, grid_size = 0.0312, plot_radius = 0.0156, lim = 
     # zgrid are the image positions, where the shots end.
     # We want to find where they start (source plane), i.e.
     # inverse ray shooting
-    grid_center = psbl.xL0_com *1e-3
+    grid_center = chosen_model.xL0_com *1e-3
     grid_size = grid_size # Probably a better way to do this...
     plot_radius = plot_radius
 
@@ -976,14 +976,14 @@ def get_magnification_map(psbl, grid_size = 0.0312, plot_radius = 0.0156, lim = 
     plt.legend(markerscale = 1)
     plt.show()
 
-def get_magnification_map_timedep_new(psbl, time_skip = 500, time_choice = 1000, grid_size = 0.0312, plot_radius = 0.0156, time_steps=300, cmap = 'seismic', lim = 0.01, bins=6000):
+def get_magnification_map_timedep(chosen_model, time_skip = 500, time_choice = 1000, grid_size = 0.0312, plot_radius = 0.0156, time_steps=300, cmap = 'seismic', lim = 0.01, bins=6000):
     """
     Same as get_magnification_map() but for arbitrary time of your chosing. This function will generate a 2x2 grid with magnification maps for four times. 
 
     Parameters
     ----------
-    psbl : model.PSBL object
-        The PSBL model to use for plotting.
+    chosen_model : model object
+        The  model to use for plotting.
 
     time_choice : int
         Time before t0 to generate the first magnification map
@@ -1008,9 +1008,9 @@ def get_magnification_map_timedep_new(psbl, time_skip = 500, time_choice = 1000,
     # Get lenses info
 
     def helper(t_obs, grid_size, plot_radius):
-        m1 = psbl.m1
-        m2 = psbl.m2
-        xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t_obs=np.array([t_obs]))
+        m1 = chosen_model.m1
+        m2 = chosen_model.m2
+        xL1_0, xL2_0 = chosen_model.get_resolved_lens_astrometry(t_obs=np.array([t_obs]))
         z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
         z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
     
@@ -1018,7 +1018,7 @@ def get_magnification_map_timedep_new(psbl, time_skip = 500, time_choice = 1000,
         # zgrid are the image positions, where the shots end.
         # We want to find where they start (source plane), i.e.
         # inverse ray shooting
-        grid_center = psbl.xL0 *1e-3
+        grid_center = chosen_model.xL0 *1e-3
         grid_size = grid_size # Probably a better way to do this...
         plot_radius = plot_radius
         print(grid_size)
@@ -1050,10 +1050,10 @@ def get_magnification_map_timedep_new(psbl, time_skip = 500, time_choice = 1000,
 
     fig, ax = plt.subplots(2, 2, figsize=(25, 20))
     index = 0
-    time = psbl.t0-time_choice
+    time = chosen_model.t0-time_choice
     count=0
     time_array = np.array([time, time+time_choice, time+time_choice*2, time+time_choice*3])
-    phot = psbl.get_photometry(time_array)
+    phot = chosen_model.get_photometry(time_array)
 
     plt.title('Magnification Map')
     for i in range(0,2):
@@ -1072,6 +1072,87 @@ def get_magnification_map_timedep_new(psbl, time_skip = 500, time_choice = 1000,
             fig.colorbar(val)
             time = time + time_skip
 
+def get_centroid_shift_map(model, grid_size=31.2, plot_radius=15.6, lim=8, bins=6000, cmap='seismic'):
+    """
+    Generate a color map of flux-weighted centroid shifts (in mas) for a uniform
+    grid of sources using inverse ray shooting.
+
+    """
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    
+    arcsec2mas = 1e3
+    mas2arcsec = 1.0 / arcsec2mas
+
+    m1 = psbl.m1
+    m2 = psbl.m2
+    xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t=np.array([psbl.t0]))
+    z1_as = xL1_0[0][0] + 1j * xL1_0[0][1]   # arcsec
+    z2_as = xL2_0[0][0] + 1j * xL2_0[0][1]   # arcsec
+    z1_mas = z1_as * arcsec2mas #Lens position in mas
+    z2_mas = z2_as * arcsec2mas#Lens position in mas
+
+    
+    
+    grid_center_mas = (psbl.xL0_com + 1e-3) * arcsec2mas
+    grid_size_mas = grid_size
+    plot_radius_mas = plot_radius 
+    lim_mas = lim
+
+    xmin_mas = grid_center_mas[0] - grid_size_mas
+    xmax_mas = grid_center_mas[0] + grid_size_mas
+    ymin_mas = grid_center_mas[1] - grid_size_mas
+    ymax_mas = grid_center_mas[1] + grid_size_mas
+
+    x = np.linspace(xmin_mas, xmax_mas, bins)
+    y = np.linspace(ymin_mas, ymax_mas, bins)   
+    xgrid, ygrid = np.meshgrid(x, y)
+    zgrid_mas = xgrid + 1j * ygrid   
+    
+    z_flat = zgrid_mas.flatten()
+    dist2_as = z_flat.real**2 + z_flat.imag**2
+    valid_mask = dist2_mas < (plot_radius_mas ** 2) #Cut off faraway points
+    z_flat_valid = z_flat[valid_mask]
+
+    # arrays of lens positions in arcsec
+    z1_arr = np.full_like(z_flat_valid, z1_mas)
+    z2_arr = np.full_like(z_flat_valid, z2_mas)
+    z_arr = psbl.get_image_pos_arr(z_flat_valid, z1_arr, z2_arr, m1, m2)
+    mu_arr = psbl.get_amp_arr(z_arr, z1_arr, z2_arr)
+
+    t_dummy = np.arange(len(z_flat_valid))
+    xCentroid = psbl.get_astrometry(t_dummy, image_arr=z_arr, amp_arr=mu_arr)
+    xCentroid_complex_mas = xCentroid[:, 0] + 1j * xCentroid[:, 1]
+    shift_mas = np.abs(xCentroid_complex_as - z_flat_valid)
+
+
+    shift_map = np.full(zgrid_mas.shape, np.nan, dtype=float)
+    shift_map_flat = shift_map.flatten()
+    shift_map_flat[valid_mask] = shift_mas
+    shift_map = shift_map_flat.reshape(zgrid_as.shape)
+
+    vmin = 0.0
+    vmax = np.nanpercentile(shift_map, 99.99)
+
+    plt.figure(figsize=(5, 5))
+    im = plt.imshow(shift_map, origin='lower', extent=[xmin_mas, xmax_mas, ymin_mas, ymax_mas],
+                    cmap=cmap, vmin=vmin, vmax=vmax)
+    cbar = plt.colorbar(im)
+
+    plt.plot(z1_mas.real, z1_mas.imag, 'black', marker='.', label='Primary Lens', markersize=10)
+    plt.plot(z2_mas.real, z2_mas.imag, 'green', marker='^', label='Secondary Lens', markersize=10)
+
+    plt.xlabel(r"$\Delta \alpha^*$ (mas)")
+    plt.ylabel(rf"$\Delta \delta$ (mas)")
+    plt.xlim(-lim, lim)   # lim in mas (user-facing)
+    plt.ylim(-lim, lim)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('csmap.png')
+    plt.show()
+    
 
 def compare_model_pkg_phot_amp(bagle_mod, time_arr, amp_pylima=None, amp_vbmicr=None, amp_mulens=None,
                           savefile='compare_model_pkg_phot_amp.png'):

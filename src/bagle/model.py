@@ -209,9 +209,11 @@ Binary source, point lens, photometry and astrometry
     - :class:`BSPL_PhotAstrom_Par_EllOrbs_Param1`
     - :class:`BSPL_PhotAstrom_Par_EllOrbs_Param2`
     - :class:`BSPL_PhotAstrom_Par_EllOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_Par_EllOrbs_Param4`
     - :class:`BSPL_PhotAstrom_noPar_EllOrbs_Param1`
     - :class:`BSPL_PhotAstrom_noPar_EllOrbs_Param2`
     - :class:`BSPL_PhotAstrom_noPar_EllOrbs_Param3`
+    - :class:`BSPL_PhotAstrom_noPar_EllOrbs_Param4`
     - :class:`BSPL_PhotAstrom_Par_GP_LinOrbs_Param1`
     - :class:`BSPL_PhotAstrom_Par_GP_LinOrbs_Param2`
     - :class:`BSPL_PhotAstrom_Par_GP_LinOrbs_Param3`
@@ -16541,8 +16543,8 @@ class BSBL(PSBL):
                 xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
 
                 orb = orbits.Orbit()
-                orb.w = self.omegaL
-                orb.o = self.big_omegaL
+                orb.w = self.omegaL_pri
+                orb.o = self.big_omegaL_sec
                 orb.i = self.iL
                 orb.e = self.eL
                 orb.p = self.pL
@@ -17283,8 +17285,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
             xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3
 
             orb = orbits.Orbit()
-            orb.w = self.omegaS
-            orb.o = self.big_omegaS
+            orb.w = self.omegaS_pri
+            orb.o = self.big_omegaS_sec
             orb.i = self.iS
             orb.e = self.eS
             orb.p = self.pS
@@ -18056,13 +18058,13 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
         RA Source proper motion (mas/yr) for secondary source.
     delta_muL_sec_N: float
         Dec Source proper motion (mas/yr) for secondary source.
-    accS_E:
+    accSsec_E:
         Acceleration of the secondary source in the direction of RA (mas/yr^2)
-    accS_N:
+    accSsec_N:
         Acceleration of the secondary source in the direction of DEC (mas/yr^2)
-    accL_E:
+    accLsec_E:
         Acceleration of the secondary lens in the direction of RA (mas/yr^2)
-    accL_N:
+    accLsec_N:
         Acceleration of the secondary lens in the direction of DEC (mas/yr^2)
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
@@ -18096,7 +18098,7 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
                           'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS',
                           'delta_muS_sec_E', 'delta_muS_sec_N',
-                         'delta_muL_sec_E', 'delta_muL_sec_N', 'accS_E', 'accS_N', 'accL_E', 'accL_N']
+                         'delta_muL_sec_E', 'delta_muL_sec_N', 'accSsec_E', 'accSsec_N', 'accLsec_E', 'accLsec_N']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -18107,7 +18109,7 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sepL, alphaL, sepS, alphaS,
                  delta_muS_sec_E, delta_muS_sec_N,
-                 delta_muL_sec_E, delta_muL_sec_N,accS_E, accS_N, accL_E, accL_N,
+                 delta_muL_sec_E, delta_muL_sec_N,accSsec_E, accSsec_N, accLsec_E, accLsec_N,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
@@ -18121,20 +18123,20 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
                  raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
 
-        self.accS = np.array([accS_E, accS_N])
-        self.accS_E, self.accS_N = self.accS
+        self.accS = np.array([accSsec_E, accSsec_N])
+        self.accSsec_E, self.accSsec_N = self.accS
         self.accS_amp = np.linalg.norm(self.accS)
         # self.acc_hat = self.muRel_sec_hat
-        if self.accS_E == 0.0 and self.accS_N == 0.0:
+        if self.accSsec_E == 0.0 and self.accSsec_N == 0.0:
             self.accS_hat = np.array([0.0, 0.0])
         else:
             self.accS_hat = self.accS / self.accS_amp
 
-        self.accL = np.array([accL_E, accL_N])
-        self.accL_E, self.accL_N = self.accL
+        self.accL = np.array([accLsec_E, accLsec_N])
+        self.accLsec_E, self.accLsec_N = self.accL
         self.accL_amp = np.linalg.norm(self.accL)
         # self.acc_hat = self.muRel_sec_hat
-        if self.accL_E == 0.0 and self.accL_N == 0.0:
+        if self.accLsec_E == 0.0 and self.accLsec_N == 0.0:
             self.accL_hat = np.array([0.0, 0.0])
         else:
             self.accL_hat = self.accL / self.accL_amp
@@ -18428,9 +18430,9 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     dS : float
         Distance from the observer to the source (pc)
    
-    omegaL: float
+    omegaL_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
-    big_omegaL: float
+    big_omegaL_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees.
     iL: float
@@ -18441,9 +18443,9 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         This is the time of the periastron of the system in days.
     aL: float
         This is the semi-major axis of the binary lens system (mas)
-    omegaS: float
+    omegaS_pri: float
         The argument of periastron of the primary source's orbit in degrees.
-    big_omegaS: float
+    big_omegaS_sec: float
         The longitude of the ascending node of the secondary source's orbit
         in degrees.
     is: float
@@ -18484,8 +18486,8 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     """
     fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL', 'big_omegaL', 'iL', 'eL', 'tpL', 'aL',
-                          'omegaS', 'big_omegaS', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'eL', 'tpL', 'aL',
+                          'omegaS_pri', 'big_omegaS_sec', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
     paramPhotFlag = True
@@ -18493,8 +18495,8 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                 omegaL, big_omegaL, iL, eL, tpL, aL,
-                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS,
+                 omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                 omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
@@ -18521,8 +18523,8 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         pL = (2 * np.pi * np.sqrt(self.sepL_AU ** 3 / (const.G * mL))).to('day')
         self.pL = pL.value  # Period in Days
 
-        self.omegaL = omegaL
-        self.big_omegaL = big_omegaL
+        self.omegaL_pri = omegaL_pri
+        self.big_omegaL_sec = big_omegaL_sec
         self.iL = iL
         self.eL = eL
         self.tpL = tpL
@@ -18533,8 +18535,8 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.alephL = self.sepL - self.aleph_secL  # mas
 
         orb = orbits.Orbit()
-        orb.w = self.omegaL
-        orb.o = self.big_omegaL
+        orb.w = self.omegaL_pri
+        orb.o = self.big_omegaL_sec
         orb.i = self.iL
         orb.e = self.eL
         orb.tp = (self.tpL)
@@ -18546,8 +18548,8 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.alphaL = np.rad2deg(self.alphaL_rad)
 
 
-        self.omegaS = omegaS
-        self.big_omegaS = big_omegaS
+        self.omegaS_pri = omegaS_pri
+        self.big_omegaS_sec = big_omegaS_sec
         self.iS = iS
         self.eS = eS
         self.pS = pS
@@ -18556,8 +18558,8 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.aleph_secS = aleph_secS
                      
         orb = orbits.Orbit()
-        orb.w = self.omegaS
-        orb.o = self.big_omegaS
+        orb.w = self.omegaS_pri
+        orb.o = self.big_omegaS_sec
         orb.i = self.iS
         orb.e = self.eS
         orb.tp = (self.tpS)
@@ -18735,9 +18737,9 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     dS : float
         Distance from the observer to the source (pc)
     
-    omegaL: float
+    omegaL_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
-    big_omegaL: float
+    big_omegaL_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees.
     iL: float
@@ -18747,9 +18749,9 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     sepL: float
         This is the angular separation between the lenses (mas)
 
-    omegaS: float
+    omegaS_pri: float
         The argument of periastron of the primary source's orbit in degrees.
-    big_omegaS: float
+    big_omegaS_sec: float
         The longitude of the ascending node of the secondary source's orbit
         in degrees.
     is: float
@@ -18786,10 +18788,10 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
+    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
                           'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL', 'big_omegaL', 'iL', 'tpL', 'sepL',
-                          'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'tpL', 'sepL',
+                          'omegaS_pri', 'big_omegaS_sec', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
 
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
@@ -18798,14 +18800,14 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
 
     def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                 omegaL, big_omegaL, iL, tpL, sepL,
-                 omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS,
+                 omegaL_pri, big_omegaL_sec, iL, tpL, sepL,
+                 omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N,
                          beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                         omegaL, big_omegaL, iL, 0, tpL, sepL,
-                         omegaS, big_omegaS, iS, 0, pS, tpS, alephS, aleph_secS,
+                         omegaL_pri, big_omegaL_sec, iL, 0, tpL, sepL,
+                         omegaS_pri, big_omegaS_sec, iS, 0, pS, tpS, alephS, aleph_secS,
                          mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
@@ -18857,9 +18859,9 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     muS_N : float
         Source system proper motion in the Dec. direction (mas/yr)
         
-    omegaL: float
+    omegaL_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
-    big_omegaL: float
+    big_omegaL_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees.
     iL: float
@@ -18872,9 +18874,9 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     aL: float
         This is the semi-major axis of the binary lens system (mas)
 
-    omegaS: float
+    omegaS_pri: float
         The argument of periastron of the primary source's orbit in degrees.
-    big_omegaS: float
+    big_omegaS_sec: float
         The longitude of the ascending node of the secondary source's orbit
         in degrees.
     is: float
@@ -18916,16 +18918,16 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
     fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 
-                          'xS0_N', 'muS_E', 'muS_N', 'omegaL', 'big_omegaL', 'iL', 'eL', 'tpL', 'aL',
-                          'omegaS', 'big_omegaS', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+                          'xS0_N', 'muS_E', 'muS_N', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'eL', 'tpL', 'aL',
+                          'omegaS_pri', 'big_omegaS_sec', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
-                omegaL, big_omegaL, iL, eL, tpL, aL,
-                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
+                omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                 omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_com = t0_com
         self.u0_amp_com = u0_amp_com
@@ -18975,15 +18977,15 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         pL = (2 * np.pi * np.sqrt(self.sepL_AU ** 3 / (const.G * mL))).to('day')
         self.pL = pL.value  # Period in Days
 
-        self.omegaL = omegaL
-        self.big_omegaL = big_omegaL
+        self.omegaL_pri = omegaL_pri
+        self.big_omegaL_sec = big_omegaL_sec
         self.iL = iL
         self.eL = eL
         self.tpL = tpL
 
         orb = orbits.Orbit()
-        orb.w = self.omegaL
-        orb.o = self.big_omegaL
+        orb.w = self.omegaL_pri
+        orb.o = self.big_omegaL_sec
         orb.i = self.iL
         orb.e = self.eL
         orb.tp = (self.tpL)
@@ -18995,8 +18997,8 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.alphaL = np.rad2deg(self.alphaL_rad)
 
 
-        self.omegaS = omegaS
-        self.big_omegaS = big_omegaS
+        self.omegaS_pri = omegaS_pri
+        self.big_omegaS_sec = big_omegaS_sec
         self.iS = iS
         self.eS = eS
         self.pS = pS
@@ -19005,8 +19007,8 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.aleph_secS = aleph_secS
                      
         orb = orbits.Orbit()
-        orb.w = self.omegaS
-        orb.o = self.big_omegaS
+        orb.w = self.omegaS_pri
+        orb.o = self.big_omegaS_sec
         orb.i = self.iS
         orb.e = self.eS
         orb.tp = (self.tpS)
@@ -19154,9 +19156,9 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         Source system proper motion in the Dec. direction (mas/yr)
     
 
-    omegaL: float
+    omegaL_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
-    big_omegaL: float
+    big_omegaL_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees.
     iL: float
@@ -19167,9 +19169,9 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     sepL: float
         This is the angular separation between the lenses (mas)
 
-    omegaS: float
+    omegaS_pri: float
         The argument of periastron of the primary source's orbit in degrees.
-    big_omegaS: float
+    big_omegaS_sec: float
         The longitude of the ascending node of the secondary source's orbit
         in degrees.
     is: float
@@ -19210,8 +19212,8 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     """
 
     fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                 'omegaL', 'big_omegaL', 'iL',  'tpL', 'sepL',
-                 'omegaS', 'big_omegaS', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+                 'omegaL_pri', 'big_omegaL_sec', 'iL',  'tpL', 'sepL',
+                 'omegaS_pri', 'big_omegaS_sec', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
 
     phot_param_names = ['fratio_bin', 'mag_base', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
@@ -19219,12 +19221,12 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
-                 omegaL, big_omegaL, iL, tpL, sepL,
-                 omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
+                 omegaL_pri, big_omegaL_sec, iL, tpL, sepL,
+                 omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
-                         omegaL, big_omegaL, iL, 0, tpL, sepL,
-                         omegaS, big_omegaS, iS, 0, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
+                         omegaL_pri, big_omegaL_sec, iL, 0, tpL, sepL,
+                         omegaS_pri, big_omegaS_sec, iS, 0, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
 
         # Super handles checking for properly formatted variables.
@@ -19275,9 +19277,9 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
 
 
-    omegaL: float
+    omegaL_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
-    big_omegaL: float
+    big_omegaL_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees.
     iL: float
@@ -19290,9 +19292,9 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     aL: float
         This is the semi-major axis of the binary lens system (mas)
 
-    omegaS: float
+    omegaS_pri: float
         The argument of periastron of the primary source's orbit in degrees.
-    big_omegaS: float
+    big_omegaS_sec: float
         The longitude of the ascending node of the secondary source's orbit
         in degrees.
     iS: float
@@ -19339,8 +19341,8 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
                           'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL', 'big_omegaL', 'iL', 'eL', 'tpL', 'aL',
-                 'omegaS', 'big_omegaS', 'iS', 'eS', 'tpS', 'aS', 'mass_source_p', 'mass_source_s']
+                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'eL', 'tpL', 'aL',
+                 'omegaS_pri', 'big_omegaS_sec', 'iS', 'eS', 'tpS', 'aS', 'mass_source_p', 'mass_source_s']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -19348,8 +19350,8 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     orbitFlag = 'Keplerian'
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,omegaL, big_omegaL, iL, eL, tpL, aL,
-                 omegaS, big_omegaS, iS, eS, tpS, aS, mass_source_p, mass_source_s,
+                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                 omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mass_source_p, mass_source_s,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
@@ -19398,8 +19400,8 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         pL = (2 * np.pi * np.sqrt(self.aL_AU ** 3 / (const.G * mL))).to('day')
         self.pL = pL.value  # Period in Days
 
-        self.omegaL = omegaL
-        self.big_omegaL = big_omegaL
+        self.omegaL_pri = omegaL_pri
+        self.big_omegaL_sec = big_omegaL_sec
         self.iL = iL
         self.eL = eL
         self.tpL = tpL
@@ -19410,8 +19412,8 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.alephL = self.sepL - self.aleph_secL  # mas
 
         orb = orbits.Orbit()
-        orb.w = self.omegaL
-        orb.o = self.big_omegaL
+        orb.w = self.omegaL_pri
+        orb.o = self.big_omegaL_sec
         orb.i = self.iL
         orb.e = self.eL
         orb.tp = (self.tpL)
@@ -19432,8 +19434,8 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
                      
 
-        self.omegaS = omegaS
-        self.big_omegaS = big_omegaS
+        self.omegaS_pri = omegaS_pri
+        self.big_omegaS_sec = big_omegaS_sec
         self.iS = iS
         self.eS = eS
         self.tpS = tpS
@@ -19450,8 +19452,8 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     #    self.aleph_secS = aleph_secS
                      
         orb = orbits.Orbit()
-        orb.w = self.omegaS
-        orb.o = self.big_omegaS
+        orb.w = self.omegaS_pri
+        orb.o = self.big_omegaS_sec
         orb.i = self.iS
         orb.e = self.eS
         orb.tp = (self.tpS)
@@ -19638,9 +19640,9 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
         Distance from the observer to the source (pc)
 
    
-    omegaL: float
+    omegaL_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
-    big_omegaL: float
+    big_omegaL_sec: float
         The longitude of the ascending node of the secondary lens's orbit
         in degrees.
     iL: float
@@ -19651,9 +19653,9 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
     aL: float
         This is the semi-major axis of the binary lens system (mas)
 
-    omegaS: float
+    omegaS_pri: float
         The argument of periastron of the primary source's orbit in degrees.
-    big_omegaS: float
+    big_omegaS_sec: float
         The longitude of the ascending node of the secondary source's orbit
         in degrees.
     iS: float
@@ -19698,8 +19700,8 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
                           'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL', 'big_omegaL', 'iL', 'tpL', 'aL',
-                 'omegaS', 'big_omegaS', 'iS',  'pS', 'tpS', 'alephS', 'aleph_secS']
+                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'tpL', 'aL',
+                 'omegaS_pri', 'big_omegaS_sec', 'iS',  'pS', 'tpS', 'alephS', 'aleph_secS']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -19707,14 +19709,14 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
     orbitFlag = 'Keplerian'
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,omegaL, big_omegaL, iL, tpL, aL,
-                 omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS,
+                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,omegaL_pri, big_omegaL_sec, iL, tpL, aL,
+                 omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,omegaL, big_omegaL, iL, eL, tpL, aL,
-                 omegaS, big_omegaS, iS, eS, pS, tpS, alephS, aleph_secS,
+                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                 omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL, decL, obsLocation, root_tol)
 
@@ -19727,29 +19729,7 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
 # ==================================================
 class FSPL(PSPL):
     """Finite-Source, Point-Lens models."""
-    def get_source_outline_astrometry(self, center):
-        """Return astrometric points that outline the outer circumference of the
-        source star. The outline is described as a circle of radius
-        self.radiusS and is evaluated at self.n_outline number of points.
-
-        Parameters
-        ----------
-        center : numpy array
-            Center position of the source. Shape = [2, len(time)]
-
-        Returns
-        -------
-        source_points : numpy array
-            Returns an array of ``shape = [2, self.n_outline, len(time)]``
-
-        """
-        sourcepos = []
-        for i in range(self.n_outline):
-            # (rcosa, rsina), # n positions of the boundary of the star equally spaced
-            sourcepos.append([center[0] + self.radiusS * np.cos((2 * i * np.pi) / (self.n_outline)),
-                              center[1] + self.radiusS * np.sin((2 * i * np.pi) / (self.n_outline))])
-        return np.array(sourcepos)
-
+    
     def get_all_arrays_CI(self, t, filt_idx=0):
         """
         Obtain the image and amplitude arrays for each t. These arrays
@@ -19835,25 +19815,33 @@ class FSPL(PSPL):
         d_angles3 = d_angles ** 3
 
         # Do the contour integrals.
-        # Equations from Bozza+ 2021 (Eq 9)
+        # Equations from Bozza+ 2021 (Eq 9). EQ38 in BAGLE paper (big omega)
         Aplus = -(1. / 2) * np.sum(b2_plus[:, :, 1] * d1_plus[:, :, 0], axis=1)
         Aminus = (1. / 2) * np.sum(b2_minus[:, :, 1] * d1_minus[:, :, 0], axis=1)
 
-        # Parabolic correction (Eq 10)
+        # Parabolic correction (Eq 10). EQ39 in BAGLE paper (d-Big Omega)
         Aplus += (1. / 24) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus), axis=1)
         Aminus += -(1. / 24) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus), axis=1)
 
-        # Centroid equations (Eq. 19)
+        # Centroid equations (Eq. 19). EQ42 in BAGLE paper
         Cplus_x = (1. / 8.0) * np.sum(b2_plus[:, :, 0] ** 2 * d1_plus[:, :, 1], axis=1)
         Cplus_y = -(1. / 8.0) * np.sum(b2_plus[:, :, 1] ** 2 * d1_plus[:, :, 0], axis=1)
 
+        # Centroid equations (Eq. 19). EQ43 in BAGLE paper
         Cminus_x = -(1. / 8.0) * np.sum(b2_minus[:, :, 0] ** 2 * d1_minus[:, :, 1], axis=1)
-        Cminus_y = (1. / 8.0) * np.sum(b2_minus[:, :, 1] ** 2 * d1_minus[:, :, 0], axis=1)
+        Cminus_y =  (1. / 8.0) * np.sum(b2_minus[:, :, 1] ** 2 * d1_minus[:, :, 0], axis=1)
 
         # Parabolic Correction
-        # Cplus_x +=  (1. / 24.) * np.sum((d1_plus[:, :, 0]**2 * d1_plus[:, :, 1]
-        #                                +d1_plus[:, :, 0] * wp_d1_d2_i_plus) + \
-        #                                (d1_plus[:, :])
+        #Eq 21 and 22 Bozza 2021. Parabolic corrections
+        Cplus_x  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_plus[:, :-1, 0]**2 * d1_plus[:, :-1, 1] + d1_plus[:, :-1, 0] * wp_d1_d2_i_plus) +
+                                                      (d1_plus[:, 1: , 0]**2 * d1_plus[:, 1: , 1] + d1_plus[:, 1:,  0] * wp_d1_d2_ip1_plus)), axis=1)
+        Cplus_y  += -(1. / 24.) * np.sum(d_angles3 * ((d1_plus[:, :-1, 1]**2 * d1_plus[:, :-1, 0] + d1_plus[:, :-1, 1] * wp_d1_d2_i_plus) +
+                                                      (d1_plus[:, 1:,  1]**2 * d1_plus[:, 1: , 0] + d1_plus[:, 1: , 1] * wp_d1_d2_ip1_plus)), axis=1)
+        Cminus_x += -(1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 0]**2 * d1_minus[:, :-1, 1] + d1_minus[:, :-1, 0] * wp_d1_d2_i_minus) +
+                                                      (d1_minus[:, 1: , 0]**2 * d1_minus[:, 1: , 1] + d1_minus[:, 1: , 0] * wp_d1_d2_ip1_minus)), axis=1)
+        Cminus_y +=  (1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 1]**2 * d1_minus[:, :-1, 0] + d1_minus[:, :-1, 1] * wp_d1_d2_i_minus) +
+                                                      (d1_minus[:, 1: , 1]**2 * d1_minus[:, 1: , 0] + d1_minus[:, 1: , 1] * wp_d1_d2_ip1_minus)), axis=1)
+        
 
         amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
         amp_minus = np.abs(Aminus) / (np.pi * self.radiusS ** 2)
@@ -19914,7 +19902,7 @@ class FSPL(PSPL):
         # Shape = [len(t), N_outline, [+,-], [E,N]]
         def im_pos1(w, z1):
             u = w - z1                
-            z_major = u * (1 + np.sqrt(1 + 4/np.abs(u)**2)) / 2
+            z_major = u * (1 + np.sqrt(1 + 4 / np.abs(u)**2)) / 2
             return z_major + z1       
         
         def im_pos_all(w, z1):
@@ -19923,65 +19911,79 @@ class FSPL(PSPL):
             return z_major, z_minor
         
         def detJac(z, z1):
-            return 1.0 - 1.0/np.abs(z - z1)**4
+            return 1.0 - 1.0 / np.abs(z - z1)**4
         
         days_in_a_year = 365.25
-        
 
-        source_unlensed = (self.xS0 *1e3) / self.thetaE_amp
-        #pdb.set_trace()
-        center = (source_unlensed)[0] + 1j * (source_unlensed)[1]
-        rad = self.radiusS / self.thetaE_amp * 1e3
-        
-        traj = self.muS[0]+ 1j * self.muS[1]   
-        traj = traj / self.thetaE_amp
+        # Put everything in units of thetaE
+        xS0 = (self.xS0 * 1e3) / self.thetaE_amp   # unit = thetaE
+        radiusS = self.radiusS * 1e3 / self.thetaE_amp # unit = thetaE
+
+        # Convert to imaginary numbers with East = real, North = imag
+        xS0_cplx = xS0[0] + 1j * xS0[1]
+        muS_cplx = (self.muS[0] + 1j * self.muS[1]) / self.thetaE_amp
 
         maxsamps = 1000
         
-        if self.n_outline >= maxsamps/4:
+        if self.n_outline >= maxsamps / 4:
             maxsamps = maxsamps * 5
-        
-        wIms = np.zeros((len(t), maxsamps, 2), dtype=complex)
+
+        # wIms is the lensed image positions for the + and - image.
+        # Shape = N_times, N_outline, [+/-]
+        wIms   = np.zeros((len(t), maxsamps, 2), dtype=complex)
         counts = np.zeros(len(t), dtype=int)
+        thetas = np.zeros((len(t), maxsamps))
             
-        dtheta = 2*np.pi/self.n_outline
+        dtheta = 2 * np.pi / self.n_outline
         lens_asts = self.get_lens_astrometry(t) / self.thetaE_amp  * 1e3 #thetaE
 
-        t = (t - self.t0)/days_in_a_year
+        t_year = (t - self.t0) / days_in_a_year
 
+        # Calculate the number of points that should be used
+        # to do the contour integration with good accuracy.
+        z1 = lens_asts[:, 0] + 1j * lens_asts[:, 1]
+        w_center = xS0_cplx + t_year * muS_cplx
 
         for i in range(len(t)):
-            z1_int = lens_asts[i]               
-            z1 = z1_int[0] + 1j * z1_int[1]       
-            w_center = center + t[i]*traj
             theta = 0.0
             count = 0
             while (theta < 2*np.pi) and (count < maxsamps):
-                w_now = w_center + rad*np.exp(1j*theta)
+                w_now = w_center[i] + radiusS * np.exp(1j * theta)
             
-                zp, zm = im_pos_all(w_now, z1)
+                zp, zm = im_pos_all(w_now, z1[i])
                 wIms[i, count, 0] = zp
                 wIms[i, count, 1] = zm
+                thetas[i, count] = theta
             
-                detp = np.abs(detJac(zp, z1))
-                detm = np.abs(detJac(zm, z1))
+                detp = np.abs(detJac(zp, z1[i]))
+                detm = np.abs(detJac(zm, z1[i]))
                 theta += dtheta * min(detp, detm)
                 count += 1
-            
         
             counts[i] = count
-        
-        
+
+        # Digitize counts into a few unique bins. (N_c_bins
+        # This speeds up the calculations later.
+        # cmin = counts.min()
+        # cmax = counts.max()
+        # N_c_bins = 4
+        # cnt_bins = np.geomspace(cmin, cmax+1, num=N_c_bins).astype('int')
+        # cnt_bins = np.insert(cnt_bins, 0, 1)  # append a left bin in prep for digitize
+        #
+        # idx = np.digitize(counts, cnt_bins, right=True)
+        # counts = cnt_bins[idx]
+
+        # Convert back to arcsec
         wIms = (wIms * self.thetaE_amp) * 1e-3
 
         n_times = len(counts)
-        Aplus = np.zeros(n_times)
-        Aminus = np.zeros(n_times)
-        Cplus_x = np.zeros(n_times)
-        Cplus_y = np.zeros(n_times)
-        Cminus_x = np.zeros(n_times)
-        Cminus_y = np.zeros(n_times)
-        
+        Aplus = np.zeros(n_times, dtype=float)
+        Aminus = np.zeros(n_times, dtype=float)
+        Cplus_x = np.zeros(n_times, dtype=float)
+        Cplus_y = np.zeros(n_times, dtype=float)
+        Cminus_x = np.zeros(n_times, dtype=float)
+        Cminus_y = np.zeros(n_times, dtype=float)
+
         for i in range(n_times):
             n = counts[i]
         
@@ -19997,6 +19999,8 @@ class FSPL(PSPL):
         
             px[:n], py[:n] = plus_x, plus_y
             qx[:n], qy[:n] = minus_x, minus_y
+            # Temporarily duplicate the first point as the last point
+            # to speed up our contour integrals.
             px[n], py[n] = plus_x[0], plus_y[0]
             qx[n], qy[n] = minus_x[0], minus_y[0]
         
@@ -20005,30 +20009,57 @@ class FSPL(PSPL):
             d1_py = np.diff(py)
             d1_qx = np.diff(qx)
             d1_qy = np.diff(qy)
-        
-            # Eq 9 areas
+            d2_px = np.diff(np.append(d1_px, d1_px[0]))
+            d2_py = np.diff(np.append(d1_py, d1_py[0]))
+            d2_qx = np.diff(np.append(d1_qx, d1_qx[0]))
+            d2_qy = np.diff(np.append(d1_qy, d1_qy[0]))
+            
+            # Eq 9 areas Bozza 2021.
             Aplus[i]  = -0.5 * np.sum((px[:-1]+px[1:]) * d1_py)
             Aminus[i] =  0.5 * np.sum((qx[:-1]+qx[1:]) * d1_qy)
-        
-            # Eq 19 centroids
-            Cplus_x[i] =  0.125 * np.sum((px[:-1]+px[1:])**2 * d1_py)
-            Cplus_y[i] = -0.125 * np.sum((py[:-1]+py[1:])**2 * d1_px)
-            Cminus_x[i] = -0.125 * np.sum((qx[:-1]+qx[1:])**2 * d1_qy)
-            Cminus_y[i] =  0.125 * np.sum((qy[:-1]+qy[1:])**2 * d1_qx)
+
+            angles = (np.arange(n) / n) * 2 * np.pi
+            d_angles = np.diff(angles)
+            d_angles3 = d_angles ** 3
             
+            #pdb.set_trace()
+            # Eq 10 areas Bozza 2021.
+
+            wp_d1_d2_i_plus    = d1_px[:-1] * d2_py[:-1] - d1_py[:-1] * d2_px[:-1]
+            wp_d1_d2_ip1_plus  = d1_px[1:] * d2_py[1:] - d1_py[1:] * d2_px[1:]
+            wp_d1_d2_i_minus   = d1_qx[:-1] * d2_qy[:-1] - d1_qy[:-1] * d2_qx[:-1]
+            wp_d1_d2_ip1_minus = d1_qx[1:] * d2_qy[1:] - d1_qy[1:] * d2_qx[1:]
+    
+            Aplus[i] += (1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus))
+            Aminus[i] += -(1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus))
+        
+            # Eq 19 Bozza centroids
+            Cplus_x[i]  =  0.125 * np.sum((px[:-1] + px[1:])**2 * d1_py)
+            Cplus_y[i]  = -0.125 * np.sum((py[:-1] + py[1:])**2 * d1_px)
+            Cminus_x[i] = -0.125 * np.sum((qx[:-1] + qx[1:])**2 * d1_qy)
+            Cminus_y[i] =  0.125 * np.sum((qy[:-1] + qy[1:])**2 * d1_qx)
+
+            #Eq 21 and 22 Bozza 2021. Parabolic corrections
+            Cplus_x[i]  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + d1_px[:-1] * wp_d1_d2_i_plus) +
+                                                             (d1_px[1: ]**2 * d1_py[1: ] + d1_px[1: ] * wp_d1_d2_ip1_plus)))
+            Cplus_y[i]  += -(1. / 24.) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + d1_py[:-1] * wp_d1_d2_i_plus) +
+                                                             (d1_py[1: ]**2 * d1_px[1: ] + d1_py[1: ] * wp_d1_d2_ip1_plus)))
+            Cminus_x[i] += -(1. / 24.) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + d1_qx[:-1] * wp_d1_d2_i_minus) +
+                                                             (d1_qx[1: ]**2 * d1_qy[1: ] + d1_qx[1: ] * wp_d1_d2_ip1_minus)))
+            Cminus_y[i] +=  (1. / 24.) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + d1_qy[:-1] * wp_d1_d2_i_minus) +
+                                                             (d1_qy[1: ]**2 * d1_qx[1: ] + d1_qy[1: ] * wp_d1_d2_ip1_minus)))
+        
         Aplus = np.array(Aplus)
         Aminus = np.array(Aminus)
         Cplus_x, Cplus_y = np.array(Cplus_x), np.array(Cplus_y) 
         Cminus_x, Cminus_y = np.array(Cminus_x), np.array(Cminus_y)
         
-        
         amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
         amp_minus = np.abs(Aminus) / (np.pi * self.radiusS ** 2)
         
-        
         img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])  #Units to mas
         img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])  #Units to mas
-        
+
         images = np.zeros((len(t), 2, 2), dtype=float)
         images[:, 0, :] = img_pos_plus.T
         images[:, 1, :] = img_pos_minus.T
@@ -20038,6 +20069,7 @@ class FSPL(PSPL):
         
         amps_interim = np.array((interim_plus, interim_minus)).T  
         amps = np.array((interim_plus,interim_minus)).T
+
         
         return images, amps
 
@@ -20236,7 +20268,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             of the circular source. The last axis contains East/North positions.
         """
        
-        if self.n_outline!=False:
+        if self.n_outline != False:
         
             xS_unlensed_center = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)  # arcsec
     
@@ -20609,7 +20641,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            
+        
             # amp_arr shape = [N_times, [+, -]]
             # image_arr shape = [N_times, [+, -], [E, N]]
 
@@ -20618,6 +20650,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         fL = fS * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
 
         # Calculate the total flux from all lensed source images and the lens itself.
+        amp_arr = np.abs(amp_arr)
         ftot = fL + np.sum(fS * amp_arr, axis=1)
         pos = np.sum(image_arr * amp_arr[:, :, np.newaxis] * fS, axis=1)
 
@@ -20926,7 +20959,7 @@ class FSPL_PhotParam2(PSPL_Param):
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE',
-                          'piE_E', 'piE_N, radiusS']
+                          'piE_E', 'piE_N', 'radiusS']
     phot_param_names = ['b_sff', 'mag_base']
     additional_param_names = ['mag_src']
 
@@ -20935,7 +20968,7 @@ class FSPL_PhotParam2(PSPL_Param):
     LeeFlag = False 
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_base,
-                 n_outline=False,
+                 n_outline=50,
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
@@ -24247,6 +24280,25 @@ class BSPL_PhotAstrom_noPar_EllOrbs_Param3(ModelClassABC,
                                            BSPL_PhotAstrom,
                                            BSPL_noParallax,
                                            BSPL_PhotAstrom_EllOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+class BSPL_PhotAstrom_Par_EllOrbs_Param4(ModelClassABC,
+                                         BSPL_PhotAstrom,
+                                         BSPL_Parallax,
+                                         BSPL_PhotAstrom_EllOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+class BSPL_PhotAstrom_noPar_EllOrbs_Param4(ModelClassABC,
+                                           BSPL_PhotAstrom,
+                                           BSPL_noParallax,
+                                           BSPL_PhotAstrom_EllOrbs_Param4):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)

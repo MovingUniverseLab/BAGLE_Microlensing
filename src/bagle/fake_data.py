@@ -2508,7 +2508,9 @@ def fake_data_parallax_multi_location_bulge(outdir='test_mnest_bulge_multiLoc/',
 def get_times_roman_gbtds(seasons_fast=(0, 1, 2, 7, 8, 9), seasons_slow=(3, 4, 5, 6),
                           seasons_fast_len=70, n_fields_per_set=7,
                           n_sets_f087_fast=1, n_sets_f146_fast=44, dt_gap_fast=0,
-                          n_sets_f087_slow=0, n_sets_f146_slow=1, dt_gap_slow=10):
+                          n_sets_f087_slow=0, n_sets_f146_slow=1, dt_gap_slow=10,
+                          t_start = Time('2027-01-01', format='isot', scale='utc'),
+                          t_end = Time('2032-01-01', format='isot', scale='utc')):
     """
     Optional
     --------
@@ -2548,8 +2550,8 @@ def get_times_roman_gbtds(seasons_fast=(0, 1, 2, 7, 8, 9), seasons_slow=(3, 4, 5
                         obstime='J2000', frame='icrs')
 
     # Roman launch and survey window of 5 years.
-    t_start = Time('2027-01-01', format='isot', scale='utc')
-    t_end = Time('2032-12-31', format='isot', scale='utc')
+    # t_start =  see input 
+    # t_end =  see input
 
     # First, get coarse daily sampling to figure out Roman visibility windows.
     t_daily = Time(np.arange(t_start.jd, t_end.jd, 1), format='jd')
@@ -2689,7 +2691,7 @@ def add_astrometric_noise(flux0, mag0, pos_err0, mag_obs, pos_obs):
     return pos_obs_new, pos_obs_err
 
 
-def fake_dex_data_noPar_BSPL_6(outdir='', outroot='bspl',
+def fake_data_noPar_BSPL_6(outdir='', outroot='bspl',
                                t0=57000.00, u0_amp=.2,
                                tE=542, log10_thetaE=np.log(2), piS=0.1,
                                piE_E=0.6, piE_N=.6, alpha=100,
@@ -2865,15 +2867,10 @@ def fake_dex_data_noPar_BSPL_6(outdir='', outroot='bspl',
     params['raL'] = raL
     params['decL'] = decL
 
-    if animate == True:
-        ani = bspl.dexanimate(20, 400, 2, 'fake_fit_deceptacon', [20, 20], 0.04, "yes",
-                              "resolved_unlensed_resolved_lensed", loc='upper right')
-    else:
-        ani = None
     return data, params, bspl, ani
 
 
-def fake_dex_data_noPar_BSPL_2(outdir='', outroot='bspl',
+def fake_data_noPar_BSPL_2(outdir='', outroot='bspl',
                                t0_com=57000.00, u0_amp=.619,
                                tE=517.5, thetaE=12, piS=0.09,
                                piE_E=0.07, piE_N=0.02, alpha=70,
@@ -3051,15 +3048,11 @@ def fake_dex_data_noPar_BSPL_2(outdir='', outroot='bspl',
     params['raL'] = raL
     params['decL'] = decL
 
-    if animate == True:
-        ani = bspl.dexanimate(20, 400, 2, 'fake_fit_deceptacon', [20, 20], 0.04, "yes",
-                              "resolved_unlensed_resolved_lensed", loc='upper right')
-    else:
-        ani = None
+    
     return data, params, bspl, ani
 
 
-def fake_dex_data_noPar_BSPL_3(outdir='', outroot='bspl',
+def fake_data_noPar_BSPL_3(outdir='', outroot='bspl',
                                mL=20, t0_com=57000.00, beta=7.5,
                                dL=1000, dL_dS=0.1, xS0_E=0, xS0_N=0,
                                muL_E=0, muL_N=0, muS_E=8, muS_N=3,
@@ -3233,15 +3226,10 @@ def fake_dex_data_noPar_BSPL_3(outdir='', outroot='bspl',
     params['raL'] = raL
     params['decL'] = decL
 
-    if animate == True:
-        ani = bspl.dexanimate(20, 400, 2, 'fake_fit_deceptacon', [20, 20], 0.04, "yes",
-                              "resolved_unlensed_resolved_lensed", loc='upper right')
-    else:
-        ani = None
     return data, params, bspl, ani
 
                                    
-def fake_dex_data_noPar_BSPL_3_5(outdir='', outroot='bspl',
+def fake_data_noPar_BSPL_3_5(outdir='', outroot='bspl',
                                mL=20, t0_com=57000.00, beta=7.5,
                                dL=1000, dL_dS=0.1, xS0_E=0, xS0_N=0,
                                muL_E=0, muL_N=0, muS_E=8, muS_N=3,
@@ -3415,15 +3403,10 @@ def fake_dex_data_noPar_BSPL_3_5(outdir='', outroot='bspl',
     params['raL'] = raL
     params['decL'] = decL
 
-    if animate == True:
-        ani = bspl.dexanimate(20, 400, 2, 'fake_fit_deceptacon', [20, 20], 0.04, "yes",
-                              "resolved_unlensed_resolved_lensed", loc='upper right')
-    else:
-        ani = None
     return data, params, bspl, ani
 
 
-def fake_dex_data_noPar_BSPL_4(outdir='', outroot='bspl',
+def fake_data_noPar_BSPL_4(outdir='', outroot='bspl',
                                mL=20.14, t0_com=57000.00, beta=7.5,
                                dL=925, dL_dS=0.1, xS0_E=-0.0505, xS0_N=-0.0450,
                                muL_E=-0.85, muL_N=-0.42, muS_E=7.11, muS_N=2.56,
@@ -3596,15 +3579,10 @@ def fake_dex_data_noPar_BSPL_4(outdir='', outroot='bspl',
     params['raL'] = raL
     params['decL'] = decL
 
-    if animate == True:
-        ani = bspl.dexanimate(20, 400, 2, 'fake_fit_deceptacon', [20, 20], 0.04, "yes",
-                              "resolved_unlensed_resolved_lensed", loc='upper right')
-    else:
-        ani = None
     return data, params, bspl, ani
 
 
-def fake_dex_data_noPar_PSBL_1(outdir='', outroot='psbl',
+def fake_data_noPar_PSBL_1(outdir='', outroot='psbl',
                                mLp=18, mLs=3, t0=5700, xS0_E=0, xS0_N=0,
                                beta=10, muL_E=8, muL_N=0, omega=0, big_omega=0, i=0, p=400, tp=30, aleph=5, aleph_sec=8,
                                muS_E=0, muS_N=4, dL=1000, dS=1500,
@@ -3783,7 +3761,7 @@ def fake_dex_data_noPar_PSBL_1(outdir='', outroot='psbl',
     return data, params, psbl
 
 
-def fake_dex_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
+def fake_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
                                   mLp=18, mLs=3, t0=5700, xS0_E=0, xS0_N=0,
                                   beta=10, muL_E=8, muL_N=0, omega=10, big_omega=10, i=10, p=400, tp=30, aleph=2,
                                   aleph_sec=8, muS_E=0, muS_N=4, dL=1000, dS=1500,
@@ -3963,7 +3941,7 @@ def fake_dex_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
     return data, params, psbl
 
 
-def fake_dex_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
+def fake_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
                                    mLp=18, mLs=3, t0=5700, xS0_E=0, xS0_N=0,
                                    beta=10, muL_E=8, muL_N=0, omega=10, big_omega=10, i=10, e=0.3, p=400, tp=30,
                                    aleph=2, aleph_sec=8, muS_E=0, muS_N=4, dL=1000, dS=1500,
@@ -4144,7 +4122,7 @@ def fake_dex_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
     return data, params, psbl
 
 
-def fake_dex_data_noPar_PSBL_4(outdir='', outroot='psbl',
+def fake_data_noPar_PSBL_4(outdir='', outroot='psbl',
                                t0=5700, u0_amp=.2, tE=100, thetaE=4, piS=1,
                                piE_E=0.1, piE_N=0.1, xS0_E=0, xS0_N=0, omega=0, big_omega=0, i=0, p=500, tp=30, aleph=5, sep = 2,
                                aleph_sec=8, muS_E=0, muS_N=5,
@@ -4324,7 +4302,7 @@ def fake_dex_data_noPar_PSBL_4(outdir='', outroot='psbl',
     return data, params, psbl
 
 
-def fake_dex_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
+def fake_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
                                t0_com=5700, xS0_E=0, xS0_N=0, beta_com=2, muL_E=8, muL_N=3,
                                muS_E=5, muS_N=10, dL=1000, dS=1200, alphaL=90,
                                alphaS=90, omegaL=90, big_omegaL=0, iL=6,
@@ -4336,10 +4314,9 @@ def fake_dex_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
     start = time.time()
     bsbl = model.BSBL_PhotAstrom_noPar_CircOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
                                                        beta_com, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                                                       alphaL, alphaS, omegaL, big_omegaL, iL, pL, tpL, alephL,
-                                                       aleph_secL,
+                                                       omegaL, big_omegaL, iL, tpL, alephL + aleph_secL,
                                                        omegaS, big_omegaS, iS, pS, tpS, alephS, aleph_secS,
-                                                       mag_src_pri, mag_src_sec, b_sff,
+                                                       mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls=20,
                                                        raL=raL, decL=decL, root_tol=root_tol)
 
     # Simulate
@@ -4507,18 +4484,15 @@ def fake_dex_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
     params['dL'] = dL
     params['dS'] = dS
 
-    params['alphaL'] = alphaL
-    params['omegaL'] = omegaL
-    params['big_omegaL'] = big_omegaL
+    params['omegaL_pri'] = omegaL
+    params['big_omegaL_sec'] = big_omegaL
     params['iL'] = iL
     params['pL'] = pL
     params['tpL'] = tpL
-    params['alephL'] = alephL
-    params['aleph_secL'] = aleph_secL
+    params['sepL'] = alephL + aleph_secL
 
-    params['alphaS'] = alphaS
-    params['omegaS'] = omegaS
-    params['big_omegaS'] = big_omegaS
+    params['omegaS_pri'] = omegaS
+    params['big_omegaS_sec'] = big_omegaS
     params['iS'] = iS
     params['pS'] = pS
     params['tpS'] = tpS
