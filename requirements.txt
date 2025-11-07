@@ -1,14 +1,23 @@
-matplotlib
-numpy
-scipy
-astropy
-pytest
-celerite
-ephem
-pymultinest
-Pyerfa
-dynesty
-joblib
-jplephem
-graphviz
+astropy==7.1.0
+celerite==0.4.3
+contourpy==1.3.3
+cycler==0.12.1
+dynesty==2.1.5
+ephem==4.2
+joblib==1.5.2
+jplephem==2.23
+matplotlib==3.10.6
+numpy==2.3.3
+pymultinest==2.12
+pytest==8.4.2
+scipy==1.16.2
+ipykernal
 numpydoc
+Pyerfa
+graphviz
+
+# Required in the Tutorial notebooks:
+# conda install -c conda-forge ffmpeg
+# pyLIMA==1.9.8
+# VBMicrolensing==5.3.3
+# MulensModel==3.3.1

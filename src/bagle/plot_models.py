@@ -217,8 +217,8 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie'):
     # Print out all of the parameters.
     plt.figtext(0.802, 0.8, 'PSBL Model')
 
-    fmt0 = r'M$_{{L1}}$ = {0:.2f} M$_\odot$'
-    fmt1 = r'M$_{{L2}}$ = {0:.2f} M$_\odot$'
+    fmt0 = r'M$_{{L1}}$ = {0:.2f} M$_\\odot$'
+    fmt1 = r'M$_{{L2}}$ = {0:.2f} M$_\\odot$'
     fmt2 = r'sep = {0:.1e} arcsec'
     fmt3 = r'$\alpha$ = {0:.2f} deg'
     fmt4 = r'$\beta$ = {0:.1f} mas'
@@ -240,8 +240,8 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie'):
     plt.figtext(0.805, 0.75-7*dy, fmt7.format(psbl.muS[0], psbl.muS[1]), fontsize=12)
     plt.figtext(0.805, 0.75-8*dy, fmt8.format(psbl.dL), fontsize=12)
     plt.figtext(0.805, 0.75-9*dy, fmt9.format(psbl.dS), fontsize=12)
-    for ff in range(len(psbl.mag_src)):
-        plt.figtext(0.805, 0.75-(10+ff*2)*dy, fmt10.format(psbl.mag_src[ff]), fontsize=12)
+    for ff, mag_src_val in enumerate(psbl.mag_src):
+        plt.figtext(0.805, 0.75-(10+ff*2)*dy, fmt10.format(mag_src_val), fontsize=12)
         plt.figtext(0.805, 0.75-(11+ff*2)*dy, fmt11.format(psbl.b_sff[ff]), fontsize=12)
 
 
@@ -249,14 +249,14 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie'):
     # with i being the number of the frame that it's currently on
     def update(i, t, rL_1, rL_2, rS, rS_img, rS_img_all, pS, lines):
         lines[0].set_data(rS[:i+1, 0], rS[:i+1, 1])
-        lines[1].set_data(rL_1[i, 0], rL_1[i, 1])
-        lines[2].set_data(rL_2[i, 0], rL_2[i, 1])
+        lines[1].set_data([rL_1[i, 0]], [rL_1[i, 1]])
+        lines[2].set_data([rL_2[i, 0]], [rL_2[i, 1]])
         lines[3].set_data(rS_img[:i+1, 0], rS_img[:i+1, 1])
         lines[4].set_data(t[:i+1] - psbl.t0, pS[:i+1])
         lines[5].set_text('time = {0:.0f} days'.format(t[i] - psbl.t0))
 
         for jj in range(5):
-            lines[6+jj].set_data(rS_img_all[i, jj, 0], rS_img_all[i, jj, 1])
+            lines[6+jj].set_data([rS_img_all[i, jj, 0]], [rS_img_all[i, jj, 1]])
         
         return lines
     
@@ -368,7 +368,7 @@ def animate_PSPL(pspl, duration=10, time_steps=300, outfile='pspl_movie.gif'):
     # Print out all of the parameters.
     plt.figtext(0.802, 0.8, 'PSPL Model')
 
-    fmt0 = r'M$_L$ = {0:.2f} M$_\odot$'
+    fmt0 = r'M$_L$ = {0:.2f} M$_\\odot$'
     fmt1 = r'R.A. = {0:.5f} deg'
     fmt2 = r'Dec. = {0:.5f} deg'
     fmt3 = r'$\beta$ = {0:.1f} mas'
@@ -397,13 +397,13 @@ def animate_PSPL(pspl, duration=10, time_steps=300, outfile='pspl_movie.gif'):
     # with i being the number of the frame that it's currently on
     def update(i, t, rL, rS, rS_img, rS_img_all, pS, lines):
         lines[0].set_data(rS[:i+1, 0], rS[:i+1, 1])
-        lines[1].set_data(rL[i, 0], rL[i, 1])
+        lines[1].set_data([rL[i, 0]], [rL[i, 1]])
         lines[2].set_data(rS_img[:i+1, 0], rS_img[:i+1, 1])
         lines[3].set_data(t[:i+1] - pspl.t0, pS[:i+1])
         lines[4].set_text('time = {0:.0f} days'.format(t[i] - pspl.t0))
 
         for jj in range(2):
-            lines[5+jj].set_data(rS_img_all[jj][i, 0], rS_img_all[jj][i, 1])
+            lines[5+jj].set_data([rS_img_all[jj][i, 0]], [rS_img_all[jj][i, 1]])
         
         return lines
     
@@ -533,8 +533,8 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     # Print out all of the parameters.
     plt.figtext(0.802, 0.8, 'PSBL Model')
 
-    fmt_dict = {'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\odot$',
-                'mLs': r'M$_{{L2}}$ = {0:.3f} M$_\odot$',
+    fmt_dict = {'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\\odot$',
+                'mLs': r'M$_{{L2}}$ = {0:.3f} M$_\\odot$',
                 'sep': r'sep = {0:.4f} arcsec or $\theta_E$',
                 'alpha': r'$\alpha$ = {0:.2f} deg',
                 'beta': r'$\beta$ = {0:.1f} mas',
@@ -853,8 +853,8 @@ def plot_bsbl(bsbl, zoom, duration = 1000, time_steps=50000, caustic_finder = 'o
 
     #plt.title('Change in Primary and Secondary Lens and Source Position (Keplerian Orbit)')
     
-    plt.xlabel(f'$\Delta$ RA') 
-    plt.ylabel(f'$\Delta$ Dec')
+    plt.xlabel(f'$\\Delta$ RA') 
+    plt.ylabel(f'$\\Delta$ Dec')
     
     labels =['Primary Source Trajectory','Secondary Source Trajectory','Primary Lens Trajectory', 'Secondary Lens Trajectory', 'Images']
     ps = mpatches.Patch(facecolor='green', edgecolor = 'k') # This will create a red bar with black borders, you can leave out edgecolor if you do not want the borders
@@ -1362,8 +1362,8 @@ def compare_model_pkg_phot_astrom_xSxL(time_mjd, xS_bagle, xL_bagle,
                  ls=':', lw=2, marker='None')
 
     ax[0,0].legend(fontsize=12)
-    ax[0,0].set_ylabel('$x_{\odot} \cdot \hat{E}$ (mas)')
-    ax[0,1].set_ylabel('$x_{\odot} \cdot \hat{N}$ (mas)')
+    ax[0,0].set_ylabel('$x_{\\odot} \\cdot \\hat{E}$ (mas)')
+    ax[0,1].set_ylabel('$x_{\\odot} \\cdot \\hat{N}$ (mas)')
     ax[1,0].legend(fontsize=12)
     ax[1,0].set_ylabel('Difference')
     ax[1,0].set_xlabel("Time (MJD)")
@@ -1436,8 +1436,8 @@ def compare_model_pkg_phot_astrom_cent(time_mjd, ast_lensed_bagle,
                  color=colors[0], ls='-', lw=2, marker='None')
 
     ax[0,0].legend(fontsize=12)
-    ax[0,0].set_ylabel('$x_{\odot} \cdot \hat{E}$ (mas)')
-    ax[0,1].set_ylabel('$x_{\odot} \cdot \hat{N}$ (mas)')
+    ax[0,0].set_ylabel('$x_{\\odot} \\cdot \\hat{E}$ (mas)')
+    ax[0,1].set_ylabel('$x_{\\odot} \\cdot \\hat{N}$ (mas)')
     ax[1,0].legend(fontsize=12)
     ax[1,0].set_ylabel('Difference')
     ax[1,0].set_xlabel("Time (MJD)")
