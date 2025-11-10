@@ -2,6 +2,19 @@
 Installation
 ============
 
+Conda - Recommended
+-------------------
+
+BAGLE is available via conda (source-forge) and pip. We recommend installing with conda or mamba::
+
+    conda install bagle
+
+PIP
+---
+BAGLE can also be installed from pip::
+
+    pip install bagle
+
 From source
 -----------
 
@@ -27,17 +40,4 @@ $.bash_profile$ or $.zshenv$::
 
     export PYTHONPATH=$PYTHONPATH:$HOME/code/python/bagle/src
 
-In the future, we hope to support installation using pip and conda.
-    
-..
-   From PyPI
-   ---------
-
-   TBD
-
-   From conda-sourceforge
-   ----------------------
-
-   TBD
-  
 

@@ -540,6 +540,7 @@ class PSPL(ABC):
 
         return xL
 
+
     def get_source_astrometry_unlensed(self, t, filt_idx=0):
         """
         Get the astrometry of the source if the lens didn't exist.
@@ -571,6 +572,7 @@ class PSPL(ABC):
 
         return xS_unlensed
 
+
     def get_astrometry_unlensed(self, t, filt_idx=0):
         """
         Get the unresolved astrometry of the combined source and lens if
@@ -597,6 +599,7 @@ class PSPL(ABC):
         pos_unlensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
 
         return pos_unlensed
+    
 
     def get_resolved_amplification(self, t, filt_idx=0):
         """
@@ -631,12 +634,11 @@ class PSPL(ABC):
         u = thetaS / self.thetaE_amp
         u_amp = np.linalg.norm(u, axis=1)
 
-        A_plus = 0.5 * (
-                (u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4)) + 1)
-        A_minus = 0.5 * (
-                (u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4)) - 1)
+        A_plus  = 0.5 * ((u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4)) + 1)
+        A_minus = 0.5 * ((u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4)) - 1)
 
         return np.stack((A_plus, A_minus))
+    
 
     def get_amplification(self, t, filt_idx=0):
         """
@@ -682,6 +684,7 @@ class PSPL(ABC):
         #pdb.set_trace()
 
         return A
+
 
     def get_resolved_astrometry(self, t, filt_idx=0):
         """
@@ -736,6 +739,7 @@ class PSPL(ABC):
         xS_minus = xL + (xSL_minus * 1e-3)  # arcsec
 
         return np.stack((xS_plus, xS_minus))
+
 
     def get_astrometry(self, t, filt_idx=0):
         """
@@ -805,6 +809,7 @@ class PSPL(ABC):
 
         return pos_lensed
 
+
     def get_photometry(self, t, filt_idx=0):
         """
         Get the predicted photomety at the specified times for the specified
@@ -840,6 +845,7 @@ class PSPL(ABC):
         mag_model = flux2mag(flux_model)
 
         return mag_model
+
 
     def get_centroid_shift(self, t, filt_idx=0):
         """
@@ -891,6 +897,7 @@ class PSPL(ABC):
 
         return shift
 
+
     def get_u(self, t, filt_idx=0):
         """Get the unlensed, relative astrometry of the source and lens in units
         of the Einstein radius.
@@ -927,6 +934,7 @@ class PSPL(ABC):
 
         return u
 
+
     def get_chi2_photometry(self, t, mag_obs, mag_err_obs, filt_idx=0):
         """
         Get chi^2 values for the model and input photometric data in the
@@ -956,6 +964,7 @@ class PSPL(ABC):
         chi2 = ((mag_obs - mag_model) / mag_err_obs) ** 2
 
         return chi2
+
 
     def get_chi2_astrometry(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
         """
@@ -995,6 +1004,7 @@ class PSPL(ABC):
 
         return chi2
 
+
     def get_lnL_constant(self, err_obs):
         """
         Get the natural log of the constant normalization terms of the likelihood.
@@ -1014,6 +1024,7 @@ class PSPL(ABC):
         lnL_const = -0.5 * np.log(2.0 * math.pi * err_obs ** 2)
 
         return lnL_const
+
 
     def log_likely_photometry_each(self, t, mag_obs, mag_err_obs, filt_idx=0):
         """
@@ -1049,6 +1060,7 @@ class PSPL(ABC):
 
         return lnL
 
+
     def log_likely_photometry(self, t, mag_obs, mag_err_obs, filt_idx=0):
         """
         Get the summed natural log of the likelihood for the input photometric data for the
@@ -1077,6 +1089,7 @@ class PSPL(ABC):
         lnL = self.log_likely_photometry_each(t, mag_obs, mag_err_obs, filt_idx=filt_idx)
 
         return lnL.sum()
+
 
     def log_likely_astrometry_each(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
         """
@@ -1118,6 +1131,7 @@ class PSPL(ABC):
 
         return lnL
 
+
     def log_likely_astrometry(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
         """
         Get the natural log of the likelihood for the input astrometric data in the
@@ -1153,6 +1167,7 @@ class PSPL(ABC):
                                               filt_idx=filt_idx)
 
         return lnL.sum()
+
 
     def animate(self, tE, time_steps, frame_time, name, size, zoom,
                 astrometry, filt_idx=0):
@@ -7933,8 +7948,8 @@ class PSBL_PhotAstromParam3(PSPL_Param):
     Attributes
     ----------
     t0 : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of projected closest approach between the source and the geometric center of the
+        lens system (before parallax is applied and in the SSB frame).
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -8116,8 +8131,8 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
     Attributes
     ----------
     t0 : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of projected closest approach between the source and the geometric center of the
+        lens system (before parallax is applied and in the SSB frame).
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -8223,8 +8238,8 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
     Attributes
     ----------
     t0 : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of projected closest approach between the source and the geometric center of the
+        lens system (before parallax is applied and in the SSB frame).
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -8619,8 +8634,8 @@ class PSBL_PhotAstromParam4(PSPL_Param):
     Attributes
     ----------
     t0_com : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of projected closest approach between the source and the geometric center of the
+        lens system (before parallax is applied and in the SSB frame).
     u0_amp_com : float
         Angular distance between the source and the binary lens COM
         on the plane of the sky at closest approach in units of thetaE. Can be
@@ -9259,8 +9274,8 @@ class PSBL_PhotAstromParam6(PSPL_Param):
     Attributes
     ----------
     t0_prim : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of projected closest approach between the source and the primary lens
+        (before parallax is applied and in the SSB frame).
     u0_amp_prim : float
         Angular distance between the source and the PRIMARY lens
         on the plane of the sky at closest approach in units of thetaE. Can be
@@ -10342,8 +10357,8 @@ class PSBL_PhotAstromParam8(PSPL_Param):
     Attributes
     ----------
     t0_com : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of closest approach between the source and the center of mass of the lens
+        system (before parallax is applied, in the SSB frame).
     u0_amp_com : float
         Angular distance between the source and the binary lens COM
         on the plane of the sky at closest approach in units of thetaE. Can be
@@ -21287,7 +21302,9 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
         
                      
 
-                     
+#
+# IN PROGRESS
+#
 class FSPL_Limb(FSPL):
     def F(self, r):
         return 2 / (1 - self.utilde / 3) * (
@@ -26198,8 +26215,8 @@ def cluster(image, R):
 #     Attributes
 #     ----------
 #     t0_prim : float
-#         Time of photometric peak, as seen from Earth (MJD.DDD)
-#         FIXME: THIS IS NOT RIGHT
+#         Time of projected closest approach between the source and the geometric center of the
+#         lens system (before parallax is applied and in the SSB frame).
 #     u0_amp_prim : float
 #         Angular distance between the source and the PRIMARY lens
 #         on the plane of the sky at closest approach in units of thetaE. Can be
