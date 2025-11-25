@@ -944,7 +944,10 @@ class MicrolensSolver(Solver):
     def get_modified_mag_err(self, cube, filt_index):
         mag_err = copy.deepcopy(self.data['mag_err' + str(filt_index + 1)])
 
-        if self.add_error_on_photometry:
+        if (self.add_error_on_photometry and \
+                    not isinstance(self.add_error_on_photometry, (list, np.ndarray))) or \
+                    (isinstance(self.add_error_on_photometry, (list, np.ndarray)) \
+                    and self.add_error_on_photometry[filt_index]):
             add_err_name = 'add_err' + str(filt_index + 1)
             if isinstance(cube, dict) or isinstance(cube, Row):
                 add_err = cube[add_err_name]
@@ -953,7 +956,10 @@ class MicrolensSolver(Solver):
                 add_err = cube[add_err_idx]
             mag_err = np.hypot(mag_err, add_err)
 
-        if self.multiply_error_on_photometry:
+        if (self.multiply_error_on_photometry and \
+                    not isinstance(self.multiply_error_on_photometry, (list, np.ndarray))) or \
+                    (isinstance(self.multiply_error_on_photometry, (list, np.ndarray)) \
+                    and self.multiply_error_on_photometry[filt_index]):
             mult_err_name = 'mult_err' + str(filt_index + 1)
             if isinstance(cube, dict) or isinstance(cube, Row):
                 mult_err = cube[mult_err_name]
@@ -962,7 +968,7 @@ class MicrolensSolver(Solver):
                 mult_err = cube[mult_err_idx]
             mag_err *= mult_err
 
-        return mag_err
+        return mag_err   
 
 
     def write_params_yaml(self):
