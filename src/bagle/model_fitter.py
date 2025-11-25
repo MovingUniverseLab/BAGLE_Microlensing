@@ -21,6 +21,7 @@ import scipy.stats
 import pymultinest
 import bagle.model as mmodel
 import bagle.frame_convert as fconv
+from bagle import parallax
 from astropy.table import Table
 from astropy.table import Row
 from astropy import units
@@ -284,6 +285,7 @@ class MicrolensSolver(Solver):
                  multiply_error_on_photometry=False,
                  use_phot_optional_params=True,
                  use_ast_optional_params=True,
+                 use_pi_ref_frame=False,
                  wrapped_params=None,
                  importance_nested_sampling=False,
                  multimodal=True, const_efficiency_mode=False,
@@ -309,7 +311,6 @@ class MicrolensSolver(Solver):
         single_gp: bool, optional
         Set as true if there are multiple datasets but only a single set
         of gp parameters.
-
         
         """
 
@@ -320,7 +321,9 @@ class MicrolensSolver(Solver):
         self.multiply_error_on_photometry = multiply_error_on_photometry
         self.use_phot_optional_params = use_phot_optional_params
         self.use_ast_optional_params = use_ast_optional_params
-
+        self.use_pi_ref_frame = use_pi_ref_frame
+        self.plx_vec_at_t_ast = None
+        
         # Check the data
         self.check_data()
 
@@ -480,6 +483,17 @@ class MicrolensSolver(Solver):
 
             if 't_ast' in key and (self.model_class.paramAstromFlag or self.model_class.astrometryFlag):
                 n_ast_sets += 1
+                
+                if (self.use_pi_ref_frame) and ('pi_ref_frame' not in ast_params):
+                    ast_params.append('pi_ref_frame')
+                if self.use_pi_ref_frame:
+                    if n_ast_sets==1:
+                        self.plx_vec_at_t_ast = {}
+                    obs_loc = 'earth' if ('obsLocation' not in self.data.keys()) else self.data['obsLocation']
+                    self.plx_vec_at_t_ast[n_ast_sets-1] = parallax.parallax_in_direction(self.data['raL'],
+                                    self.data['decL'], self.data['t_ast'+str(n_ast_sets)],
+                                    obsLocation=obs_loc)
+                        
 
                 # Optional astrometric parameters -- not all filters
                 for opt_ast_name in self.model_class.ast_optional_param_names:
@@ -673,7 +687,7 @@ class MicrolensSolver(Solver):
         if self.fixed_param_names is not None:
             fixed_params_dict = generate_fixed_params_dict(self.data,
                                                            self.fixed_param_names)
-
+            #pdb.set_trace()
             mod = self.model_class(*params_dict.values(), **fixed_params_dict)
 
         else:
@@ -794,16 +808,23 @@ class MicrolensSolver(Solver):
 
         return lnL
         
-    def log_likely_astrometry(self, model):
+    def log_likely_astrometry(self, model, cube):
         if model.astrometryFlag:
             lnL_ast = 0.0
             
             # If no photometry
             if len(self.map_phot_idx_to_ast_idx) == 0:
                 for i in range(self.n_ast_sets):
+                    xpos = self.data['xpos' + str(i+1)].copy()
+                    ypos = self.data['ypos' + str(i+1)].copy()
+                    if self.use_pi_ref_frame:
+                        pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                        pi_ref_frame = cube[pi_ref_idx]
+                        xpos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
+                        ypos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                     lnL_ast_i = model.log_likely_astrometry(self.data['t_ast' + str(i+1)],
-                                                            self.data['xpos' + str(i+1)],
-                                                            self.data['ypos' + str(i+1)],
+                                                            xpos,
+                                                            ypos,
                                                             self.data['xpos_err' + str(i+1)],
                                                             self.data['ypos_err' + str(i+1)],
                                                             filt_idx = i)
@@ -812,9 +833,16 @@ class MicrolensSolver(Solver):
             # If photometry
             else:
                 for i in range(self.n_ast_sets):
+                    xpos = self.data['xpos' + str(i+1)].copy()
+                    ypos = self.data['ypos' + str(i+1)].copy()
+                    if self.use_pi_ref_frame:
+                        pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                        pi_ref_frame = cube[pi_ref_idx]
+                        xpos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
+                        ypos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                     lnL_ast_i = model.log_likely_astrometry(self.data['t_ast' + str(i+1)],
-                                                            self.data['xpos' + str(i+1)],
-                                                            self.data['ypos' + str(i+1)],
+                                                            xpos,
+                                                            ypos,
                                                             self.data['xpos_err' + str(i+1)],
                                                             self.data['ypos_err' + str(i+1)],
                                                             filt_idx = self.map_phot_idx_to_ast_idx[i])
@@ -867,7 +895,7 @@ class MicrolensSolver(Solver):
 #        print(f'Cache size = {get_cache_size()}')
 
         lnL_phot = self.log_likely_photometry(model, cube)
-        lnL_ast = self.log_likely_astrometry(model)
+        lnL_ast = self.log_likely_astrometry(model, cube)
 
         lnL = lnL_phot + lnL_ast
             
@@ -944,7 +972,10 @@ class MicrolensSolver(Solver):
     def get_modified_mag_err(self, cube, filt_index):
         mag_err = copy.deepcopy(self.data['mag_err' + str(filt_index + 1)])
 
-        if self.add_error_on_photometry:
+        if (self.add_error_on_photometry and \
+                    not isinstance(self.add_error_on_photometry, (list, np.ndarray))) or \
+                    (isinstance(self.add_error_on_photometry, (list, np.ndarray)) \
+                    and self.add_error_on_photometry[filt_index]):
             add_err_name = 'add_err' + str(filt_index + 1)
             if isinstance(cube, dict) or isinstance(cube, Row):
                 add_err = cube[add_err_name]
@@ -953,7 +984,10 @@ class MicrolensSolver(Solver):
                 add_err = cube[add_err_idx]
             mag_err = np.hypot(mag_err, add_err)
 
-        if self.multiply_error_on_photometry:
+        if (self.multiply_error_on_photometry and \
+                    not isinstance(self.multiply_error_on_photometry, (list, np.ndarray))) or \
+                    (isinstance(self.multiply_error_on_photometry, (list, np.ndarray)) \
+                    and self.multiply_error_on_photometry[filt_index]):
             mult_err_name = 'mult_err' + str(filt_index + 1)
             if isinstance(cube, dict) or isinstance(cube, Row):
                 mult_err = cube[mult_err_name]
@@ -1907,7 +1941,7 @@ class MicrolensSolver(Solver):
         # Get likelihoods.
         pspl = self.get_model(params)
         lnL_phot = self.log_likely_photometry(pspl, params)
-        lnL_ast = self.log_likely_astrometry(pspl)
+        lnL_ast = self.log_likely_astrometry(pspl, params)
 
         # Calculate constants needed to subtract from lnL to calculate chi2.
         if pspl.astrometryFlag:
@@ -1918,8 +1952,13 @@ class MicrolensSolver(Solver):
 
             for nn in range(self.n_ast_sets):
                 t_ast = self.data['t_ast' + str(nn + 1)]
-                x = self.data['xpos' + str(nn + 1)]
-                y = self.data['ypos' + str(nn + 1)]
+                x = self.data['xpos' + str(nn + 1)].copy()
+                y = self.data['ypos' + str(nn + 1)].copy()
+                if self.use_pi_ref_frame:
+                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                    pi_ref_frame = params[pi_ref_idx]
+                    x -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
+                    y -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                 xerr = self.data['xpos_err' + str(nn + 1)]
                 yerr = self.data['ypos_err' + str(nn + 1)]
 
@@ -2031,8 +2070,13 @@ class MicrolensSolver(Solver):
         
             for nn in range(self.n_ast_sets):
                 t_ast = self.data['t_ast' + str(nn + 1)]
-                x = self.data['xpos' + str(nn + 1)]
-                y = self.data['ypos' + str(nn + 1)]
+                x = self.data['xpos' + str(nn + 1)].copy()
+                y = self.data['ypos' + str(nn + 1)].copy()
+                if self.use_pi_ref_frame:
+                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                    pi_ref_frame = params[pi_ref_idx]
+                    x -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
+                    y -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                 xerr = self.data['xpos_err' + str(nn + 1)]
                 yerr = self.data['ypos_err' + str(nn + 1)]
 
@@ -2211,8 +2255,13 @@ class MicrolensSolver(Solver):
 
             for nn in range(self.n_ast_sets):
                 t_ast = self.data['t_ast' + str(nn + 1)]
-                x_obs = self.data['xpos' + str(nn + 1)]
-                y_obs = self.data['ypos' + str(nn + 1)]
+                x_obs = self.data['xpos' + str(nn + 1)].copy()
+                y_obs = self.data['ypos' + str(nn + 1)].copy()
+                if self.use_pi_ref_frame:
+                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                    pi_ref_frame = params[pi_ref_idx]
+                    x_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
+                    y_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                 x_err_obs = self.data['xpos_err' + str(nn + 1)]
                 y_err_obs = self.data['ypos_err' + str(nn + 1)]
 
@@ -2267,6 +2316,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
                  multiply_error_on_photometry=False,
                  use_phot_optional_params=True,
                  use_ast_optional_params=True,
+                 use_pi_ref_frame=False,
                  wrapped_params=None,
                  importance_nested_sampling=False,
                  multimodal=True, const_efficiency_mode=False,
@@ -2295,6 +2345,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
                  multiply_error_on_photometry=multiply_error_on_photometry,
                  use_phot_optional_params=use_phot_optional_params,
                  use_ast_optional_params=use_ast_optional_params,
+                 use_pi_ref_frame=use_pi_ref_frame,
                  wrapped_params=wrapped_params,
                  importance_nested_sampling=importance_nested_sampling,
                  multimodal=multimodal,
@@ -2401,14 +2452,19 @@ class MicrolensSolverWeighted(MicrolensSolver):
             return weights
 
             
-    def log_likely_astrometry(self, model):
+    def log_likely_astrometry(self, model, cube):
         if model.astrometryFlag:
             lnL_ast = 0.0
 
             for i in range(self.n_ast_sets):
                 t_ast = self.data['t_ast' + str(i + 1)]
-                xpos = self.data['xpos' + str(i + 1)]
-                ypos = self.data['ypos' + str(i + 1)]
+                xpos = self.data['xpos' + str(i + 1)].copy()
+                ypos = self.data['ypos' + str(i + 1)].copy()
+                if self.use_pi_ref_frame:
+                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                    pi_ref_frame = cube[pi_ref_idx]
+                    xpos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
+                    ypos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                 xpos_err = self.data['xpos_err' + str(i + 1)]
                 ypos_err = self.data['ypos_err' + str(i + 1)]
 
@@ -2515,8 +2571,13 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
                     filt_idx = self.map_phot_idx_to_ast_idx[i]
 
                 t_ast = self.data['t_ast' + str(i+1)]
-                x_obs = self.data['xpos' + str(i+1)]
-                y_obs = self.data['ypos' + str(i+1)]
+                x_obs = self.data['xpos' + str(i+1)].copy()
+                y_obs = self.data['ypos' + str(i+1)].copy()
+                if self.use_pi_ref_frame:
+                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                    pi_ref_frame = cube[pi_ref_idx]
+                    x_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
+                    y_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                 x_err_obs = self.data['xpos_err' + str(i+1)]
                 y_err_obs = self.data['ypos_err' + str(i+1)]
 
@@ -2654,8 +2715,13 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
                     filt_idx = self.map_phot_idx_to_ast_idx[i]
 
                 t_ast = self.data['t_ast' + str(i+1)]
-                x_obs = self.data['xpos' + str(i+1)]
-                y_obs = self.data['ypos' + str(i+1)]
+                x_obs = self.data['xpos' + str(i+1)].copy()
+                y_obs = self.data['ypos' + str(i+1)].copy()
+                if self.use_pi_ref_frame:
+                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                    pi_ref_frame = cube[pi_ref_idx]
+                    x_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
+                    y_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                 x_err_obs = self.data['xpos_err' + str(i+1)]
                 y_err_obs = self.data['ypos_err' + str(i+1)]
 
@@ -3087,7 +3153,7 @@ def generate_params_dict(params, fitter_param_names):
         Dictionary of the parameter names and values.
 
     """
-    skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
+    skip_list = ['weights', 'logLike', 'add_err', 'mult_err', 'pi_ref_frame']
     multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls']
     multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0',
                   'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
