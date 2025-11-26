@@ -1371,6 +1371,8 @@ class PSPL_Phot(PSPL):
     """
     photometryFlag = True
     astrometryFlag = False
+    
+    # TODO: these astrom functions make no sense with ref_frame_par, but does it matter for phot only?? Depends whether it comes in from other PSPL functions - need to work on
 
     def get_lens_astrometry(self, t, filt_idx=0):
         """Get the lens astrometry.
