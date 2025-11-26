@@ -818,8 +818,11 @@ class MicrolensSolver(Solver):
                     xpos = self.data['xpos' + str(i+1)].copy()
                     ypos = self.data['ypos' + str(i+1)].copy()
                     if self.use_pi_ref_frame:
-                        pi_ref_idx = self.all_param_names.index('pi_ref_frame')
-                        pi_ref_frame = cube[pi_ref_idx]
+                        if isinstance(cube, dict) or isinstance(cube, Row):
+                            pi_ref_frame = cube['pi_ref_frame']
+                        else:
+                            pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                            pi_ref_frame = cube[pi_ref_idx]
                         xpos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
                         ypos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                     lnL_ast_i = model.log_likely_astrometry(self.data['t_ast' + str(i+1)],
@@ -836,8 +839,11 @@ class MicrolensSolver(Solver):
                     xpos = self.data['xpos' + str(i+1)].copy()
                     ypos = self.data['ypos' + str(i+1)].copy()
                     if self.use_pi_ref_frame:
-                        pi_ref_idx = self.all_param_names.index('pi_ref_frame')
-                        pi_ref_frame = cube[pi_ref_idx]
+                        if isinstance(cube, dict) or isinstance(cube, Row):
+                            pi_ref_frame = cube['pi_ref_frame']
+                        else:
+                            pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                            pi_ref_frame = cube[pi_ref_idx]
                         xpos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
                         ypos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                     lnL_ast_i = model.log_likely_astrometry(self.data['t_ast' + str(i+1)],
@@ -893,6 +899,7 @@ class MicrolensSolver(Solver):
 #            return size
 #
 #        print(f'Cache size = {get_cache_size()}')
+        #pdb.set_trace()
 
         lnL_phot = self.log_likely_photometry(model, cube)
         lnL_ast = self.log_likely_astrometry(model, cube)
@@ -967,7 +974,6 @@ class MicrolensSolver(Solver):
 #            f.write(str(t) + '\n')
 #
 #        return -1
-
 
     def get_modified_mag_err(self, cube, filt_index):
         mag_err = copy.deepcopy(self.data['mag_err' + str(filt_index + 1)])
@@ -1955,10 +1961,13 @@ class MicrolensSolver(Solver):
                 x = self.data['xpos' + str(nn + 1)].copy()
                 y = self.data['ypos' + str(nn + 1)].copy()
                 if self.use_pi_ref_frame:
-                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
-                    pi_ref_frame = params[pi_ref_idx]
-                    x -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
-                    y -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
+                    if isinstance(params, dict) or isinstance(params, Row):
+                        pi_ref_frame = params['pi_ref_frame']
+                    else:
+                        pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                        pi_ref_frame = params[pi_ref_idx]
+                    x -= pi_ref_frame*self.plx_vec_at_t_ast[nn][:,0]
+                    y -= pi_ref_frame*self.plx_vec_at_t_ast[nn][:,1]
                 xerr = self.data['xpos_err' + str(nn + 1)]
                 yerr = self.data['ypos_err' + str(nn + 1)]
 
@@ -2073,8 +2082,11 @@ class MicrolensSolver(Solver):
                 x = self.data['xpos' + str(nn + 1)].copy()
                 y = self.data['ypos' + str(nn + 1)].copy()
                 if self.use_pi_ref_frame:
-                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
-                    pi_ref_frame = params[pi_ref_idx]
+                    if isinstance(params, dict) or isinstance(params, Row):
+                        pi_ref_frame = params['pi_ref_frame']
+                    else:
+                        pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                        pi_ref_frame = params[pi_ref_idx]
                     x -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
                     y -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                 xerr = self.data['xpos_err' + str(nn + 1)]
@@ -2258,8 +2270,11 @@ class MicrolensSolver(Solver):
                 x_obs = self.data['xpos' + str(nn + 1)].copy()
                 y_obs = self.data['ypos' + str(nn + 1)].copy()
                 if self.use_pi_ref_frame:
-                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
-                    pi_ref_frame = params[pi_ref_idx]
+                    if isinstance(params, dict) or isinstance(params, Row):
+                        pi_ref_frame = params['pi_ref_frame']
+                    else:
+                        pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                        pi_ref_frame = params[pi_ref_idx]
                     x_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
                     y_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                 x_err_obs = self.data['xpos_err' + str(nn + 1)]
@@ -2461,8 +2476,11 @@ class MicrolensSolverWeighted(MicrolensSolver):
                 xpos = self.data['xpos' + str(i + 1)].copy()
                 ypos = self.data['ypos' + str(i + 1)].copy()
                 if self.use_pi_ref_frame:
-                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
-                    pi_ref_frame = cube[pi_ref_idx]
+                    if isinstance(cube, dict) or isinstance(cube, Row):
+                        pi_ref_frame = cube['pi_ref_frame']
+                    else:
+                        pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                        pi_ref_frame = cube[pi_ref_idx]
                     xpos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
                     ypos -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                 xpos_err = self.data['xpos_err' + str(i + 1)]
@@ -2574,8 +2592,11 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
                 x_obs = self.data['xpos' + str(i+1)].copy()
                 y_obs = self.data['ypos' + str(i+1)].copy()
                 if self.use_pi_ref_frame:
-                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
-                    pi_ref_frame = cube[pi_ref_idx]
+                    if isinstance(cube, dict) or isinstance(cube, Row):
+                        pi_ref_frame = cube['pi_ref_frame']
+                    else:
+                        pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                        pi_ref_frame = cube[pi_ref_idx]
                     x_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
                     y_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                 x_err_obs = self.data['xpos_err' + str(i+1)]
@@ -2718,8 +2739,11 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
                 x_obs = self.data['xpos' + str(i+1)].copy()
                 y_obs = self.data['ypos' + str(i+1)].copy()
                 if self.use_pi_ref_frame:
-                    pi_ref_idx = self.all_param_names.index('pi_ref_frame')
-                    pi_ref_frame = cube[pi_ref_idx]
+                    if isinstance(cube, dict) or isinstance(cube, Row):
+                        pi_ref_frame = cube['pi_ref_frame']
+                    else:
+                        pi_ref_idx = self.all_param_names.index('pi_ref_frame')
+                        pi_ref_frame = cube[pi_ref_idx]
                     x_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,0]
                     y_obs -= pi_ref_frame*self.plx_vec_at_t_ast[i][:,1]
                 x_err_obs = self.data['xpos_err' + str(i+1)]
