@@ -747,6 +747,13 @@ class PSPL(ABC):
 
         xS_plus = xL + (xSL_plus * 1e-3)  # arcsec
         xS_minus = xL + (xSL_minus * 1e-3)  # arcsec
+        
+        if self.ref_frame_parallax_flag:
+            # Get the parallax vector for each date.
+            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
+                                                          obsLocation=self.obsLocation[filt_idx])
+            xS_plus += (self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
+            xS_minus += (self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
 
         return np.stack((xS_plus, xS_minus))
 
