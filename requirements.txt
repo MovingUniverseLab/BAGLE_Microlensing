@@ -1,5 +1,5 @@
 astropy==7.1.0
-celerite==0.4.3
+celerite
 contourpy==1.3.3
 cycler==0.12.1
 dynesty==2.1.5
