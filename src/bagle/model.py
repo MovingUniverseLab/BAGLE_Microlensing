@@ -16753,10 +16753,11 @@ class BSBL(PSBL):
         N_times = z1.shape[0]
         N_sources = z_arr.shape[1]
 
-        dwbardz = self.m1 / (z_arr - z1[:, np.newaxis, np.newaxis]) ** 2
-        dwbardz += self.m2 / (z_arr - z2[:, np.newaxis, np.newaxis]) ** 2
-        jacobian = 1 - np.absolute(dwbardz) ** 2
-        amp_arr = 1.0 / np.absolute(jacobian)  # Absolute value of J
+        with np.errstate(divide='ignore', invalid='ignore'):        
+            dwbardz = self.m1 / (z_arr - z1[:, np.newaxis, np.newaxis]) ** 2
+            dwbardz += self.m2 / (z_arr - z2[:, np.newaxis, np.newaxis]) ** 2
+            jacobian = 1 - np.absolute(dwbardz) ** 2
+            amp_arr = 1.0 / np.absolute(jacobian)  # Absolute value of J
 
         return amp_arr
 
