@@ -1621,6 +1621,8 @@ class MicrolensSolver(Solver):
         fig = plot_params(model)
         fig.savefig(self.outputfiles_basename + 'parameters.png')
         plt.close()
+        with open(f'{self.outputfiles_basename}parameters_png.txt', 'w') as f:
+            save_params(model, f)
 
         # Plot photometry
         if model.photometryFlag:
@@ -3308,6 +3310,67 @@ def plot_params(model):
             nrow += 1
 
     return fig
+    
+def save_params(model, file):
+    """
+    Alternative to plot_params that saves a text file
+    instead of a png.
+    """
+    
+    def get_param_value(pname):
+        if pname.endswith('_E') or pname.endswith('_N'):
+            pname_act = pname[:-2]
+        elif pname == 'log10_thetaE':
+            pname_act = 'thetaE_amp'
+        elif pname == 'thetaE':
+            pname_act = 'thetaE_amp'
+        else:
+            pname_act = pname
+
+        pvalue = getattr(model, pname_act)
+        #pdb.set_trace()
+        if pname.endswith('_E'):
+            pvalue = pvalue[0]
+        if pname.endswith('_N'):
+            pvalue = pvalue[1]
+        if pname == 'log10_thetaE':
+            pvalue = np.log10(pvalue)
+
+        return pvalue
+        
+    for ff in range(len(model.fitter_param_names)):
+        pname = model.fitter_param_names[ff]
+        pvalu = get_param_value(pname)
+
+        fmt_str = '{0:s} = {1:.2f}'
+        if pname.startswith('x'):
+            fmt_str = '{0:s} = {1:.4f}'
+
+        if pname == 'thetaE':
+            fmt_str = '{0:s}'
+            print(f'thetaE = {np.around(pvalu, 2)}', file=file)
+        else:
+            print(fmt_str.format(pname, pvalu), file=file)
+
+    for ff in range(len(model.phot_param_names)):
+        pname = model.phot_param_names[ff]
+        pvalu = np.array(get_param_value(pname))
+        fmt_str = '{0:s} = {1:.2f}'
+        for rr in range(len(pvalu)):
+            print(f'{pname + str(rr+1)} = {np.around(pvalu[rr], 2)}', file=file)
+
+    #nrow = 0
+    for ff in range(len(model.additional_param_names)):
+        pname = model.additional_param_names[ff]
+        pvalu = get_param_value(pname)
+        fmt_str = '{0:s} = {1:.2f}'
+        if pname in multi_filt_params:
+            for rr in range(len(pvalu)):
+                print(fmt_str.format(pname + str(rr + 1), pvalu[rr]), file=file)
+        else:
+            print(fmt_str.format(pname, pvalu), file=file)
+    return
+
 
 def plot_photometry(data, model, input_model=None, dense_time=True, residuals=True,
                     filt_index=0, zoomx=None, zoomy=None, zoomy_res=None, mnest_results=None,
