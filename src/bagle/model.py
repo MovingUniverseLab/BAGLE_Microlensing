@@ -3782,6 +3782,7 @@ class PSPL_PhotAstromParam4(PSPL_Param):
         self.dS = dS.to('pc').value
 
         # Get the directional vectors.
+        self.log10_thetaE = np.log10(self.thetaE_amp)
         self.thetaE_hat = self.piE / self.piE_amp
         self.muRel_hat = self.thetaE_hat
         self.thetaE = self.thetaE_amp * self.thetaE_hat
@@ -3888,7 +3889,7 @@ class PSPL_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4):
                        identical. Otherwise, array of same length as mag_src
                        or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE_amp', 'piS',
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
                           'piE_E', 'piE_N',
                           'xS0_E', 'xS0_N',
                           'muS_E', 'muS_N', 'pi_ref_frame']
@@ -5350,6 +5351,113 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
             self.use_gp_phot[key] = True
 
         return
+        
+class PSPL_GP_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4_RefPar):
+    """
+    Point Source Point Lens with GP model for microlensing. This model includes
+    proper motions of the source and the source position on the sky.
+    It is the same as PSPL_PhotAstromParam4 except it fits for log10(thetaE)
+    instead of thetaE.
+
+    Attributes
+    ----------
+
+    t0: float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
+    u0_amp: float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time (days).
+    thetaE: float
+        the size of the Einstein radius in (mas).
+    piS: float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E: float
+        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    xS0_N: float
+        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    muS_E: float
+        RA Source proper motion (mas/yr)
+    muS_N: float
+        Dec Source proper motion (mas/yr)
+    b_sff: numpy array or list of floats
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base: numpy array or list of floats
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    gp_log_sigma: float
+        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+    gp_rho: float
+        Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
+    gp_log_omega04_S0: float
+        Guassian process :math:`log(\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
+    gp_log_omega0: float
+        Guassian process :math:`log(\omega_0)` from the DDSHO kernel.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
+
+    Notes
+    -----
+    .. note::
+       `raL` and `decL` are required parameters if calculating with parallax
+    """
+    phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 pi_ref_frame,
+                 b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
+                 raL=None, decL=None, obsLocation='earth'):
+
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega04_S0 = gp_log_omega04_S0
+        self.gp_log_omega0 = gp_log_omega0
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                         piE_E, piE_N,
+                         xS0_E, xS0_N,
+                         muS_E, muS_N,
+                         pi_ref_frame,
+                         b_sff, mag_base,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+
+        self.gp_log_S0 = {}
+        for key, val in self.gp_log_omega04_S0.items():
+            self.gp_log_S0[key] = self.gp_log_omega04_S0[key] - 4 * self.gp_log_omega0[key]
+
+        # Setup a useful "use_phot_gp" flag.
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+
+        return
 
 class PSPL_GP_PhotAstromParam4_1(PSPL_PhotAstromParam4):
     """
@@ -5439,6 +5547,116 @@ class PSPL_GP_PhotAstromParam4_1(PSPL_PhotAstromParam4):
                          piE_E, piE_N,
                          xS0_E, xS0_N,
                          muS_E, muS_N,
+                         b_sff, mag_base,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+
+        self.gp_log_S0 = {}
+        self.gp_log_omega04_S0 = {}
+        for key, val in self.gp_log_omega0_S0.items():
+            self.gp_log_S0[key] = self.gp_log_omega0_S0[key] - self.gp_log_omega0[key]
+            self.gp_log_omega04_S0[key] = self.gp_log_omega0_S0[key] + 3 * self.gp_log_omega0[key]
+
+        # Setup a useful "use_phot_gp" flag.
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+
+        return
+
+class PSPL_GP_PhotAstromParam4_1_RefPar(PSPL_PhotAstromParam4_RefPar):
+    """
+    Point Source Point Lens with GP model for microlensing. This model includes
+    proper motions of the source and the source position on the sky.
+    It is the same as PSPL_PhotAstromParam3 except it fits for thetaE
+    instead of thetaE.
+
+    Attributes
+    ----------
+
+    t0: float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp: float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time (days).
+    thetaE: float
+        log10 of the size of the Einstein radius in (mas).
+    piS: float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E: float
+        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    xS0_N: float
+        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    muS_E: float
+        RA Source proper motion (mas/yr)
+    muS_N: float
+        Dec Source proper motion (mas/yr)
+    pi_ref_frame : float
+        parallax offset in the astrometric reference frame (mas).
+        This is useful for astrometry derived from FlyStar w/ Parallax motion model
+        where absolute parallax reference frame could not be established.
+    b_sff: numpy array or list of floats
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base: numpy array or list of floats
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    gp_log_sigma: float
+        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+    gp_rho: float
+        Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
+    gp_log_omega0_S0: float
+        Guassian process :math:`log(\omega_0 * S_0)` from the variance of the DDSHO kernel.
+    gp_log_omega0: float
+        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
+
+    Notes
+    -----
+    .. note::
+       `raL` and `decL` are required parameters if calculating with parallax
+    """
+    phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0', 'gp_log_omega0']
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 pi_ref_frame,
+                 b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega0_S0, gp_log_omega0,
+                 raL=None, decL=None, obsLocation='earth'):
+
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega0_S0 = gp_log_omega0_S0
+        self.gp_log_omega0 = gp_log_omega0
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                         piE_E, piE_N,
+                         xS0_E, xS0_N,
+                         muS_E, muS_N,
+                         pi_ref_frame,
                          b_sff, mag_base,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
@@ -23590,11 +23808,33 @@ class PSPL_PhotAstrom_Par_GP_Param4(ModelClassABC,
         checkconflicts(self)
 
 @inheritdocstring
+class PSPL_PhotAstrom_RefPar_GP_Param4(ModelClassABC,
+                                      PSPL_GP,
+                                      PSPL_PhotAstrom,
+                                      PSPL_Parallax_RefFrame,
+                                      PSPL_GP_PhotAstromParam4_RefPar):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+@inheritdocstring
 class PSPL_PhotAstrom_Par_GP_Param4_1(ModelClassABC,
                                       PSPL_GP,
                                       PSPL_PhotAstrom,
                                       PSPL_Parallax,
                                       PSPL_GP_PhotAstromParam4_1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        
+@inheritdocstring
+class PSPL_PhotAstrom_RefPar_GP_Param4_1(ModelClassABC,
+                                      PSPL_GP,
+                                      PSPL_PhotAstrom,
+                                      PSPL_Parallax_RefFrame,
+                                      PSPL_GP_PhotAstromParam4_1_RefPar):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
