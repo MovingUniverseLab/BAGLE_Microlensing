@@ -33,6 +33,7 @@ from datetime import date
 import yaml
 from scipy.stats import norm
 import matplotlib.patches as mpatches
+import pickle
 
 import logging
 import types
@@ -997,6 +998,11 @@ class MicrolensSolver(Solver):
             foo = yaml.dump(params, f)
         
         return
+        
+    def write_priors_pkl(self):
+        with open(self.outputfiles_basename + 'priors.pkl', 'wb') as f:
+            pickle.dump(self.priors, f)
+        return
 
     def solve(self):
         """
@@ -1006,6 +1012,7 @@ class MicrolensSolver(Solver):
         Note we will ALWAYS tell multinest to be verbose.
         """
         self.write_params_yaml()
+        self.write_priors_pkl()
 
         # Choose whether to use self.Prior or self.Prior_from_post depending
         # on whether self.post_param_names is none or not.
@@ -1276,6 +1283,11 @@ class MicrolensSolver(Solver):
             pspl_mod_list.append(pspl_mod)
 
         return pspl_mod_list
+        
+    def load_priors(self):
+        with open(self.outputfiles_basename + 'priors.pkl', 'rb') as f:
+            self.priors = pickle.load(f)
+        return
 
     def load_mnest_results(self, remake_fits=False):
         """Load up the MultiNest results into an astropy table.
