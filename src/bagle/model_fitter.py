@@ -1000,6 +1000,9 @@ class MicrolensSolver(Solver):
         return
         
     def write_priors_pkl(self):
+        """
+        Save the priors to a .pkl to optionally reload later.
+        """
         with open(self.outputfiles_basename + 'priors.pkl', 'wb') as f:
             pickle.dump(self.priors, f)
         return
@@ -1285,6 +1288,9 @@ class MicrolensSolver(Solver):
         return pspl_mod_list
         
     def load_priors(self):
+        """
+        Load the priors used in the fit from the .pkl made in solve()
+        """
         with open(self.outputfiles_basename + 'priors.pkl', 'rb') as f:
             self.priors = pickle.load(f)
         return
