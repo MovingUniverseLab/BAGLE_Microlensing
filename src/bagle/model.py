@@ -494,6 +494,15 @@ from astropy.coordinates.builtin_frames.utils import get_jd12
 import erfa
 import copy
 
+import jax
+import jax.numpy as jnp
+
+jax.config.update('jax_enable_x64', True)
+#Switch to whatever backend the GPU uses. Or run JAX_PLATFORM_NAME='name' python ....py from terminal
+#jax.config.update('jax_enable_x64', True)
+
+
+
 from bagle import frame_convert as fc
 from bagle import orbits as orbits
 from bagle import parallax
@@ -5499,6 +5508,131 @@ class PSBL(PSPL):
             #         print('N images = {0} : {1}'.format(ii, (nim == ii).sum()))
 
         return z_arr
+    
+
+
+    def _quintic_roots(a5, a4, a3, a2, a1, a0):
+        """
+        Solve via companion matrix.
+        All inputs are scalars (complex).
+        Returns (5,) complex roots.
+        """
+        C = jnp.complex128([
+            [-a4 / a5, -a3 / a5, -a2 / a5, -a1 / a5, -a0 / a5],
+            [ 1.0+0j, 0, 0, 0, 0],
+            [ 0, 1.0+0j, 0, 0, 0],
+            [ 0, 0, 1.0+0j, 0, 0],
+            [ 0, 0, 0, 1.0+0j, 0],
+        ])
+        #pdb.set_trace()
+        return jnp.linalg.eigvals(C)
+
+
+    def get_image_pos_arr_jax(self, w, z1, z2, m1, m2, check_sols=False):
+        #print(jax.default_backend())
+
+        """
+        JAX version of get_image_pos_arr
+        """
+        assert (len(w) == len(z1)) & (len(w) == len(z2))
+
+        #Use this over jnp.roots to avoid stepping over each time step.
+        vmap_roots = jax.vmap(PSBL._quintic_roots, in_axes=(0, 0, 0, 0, 0, 0))
+        
+        
+        #Use numpy for nested arrays like this. JNP is slow.
+        wbar   = np.conj(w)
+        z1bar  = np.conj(z1)
+        z2bar  = np.conj(z2)
+
+        a5 = (wbar - z1bar) * (wbar - z2bar)
+        a4 = -((w + 2 * (z1 + z2)) * wbar ** 2) - m2 * z2bar - \
+             z1bar * (m1 + (w + 2 * (z1 + z2)) * z2bar) + \
+             wbar * (m1 + m2 + (w + 2 * (z1 + z2)) * (z1bar + z2bar))
+        a3 = (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
+                z1 + z2)) * wbar ** 2 + \
+             (m1 * (w - z1) + m2 * (w + 2 * z1 + z2)) * z2bar + \
+             z1bar * (m2 * (w - z2) + m1 * (w + z1 + 2 * z2) + \
+                      (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (
+                              z1 + z2)) * z2bar) - \
+             wbar * (2 * (m2 * (w + z1) + m1 * (w + z2)) + \
+                     (z1 ** 2 + 4 * z1 * z2 + z2 ** 2 + 2 * w * (z1 + z2)) * (
+                             z1bar + z2bar))
+        a2 = -((m1 + m2) * (
+                m1 * (w - z1) + m2 * (w - z2))) - \
+             (2 * z1 * z2 * (z1 + z2) + w * (
+                     z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * wbar ** 2 - \
+             (m2 * (w - z2) * (2 * z1 + z2) + m1 * (
+                     w * z1 + 2 * (w + z1) * z2 + z2 ** 2)) * z1bar - \
+             (m2 * w * (2 * z1 + z2) + m1 * (w - z1) * (
+                     z1 + 2 * z2) + m2 * z1 * (z1 + 2 * z2) + \
+              2 * z1 * z2 * (z1 + z2) * z1bar + w * (
+                      z1 ** 2 + 4 * z1 * z2 + z2 ** 2) * z1bar) * \
+             z2bar + wbar * (z1 * (
+                2 * m1 * w + 4 * m2 * w - m1 * z1 + m2 * z1) + \
+                             2 * (2 * m1 + m2) * w * z2 + (
+                                     m1 - m2) * z2 ** 2 + \
+                             (2 * z1 * z2 * (z1 + z2) + w * (
+                                     z1 ** 2 + 4 * z1 * z2 + z2 ** 2)) * (
+                                     z1bar + z2bar))
+        a1 = 2 * m1 ** 2 * w * z2 + 2 * m1 * m2 * w * z2 - m1 * m2 * z2 ** 2 - 2 * m1 * w * z2 ** 2 * wbar + \
+             m1 * w * z2 ** 2 * z1bar + m1 * w * z2 ** 2 * z2bar + \
+             z1 ** 2 * (-(
+                m1 * m2) - 2 * m2 * w * wbar + 2 * m1 * z2 * wbar + \
+                        2 * w * z2 * wbar ** 2 + z2 ** 2 * wbar ** 2 + m2 * (
+                                w - z2) * z1bar - \
+                        2 * w * z2 * wbar * z1bar - z2 ** 2 * wbar * z1bar + \
+                        m2 * w * z2bar - 2 * m1 * z2 * z2bar + m2 * z2 * z2bar - \
+                        2 * w * z2 * wbar * z2bar - z2 ** 2 * wbar * z2bar + \
+                        2 * w * z2 * z1bar * z2bar + z2 ** 2 * z1bar * z2bar) + \
+             z1 * (2 * m1 * m2 * w + 2 * m2 ** 2 * (
+                w - z2) - 2 * m1 ** 2 * z2 - 2 * m1 * m2 * z2 - \
+                   4 * m1 * w * z2 * wbar - 4 * m2 * w * z2 * wbar + 2 * m2 * z2 ** 2 * wbar + \
+                   2 * w * z2 ** 2 * wbar ** 2 + 2 * m1 * w * z2 * z1bar + \
+                   2 * m2 * (
+                           w - z2) * z2 * z1bar + m1 * z2 ** 2 * z1bar - \
+                   2 * w * z2 ** 2 * wbar * z1bar + 2 * m1 * w * z2 * z2bar + \
+                   2 * m2 * w * z2 * z2bar - m1 * z2 ** 2 * z2bar - \
+                   2 * w * z2 ** 2 * wbar * z2bar + 2 * w * z2 ** 2 * z1bar * z2bar)
+        a0 = (m2 * z1 + m1 * z2) * (
+                m1 * (-w + z1) * z2 + m2 * z1 * (-w + z2)) + \
+             z1 * z2 * (-(w * z1 * z2 * wbar ** 2) - (
+                m2 * z1 * (w - z2) + m1 * w * z2) * z1bar - \
+                        (m2 * w * z1 + m1 * (
+                                w - z1) * z2 + w * z1 * z2 * z1bar) * z2bar + \
+                        wbar * (2 * m2 * w * z1 + 2 * m1 * w * z2 - (
+                        m1 + m2) * z1 * z2 + \
+                                w * z1 * z2 * (z1bar + z2bar)))
+    
+        # Solve for roots (N, 5)
+        z_arr = vmap_roots(a5, a4, a3, a2, a1, a0)
+        z_arr = np.array(z_arr)
+
+
+        # Plug back into equation and see if those roots are actually solutions.
+        # There should either be 3 (outside caustic) or 5 (inside caustic).
+        # (for our regime, it should be 3)
+            
+        if check_sols:
+            # broadcast m1,m2
+            #pdb.set_trace()
+            m1_arr = m1 if np.ndim(m1) else np.full(N_times, m1)
+            m2_arr = m2 if np.ndim(m2) else np.full(N_times, m2)
+
+            if np.ndim(self.root_tol)==True:
+                tol = self.root_tol               
+            else:
+                tol = np.full(N_times, self.root_tol)
+    
+            diff = w[:, np.newaxis] - (z_arr - m1_arr[:, np.newaxis] / np.conj(z_arr - z1[:, np.newaxis])
+                                       - m2_arr[:, np.newaxis] / np.conj(z_arr - z2[:, np.newaxis]))
+    
+            bad = jnp.abs(diff) > tol[:, np.newaxis]
+            z_arr[bad] = np.nan + 0j
+
+        return z_arr
+
+    
 
     def get_all_arrays(self, t, filt_idx=0, check_sols=True, rescale=True):
         '''
@@ -5536,7 +5670,7 @@ class PSBL(PSPL):
             self.root_tol *= rcomp[5]
 
             # Image positions derived from rescale complex positions.
-            rimages = self.get_image_pos_arr(*rcomp[0:5], **kwargs)
+            rimages = self.get_image_pos_arr_jax(*rcomp[0:5], **kwargs)
 
             self.root_tol = orig_root_tol
 
