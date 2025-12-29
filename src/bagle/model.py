@@ -496,7 +496,6 @@ import copy
 
 import jax
 import jax.numpy as jnp
-
 jax.config.update('jax_enable_x64', True)
 #Switch to whatever backend the GPU uses. Or run JAX_PLATFORM_NAME='name' python ....py from terminal
 #jax.config.update('jax_enable_x64', True)
@@ -19991,21 +19990,23 @@ class FSPL(PSPL):
                                                       (d1_minus[:, 1: , 0]**2 * d1_minus[:, 1: , 1] + d1_minus[:, 1: , 0] * wp_d1_d2_ip1_minus)), axis=1)
         Cminus_y +=  (1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 1]**2 * d1_minus[:, :-1, 0] + d1_minus[:, :-1, 1] * wp_d1_d2_i_minus) +
                                                       (d1_minus[:, 1: , 1]**2 * d1_minus[:, 1: , 0] + d1_minus[:, 1: , 1] * wp_d1_d2_ip1_minus)), axis=1)
-        
-
+                
         amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
         amp_minus = np.abs(Aminus) / (np.pi * self.radiusS ** 2)
-        img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])
-        img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])
+        
+        img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])  #Units to mas
+        img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])  #Units to mas
 
-        # Final shape = [N_times, [+, -], [E, N]]
         images = np.zeros((len(t), 2, 2), dtype=float)
         images[:, 0, :] = img_pos_plus.T
         images[:, 1, :] = img_pos_minus.T
-
-        # Final shape = [N_times, [+, -]]
-        amps = np.array((amp_plus, amp_minus)).T  # amplifications
-
+        
+        interim_plus = (Aplus) / (np.pi * self.radiusS ** 2)
+        interim_minus = (Aminus) / (np.pi * self.radiusS ** 2)
+        
+        amps_interim = np.array((interim_plus, interim_minus)).T  
+        amps = np.array((interim_plus,interim_minus)).T
+        
         return images, amps
 
 
@@ -20239,12 +20240,15 @@ class FSPL(PSPL):
         u_vectors = np.linalg.norm(self.get_u(t), axis=1)
         if self.astrometryFlag == True:
             self.amgFlag = True
-            images, amps = self.get_all_arrays_amg(t, filt_idx)
+            if np.abs(self.u0_amp) >= 2* (self.radiusS * 1e3)/self.thetaE_amp:
+                images, amps = self.get_all_arrays_CI(t, filt_idx)
+            else:
+                images, amps = self.get_all_arrays_amg(t, filt_idx)
         else:
             #self.n_outline = 1000
             self.amgFlag = False
             images, amps = self.get_all_arrays_CI(t, filt_idx)
-        return images, amps 
+            
   
     def get_u(self, t, filt_idx=0):
         """
