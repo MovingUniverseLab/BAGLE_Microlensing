@@ -520,6 +520,8 @@ class MicrolensSolver(Solver):
         # Is this necessary?
         if len(self.model_class.fixed_param_names) > 0:
             self.fixed_param_names = self.model_class.fixed_param_names
+            if len(self.model_class.fixed_phot_param_names) > 0:
+                self.fixed_param_names += self.model_class.fixed_phot_param_names
 
         if self.custom_additional_param_names is not None:
             self.additional_param_names = []
@@ -2062,8 +2064,11 @@ class MicrolensSolver(Solver):
                 xerr = self.data['xpos_err' + str(nn + 1)]
                 yerr = self.data['ypos_err' + str(nn + 1)]
 
-                # NOTE: WILL BREAK FOR LUMINOUS LENS. BREAKS FOR ASTROM AND PHOTOM??? ADD map_phot_
-                pos_out = pspl.get_astrometry(t_ast, filt_idx=nn)
+                # NOTE: WILL BREAK FOR LUMINOUS LENS. [Is this still true? I'm not sure why it would happen.]
+                if len(self.map_phot_idx_to_ast_idx) == 0:
+                    pos_out = pspl.get_astrometry(t_ast, filt_idx=nn)
+                else:
+                    pos_out = pspl.get_astrometry(t_ast, filt_idx=self.map_phot_idx_to_ast_idx[nn])
 
                 chi2_ast_nn = (x - pos_out[:,0])**2/xerr**2
                 chi2_ast_nn += (y - pos_out[:,1])**2/yerr**2
@@ -2104,7 +2109,7 @@ class MicrolensSolver(Solver):
 #                chi2_phot_nn = (mag - mag_out)**2/mag_err**2
                 
                 chi2_phot_filts.append(np.nansum(chi2_phot_nn))
-                print('NANs : ' + str(np.sum(np.isnan(chi2_phot_nn))))
+                #print('NANs : ' + str(np.sum(np.isnan(chi2_phot_nn))))
 
         else:
             chi2_phot_filts = [0]
@@ -2118,12 +2123,14 @@ class MicrolensSolver(Solver):
                 for ff in range(self.n_ast_sets):
                     print(fmt.format('chi2_ast' + str(ff + 1), chi2_ast_filts[ff]))
 
-            chi2 = np.sum(chi2_ast_filts) + np.sum(chi2_phot_filts)
+            chi2_phot = np.sum(chi2_phot_filts)
+            chi2_ast = np.sum(chi2_ast_filts)
+            chi2 = chi2_phot + chi2_ast
                 
-#            print(fmt.format('chi2_phot', chi2_phot))
-#            print(fmt.format('chi2_ast', chi2_ast))
-#            print(fmt.format('chi2', chi2))
-#
+            print(fmt.format('chi2_phot', chi2_phot))
+            print(fmt.format('chi2_ast', chi2_ast))
+            print(fmt.format('chi2', chi2))
+
         return chi2
 
     def write_summary_maxL(self, return_mnest_results=False):
@@ -2476,7 +2483,220 @@ class MicrolensSolverWeighted(MicrolensSolver):
             lnL_phot = 0
 
         return lnL_phot
+        
+    def calc_chi2(self, params='best', verbose=False):
+        """
+        Parameters
+        ----------
+        params : str or dict, optional
+            model_params = 'best' will load up the best solution and calculate
+            the chi^2 based on those values. Alternatively, pass in a dictionary
+            with the model parameters to use.
+        """
+        if params == 'best':
+            params = self.get_best_fit()
 
+        # Get likelihoods.
+        pspl = self.get_model(params)
+        #lnL_phot = self.log_likely_photometry(pspl, params)
+        #lnL_ast = self.log_likely_astrometry(pspl)
+
+        # Calculate constants needed to subtract from lnL to calculate chi2.
+        if pspl.astrometryFlag:
+
+            # Lists to store lnL, chi2, and constants for each filter.
+            chi2_ast_filts = []
+            lnL_const_ast_filts = []
+
+            for nn in range(self.n_ast_sets):
+                t_ast = self.data['t_ast' + str(nn + 1)]
+                x = self.data['xpos' + str(nn + 1)]
+                y = self.data['ypos' + str(nn + 1)]
+                xerr = self.data['xpos_err' + str(nn + 1)]
+                yerr = self.data['ypos_err' + str(nn + 1)]
+
+                # Calculate the lnL for just a single filter.
+                # If no photometry
+                if len(self.map_phot_idx_to_ast_idx) == 0:
+                    lnL_ast_nn = pspl.log_likely_astrometry(t_ast, x, y, xerr, yerr, filt_idx=nn)
+                # If photometry
+                else:
+                    lnL_ast_nn = pspl.log_likely_astrometry(t_ast, x, y, xerr, yerr, filt_idx=self.map_phot_idx_to_ast_idx[nn])
+                lnL_ast_nn = lnL_ast_nn.sum()
+
+                # Calculate the chi2 and constants for just a single filter.
+                lnL_const_ast_nn = -0.5 * np.log(2.0 * math.pi * xerr ** 2)
+                lnL_const_ast_nn += -0.5 * np.log(2.0 * math.pi * yerr ** 2)
+                lnL_const_ast_nn = lnL_const_ast_nn.sum()
+                chi2_ast_nn = (lnL_ast_nn - lnL_const_ast_nn) / -0.5
+                # Save to our lists
+                chi2_ast_filts.append(chi2_ast_nn)
+                lnL_const_ast_filts.append(lnL_const_ast_nn)
+
+            lnL_const_ast = sum(lnL_const_ast_filts)
+
+        else:
+            lnL_const_ast = 0
+
+        if pspl.photometryFlag:
+
+            # Lists to store lnL, chi2, and constants for each filter.
+            chi2_phot_filts = []
+            lnL_const_phot_filts = []
+        
+            for nn in range(self.n_phot_sets):
+                if hasattr(pspl, 'use_gp_phot'):
+                    if pspl.use_gp_phot[nn]:
+                        gp = True
+                    else:
+                        gp = False
+                else:
+                    gp = False
+                t_phot = self.data['t_phot' + str(nn + 1)]
+                mag = self.data['mag' + str(nn + 1)]
+                mag_err = self.get_modified_mag_err(params, nn)
+                
+                # Calculate the lnL for just a single filter.
+                lnL_phot_nn = pspl.log_likely_photometry(t_phot, mag, mag_err, nn)
+
+                # Calculate the chi2 and constants for just a single filter.
+                if gp:
+                    log_det = pspl.get_log_det_covariance(t_phot, mag, mag_err, nn)
+                    lnL_const_phot_nn = -0.5 * log_det - 0.5 * np.log(2 * np.pi) * len(mag)
+                else:
+                    lnL_const_phot_nn = -0.5 * np.log(2.0 * math.pi * mag_err**2)
+                    lnL_const_phot_nn = lnL_const_phot_nn.sum()
+                
+                chi2_phot_nn = (lnL_phot_nn - lnL_const_phot_nn) / -0.5
+    
+                # Save to our lists
+                chi2_phot_filts.append(chi2_phot_nn)
+                lnL_const_phot_filts.append(lnL_const_phot_nn)
+    
+            lnL_const_phot = sum(lnL_const_phot_filts)
+    
+        else:
+            lnL_const_phot = 0
+
+        # Calculate chi2.
+        chi2_ast = sum(chi2_ast_filts)
+        chi2_phot = sum(chi2_phot_filts)
+        chi2 = chi2_ast + chi2_phot
+
+        if verbose:
+            fmt = '{0:13s} = {1:f} '
+            if pspl.photometryFlag:
+                for ff in range(self.n_phot_sets):
+                    print(fmt.format('chi2_phot' + str(ff + 1)+ ' (unweighted)', chi2_phot_filts[ff]))
+
+            if pspl.astrometryFlag:
+                for ff in range(self.n_ast_sets):
+                    print(fmt.format('chi2_ast' + str(ff + 1)+ ' (unweighted)', chi2_ast_filts[ff]))
+                
+            print(fmt.format('chi2_phot (unweighted)', chi2_phot))
+            print(fmt.format('chi2_ast (unweighted)', chi2_ast))
+            print(fmt.format('chi2 (unweighted)', chi2))
+
+        return chi2
+
+    def calc_chi2_manual(self, params='best', verbose=False):
+        """
+        Parameters
+        ----------
+        params : str or dict, optional
+            model_params = 'best' will load up the best solution and calculate
+            the chi^2 based on those values. Alternatively, pass in a dictionary
+            with the model parameters to use.
+        """
+        raise NotImplementedError("calc_chi2_manual not yet implemented for weighted fits")
+        
+        if params == 'best':
+            params = self.get_best_fit()
+
+        pspl = self.get_model(params)
+
+        if pspl.astrometryFlag:
+
+            # Lists to store lnL, chi2, and constants for each filter.
+            chi2_ast_filts = []
+
+            pspl = self.get_model(params)
+        
+            for nn in range(self.n_ast_sets):
+                t_ast = self.data['t_ast' + str(nn + 1)]
+                x = self.data['xpos' + str(nn + 1)]
+                y = self.data['ypos' + str(nn + 1)]
+                xerr = self.data['xpos_err' + str(nn + 1)]
+                yerr = self.data['ypos_err' + str(nn + 1)]
+
+                # NOTE: WILL BREAK FOR LUMINOUS LENS. [Is this still true? I'm not sure why it would happen.]
+                if len(self.map_phot_idx_to_ast_idx) == 0:
+                    pos_out = pspl.get_astrometry(t_ast, filt_idx=nn)
+                else:
+                    pos_out = pspl.get_astrometry(t_ast, filt_idx=self.map_phot_idx_to_ast_idx[nn])
+
+                chi2_ast_nn = (x - pos_out[:,0])**2/xerr**2
+                chi2_ast_nn += (y - pos_out[:,1])**2/yerr**2
+
+                chi2_ast_filts.append(np.nansum(chi2_ast_nn))
+        else:
+            chi2_ast_filts = [0]
+
+        if pspl.photometryFlag:
+            # Lists to store lnL, chi2, and constants for each filter.
+            chi2_phot_filts = []
+
+            for nn in range(self.n_phot_sets):
+                if hasattr(pspl, 'use_gp_phot'):
+                    if pspl.use_gp_phot[nn]:
+                        gp = True
+                    else:
+                        gp = False
+                else:
+                    gp = False
+
+                t_phot = self.data['t_phot' + str(nn + 1)]
+                mag = self.data['mag' + str(nn + 1)]
+                mag_err = self.get_modified_mag_err(params, nn)
+
+                if gp:
+                    print('GP')
+                    mod_m_at_dat, mod_m_at_dat_std = pspl.get_photometry_with_gp(t_phot, mag, mag_err, nn)
+
+                    print(pspl.get_log_det_covariance(t_phot, mag, mag_err, nn))
+                    mag_out = mod_m_at_dat
+                    mag_err_out = mod_m_at_dat_std
+                    chi2_phot_nn = (mag - mag_out)**2/mag_err_out**2
+                else:
+                    mag_out = pspl.get_photometry(t_phot, nn)
+                    chi2_phot_nn = (mag - mag_out)**2/mag_err**2
+                
+#                chi2_phot_nn = (mag - mag_out)**2/mag_err**2
+                
+                chi2_phot_filts.append(np.nansum(chi2_phot_nn))
+                #print('NANs : ' + str(np.sum(np.isnan(chi2_phot_nn))))
+
+        else:
+            chi2_phot_filts = [0]
+        if verbose:
+            fmt = '{0:13s} = {1:f} '
+            if pspl.photometryFlag:
+                for ff in range(self.n_phot_sets):
+                    print(fmt.format('chi2_phot' + str(ff + 1) + ' (unweigted)', chi2_phot_filts[ff]))
+
+            if pspl.astrometryFlag:
+                for ff in range(self.n_ast_sets):
+                    print(fmt.format('chi2_ast' + str(ff + 1) + ' (unweigted)', chi2_ast_filts[ff]))
+
+            chi2_phot = np.sum(chi2_phot_filts)
+            chi2_ast = np.sum(chi2_ast_filts)
+            chi2 = chi2_phot + chi2_ast
+                
+            print(fmt.format('chi2_phot (unweighted)', chi2_phot))
+            print(fmt.format('chi2_ast (unweighted)', chi2_ast))
+            print(fmt.format('chi2 (unweighted)', chi2))
+
+        return chi2
 
 class MicrolensSolverHobsonWeighted(MicrolensSolver):
     def log_likely(self, cube, verbose=False):
