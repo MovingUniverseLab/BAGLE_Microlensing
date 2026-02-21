@@ -70,10 +70,10 @@ Point source, point lens, photometry only:
     - See :ref:`PSPL Details` under `API Documentation` for details.
     - :class:`PSPL_Phot_Par_Param1` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_src, with parallax
     - :class:`PSPL_Phot_Par_Param2` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_base, with parallax
-    - :class:`PSPL_Phot_Par_Param3`
+    - :class:`PSPL_Phot_Par_Param3` -- photometry only t0, u0, log(tE), log(piE), phi_muRel, b_sff, mag_base, with parallax
     - :class:`PSPL_Phot_noPar_Param1` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_src, no parallax
     - :class:`PSPL_Phot_noPar_Param2` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_base, no parallax
-    - :class:`PSPL_Phot_noPar_Param3`
+    - :class:`PSPL_Phot_noPar_Param3`-- photometry only t0, u0, log(tE), log(piE), phi_muRel, b_sff, mag_base, no parallax
     - :class:`PSPL_Phot_Par_Param1_geoproj` -- parameters in geo-projected rather than helio frame
     - :class:`PSPL_Phot_Par_GP_Param1` -- additional Gaussian Process noise kernel
     - :class:`PSPL_Phot_Par_GP_Param2`
@@ -90,12 +90,12 @@ Point source, point lens, photometry only:
 
 Point source, point lens, photometry and astrometry:
 ----------------------------------------------------
-    - :class:`PSPL_PhotAstrom_Par_Param1`
-    - :class:`PSPL_PhotAstrom_Par_Param2`
-    - :class:`PSPL_PhotAstrom_Par_Param3`
-    - :class:`PSPL_PhotAstrom_Par_Param4`
+    - :class:`PSPL_PhotAstrom_Par_Param1` -- physical parameters, such as mL, t0, beta, dL, xS0, muL, muS, etc.
+    - :class:`PSPL_PhotAstrom_Par_Param2` -- photometry-style parameters, such as t0, u0, tE, piEE, piEN, mag_src; but with astrometry parameters added (thetaE, piS, xS0, muS)
+    - :class:`PSPL_PhotAstrom_Par_Param3` -- photometry-style parameters, such as t0, u0, tE, piEE, piEN, mag_base; but with astrometry parameters added (log10(thetaE), piS, xS0, muS)
+    - :class:`PSPL_PhotAstrom_Par_Param4` -- photometry-style parameters, such as t0, u0, tE, piEE, piEN, mag_base; but with astrometry parameters added (thetaE, piS, xS0, muS)
     - :class:`PSPL_PhotAstrom_Par_Param5`
-    - :class:`PSPL_PhotAstrom_Par_Param6`
+    - :class:`PSPL_PhotAstrom_Par_Param6` -- photometry-style parameters, such as t0, u0, tE, log10(piE), phi_muRel, mag_base; but with astrometry parameters added (log10(thetaE), piS, xS0, muS)
     - :class:`PSPL_PhotAstrom_noPar_Param1`
     - :class:`PSPL_PhotAstrom_noPar_Param2`
     - :class:`PSPL_PhotAstrom_noPar_Param3`
@@ -128,10 +128,10 @@ Point soruce, binary lens, photometry only
 
 Point source, binary lens, photometry and astrometry
 ----------------------------------------------------
-    - :class:`PSBL_PhotAstrom_Par_Param1`
-    - :class:`PSBL_PhotAstrom_Par_Param2`
-    - :class:`PSBL_PhotAstrom_Par_Param3`
-    - :class:`PSBL_PhotAstrom_Par_Param4`
+    - :class:`PSBL_PhotAstrom_Par_Param1` -- mLp, mLs, t0, xS0, beta, muL, muS, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls
+    - :class:`PSBL_PhotAstrom_Par_Param2` -- t0, u0, tE, thetaE, piS, piEE, piEN, xS0, muS, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls
+    - :class:`PSBL_PhotAstrom_Par_Param3` -- t0, u0, tE, log10(thetaE), piS, piEE, piEN, xS0, muS, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls; origin on primary
+    - :class:`PSBL_PhotAstrom_Par_Param4` -- t0, u0, tE, thetaE, piS, piEE, piEN, xS0, muS, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls; origin on COM
     - :class:`PSBL_PhotAstrom_Par_Param5`
     - :class:`PSBL_PhotAstrom_Par_Param7`
     - :class:`PSBL_PhotAstrom_noPar_Param1`
@@ -362,14 +362,17 @@ The base class is ParallaxClassABC.
 Parameterization Class Family
 -----------------------------
 
-These classes determine which physical parameters define the model. Currently
-this file supports one parameterization when using only photometry (`Phot`)
-and three parametrizations when using photometry and astrometery
-(`PhotAstrom`).
+These classes determine which physical parameters define the model.
+There are numerous supported parameterizations, including some that
+only use photometry (`Phot`), only use astrometry (`Astrom`), or both
+(`PhotAstrom`). A most common developer task would be to make a new
+parameterization. This entails making a class that inherits from the
+base class, `PSPL_Param` (or another subclass), and implements the
+`__init__()` function to take in the new parameters and convert them
+into the BAGLE expected set of parameters (which are usually physical
+paraemteres in the Solar System Barycentric reference frame).
 
-The base class is PSPL_Param.
-
-The parameters for each parameterization are:
+Some examples of the parameters for different parameterization are:
     PhotParam1 :
         Point source point lens model for microlensing photometry only.
         This model includes the relative proper motion between the lens
@@ -474,7 +477,7 @@ are several rules that must be followed when creating a new class.
 
 Other notes
 -----------
-All times must be reported in MJD.
+All times must be reported in MJD in the Solar System Barycentric reference frame (TODO: CONFIRM and EXPAND!).
 
 """
 
