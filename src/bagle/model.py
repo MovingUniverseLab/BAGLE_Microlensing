@@ -113,6 +113,12 @@ Point source, point lens, photometry and astrometry:
     - :class:`PSPL_PhotAstrom_Par_GP_Param4_1`
     - :class:`PSPL_PhotAstrom_Par_GP_Param4_2`
     - :class:`PSPL_PhotAstrom_Par_GPnoJitter_Param3_1`
+    - :class:`PSPL_PhotAstrom_RefPar_Param3`
+    - :class:`PSPL_PhotAstrom_RefPar_Param4`
+    - :class:`PSPL_PhotAstrom_RefPar_GP_Param3`
+    - :class:`PSPL_PhotAstrom_RefPar_GP_Param4`
+    - :class:`PSPL_PhotAstrom_RefPar_GP_Param3_1`
+    - :class:`PSPL_PhotAstrom_RefPar_GP_Param4_1`
 
 Point source, point lens, astrometry only
 -----------------------------------------
@@ -294,6 +300,7 @@ Each microlensing model must contain:
 
           - `PSPL_noParallax`
           - `PSPL_Parallax`
+          - `PSPL_Parallax_RefFrame` - adds and additional parameter pi_ref_frame
         
     3) A class from the GP Class Family: (optional)
     
@@ -317,7 +324,8 @@ Each microlensing model must contain:
           - `PSPL_GP_PhotAstromParam3`
           - `PSPL_GP_PhotAstromParam4`
 
-There is a similar hierarchy for PSBL, etc.
+There is a similar hierarchy for PSBL, etc. Parallax_RefFrame has only been implemented in select PSPL classes,
+but the framework may easily added to other classes as needed.
 
 For example, the `PSPL_PhotAstrom_noPar_Param1` model is declared as:
 
@@ -428,7 +436,7 @@ Making a New Model
 ------------------
 
 Each model is, as described above, constructed by combining inheriting from
-different parent classes that contain the desired features for the model. Each
+different parent classes that the desired features for the model. Each
 model must have one class from each class family. In addition to this, there
 are several rules that must be followed when creating a new class.
 
@@ -3602,7 +3610,7 @@ class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
         Dec Source proper motion (mas/yr)
     pi_ref_frame : float
         parallax offset in the astrometric reference frame (mas).
-        This is useful for astrometry derived from FlyStar w/ Parallax motion model
+        This is useful for fitting astrometry derived from FlyStar w/ Parallax motion model
         where absolute parallax reference frame could not be established.
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
@@ -3864,7 +3872,7 @@ class PSPL_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4):
         Dec Source proper motion (mas/yr)
     pi_ref_frame : float
         parallax offset in the astrometric reference frame (mas).
-        This is useful for astrometry derived from FlyStar w/ Parallax motion model
+        This is useful for fitting astrometry derived from FlyStar w/ Parallax motion model
         where absolute parallax reference frame could not be established.
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
@@ -4855,6 +4863,10 @@ class PSPL_GP_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3_RefPar):
         RA Source proper motion (mas/yr)
     muS_N: float
         Dec Source proper motion (mas/yr)
+    pi_ref_frame : float
+        parallax offset in the astrometric reference frame (mas).
+        This is useful for fitting astrometry derived from FlyStar w/ Parallax motion model
+        where absolute parallax reference frame could not be established.
     b_sff: numpy array or list of floats
         The ratio of the source flux to the total (source + neighbors + lens)
         :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
@@ -5065,7 +5077,7 @@ class PSPL_GP_PhotAstromParam3_1_RefPar(PSPL_PhotAstromParam3_RefPar):
         Dec Source proper motion (mas/yr)
     pi_ref_frame : float
         parallax offset in the astrometric reference frame (mas).
-        This is useful for astrometry derived from FlyStar w/ Parallax motion model
+        This is useful for fitting astrometry derived from FlyStar w/ Parallax motion model
         where absolute parallax reference frame could not be established.
     b_sff: numpy array or list of floats
         The ratio of the source flux to the total (source + neighbors + lens)
@@ -5390,6 +5402,10 @@ class PSPL_GP_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4_RefPar):
         RA Source proper motion (mas/yr)
     muS_N: float
         Dec Source proper motion (mas/yr)
+    pi_ref_frame : float
+        parallax offset in the astrometric reference frame (mas).
+        This is useful for fitting astrometry derived from FlyStar w/ Parallax motion model
+        where absolute parallax reference frame could not be established.
     b_sff: numpy array or list of floats
         The ratio of the source flux to the total (source + neighbors + lens)
         :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
@@ -5604,7 +5620,7 @@ class PSPL_GP_PhotAstromParam4_1_RefPar(PSPL_PhotAstromParam4_RefPar):
         Dec Source proper motion (mas/yr)
     pi_ref_frame : float
         parallax offset in the astrometric reference frame (mas).
-        This is useful for astrometry derived from FlyStar w/ Parallax motion model
+        This is useful for fitting astrometry derived from FlyStar w/ Parallax motion model
         where absolute parallax reference frame could not be established.
     b_sff: numpy array or list of floats
         The ratio of the source flux to the total (source + neighbors + lens)
