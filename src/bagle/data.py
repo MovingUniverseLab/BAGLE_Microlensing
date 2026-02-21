@@ -21,7 +21,7 @@ class EventDataDict(dict):
     can be set at or after initialization. If they are not 
     set at initialization, they will be initiliazed. 
 
-    The other eexpected entries include:
+    The other expected entries include:
 
     For each photometric data set, the dictionary should contain:
         

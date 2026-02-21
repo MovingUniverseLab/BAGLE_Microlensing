@@ -1,9 +1,9 @@
 [project]
 name = "BAGLE"
 description = "BAGLE (Bayesian Analysis of Gravitational Lensing Events) is a package to model and fit microlensing events."
-version = "1.0.1rc1"
+version = "1.0.4"
 authors = [
-    {name = "Jessica Lu", email = "jlu.astro@berkeley.edu"},
+    {name = "Jessica R. Lu", email = "jlu.astro@berkeley.edu"},
     {name = "T. Dex Bhadra"},
     {name = "Michael Medford"},
     {name = "Casey Lam"},
@@ -26,6 +26,7 @@ dependencies = ["numpy>=1.24",
                 "celerite>=0.4.2",
                 "scipy>=1.10",
                 "joblib"]
+                "jplephem"]
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",

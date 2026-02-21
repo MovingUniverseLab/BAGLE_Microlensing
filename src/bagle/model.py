@@ -70,10 +70,10 @@ Point source, point lens, photometry only:
     - See :ref:`PSPL Details` under `API Documentation` for details.
     - :class:`PSPL_Phot_Par_Param1` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_src, with parallax
     - :class:`PSPL_Phot_Par_Param2` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_base, with parallax
-    - :class:`PSPL_Phot_Par_Param3`
+    - :class:`PSPL_Phot_Par_Param3` -- photometry only t0, u0, log(tE), log(piE), phi_muRel, b_sff, mag_base, with parallax
     - :class:`PSPL_Phot_noPar_Param1` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_src, no parallax
     - :class:`PSPL_Phot_noPar_Param2` -- photometry only t0, tE, u0, piEE, piEN, b_sff, mag_base, no parallax
-    - :class:`PSPL_Phot_noPar_Param3`
+    - :class:`PSPL_Phot_noPar_Param3`-- photometry only t0, u0, log(tE), log(piE), phi_muRel, b_sff, mag_base, no parallax
     - :class:`PSPL_Phot_Par_Param1_geoproj` -- parameters in geo-projected rather than helio frame
     - :class:`PSPL_Phot_Par_GP_Param1` -- additional Gaussian Process noise kernel
     - :class:`PSPL_Phot_Par_GP_Param2`
@@ -90,12 +90,12 @@ Point source, point lens, photometry only:
 
 Point source, point lens, photometry and astrometry:
 ----------------------------------------------------
-    - :class:`PSPL_PhotAstrom_Par_Param1`
-    - :class:`PSPL_PhotAstrom_Par_Param2`
-    - :class:`PSPL_PhotAstrom_Par_Param3`
-    - :class:`PSPL_PhotAstrom_Par_Param4`
+    - :class:`PSPL_PhotAstrom_Par_Param1` -- physical parameters, such as mL, t0, beta, dL, xS0, muL, muS, etc.
+    - :class:`PSPL_PhotAstrom_Par_Param2` -- photometry-style parameters, such as t0, u0, tE, piEE, piEN, mag_src; but with astrometry parameters added (thetaE, piS, xS0, muS)
+    - :class:`PSPL_PhotAstrom_Par_Param3` -- photometry-style parameters, such as t0, u0, tE, piEE, piEN, mag_base; but with astrometry parameters added (log10(thetaE), piS, xS0, muS)
+    - :class:`PSPL_PhotAstrom_Par_Param4` -- photometry-style parameters, such as t0, u0, tE, piEE, piEN, mag_base; but with astrometry parameters added (thetaE, piS, xS0, muS)
     - :class:`PSPL_PhotAstrom_Par_Param5`
-    - :class:`PSPL_PhotAstrom_Par_Param6`
+    - :class:`PSPL_PhotAstrom_Par_Param6` -- photometry-style parameters, such as t0, u0, tE, log10(piE), phi_muRel, mag_base; but with astrometry parameters added (log10(thetaE), piS, xS0, muS)
     - :class:`PSPL_PhotAstrom_noPar_Param1`
     - :class:`PSPL_PhotAstrom_noPar_Param2`
     - :class:`PSPL_PhotAstrom_noPar_Param3`
@@ -134,10 +134,10 @@ Point source, binary lens, photometry only
 
 Point source, binary lens, photometry and astrometry
 ----------------------------------------------------
-    - :class:`PSBL_PhotAstrom_Par_Param1`
-    - :class:`PSBL_PhotAstrom_Par_Param2`
-    - :class:`PSBL_PhotAstrom_Par_Param3`
-    - :class:`PSBL_PhotAstrom_Par_Param4`
+    - :class:`PSBL_PhotAstrom_Par_Param1` -- mLp, mLs, t0, xS0, beta, muL, muS, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls
+    - :class:`PSBL_PhotAstrom_Par_Param2` -- t0, u0, tE, thetaE, piS, piEE, piEN, xS0, muS, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls
+    - :class:`PSBL_PhotAstrom_Par_Param3` -- t0, u0, tE, log10(thetaE), piS, piEE, piEN, xS0, muS, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls; origin on primary
+    - :class:`PSBL_PhotAstrom_Par_Param4` -- t0, u0, tE, thetaE, piS, piEE, piEN, xS0, muS, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls; origin on COM
     - :class:`PSBL_PhotAstrom_Par_Param5`
     - :class:`PSBL_PhotAstrom_Par_Param7`
     - :class:`PSBL_PhotAstrom_noPar_Param1`
@@ -370,14 +370,17 @@ The base class is ParallaxClassABC.
 Parameterization Class Family
 -----------------------------
 
-These classes determine which physical parameters define the model. Currently
-this file supports one parameterization when using only photometry (`Phot`)
-and three parametrizations when using photometry and astrometery
-(`PhotAstrom`).
+These classes determine which physical parameters define the model.
+There are numerous supported parameterizations, including some that
+only use photometry (`Phot`), only use astrometry (`Astrom`), or both
+(`PhotAstrom`). A most common developer task would be to make a new
+parameterization. This entails making a class that inherits from the
+base class, `PSPL_Param` (or another subclass), and implements the
+`__init__()` function to take in the new parameters and convert them
+into the BAGLE expected set of parameters (which are usually physical
+paraemteres in the Solar System Barycentric reference frame).
 
-The base class is PSPL_Param.
-
-The parameters for each parameterization are:
+Some examples of the parameters for different parameterization are:
     PhotParam1 :
         Point source point lens model for microlensing photometry only.
         This model includes the relative proper motion between the lens
@@ -482,7 +485,7 @@ are several rules that must be followed when creating a new class.
 
 Other notes
 -----------
-All times must be reported in MJD.
+All times must be reported in MJD in the Solar System Barycentric reference frame (TODO: CONFIRM and EXPAND!).
 
 """
 
@@ -554,6 +557,7 @@ class PSPL(ABC):
             
         return xL
 
+
     def get_source_astrometry_unlensed(self, t, filt_idx=0):
         """
         Get the astrometry of the source if the lens didn't exist.
@@ -592,6 +596,7 @@ class PSPL(ABC):
 
         return xS_unlensed
 
+
     def get_astrometry_unlensed(self, t, filt_idx=0):
         """
         Get the unresolved astrometry of the combined source and lens if
@@ -618,6 +623,7 @@ class PSPL(ABC):
         pos_unlensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
 
         return pos_unlensed
+    
 
     def get_resolved_amplification(self, t, filt_idx=0):
         """
@@ -652,12 +658,11 @@ class PSPL(ABC):
         u = thetaS / self.thetaE_amp
         u_amp = np.linalg.norm(u, axis=1)
 
-        A_plus = 0.5 * (
-                (u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4)) + 1)
-        A_minus = 0.5 * (
-                (u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4)) - 1)
+        A_plus  = 0.5 * ((u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4)) + 1)
+        A_minus = 0.5 * ((u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4)) - 1)
 
         return np.stack((A_plus, A_minus))
+    
 
     def get_amplification(self, t, filt_idx=0):
         """
@@ -703,6 +708,7 @@ class PSPL(ABC):
         #pdb.set_trace()
 
         return A
+
 
     def get_resolved_astrometry(self, t, filt_idx=0):
         """
@@ -764,6 +770,7 @@ class PSPL(ABC):
             xS_minus += (self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
 
         return np.stack((xS_plus, xS_minus))
+
 
     def get_astrometry(self, t, filt_idx=0):
         """
@@ -839,6 +846,7 @@ class PSPL(ABC):
 
         return pos_lensed
 
+
     def get_photometry(self, t, filt_idx=0):
         """
         Get the predicted photomety at the specified times for the specified
@@ -874,6 +882,7 @@ class PSPL(ABC):
         mag_model = flux2mag(flux_model)
 
         return mag_model
+
 
     def get_centroid_shift(self, t, filt_idx=0):
         """
@@ -925,6 +934,7 @@ class PSPL(ABC):
 
         return shift
 
+
     def get_u(self, t, filt_idx=0):
         """Get the unlensed, relative astrometry of the source and lens in units
         of the Einstein radius.
@@ -961,6 +971,7 @@ class PSPL(ABC):
 
         return u
 
+
     def get_chi2_photometry(self, t, mag_obs, mag_err_obs, filt_idx=0):
         """
         Get chi^2 values for the model and input photometric data in the
@@ -990,6 +1001,7 @@ class PSPL(ABC):
         chi2 = ((mag_obs - mag_model) / mag_err_obs) ** 2
 
         return chi2
+
 
     def get_chi2_astrometry(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
         """
@@ -1029,11 +1041,12 @@ class PSPL(ABC):
 
         return chi2
 
+
     def get_lnL_constant(self, err_obs):
         """
         Get the natural log of the constant normalization terms of the likelihood.
 
-        .. math:: -0.5 * \ln{2 \pi \sigma_{obs}^2}
+        .. math:: -0.5 * \\ln{2 \\pi \\sigma_{obs}^2}
 
         Parameters
         ----------
@@ -1048,6 +1061,7 @@ class PSPL(ABC):
         lnL_const = -0.5 * np.log(2.0 * math.pi * err_obs ** 2)
 
         return lnL_const
+
 
     def log_likely_photometry_each(self, t, mag_obs, mag_err_obs, filt_idx=0):
         """
@@ -1083,6 +1097,7 @@ class PSPL(ABC):
 
         return lnL
 
+
     def log_likely_photometry(self, t, mag_obs, mag_err_obs, filt_idx=0):
         """
         Get the summed natural log of the likelihood for the input photometric data for the
@@ -1111,6 +1126,7 @@ class PSPL(ABC):
         lnL = self.log_likely_photometry_each(t, mag_obs, mag_err_obs, filt_idx=filt_idx)
 
         return lnL.sum()
+
 
     def log_likely_astrometry_each(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
         """
@@ -1152,6 +1168,7 @@ class PSPL(ABC):
 
         return lnL
 
+
     def log_likely_astrometry(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
         """
         Get the natural log of the likelihood for the input astrometric data in the
@@ -1187,6 +1204,7 @@ class PSPL(ABC):
                                               filt_idx=filt_idx)
 
         return lnL.sum()
+
 
     def animate(self, tE, time_steps, frame_time, name, size, zoom,
                 astrometry, filt_idx=0):
@@ -1287,15 +1305,15 @@ class PSPL(ABC):
             def update(i, source, lens, plus, minus, astrometry, tau,
                        magnification, line):
                 # print(str(i) + ", ", end='', flush=True)
-                line[0].set_data(source[i, 0], source[i, 1])
+                line[0].set_data([source[i, 0]], [source[i, 1]])
                 line[1].set_data(source[:i + 1, 0], source[:i + 1, 1])
-                line[2].set_data(lens[i, 0], lens[i, 1])
+                line[2].set_data([lens[i, 0]], [lens[i, 1]])
                 line[3].set_data(lens[:i + 1, 0], lens[:i + 1, 1])
-                line[4].set_data(plus[i, 0], plus[i, 1])
+                line[4].set_data([plus[i, 0]], [plus[i, 1]])
                 line[5].set_data(plus[:i + 1, 0], plus[:i + 1, 1])
-                line[6].set_data(minus[i, 0], minus[i, 1])
+                line[6].set_data([minus[i, 0]], [minus[i, 1]])
                 line[7].set_data(minus[:i + 1, 0], minus[:i + 1, 1])
-                line[8].set_data(astrometry[i, 0], astrometry[i, 1])
+                line[8].set_data([astrometry[i, 0]], [astrometry[i, 1]])
                 line[9].set_data(astrometry[:i + 1, 0], astrometry[:i + 1, 1])
                 line[10].set_data(tau[:i + 1], magnification[:i + 1])
                 return line
@@ -1415,7 +1433,7 @@ class PSPL_Phot(PSPL):
         Returns
         -------
         xS_unlensed : numpy array, dtype=float, shape = len(t) x 2
-            The unlensed positions of the source in Einstein radii (i.e. \vec{u})
+            The unlensed positions of the source in Einstein radii (i.e. \\vec{u})
         """
         u = self.get_u(t, filt_idx=filt_idx)
 
@@ -1591,7 +1609,7 @@ class PSPL_PhotAstrom(PSPL):
         """
         Get the natural log of the constant normalization terms of the likelihood.
 
-        .. math:: -0.5 * \ln{2 \pi \sigma_{obs}^2}
+        .. math:: -0.5 * \\ln{2 \\pi \\sigma_{obs}^2}
 
         Parameters
         ----------
@@ -2388,7 +2406,7 @@ class PSPL_AstromParam3(PSPL_Param):
 
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -2500,7 +2518,7 @@ class PSPL_AstromParam3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -2539,7 +2557,7 @@ class PSPL_AstromParam4(PSPL_Param):
     
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -2653,7 +2671,7 @@ class PSPL_AstromParam4(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -2694,7 +2712,7 @@ class PSPL_PhotParam1(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -2760,7 +2778,7 @@ class PSPL_PhotParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -2795,7 +2813,7 @@ class PSPL_PhotParam2(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -2868,7 +2886,7 @@ class PSPL_PhotParam2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -2975,7 +2993,7 @@ class PSPL_PhotParam3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -3060,7 +3078,7 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
         self.decL = decL
         self.obsLocation = obsLocation
 
-        # Convert the parameters back into heliocentric (actually SSB) for our use.
+        # Convert the parameters back into Solar System barycentric (actually SSB) for our use.
         t0, u0, tE, piEE, piEN = fc.convert_helio_geo_phot(self.raL, self.decL,
                                                            self.t0_geotr, self.u0_amp_geotr,
                                                            self.tE_geotr, self.piE_geotr[0], self.piE_geotr[1],
@@ -3096,7 +3114,7 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -3211,7 +3229,7 @@ class PSPL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -3258,7 +3276,7 @@ class PSPL_PhotAstromParam2(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float 
@@ -3377,7 +3395,7 @@ class PSPL_PhotAstromParam2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -3542,7 +3560,7 @@ class PSPL_PhotAstromParam3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -3804,7 +3822,7 @@ class PSPL_PhotAstromParam4(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -4023,7 +4041,7 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
         self.decL = decL
         self.obsLocation = obsLocation
 
-        # Convert the parameters back into heliocentric (actually SSB) for our use.
+        # Convert the parameters back into Solar System barycentric (actually SSB) for our use.
         t0, u0_amp, tE, piE_E, piE_N = fc.convert_helio_geo_phot(self.raL, self.decL,
                                                                  self.t0_geotr, self.u0_amp_geotr,
                                                                  self.tE_geotr, self.piE_geotr[0], self.piE_geotr[1],
@@ -4183,7 +4201,7 @@ class PSPL_PhotAstromParam5(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -4345,7 +4363,7 @@ class PSPL_PhotAstromParam6(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -4732,7 +4750,7 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
 
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -4766,13 +4784,13 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel. 
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel. 
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the DDSHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -4979,13 +4997,13 @@ class PSPL_GP_PhotAstromParam3_1(PSPL_PhotAstromParam3):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega0_S0: float
-        Guassian process :math:`log(\omega_0 * S_0)` from the variance of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0 * S_0)` from the variance of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -5192,13 +5210,13 @@ class PSPL_GP_PhotAstromParam3_2(PSPL_PhotAstromParam3):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega0_S0: float
-        Guassian process :math:`log(\omega_0 * S_0)` from the variance of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0 * S_0)` from the variance of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     gp_log_jit_sigma: float
         Gaussian process for jitter term
     raL: float, optional
@@ -5267,7 +5285,7 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -5301,13 +5319,13 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel. 
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel. 
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
 
     raL: float, optional
         Right ascension of the lens in decimal degrees.
@@ -5518,13 +5536,13 @@ class PSPL_GP_PhotAstromParam4_1(PSPL_PhotAstromParam4):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega0_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
 
     raL: float, optional
         Right ascension of the lens in decimal degrees.
@@ -5735,13 +5753,13 @@ class PSPL_GP_PhotAstromParam4_2(PSPL_PhotAstromParam4):
         Photometric magnitude of the base. This must be passed in as a
         list or array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega0_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the power spectral density (PSD) of the DDSHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     gp_log_jit_sigma: float
         Gaussian process for jitter term
 
@@ -6959,7 +6977,9 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         fratio_1_2 = dmag2fratio(self.dmag_Lp_Ls[filt_idx])
 
         # Flux-weighted centroid.
-        xL_centroid = (xL1 * fratio_1_2) + (xL2 * (1 - fratio_1_2))
+        fL1 = 1.0 # artifically sets f1 = 1.0
+        fL2 = fL1 / fratio_1_2
+        xL_centroid = (xL1 * fL1 + xL2 * fL2) / (fL1 + fL2)
 
         return xL_centroid
 
@@ -7365,7 +7385,7 @@ class PSBL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -7767,7 +7787,7 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -8067,7 +8087,7 @@ class PSBL_PhotAstromParam2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -8456,7 +8476,7 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -8618,8 +8638,8 @@ class PSBL_PhotAstromParam3(PSPL_Param):
     Attributes
     ----------
     t0 : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of projected closest approach between the source and the geometric center of the
+        lens system (before parallax is applied and in the SSB frame).
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -8764,7 +8784,7 @@ class PSBL_PhotAstromParam3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -8801,8 +8821,8 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
     Attributes
     ----------
     t0 : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of projected closest approach between the source and the geometric center of the
+        lens system (before parallax is applied and in the SSB frame).
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -8908,8 +8928,8 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
     Attributes
     ----------
     t0 : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of projected closest approach between the source and the geometric center of the
+        lens system (before parallax is applied and in the SSB frame).
     u0_amp : float
         Angular distance between the source and the GEOMETRIC center of the lenses
         on the plane of the sky at closest approach in units of thetaE. Can
@@ -9304,8 +9324,8 @@ class PSBL_PhotAstromParam4(PSPL_Param):
     Attributes
     ----------
     t0_com : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of projected closest approach between the source and the geometric center of the
+        lens system (before parallax is applied and in the SSB frame).
     u0_amp_com : float
         Angular distance between the source and the binary lens COM
         on the plane of the sky at closest approach in units of thetaE. Can be
@@ -9450,7 +9470,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -9911,7 +9931,7 @@ class PSBL_PhotAstromParam5(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -9944,8 +9964,8 @@ class PSBL_PhotAstromParam6(PSPL_Param):
     Attributes
     ----------
     t0_prim : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of projected closest approach between the source and the primary lens
+        (before parallax is applied and in the SSB frame).
     u0_amp_prim : float
         Angular distance between the source and the PRIMARY lens
         on the plane of the sky at closest approach in units of thetaE. Can be
@@ -10092,7 +10112,7 @@ class PSBL_PhotAstromParam6(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -10458,7 +10478,7 @@ class PSBL_PhotAstromParam7(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -10866,7 +10886,7 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -11027,8 +11047,8 @@ class PSBL_PhotAstromParam8(PSPL_Param):
     Attributes
     ----------
     t0_com : float
-        Time of photometric peak, as seen from Earth (MJD.DDD)
-        FIXME: THIS IS NOT RIGHT
+        Time of closest approach between the source and the center of mass of the lens
+        system (before parallax is applied, in the SSB frame).
     u0_amp_com : float
         Angular distance between the source and the binary lens COM
         on the plane of the sky at closest approach in units of thetaE. Can be
@@ -11174,7 +11194,7 @@ class PSBL_PhotAstromParam8(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -11492,7 +11512,7 @@ class PSBL_PhotParam1(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -11589,7 +11609,7 @@ class PSBL_PhotParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -11632,7 +11652,7 @@ class PSBL_Phot_EllOrbs_Param1(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -11762,7 +11782,7 @@ class PSBL_Phot_EllOrbs_Param1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -11803,7 +11823,7 @@ class PSBL_Phot_CircOrbs_Param1(PSBL_Phot_EllOrbs_Param1):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -12955,7 +12975,7 @@ class BSPL_PhotParam1(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -13097,7 +13117,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -13241,7 +13261,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -13307,7 +13327,7 @@ class BSPL_PhotAstromParam2(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -13450,7 +13470,7 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         self.muL_E, self.muL_N = self.muL
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -13508,7 +13528,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -13658,7 +13678,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -13713,7 +13733,7 @@ class BSPL_GP_PhotParam1(BSPL_PhotParam1):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -13748,13 +13768,13 @@ class BSPL_GP_PhotParam1(BSPL_PhotParam1):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
 
     raL: float, optional
         Right ascension of the lens in decimal degrees.
@@ -13817,7 +13837,7 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -13867,13 +13887,13 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -13941,7 +13961,7 @@ class BSPL_GP_PhotAstromParam2(BSPL_PhotAstromParam2):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -13995,13 +14015,13 @@ class BSPL_GP_PhotAstromParam2(BSPL_PhotAstromParam2):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -14063,7 +14083,7 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -14110,13 +14130,13 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
 
     Other Parameters
     ----------------
@@ -14189,7 +14209,7 @@ class BSPL_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstromParam1):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -14316,7 +14336,7 @@ class BSPL_PhotAstrom_AccOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -14446,7 +14466,7 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -14573,7 +14593,7 @@ class BSPL_PhotAstrom_AccOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
     ----------
      t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -14703,7 +14723,7 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -14829,7 +14849,7 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -14962,7 +14982,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between primary source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -15165,7 +15185,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -15249,7 +15269,7 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -15487,7 +15507,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between primary source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -15683,7 +15703,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -15757,7 +15777,7 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between primary source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -15980,7 +16000,7 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -16068,7 +16088,7 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between primary source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -16199,7 +16219,7 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -16327,7 +16347,7 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between primary source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -16510,13 +16530,13 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -16634,13 +16654,13 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -16759,13 +16779,13 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -16883,13 +16903,13 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -16997,13 +17017,13 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -17116,13 +17136,13 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
         This must be passed in as a list or
         array, with one entry for each photometric filter.
     gp_log_sigma: float
-        Guassian process :math:`log(\sigma)` for the Matern 3/2 kernel.
+        Guassian process :math:`log(\\sigma)` for the Matern 3/2 kernel.
     gp_rho: float
         Guassian process :math:`{\\rho}` for the Matern 3/2 kernel.
     gp_log_omega04_S0: float
-        Guassian process :math:`log(\omega_0^4 * S_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0^4 * S_0)` from the SHO kernel.
     gp_log_omega0: float
-        Guassian process :math:`log(\omega_0)` from the SHO kernel.
+        Guassian process :math:`log(\\omega_0)` from the SHO kernel.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -17425,10 +17445,11 @@ class BSBL(PSBL):
         N_times = z1.shape[0]
         N_sources = z_arr.shape[1]
 
-        dwbardz = self.m1 / (z_arr - z1[:, np.newaxis, np.newaxis]) ** 2
-        dwbardz += self.m2 / (z_arr - z2[:, np.newaxis, np.newaxis]) ** 2
-        jacobian = 1 - np.absolute(dwbardz) ** 2
-        amp_arr = 1.0 / np.absolute(jacobian)  # Absolute value of J
+        with np.errstate(divide='ignore', invalid='ignore'):        
+            dwbardz = self.m1 / (z_arr - z1[:, np.newaxis, np.newaxis]) ** 2
+            dwbardz += self.m2 / (z_arr - z2[:, np.newaxis, np.newaxis]) ** 2
+            jacobian = 1 - np.absolute(dwbardz) ** 2
+            amp_arr = 1.0 / np.absolute(jacobian)  # Absolute value of J
 
         return amp_arr
 
@@ -18489,7 +18510,7 @@ class BSBL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -19007,7 +19028,7 @@ class BSBL_PhotAstromParam2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -19323,7 +19344,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -19760,7 +19781,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -20191,7 +20212,7 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -20787,9 +20808,9 @@ class FSPL(PSPL):
   
     def get_u(self, t, filt_idx=0):
         """
-        Get the separation vector, \vec{u}(t), which is the unlensed
+        Get the separation vector, \\vec{u}(t), which is the unlensed
         source - lens separation vector on the  plane of the sky
-        in units of \theta_E.
+        in units of \\theta_E.
 
         Parameters
         ----------
@@ -20801,7 +20822,7 @@ class FSPL(PSPL):
         Returns
         -------
         u : array, float, shape = [len(t), 2]
-            Separation vector in East, North on the sky in units of \theta_E.
+            Separation vector in East, North on the sky in units of \\theta_E.
         """
         tau = (t - self.t0) / self.tE
 
@@ -20980,9 +21001,9 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
     def get_u_outline(self, t, filt_idx=0):
         """
-        Get the separation vector, \vec{u}(t), which is the unlensed
+        Get the separation vector, \\vec{u}(t), which is the unlensed
         source - lens separation vector for each point of the source
-        outline. Positions are on the plane of the sky in units of \theta_E.
+        outline. Positions are on the plane of the sky in units of \\theta_E.
 
         Parameters
         ----------
@@ -20994,7 +21015,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Returns
         -------
         u : array, float, shape = [len(t), n_outline, [E, N]]
-            Separation vector in East, North on the sky in units of \theta_E.
+            Separation vector in East, North on the sky in units of \\theta_E.
         """
         if self.n_outline!=False:
             u_vec = self.get_u(t, filt_idx=filt_idx)
@@ -21501,9 +21522,9 @@ class FSPL_Phot(FSPL):
 
     def get_u_outline(self, t, filt_idx=0):
         """
-        Get the separation vector, \vec{u}(t), which is the unlensed
+        Get the separation vector, \\vec{u}(t), which is the unlensed
         source - lens separation vector for each point of the source
-        outline. Positions are  on the plane of the sky in units of \theta_E.
+        outline. Positions are  on the plane of the sky in units of \\theta_E.
 
         Parameters
         ----------
@@ -21515,7 +21536,7 @@ class FSPL_Phot(FSPL):
         Returns
         -------
         u : array, float, shape = [len(t), n_outline, [E, N]]
-            Separation vector in East, North on the sky in units of \theta_E.
+            Separation vector in East, North on the sky in units of \\theta_E.
         """
         if self.n_outline != False:
             u_vec = self.get_u(t, filt_idx=filt_idx)
@@ -21596,6 +21617,118 @@ class FSPL_Parallax(PSPL_Parallax):
     ref_frame_parallax_flag = False
 
 
+class FSPL_PhotParam1(PSPL_Param):
+    """
+    Point source point lens model for microlensing photometry only.
+    This model includes the relative proper motion between the lens
+    and the source. Parameters are reduced with the use of piRel
+    (rather than dL and dS) and muRel (rather than muL and muS).
+    Same as PSPL_PhotParam1.
+
+    Attributes
+    ----------
+    t0: float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in Solar System barycentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
+    u0_amp: float
+         Angular distance between the lens and source on the plane of the
+         sky at closest approach in units of thetaE. It can be
+         positive (u0_amp > 0 when u0_hat[0] > 0) or
+         negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time in days.
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE.
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    radiusS: float
+        Apparent radius on the sky of the source star (in thetaE).
+    b_sff: numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_src: numpy array or list
+        Photometric magnitude of the source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    n_outline: int (optional)
+        Number of boundary points to use when approximating the source outline.
+        Calculation time scales approximately linearly with 'n_outline'.
+
+    Notes
+    -----
+    .. note:: Required parameters if calculating with parallax
+
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location for each photometric
+                       dataset (def=['earth']) such as 'jwst' or 'spitzer'.
+                       Can be a single string if all observer locations are
+                       identical. Otherwise, array of same length as mag_src
+                       or b_sff (e.g. other photometric parameters).
+    """
+
+    fitter_param_names = ['t0', 'u0_amp', 'tE',
+                          'piE_E', 'piE_N', 'radiusS']
+    phot_param_names = ['b_sff', 'mag_src']
+    additional_param_names = ['mag_base']
+
+    paramAstromFlag = False
+    paramPhotFlag = True
+    LeeFlag = False 
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_src,
+                 n_outline=50,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.t0 = t0
+        self.u0_amp = u0_amp
+        self.tE = tE
+        self.piE = np.array([piE_E, piE_N])
+        self.b_sff = b_sff
+        self.mag_src = mag_src
+        self.n_outline = n_outline
+        self.raL = raL
+        self.decL = decL
+        self.obsLocation = obsLocation
+        self.radiusS = radiusS
+        # Must call after setting parameters.
+        # This checks for proper parameter formatting.
+        super().__init__()
+
+        # Derived quantities
+        self.mag_base = self.mag_src + 2.5 * np.log10(self.b_sff)
+
+        # Calculate the microlensing parallax amplitude
+        self.piE_amp = np.linalg.norm(self.piE)
+
+        # Get thetaE_hat (same direction as piE
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+
+        # Comment on sign conventions:
+        # thetaS0 = xS0 - xL0
+        # (difference in positions on sky, Solar System barycentric, at t0)
+        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
+        # if u0_E > 0 then the Source is to the East of the lens
+        # if u0_E < 0 then the source is to the West of the lens
+        # We adopt the following sign convention (same as Gould:2004):
+        #    u0_amp > 0 means u0_E > 0
+        #    u0_amp < 0 means u0_E < 0
+        # Note that we assume beta = u0_amp (with same signs).
+
+        # Calculate the closest approach vector. Define beta sign convention
+        # same as of Andy Gould does with beta > 0 means u0_E > 0
+        # (lens passes to the right of the source as seen from Earth or Sun).
+        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
+        # the sign of beta is always the same as the sign of u0_amp. Therefore this
+        # usage of the function with u0_amp works exactly the same.
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        return
+                     
+
 class FSPL_PhotParam2(PSPL_Param):
     """
     Point source point lens model for microlensing photometry only.
@@ -21609,7 +21742,7 @@ class FSPL_PhotParam2(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -21688,7 +21821,7 @@ class FSPL_PhotParam2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -21845,7 +21978,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -21892,7 +22025,7 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float 
@@ -21978,7 +22111,9 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
         
                      
 
-                     
+#
+# IN PROGRESS
+#
 class FSPL_Limb(FSPL):
     def F(self, r):
         return 2 / (1 - self.utilde / 3) * (
@@ -22544,9 +22679,9 @@ class BFSPL(PSPL):
         
     def get_u(self, t, filt_idx=0):
         """
-        Get the separation vector, \vec{u}(t), which is the unlensed
+        Get the separation vector, \\vec{u}(t), which is the unlensed
         source - lens separation vector on the  plane of the sky
-        in units of \theta_E.
+        in units of \\theta_E.
 
         Parameters
         ----------
@@ -22558,7 +22693,7 @@ class BFSPL(PSPL):
         Returns
         -------
         u : array, float, shape = [len(t), 2]
-            Separation vector in East, North on the sky in units of \theta_E.
+            Separation vector in East, North on the sky in units of \\theta_E.
         """
         tau = (t - self.t0) / self.tE
 
@@ -23121,7 +23256,7 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -25511,6 +25646,31 @@ class BFSPL_PhotAstrom_noPar_Param1(ModelClassABC,
 # =====
 # FSPL_noparallax
 @inheritdocstring
+class FSPL_Phot_noPar_Param1(ModelClassABC,
+                             FSPL_Phot,
+                             FSPL_noParallax,
+                             FSPL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+
+# FSPL_parallax
+@inheritdocstring
+class FSPL_Phot_Par_Param1(ModelClassABC,
+                           FSPL_Phot,
+                           FSPL_Parallax,
+                           FSPL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        
+# FSPL_noparallax
+@inheritdocstring
 class FSPL_Phot_noPar_Param2(ModelClassABC,
                              FSPL_Phot,
                              FSPL_noParallax,
@@ -26967,8 +27127,8 @@ def cluster(image, R):
 #     Attributes
 #     ----------
 #     t0_prim : float
-#         Time of photometric peak, as seen from Earth (MJD.DDD)
-#         FIXME: THIS IS NOT RIGHT
+#         Time of projected closest approach between the source and the geometric center of the
+#         lens system (before parallax is applied and in the SSB frame).
 #     u0_amp_prim : float
 #         Angular distance between the source and the PRIMARY lens
 #         on the plane of the sky at closest approach in units of thetaE. Can be
@@ -27096,7 +27256,7 @@ def cluster(image, R):
 #
 #         # Comment on sign conventions:
 #         # thetaS0 = xS0 - xL0
-#         # (difference in positions on sky, heliocentric, at t0)
+#         # (difference in positions on sky, Solar System barycentric, at t0)
 #         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
 #         # if u0_E > 0 then the Source is to the East of the lens
 #         # if u0_E < 0 then the source is to the West of the lens

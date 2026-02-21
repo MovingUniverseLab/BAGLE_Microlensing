@@ -748,7 +748,7 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
         Mass of the secondary lens.
     t0 : float (mjd)
         The time of closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     xS0_E : float (arcsec)
         Position of the source in RA relative to the
@@ -758,7 +758,7 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
         geometric center of the lens system at time t0.
     beta : float (mas)
         The closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     muL_E : float (mas/yr)
         Proper motion of the lens system in RA direction
@@ -961,7 +961,7 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
         Mass of the secondary lens.
     t0 : float (mjd)
         The time of closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     xS0_E : float (arcsec)
         Position of the source in RA relative to the
@@ -971,7 +971,7 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
         geometric center of the lens system at time t0.
     beta : float (mas)
         The closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     muL_E : float (mas/yr)
         Proper motion of the lens system in RA direction
@@ -2194,11 +2194,11 @@ def fake_data_BSPL(outdir='', outroot='bspl',
         Mass of the  lens.
     t0 : float (mjd)
         The time of closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     beta : float (mas)
         The closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     xS0_E : float (arcsec)
         Position of the source in RA relative to the
@@ -2634,10 +2634,11 @@ def fake_data_parallax_multi_location_bulge(outdir='test_mnest_bulge_multiLoc/',
     return data, params
 
 
-def get_times_roman_gbtds(seasons_fast=(0, 1, 2, 7, 8, 9), seasons_slow=(3, 4, 5, 6),
-                          seasons_fast_len=70, n_fields_per_set=7,
+def get_times_roman_gbtds(seasons_fast=(0, 1, 2, 7, 8, 9),
+                          seasons_slow=(3, 4, 5, 6),
+                          seasons_fast_len=70.5, n_fields_per_set=6,
                           n_sets_f087_fast=1, n_sets_f146_fast=44, dt_gap_fast=0,
-                          n_sets_f087_slow=0, n_sets_f146_slow=1, dt_gap_slow=10,
+                          n_sets_f087_slow=0, n_sets_f146_slow=1, dt_gap_slow=3,
                           t_start = Time('2027-01-01', format='isot', scale='utc'),
                           t_end = Time('2032-01-01', format='isot', scale='utc')):
     """

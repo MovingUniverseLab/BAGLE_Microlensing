@@ -971,7 +971,7 @@ class MicrolensSolver(Solver):
                 mult_err = cube[mult_err_idx]
             mag_err *= mult_err
 
-        return mag_err   
+        return mag_err    
 
 
     def write_params_yaml(self):
@@ -1929,7 +1929,7 @@ class MicrolensSolver(Solver):
             the chi^2 based on those values. Alternatively, pass in a dictionary
             with the model parameters to use.
         """
-        if params == 'best':
+        if (type(params) == 'str') and (params == 'best'):
             params = self.get_best_fit()
 
         # Get likelihoods.

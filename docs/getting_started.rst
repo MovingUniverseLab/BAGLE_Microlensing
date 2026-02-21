@@ -55,7 +55,7 @@ Note that BAGLE mas many different parameterizations that all
 specify the same event. We have chosen ``Param1``.
 
 Once you have created the event, you can see numerous event
-properties. BAGLE defines event parameteres in heliocentric
+properties. BAGLE defines event parameteres in Solar System barycentric
 coordinates unless otherwise specified. To see properties,
 use::
 
@@ -107,7 +107,7 @@ Making a PSPL Model with Parallax
 ---------------------------------
 The second step is to generate a PSPL model with parallax adding the
 *ra* (right ascention of lens) and *dec* (declination of lens).
-Again, all of the parameters are specified in heliocentric coordinates.
+Again, all of the parameters are specified in Solar System barycentric coordinates.
 
 .. code-block:: python3
 

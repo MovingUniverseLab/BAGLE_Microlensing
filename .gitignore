@@ -6,6 +6,7 @@ src/BAGLE/parallax_cache
 src/bagle/parallax_cache
 .ipynb_checkpoints/
 docs/_build
+tests/*.png
 
 *.pyc
 *~
