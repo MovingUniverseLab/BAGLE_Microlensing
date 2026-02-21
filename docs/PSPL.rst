@@ -5,8 +5,8 @@ Point-Source Point-Lens (PSPL) Implementation
 
 PSPL models involve a single lens moving in front of a single star
 on the plane of the sky. The majority of PSPL models in BAGLE have parameterizations
-with input parameters in heliocentric coordinates, unless otherwise specified.
-The heliocentric coordinates are most useful in when modeling astrometry and
+with input parameters in Solar System barycentric coordinates, unless otherwise specified.
+The Solar System barycentric (SSB) coordinates are most useful in when modeling astrometry and
 photometry jointly, which we will build up to.
 
 Photometry-Only
@@ -22,7 +22,7 @@ For classes with photometry only, input parameters typically include
 =================  ================  ========================================================
 Parameter          Units             Description
 =================  ================  ========================================================
-:math:`t_0`        MJD (day)         Time of closest approach in heliocentric coordinates.
+:math:`t_0`        MJD (day)         Time of closest approach in SSB coordinates.
 :math:`u_0`        :math:`\theta_E`  Closest approach distance.
 :math:`t_E`        (day)             Einstein crossing time.
 :math:`\pi_{E,E}`                    Microlensing parallax in the East direction.
@@ -51,7 +51,7 @@ BAGLE's strength is jointly modeling or fitting photometric and astrometric data
 In these events, the absolution position of the lens and source on the sky are known
 and controlled by additional parameters in the model. All orientations of position and velocity
 vectors in these models are with respect to North and East as defined by the Earth's equator,
-even if models are heliocentric or observed from some other satellite (e.g. Roman).
+even if models are SSB or observed from some other satellite (e.g. Roman).
 
 Parameterizations for photometric+astrometric models are much more varied. First, we can
 start with an expansion approach where we start with photometric parameters and add more
@@ -61,7 +61,7 @@ parameters to describe the astrometry. An example of this parameterization is
 =================  ================  ========================================================
 Parameter          Units             Description
 =================  ================  ========================================================
-:math:`t_0`        MJD (day)         Time of closest approach in heliocentric coordinates.
+:math:`t_0`        MJD (day)         Time of closest approach in SSB coordinates.
 :math:`u_0`        :math:`\theta_E`  Closest approach distance.
 :math:`t_E`        (day)             Einstein crossing time.
 :math:`\theta_E`   (mas)             Einstein radius.
@@ -98,7 +98,7 @@ the case for the ``PSPL_PhotAstrom_Par_Param1`` model class with the following p
 Parameter          Units              Description
 =================  =================  ========================================================
 :math:`m_L`        (:math:`M_\odot`)  Lens mass.“
-:math:`t_0`        MJD (day)          Time of closest approach in heliocentric coordinates.
+:math:`t_0`        MJD (day)          Time of closest approach in SSB coordinates.
 :math:`\beta`      (mas)              Closest approach distance, projected on sky.
 :math:`d_L`        (pc)               Distance to the lens.
 :math:`d_L/d_S`                       Ratio of lens distance to source distance.

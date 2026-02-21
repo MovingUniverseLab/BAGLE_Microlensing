@@ -6,22 +6,22 @@ Convert between the native fit parameters of BAGLE and MulensModel for a point s
 
 convert_helio_geo_ast
 =====================
-Convert between heliocentric and geocentric-projected parameters for a point source point lens model.
+Convert between Solar System barycentric and geocentric-projected parameters for a point source point lens model.
 This converts both the photometric and the astrometric parameters.
 [NOT YET TESTED OR DOCUMENTED]
 
 convert_helio_geo_phot
 ======================
-Convert between heliocentric and geocentric-projected parameters for a point source point lens model.
+Convert between Solar System barycentric and geocentric-projected parameters for a point source point lens model.
 This converts only the subset of parameters in photometry fits (t0, u0, tE, piEE, piEN). 
 
 convert_u0vec_t0
 ================
-Convert the values of u0 vector and t0 between the heliocentric and geocentric projected frames.
+Convert the values of u0 vector and t0 between the Solar System barycentric and geocentric projected frames.
 
 convert_piEvec_tE
 =================
-Convert the values of piE vector and tE between the heliocentric and geocentric projected frames.
+Convert the values of piE vector and tE between the Solar System barycentric and geocentric projected frames.
 
 v_Earth_proj
 ============

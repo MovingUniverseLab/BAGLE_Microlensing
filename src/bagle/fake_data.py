@@ -619,7 +619,7 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
         Mass of the secondary lens.
     t0 : float (mjd)
         The time of closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     xS0_E : float (arcsec)
         Position of the source in RA relative to the
@@ -629,7 +629,7 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
         geometric center of the lens system at time t0.
     beta : float (mas)
         The closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     muL_E : float (mas/yr)
         Proper motion of the lens system in RA direction
@@ -832,7 +832,7 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
         Mass of the secondary lens.
     t0 : float (mjd)
         The time of closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     xS0_E : float (arcsec)
         Position of the source in RA relative to the
@@ -842,7 +842,7 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
         geometric center of the lens system at time t0.
     beta : float (mas)
         The closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     muL_E : float (mas/yr)
         Proper motion of the lens system in RA direction
@@ -2065,11 +2065,11 @@ def fake_data_BSPL(outdir='', outroot='bspl',
         Mass of the  lens.
     t0 : float (mjd)
         The time of closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     beta : float (mas)
         The closest projected approach between the source
-        and the geometric center of the lens system in heliocentric
+        and the geometric center of the lens system in Solar System barycentric
         coordinates.
     xS0_E : float (arcsec)
         Position of the source in RA relative to the

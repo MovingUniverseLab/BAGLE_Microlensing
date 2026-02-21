@@ -664,7 +664,7 @@ def convert_helio_geo_ast(ra, dec,
                           murel_in='SL', murel_out='LS', 
                           coord_in='EN', coord_out='tb', plot=True):
     """
-    Convert between heliocentric and geocentric-projected parameters.
+    Convert between Solar System barycentric and geocentric-projected parameters.
     This converts only the subset of parameters in astrometry fits
     (xS0E, xS0N, muSE, muSN).
 
@@ -703,8 +703,8 @@ def convert_helio_geo_ast(ra, dec,
     t0par : float or array
         Reference time for the geocentric projected coordinate system. (MJD)
     in_frame : str
-        'helio' if converting from heliocentric to geocentric projected frame.
-        'geo' if converting from geocentric projected to heliocentric frame.
+        'helio' if converting from Solar System barycentric to geocentric projected frame.
+        'geo' if converting from geocentric projected to Solar System barycentric frame.
     murel_in : str
         Definition of "relative" for the input relative proper motion.
         'SL' if relative proper motion in the input parameters is defined as source-lens.
@@ -830,7 +830,7 @@ def convert_helio_geo_phot(ra, dec,
                            coord_in='EN', coord_out='tb',
                            plot=True):
     """
-    Convert between heliocentric and geocentric-projected parameters.
+    Convert between Solar System barycentric and geocentric-projected parameters.
     This converts only the subset of parameters in photometry fits
     (t0, u0, tE, piEE, piEN).
 
@@ -866,8 +866,8 @@ def convert_helio_geo_phot(ra, dec,
         Reference time for the geocentric projected coordinate system.
 
     in_frame : str
-        'helio' if converting from heliocentric to geocentric projected frame.
-        'geo' if converting from geocentric projected to heliocentric frame.
+        'helio' if converting from Solar System barycentric to geocentric projected frame.
+        'geo' if converting from geocentric projected to Solar System barycentric frame.
 
     murel_in : str
         Definition of "relative" for the input relative proper motion.
@@ -1061,7 +1061,7 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
     # FIXME: Fix the broadcasting stuff using the check above for the lenght
     # don't hardcode as t0_in.
     """
-    Convert the values of u0 vector and t0 between the heliocentric and geocentric projected frames.
+    Convert the values of u0 vector and t0 between the Solar System barycentric and geocentric projected frames.
 
     Note: 
     *** PROPER MOTIONS ARE DEFINED AS SOURCE - LENS ***
@@ -1096,8 +1096,8 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
         Note that this is the same in both the input and output frame (invariant).
     
     in_frame : str
-        'helio' if converting from heliocentric to geocentric projected frame.
-        'geo' if converting from geocentric projected to heliocentric frame.
+        'helio' if converting from Solar System barycentric to geocentric projected frame.
+        'geo' if converting from geocentric projected to Solar System barycentric frame.
 
     tauhat_in : float or array
         Unit vector in the direction of the source-lens proper motion in the input frame.
@@ -1186,7 +1186,7 @@ def convert_piEvec_tE(ra, dec, t0par,
                       in_frame='helio'):     
     """
     Convert the values of piE vector and tE between the
-    heliocentric and geoprojected frame.
+    Solar System barycentric and geoprojected frame.
     
     !!! NOTE: INPUT AND OUTPUT RELATIVE PROPER MOTION
     (AND HENCE piE VECTOR) ARE DEFINED TO BE SOURCE - LENS !!!
@@ -1240,7 +1240,7 @@ def convert_piEvec_tE(ra, dec, t0par,
     vtildeE_in *= au_day_to_km_s
 
     # Get Earth's instantaneous velocity at t0par 
-    # to get heliocentric velocity as projected on 
+    # to get Solar System barycentric velocity as projected on
     # sky (in km/s)
     v_Earth_perp_E, v_Earth_perp_N = v_Earth_proj(ra, dec, t0par)
 
@@ -1295,7 +1295,7 @@ def v_Earth_proj(ra, dec, mjd):
     # Make this check dec too.
     if type(ra) == str:
         coord = SkyCoord(ra, dec, unit=(u.hourangle, u.deg))
-    elif ((type(ra) == float) or (type(ra) == int)):
+    elif (isinstance(ra, float) or isinstance(ra, int)):
         coord = SkyCoord(ra, dec, unit=(u.deg, u.deg))
     else:
         raise Exception('ra and dec must be either strings or int/floats.')
@@ -1332,7 +1332,7 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
                             t0_out, u0_out, tE_out, piEE_out, piEN_out):
     """
     The parallax vector direction is always Earth to Sun (blue to red).
-    All the input values are in the heliocentric frame, following the
+    All the input values are in the Solar System barycentric frame, following the
     source-lens and East-North coordinate conventions.
 
     FIXME: There seems to be some bugs in the reported values in the side panel still.
