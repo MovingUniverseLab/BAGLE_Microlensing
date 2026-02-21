@@ -436,7 +436,7 @@ Making a New Model
 ------------------
 
 Each model is, as described above, constructed by combining inheriting from
-different parent classes that the desired features for the model. Each
+different parent classes that contain the desired features for the model. Each
 model must have one class from each class family. In addition to this, there
 are several rules that must be followed when creating a new class.
 
