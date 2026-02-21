@@ -20920,6 +20920,118 @@ class FSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
 
 
+class FSPL_PhotParam1(PSPL_Param):
+    """
+    Point source point lens model for microlensing photometry only.
+    This model includes the relative proper motion between the lens
+    and the source. Parameters are reduced with the use of piRel
+    (rather than dL and dS) and muRel (rather than muL and muS).
+    Same as PSPL_PhotParam1.
+
+    Attributes
+    ----------
+    t0: float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
+    u0_amp: float
+         Angular distance between the lens and source on the plane of the
+         sky at closest approach in units of thetaE. It can be
+         positive (u0_amp > 0 when u0_hat[0] > 0) or
+         negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time in days.
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE.
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    radiusS: float
+        Apparent radius on the sky of the source star (in thetaE).
+    b_sff: numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_src: numpy array or list
+        Photometric magnitude of the source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    n_outline: int (optional)
+        Number of boundary points to use when approximating the source outline.
+        Calculation time scales approximately linearly with 'n_outline'.
+
+    Notes
+    -----
+    .. note:: Required parameters if calculating with parallax
+
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location for each photometric
+                       dataset (def=['earth']) such as 'jwst' or 'spitzer'.
+                       Can be a single string if all observer locations are
+                       identical. Otherwise, array of same length as mag_src
+                       or b_sff (e.g. other photometric parameters).
+    """
+
+    fitter_param_names = ['t0', 'u0_amp', 'tE',
+                          'piE_E', 'piE_N', 'radiusS']
+    phot_param_names = ['b_sff', 'mag_src']
+    additional_param_names = ['mag_base']
+
+    paramAstromFlag = False
+    paramPhotFlag = True
+    LeeFlag = False 
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_src,
+                 n_outline=50,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.t0 = t0
+        self.u0_amp = u0_amp
+        self.tE = tE
+        self.piE = np.array([piE_E, piE_N])
+        self.b_sff = b_sff
+        self.mag_src = mag_src
+        self.n_outline = n_outline
+        self.raL = raL
+        self.decL = decL
+        self.obsLocation = obsLocation
+        self.radiusS = radiusS
+        # Must call after setting parameters.
+        # This checks for proper parameter formatting.
+        super().__init__()
+
+        # Derived quantities
+        self.mag_base = self.mag_src + 2.5 * np.log10(self.b_sff)
+
+        # Calculate the microlensing parallax amplitude
+        self.piE_amp = np.linalg.norm(self.piE)
+
+        # Get thetaE_hat (same direction as piE
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+
+        # Comment on sign conventions:
+        # thetaS0 = xS0 - xL0
+        # (difference in positions on sky, heliocentric, at t0)
+        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
+        # if u0_E > 0 then the Source is to the East of the lens
+        # if u0_E < 0 then the source is to the West of the lens
+        # We adopt the following sign convention (same as Gould:2004):
+        #    u0_amp > 0 means u0_E > 0
+        #    u0_amp < 0 means u0_E < 0
+        # Note that we assume beta = u0_amp (with same signs).
+
+        # Calculate the closest approach vector. Define beta sign convention
+        # same as of Andy Gould does with beta > 0 means u0_E > 0
+        # (lens passes to the right of the source as seen from Earth or Sun).
+        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
+        # the sign of beta is always the same as the sign of u0_amp. Therefore this
+        # usage of the function with u0_amp works exactly the same.
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        return
+                     
+
 class FSPL_PhotParam2(PSPL_Param):
     """
     Point source point lens model for microlensing photometry only.
@@ -24757,6 +24869,31 @@ class BFSPL_PhotAstrom_noPar_Param1(ModelClassABC,
 # =====
 # FSPL Model
 # =====
+# FSPL_noparallax
+@inheritdocstring
+class FSPL_Phot_noPar_Param1(ModelClassABC,
+                             FSPL_Phot,
+                             FSPL_noParallax,
+                             FSPL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+
+# FSPL_parallax
+@inheritdocstring
+class FSPL_Phot_Par_Param1(ModelClassABC,
+                           FSPL_Phot,
+                           FSPL_Parallax,
+                           FSPL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        
 # FSPL_noparallax
 @inheritdocstring
 class FSPL_Phot_noPar_Param2(ModelClassABC,

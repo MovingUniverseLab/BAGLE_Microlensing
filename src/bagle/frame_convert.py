@@ -1295,7 +1295,7 @@ def v_Earth_proj(ra, dec, mjd):
     # Make this check dec too.
     if type(ra) == str:
         coord = SkyCoord(ra, dec, unit=(u.hourangle, u.deg))
-    elif ((type(ra) == float) or (type(ra) == int)):
+    elif (isinstance(ra, float) or isinstance(ra, int)):
         coord = SkyCoord(ra, dec, unit=(u.deg, u.deg))
     else:
         raise Exception('ra and dec must be either strings or int/floats.')

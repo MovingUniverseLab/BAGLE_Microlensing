@@ -1901,7 +1901,7 @@ class MicrolensSolver(Solver):
             the chi^2 based on those values. Alternatively, pass in a dictionary
             with the model parameters to use.
         """
-        if params == 'best':
+        if (type(params) == 'str') and (params == 'best'):
             params = self.get_best_fit()
 
         # Get likelihoods.
