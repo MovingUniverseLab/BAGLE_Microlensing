@@ -2505,10 +2505,11 @@ def fake_data_parallax_multi_location_bulge(outdir='test_mnest_bulge_multiLoc/',
     return data, params
 
 
-def get_times_roman_gbtds(seasons_fast=(0, 1, 2, 7, 8, 9), seasons_slow=(3, 4, 5, 6),
-                          seasons_fast_len=70, n_fields_per_set=7,
+def get_times_roman_gbtds(seasons_fast=(0, 1, 2, 7, 8, 9),
+                          seasons_slow=(3, 4, 5, 6),
+                          seasons_fast_len=70.5, n_fields_per_set=6,
                           n_sets_f087_fast=1, n_sets_f146_fast=44, dt_gap_fast=0,
-                          n_sets_f087_slow=0, n_sets_f146_slow=1, dt_gap_slow=10,
+                          n_sets_f087_slow=0, n_sets_f146_slow=1, dt_gap_slow=3,
                           t_start = Time('2027-01-01', format='isot', scale='utc'),
                           t_end = Time('2032-01-01', format='isot', scale='utc')):
     """

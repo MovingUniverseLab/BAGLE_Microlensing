@@ -5,13 +5,13 @@ Installation
 Conda - Recommended
 -------------------
 
-BAGLE is available via conda (source-forge) and pip. We recommend installing with conda or mamba::
+BAGLE is available via conda (source-forge) and pip. We recommend installing with conda or mamba for linux and macos users (windows is not supported on our conda-forge distribution for now)::
 
     conda install bagle
 
 PIP
 ---
-BAGLE can also be installed from pip::
+BAGLE can also be installed from pip (especially useful for Windows users)::
 
     pip install bagle
 
