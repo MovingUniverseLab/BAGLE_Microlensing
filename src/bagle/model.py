@@ -2361,7 +2361,7 @@ class PSPL_AstromParam3(PSPL_Param):
 
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -2473,7 +2473,7 @@ class PSPL_AstromParam3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -2512,7 +2512,7 @@ class PSPL_AstromParam4(PSPL_Param):
     
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -2626,7 +2626,7 @@ class PSPL_AstromParam4(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -2667,7 +2667,7 @@ class PSPL_PhotParam1(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -2733,7 +2733,7 @@ class PSPL_PhotParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -2768,7 +2768,7 @@ class PSPL_PhotParam2(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -2841,7 +2841,7 @@ class PSPL_PhotParam2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -2948,7 +2948,7 @@ class PSPL_PhotParam3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -3033,7 +3033,7 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
         self.decL = decL
         self.obsLocation = obsLocation
 
-        # Convert the parameters back into heliocentric (actually SSB) for our use.
+        # Convert the parameters back into Solar System barycentric (actually SSB) for our use.
         t0, u0, tE, piEE, piEN = fc.convert_helio_geo_phot(self.raL, self.decL,
                                                            self.t0_geotr, self.u0_amp_geotr,
                                                            self.tE_geotr, self.piE_geotr[0], self.piE_geotr[1],
@@ -3069,7 +3069,7 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -3184,7 +3184,7 @@ class PSPL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -3231,7 +3231,7 @@ class PSPL_PhotAstromParam2(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float 
@@ -3350,7 +3350,7 @@ class PSPL_PhotAstromParam2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -3515,7 +3515,7 @@ class PSPL_PhotAstromParam3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -3677,7 +3677,7 @@ class PSPL_PhotAstromParam4(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -3797,7 +3797,7 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
         self.decL = decL
         self.obsLocation = obsLocation
 
-        # Convert the parameters back into heliocentric (actually SSB) for our use.
+        # Convert the parameters back into Solar System barycentric (actually SSB) for our use.
         t0, u0_amp, tE, piE_E, piE_N = fc.convert_helio_geo_phot(self.raL, self.decL,
                                                                  self.t0_geotr, self.u0_amp_geotr,
                                                                  self.tE_geotr, self.piE_geotr[0], self.piE_geotr[1],
@@ -3957,7 +3957,7 @@ class PSPL_PhotAstromParam5(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -4119,7 +4119,7 @@ class PSPL_PhotAstromParam6(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -4506,7 +4506,7 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
 
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -4820,7 +4820,7 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -6695,7 +6695,7 @@ class PSBL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -7097,7 +7097,7 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -7397,7 +7397,7 @@ class PSBL_PhotAstromParam2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -7786,7 +7786,7 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -8094,7 +8094,7 @@ class PSBL_PhotAstromParam3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -8780,7 +8780,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -9241,7 +9241,7 @@ class PSBL_PhotAstromParam5(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -9422,7 +9422,7 @@ class PSBL_PhotAstromParam6(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -9788,7 +9788,7 @@ class PSBL_PhotAstromParam7(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -10196,7 +10196,7 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -10504,7 +10504,7 @@ class PSBL_PhotAstromParam8(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -10822,7 +10822,7 @@ class PSBL_PhotParam1(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -10919,7 +10919,7 @@ class PSBL_PhotParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -10962,7 +10962,7 @@ class PSBL_Phot_EllOrbs_Param1(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -11092,7 +11092,7 @@ class PSBL_Phot_EllOrbs_Param1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -11133,7 +11133,7 @@ class PSBL_Phot_CircOrbs_Param1(PSBL_Phot_EllOrbs_Param1):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -12283,7 +12283,7 @@ class BSPL_PhotParam1(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -12425,7 +12425,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -12569,7 +12569,7 @@ class BSPL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -12635,7 +12635,7 @@ class BSPL_PhotAstromParam2(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -12778,7 +12778,7 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         self.muL_E, self.muL_N = self.muL
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -12836,7 +12836,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -12986,7 +12986,7 @@ class BSPL_PhotAstromParam3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -13041,7 +13041,7 @@ class BSPL_GP_PhotParam1(BSPL_PhotParam1):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -13145,7 +13145,7 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -13269,7 +13269,7 @@ class BSPL_GP_PhotAstromParam2(BSPL_PhotAstromParam2):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -13391,7 +13391,7 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -13517,7 +13517,7 @@ class BSPL_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstromParam1):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -13644,7 +13644,7 @@ class BSPL_PhotAstrom_AccOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -13774,7 +13774,7 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -13901,7 +13901,7 @@ class BSPL_PhotAstrom_AccOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
     ----------
      t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -14031,7 +14031,7 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -14157,7 +14157,7 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -14290,7 +14290,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between primary source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -14493,7 +14493,7 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -14577,7 +14577,7 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -14815,7 +14815,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between primary source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -15011,7 +15011,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -15085,7 +15085,7 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between primary source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -15308,7 +15308,7 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -15396,7 +15396,7 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         Mass of the lens (Msun)
     t0: float
         Time (MJD.DDD) of closest projected approach between primary source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     beta: float
@@ -15527,7 +15527,7 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -15655,7 +15655,7 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between primary source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp : float
@@ -17816,7 +17816,7 @@ class BSBL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -18334,7 +18334,7 @@ class BSBL_PhotAstromParam2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -18650,7 +18650,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -19087,7 +19087,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -19518,7 +19518,7 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -20933,7 +20933,7 @@ class FSPL_PhotParam1(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -21012,7 +21012,7 @@ class FSPL_PhotParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -21046,7 +21046,7 @@ class FSPL_PhotParam2(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -21125,7 +21125,7 @@ class FSPL_PhotParam2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -21282,7 +21282,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -21329,7 +21329,7 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float 
@@ -22556,7 +22556,7 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -26482,7 +26482,7 @@ def cluster(image, R):
 #
 #         # Comment on sign conventions:
 #         # thetaS0 = xS0 - xL0
-#         # (difference in positions on sky, heliocentric, at t0)
+#         # (difference in positions on sky, Solar System barycentric, at t0)
 #         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
 #         # if u0_E > 0 then the Source is to the East of the lens
 #         # if u0_E < 0 then the source is to the West of the lens
