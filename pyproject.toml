@@ -23,9 +23,10 @@ dependencies = ["numpy>=1.24",
                 "pymultinest",
                 "matplotlib",
                 "astropy>=5.3",
-                "celerite",
-                "jplephem",
-                "scipy>=1.10"]
+                "celerite>=0.4.2",
+                "scipy>=1.10",
+                "joblib"]
+                "jplephem"]
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
