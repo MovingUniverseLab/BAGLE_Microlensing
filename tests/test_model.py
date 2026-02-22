@@ -59,7 +59,9 @@ def test_default_priors():
     import inspect
     
     check_keys = model_fitter.MicrolensSolver.default_priors.keys()
-    
+
+    unmatched = []
+
     def check_lengths(carg):
         fitter_params = carg.fitter_param_names + carg.phot_param_names
         #print("Fitter count :", len(fitter_params)) 

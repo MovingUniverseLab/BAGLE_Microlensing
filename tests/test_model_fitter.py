@@ -85,6 +85,7 @@ def test_pspl_parallax_fit_geoproj(verbose=False, resume=False):
     fitter.solve()
 
     pspl_out = fitter.get_best_fit_model()
+    best = fitter.get_best_fit()
 
     fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
     if verbose:
