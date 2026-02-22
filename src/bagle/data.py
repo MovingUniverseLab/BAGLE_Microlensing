@@ -1,11 +1,9 @@
 import numpy as np
-import pylab as plt
 from astropy.table import Table
 from astropy.time import Time
 from astropy import units 
 from astropy.coordinates import SkyCoord
 from astropy import time as atime, coordinates as coord, units as u
-import time
 
 
 class EventDataDict(dict):
@@ -95,8 +93,7 @@ class EventDataDict(dict):
         return
         
 
-    
-def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
+def getdata(target, phot_data=('I_OGLE'), ast_data=('Kp_Keck'),
             time_format='mjd', verbose=False):
     """
     Helper function to illustrate how to load photometric and astrometric data.
@@ -162,12 +159,12 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
     # Setup some internal dictionaries to hold many objects.
     # These are just for convenience.
     
-    ra = {'mb09260' :  '17:58:28.561',
-          'mb10364' :  '17:57:05.401',
-          'ob110037' : '17:55:55.83',
-          'ob110310' : '17:51:25.39',
-          'ob110462' : '17:51:40.19',
-          'ob120169' : '17:49:51.38'
+    ra = {'mb09260':  '17:58:28.561',
+          'mb10364':  '17:57:05.401',
+          'ob110037': '17:55:55.83',
+          'ob110310': '17:51:25.39',
+          'ob110462': '17:51:40.19',
+          'ob120169': '17:49:51.38'
     }
     
     dec = {'mb09260' :  '-26:50:20.88',
@@ -179,39 +176,39 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
     }
     
     # The values in astrom_file are from the latest analysis directories
-    astrom_file = {'ob120169' : '/u/jlu/work/microlens/OB120169/a_2020_08_18/ob120169_astrom_p5_2020_08_18.fits'} # TEMP
+    astrom_file = {'ob120169': '/u/jlu/work/microlens/OB120169/a_2020_08_18/ob120169_astrom_p5_2020_08_18.fits'} # TEMP
     
     # The values in astrom_file are from the latest analysis directories
-    astrom_hst = {'mb09260_f606w'  : '/u/jlu/work/microlens/MB09260/a_2021_07_08/mb09260_f606w_astrom_p4_2021_07_08.fits',
-                  'mb09260_f814w'  : '/u/jlu/work/microlens/MB09260/a_2021_07_08/mb09260_f814w_astrom_p4_2021_07_08.fits',
-                  'mb10364_f606w' : '/u/jlu/work/microlens/MB10364/a_2021_07_08/mb10364_f606w_astrom_p5_2021_07_08.fits',
-                  'mb10364_f814w' : '/u/jlu/work/microlens/MB10364/a_2021_07_08/mb10364_f814w_astrom_p5_2021_07_08.fits',
-                  'ob110037_f606w' : '/u/jlu/work/microlens/OB110037/a_2021_07_08/ob110037_f606w_astrom_p5_2021_07_08.fits',
-                  'ob110037_f814w' : '/u/jlu/work/microlens/OB110037/a_2021_07_08/ob110037_f814w_astrom_p5_2021_07_08.fits',
-                  'ob110310_f606w' : '/u/jlu/work/microlens/OB110310/a_2021_07_08/ob110310_f606w_astrom_p4_2021_07_08.fits',
-                  'ob110310_f814w' : '/u/jlu/work/microlens/OB110310/a_2021_07_08/ob110310_f814w_astrom_p4_2021_07_08.fits',
-                  'ob110462_f606w' : '/u/jlu/work/microlens/OB110462/a_2021_07_08/ob110462_f606w_astrom_p5_nomay_2021_07_08.fits',
-                  'ob110462_f814w' : '/u/jlu/work/microlens/OB110462/a_2021_07_08/ob110462_f814w_astrom_p5_nomay_2021_07_08.fits'
+    astrom_hst = {'mb09260_f606w': '/u/jlu/work/microlens/MB09260/a_2021_07_08/mb09260_f606w_astrom_p4_2021_07_08.fits',
+                  'mb09260_f814w': '/u/jlu/work/microlens/MB09260/a_2021_07_08/mb09260_f814w_astrom_p4_2021_07_08.fits',
+                  'mb10364_f606w': '/u/jlu/work/microlens/MB10364/a_2021_07_08/mb10364_f606w_astrom_p5_2021_07_08.fits',
+                  'mb10364_f814w': '/u/jlu/work/microlens/MB10364/a_2021_07_08/mb10364_f814w_astrom_p5_2021_07_08.fits',
+                  'ob110037_f606w': '/u/jlu/work/microlens/OB110037/a_2021_07_08/ob110037_f606w_astrom_p5_2021_07_08.fits',
+                  'ob110037_f814w': '/u/jlu/work/microlens/OB110037/a_2021_07_08/ob110037_f814w_astrom_p5_2021_07_08.fits',
+                  'ob110310_f606w': '/u/jlu/work/microlens/OB110310/a_2021_07_08/ob110310_f606w_astrom_p4_2021_07_08.fits',
+                  'ob110310_f814w': '/u/jlu/work/microlens/OB110310/a_2021_07_08/ob110310_f814w_astrom_p4_2021_07_08.fits',
+                  'ob110462_f606w': '/u/jlu/work/microlens/OB110462/a_2021_07_08/ob110462_f606w_astrom_p5_nomay_2021_07_08.fits',
+                  'ob110462_f814w': '/u/jlu/work/microlens/OB110462/a_2021_07_08/ob110462_f814w_astrom_p5_nomay_2021_07_08.fits'
     }
     
-    photom_file = {'ob110037' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0037.dat',
-                   'ob110310' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0310.dat',
-                   'ob110462' : '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462.dat',
-                   'ob120169' : '/g/lu/data/microlens/ogle/v2019_06/OGLE-2012-BLG-0169.dat'
+    photom_file = {'ob110037': '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0037.dat',
+                   'ob110310': '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0310.dat',
+                   'ob110462': '/g/lu/data/microlens/ogle/OGLE-2011-BLG-0462.dat',
+                   'ob120169': '/g/lu/data/microlens/ogle/v2019_06/OGLE-2012-BLG-0169.dat'
     }
     
     photom_spitzer = {'ob120169': None
                       }
     
-    photom_moa = {'mb09260' : '/g/lu/data/microlens/moa/MB09260/mb09260-MOA2R-10000.phot.dat',
-                  'mb10364' : '/g/lu/data/microlens/moa/MB10364/mb10364-MOA2R-10000.phot.dat',
-                  'mb11039' : '/g/lu/data/microlens/moa/MB11039/mb11039-MOA2R-10000.phot.dat', # OB110037
-                  'mb11332' : '/g/lu/data/microlens/moa/MB11332/mb11332-MOA2R-10000.phot.dat', # OB110310
-                  'mb11191' : '/g/lu/data/microlens/moa/MB11191/mb11191-MOA2R-10000.phot.dat' # OB110462
+    photom_moa = {'mb09260': '/g/lu/data/microlens/moa/MB09260/mb09260-MOA2R-10000.phot.dat',
+                  'mb10364': '/g/lu/data/microlens/moa/MB10364/mb10364-MOA2R-10000.phot.dat',
+                  'mb11039': '/g/lu/data/microlens/moa/MB11039/mb11039-MOA2R-10000.phot.dat', # OB110037
+                  'mb11332': '/g/lu/data/microlens/moa/MB11332/mb11332-MOA2R-10000.phot.dat', # OB110310
+                  'mb11191': '/g/lu/data/microlens/moa/MB11191/mb11191-MOA2R-10000.phot.dat' # OB110462
                  }
     
-    photom_kmt = {'kb200101' : '/g/lu/data/microlens/kmtnet/alerts_2020/kb200101/KMTA19_I.pysis.txt',
-                  'kb200122' : '/g/lu/data/microlens/kmtnet/alerts_2020/kb200122/KMTA37_I.pysis'}
+    photom_kmt = {'kb200101': '/g/lu/data/microlens/kmtnet/alerts_2020/kb200101/KMTA19_I.pysis.txt',
+                  'kb200122': '/g/lu/data/microlens/kmtnet/alerts_2020/kb200122/KMTA37_I.pysis'}
     
     data_sets = {'mb09260' : {'MOA'   :      photom_moa['mb09260'],
                               'HST_f606w' :  astrom_hst['mb09260_f606w'],
@@ -264,23 +261,26 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
             # Read in photometry table.
             t, m, me = read_ogle_lightcurve(data_sets[target][filt])
 
-        if filt == 'Kp_Keck':
+        elif filt == 'Kp_Keck':
             t, m, me = read_keck_lightcurve(data_sets[target][filt], target)
 
-        if filt == 'Ch1_Spitzer':
+        elif filt == 'Ch1_Spitzer':
             t, m, me = read_spitzer_lightcurve(data_sets[target][filt])
 
-        if filt == 'MOA':
-            t, m, me = read_moa_lightcurve(data_sets[target][filt])
+        elif filt == 'MOA':
+            t, m, me = read_moa_lightcurve(data_sets[target][filt], target_coords)
 
-        if filt[0:3] == 'HST':
+        elif filt[0:3] == 'HST':
             t, m, me = read_hst_lightcurve(data_sets[target][filt], target)
 
-        if filt == 'KMT':
+        elif filt == 'KMT':
             t, m, me = read_kmt_lightcurve(data_sets[target][filt])
 
-        if filt == 'KMT_DIA':
+        elif filt == 'KMT_DIA':
             t, m, me = read_kmt_dia_lightcurve(data_sets[target][filt])
+
+        else:
+            raise RuntimeError('Failed to find photometric data set {0:s}'.format(data_sets[target][filt]))
 
         # Set time to proper format
         if time_format == 'mjd':
@@ -310,10 +310,12 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
         if filt == 'Kp_Keck':
             t, x, y, xe, ye = read_keck_astrometry(data_sets[target][filt], target)
 
-        if filt[0:3] == 'HST':
+        elif filt[0:3] == 'HST':
             t, x, y, xe, ye = read_hst_astrometry(data_sets[target][filt], target)
-            
-            
+
+        else:
+            raise RuntimeError('Failed to find astrometric data set {0:s} for {1:s}'.format(filt, target))
+
         # Set time to proper format
         if time_format == 'mjd':
             t = t.mjd
@@ -345,6 +347,21 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
 
 # Convenience functions for reading in different types of data files.
 def read_ogle_lightcurve(filename):
+    """
+    Read an OGLE photometry file with columns for time, magnitude, magnitude-error.
+
+    Parameters
+    ----------
+    filename : str
+        Path to an ASCII OGLE lightcurve file with JD, magnitude, and
+        magnitude-error columns in `col1`, `col2`, and `col3`.
+
+    Returns
+    -------
+    tuple
+        `(t, m, me)` where `t` is an `astropy.time.Time` array and `m`/`me`
+        are magnitude and magnitude-error arrays.
+    """
     pho = Table.read(filename, format = 'ascii')
     t = Time(pho['col1'], format='jd', scale='utc')
     m = pho['col2']
@@ -352,7 +369,23 @@ def read_ogle_lightcurve(filename):
     
     return (t, m, me)
 
-def read_moa_lightcurve(filename):
+def read_moa_lightcurve(filename, target_coords):
+    """
+    Read a MOA photometry file and convert HJD-like times to JD.
+
+    Parameters
+    ----------
+    filename : str
+        Path to an ASCII MOA lightcurve file.
+    target_coords : SkyCoord
+        Coordinates of the target are needed to correct for light travel time.
+
+    Returns
+    -------
+    tuple
+        `(t, m, me)` where `t` is an `astropy.time.Time` array and `m`/`me`
+        are magnitude and magnitude-error arrays.
+    """
     pho = Table.read(filename, format='ascii')
     # Convert HJD provided by MOA into JD.
     # https://geohack.toolforge.org/geohack.php?pagename=Mount_John_University_Observatory&params=43_59.2_S_170_27.9_E_region:NZ-CAN_type:landmark
@@ -368,6 +401,21 @@ def read_moa_lightcurve(filename):
     
 
 def read_kmt_lightcurve(filename):
+    """
+    Read a KMTNet photometry file.
+
+    Parameters
+    ----------
+    filename : str
+        Path to an ASCII KMT lightcurve file with `HJD`, `mag`, and
+        `mag_err` columns.
+
+    Returns
+    -------
+    tuple
+        `(t, m, me)` where `t` is an `astropy.time.Time` array and `m`/`me`
+        are magnitude and magnitude-error arrays.
+    """
     pho = Table.read(filename, format='ascii')
     t = Time(pho['HJD'] + 2450000.0, format='jd', scale='utc')
     m = pho['mag']
@@ -376,6 +424,21 @@ def read_kmt_lightcurve(filename):
     return (t, m, me)
 
 def read_kmt_dia_lightcurve(filename):
+    """
+    Read a KMT DIA lightcurve file and convert fluxes to magnitudes.
+
+    Parameters
+    ----------
+    filename : str
+        Path to an ASCII KMT DIA file with time, flux, and flux-error columns
+        in `col1`, `col2`, and `col3`.
+
+    Returns
+    -------
+    tuple
+        `(t, m, me)` where `t` is an `astropy.time.Time` array and `m`/`me`
+        are converted magnitude and magnitude-error arrays.
+    """
     pho = Table.read(filename, format='ascii')
     t = Time(pho['col1'] + 2450000.0, format='jd', scale='utc')
     m = 27.68-2.5*np.log10(pho['col2']+27300)
@@ -386,7 +449,23 @@ def read_kmt_dia_lightcurve(filename):
 
 def read_keck_lightcurve(filename, target, verbose=False):
     """
-    File should be a FITS table with all of the stars (not just the target).
+    Read Keck photometry for one target from a multi-star FITS table.
+
+    Parameters
+    ----------
+    filename : str
+        Path to a FITS table containing all stars and epochs.
+    target : str
+        Target name to select from the table `name` column.
+    verbose : bool, optional
+        If `True`, print details about neighboring stars used to estimate
+        empirical photometric uncertainties.
+
+    Returns
+    -------
+    tuple
+        `(t, m, me)` where `t` is an `astropy.time.Time` array and `m`/`me`
+        are magnitude and magnitude-error arrays for the target.
     """
     pho = Table.read(filename)
     tdx = np.where(pho['name'] == target)[0][0]
@@ -441,6 +520,21 @@ def read_keck_lightcurve(filename, target, verbose=False):
 
         
 def read_spitzer_lightcurve(filename):
+    """
+    Read a Spitzer lightcurve file and convert fluxes to magnitudes.
+
+    Parameters
+    ----------
+    filename : str
+        Path to an ASCII file with time, flux, and flux-error columns in
+        `col1`, `col2`, and `col3`.
+
+    Returns
+    -------
+    tuple
+        `(t, m, me)` where `t` is an `astropy.time.Time` array and `m`/`me`
+        are converted magnitude and magnitude-error arrays.
+    """
     pho = Table.read(filename, format='ascii')
     t = Time(pho['col1']  + 2450000.0, format='jd', scale='utc')
     f = pho['col2']
@@ -452,9 +546,21 @@ def read_spitzer_lightcurve(filename):
 
 def read_hst_lightcurve(filename, target):
     """
-    File is a FITS table containing all stars. 
-    Expected format is flystar.StarTable with columns
-    for 'name', and 2D columns for 't', 'm', and 'me'.
+    Read HST photometry for one target from a multi-star FITS table.
+
+    Parameters
+    ----------
+    filename : str
+        Path to a FITS file in `flystar.StarTable`-like format.
+    target : str
+        Target name to select from the table `name` column (matched in
+        uppercase).
+
+    Returns
+    -------
+    tuple
+        `(t, m, me)` where `t` is an `astropy.time.Time` array and `m`/`me`
+        are magnitude and magnitude-error arrays for non-NaN epochs.
     """
     pho = Table.read(filename)
     tdx = np.where(pho['name'] == target.upper())[0][0]
@@ -472,6 +578,22 @@ def read_hst_lightcurve(filename, target):
     return (t, m, me)
     
 def read_keck_astrometry(filename, target):
+    """
+    Read Keck astrometry for one target from a multi-star FITS table.
+
+    Parameters
+    ----------
+    filename : str
+        Path to a FITS table containing astrometry for multiple stars.
+    target : str
+        Target name to select from the table `name` column.
+
+    Returns
+    -------
+    tuple
+        `(t, x, y, xe, ye)` where `t` is an `astropy.time.Time` array and
+        `x/y` are East/North offsets with corresponding uncertainties.
+    """
     ast = Table.read(filename)
     tdx = np.where(ast['name'] == target)[0][0]
     t = Time(ast['t'][tdx, :], format='jyear', scale='utc')
@@ -483,6 +605,24 @@ def read_keck_astrometry(filename, target):
     return (t, x, y, xe, ye)
 
 def read_hst_astrometry(filename, target):
+    """
+    Read HST astrometry for one target from a multi-star FITS table.
+
+    Parameters
+    ----------
+    filename : str
+        Path to a FITS table containing astrometry for multiple stars.
+    target : str
+        Target name to select from the table `name` column (matched in
+        uppercase).
+
+    Returns
+    -------
+    tuple
+        `(t, x, y, xe, ye)` where `t` is an `astropy.time.Time` array and
+        `x/y` are East/North offsets with corresponding uncertainties for
+        non-NaN epochs.
+    """
     ast = Table.read(filename)
     tdx = np.where(ast['name'] == target.upper())[0][0]
     good_idx = np.where(~np.isnan(ast[tdx]['t']))[0] # get rid of nans 

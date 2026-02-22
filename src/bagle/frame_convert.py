@@ -24,24 +24,24 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
     Using an input BAGLE model, return a pyLIMA model. This utility function does
     all the appropriate frame conversions.
 
-    Input
-    -----
+    Parameters
+    ----------
     bagle_model : BAGLE model instance
         An instance of a BAGLE model. All PSPL models are supported.
 
-    Optional
-    --------
     times_mjd : None or array
         An array of times in MJD that is not really used.
+    verbose : bool, optional
+        If `True`, print conversion mode details.
 
     Returns
     -------
-    pylima_model:
-        pyLIMA model object.
-    pylima_par:
-        pyLIMA parameter object.
-    pylima_tel:
-        pyLIMA telescope object.
+    pylima_mod : object
+        pyLIMA model object configured to match the input BAGLE model.
+    pylima_par : object
+        pyLIMA parameter object for `pylima_mod`.
+    pylima_tel : object
+        pyLIMA telescope object attached to the generated event.
 
     """
 
@@ -180,7 +180,7 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
         # Binary Lens
         elif 'PSBL' in bagle_class_name:
             geo_params = convert_bagle_pylima_psbl_phot(bagle_model.raL, bagle_model.decL,
-                                                        bagle_model.t0, bagle_model.u0_amp, balgle_model.tE,
+                                                        bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
                                                         bagle_model.piEE, bagle_model.piEN, bagle_model.t0,
                                                         murel_in='SL', murel_out='LS',
                                                         coord_in='EN', coord_out='tb',
@@ -253,6 +253,7 @@ def get_mulens_model(bagle_model):
     Returns
     -------
     mulens_mod : MuLens model
+        MuLensModel model instance configured with BAGLE-equivalent parameters.
     """
     import MulensModel
 
@@ -300,10 +301,15 @@ def get_vbm_model(bagle_model, verbose=False):
     Parameters
     ----------
     bagle_model : BAGLE model instance
+    verbose : bool, optional
+        If `True`, print conversion mode details.
 
     Returns
     -------
-    vbm_mod : VBM model
+    vbm_mod : object
+        VBMicrolensing model instance configured with BAGLE-equivalent settings.
+    vbm_par : list
+        Parameter vector in the order expected by the returned VBM model class.
     """
     import VBMicrolensing
 
@@ -395,7 +401,21 @@ def get_vbm_model(bagle_model, verbose=False):
 
 # Utility to account for light travel time.
 def get_mjd_prime(target_coords, time_mjd):
-    # Converts from JD to HJD Prime
+    """
+    Convert UTC MJD times to heliocentric-corrected MJD ("MJD prime").
+
+    Parameters
+    ----------
+    target_coords : astropy.coordinates.SkyCoord
+        Sky position of the target used for the light-travel-time correction.
+    time_mjd : float or array-like
+        Observation time(s) in MJD (UTC).
+
+    Returns
+    -------
+    float or np.ndarray
+        Light-travel-time-corrected MJD value(s), computed for Keck Observatory.
+    """
     location = EarthLocation.of_site('Keck Observatory')
     time_to_correct = Time(time_mjd, format='mjd', scale='utc', location=location)
     ltt_helio = time_to_correct.light_travel_time(target_coords, 'heliocentric')
@@ -409,14 +429,18 @@ def mjd_prime_to_vbm_time(time_mjd, target_coords):
     HJD' - 2450000). Note, these times are missing 0.5, subtract off an extra 50,000 days,
     and account for the light-travel time differences for the Earth in different parts of the orbit.
 
-    Inputs
-    ------
+    Parameters
+    ----------
     time_mjd : float or np.array
         Times in MJD (float or numpy array, not Time objects).
+    target_coords : astropy.coordinates.SkyCoord
+        Sky position of the target used for heliocentric light-travel correction.
 
     Returns
     -------
-    VBM_times : float or np.array
+    time_vbm : float or np.ndarray
+        Time(s) converted to the VBMicrolensing convention (`HJD' - 2450000`
+        with the package-specific offset correction).
     """
     new_time_helio = get_mjd_prime(target_coords, time_mjd)
 
@@ -462,6 +486,9 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
     piEN_in : float or array
         Microlensing parallax, North component, in input frame.
 
+    t0par : float
+        Reference time for geocentric projection conversions (MJD).
+
     q_in : float or array
         Binary lens mass ratio.
     
@@ -477,6 +504,25 @@ def convert_bagle_mulens_psbl_phot(ra, dec,
 
     plot : bool
         Plot the conversion figures if true.
+
+    Returns
+    -------
+    t0_out : float or np.ndarray
+        Converted closest-approach time (MJD).
+    u0_out : float or np.ndarray
+        Converted signed impact parameter (Einstein-radius units).
+    tE_out : float or np.ndarray
+        Converted Einstein timescale (days).
+    piEE_out : float or np.ndarray
+        Converted east microlensing parallax component.
+    piEN_out : float or np.ndarray
+        Converted north microlensing parallax component.
+    q_out : float or np.ndarray
+        Converted binary mass ratio.
+    alpha_out : float or np.ndarray
+        Converted binary-axis angle (degrees).
+    sep_out : float or np.ndarray
+        Converted binary separation (Einstein-radius units).
     """
     ##########
     # Convert between helio and geo projected.
@@ -577,13 +623,16 @@ def convert_bagle_pylima_psbl_phot(ra, dec,
     piEN_in : float or array
         Microlensing parallax, North component, in input frame.
 
+    t0par : float
+        Reference time for geocentric projection conversions (MJD).
+
     q_in : float or array
         Binary lens mass ratio.
 
     alpha_in : float or array (deg)
         Angle between relative proper motion vector and the binary axis, in input frame.
 
-    sep : float or array (thetaE)
+    sep_in : float or array (thetaE)
         Separation between the binary lens components.
 
     mod_in : str
@@ -592,6 +641,25 @@ def convert_bagle_pylima_psbl_phot(ra, dec,
 
     plot : bool
         Plot the conversion figures if true.
+
+    Returns
+    -------
+    t0_out : float or np.ndarray
+        Converted closest-approach time (MJD).
+    u0_out : float or np.ndarray
+        Converted signed impact parameter (Einstein-radius units).
+    tE_out : float or np.ndarray
+        Converted Einstein timescale (days).
+    piEE_out : float or np.ndarray
+        Converted east microlensing parallax component.
+    piEN_out : float or np.ndarray
+        Converted north microlensing parallax component.
+    q_out : float or np.ndarray
+        Converted binary mass ratio.
+    alpha_out : float or np.ndarray
+        Converted binary-axis angle (degrees).
+    sep_out : float or np.ndarray
+        Converted binary separation (Einstein-radius units).
     """
     ##########
     # Convert between helio and geo projected.
@@ -781,7 +849,37 @@ def _check_input_convert_helio_geo_phot(ra, dec,
 
     Parameters
     ----------
-    See the docstring in convert_helio_geo_phot, as all parameters are the same.
+    ra, dec : str, float, or int
+        Equatorial coordinates of the microlensing event.
+    t0_in : float or array-like
+        Input closest-approach time (MJD).
+    u0_in : float or array-like
+        Input signed impact parameter (Einstein-radius units).
+    tE_in : float or array-like
+        Input Einstein timescale (days).
+    piEE_in : float or array-like
+        Input east microlensing parallax component.
+    piEN_in : float or array-like
+        Input north microlensing parallax component.
+    t0par : float
+        Reference time for geocentric-projected quantities (MJD).
+    in_frame : str
+        Input frame selector: `'helio'` or `'geo'`.
+    murel_in : str
+        Input relative-motion convention: `'SL'` or `'LS'`.
+    murel_out : str
+        Output relative-motion convention: `'SL'` or `'LS'`.
+    coord_in : str
+        Input coordinate convention: `'EN'` or `'tb'`.
+    coord_out : str
+        Output coordinate convention: `'EN'` or `'tb'`.
+    plot : bool
+        Plotting flag passed through to conversion utilities.
+
+    Returns
+    -------
+    None
+        This function validates inputs and raises an exception on invalid values.
     """
 
     var_str = ['ra', 'dec']
@@ -888,6 +986,8 @@ def convert_helio_geo_phot(ra, dec,
         Definition of coordinate system used to define output parameters.
         'EN' if using fixed on-sky East-North coordinate system (Lu)
         'tb' if using right-handed tau-beta system based on murel and minimum separation (Gould)
+    plot : bool
+        If `True`, show conversion diagnostic plots.
 
     Returns
     -------
@@ -1099,17 +1199,25 @@ def convert_u0vec_t0(ra, dec, t0par, t0_in, u0_in, tE_in, tE_out, piE,
         'helio' if converting from Solar System barycentric to geocentric projected frame.
         'geo' if converting from geocentric projected to Solar System barycentric frame.
 
-    tauhat_in : float or array
-        Unit vector in the direction of the source-lens proper motion in the input frame.
+    tauhatE_in : float or array
+        East component of the input proper-motion unit vector.
+    tauhatN_in : float or array
+        North component of the input proper-motion unit vector.
+    u0hatE_in : float or array
+        East component of the input impact-parameter unit vector.
+    u0hatN_in : float or array
+        North component of the input impact-parameter unit vector.
+    tauhatE_out : float or array
+        East component of the output proper-motion unit vector.
+    tauhatN_out : float or array
+        North component of the output proper-motion unit vector.
 
-    tauhat_out : float or array
-        Unit vector in the direction of the source-lens proper motion in the output frame.
-
-    u0hat_in : float or array
-        Unit vector in the direction of the source-lens separation vector in the input frame.
-
-    u0hat_out : float or array
-        Unit vector in the direction of the source-lens separation vector in the output frame.
+    Returns
+    -------
+    t0_out : float or np.ndarray
+        Converted closest-approach time in the output frame (MJD).
+    u0vec_out : np.ndarray
+        Converted impact-parameter vector(s) in East/North coordinates.
 
     """
     # Parallax vector (Sun-Earth projected separation vector in AU) at t0par.
@@ -1213,12 +1321,14 @@ def convert_piEvec_tE(ra, dec, t0par,
         piEE, piEN, and tE of the event in the frame passed 
         in for in_frame (i.e. either helio or geo)
 
-    Return
-    ------
-    piEE_out, piEN_out, tE_out : float
-        piEE, piEN, and tE converted to the frame that was 
-        NOT passed in for in_frame (i.e. in_frame='helio' 
-        will return these values in 'geo', and vice versa)
+    Returns
+    -------
+    piEE_out : float or np.ndarray
+        Microlensing parallax east component in the output frame.
+    piEN_out : float or np.ndarray
+        Microlensing parallax north component in the output frame.
+    tE_out : float or np.ndarray
+        Einstein timescale in the output frame (days).
     """
     if in_frame not in ['helio', 'geo']:
         raise Exception('in_frame must be either helio or geo.')
@@ -1288,6 +1398,13 @@ def v_Earth_proj(ra, dec, mjd):
         
     mjd : float
         Time in MJD.
+
+    Returns
+    -------
+    v_Earth_perp_E : float or np.ndarray
+        East component of Earth's projected barycentric velocity (km/s).
+    v_Earth_perp_N : float or np.ndarray
+        North component of Earth's projected barycentric velocity (km/s).
     """
     # Convert from AU/day to km/s.
     au_day_to_km_s = 1731.45683
@@ -1336,6 +1453,50 @@ def plot_conversion_diagram(vec_u0_in, vec_tau_in, vec_u0_out, vec_tau_out,
     source-lens and East-North coordinate conventions.
 
     FIXME: There seems to be some bugs in the reported values in the side panel still.
+
+    Parameters
+    ----------
+    vec_u0_in : array-like
+        Input-frame impact-parameter vector in East/North components.
+    vec_tau_in : array-like
+        Input-frame trajectory (`tau`) vector in East/North components.
+    vec_u0_out : array-like
+        Output-frame impact-parameter vector in East/North components.
+    vec_tau_out : array-like
+        Output-frame trajectory (`tau`) vector in East/North components.
+    piE : float
+        Microlensing parallax magnitude.
+    vec_par : array-like
+        Projected Earth-Sun parallax vector components at `t0par`.
+    in_frame : str
+        Frame of the supplied input parameters (`'helio'` or `'geo'`).
+    t0par : float
+        Geocentric reference time (MJD).
+    t0_in : float
+        Input-frame closest-approach time (MJD).
+    u0_in : float
+        Input-frame signed impact parameter.
+    tE_in : float
+        Input-frame Einstein timescale (days).
+    piEE_in : float
+        Input-frame east parallax component.
+    piEN_in : float
+        Input-frame north parallax component.
+    t0_out : float
+        Output-frame closest-approach time (MJD).
+    u0_out : float
+        Output-frame signed impact parameter.
+    tE_out : float
+        Output-frame Einstein timescale (days).
+    piEE_out : float
+        Output-frame east parallax component.
+    piEN_out : float
+        Output-frame north parallax component.
+
+    Returns
+    -------
+    None
+        Displays diagnostic plots for the frame conversion and pauses briefly.
     """
     #####
     # Figure in Lu convention (S-L frame, E-N coord)
@@ -1672,8 +1833,8 @@ def convert_u0_t0_psbl(t0_in, u0_x_in, u0_y_in, tE, theta_E,
         If output coord center is closer to primary than input d > 0.
         If output coord center is closer to secondary than input d < 0.
     
-    Outputs
-    ---------
+    Returns
+    -------
     u0_x_out : float
         u0 in specified coordinate frame in coords_out.
         x direction is coordinate independent, but standard is East.
@@ -1748,4 +1909,3 @@ def convert_u0_t0_psbl(t0_in, u0_x_in, u0_y_in, tE, theta_E,
     t0_out = t0_in + sign*tE*d*np.cos(phi)
     
     return u0_x_out, u0_y_out, t0_out
-
