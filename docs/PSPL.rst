@@ -1,6 +1,6 @@
 .. _PSPL Details:
 ######################################################
-Point-Source Point-Lens (PSPL) Implementation
+Point-Source Point-Lens (PSPL) Models
 ######################################################
 
 PSPL models involve a single lens moving in front of a single star

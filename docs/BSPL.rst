@@ -1,6 +1,6 @@
 
 ######################################################
-Binary Source Point Lens (BSPL) Implementation
+Binary Source Point Lens (BSPL) Models
 ######################################################
 
 .. toctree::

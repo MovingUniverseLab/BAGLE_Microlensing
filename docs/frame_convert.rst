@@ -1,8 +1,6 @@
-For details, see Chapter 6 (starting on page 221) at https://www.proquest.com/docview/2866322369
-
-
 General conventions between the codes:
 ======================================
+For details, see Chapter 6 (starting on page 221) at https://www.proquest.com/docview/2866322369
 
 Time
 ----
@@ -23,6 +21,10 @@ MulensModel and pyLIMA defined relative proper motion as lens-source.
 Angles
 ------
 FILL IN LATER
+
+
+Frame Conversions (bagle.frame_convert)
+=======================================
 
 .. automodule:: bagle.frame_convert
      :memebers:

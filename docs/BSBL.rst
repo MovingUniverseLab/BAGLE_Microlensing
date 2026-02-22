@@ -1,6 +1,6 @@
 
 ######################################################
-Binary Source Binary Lens (BSBL) Implementation
+Binary Source Binary Lens (BSBL) Models
 ######################################################
 
 .. toctree::

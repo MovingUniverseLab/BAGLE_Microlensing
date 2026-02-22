@@ -1,6 +1,6 @@
 
 ######################################################
-Point Source Binary Lens (PSBL) Implementation
+Point Source Binary Lens (PSBL) Models
 ######################################################
 
 .. toctree::

@@ -12,3 +12,4 @@ API Documentation
    FSPL.rst
    data.rst
    frame_convert.rst
+   model_fitter.rst
