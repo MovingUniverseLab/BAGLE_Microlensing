@@ -29,6 +29,13 @@ RUN printf '%s\n' \
 
 SHELL ["conda", "run", "--no-capture-output", "-n", "bagle_env", "/bin/bash", "-c"]
 
+RUN mamba install -n "${CONDA_ENV_NAME}" -y \
+    ipykernel \
+    ipywidgets \
+    jupyterlab \
+    notebook && \
+    mamba clean -afy
+
 RUN pip install \
     astropy==7.1.0 \
     celerite==0.4.3 \
@@ -45,7 +52,8 @@ RUN pip install \
     pandas==2.3.2 \
     pyerfa==2.0.1.5 \
     pytest==8.4.2 \
-    scipy==1.16.2
+    scipy==1.16.2 \
+    ffmpeg-python 
 
 WORKDIR /opt
 RUN git clone --depth 1 --branch master https://github.com/JohannesBuchner/MultiNest.git
@@ -57,6 +65,7 @@ RUN cmake -DCMAKE_INSTALL_PREFIX=/opt/MultiNest .. && \
 ENV LD_LIBRARY_PATH=/opt/MultiNest/lib
 
 RUN pip install pymultinest==2.12
+RUN python -m ipykernel install --name bagle_env --display-name "Python (bagle_env)"
 
 WORKDIR /opt/BAGLE_Microlensing
 COPY . /opt/BAGLE_Microlensing
@@ -65,10 +74,8 @@ RUN pip install .
 RUN mkdir -p /data/input /data/output /data/test
 
 COPY docker/test_imports.py /opt/test_imports.py
-COPY docker/entrypoint.sh /opt/entrypoint.sh
-RUN chmod +x /opt/entrypoint.sh
 
 WORKDIR /data
 
-ENTRYPOINT ["/opt/entrypoint.sh"]
+EXPOSE 8888
 CMD ["/bin/bash"]

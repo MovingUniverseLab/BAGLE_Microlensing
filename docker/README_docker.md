@@ -7,8 +7,10 @@ This directory provides a minimal Docker workflow for running BAGLE in an isolat
 - Builds a Python 3.11 environment with pinned dependencies
 - Builds MultiNest from source before installing `pymultinest`
 - Installs BLAS/LAPACK system libraries required by MultiNest
+- Installs JupyterLab, Notebook, `ipykernel`, and `ipywidgets` in `bagle_env`
 - Installs the local BAGLE checkout into the container
 - Exposes a writable `/data` mount for inputs and outputs
+- Exposes port `8888` for optional Jupyter access
 - Starts an interactive shell by default
 - Uses the `bagle_env` Conda environment as the default runtime environment
 
@@ -16,7 +18,6 @@ This directory provides a minimal Docker workflow for running BAGLE in an isolat
 
 - `Dockerfile`: container build definition
 - `docker-compose.yml`: interactive local workflow
-- `entrypoint.sh`: activates `bagle_env` for interactive shells and commands
 - `test_imports.py`: smoke test for the container environment
 
 ## Build
@@ -63,6 +64,24 @@ docker compose down
 docker compose up -d --build
 ```
 
+## JupyterLab
+
+Jupyter support is optional and does not change the default CLI behavior.
+
+From inside the running container:
+
+```bash
+jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+```
+
+If you started the service with Docker Compose, port `8888` is already published to the host.
+
+The image also registers the `bagle_env` kernel, which appears in Jupyter as:
+
+```text
+Python (bagle_env)
+```
+
 ## Validate the Environment
 
 Validated directly from the repository root with:
@@ -92,4 +111,4 @@ Environment test PASSED.
 - The image is CPU-only and does not include MPI, GPU, or HPC-specific support.
 - The container installs the code from the current checkout, so local repo changes are reflected when you rebuild the image.
 - MultiNest is built without MPI support in this MVP by design.
-- The image now activates `bagle_env` explicitly at container startup, so both interactive shells and one-off commands use the BAGLE environment.
+- Interactive shells still start in `bagle_env` via the root shell init files, while the default container command remains `/bin/bash`.
