@@ -1,0 +1,11 @@
+services:
+  bagle:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: bagle-in-docker:0.1
+    container_name: bagle_container
+    stdin_open: true
+    tty: true
+    volumes:
+      - ../data:/data
