@@ -1811,7 +1811,7 @@ def test_plot_model_and_data_GP_err():
                           phot_data=['I_OGLE'],
                           ast_data=[])
 
-    outdir = '/u/jlu/work/microlens/OB120169/a_2020_08_18/model_fits/201_phot_ogle_gp/base_a/'
+    outdir = _resolve_data_path('/u/jlu/work/microlens/OB120169/a_2020_08_18/model_fits/201_phot_ogle_gp/base_a/')
     outbase = 'a1_'
 
     fitter = model_fitter.MicrolensSolver(data,
