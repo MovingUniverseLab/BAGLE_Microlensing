@@ -4,10 +4,10 @@ This directory provides a minimal Docker workflow for running BAGLE in an isolat
 
 ## What It Does
 
-- Builds a Python 3.11 environment with pinned dependencies
+- Builds a Python 3.11 environment from the repo's dependency files
 - Builds MultiNest from source before installing `pymultinest`
 - Installs BLAS/LAPACK system libraries required by MultiNest
-- Installs JupyterLab, Notebook, `ipykernel`, and `ipywidgets` in `bagle_env`
+- Installs Python dependencies from `requirements.txt` and BAGLE package metadata from `pyproject.toml`
 - Installs the local BAGLE checkout into the container
 - Exposes a writable `/data` mount for inputs and outputs
 - Exposes port `8888` for optional Jupyter access
@@ -110,5 +110,6 @@ Environment test PASSED.
 - Docker support is optional and does not replace the native BAGLE workflow.
 - The image is CPU-only and does not include MPI, GPU, or HPC-specific support.
 - The container installs the code from the current checkout, so local repo changes are reflected when you rebuild the image.
+- Changes to `requirements.txt` and `pyproject.toml` are picked up when you rebuild the image.
 - MultiNest is built without MPI support in this MVP by design.
 - Interactive shells still start in `bagle_env` via the root shell init files, while the default container command remains `/bin/bash`.
