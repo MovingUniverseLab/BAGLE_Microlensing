@@ -1239,7 +1239,7 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
 
     pnames = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
               'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-              'q', 'sep', 'alpha', 'b_sff1', 'mag_src1']
+              'q', 'sep', 'alpha', 'b_sff1', 'mag_src1', 'dmag_Lp_Ls1']
 
     # There should be a better way to do this.
     p_in_params = {k: p_in[k] for k in pnames}
