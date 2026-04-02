@@ -8,6 +8,8 @@ joblib==1.5.2
 jplephem==2.23
 matplotlib==3.10.6
 numpy==2.3.3
+ipykernel
+graphviz
 numpydoc
 pandas==2.3.2
 Pyerfa
