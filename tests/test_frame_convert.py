@@ -1,4 +1,5 @@
 import pdb
+import os
 from bagle import model
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,9 +11,28 @@ from astropy.table import Table
 from matplotlib import logging
 logging.getLogger('matplotlib.font_manager').disabled = True
 
+
+def _resolve_data_path(default_path):
+    if os.path.exists(default_path):
+        return default_path
+
+    fallback_path = os.path.join('/data', os.path.basename(default_path))
+    if os.path.exists(fallback_path):
+        return fallback_path
+
+    raise FileNotFoundError(
+        f"File not found at default path '{default_path}' or fallback path '{fallback_path}'."
+    )
+
 def blah():
-    t = Table.read('/u/jlu/work/microlens/OB110462/a_2022_03_01/model_fits/pspl/ogle_hst_phot_gp/base_b/b0_post_equal_weights.dat', format='ascii')
-    t = Table.read('/u/jlu/work/microlens/OB110462/a_2021_12_20/model_fits/ogle_hst_phot/base_a/a0_post_equal_weights.dat', format='ascii')
+    t = Table.read(
+        _resolve_data_path('/u/jlu/work/microlens/OB110462/a_2022_03_01/model_fits/pspl/ogle_hst_phot_gp/base_b/b0_post_equal_weights.dat'),
+        format='ascii'
+    )
+    t = Table.read(
+        _resolve_data_path('/u/jlu/work/microlens/OB110462/a_2021_12_20/model_fits/ogle_hst_phot/base_a/a0_post_equal_weights.dat'),
+        format='ascii'
+    )
     ra = '17:51:40.19'
     dec = '-29:53:26.3'
 
