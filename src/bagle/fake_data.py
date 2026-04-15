@@ -4282,17 +4282,17 @@ def fake_data_noPar_PSBL_4(outdir='', outroot='psbl',
     params['xS0_E'] = xS0_E
     params['xS0_N'] = xS0_N
 
-    params['omega'] = omega
-    params['big_omega'] = big_omega
+    params['omega_pri'] = omega
+    params['big_omega_sec'] = big_omega
     params['i'] = i
     params['p'] = p
     params['tp'] = tp
-    params['aleph'] = aleph
-    params['aleph_sec'] = aleph_sec
+    params['aleph'] = psbl.aleph
+    params['aleph_sec'] = psbl.aleph_sec
     params['muS_E'] = muS_E
     params['muS_N'] = muS_N
     params['q'] = q
-    params['alpha'] = alpha
+    params['alpha'] = psbl.alpha
     params['b_sff'] = np.array([b_sff])
     params['mag_src1'] = np.array([mag_src])
     params['dmag_Lp_Ls'] = np.array([dmag_Lp_Ls])
