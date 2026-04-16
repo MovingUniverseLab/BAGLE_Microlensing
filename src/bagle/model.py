@@ -22721,7 +22721,7 @@ class FSBL_caustics(FSBL):
         return jnp.where(a != 0, a, jnp.nan).argsort()
 
     def match_points(self, a, b):
-        """caustics ``utils.match_points``."""
+        """caustics ``utils.match_points``"""
         vals = jnp.argsort(jnp.abs(b - a[:, None]), axis=1)
         idcs = []
         for i in range(vals.shape[0]):
@@ -22828,10 +22828,7 @@ class FSBL_caustics(FSBL):
             lambda s1, s2, t1, t2: (get_segment_head(s1, t1), get_segment_tail(s2, t2)),
             lambda s1, s2, t1, t2: (get_segment_head(s1, t1), get_segment_head(s2, t2)),
             lambda s1, s2, t1, t2: (get_segment_tail(s1, tidx1), get_segment_tail(s2, t2))],
-            seg1,
-            seg2,
-            tidx1,
-            tidx2,
+            seg1, seg2, tidx1, tidx2
         )
         dist = jnp.abs(line1[1] - line2[1])
         cond1 = dist < max_dist
@@ -23064,10 +23061,16 @@ class FSBL_caustics(FSBL):
         Same layout as :meth:`FSBL.get_all_arrays_CI`, but magnification uses
         the caustics contour pipeline.
         """
-        rho = self.radiusS * 1e3 / self.thetaE_amp
         u_vec = self.get_u(t)
-        lens_asts_1 = self.get_resolved_lens_astrometry(t)[0, :, :] / self.thetaE_amp * 1e3
-        lens_asts_2 = self.get_resolved_lens_astrometry(t)[1, :, :] / self.thetaE_amp * 1e3
+        if self.astrometryFlag:
+            rho = self.radiusS * 1e3 / self.thetaE_amp
+            lens_asts_1 = self.get_resolved_lens_astrometry(t)[0, :, :] / self.thetaE_amp * 1e3
+            lens_asts_2 = self.get_resolved_lens_astrometry(t)[1, :, :] / self.thetaE_amp * 1e3
+
+        else: 
+            rho = self.radiusS
+            lens_asts_1 = self.get_resolved_lens_astrometry(t)[0, :, :] 
+            lens_asts_2 = self.get_resolved_lens_astrometry(t)[1, :, :] 
         w = jnp.atleast_1d(jnp.asarray(u_vec[:, 0] + 1j * u_vec[:, 1], dtype=jnp.complex128))
 
         z1_abs = jnp.asarray(lens_asts_1[:, 0] + 1j * lens_asts_1[:, 1], dtype=jnp.complex128)
@@ -23076,8 +23079,12 @@ class FSBL_caustics(FSBL):
         z_cm = 0.5 * (z1_abs + z2_abs)
         z1 = z1_abs - z_cm
         z2 = z2_abs - z_cm
-        m1 = jnp.asarray(self.mLp / self.mL, dtype=jnp.float64)
-        m2 = jnp.asarray(self.mLs / self.mL, dtype=jnp.float64)
+        if self.astrometryFlag:
+            m1 = jnp.asarray(self.mLp / self.mL, dtype=jnp.float64)
+            m2 = jnp.asarray(self.mLs / self.mL, dtype=jnp.float64)
+        else:
+            m1 = self.m1
+            m2 = self.m2
 
         w = jnp.atleast_1d(jnp.asarray(w, dtype=jnp.complex128))
         z1 = jnp.atleast_1d(jnp.asarray(z1, dtype=jnp.complex128))
@@ -23097,6 +23104,249 @@ class FSBL_caustics(FSBL):
 
         return images, z_parity, amps
 
+ 
+class FSBL_Phot(FSBL, PSPL_Phot):
+    photometryFlag = True
+    astrometryFlag = False
+
+    def get_resolved_lens_astrometry(self, t, filt_idx=0):
+        """Equation of motion for just the foreground lenses, individually.
+        
+        Parameters
+        ----------
+        t : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Filter index.
+
+        Notes
+        -----
+        .. note::
+           Note, this is a photometry only model, so units are in Einstein radii.
+        """
+        # In phot only fits, lens is at rest. So just duplicate to get
+        # the right shape.
+
+        if self.orbitFlag:
+            eccentricity, i, big_omega_sec, little_omega, p, tp = self.get_me_some_orbital_parameters(self.t0, self.sep, self.r_s, self.a_s, self.v_para, self.v_perp, self.v_rad)
+            orb = orbits.Orbit()
+            orb.w = little_omega
+            orb.o = big_omega_sec
+            orb.i = i
+            orb.e = eccentricity
+            orb.tp = tp
+            orb.aleph2 = self.aleph_sec
+            orb.aleph = self.aleph
+            orb.p = p
+            x, y, x2, y2 = orb.oal2xy(t)
+            xL1 = np.zeros((len(t), 2), dtype=float) 
+            xL2 = np.zeros((len(t), 2), dtype=float) 
+            xL1[:, 0] = x
+            xL1[:, 1] = y
+            xL2[:, 0] = x2
+            xL2[:, 1] = y2
+            self.xL1 = xL1
+            self.xL2 = xL2
+        else:
+            xL1 = np.tile(self.xL1_over_theta, (len(t), 1))
+            xL2 = np.tile(self.xL2_over_theta, (len(t), 1))
+        
+        return np.stack((xL1, xL2))
+      
+    def get_lens_astrometry(self, t, filt_idx=0):
+        """
+        Get the astrometry for the foreground lens at the input times.
+        The returned array is in arcsec and
+        has a shape of [len(t), 2] where the second dimension includes
+        [RA, Dec] positions in arcsec.
+
+        Parameters
+        ----------
+        t : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Filter index.
+
+        Notes
+        -----
+        .. note::
+           Note, this is a photometry only model, so units are in Einstein radii.
+        """
+        magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
+        xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+
+        fL1 = mag2flux(magL1)
+        fL2 = mag2flux(magL2)
+
+        xL_centroid = (xL1 * fL1 + xL2 * fL2) / (fL1 + fL2)
+
+        return xL_centroid
+
+    def get_source_astrometry_unlensed(self, t, filt_idx=0):
+        """Get the astrometry of the source alone if there was
+        no gravitational lensing and no lens.
+        Note, this is a photometry only model, so units are in Einstein radii.
+
+        Parameters
+        ----------
+        t : array_like
+            List of times in MJD for the observations.
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+
+        Returns
+        -------
+        xS_unlensed : numpy array, dtype=float, ``shape = len(t) x 2``
+            The unlensed positions of the source in Einstein radii.
+
+        Notes
+        -----
+        .. note::
+           Note that this is a photometry-only model, so units are in Einstein radii.
+        """
+        u = self.get_u(t, filt_idx=filt_idx)
+
+        return u
+
+    def get_astrometry_unlensed(self, t, filt_idx=0):
+        """Get the unresolved astrometry of the source and lens if there was
+        no gravitational lensing.
+        Note, this is a photometry only model, so units are in Einstein radii.
+
+        Returns
+        -------
+        xS_unlensed : numpy array, dtype=float, ``shape = len(t) x 2``
+            The unlensed positions of the source in Einstein radii.
+        filt_idx : int, optional
+            Filter index.
+
+        Notes
+        -----
+        .. note::
+           Note, this is a photometry only model, so units are in Einstein radii.
+        """
+        # Get the relative unlensed separation.
+        u = self.get_u(t, filt_idx=filt_idx)
+
+        # Calculate the flux-weighted centroid (source + lens)
+        # fS * u + (fL - fS) * [0, 0]
+        # where u is position of source relative to lens.
+        pos_unlensed = self.b_sff[filt_idx] * u
+
+        return pos_unlensed
+
+    def get_complex_pos(self, t, filt_idx=0):
+        """Get the positions of the lenses and source as complex numbers.
+
+        This is needed for further calculations.
+        Note that all units are still the same as before, this
+        is just rewriting vectors :math:`z = (x,y)` as :math:`z = x + iy`.
+
+        Parameters
+        ----------
+        t : array_like
+            Array of times to model.
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+
+        Returns
+        -------
+        w : complex array
+            Source position as an array of complex numbers with
+            real = east component, imaginary = north component
+
+        z1 : complex array
+            Lens primary component position as an array of complex numbers with
+            real = east component, imaginary = north component
+
+        z2 : complex array
+            Lens secondary component position as an array of complex numbers with
+            real = east component, imaginary = north component
+        filt_idx : int, optional
+            Filter index.
+        """
+        if not isinstance(t, np.ndarray):
+            raise RuntimeError("time must be a 1D numpy array")
+
+        # Calculate the position of the source w.r.t. lens (in Einstein radii)
+        # Distance along muRel direction
+        tau = (t - self.t0) / self.tE
+        tau = tau.reshape(len(tau), 1)
+
+        # Distance along u0 direction -- always constant with time.
+        u0 = self.u0.reshape(1, len(self.u0))
+        thetaE_hat = self.thetaE_hat.reshape(1, len(self.thetaE_hat))
+
+        # Total distance
+        u = u0 + tau * thetaE_hat
+
+        # Incorporate parallax
+        if self.parallaxFlag:
+            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
+                                                          obsLocation=self.obsLocation[filt_idx])
+            u -= self.piE_amp * parallax_vec
+
+        # Convert positions to complex coordinates
+        w = u[:, 0] + u[:, 1] * 1j
+
+      # Get the position of the lenses (in units of Einstein radii)
+        if self.orbitFlag:
+            z1 = self.xL1[:, 0] + self.xL1[:, 1] * 1j
+            z2 = self.xL2[:, 0] + self.xL2[:, 1] * 1j
+        else:    
+            z1 = self.xL1_over_theta[0] + self.xL1_over_theta[1] * 1j
+            z2 = self.xL2_over_theta[0] + self.xL2_over_theta[1] * 1j
+
+            z1 = np.repeat(z1, w.shape[0])
+            z2 = np.repeat(z2, w.shape[0])
+
+
+        return w, z1, z2
+
+    def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
+        '''
+        Position of the observed source position in Einstein radii.
+
+        Parameters
+        ----------
+        t : array_like, shape = [N_times]
+            Array of times to model.
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+
+        Other Parameters
+        ----------------
+        image_arr : array_like
+            Array of complex image positions at each t,
+            i.e. image_arr.shape = (len(t), number of images at each t).
+            Each value in this array is complex
+            (real = north component, imaginary = east component)
+
+        amp_arr : array_like
+            Array of magnifications of each images.
+            Same shape as image_arr.
+
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+
+        Returns
+        -------
+        model_pos : array_like. shape = [N_times, N_images, 2]
+            Array of vector positions of the centroid at each t.
+        '''
+        if (image_arr is None) or (amp_arr is None):
+            image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+
+        # In units of Einstein radii.
+        xS_lensed_pos = image_arr.view('(2,)float')
+
+
+        #xS_lensed_pos = jnp.stack(
+         #   [jnp.real(image_arr), jnp.imag(image_arr)],
+          #  axis=-1
+        #)
+
+        return xS_lensed_pos
 
 class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
     """
@@ -23902,6 +24152,18 @@ class FSPL_Phot(PSBL):
             print("You've selected a parameterization without outlines")
 
 
+
+class FSBL_caustics_Phot(FSBL_caustics, FSBL_Phot):
+    """
+    Photometry + astrometry data class for FSBL using :class:`FSBL_caustics`
+    (caustics-style contours) instead of :class:`FSBL`.
+
+    Instantiate via the concrete classes
+    ``FSBL_caustics_PhotAstrom_noPar_Param1``, etc., not this class directly.
+    """
+    pass
+
+
 class FSBL_caustics_PhotAstrom(FSBL_caustics, FSBL_PhotAstrom):
     """
     Photometry + astrometry data class for FSBL using :class:`FSBL_caustics`
@@ -23919,6 +24181,84 @@ class FSBL_noParallax(PSPL_noParallax):
 
 class FSBL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+
+
+class FSBL_PhotParam1(PSBL_PhotParam1):
+    """
+    Finite source binary lens, photometry only.
+
+    It has 3 more parameters than PSPL_PhotParam1:
+       * mass ratio
+       * separation -- in units of thetaE
+       * angle of approach
+    Note that this is a STATIC binary lens, i.e. there is no orbital motion.
+
+    Attributes
+    ----------
+    t0: float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in heliocentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
+    u0_amp: float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. It can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time based on the system mass. [MJD]
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    q: float
+        Mass ratio (low-mass / high-mass)
+    sep: float
+        Angular separation of the two lenses in units of thetaE where
+        thetaE is defined with the total binary mass.
+    phi: float
+        Angle made between the binary axis and the relative proper motion vector,
+        measured in degrees.
+    b_sff: array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_src:  array or list
+        Photometric magnitude of the source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
+                          'q', 'sep', 'phi']
+    phot_param_names = ['b_sff', 'mag_src']
+
+    paramAstromFlag = False
+    paramPhotFlag = True
+    orbitFlag=False
+
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS,
+                 b_sff, mag_src, max_contour_jump = 0.01, n_outline = 50,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        
+
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, q, sep, phi,
+                 b_sff, mag_src, 
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        # Calculate the microlensing parallax amplitude
+        self.radiusS = radiusS
+        self.n_outline = n_outline
+        self.max_contour_jump = max_contour_jump
+
+        return
 
 
 class FSBL_PhotAstromParam1(PSPL_Param):
@@ -26092,6 +26432,29 @@ class FSBL_PhotAstrom_Par_Param1(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+
+
+@inheritdocstring
+class FSBL_Phot_noPar_Param1(ModelClassABC,
+                                   FSBL_caustics_Phot,
+                                   FSBL_noParallax,
+                                   FSBL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+# PSBL_parallax
+@inheritdocstring
+class FSBL_Phot_Par_Param1(ModelClassABC,
+                                 FSBL_caustics_Phot,
+                                 FSBL_Parallax,
+                                 FSBL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
 
 
 @inheritdocstring
