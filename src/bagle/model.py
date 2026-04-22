@@ -687,7 +687,7 @@ class PSPL(ABC):
         u_amp = np.linalg.norm(u, axis=1)
 
         A = (u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4))
-        #pdb.set_trace()
+        ##pdb.set_trace()
 
         return A
 
@@ -2864,7 +2864,7 @@ class PSPL_PhotParam2(PSPL_Param):
         # usage of the function with u0_amp works exactly the same.
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
-        #pdb.set_trace()
+        ##pdb.set_trace()
 
         return
 
@@ -5182,6 +5182,7 @@ class PSBL(PSPL):
 
         # Flux Ratio of f_Lp / f_Ls
         fr_Lp_Ls = np.nan_to_num(dmag2fratio(self.dmag_Lp_Ls[filt_idx]), nan=0)
+#        #pdb.set_trace()
 
         # Derivation of individual lens photometry
         # fr = fL1 / fL2 input value
@@ -5250,7 +5251,7 @@ class PSBL(PSPL):
             BLEH
         """
         N_times = z1.shape[0]
-        #pdb.set_trace()
+        ##pdb.set_trace()
         # print(z_arr)
         # print(z1)
         # print(z2)
@@ -5593,7 +5594,7 @@ class PSBL(PSPL):
         for i in range(N_times):
              z_arr[i] = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
             #z_arr[i] = np.roots(jnp.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]]))
-#        pdb.set_trace()
+#        #pdb.set_trace()
 
         # Plug back into equation and see if those roots are actually solutions.
         # There should either be 3 (outside caustic) or 5 (inside caustic).
@@ -5705,7 +5706,7 @@ class PSBL(PSPL):
         for i in range(N_times):
              z_arr[i] = np.roots([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
             #z_arr[i] = np.roots(jnp.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]]))
-#        pdb.set_trace()
+#        #pdb.set_trace()
 
         # Plug back into equation and see if those roots are actually solutions.
         # There should either be 3 (outside caustic) or 5 (inside caustic).
@@ -5743,7 +5744,7 @@ class PSBL(PSPL):
             [ 0, 0, 1.0+0j, 0, 0],
             [ 0, 0, 0, 1.0+0j, 0],
         ])
-        #pdb.set_trace()
+        ##pdb.set_trace()
         return jnp.linalg.eigvals(C)
 
 
@@ -5837,7 +5838,7 @@ class PSBL(PSPL):
             
         if check_sols:
             # broadcast m1,m2
-            #pdb.set_trace()
+            ##pdb.set_trace()
             m1_arr = m1 if np.ndim(m1) else np.full(N_times, m1)
             m2_arr = m2 if np.ndim(m2) else np.full(N_times, m2)
 
@@ -5961,7 +5962,7 @@ class PSBL(PSPL):
             z_arr[i] = _polyroots_mpsolve([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]])
 
             #z_arr[i] = np.roots(jnp.array([a5[i], a4[i], a3[i], a2[i], a1[i], a0[i]]))
-#        pdb.set_trace()
+#        #pdb.set_trace()
 
         # Plug back into equation and see if those roots are actually solutions.
         # There should either be 3 (outside caustic) or 5 (inside caustic).
@@ -6224,6 +6225,7 @@ class PSBL(PSPL):
 
         # Derivations are in https://www.overleaf.com/project/5c058eb8e5b5b14080d3d567
         # centroid = [ sum(A_i*fS*xS_i) + fL1*xL1 + fL2*xL2 ] / [ sum(A_i*fS) + fL1 + fL2 ]
+        #pdb.set_trace()
         numer = np.sum(xS_lensed_res_mskd * amp_arr_mskd2 * fS, axis=1) + xL1 * fL1 + xL2 * fL2
         denom = np.sum(amp_arr_mskd2 * fS, axis=1) + fL1 + fL2
 
@@ -20414,7 +20416,7 @@ class FSPL(PSPL):
             d_angles = np.diff(angles)
             d_angles3 = d_angles ** 3
             
-            #pdb.set_trace()
+            ##pdb.set_trace()
             # Eq 10 areas Bozza 2021.
 
             wp_d1_d2_i_plus    = d1_px[:-1] * d2_py[:-1] - d1_py[:-1] * d2_px[:-1]
@@ -20612,7 +20614,7 @@ class FSPL(PSPL):
             d_angles = np.diff(angles)
             d_angles3 = d_angles ** 3
             
-            #pdb.set_trace()
+            ##pdb.set_trace()
             # Eq 10 areas Bozza 2021.
 
             wp_d1_d2_i_plus    = d1_px[:-1] * d2_py[:-1] - d1_py[:-1] * d2_px[:-1]
@@ -22228,8 +22230,13 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
 #
 # ==================================================
 class FSBL(PSBL):
-    """Finite-Source, Binary-Lens models."""
-    
+    """
+    Finite-source binary lens magnification inspired by ``caustics`` by F.Bartolic
+    https://github.com/fbartolic/caustics
+    """
+
+    fsbl_niter = 10
+
     def im_pos1(self, w, z1):
         u = w - z1                
         z_major = u * (1 + np.sqrt(1 + 4 / np.abs(u)**2)) / 2
@@ -22242,89 +22249,6 @@ class FSBL(PSBL):
     
     def detJac(self, z, z1):
         return 1.0 - 1.0 / np.abs(z - z1)**4
-
-    
-    
-    def match_points(self, a, b, parity_a=None, parity_b=None, valid_a=None, valid_b=None):
-        """
-        Match a to closest empty b index. 
-        """
-        n = a.shape[0]
-        dists = jnp.abs(b - a[:, None])
-        dists = jnp.where(jnp.isnan(dists), jnp.inf, dists)
-
-        # Do not connect two points across a large jump
-        if valid_a is not None and valid_b is not None:
-            cross_contour = valid_a[:, None] & valid_b[None, :] & (dists > self.max_contour_jump)
-            dists = jnp.where(cross_contour, jnp.inf, dists)
-            
-        # Opposite parity: forbid matching different non-zero parities outright
-        if parity_a is not None and parity_b is not None:
-            pa = jnp.real(jnp.sign(parity_a))  # (n,)
-            pb = jnp.real(jnp.sign(parity_b))  # (n,)
-            opposite = (pa[:, None] != 0) & (pb[None, :] != 0) & (pa[:, None] != pb[None, :])
-            dists = jnp.where(opposite, jnp.inf, dists)
-        tie_break = 1e-10 * (1.0 - jnp.eye(n, dtype=dists.dtype))
-        dists = dists + tie_break
-        sorted_by_dist = jnp.argsort(dists, axis=1)
-
-        #Function to use with jax scan. 
-        def step(used_mask, i):
-            row = sorted_by_dist[i]
-            used_flags = used_mask[row]
-            j_opt = jnp.argmax(1 - used_flags.astype(jnp.int32))
-            idx = row[j_opt]
-            used_next = used_mask.at[idx].set(True)
-            return used_next, idx
-
-        init_used = jnp.zeros(n, dtype=bool)
-        _, indices = lax.scan(step, init_used, jnp.arange(n))
-        return indices
-        
-
-    def continuous_images(self, z, z_mask, parity):
-        """
-        Create continuous image tracks
-        """
-        d_max = self.max_contour_jump
-        z_match = jnp.where(z_mask, z, 0.0 + 0.0j)
-
-        def step(carry, i):
-            carry_pos, carry_parity = carry
-            z_curr_match = z_match[i]
-            parity_curr = parity[i]
-            valid_prev = ~jnp.isnan(jnp.real(carry_pos)) & (jnp.abs(carry_pos) > 1e-30)
-            valid_curr = ~jnp.isnan(jnp.real(z_curr_match)) & (jnp.abs(z_curr_match) > 1e-30)
-            nv = jnp.maximum(jnp.sum(valid_curr), 1)
-            centroid = jnp.sum(jnp.where(valid_curr, z_curr_match, 0.0)) / nv
-            
-            
-            carry_filled = jnp.where(jnp.isnan(jnp.real(carry_pos)) | (jnp.abs(carry_pos) < 1e-30), jnp.broadcast_to(centroid, carry_pos.shape), carry_pos)
-            
-
-            idx = self.match_points(carry_filled, z_curr_match, carry_parity, parity_curr, valid_prev, valid_curr)
-
-            # Reorder images, masks and parities using these indices
-            z_matched = z[i, idx]
-            z_mask_matched = z_mask[i, idx]
-            z_parity_matched = parity_curr[idx]
-
-            # Next carry: positions and parities for each track
-            carry_next_pos = z_curr_match[idx]
-            carry_next_parity = z_parity_matched
-            return (carry_next_pos, carry_next_parity), (z_matched, z_mask_matched, z_parity_matched)
-
-        init_parity = parity[0]
-        init = (z_match[0], init_parity)
-        temp, (z_out, z_mask_out, z_parity_out) = lax.scan(step, init, jnp.arange(1, z.shape[0]))
-
-        # Prepend the first limb point (already correctly ordered in init)
-        z_out = jnp.concatenate([z[0:1], z_out], axis=0)
-        z_mask_out = jnp.concatenate([z_mask[0:1], z_mask_out], axis=0)
-        z_parity_out = jnp.concatenate([parity[0:1], z_parity_out], axis=0)
-        return z_out, z_mask_out, z_parity_out
-
-    
 
     def quintic_roots(self, a5, a4, a3, a2, a1, a0):
         """JAX root finder via companion matrix eigenvalues (Witt 1995 / BAGLE)."""
@@ -22453,147 +22377,10 @@ class FSBL(PSBL):
         #return a_t + 0.5 * (ap1 + ap2)
 
 
-    def polygonal_area_with_parity(self, pts, valid, theta, parity_edge):
-        """
-        Signed area where each edge is weighted by local parity.c.
-        """
-        n = pts.shape[0]
-        dtheta = theta[1] - theta[0] if n > 1 else 1.0
-        k = jnp.arange(n)
-        kp1 = (k + 1) % n
-
-        delta = pts[kp1] - pts
-
-        # Edge parity in {-1, +1}; treat zeros as +1.
-        p_edge = jnp.where(valid, jnp.sign(jnp.real(parity_edge)), 0.0)
-        p_edge = jnp.where(p_edge == 0.0, 1.0, p_edge)
-
-        # Discard contributions across discontinuous jumps near caustics.
-        big_jump = (delta.real**2 + delta.imag**2) > (0.1**2)
-
-        arc_valid = valid & jnp.roll(valid, -1) & (~big_jump)
-        term_t = jnp.imag(jnp.conj(pts) * delta) * p_edge
-        a_t = 0.5 * jnp.sum(jnp.where(arc_valid, term_t, 0.0))
-
-        parabolic_ok = (jnp.roll(valid, 1) & valid & jnp.roll(valid, -1) & jnp.roll(valid, -2) & (~jnp.roll(big_jump, 1)) & (~big_jump) & (~jnp.roll(big_jump, -1)))
-        d1 = jnp.diff(pts, append=pts[0])
-        z_p = (d1 + jnp.roll(d1, 1)) / (2.0 * dtheta)
-        z_pp = jnp.diff(d1, prepend=d1[-1]) / (dtheta**2)
-
-        ap1_term = jnp.imag(jnp.conj(z_p) * z_pp) + jnp.imag(jnp.conj(z_p[kp1]) * z_pp[kp1])
-        ap1_term = ap1_term * p_edge
-        ap1 = (1.0 / 24.0) * jnp.sum(jnp.where(parabolic_ok, ap1_term * dtheta**3, 0.0))
-
-        ap2_term = jnp.imag(jnp.conj(delta) * (z_p[kp1] - z_p)) * dtheta
-        ap2_term = ap2_term * p_edge
-        ap2 = (1.0 / 12.0) * jnp.sum(jnp.where(parabolic_ok, ap2_term, 0.0))
-
-        return a_t + 0.5 * (ap1 + ap2)
-
-    def magnification_one(self, w0, z1, z2, m1, m2, rho, theta):
-        """Contour magnification for one (w0, z1, z2) configuration."""
-        w_limb = w0 + rho * jnp.exp(1j * theta)
-        z_all = self.get_image_pos_arr(w_limb, z1, z2, m1, m2)
-        z_mask = ~jnp.isnan(z_all.real)
-        _J, parity_all = self.det_and_jac(z_all, z1, z2, m1, m2)
-        z_parity = jnp.sign(jnp.real(parity_all))
-        z, z_mask, z_parity_return = self.continuous_images(
-            z_all, z_mask, z_parity)
-
-        total_signed_area = jnp.array(0.0, dtype=jnp.float64)
-        for k in range(5):
-            pts = z[:, k]
-            valid = z_mask[:, k]
-            n_valid = jnp.sum(valid)
-            area = lax.cond(
-                n_valid > 0,
-                lambda: self.polygonal_area_with_parity(pts, valid, theta, z_parity_return[:, k]),
-                lambda: jnp.array(0.0, dtype=jnp.float64))
-            total_signed_area = total_signed_area + area
-        return z, z_parity_return, jnp.abs(total_signed_area) / (jnp.pi * rho**2)
-
-    def get_all_arrays_CI(self, t, filt_idx=0):
-        """
-        Obtain the image and amplitude arrays for each t. These arrays
-        contain the positions for each point in the outline for each lensed image.
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times to model.
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        Returns
-        -------
-        images : array_like
-            Array/tuple of positions of each lensed image at each t.
-            Shape = [len(t), n_images=2, [E,N]]
-            The last axis contains East and North positions on the sky
-            in arcseconds.
-
-        amp_arr : array_like
-            Array/tuple of amplification of each lensed image at each t.
-            Shape = [len(t), n_images=2]
-
-        Notes
-        -----
-        The algorithm uses Green's theorem to change an area integral of the
-        image of the source into a path integral around the outline.
-        For the amplification, we perform a first-order contour integral to
-        approximate the area, and include a second-order parabolic correction.
-        For the centroid calculation, we perform only the first-order contour
-        integral with no second-order parabolic correction.
-        Equations for the contour integrals come from Bozza et al. (2021).
-        """
-        # Lensed positions of each outline point for both plus/minus images.
-        # Note these are positions on the sky. in arcsec
-
-        # Shape = [len(t), N_outline, [+,-], [E,N]]
-        
-        rho = self.radiusS * 1e3 / self.thetaE_amp
-        u_vec = self.get_u(t)
-        lens_asts_1 = self.get_resolved_lens_astrometry(t)[0, :, :] / self.thetaE_amp * 1e3
-        lens_asts_2 = self.get_resolved_lens_astrometry(t)[1, :, :] / self.thetaE_amp * 1e3
-        w = jnp.atleast_1d(jnp.asarray(u_vec[:, 0] + 1j * u_vec[:, 1], dtype=jnp.complex128))  # already in θ_E units
-
-        z1_abs = jnp.asarray(lens_asts_1[:, 0] + 1j * lens_asts_1[:, 1], dtype=jnp.complex128)
-        z2_abs = jnp.asarray(lens_asts_2[:, 0] + 1j * lens_asts_2[:, 1], dtype=jnp.complex128)
-
-        z_cm = 0.5 * (z1_abs + z2_abs)
-        z1 = z1_abs - z_cm
-        z2 = z2_abs - z_cm
-        m1 = jnp.asarray(self.mLp / self.mL, dtype=jnp.float64)
-        m2 = jnp.asarray(self.mLs / self.mL, dtype=jnp.float64)
-
-        w = jnp.atleast_1d(jnp.asarray(w, dtype=jnp.complex128))
-        z1 = jnp.atleast_1d(jnp.asarray(z1, dtype=jnp.complex128))
-        z2 = jnp.atleast_1d(jnp.asarray(z2, dtype=jnp.complex128))
-        n = w.shape[0]
-        z1 = jnp.broadcast_to(z1.ravel()[0] if z1.size == 1 else z1, n)
-        z2 = jnp.broadcast_to(z2.ravel()[0] if z2.size == 1 else z2, n)
-        m1 = jnp.broadcast_to(jnp.atleast_1d(jnp.asarray(m1, dtype=jnp.float64)), n)
-        m2 = jnp.broadcast_to(jnp.atleast_1d(jnp.asarray(m2, dtype=jnp.float64)), n)
-
-        theta = jnp.linspace(0, 2 * jnp.pi, self.n_outline, endpoint=False)
-
-        z_rel, z_parity, mag = vmap(
-            lambda w_i, z1_i, z2_i, m1_i, m2_i: self.magnification_one(
-                w_i, z1_i, z2_i, m1_i, m2_i, rho, theta
-            ),
-            in_axes=(0, 0, 0, 0, 0),
-        )(w, z1, z2, m1, m2)
-
-        amps = mag
-        # Images in θ_E units: add back CoM shift.
-        images = z_rel + z_cm[:, None, None]
-
-        return images, z_parity, amps
-
     def get_all_arrays(self, t, filt_idx=0):
-        images, z_parity, amps = self.get_all_arrays_CI(
+        images, z_parity, amps, individual_area = self.get_all_arrays_CI(
             t, filt_idx)
-        return images, z_parity, amps
+        return images, z_parity, amps, individual_area
   
     def get_u(self, t, filt_idx=0):
         """
@@ -22642,7 +22429,7 @@ class FSBL(PSBL):
 
         """
         if amp_arr is None:
-            img_arr, z_parity, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+            img_arr, z_parity, amp_arr, _ = self.get_all_arrays(t, filt_idx=filt_idx)
             amp = amp_arr
         else:
             amp = amp_arr
@@ -22676,7 +22463,7 @@ class FSBL(PSBL):
 
         '''
         if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+            img_arr, _zp, amp_arr, _ = self.get_all_arrays(t, filt_idx=filt_idx)
 
         amp = jnp.asarray(amp_arr)
         flux_src = mag2flux(self.mag_src[filt_idx])
@@ -22693,15 +22480,6 @@ class FSBL(PSBL):
         mag_model = flux2mag(flux_model)
 
         return mag_model
-
-
-class FSBL_caustics(FSBL):
-    """
-    Finite-source binary lens magnification using the image-plane contour
-    pipeline from ``caustics``.
-    """
-
-    fsbl_caustics_niter = 10
 
     def first_nonzero(self, x, axis=0):
         return jnp.argmax(x != 0.0, axis=axis)
@@ -22866,12 +22644,49 @@ class FSBL_caustics(FSBL):
         seg_m, tidx_m = lax.switch(ctype, [th, ht, hh, tt], seg1, seg2, tidx1, tidx2)
         return seg_m, tidx_m
 
+    
+    def polygonal_area_with_parity(self, pts, valid, theta, parity_edge):
+        """
+        Signed area where each edge is weighted by local parity.c.
+        """
+        n = pts.shape[0]
+        dtheta = theta[1] - theta[0] if n > 1 else 1.0
+        k = jnp.arange(n)
+        kp1 = (k + 1) % n
+
+        delta = pts[kp1] - pts
+
+        # Edge parity in {-1, +1}; treat zeros as +1.
+        p_edge = jnp.where(valid, jnp.sign(jnp.real(parity_edge)), 0.0)
+        p_edge = jnp.where(p_edge == 0.0, 1.0, p_edge)
+
+        # Discard contributions across discontinuous jumps near caustics.
+        big_jump = (delta.real**2 + delta.imag**2) > (0.1**2)
+
+        arc_valid = valid & jnp.roll(valid, -1) & (~big_jump)
+        term_t = jnp.imag(jnp.conj(pts) * delta) * p_edge
+        a_t = 0.5 * jnp.sum(jnp.where(arc_valid, term_t, 0.0))
+
+        parabolic_ok = (jnp.roll(valid, 1) & valid & jnp.roll(valid, -1) & jnp.roll(valid, -2) & (~jnp.roll(big_jump, 1)) & (~big_jump) & (~jnp.roll(big_jump, -1)))
+        d1 = jnp.diff(pts, append=pts[0])
+        z_p = (d1 + jnp.roll(d1, 1)) / (2.0 * dtheta)
+        z_pp = jnp.diff(d1, prepend=d1[-1]) / (dtheta**2)
+
+        ap1_term = jnp.imag(jnp.conj(z_p) * z_pp) + jnp.imag(jnp.conj(z_p[kp1]) * z_pp[kp1])
+        ap1_term = ap1_term * p_edge
+        ap1 = (1.0 / 24.0) * jnp.sum(jnp.where(parabolic_ok, ap1_term * dtheta**3, 0.0))
+
+        ap2_term = jnp.imag(jnp.conj(delta) * (z_p[kp1] - z_p)) * dtheta
+        ap2_term = ap2_term * p_edge
+        ap2 = (1.0 / 12.0) * jnp.sum(jnp.where(parabolic_ok, ap2_term, 0.0))
+
+        return a_t + 0.5 * (ap1 + ap2)
+
+    
     def merge_open_segments(self, segments, max_nr_of_contours=3, max_nr_of_segments_in_contour=10):
         def merge_with_another(seg_active, tidx_active, segs, tidcs):
             dist_th = jnp.abs(seg_active[0, tidx_active] - segs[:, 0, 0])
-            dist_ht = vmap(
-                lambda seg, tidx: jnp.abs(seg_active[0, 0] - seg[0, tidx])
-            )(segs, tidcs)
+            dist_ht = vmap(lambda seg, tidx: jnp.abs(seg_active[0, 0] - seg[0, tidx]))(segs, tidcs)
             dist_hh = jnp.abs(seg_active[0, 0] - segs[:, 0, 0])
             dist_tt = vmap(lambda seg, tidx: jnp.abs(seg_active[0, tidx_active] - seg[0, tidx]))(segs, tidcs)
             distances = jnp.stack([dist_th, dist_ht, dist_hh, dist_tt])
@@ -22976,7 +22791,7 @@ class FSBL_caustics(FSBL):
         I2 = self.trapz_zero_avoiding(-0.5 * z.imag, z.real, tidx)
         return I1 + I2
 
-    def images_on_source_limb_caustics(self, w0, z1, z2, m1, m2, rho, npts_limb, niter):
+    def images_on_source_limb(self, w0, z1, z2, m1, m2, rho, npts_limb, niter):
         """
         """
         npts_limb = int(npts_limb)
@@ -23020,16 +22835,26 @@ class FSBL_caustics(FSBL):
         mask_dup = jnp.full(z_flat.shape, True)
         mask_dup = mask_dup.at[ix].set(False).reshape(z.shape)
         z = jnp.where(mask_dup, z + jax.random.uniform(key, shape=z.shape, minval=-1e-9, maxval=1e-9), z)
-        return z, z_mask, z_parity
+        return z, z_mask, z_parity, theta
 
-    def magnification_caustics_one(self, w0, z1, z2, m1, m2, rho):
+    def magnification_one(self, w0, z1, z2, m1, m2, rho):
         """
-        Extended-source magnification for one time step
+        Extended-source magnification for one time step.
+
+        Returns
+        -------
+        z_out, z_p_out, mag, individual_area
+            ``mag`` and ``individual_area`` both have shape ``(n_theta, 5)`` where
+            ``n_theta`` is the number of source-limb samples (adaptive). ``mag`` is
+            the total magnification, broadcast to that grid; ``individual_area`` is
+            the per image-track signed area / (πρ²), broadcast along axis 0.
         """
         npts_limb = int(self.n_outline)
-        niter = int(self.fsbl_caustics_niter)
+        niter = int(self.fsbl_niter)
 
-        z_raw, z_mask, z_parity = self.images_on_source_limb_caustics(w0, z1, z2, m1, m2, rho, npts_limb, niter)
+        z_raw, z_mask, z_parity, theta = self.images_on_source_limb(
+            w0, z1, z2, m1, m2, rho, npts_limb, niter
+        )
         z_perm, z_mask_perm, z_parity_perm = (self.permute_images(z_raw, z_mask, z_parity))
 
         seg_closed, seg_open, all_closed = self.get_segments(z_perm, z_mask_perm, z_parity_perm, n_images=5)
@@ -23050,11 +22875,31 @@ class FSBL_caustics(FSBL):
             return I2 * p2
 
         mags2 = lax.cond(all_closed, branch_all_closed, branch_has_open, seg_open)
-        mag = jnp.abs(jnp.sum(mags1) + jnp.sum(mags2)) / (jnp.pi * rho ** 2)
+        mag_total = jnp.abs(jnp.sum(mags1) + jnp.sum(mags2)) / (jnp.pi * rho ** 2)
 
         z_out = z_perm.T
         z_p_out = z_parity_perm.T
-        return z_out, z_p_out, mag
+        ntheta = theta.shape[0]
+        # Same shape (ntheta, 5): total magnification broadcast; per-track signed area / (πρ²).
+        inv_src = 1.0 / (jnp.pi * rho**2)
+        indiv = []
+        for k in range(5):
+            n_valid = jnp.sum(z_mask_perm[k, :])
+            area = lax.cond(
+                n_valid > 0,
+                lambda kk=k: self.polygonal_area_with_parity(
+                    z_perm[kk],
+                    z_mask_perm[kk, :],
+                    theta,
+                    z_parity_perm[kk, :],
+                ),
+                lambda: jnp.array(0.0, dtype=jnp.float64),
+            )
+            indiv.append(area * inv_src)
+        ind_stack = jnp.stack(indiv)
+        individual_area = jnp.broadcast_to(ind_stack[None, :], (ntheta, 5))
+        mag = jnp.broadcast_to(mag_total, (ntheta, 5))
+        return z_out, z_p_out, mag, individual_area
 
     def get_all_arrays_CI(self, t, filt_idx=0):
         """
@@ -23095,14 +22940,18 @@ class FSBL_caustics(FSBL):
         m1 = jnp.broadcast_to(jnp.atleast_1d(jnp.asarray(m1, dtype=jnp.float64)), n)
         m2 = jnp.broadcast_to(jnp.atleast_1d(jnp.asarray(m2, dtype=jnp.float64)), n)
 
-        z_rel, z_parity, mag = vmap(
-            lambda w_i, z1_i, z2_i, m1_i, m2_i: self.magnification_caustics_one(w_i, z1_i, z2_i, m1_i, m2_i, rho),
-            in_axes=(0, 0, 0, 0, 0))(w, z1, z2, m1, m2)
+        z_rel, z_parity, mag, individual_area = vmap(
+            lambda w_i, z1_i, z2_i, m1_i, m2_i: self.magnification_one(
+                w_i, z1_i, z2_i, m1_i, m2_i, rho
+            ),
+            in_axes=(0, 0, 0, 0, 0),
+        )(w, z1, z2, m1, m2)
 
-        amps = mag
+        # One total amplification per time (``mag`` is constant on the (ntheta, 5) grid).
+        amps = mag[:, 0, 0]
         images = z_rel + z_cm[:, None, None]
 
-        return images, z_parity, amps
+        return images, z_parity, amps, individual_area
 
  
 class FSBL_Phot(FSBL, PSPL_Phot):
@@ -23335,7 +23184,9 @@ class FSBL_Phot(FSBL, PSPL_Phot):
             Array of vector positions of the centroid at each t.
         '''
         if (image_arr is None) or (amp_arr is None):
-            image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+            image_arr, _zp, amp_arr, _ = self.get_all_arrays(
+                t, filt_idx=filt_idx
+            )
 
         # In units of Einstein radii.
         xS_lensed_pos = image_arr.view('(2,)float')
@@ -23726,7 +23577,9 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
             Last axis contains East/North positions.
         """
         if (image_arr is None) or (amp_arr is None):
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+            img_arr, parity_arr, amp_arr, _ = self.get_all_arrays(
+                t, filt_idx=filt_idx
+            )
         xS_lensed_pos = img_arr
 
         return xS_lensed_pos
@@ -23748,7 +23601,9 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
             Shape = [n_images=2, len(t)]
         """
         if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+            img_arr, parity_arr, amp_arr, _ = self.get_all_arrays(
+                t, filt_idx=filt_idx
+            )
 
         return np.swapaxes(amp_arr, 0, 1)
 
@@ -23785,7 +23640,9 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
         flux_zp = 1.0
 
         if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+            img_arr, parity_arr, amp_arr, _ = self.get_all_arrays(
+                t, filt_idx=filt_idx
+            )
         # Mask invalid values from the amplification array.
         amp_arr_mskd = np.ma.masked_invalid(amp_arr)
 
@@ -23837,7 +23694,9 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
             Magnitude of the centroid at t.
         '''
         if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+            img_arr, parity_arr, amp_arr, _ = self.get_all_arrays(
+                t, filt_idx=filt_idx
+            )
 
         amp_arr_mskd = np.ma.masked_invalid(amp_arr)
         # FSBL returns 1D magnification (one per time); PSBL returns 2D (per time, per image).
@@ -23862,9 +23721,10 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
         mag_model = flux2mag(flux_model)
 
         return mag_model
-
+    
+    
     def get_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
-        '''
+        """
         Position of the observed (unresolved) source position in arcsec.
 
         Parameters
@@ -23875,50 +23735,47 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
         Other Parameters
         ----------------
         image_arr : array_like
-            Array of complex image positions at each t,
-            i.e. image_arr.shape = (len(t), number of images at each t).
-            Each value in this array is complex
-            (real = north component, imaginary = east component)
+            Array of complex image positions at each t, shape ``(N, n_\\theta, 5)``.
+            (real = North, imaginary = East).
         amp_arr : array_like
-            Array of magnifications of each images.
-            Same shape as image_arr.
+            From :meth:`get_all_arrays` this is the total magnification per time (1D, length ``N``);
+            if you pass in cached data yourself, the same. ``indv_amp`` is taken from
+            :meth:`get_all_arrays` when ``amp_arr`` is loaded here; when both arrays are
+            pre-supplied, unit weights on the same grid are used in place of ``indv_amp``.
         filt_idx : int
             The filter index (def=0).
 
         Returns
         -------
-        model_pos : array_like
-            Array of vector positions of the centroid at each t.
-        '''
-        # Equation of motion for just the foreground lens.
-        # Shape is [len(t), [E, N]]
-        xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
-
+        model_pos : ndarray, shape (N, 2)
+        """
         if (image_arr is None) or (amp_arr is None):
-            image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-        
-            # amp_arr shape = [N_times, [+, -]]
-            # image_arr shape = [N_times, [+, -], [E, N]]
-
-        # Add in the flux of the lens objects as well.
+            image_arr, _parity, amp_arr, indv_amp = self.get_all_arrays(t, filt_idx=filt_idx)
+    
+        image_arr = np.asarray(image_arr, dtype=np.complex128)
+        indv_amp = np.asarray(indv_amp, dtype=np.float64)
         fS = mag2flux(self.mag_src[filt_idx])
-        fL = fS * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
 
-        # Calculate the total flux from all lensed source images and the lens itself.
-        amp_arr = np.abs(amp_arr)
-        ftot = fL + np.sum(fS * amp_arr, axis=1)
-        pos = np.sum(image_arr * amp_arr[:, :, np.newaxis] * fS, axis=1)
-
-
-        # Calculate the flux-weighted centroid. Components are:
-        #  - all lensed source images
-        #  - luminous lens
+        # Drop cells with non-finite image position so nothing NaN enters np.sum
         
-        pos += fL * xL
-        pos /= ftot[:, np.newaxis]
+        valid = (np.isfinite(np.real(image_arr)) & np.isfinite(np.imag(image_arr)))
+        zc = np.where(valid, indv_amp * fS, 0.0)
+        src = np.where(valid, image_arr * indv_amp * fS, 0.0j)
 
-        return pos
-
+        pos_c = np.sum(src, axis=(1, 2))
+        pos = np.stack((pos_c.real, pos_c.imag), axis=-1)
+        ftot_src = np.sum(zc, axis=(1, 2))
+        
+        xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
+        fL1 = mag2flux(magL1)
+        fL2 = mag2flux(magL2)
+        
+        numer = pos + xL1 * fL1 + xL2 * fL2
+        denom = ftot_src + fL1 + fL2
+        astrometry = numer / np.asarray(denom)[:, np.newaxis]
+        return astrometry
+     
 
     def get_centroid_shift(self, t, filt_idx=0, image_arr=None, amp_arr=None):
         """Parallax: Get the centroid shift (in mas) for a list of
@@ -24150,29 +24007,6 @@ class FSPL_Phot(PSBL):
             return shifts_res
         else:
             print("You've selected a parameterization without outlines")
-
-
-
-class FSBL_caustics_Phot(FSBL_caustics, FSBL_Phot):
-    """
-    Photometry + astrometry data class for FSBL using :class:`FSBL_caustics`
-    (caustics-style contours) instead of :class:`FSBL`.
-
-    Instantiate via the concrete classes
-    ``FSBL_caustics_PhotAstrom_noPar_Param1``, etc., not this class directly.
-    """
-    pass
-
-
-class FSBL_caustics_PhotAstrom(FSBL_caustics, FSBL_PhotAstrom):
-    """
-    Photometry + astrometry data class for FSBL using :class:`FSBL_caustics`
-    (caustics-style contours) instead of :class:`FSBL`.
-
-    Instantiate via the concrete classes
-    ``FSBL_caustics_PhotAstrom_noPar_Param1``, etc., not this class directly.
-    """
-    pass
 
 
 class FSBL_noParallax(PSPL_noParallax):
@@ -24526,8 +24360,105 @@ class FSBL_PhotAstromParam2(PSBL_PhotAstromParam2):
         self.max_contour_jump = max_contour_jump
                       
         return 
-        
-                     
+
+
+class FSBL_PhotAstrom_EllOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
+    """
+    Point source binary lens.
+    Note that this is a non-STATIC binary lens, i.e.
+    there is orbital motion.
+
+    Attributes
+    ----------
+    mLp, mLs : float
+        Masses of the lenses (Msun)
+    t0_p : float
+        Time of closest approach between source and PRIMARY LENS (MJD.DDD)
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    beta_p : float
+        Angular distance between the source and the PRIMARY LENS
+        of the lenses on the plane of the sky (mas) at t0. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+
+    
+    omega_pri: float
+        The argument of periastron of the primary lens's orbit in degrees.
+        The secondary source will be directly 180 degrees across the primary
+        source's argument of periastron.
+    big_omega_sec: float
+        The longitude of the ascending node of the secondary lens's orbit
+        in degrees. Since the primary and secondary sources share the same
+        inclination angle for their orbital planes, they also share the same
+        big_omega_sec
+    i: float
+        Inclination angle of the system in degrees.
+    e: float
+        Eccentricity of the System
+    tp: float
+        This is the time of the periastron of the system in days.
+    a: float
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
+    muL_E : float
+        Lens system proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Lens system proper motion in the Dec. direction (mas/yr)
+    muS_E : float
+        Source proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source proper motion in the Dec. direction (mas/yr)
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source (pc)
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
+                          'beta_p', 'muL_E', 'muL_N', 'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a', 'muS_E', 'muS_N',
+                          'dL', 'dS']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+
+    paramAstromFlag = True
+    orbitFlag='Keplerian'
+    paramPhotFlag = True
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, radiusS,
+                 beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
+                 b_sff, mag_src, dmag_Lp_Ls, n_outline = 50, max_contour_jump=0.1,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, 
+                 beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        self.n_outline = n_outline
+        self.radiusS = radiusS
+        self.max_contour_jump = max_contour_jump
+        return
+
 
 #
 # IN PROGRESS
@@ -26433,10 +26364,35 @@ class FSBL_PhotAstrom_Par_Param1(ModelClassABC,
         checkconflicts(self)
 
 
+@inheritdocstring
+class FSBL_PhotAstrom_noPar_EllOrbs_Param7(ModelClassABC,
+                                   FSBL_PhotAstrom,
+                                   FSBL_noParallax,
+                                   FSBL_PhotAstrom_EllOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+# PSBL_parallax
+@inheritdocstring
+class FSBL_PhotAstrom_Par_EllOrbs_Param7(ModelClassABC,
+                                 FSBL_PhotAstrom,
+                                 FSBL_Parallax,
+                                 FSBL_PhotAstrom_EllOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+
+
 
 @inheritdocstring
 class FSBL_Phot_noPar_Param1(ModelClassABC,
-                                   FSBL_caustics_Phot,
+                                   FSBL_Phot,
                                    FSBL_noParallax,
                                    FSBL_PhotParam1):
     def __init__(self, *args, **kwargs):
@@ -26448,7 +26404,7 @@ class FSBL_Phot_noPar_Param1(ModelClassABC,
 # PSBL_parallax
 @inheritdocstring
 class FSBL_Phot_Par_Param1(ModelClassABC,
-                                 FSBL_caustics_Phot,
+                                 FSBL_Phot,
                                  FSBL_Parallax,
                                  FSBL_PhotParam1):
     def __init__(self, *args, **kwargs):
@@ -26474,50 +26430,6 @@ class FSBL_PhotAstrom_Par_Param2(ModelClassABC,
                                  FSBL_PhotAstrom,
                                  FSBL_Parallax,
                                  FSBL_PhotAstromParam2):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class FSBL_caustics_PhotAstrom_noPar_Param1(ModelClassABC,
-                                            FSBL_caustics_PhotAstrom,
-                                            FSBL_noParallax,
-                                            FSBL_PhotAstromParam1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class FSBL_caustics_PhotAstrom_Par_Param1(ModelClassABC,
-                                          FSBL_caustics_PhotAstrom,
-                                          FSBL_Parallax,
-                                          FSBL_PhotAstromParam1):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class FSBL_caustics_PhotAstrom_noPar_Param2(ModelClassABC,
-                                            FSBL_caustics_PhotAstrom,
-                                            FSBL_noParallax,
-                                            FSBL_PhotAstromParam2):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
-
-
-@inheritdocstring
-class FSBL_caustics_PhotAstrom_Par_Param2(ModelClassABC,
-                                          FSBL_caustics_PhotAstrom,
-                                          FSBL_Parallax,
-                                          FSBL_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -28396,7 +28308,7 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
 
     if beta > 0:
         u0_hat[0] = np.abs(thetaE_hat[1])
-        #pdb.set_trace()
+        ##pdb.set_trace()
         if np.sign(thetaE_hat).prod() > 0:
             u0_hat[1] = -np.abs(thetaE_hat[0])
         else:

@@ -806,6 +806,215 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
     return data, params, psbl, ani
 
 
+def fake_data_FSBL(outdir='', outroot='fsbl_',
+                   raL=259.5, decL=-29.0,
+                   mLp=10, mLs=10, t0=57755,
+                   xS0_E=0, xS0_N=0.001, beta=0.5,
+                   muL_E=0, muL_N=0, muS_E=4, muS_N=0,
+                   radiusS = 2e-6, n_outline = 20,
+                   dL=4000, dS=8000, sep=5, alpha=0,
+                   mag_src=18, b_sff=1, dmag_Lp_Ls=20, parallax=True,
+                   target='FSBL', animate=False):
+    """
+    Optional Inputs
+    ---------------
+    outdir : str
+        The output directory where figures and data are saved.
+    outroot : str
+        The output file name root for a saved figure.
+    raL : float (deg)
+        The right ascension in degrees. Needed if parallax=True.
+    decL : float (deg)
+        The declination in degrees. Needed if parallax=False.
+    mL1 : float (Msun)
+        Mass of the primary lens.
+    mL2 : float (Msun)
+        Mass of the secondary lens.
+    t0 : float (mjd)
+        The time of closest projected approach between the source
+        and the geometric center of the lens system in heliocentric
+        coordinates.
+    xS0_E : float (arcsec)
+        Position of the source in RA relative to the
+        geometric center of the lens system at time t0.
+    xS0_N : float (arcsec)
+        Position of the source in Dec relative to the
+        geometric center of the lens system at time t0.
+    beta : float (mas)
+        The closest projected approach between the source
+        and the geometric center of the lens system in heliocentric
+        coordinates.
+    muL_E : float (mas/yr)
+        Proper motion of the lens system in RA direction
+    muL_N : float (mas/yr)
+        Proper motion of the lens system in the Dec direction
+    muS_E : float (mas/yr)
+        Proper motion of the source in the RA direction
+    muS_N : float (mas/yr)
+        Proper motion of the source in the Dec direction
+    dL : float (pc)
+        Distance to the lens system
+    dS : float (pc)
+        Distance to the source
+    sep : float (mas)
+        Separation between the binary lens stars,
+        projected onto the sky.
+    alpha : float (degrees)
+        Angle of the project binary separation vector on the
+        sky. The separation vector points from the secondary
+        to the primary and the angle alpha is measured in
+        degrees East of North.
+    mag_src : float (mag)
+        Brightness of the source.
+    b_sff : float
+        Source flux fraction = fluxS / (fluxS + fluxL1 + fluxL2 + fluxN)
+    dmag_Lp_Ls : float
+        Magnitude difference between primary and secondary lens.
+
+    """
+
+    start = time.time()
+    if parallax:
+        fsbl = model.FSBL_caustics_PhotAstrom_Par_Param1(mLp, mLs, t0, radiusS, xS0_E, xS0_N,
+                                                beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                                                sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
+                                                raL=raL, decL=decL, n_outline = n_outline, root_tol=1e-8)
+    else:
+        fsbl = model.FSBL_caustics_PhotAstrom_noPar_Param1(mLp, mLs, t0, radiusS, xS0_E, xS0_N,
+                                                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                                                  sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls], n_outline =n_outline, dmag_Lp_Ls = 20,
+                                                  root_tol=1e-8)
+
+    # Simulate
+    # photometric observations every 1 day and
+    # astrometric observations every 14 days
+    # for the bulge observing window. Observations missed
+    # for 125 days out of 365 days for photometry and missed
+    # for 245 days out of 365 days for astrometry.
+    t_pho = np.array([], dtype=float)
+    t_ast = np.array([], dtype=float)
+    for year_start in np.arange(57000, 60000, 365.25):
+        phot_win = 240.0
+        phot_start = (365.25 - phot_win) / 2.0
+        t_pho_new = np.arange(year_start + phot_start,
+                              year_start + phot_start + phot_win, 10)
+        t_pho = np.concatenate([t_pho, t_pho_new])
+
+        ast_win = 120.0
+        ast_start = (365.25 - ast_win) / 2.0
+        t_ast_new = np.arange(year_start + ast_start,
+                              year_start + ast_start + ast_win, 28)
+        t_ast = np.concatenate([t_ast, t_ast_new])
+
+    t_mod = np.arange(t_pho.min(), t_pho.max(), 1)
+    print(len(t_pho))
+    i_pho, z_parity, A_pho = fsbl.get_all_arrays(t_pho)
+    print("Here")
+    i_ast, z_parity, A_ast = fsbl.get_all_arrays(t_ast)
+    i_mod, z_parity, A_mod = fsbl.get_all_arrays(t_mod)
+    print("Here")
+    imag_pho = fsbl.get_photometry(t_pho, amp_arr=A_pho)
+    imag_mod = fsbl.get_photometry(t_mod, amp_arr=A_mod)
+
+    # Make the photometric observations.
+    # Assume 0.05 mag photoemtric errors at I=19.
+    # This means Signal = 400 e- at I=19.
+    flux0 = 400.0
+    imag0 = 19.
+    ast_err0 = 1.0 * 1e-3  # arcsec
+
+    imag_pho, imag_pho_err = add_photometric_noise(flux0, imag0, imag_pho)
+
+    # Make the astrometric observations.
+    # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
+    lens_pos = fsbl.get_lens_astrometry(t_mod)
+    lens1_pos, lens2_pos = fsbl.get_resolved_lens_astrometry(t_mod)
+    srce_pos = fsbl.get_astrometry_unlensed(t_mod)
+    srce_pos_lensed_res = fsbl.get_resolved_astrometry(t_mod)
+    srce_pos_lensed_unres = fsbl.get_astrometry(t_mod)
+
+    srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
+
+    pos_ast_tmp = fsbl.get_astrometry(t_ast, image_arr=i_ast, amp_arr=A_ast)
+    mag_ast_tmp = fsbl.get_photometry(t_ast, amp_arr=A_ast)
+    pos_ast, pos_ast_err = add_astrometric_noise(flux0, imag0, ast_err0, mag_ast_tmp, pos_ast_tmp)
+
+    stop = time.time()
+
+    fmt = 'It took {0:.2f} seconds to evaluate the model at {1:d} time steps'
+    print(fmt.format(stop - start, len(t_mod) + len(t_ast) + len(t_pho)))
+
+    data = {}
+    data['target'] = target
+    data['phot_data'] = 'sim'
+    data['ast_data'] = 'sim'
+    data['phot_files'] = ['fake_data_parallax_phot1']
+    data['ast_files'] = ['fake_data_parallax_ast1']
+
+    data['t_phot1'] = t_pho
+    data['mag1'] = imag_pho
+    data['mag_err1'] = imag_pho_err
+
+    data['t_ast1'] = t_ast
+    data['xpos1'] = pos_ast[:, 0]
+    data['ypos1'] = pos_ast[:, 1]
+    data['xpos_err1'] = pos_ast_err[:, 0]
+    data['ypos_err1'] = pos_ast_err[:, 1]
+
+    data['raL'] = raL
+    data['decL'] = decL
+
+    params = {}
+    params['mLp'] = mLp
+    params['mLs'] = mLs
+    params['sep'] = sep
+    params['alpha'] = alpha
+    params['t0'] = t0
+    params['xS0_E'] = xS0_E
+    params['xS0_N'] = xS0_N
+    params['beta'] = beta
+    params['muS_E'] = muS_E
+    params['muS_N'] = muS_N
+    params['muL_E'] = muL_E
+    params['muL_N'] = muL_N
+    params['dL'] = dL
+    params['dS'] = dS
+    params['b_sff'] = [b_sff]
+    params['mag_src'] = [mag_src]
+    params['mag_base'] = [params['mag_src'] + 2.5 * np.log10(params['b_sff'])]
+    params['dmag_Lp_Ls'] = [dmag_Lp_Ls]
+    params['b_sff1'] = b_sff
+    params['mag_src1'] = mag_src
+    params['mag_base1'] = params['mag_base'][0]
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
+    params['thetaE_amp'] = fsbl.thetaE_amp
+    params['thetaE'] = fsbl.thetaE_amp
+    params['log10_thetaE'] = np.log10(params['thetaE'])
+    params['u0_amp'] = fsbl.u0_amp
+    params['tE'] = fsbl.tE
+    params['piS'] = fsbl.piS
+    params['piE_E'] = fsbl.piE[0]
+    params['piE_N'] = fsbl.piE[1]
+    params['q'] = mLs / mLp
+
+
+    phot_fig = model_fitter.plot_photometry(data, fsbl, dense_time=True)
+    phot_fig.axes[0].set_title('Input Data and Model')
+    phot_fig.savefig(outdir + outroot + '_fake_data_phot.png')
+
+    ast_figs = model_fitter.plot_astrometry(data, fsbl, dense_time=True)
+    ast_figs[0].axes[0].set_title('Input Data and Model')
+    ast_figs[0].savefig(outdir + outroot + '_fake_data_ast.png')
+
+    ast_figs[1].axes[0].set_title('Input Data and Model')
+    ast_figs[1].savefig(outdir + outroot + '_fake_data_t_vs_E.png')
+
+    ast_figs[2].axes[0].set_title('Input Data and Model')
+    ast_figs[2].savefig(outdir + outroot + '_fake_data_t_vs_N.png')
+
+    return data, params, fsbl
+
+
 def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
                                        raL=259.5, decL=-29.0,
                                        mL1=10, mL2=10, t0=57000,
