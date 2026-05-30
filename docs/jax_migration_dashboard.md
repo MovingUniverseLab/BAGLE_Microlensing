@@ -1,17 +1,17 @@
 # JAX migration dashboard
 
-Updated: 2026-05-30 | Tasks: 0/1620 done
+Updated: 2026-05-30 | Tasks: 62/1620 done
 
 | Class | Method | JAX forward | Parity | Grad | Overall |
 |-------|--------|-------------|--------|------|---------|
-| PSPL_Astrom_Par_Param3 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| PSPL_Astrom_Par_Param3 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_Astrom_Par_Param3 | get_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_Astrom_Par_Param3 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
-| PSPL_Astrom_Par_Param4 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| PSPL_Astrom_Par_Param4 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_Astrom_Par_Param4 | get_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_Astrom_Par_Param4 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
+| PSPL_Astrom_Par_Param3 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| PSPL_Astrom_Par_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
+| PSPL_Astrom_Par_Param3 | get_astrometry | jax_only | pass | pass | done |
+| PSPL_Astrom_Par_Param3 | get_centroid_shift | jax_only | pass | pass | done |
+| PSPL_Astrom_Par_Param4 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| PSPL_Astrom_Par_Param4 | get_lens_astrometry | jax_only | pass | pass | done |
+| PSPL_Astrom_Par_Param4 | get_astrometry | jax_only | pass | pass | done |
+| PSPL_Astrom_Par_Param4 | get_centroid_shift | jax_only | pass | pass | done |
 | PSPL_PhotAstrom_Par_GP_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
 | PSPL_PhotAstrom_Par_GP_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
 | PSPL_PhotAstrom_Par_GP_Param1 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
@@ -75,24 +75,24 @@ Updated: 2026-05-30 | Tasks: 0/1620 done
 | PSPL_PhotAstrom_Par_GPnoJitter_Param3_1 | get_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSPL_PhotAstrom_Par_GPnoJitter_Param3_1 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
 | PSPL_PhotAstrom_Par_GPnoJitter_Param3_1 | get_photometry_with_gp | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param1 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param1 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param1 | get_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param1 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param2 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param2 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param2 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param2 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param2 | get_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param2 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param3 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param3 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param3 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param3 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param3 | get_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param3 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
+| PSPL_PhotAstrom_Par_Param1 | get_amplification | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param1 | get_photometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param1 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param1 | get_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param1 | get_centroid_shift | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param2 | get_amplification | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param2 | get_photometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param2 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param2 | get_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param2 | get_centroid_shift | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param3 | get_amplification | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param3 | get_photometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param3 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param3 | get_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | PSPL_PhotAstrom_Par_Param4 | get_amplification | numpy_fallback | not_run | not_run | pending |
 | PSPL_PhotAstrom_Par_Param4 | get_photometry | numpy_fallback | not_run | not_run | pending |
 | PSPL_PhotAstrom_Par_Param4 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
@@ -131,30 +131,30 @@ Updated: 2026-05-30 | Tasks: 0/1620 done
 | PSPL_PhotAstrom_noPar_GP_Param2 | get_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSPL_PhotAstrom_noPar_GP_Param2 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
 | PSPL_PhotAstrom_noPar_GP_Param2 | get_photometry_with_gp | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param1 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param1 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param1 | get_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param1 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param2 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param2 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param2 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param2 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param2 | get_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param2 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param3 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param3 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param3 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param3 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param3 | get_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param3 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param4 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param4 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param4 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param4 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param4 | get_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_noPar_Param4 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
+| PSPL_PhotAstrom_noPar_Param1 | get_amplification | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param1 | get_photometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param1 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param1 | get_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param1 | get_centroid_shift | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param2 | get_amplification | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param2 | get_photometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param2 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param2 | get_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param2 | get_centroid_shift | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param3 | get_amplification | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param3 | get_photometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param3 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param3 | get_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param3 | get_centroid_shift | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param4 | get_amplification | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param4 | get_photometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param4 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param4 | get_lens_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param4 | get_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_noPar_Param4 | get_centroid_shift | jax_only | pass | pass | done |
 | PSPL_Phot_Par_GP_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
 | PSPL_Phot_Par_GP_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
 | PSPL_Phot_Par_GP_Param1 | get_photometry_with_gp | numpy_fallback | not_run | not_run | pending |
@@ -185,14 +185,14 @@ Updated: 2026-05-30 | Tasks: 0/1620 done
 | PSPL_Phot_Par_GPnoJitter_Param2_3 | get_amplification | numpy_fallback | not_run | not_run | pending |
 | PSPL_Phot_Par_GPnoJitter_Param2_3 | get_photometry | numpy_fallback | not_run | not_run | pending |
 | PSPL_Phot_Par_GPnoJitter_Param2_3 | get_photometry_with_gp | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_Par_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_Par_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
+| PSPL_Phot_Par_Param1 | get_amplification | jax_only | pass | pass | done |
+| PSPL_Phot_Par_Param1 | get_photometry | jax_only | pass | pass | done |
 | PSPL_Phot_Par_Param1_geoproj | get_amplification | numpy_fallback | not_run | not_run | pending |
 | PSPL_Phot_Par_Param1_geoproj | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_Par_Param2 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_Par_Param2 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_Par_Param3 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_Par_Param3 | get_photometry | numpy_fallback | not_run | not_run | pending |
+| PSPL_Phot_Par_Param2 | get_amplification | jax_only | pass | pass | done |
+| PSPL_Phot_Par_Param2 | get_photometry | jax_only | pass | pass | done |
+| PSPL_Phot_Par_Param3 | get_amplification | jax_only | pass | pass | done |
+| PSPL_Phot_Par_Param3 | get_photometry | jax_only | pass | pass | done |
 | PSPL_Phot_noPar_GP_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
 | PSPL_Phot_noPar_GP_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
 | PSPL_Phot_noPar_GP_Param1 | get_photometry_with_gp | numpy_fallback | not_run | not_run | pending |
@@ -202,12 +202,12 @@ Updated: 2026-05-30 | Tasks: 0/1620 done
 | PSPL_Phot_noPar_GP_Param3 | get_amplification | numpy_fallback | not_run | not_run | pending |
 | PSPL_Phot_noPar_GP_Param3 | get_photometry | numpy_fallback | not_run | not_run | pending |
 | PSPL_Phot_noPar_GP_Param3 | get_photometry_with_gp | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_noPar_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_noPar_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_noPar_Param2 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_noPar_Param2 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_noPar_Param3 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_Phot_noPar_Param3 | get_photometry | numpy_fallback | not_run | not_run | pending |
+| PSPL_Phot_noPar_Param1 | get_amplification | jax_only | pass | pass | done |
+| PSPL_Phot_noPar_Param1 | get_photometry | jax_only | pass | pass | done |
+| PSPL_Phot_noPar_Param2 | get_amplification | jax_only | pass | pass | done |
+| PSPL_Phot_noPar_Param2 | get_photometry | jax_only | pass | pass | done |
+| PSPL_Phot_noPar_Param3 | get_amplification | jax_only | pass | pass | done |
+| PSPL_Phot_noPar_Param3 | get_photometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_Par_AccOrbs_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_Par_AccOrbs_Param1 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
@@ -1625,7 +1625,7 @@ Updated: 2026-05-30 | Tasks: 0/1620 done
 | BFSPL_PhotAstrom_noPar_Param1 | get_astrometry | numpy_fallback | not_run | not_run | pending |
 | BFSPL_PhotAstrom_noPar_Param1 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
 
-**PSPL methods:** 0/204 done
+**PSPL methods:** 62/204 done
 **PSBL methods:** 0/406 done
 **BSPL methods:** 0/382 done
 **FSPL methods:** 0/38 done
@@ -1633,7 +1633,7 @@ Updated: 2026-05-30 | Tasks: 0/1620 done
 **BSBL methods:** 0/160 done
 **BFSPL methods:** 0/6 done
 
-**Total methods:** 0/1620 done
+**Total methods:** 62/1620 done
 
 See also [`jax_migration_tasks.md`](jax_migration_tasks.md).
 
