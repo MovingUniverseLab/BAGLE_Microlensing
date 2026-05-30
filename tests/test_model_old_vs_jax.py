@@ -11,6 +11,7 @@ from model_old_vs_jax_fixtures import (
     build_paired_instances,
     call_method,
     grad_smoke_jax,
+    psbl_phot_first_pairs,
     pspl_non_gp_pairs,
     time_grid_ast,
     time_grid_phot,
@@ -43,3 +44,13 @@ def test_grad_old_vs_jax(class_name, method_name):
     g = grad_smoke_jax(class_name, method_name, jax_inst, t)
     assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
     assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_phot_first_pairs())
+def test_parity_psbl_first(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    ref = np.asarray(call_method(old_inst, method_name, t), dtype=np.float64)
+    test = np.asarray(call_method(jax_inst, method_name, t), dtype=np.float64)
+    assert ref.shape == test.shape
+    np.testing.assert_allclose(test, ref, rtol=RTOL, atol=ATOL)

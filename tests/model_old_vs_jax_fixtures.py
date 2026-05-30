@@ -53,6 +53,7 @@ CANONICAL: dict[str, Any] = {
     "s2": 0.02,
     "rho": 0.01,
     "log_rho": math.log10(0.01),
+    "root_tol": 1e-8,
     "gp_log_sigma": [-1.0],
     "gp_log_rho": [0.5],
     "gp_log_S0": [-2.0],
@@ -146,6 +147,11 @@ def pspl_non_gp_pairs() -> list[tuple[str, str]]:
     )
 
 
+def psbl_phot_first_pairs() -> list[tuple[str, str]]:
+    """Seed PSBL parity harness (photometry Param1, no GP)."""
+    return [("PSBL_Phot_noPar_Param1", "get_photometry")]
+
+
 def time_grid_phot(instance) -> np.ndarray:
     t0 = float(instance.t0)
     tE = float(instance.tE)
@@ -174,16 +180,178 @@ def call_method(instance, method_name: str, t: np.ndarray):
 def pack_fitter_vector(instance) -> tuple[np.ndarray, list[str]]:
     layout = resolve_layout(instance.__class__)
     names = list(layout.base_fitter_names) if layout else list(instance.fitter_param_names)
-    vec = np.array([float(getattr(instance, n, CANONICAL.get(n, 0.0))) for n in names])
+    vec = np.array([_fitter_scalar(instance, n) for n in names])
     return vec, names
 
 
+_ARRAY_COMPONENT: dict[str, tuple[str, int]] = {
+    "piE_E": ("piE", 0),
+    "piE_N": ("piE", 1),
+    "xS0_E": ("xS0", 0),
+    "xS0_N": ("xS0", 1),
+    "muS_E": ("muS", 0),
+    "muS_N": ("muS", 1),
+    "muL_E": ("muL", 0),
+    "muL_N": ("muL", 1),
+}
+
+
 def _fitter_scalar(instance, name: str) -> float:
-    if name == "piE_E":
-        return float(instance.piE[0])
-    if name == "piE_N":
-        return float(instance.piE[1])
-    return float(getattr(instance, name))
+    if name in _ARRAY_COMPONENT:
+        attr, idx = _ARRAY_COMPONENT[name]
+        if hasattr(instance, attr):
+            return float(np.asarray(getattr(instance, attr)).reshape(-1)[idx])
+    if name == "thetaE" and hasattr(instance, "thetaE_amp"):
+        return float(instance.thetaE_amp)
+    if name == "log10_thetaE" and hasattr(instance, "thetaE_amp"):
+        return float(np.log10(instance.thetaE_amp))
+    val = getattr(instance, name, None)
+    if val is None and name in CANONICAL:
+        val = CANONICAL[name]
+    if val is None:
+        raise AttributeError(f"{instance.__class__.__name__} has no attribute {name!r}")
+    arr = np.asarray(val).reshape(-1)
+    if arr.size != 1:
+        raise TypeError(f"cannot coerce {name!r} to scalar (shape {arr.shape})")
+    return float(arr[0])
+
+
+def _obs_location(instance) -> str:
+    obs = getattr(instance, "obsLocation", "earth")
+    if isinstance(obs, (list, tuple, np.ndarray)):
+        return str(np.asarray(obs).reshape(-1)[0])
+    return str(obs)
+
+
+def _parallax_vectors(jax_inst, t: np.ndarray):
+    if not getattr(jax_inst, "parallaxFlag", False):
+        return None
+    from bagle.jax_physics import precompute_parallax_vectors
+
+    return precompute_parallax_vectors(
+        float(jax_inst.raL),
+        float(jax_inst.decL),
+        t,
+        obs_location=_obs_location(jax_inst),
+    )
+
+
+def _mag_scalar(jax_inst, layout) -> float:
+    from bagle.jax.geometry import mag_src_from_fitter
+
+    b_sff = float(np.asarray(jax_inst.b_sff).reshape(-1)[0])
+    if layout.mag_fitter == "mag_base":
+        mag_base = float(np.asarray(jax_inst.mag_base).reshape(-1)[0])
+        return float(
+            mag_src_from_fitter(
+                jnp.asarray(mag_base), "mag_base", jnp.asarray(b_sff)
+            )
+        )
+    return float(np.asarray(jax_inst.mag_src).reshape(-1)[0])
+
+
+def _unpack_pspl_geom(eval_kind: str, names: tuple[str, ...], v):
+    from bagle.jax.geometry import derive_geometry_from_layout
+
+    out = derive_geometry_from_layout("", eval_kind, v, names)
+    if isinstance(out[0], str) and out[0] == "pspl_phot":
+        _, u0, thetaE_hat, tE, piE_E, piE_N = out
+        p = {names[i]: v[i] for i in range(len(names))}
+        return {
+            "t0": p["t0"],
+            "u0": u0,
+            "thetaE_hat": thetaE_hat,
+            "tE": tE,
+            "piE_E": piE_E,
+            "piE_N": piE_N,
+        }
+    (
+        u0,
+        thetaE_hat,
+        tE,
+        piE_E,
+        piE_N,
+        xS0,
+        xL0,
+        muS,
+        muL,
+        thetaE_amp,
+        piS,
+        piL,
+    ) = out
+    t0_idx = names.index("t0")
+    return {
+        "t0": v[t0_idx],
+        "u0": u0,
+        "thetaE_hat": thetaE_hat,
+        "tE": tE,
+        "piE_E": piE_E,
+        "piE_N": piE_N,
+        "xS0": xS0,
+        "xL0": xL0,
+        "muS": muS,
+        "muL": muL,
+        "thetaE_amp": thetaE_amp,
+        "piS": piS,
+        "piL": piL,
+    }
+
+
+def _linear_astrometry_jax(t_j, t0, x0, mu, parallax_vectors, pi):
+    dt = ((t_j - t0) / 365.25).reshape(-1, 1)
+    pos = x0.reshape(1, 2) + dt * mu.reshape(1, 2) * 1e-3
+    if parallax_vectors is not None and pi is not None:
+        pos = pos + jnp.asarray(pi, dtype=jnp.float64) * jnp.asarray(
+            parallax_vectors, dtype=jnp.float64
+        ) * 1e-3
+    return pos
+
+
+def _pspl_astrom_forward(method_name: str, geom: dict, t_j, t0, b_sff, pvec):
+    from bagle.jax_physics import pspl_astrometry_param1
+
+    xS0 = geom["xS0"]
+    xL0 = geom["xL0"]
+    muS = geom["muS"]
+    muL = geom["muL"]
+    thetaE_amp = geom["thetaE_amp"]
+    piS = geom["piS"]
+    piL = geom["piL"]
+    if method_name == "get_astrometry":
+        return pspl_astrometry_param1(
+            t_j,
+            t0,
+            xS0,
+            xL0,
+            muS,
+            muL,
+            thetaE_amp,
+            b_sff,
+            parallax_vectors=pvec,
+            piS=piS,
+            piL=piL,
+        )
+    xL = _linear_astrometry_jax(t_j, t0, xL0, muL, pvec, piL)
+    if method_name == "get_lens_astrometry":
+        return xL
+    xS = _linear_astrometry_jax(t_j, t0, xS0, muS, pvec, piS)
+    if method_name == "get_astrometry_unlensed":
+        return float(b_sff) * xS + (1.0 - float(b_sff)) * xL
+    ast = pspl_astrometry_param1(
+        t_j,
+        t0,
+        xS0,
+        xL0,
+        muS,
+        muL,
+        thetaE_amp,
+        b_sff,
+        parallax_vectors=pvec,
+        piS=piS,
+        piL=piL,
+    )
+    unl = float(b_sff) * xS + (1.0 - float(b_sff)) * xL
+    return (ast - unl) * 1e3
 
 
 def grad_smoke_jax(class_name: str, method_name: str, jax_inst, t: np.ndarray) -> np.ndarray:
@@ -191,118 +359,54 @@ def grad_smoke_jax(class_name: str, method_name: str, jax_inst, t: np.ndarray) -
     import jax
 
     from bagle.jax.layout_registry import resolve_layout
-    from bagle.jax_physics import (
-        derive_pspl_static_geometry,
-        precompute_parallax_vectors,
-        pspl_amplification,
-        pspl_astrometry_param1,
-        pspl_photometry,
-        unpack_pspl_phot_param1,
-    )
+    from bagle.jax_physics import pspl_amplification, pspl_photometry
 
     layout = resolve_layout(jax_inst.__class__)
     if layout is None:
         raise NotImplementedError(f"no layout for {class_name}")
 
+    names = tuple(layout.base_fitter_names)
     t_j = jnp.asarray(t, dtype=jnp.float64)
-    pvec = None
-    if getattr(jax_inst, "parallaxFlag", False):
-        pvec = precompute_parallax_vectors(
-            float(jax_inst.raL),
-            float(jax_inst.decL),
-            t,
-            obs_location=str(jax_inst.obsLocation),
-        )
+    pvec = _parallax_vectors(jax_inst, t)
+    vec0 = jnp.array([_fitter_scalar(jax_inst, n) for n in names], dtype=jnp.float64)
+    ek = layout.eval_kind
 
-    if method_name in ("get_photometry", "get_amplification") and layout.eval_kind in (
+    if method_name in ("get_photometry", "get_amplification") and ek in (
         "pspl_phot_static",
         "pspl_phot_log",
-    ):
-        names = list(jax_inst.fitter_param_names)
-        vec0 = jnp.array([_fitter_scalar(jax_inst, n) for n in names], dtype=jnp.float64)
-        b_sff = float(np.asarray(jax_inst.b_sff).reshape(-1)[0])
-        if hasattr(jax_inst, "mag_src"):
-            mag = float(np.asarray(jax_inst.mag_src).reshape(-1)[0])
-        else:
-            mag = float(np.asarray(jax_inst.mag_base).reshape(-1)[0])
-
-        def forward(v):
-            if layout.eval_kind == "pspl_phot_log":
-                p = {n: v[i] for i, n in enumerate(names)}
-                tE = 10.0 ** p["log_tE"]
-                piE_amp = 10.0 ** p["log_piE"]
-                phi = p["phi_muRel"] * jnp.pi / 180.0
-                piE_E = piE_amp * jnp.cos(phi)
-                piE_N = piE_amp * jnp.sin(phi)
-                u0, thetaE_hat, _ = derive_pspl_static_geometry(
-                    p["u0_amp"], piE_E, piE_N
-                )
-                t0 = p["t0"]
-            else:
-                p = unpack_pspl_phot_param1(v)
-                u0, thetaE_hat, _ = derive_pspl_static_geometry(
-                    p["u0_amp"], p["piE_E"], p["piE_N"]
-                )
-                t0, tE, piE_E, piE_N = p["t0"], p["tE"], p["piE_E"], p["piE_N"]
-            fn = pspl_amplification if method_name == "get_amplification" else pspl_photometry
-            return jnp.sum(
-                fn(
-                    t_j,
-                    t0,
-                    tE,
-                    u0,
-                    thetaE_hat,
-                    mag,
-                    b_sff=b_sff,
-                    parallax_vectors=pvec,
-                    piE_E=piE_E,
-                    piE_N=piE_N,
-                )
-            )
-
-        return np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
-
-    if method_name in ("get_photometry", "get_amplification") and layout.eval_kind in (
         "pspl_photastrom_physical",
         "pspl_photastrom_reduced",
     ):
-        from bagle.jax_physics import PSPL_PHOTASTROM_PARAM1_FITTER_NAMES, derive_pspl_photastrom_param1_geometry
-
-        names = PSPL_PHOTASTROM_PARAM1_FITTER_NAMES
-        vec0 = jnp.array([_fitter_scalar(jax_inst, n) for n in names], dtype=jnp.float64)
         b_sff = float(np.asarray(jax_inst.b_sff).reshape(-1)[0])
-        mag = float(np.asarray(jax_inst.mag_src).reshape(-1)[0])
+        mag = _mag_scalar(jax_inst, layout)
 
         def forward(v):
-            p = {n: v[i] for i, n in enumerate(names)}
-            u0, thetaE_hat, tE, piE_E, piE_N, *_rest = derive_pspl_photastrom_param1_geometry(
-                p["mL"],
-                p["t0"],
-                p["beta"],
-                p["dL"],
-                p["dL_dS"],
-                p["xS0_E"],
-                p["xS0_N"],
-                p["muL_E"],
-                p["muL_N"],
-                p["muS_E"],
-                p["muS_N"],
-            )
-            fn = pspl_amplification if method_name == "get_amplification" else pspl_photometry
-            return jnp.sum(
-                fn(
+            geom = _unpack_pspl_geom(ek, names, v)
+            if method_name == "get_amplification":
+                out = pspl_amplification(
                     t_j,
-                    p["t0"],
-                    tE,
-                    u0,
-                    thetaE_hat,
+                    geom["t0"],
+                    geom["tE"],
+                    geom["u0"],
+                    geom["thetaE_hat"],
+                    parallax_vectors=pvec,
+                    piE_E=geom["piE_E"],
+                    piE_N=geom["piE_N"],
+                )
+            else:
+                out = pspl_photometry(
+                    t_j,
+                    geom["t0"],
+                    geom["tE"],
+                    geom["u0"],
+                    geom["thetaE_hat"],
                     mag,
                     b_sff=b_sff,
                     parallax_vectors=pvec,
-                    piE_E=piE_E,
-                    piE_N=piE_N,
+                    piE_E=geom["piE_E"],
+                    piE_N=geom["piE_N"],
                 )
-            )
+            return jnp.sum(out)
 
         return np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
 
@@ -311,62 +415,19 @@ def grad_smoke_jax(class_name: str, method_name: str, jax_inst, t: np.ndarray) -
         "get_astrometry_unlensed",
         "get_lens_astrometry",
         "get_centroid_shift",
-    ) and layout.eval_kind in (
+    ) and ek in (
         "pspl_photastrom_physical",
         "pspl_photastrom_reduced",
         "pspl_astrom_reduced",
     ):
-        from bagle.jax_physics import PSPL_PHOTASTROM_PARAM1_FITTER_NAMES, derive_pspl_photastrom_param1_geometry
-
         b_sff = float(np.asarray(getattr(jax_inst, "b_sff", [1.0])).reshape(-1)[0])
 
-        if layout.eval_kind == "pspl_photastrom_physical":
-            names = PSPL_PHOTASTROM_PARAM1_FITTER_NAMES
-            vec0 = jnp.array([_fitter_scalar(jax_inst, n) for n in names], dtype=jnp.float64)
-
-            def forward(v):
-                p = {n: v[i] for i, n in enumerate(names)}
-                *geom, thetaE_amp, piS, piL = derive_pspl_photastrom_param1_geometry(
-                    p["mL"],
-                    p["t0"],
-                    p["beta"],
-                    p["dL"],
-                    p["dL_dS"],
-                    p["xS0_E"],
-                    p["xS0_N"],
-                    p["muL_E"],
-                    p["muL_N"],
-                    p["muS_E"],
-                    p["muS_N"],
-                )
-                _u0, _thetaE_hat, _tE, _piE_E, _piE_N, xS0, xL0, muS, muL = geom
-                out = pspl_astrometry_param1(
-                    t_j,
-                    p["t0"],
-                    xS0,
-                    xL0,
-                    muS,
-                    muL,
-                    thetaE_amp,
-                    b_sff,
-                    parallax_vectors=pvec,
-                    piS=piS,
-                    piL=piL,
-                )
-                return jnp.sum(out)
-
-            return np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
-
-        names = list(jax_inst.fitter_param_names)
-        vec0 = jnp.array([_fitter_scalar(jax_inst, n) for n in names], dtype=jnp.float64)
-
         def forward(v):
-            for i, n in enumerate(names):
-                setattr(jax_inst, n, float(v[i]))
-            if "log10_thetaE" in names:
-                jax_inst.thetaE_amp = 10.0 ** float(v[names.index("log10_thetaE")])
-            out = call_method(jax_inst, method_name, t)
-            return jnp.sum(jnp.asarray(out, dtype=jnp.float64))
+            geom = _unpack_pspl_geom(ek, names, v)
+            out = _pspl_astrom_forward(
+                method_name, geom, t_j, geom["t0"], b_sff, pvec
+            )
+            return jnp.sum(out)
 
         return np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
 
