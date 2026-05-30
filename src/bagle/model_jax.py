@@ -666,6 +666,15 @@ class PSPL(ABC):
             The total amplification (sum of +/- images)
         """
 
+        try:
+            from bagle.jax_model import try_get_amplification
+
+            amp_jax = try_get_amplification(self, t, filt_idx=filt_idx)
+            if amp_jax is not None:
+                return amp_jax
+        except ImportError:
+            pass
+
         tau = (t - self.t0) / self.tE
 
         # Convert to matrices for more efficient operations.
