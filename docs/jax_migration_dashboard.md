@@ -593,8 +593,8 @@ Updated: 2026-05-30 | Tasks: 88/1620 done
 | PSBL_Phot_Par_GP_Param1 | get_resolved_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_Phot_Par_GP_Param1 | get_resolved_lens_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_Phot_Par_GP_Param1 | get_photometry_with_gp | numpy_fallback | not_run | not_run | pending |
-| PSBL_Phot_Par_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSBL_Phot_Par_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
+| PSBL_Phot_Par_Param1 | get_amplification | jax_only | pass | not_run | pending |
+| PSBL_Phot_Par_Param1 | get_photometry | jax_only | pass | not_run | pending |
 | PSBL_Phot_Par_Param1 | get_resolved_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_Phot_Par_Param1 | get_resolved_lens_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_Phot_noPar_CircOrbs_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
@@ -610,8 +610,8 @@ Updated: 2026-05-30 | Tasks: 88/1620 done
 | PSBL_Phot_noPar_GP_Param1 | get_resolved_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_Phot_noPar_GP_Param1 | get_resolved_lens_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_Phot_noPar_GP_Param1 | get_photometry_with_gp | numpy_fallback | not_run | not_run | pending |
-| PSBL_Phot_noPar_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSBL_Phot_noPar_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
+| PSBL_Phot_noPar_Param1 | get_amplification | jax_only | pass | not_run | pending |
+| PSBL_Phot_noPar_Param1 | get_photometry | jax_only | pass | not_run | pending |
 | PSBL_Phot_noPar_Param1 | get_resolved_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_Phot_noPar_Param1 | get_resolved_lens_astrometry | numpy_fallback | not_run | not_run | pending |
 | BSPL_PhotAstrom_Par_AccOrbs_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |

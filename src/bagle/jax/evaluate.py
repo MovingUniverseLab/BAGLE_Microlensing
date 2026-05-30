@@ -10,7 +10,10 @@ from bagle.jax import geometry as geom
 from bagle.jax.layout_registry import LayoutSpec, resolve_layout
 from bagle.jax_physics import (
     precompute_parallax_vectors,
+    psbl_all_arrays,
+    psbl_complex_pos_static,
     psbl_photometry,
+    psbl_total_amplification,
     pspl_astrometry_param1,
     pspl_amplification,
     pspl_photometry,
@@ -387,6 +390,33 @@ def evaluate_amplification_jax(
                 piE_E=float(model.piE[0]),
                 piE_N=float(model.piE[1]),
             )
+            return np.asarray(amp, dtype=np.float64)
+        if ek.startswith("psbl_phot"):
+            m1 = float(model.m1)
+            m2 = float(model.m2)
+            xL1 = jnp.asarray(model.xL1_over_theta, dtype=jnp.float64)
+            xL2 = jnp.asarray(model.xL2_over_theta, dtype=jnp.float64)
+            w, z1, z2 = psbl_complex_pos_static(
+                t_j,
+                float(model.t0),
+                float(model.tE),
+                jnp.asarray(model.u0, dtype=jnp.float64),
+                jnp.asarray(model.thetaE_hat, dtype=jnp.float64),
+                xL1,
+                xL2,
+                parallax_vectors=pvec,
+                piE_E=float(model.piE[0]),
+                piE_N=float(model.piE[1]),
+            )
+            _, amp_arr = psbl_all_arrays(
+                w,
+                z1,
+                z2,
+                m1,
+                m2,
+                float(getattr(model, "root_tol", 1e-8)),
+            )
+            amp = psbl_total_amplification(amp_arr)
             return np.asarray(amp, dtype=np.float64)
     except (AttributeError, NotImplementedError, TypeError):
         return None

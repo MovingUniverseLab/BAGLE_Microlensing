@@ -153,7 +153,9 @@ def pspl_non_gp_pairs() -> list[tuple[str, str]]:
 
 def psbl_phot_first_pairs() -> list[tuple[str, str]]:
     """Seed PSBL parity harness (photometry Param1, no GP)."""
-    return [("PSBL_Phot_noPar_Param1", "get_photometry")]
+    classes = ("PSBL_Phot_noPar_Param1", "PSBL_Phot_Par_Param1")
+    methods = ("get_photometry", "get_amplification")
+    return [(c, m) for c in classes for m in methods]
 
 
 def time_grid_phot(instance) -> np.ndarray:
@@ -496,7 +498,15 @@ def grad_smoke_jax(
     import jax
 
     from bagle.jax.layout_registry import resolve_layout
-    from bagle.jax_physics import pspl_amplification, pspl_photometry
+    from bagle.jax.geometry import derive_geometry_from_layout
+    from bagle.jax_physics import (
+        psbl_all_arrays,
+        psbl_complex_pos_static,
+        psbl_photometry,
+        psbl_total_amplification,
+        pspl_amplification,
+        pspl_photometry,
+    )
 
     layout = resolve_layout(jax_inst.__class__)
     if layout is None:
@@ -548,6 +558,70 @@ def grad_smoke_jax(
                     piE_E=geom["piE_E"],
                     piE_N=geom["piE_N"],
                 )
+            return jnp.sum(out)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name in ("get_photometry", "get_amplification") and ek.startswith(
+        "psbl_phot"
+    ):
+
+        def forward(v):
+            base = _base_vec_from_init(v, init_names, base_names)
+            (
+                _tag,
+                u0,
+                thetaE_hat,
+                t0,
+                tE,
+                m1,
+                m2,
+                xL1,
+                xL2,
+                piE_E,
+                piE_N,
+            ) = derive_geometry_from_layout("", ek, base, base_names)
+            b_sff = _init_param(v, init_names, "b_sff", 1.0)
+            mag = _mag_from_init(v, init_names, layout, b_sff)
+            if mag is None:
+                mag = jnp.asarray(_mag_scalar(jax_inst, layout), dtype=jnp.float64)
+            root_tol = float(getattr(jax_inst, "root_tol", 1e-8))
+            if method_name == "get_photometry":
+                out = psbl_photometry(
+                    t_j,
+                    t0,
+                    tE,
+                    u0,
+                    thetaE_hat,
+                    xL1,
+                    xL2,
+                    m1,
+                    m2,
+                    mag,
+                    b_sff=b_sff,
+                    parallax_vectors=pvec,
+                    piE_E=piE_E,
+                    piE_N=piE_N,
+                    root_tol=root_tol,
+                )
+            else:
+                w, z1, z2 = psbl_complex_pos_static(
+                    t_j,
+                    t0,
+                    tE,
+                    u0,
+                    thetaE_hat,
+                    xL1,
+                    xL2,
+                    parallax_vectors=pvec,
+                    piE_E=piE_E,
+                    piE_N=piE_N,
+                )
+                _, amp_arr = psbl_all_arrays(w, z1, z2, m1, m2, root_tol)
+                out = psbl_total_amplification(amp_arr)
             return jnp.sum(out)
 
         g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
