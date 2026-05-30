@@ -3014,6 +3014,14 @@ class PSPL_PhotParam3(PSPL_Param):
         return
 
 class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
+    fitter_param_names = [
+        "t0_geotr",
+        "u0_amp_geotr",
+        "tE_geotr",
+        "piE_E_geotr",
+        "piE_N_geotr",
+    ]
+
     """PSPL model for photometry only.
 
     Point source point lens model for microlensing photometry only
@@ -3949,6 +3957,20 @@ class PSPL_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4):
 
 
 class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
+    fitter_param_names = [
+        "t0_geotr",
+        "u0_amp_geotr",
+        "tE_geotr",
+        "thetaE",
+        "piS",
+        "piE_E_geotr",
+        "piE_N_geotr",
+        "xS0_E",
+        "xS0_N",
+        "muS_E",
+        "muS_N",
+    ]
+
     """
     Point Source Point Lens model for microlensing in the
     geocentric-projected reference frame. This model includes

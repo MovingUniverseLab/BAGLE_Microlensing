@@ -65,10 +65,17 @@ PARALLAX_KW = dict(raL=259.5, decL=-29.0, obsLocation="earth")
 SKIP_CLASS_SUBSTR = (
     "Param5",
     "Param6",
-    "geoproj",
     "RefPar",
     "LumLens",
 )
+
+_GEO_PHOT_TO_HELIO = {
+    "t0_geotr": "t0",
+    "u0_amp_geotr": "u0_amp",
+    "tE_geotr": "tE",
+    "piE_E_geotr": "piE_E",
+    "piE_N_geotr": "piE_N",
+}
 
 
 def _value_for(name: str) -> Any:
@@ -448,6 +455,37 @@ def _pspl_astrom_forward(method_name: str, geom: dict, t_j, t0, b_sff, pvec):
     return (ast - unl) * 1e3
 
 
+def _helio_geom_names(base_names: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(_GEO_PHOT_TO_HELIO.get(n, n) for n in base_names)
+
+
+def _base_vec_geoproj(v, init_names: tuple[str, ...], base_names: tuple[str, ...], ra, dec):
+    from bagle.jax.frame_convert import geo_phot_to_helio_jax
+
+    p = {init_names[i]: v[i] for i in range(len(init_names))}
+    geo = jnp.stack(
+        [
+            p["t0_geotr"],
+            p["u0_amp_geotr"],
+            p["tE_geotr"],
+            p["piE_E_geotr"],
+            p["piE_N_geotr"],
+            p["t0par"],
+        ]
+    )
+    helio = geo_phot_to_helio_jax(geo, float(ra), float(dec))
+    helio_map = dict(zip(("t0", "u0_amp", "tE", "piE_E", "piE_N"), helio))
+    return jnp.stack([helio_map.get(_GEO_PHOT_TO_HELIO.get(n, n), p[n]) for n in base_names])
+
+
+def _base_vec_for_layout(v, init_names, base_names, layout, jax_inst):
+    if layout.geoproj:
+        return _base_vec_geoproj(
+            v, init_names, base_names, float(jax_inst.raL), float(jax_inst.decL)
+        )
+    return _base_vec_from_init(v, init_names, base_names)
+
+
 def grad_smoke_jax(
     class_name: str,
     method_name: str,
@@ -479,10 +517,11 @@ def grad_smoke_jax(
         "pspl_photastrom_physical",
         "pspl_photastrom_reduced",
     ):
+        geom_names = _helio_geom_names(base_names)
 
         def forward(v):
-            base = _base_vec_from_init(v, init_names, base_names)
-            geom = _unpack_pspl_geom(ek, base_names, base)
+            base = _base_vec_for_layout(v, init_names, base_names, layout, jax_inst)
+            geom = _unpack_pspl_geom(ek, geom_names, base)
             b_sff = _init_param(v, init_names, "b_sff", 1.0)
             mag = _mag_from_init(v, init_names, layout, b_sff)
             if mag is None:
@@ -529,10 +568,11 @@ def grad_smoke_jax(
         "pspl_astrom_reduced",
     ):
         default_b = float(np.asarray(getattr(jax_inst, "b_sff", [1.0])).reshape(-1)[0])
+        geom_names = _helio_geom_names(base_names)
 
         def forward(v):
-            base = _base_vec_from_init(v, init_names, base_names)
-            geom = _unpack_pspl_geom(ek, base_names, base)
+            base = _base_vec_for_layout(v, init_names, base_names, layout, jax_inst)
+            geom = _unpack_pspl_geom(ek, geom_names, base)
             b_sff = _init_param(v, init_names, "b_sff", default_b)
             out = _pspl_astrom_forward(
                 method_name, geom, t_j, geom["t0"], b_sff, pvec
