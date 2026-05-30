@@ -41,7 +41,13 @@ def test_parity_old_vs_jax(class_name, method_name):
 def test_grad_old_vs_jax(class_name, method_name):
     _, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, jax_inst)
-    g = grad_smoke_jax(class_name, method_name, jax_inst, t)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names), (
+        f"grad length {len(g)} != init param count {len(init_names)} "
+        f"for {class_name}.{method_name}"
+    )
     assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
     assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
 

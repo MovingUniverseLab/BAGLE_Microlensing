@@ -1405,60 +1405,60 @@
       "method_name": "get_amplification",
       "family": "PSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
     },
     {
       "class_name": "PSPL_PhotAstrom_Par_Param4",
       "method_name": "get_photometry",
       "family": "PSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
     },
     {
       "class_name": "PSPL_PhotAstrom_Par_Param4",
       "method_name": "get_astrometry_unlensed",
       "family": "PSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
     },
     {
       "class_name": "PSPL_PhotAstrom_Par_Param4",
       "method_name": "get_lens_astrometry",
       "family": "PSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
     },
     {
       "class_name": "PSPL_PhotAstrom_Par_Param4",
       "method_name": "get_astrometry",
       "family": "PSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
     },
     {
       "class_name": "PSPL_PhotAstrom_Par_Param4",
       "method_name": "get_centroid_shift",
       "family": "PSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
     },
     {
       "class_name": "PSPL_PhotAstrom_Par_Param4",
@@ -23503,6 +23503,6 @@
   ],
   "summary": {
     "total_applicable": 1620,
-    "total_done": 62
+    "total_done": 68
   }
 }

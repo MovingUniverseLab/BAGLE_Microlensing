@@ -312,6 +312,27 @@ def try_get_amplification(model, t, filt_idx: int = 0):
     return evaluate_amplification_jax(layout, model, t, filt_idx)
 
 
+def try_get_lens_astrometry(model, t, filt_idx: int = 0):
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_lens_astrometry_jax(layout, model, t, filt_idx)
+
+
+def try_get_astrometry_unlensed(model, t, filt_idx: int = 0):
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_astrometry_unlensed_jax(layout, model, t, filt_idx)
+
+
+def try_get_centroid_shift(model, t, filt_idx: int = 0):
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_centroid_shift_jax(layout, model, t, filt_idx)
+
+
 def evaluate_method_jax(model, method_name: str, t, filt_idx: int = 0):
     """Dispatch forward evaluation by method name."""
     layout = resolve_layout(model.__class__)

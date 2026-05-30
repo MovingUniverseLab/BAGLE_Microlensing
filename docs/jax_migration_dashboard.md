@@ -1,6 +1,6 @@
 # JAX migration dashboard
 
-Updated: 2026-05-30 | Tasks: 62/1620 done
+Updated: 2026-05-30 | Tasks: 68/1620 done
 
 | Class | Method | JAX forward | Parity | Grad | Overall |
 |-------|--------|-------------|--------|------|---------|
@@ -93,12 +93,12 @@ Updated: 2026-05-30 | Tasks: 62/1620 done
 | PSPL_PhotAstrom_Par_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSPL_PhotAstrom_Par_Param3 | get_astrometry | jax_only | pass | pass | done |
 | PSPL_PhotAstrom_Par_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| PSPL_PhotAstrom_Par_Param4 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param4 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param4 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param4 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param4 | get_astrometry | numpy_fallback | not_run | not_run | pending |
-| PSPL_PhotAstrom_Par_Param4 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
+| PSPL_PhotAstrom_Par_Param4 | get_amplification | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param4 | get_photometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param4 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param4 | get_lens_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param4 | get_astrometry | jax_only | pass | pass | done |
+| PSPL_PhotAstrom_Par_Param4 | get_centroid_shift | jax_only | pass | pass | done |
 | PSPL_PhotAstrom_Par_Param4_geoproj | get_amplification | numpy_fallback | not_run | not_run | pending |
 | PSPL_PhotAstrom_Par_Param4_geoproj | get_photometry | numpy_fallback | not_run | not_run | pending |
 | PSPL_PhotAstrom_Par_Param4_geoproj | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
@@ -1625,7 +1625,7 @@ Updated: 2026-05-30 | Tasks: 62/1620 done
 | BFSPL_PhotAstrom_noPar_Param1 | get_astrometry | numpy_fallback | not_run | not_run | pending |
 | BFSPL_PhotAstrom_noPar_Param1 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
 
-**PSPL methods:** 62/204 done
+**PSPL methods:** 68/204 done
 **PSBL methods:** 0/406 done
 **BSPL methods:** 0/382 done
 **FSPL methods:** 0/38 done
@@ -1633,7 +1633,7 @@ Updated: 2026-05-30 | Tasks: 62/1620 done
 **BSBL methods:** 0/160 done
 **BFSPL methods:** 0/6 done
 
-**Total methods:** 62/1620 done
+**Total methods:** 68/1620 done
 
 See also [`jax_migration_tasks.md`](jax_migration_tasks.md).
 

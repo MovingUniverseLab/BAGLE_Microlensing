@@ -68,7 +68,6 @@ SKIP_CLASS_SUBSTR = (
     "geoproj",
     "RefPar",
     "LumLens",
-    "PhotAstrom_Par_Param4",
 )
 
 
@@ -177,11 +176,96 @@ def call_method(instance, method_name: str, t: np.ndarray):
     return method(t, **kwargs)
 
 
-def pack_fitter_vector(instance) -> tuple[np.ndarray, list[str]]:
-    layout = resolve_layout(instance.__class__)
-    names = list(layout.base_fitter_names) if layout else list(instance.fitter_param_names)
-    vec = np.array([_fitter_scalar(instance, n) for n in names])
+INIT_PARAM_SKIP = frozenset({"self", "raL", "decL", "obsLocation"})
+LIST_INIT_PARAMS = frozenset(
+    {
+        "b_sff",
+        "mag_src",
+        "mag_base",
+        "mag_src_pri",
+        "mag_src_sec",
+        "dmag_Lp_Ls",
+        "gp_log_sigma",
+        "gp_log_rho",
+        "gp_log_S0",
+        "gp_log_omega0",
+        "gp_log_omega0_S0",
+        "gp_log_omega04_S0",
+    }
+)
+
+
+def numeric_init_param_names(jax_inst) -> tuple[str, ...]:
+    """All numeric ``__init__`` parameters from the Param mixin (filter 0 for lists)."""
+    import bagle.model_jax as model_module
+
+    mixin = _param_mixin_cls(model_module, jax_inst.__class__.__name__)
+    sig = inspect.signature(mixin.__init__)
+    return tuple(p for p in sig.parameters if p not in INIT_PARAM_SKIP)
+
+
+def pack_init_vector(instance) -> tuple[np.ndarray, tuple[str, ...]]:
+    """Pack every numeric Param-mixin ``__init__`` argument into a 1D vector."""
+    names = numeric_init_param_names(instance)
+    vec = np.array([_scalar_from_instance(instance, n) for n in names], dtype=np.float64)
     return vec, names
+
+
+def _scalar_from_instance(instance, name: str) -> float:
+    if name in _ARRAY_COMPONENT:
+        return _fitter_scalar(instance, name)
+    if name == "thetaE" and hasattr(instance, "thetaE_amp"):
+        return float(instance.thetaE_amp)
+    if name == "log10_thetaE" and hasattr(instance, "thetaE_amp"):
+        return float(np.log10(instance.thetaE_amp))
+    val = getattr(instance, name, None)
+    if val is None and name in CANONICAL:
+        val = CANONICAL[name]
+    if val is None:
+        raise AttributeError(f"{instance.__class__.__name__} has no attribute {name!r}")
+    arr = np.asarray(val).reshape(-1)
+    if name in LIST_INIT_PARAMS or arr.size > 1:
+        return float(arr[0])
+    if arr.size != 1:
+        raise TypeError(f"cannot coerce {name!r} to scalar (shape {arr.shape})")
+    return float(arr[0])
+
+
+def _init_value_for_base_name(v, init_names: tuple[str, ...], base_name: str):
+    if base_name in init_names:
+        return v[init_names.index(base_name)]
+    if base_name == "log10_thetaE" and "thetaE" in init_names:
+        return jnp.log10(v[init_names.index("thetaE")])
+    if base_name == "thetaE" and "log10_thetaE" in init_names:
+        return jnp.power(10.0, v[init_names.index("log10_thetaE")])
+    raise ValueError(
+        f"cannot map base fitter {base_name!r} from init parameters {init_names!r}"
+    )
+
+
+def _base_vec_from_init(v, init_names: tuple[str, ...], base_names: tuple[str, ...]):
+    return jnp.stack(
+        [_init_value_for_base_name(v, init_names, n) for n in base_names]
+    )
+
+
+def _init_param(v, init_names: tuple[str, ...], name: str, default=None):
+    if name not in init_names:
+        return default
+    return v[init_names.index(name)]
+
+
+def _mag_from_init(v, init_names: tuple[str, ...], layout, b_sff):
+    from bagle.jax.geometry import mag_src_from_fitter
+
+    b_sff_j = jnp.asarray(b_sff, dtype=jnp.float64)
+    if layout.mag_fitter == "mag_base" and "mag_base" in init_names:
+        mag_v = _init_param(v, init_names, "mag_base")
+        return mag_src_from_fitter(mag_v, "mag_base", b_sff_j)
+    if "mag_src" in init_names:
+        mag_v = _init_param(v, init_names, "mag_src")
+        return mag_src_from_fitter(mag_v, "mag_src", b_sff_j)
+    return None
 
 
 _ARRAY_COMPONENT: dict[str, tuple[str, int]] = {
@@ -194,6 +278,13 @@ _ARRAY_COMPONENT: dict[str, tuple[str, int]] = {
     "muL_E": ("muL", 0),
     "muL_N": ("muL", 1),
 }
+
+
+def pack_fitter_vector(instance) -> tuple[np.ndarray, list[str]]:
+    layout = resolve_layout(instance.__class__)
+    names = list(layout.base_fitter_names) if layout else list(instance.fitter_param_names)
+    vec = np.array([_fitter_scalar(instance, n) for n in names])
+    return vec, names
 
 
 def _fitter_scalar(instance, name: str) -> float:
@@ -336,7 +427,8 @@ def _pspl_astrom_forward(method_name: str, geom: dict, t_j, t0, b_sff, pvec):
         return xL
     xS = _linear_astrometry_jax(t_j, t0, xS0, muS, pvec, piS)
     if method_name == "get_astrometry_unlensed":
-        return float(b_sff) * xS + (1.0 - float(b_sff)) * xL
+        b = jnp.asarray(b_sff, dtype=jnp.float64)
+        return b * xS + (1.0 - b) * xL
     ast = pspl_astrometry_param1(
         t_j,
         t0,
@@ -350,12 +442,21 @@ def _pspl_astrom_forward(method_name: str, geom: dict, t_j, t0, b_sff, pvec):
         piS=piS,
         piL=piL,
     )
-    unl = float(b_sff) * xS + (1.0 - float(b_sff)) * xL
+    unl = jnp.asarray(b_sff, dtype=jnp.float64) * xS + (
+        1.0 - jnp.asarray(b_sff, dtype=jnp.float64)
+    ) * xL
     return (ast - unl) * 1e3
 
 
-def grad_smoke_jax(class_name: str, method_name: str, jax_inst, t: np.ndarray) -> np.ndarray:
-    """Pure-JAX grad smoke via jax_physics kernels."""
+def grad_smoke_jax(
+    class_name: str,
+    method_name: str,
+    jax_inst,
+    t: np.ndarray,
+    *,
+    return_names: bool = False,
+):
+    """Pure-JAX grad smoke w.r.t. all numeric Param-mixin ``__init__`` parameters."""
     import jax
 
     from bagle.jax.layout_registry import resolve_layout
@@ -365,10 +466,11 @@ def grad_smoke_jax(class_name: str, method_name: str, jax_inst, t: np.ndarray) -
     if layout is None:
         raise NotImplementedError(f"no layout for {class_name}")
 
-    names = tuple(layout.base_fitter_names)
+    base_names = tuple(layout.base_fitter_names)
+    init_names = numeric_init_param_names(jax_inst)
     t_j = jnp.asarray(t, dtype=jnp.float64)
     pvec = _parallax_vectors(jax_inst, t)
-    vec0 = jnp.array([_fitter_scalar(jax_inst, n) for n in names], dtype=jnp.float64)
+    vec0 = jnp.array(pack_init_vector(jax_inst)[0], dtype=jnp.float64)
     ek = layout.eval_kind
 
     if method_name in ("get_photometry", "get_amplification") and ek in (
@@ -377,11 +479,14 @@ def grad_smoke_jax(class_name: str, method_name: str, jax_inst, t: np.ndarray) -
         "pspl_photastrom_physical",
         "pspl_photastrom_reduced",
     ):
-        b_sff = float(np.asarray(jax_inst.b_sff).reshape(-1)[0])
-        mag = _mag_scalar(jax_inst, layout)
 
         def forward(v):
-            geom = _unpack_pspl_geom(ek, names, v)
+            base = _base_vec_from_init(v, init_names, base_names)
+            geom = _unpack_pspl_geom(ek, base_names, base)
+            b_sff = _init_param(v, init_names, "b_sff", 1.0)
+            mag = _mag_from_init(v, init_names, layout, b_sff)
+            if mag is None:
+                mag = jnp.asarray(_mag_scalar(jax_inst, layout), dtype=jnp.float64)
             if method_name == "get_amplification":
                 out = pspl_amplification(
                     t_j,
@@ -408,7 +513,10 @@ def grad_smoke_jax(class_name: str, method_name: str, jax_inst, t: np.ndarray) -
                 )
             return jnp.sum(out)
 
-        return np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
 
     if method_name in (
         "get_astrometry",
@@ -420,15 +528,20 @@ def grad_smoke_jax(class_name: str, method_name: str, jax_inst, t: np.ndarray) -
         "pspl_photastrom_reduced",
         "pspl_astrom_reduced",
     ):
-        b_sff = float(np.asarray(getattr(jax_inst, "b_sff", [1.0])).reshape(-1)[0])
+        default_b = float(np.asarray(getattr(jax_inst, "b_sff", [1.0])).reshape(-1)[0])
 
         def forward(v):
-            geom = _unpack_pspl_geom(ek, names, v)
+            base = _base_vec_from_init(v, init_names, base_names)
+            geom = _unpack_pspl_geom(ek, base_names, base)
+            b_sff = _init_param(v, init_names, "b_sff", default_b)
             out = _pspl_astrom_forward(
                 method_name, geom, t_j, geom["t0"], b_sff, pvec
             )
             return jnp.sum(out)
 
-        return np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
 
     raise NotImplementedError(f"grad smoke not wired for {class_name}.{method_name}")

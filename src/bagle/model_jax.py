@@ -536,6 +536,15 @@ class PSPL(ABC):
         xL : array_like, dtype=float, shape = [len(t), 2]
             Position of the lens on the sky (arcsec).
         """
+        try:
+            from bagle.jax_model import try_get_lens_astrometry
+
+            pos_jax = try_get_lens_astrometry(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         # Equation of motion for just the background source.
         dt_in_years = (t - self.t0) / days_per_year
         xL = self.xL0 + np.outer(dt_in_years, self.muL) * 1e-3
@@ -601,6 +610,15 @@ class PSPL(ABC):
         xS_unlensed : numpy array, dtype=float, shape = [len(t), 2]
             The unlensed, flux-weighted centroid position of the source+lens in arcseconds.
         """
+        try:
+            from bagle.jax_model import try_get_astrometry_unlensed
+
+            pos_jax = try_get_astrometry_unlensed(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         xS_unlensed = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
@@ -899,6 +917,15 @@ class PSPL(ABC):
             Index of the photometric filter or data set.
 
         """
+        try:
+            from bagle.jax_model import try_get_centroid_shift
+
+            shift_jax = try_get_centroid_shift(self, t, filt_idx=filt_idx)
+            if shift_jax is not None:
+                return shift_jax
+        except ImportError:
+            pass
+
         # Things we will need.
         dt_in_years = (t - self.t0) / days_per_year
 
