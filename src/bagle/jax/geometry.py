@@ -221,14 +221,25 @@ def derive_geometry_from_layout(layout_id: str, eval_kind: str, base_vec, names:
     if eval_kind in ("pspl_photastrom_reduced", "pspl_astrom_reduced"):
         te_key = "log10_thetaE" if "log10_thetaE" in p else "thetaE"
         theta = 10.0 ** p[te_key] if te_key == "log10_thetaE" else p[te_key]
+        if "log_piE" in p and "phi_muRel" in p:
+            piE_amp = 10.0 ** p["log_piE"]
+            phi = p["phi_muRel"] * jnp.pi / 180.0
+            piE_E = piE_amp * jnp.sin(phi)
+            piE_N = piE_amp * jnp.cos(phi)
+        elif "piEN_piEE" in p:
+            piE_E = p["piE_E"]
+            piE_N = p["piE_E"] * p["piEN_piEE"]
+        else:
+            piE_E = p["piE_E"]
+            piE_N = p["piE_N"]
         return derive_pspl_photastrom_reduced(
             p["t0"],
             p["u0_amp"],
             p["tE"],
             theta,
             p["piS"],
-            p["piE_E"],
-            p["piE_N"],
+            piE_E,
+            piE_N,
             p["xS0_E"],
             p["xS0_N"],
             p["muS_E"],

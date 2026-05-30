@@ -63,8 +63,6 @@ CANONICAL: dict[str, Any] = {
 PARALLAX_KW = dict(raL=259.5, decL=-29.0, obsLocation="earth")
 
 SKIP_CLASS_SUBSTR = (
-    "Param5",
-    "Param6",
     "RefPar",
     "LumLens",
 )

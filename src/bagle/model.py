@@ -4326,6 +4326,7 @@ class PSPL_PhotAstromParam6(PSPL_Param):
         self.u0_amp = u0_amp
         self.tE = tE
         self.thetaE = thetaE
+        self.thetaE_amp = thetaE
         self.log_piE = log_piE
         self.phi_muRel = phi_muRel  # degrees
         self.xS0 = np.array([xS0_E, xS0_N])
@@ -4342,7 +4343,6 @@ class PSPL_PhotAstromParam6(PSPL_Param):
         super().__init__()
 
         # Derived quantities
-        self.tE = 10 ** log_tE
         self.piE_amp = 10 ** log_piE
         self.phi_muRel_rad = np.deg2rad(phi_muRel)  # radians
         self.piE = self.piE_amp * np.array([np.sin(self.phi_muRel_rad),
