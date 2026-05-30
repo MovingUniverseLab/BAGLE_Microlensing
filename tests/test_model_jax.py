@@ -1,9 +1,9 @@
 import math
 from bagle import parallax
-from bagle import model
 from bagle import model_fitter
 from bagle import frame_convert as fc
 from bagle.fake_data import *
+from bagle import model_jax as model
 from bagle import frame_convert
 import time
 import pickle
@@ -59,9 +59,7 @@ def test_default_priors():
     import inspect
     
     check_keys = model_fitter.MicrolensSolver.default_priors.keys()
-
-    unmatched = []
-
+    
     def check_lengths(carg):
         fitter_params = carg.fitter_param_names + carg.phot_param_names
         #print("Fitter count :", len(fitter_params)) 
@@ -4061,7 +4059,7 @@ def test_ABC_MRO():
     model_classes = []
 
     for name, obj in inspect.getmembers(model):
-        if inspect.isclass(obj) and obj.__module__ == 'bagle.model':
+        if inspect.isclass(obj) and obj.__module__ == 'bagle.model_jax':
             classes_list.append(obj)
 
             # First, figure out if it is a ModelClass

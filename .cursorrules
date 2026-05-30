@@ -1,0 +1,53 @@
+# BAGLE — Cursor agent rules
+
+## Shell and Python environment
+
+Run **all** terminal commands (tests, installs, scripts, debugging) in the **`astro`** conda environment, with the same setup as an interactive login shell.
+
+### Preferred: login-interactive zsh (loads full `~/.zshenv`)
+
+Non-interactive shells skip most of `~/.zshenv` (it returns when `PS1` is empty). Use:
+
+```bash
+zsh -lic 'cd /Users/jlu/code/python/bagle && <your command>'
+```
+
+Examples:
+
+```bash
+zsh -lic 'cd /Users/jlu/code/python/bagle && PYTHONPATH=src python -m pytest tests/test_jax_physics.py -q'
+zsh -lic 'cd /Users/jlu/code/python/bagle && PYTHONPATH=src python -m pytest tests/test_model.py -q'
+```
+
+### Alternative: explicit conda activation (mirrors end of `~/.zshenv`)
+
+If `zsh -lic` is unavailable, activate `astro` before any Python/pytest command:
+
+```bash
+export PATH="/opt/mambaforge3/bin:/opt/miniforge3/bin:$PATH"
+source /opt/miniforge3/etc/profile.d/conda.sh
+source /opt/miniforge3/etc/profile.d/mamba.sh
+mamba activate astro
+export PARALLAX_CACHE_DIR="${HOME}/.bagle_parallax_cache/"
+cd /Users/jlu/code/python/bagle
+export PYTHONPATH="${PWD}/src:${PYTHONPATH}"
+```
+
+Do **not** use the system `/usr/bin/python3` or a bare `pip3` outside `astro`.
+
+## This repository
+
+- Package code lives under `src/bagle/`. For local runs and tests, prepend **`PYTHONPATH=src`** (in addition to any paths from `~/.zshenv`).
+- JAX layout registry and tests: `tests/test_jax_*.py`, `src/bagle/jax/`.
+- **`bagle.model`** = NumPy reference (`origin/main`); **`bagle.model_jax`** = JAX implementation under test.
+- Do not edit plan files in `.cursor/plans/` unless the user asks.
+
+## Testing defaults
+
+When verifying changes, prefer:
+
+```bash
+zsh -lic 'cd /Users/jlu/code/python/bagle && PYTHONPATH=src python -m pytest tests/test_jax_layout_coverage.py tests/test_jax_physics.py tests/test_jax_likelihood.py -q'
+```
+
+Run `tests/test_model.py` (NumPy reference) and `tests/test_model_jax.py` (JAX model) after model or physics changes (slower; needs `astro` + full deps).
