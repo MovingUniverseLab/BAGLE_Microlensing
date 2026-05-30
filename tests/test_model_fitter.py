@@ -3,7 +3,7 @@ from bagle import model_fitter
 from bagle import multinest_utils
 from bagle import fake_data
 from bagle import data as data_mod
-from bagle.model_fitter import MicrolensSolver, MicrolensSolverHobsonWeighted
+from bagle.model_fitter import MicrolensSolver, MicrolensSolverHobsonWeighted, MicrolensSolverPyMC
 import numpy as np
 import pylab as plt
 import os
@@ -2426,3 +2426,406 @@ def test_multi_obsLocation(resume=False, verbose=False):
     assert (np.abs(lnL_out - lnL_in) / np.abs(lnL_in)) < 0.1
 
     return
+
+
+def _test_figures_dir():
+    figdir = os.path.join(os.path.dirname(__file__), 'figures')
+    os.makedirs(figdir, exist_ok=True)
+    return figdir
+
+
+def _plot_scipy_vs_pymc_prior(scipy_prior, pymc_samples, outpath, title):
+    """Overlay scipy PDF and PyMC prior samples."""
+    x_lo = scipy_prior.ppf(0.001)
+    x_hi = scipy_prior.ppf(0.999)
+    if not np.isfinite(x_lo) or not np.isfinite(x_hi) or x_lo >= x_hi:
+        x_lo = np.min(pymc_samples)
+        x_hi = np.max(pymc_samples)
+    x = np.linspace(x_lo, x_hi, 400)
+    pdf = scipy_prior.pdf(x)
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.plot(x, pdf, 'k-', lw=2, label='scipy prior')
+    ax.hist(pymc_samples, bins=50, density=True, alpha=0.45,
+            color='C0', label='PyMC prior samples')
+    ax.set_xlabel(r'$\theta$')
+    ax.set_ylabel('density')
+    ax.set_title(title)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(outpath)
+    plt.close(fig)
+
+
+def _dense_phot_times(t_phot):
+    """Build a model time grid matching phot cadence but skipping seasonal gaps."""
+    t_phot = np.sort(np.asarray(t_phot, dtype=float))
+    if len(t_phot) < 2:
+        return t_phot.copy()
+
+    dts = np.diff(t_phot)
+    small_dts = dts[dts <= np.percentile(dts, 50)]
+    step = float(np.median(small_dts)) if len(small_dts) else float(np.median(dts))
+    if step <= 0:
+        step = 1.0
+
+    gap_threshold = max(3.0 * step, 30.0)
+    segments = []
+    seg_start = t_phot[0]
+    for i, dt in enumerate(dts):
+        if dt > gap_threshold:
+            segments.append((seg_start, t_phot[i]))
+            seg_start = t_phot[i + 1]
+    segments.append((seg_start, t_phot[-1]))
+
+    t_mod = [np.arange(t0, t1 + 0.5 * step, step) for t0, t1 in segments]
+    return np.concatenate(t_mod)
+
+
+def _dense_ast_times(t_ast, cadence=5.0):
+    """Build a uniform model time grid over the astrometry epoch range."""
+    t_ast = np.asarray(t_ast, dtype=float)
+    return np.arange(t_ast.min(), t_ast.max() + 0.5 * cadence, cadence)
+
+
+def _plot_data_and_both_models(data, model_mn, model_pm, model_in, figdir):
+    """Plot fake data with MultiNest, PyMC, and input models overlaid."""
+    os.makedirs(figdir, exist_ok=True)
+
+    t_phot = data['t_phot1']
+    t_phot_mod = _dense_phot_times(t_phot)
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.errorbar(t_phot, data['mag1'], yerr=data['mag_err1'],
+                fmt='k.', ms=3, label='data')
+    ax.plot(t_phot_mod, model_mn.get_photometry(t_phot_mod), 'r-',
+            lw=1.5, label='MultiNest best fit')
+    ax.plot(t_phot_mod, model_pm.get_photometry(t_phot_mod), 'b--',
+            lw=1.5, label='PyMC best fit')
+    ax.plot(t_phot_mod, model_in.get_photometry(t_phot_mod), 'g:',
+            lw=1.5, label='input model')
+    ax.set_xlabel('t (MJD)')
+    ax.set_ylabel('mag')
+    ax.set_title('Photometry')
+    ax.legend()
+    ax.invert_yaxis()
+    fig.tight_layout()
+    fig.savefig(os.path.join(figdir, 'photometry_models.png'))
+    plt.close(fig)
+
+    t_ast = data['t_ast1']
+    t_ast_mod = _dense_ast_times(t_ast, cadence=5.0)
+    for axis, obs_key, err_key, mod_idx, fname in [
+        ('E', 'xpos1', 'xpos_err1', 0, 'astrometry_E.png'),
+        ('N', 'ypos1', 'ypos_err1', 1, 'astrometry_N.png'),
+    ]:
+        pos_mn = model_mn.get_astrometry(t_ast_mod)
+        pos_pm = model_pm.get_astrometry(t_ast_mod)
+        pos_in = model_in.get_astrometry(t_ast_mod)
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.errorbar(t_ast, data[obs_key], yerr=data[err_key],
+                    fmt='k.', ms=3, label='data')
+        ax.plot(t_ast_mod, pos_mn[:, mod_idx], 'r-',
+                lw=1.5, label='MultiNest best fit')
+        ax.plot(t_ast_mod, pos_pm[:, mod_idx], 'b--',
+                lw=1.5, label='PyMC best fit')
+        ax.plot(t_ast_mod, pos_in[:, mod_idx], 'g:',
+                lw=1.5, label='input model')
+        ax.set_xlabel('t (MJD)')
+        ax.set_ylabel(f'pos {axis} (arcsec)')
+        ax.set_title(f'Astrometry {axis}')
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(os.path.join(figdir, fname))
+        plt.close(fig)
+
+
+def _overlay_prior_and_map(ax, prior, map_mn, map_pm, vals_mn, vals_pm,
+                           show_legend=False):
+    """Overplot scipy prior (scaled) and MAP vertical lines on a posterior axis."""
+    x_lo = min(np.min(vals_mn), np.min(vals_pm))
+    x_hi = max(np.max(vals_mn), np.max(vals_pm))
+    pad = 0.05 * (x_hi - x_lo) if x_hi > x_lo else 1.0
+    x = np.linspace(x_lo - pad, x_hi + pad, 400)
+    pdf = prior.pdf(x)
+    valid = np.isfinite(pdf) & (pdf > 0)
+    if np.any(valid):
+        ymax = ax.get_ylim()[1]
+        peak = np.max(pdf[valid])
+        if peak > 0:
+            ax.plot(x, pdf / peak * ymax * 0.85, 'k--', lw=1.2, label='prior')
+
+    if map_mn is not None:
+        ax.axvline(map_mn, color='C3', ls='-', lw=1.5, label='MultiNest MAP')
+    if map_pm is not None:
+        ax.axvline(map_pm, color='C0', ls='-.', lw=1.5, label='PyMC MAP')
+
+    if show_legend:
+        ax.legend(fontsize=7)
+
+
+def _plot_posterior_comparison(tab_mn, tab_pm, param_names, figdir, priors,
+                               map_mn=None, map_pm=None):
+    """1D posterior comparison: MultiNest (weighted) vs PyMC."""
+    os.makedirs(figdir, exist_ok=True)
+    weights = tab_mn['weights']
+    n_params = len(param_names)
+    ncols = 4
+    nrows = int(np.ceil(n_params / ncols))
+
+    fig, axes = plt.subplots(nrows, ncols,
+                             figsize=(3.5 * ncols, 2.8 * nrows))
+    axes = np.atleast_1d(axes).flatten()
+
+    for ii, name in enumerate(param_names):
+        ax = axes[ii]
+        ax.hist(tab_mn[name], bins=30, weights=weights, density=True,
+                alpha=0.45, color='C3', label='MultiNest')
+        ax.hist(tab_pm[name], bins=30, density=True,
+                alpha=0.45, color='C0', label='PyMC')
+        _overlay_prior_and_map(
+            ax, priors[name],
+            map_mn[name] if map_mn is not None else None,
+            map_pm[name] if map_pm is not None else None,
+            tab_mn[name], tab_pm[name],
+            show_legend=(ii == 0),
+        )
+        ax.set_title(name, fontsize=9)
+
+    for jj in range(n_params, len(axes)):
+        axes[jj].set_visible(False)
+
+    fig.suptitle('Posterior comparison: MultiNest vs PyMC', fontsize=11)
+    fig.tight_layout()
+    fig.savefig(os.path.join(figdir, 'posteriors_1d_all.png'))
+    plt.close(fig)
+
+    for name in param_names:
+        fig, ax = plt.subplots(figsize=(5, 3.5))
+        ax.hist(tab_mn[name], bins=30, weights=weights, density=True,
+                alpha=0.45, color='C3', label='MultiNest')
+        ax.hist(tab_pm[name], bins=30, density=True,
+                alpha=0.45, color='C0', label='PyMC')
+        _overlay_prior_and_map(
+            ax, priors[name],
+            map_mn[name] if map_mn is not None else None,
+            map_pm[name] if map_pm is not None else None,
+            tab_mn[name], tab_pm[name],
+            show_legend=True,
+        )
+        ax.set_xlabel(name)
+        ax.set_ylabel('density')
+        fig.tight_layout()
+        fig.savefig(os.path.join(figdir, f'posterior_{name}.png'))
+        plt.close(fig)
+
+
+def _apply_pspl_fake_data1_priors(fitter, p_in):
+    """Narrow priors around fake_data1() truth for fast fitting tests."""
+    fitter.priors['mL'] = model_fitter.make_gen(9.9, 10.1)
+    fitter.priors['t0'] = model_fitter.make_gen(56990, 57010)
+    fitter.priors['beta'] = model_fitter.make_gen(-0.45, -0.35)
+    fitter.priors['muL_E'] = model_fitter.make_gen(-0.1, 0.1)
+    fitter.priors['muL_N'] = model_fitter.make_gen(-7.1, -6.9)
+    fitter.priors['muS_E'] = model_fitter.make_gen(1.4, 1.6)
+    fitter.priors['muS_N'] = model_fitter.make_gen(-0.6, -0.4)
+    fitter.priors['dL'] = model_fitter.make_gen(3900, 4100)
+    fitter.priors['dL_dS'] = model_fitter.make_gen(0.45, 0.55)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(0.95, 1.05)
+    fitter.priors['mag_src1'] = model_fitter.make_gen(18.9, 19.1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen(-1e-4, 1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen(-1e-4, 1e-4)
+
+
+def _relative_param_diff(a, b):
+    if np.abs(b) < 1e-3:
+        return np.abs(a - b)
+    return np.abs((a - b) / b)
+
+
+def _build_data_driven_prior(prior_name, data):
+    """Build a scipy prior from fake data using the old make_* generators."""
+    if prior_name == 'make_piS':
+        prior = model_fitter.make_piS()
+    elif prior_name == 'make_t0_gen':
+        prior = model_fitter.make_t0_gen(data['t_phot1'], data['mag1'])
+    elif prior_name == 'make_xS0_gen':
+        prior = model_fitter.make_xS0_gen(data['xpos1'])
+    elif prior_name == 'make_muS_EN_gen':
+        prior = model_fitter.make_muS_EN_gen(
+            data['t_ast1'], data['xpos1'])
+    elif prior_name == 'make_mag_src_gen':
+        prior = model_fitter.make_mag_src_gen(data['mag1'])
+    elif prior_name == 'make_mag_base_gen':
+        prior = model_fitter.make_mag_base_gen(data['mag1'])
+    else:
+        raise ValueError(f'Unknown prior generator: {prior_name}')
+
+    return prior
+
+
+def _assert_scipy_pymc_prior_similar(scipy_prior, pymc_samples):
+    """Check that PyMC prior samples match scipy quantiles."""
+    for q in [0.16, 0.5, 0.84]:
+        target = scipy_prior.ppf(q)
+        sample_q = np.quantile(pymc_samples, q)
+        atol = max(0.05, 0.15 * np.abs(target))
+        assert np.isclose(sample_q, target, rtol=0.15, atol=atol)
+
+    return None
+
+
+@pytest.mark.parametrize('prior_name', [
+    'make_piS',
+    'make_t0_gen',
+    'make_xS0_gen',
+    'make_muS_EN_gen',
+    'make_mag_src_gen',
+    'make_mag_base_gen',
+])
+def test_old_data_priors_supported_in_pymc(prior_name, plot=False):
+    """Old data-driven priors should map to similar PyMC priors."""
+    pymc = pytest.importorskip('pymc')
+    from bagle.model_fitter import scipy_to_pymc
+
+    data, _p_in = fake_data.fake_data1()
+    scipy_prior = _build_data_driven_prior(prior_name, data)
+
+    with pymc.Model():
+        scipy_to_pymc(scipy_prior, 'theta')
+        idata = pymc.sample_prior_predictive(draws=3000, random_seed=0)
+
+    samples = idata.prior['theta'].values.reshape(-1)
+    _assert_scipy_pymc_prior_similar(scipy_prior, samples)
+
+    if plot:
+        figdir = _test_figures_dir()
+        outpath = os.path.join(figdir, f'prior_{prior_name}.png')
+        _plot_scipy_vs_pymc_prior(
+            scipy_prior, samples, outpath, title=prior_name)
+
+    return None
+
+
+@pytest.mark.parametrize('prior_fn,args', [
+    (model_fitter.make_gen, (-1.0, 1.0)),
+    (model_fitter.make_norm_gen, (0.0, 1.0)),
+    (model_fitter.make_lognorm_gen, (0.0, 0.5)),
+    (model_fitter.make_log10norm_gen, (-1.0, 0.3)),
+    (model_fitter.make_truncnorm_gen, (0.0, 1.0, -2.0, 2.0)),
+    (model_fitter.make_truncnorm_gen_with_bounds, (0.0, 1.0, -5.0, 5.0)),
+    (model_fitter.make_invgamma_gen, (np.linspace(57000.0, 57100.0, 50),)),
+    (model_fitter.make_piS, ()),
+    (model_fitter.make_fdfdt, ()),
+])
+def test_scipy_to_pymc_priors(prior_fn, args, plot=False):
+    pymc = pytest.importorskip('pymc')
+    from bagle.model_fitter import scipy_to_pymc
+
+    scipy_prior = prior_fn(*args)
+    with pymc.Model():
+        scipy_to_pymc(scipy_prior, 'theta')
+        idata = pymc.sample_prior_predictive(draws=3000, random_seed=0)
+
+    samples = idata.prior['theta'].values.reshape(-1)
+    for q in [0.16, 0.5, 0.84]:
+        target = scipy_prior.ppf(q)
+        sample_q = np.quantile(samples, q)
+        atol = max(0.05, 0.15 * np.abs(target))
+        assert np.isclose(sample_q, target, rtol=0.15, atol=atol)
+
+    if plot:
+        figdir = _test_figures_dir()
+        outpath = os.path.join(figdir, f'prior_{prior_fn.__name__}.png')
+        _plot_scipy_vs_pymc_prior(
+            scipy_prior, samples, outpath, title=prior_fn.__name__)
+
+    return
+
+def test_microlens_solver_pymc_vs_multinest(plot=False):
+    pytest.importorskip('pymc')
+    from bagle.model_fitter import MicrolensSolverPyMC
+
+    outdir = './test_pymc_solver/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = fake_data.fake_data1()
+    model_class = model.PSPL_PhotAstrom_noPar_Param1
+
+    fitter_mn = MicrolensSolver(
+        data,
+        model_class,
+        n_live_points=100,
+        outputfiles_basename=outdir + 'mnest_',
+        sampling_efficiency=0.9,
+        evidence_tolerance=0.8,
+        max_iter=5000,
+        dump_callback=None,
+        verbose=False,
+    )
+    _apply_pspl_fake_data1_priors(fitter_mn, p_in)
+
+    t0 = time.time()
+    fitter_mn.solve()
+    t_mn = time.time() - t0
+
+    best_mn = fitter_mn.get_best_fit(def_best='median')[0]
+    tab_mn = fitter_mn.load_mnest_results()
+
+    fitter_pm = MicrolensSolverPyMC(
+        data,
+        model_class,
+        outputfiles_basename=outdir + 'pymc_',
+        draws=1500,
+        tune=800,
+        chains=2,
+        cores=1,
+        pymc_random_seed=0,
+        verbose=False,
+    )
+    _apply_pspl_fake_data1_priors(fitter_pm, p_in)
+
+    t0 = time.time()
+    fitter_pm.solve()
+    t_pm = time.time() - t0
+
+    best_pm = fitter_pm.get_best_fit(def_best='median')[0]
+    tab_pm = fitter_pm.load_mnest_results()
+
+    for key in fitter_mn.fitter_param_names:
+        assert _relative_param_diff(best_mn[key], best_pm[key]) < 0.3
+
+    for key in fitter_mn.fitter_param_names:
+        q_mn = model_fitter.weighted_quantile(
+            tab_mn[key], [0.16, 0.5, 0.84], sample_weight=tab_mn['weights'])
+        q_pm = np.quantile(tab_pm[key], [0.16, 0.5, 0.84])
+        for qmn, qpm in zip(q_mn, q_pm):
+            atol = max(1e-4, 0.15 * np.abs(qmn))
+            assert np.isclose(qmn, qpm, rtol=0.3, atol=atol)
+
+    lnL_mn = fitter_mn.log_likely(best_mn)
+    lnL_pm = fitter_pm.log_likely(best_pm)
+    assert np.abs(lnL_mn - lnL_pm) < 10
+
+    print(f'MultiNest runtime: {t_mn:.1f}s, PyMC runtime: {t_pm:.1f}s')
+
+    if plot:
+        figdir = os.path.join(_test_figures_dir(), 'pymc_vs_multinest')
+        model_mn = fitter_mn.get_model(best_mn)
+        model_pm = fitter_pm.get_model(best_pm)
+        model_in = fitter_mn.get_model(p_in)
+        map_mn = {
+            name: tab_mn[name][np.argmax(tab_mn['logLike'])]
+            for name in fitter_mn.fitter_param_names
+        }
+        map_pm = {
+            name: tab_pm[name][np.argmax(tab_pm['logLike'])]
+            for name in fitter_pm.fitter_param_names
+        }
+        _plot_data_and_both_models(data, model_mn, model_pm, model_in, figdir)
+        _plot_posterior_comparison(
+            tab_mn, tab_pm, fitter_mn.fitter_param_names, figdir,
+            priors=fitter_mn.priors, map_mn=map_mn, map_pm=map_pm)
+
+    return
+    

@@ -9,6 +9,12 @@ jplephem==2.23
 matplotlib==3.10.6
 numpy==2.3.3
 pymultinest==2.12
+pymc>=5.0
+arviz>=0.16
+pytensor>=2.18
+jax>=0.4
+jaxlib>=0.4
+tinygp>=0.3
 pytest==8.4.2
 scipy==1.16.2
 ipykernal

@@ -25,7 +25,13 @@ dependencies = ["numpy>=1.24",
                 "astropy>=5.3",
                 "celerite",
                 "jplephem",
-                "scipy>=1.10"]
+                "scipy>=1.10",
+                "pymc>=5.0",
+                "arviz>=0.16",
+                "pytensor>=2.18",
+                "jax>=0.4",
+                "jaxlib>=0.4",
+                "tinygp>=0.3"]
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -48,3 +54,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.basedpyright]
+include = ["src", "tests"]
+pythonVersion = "3.11"
+stubPath = "typings"
+reportMissingModuleSource = false

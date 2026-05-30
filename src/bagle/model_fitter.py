@@ -47,6 +47,10 @@ from bagle.dynesty.utils import resample_equal, unitcheck
 from bagle.dynesty.utils import quantile as _quantile
 import re
 
+from bagle import jax_physics
+import jax
+import jax.numpy as jnp
+
 from matplotlib import logging
 logging.getLogger('matplotlib.font_manager').disabled = True
 
@@ -192,6 +196,7 @@ class MicrolensSolver(Solver):
         'mag_base': ('make_mag_base_gen', None, None),
         'dmag_Lp_Ls': ('make_gen', -20, 20),
         'tE': ('make_gen', 1, 400),
+        'log_tE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
         'piE_E': ('make_gen', -1, 1),
         'piE_N': ('make_gen', -1, 1),
         'piEN_piEE' : ('make_gen', -10, 10),
@@ -892,6 +897,34 @@ class MicrolensSolver(Solver):
             # pdb.set_trace()
 
         return lnL
+
+    def evaluate_loglik_jax(self, cube):
+        """Evaluate log-likelihood via JAX registry (vector from ``cube``)."""
+        fn, _ = jax_physics.build_jax_loglik_fn(self)
+        if fn is None:
+            return float(self.log_likely(cube))
+        if isinstance(cube, dict):
+            vec = np.array(
+                [cube[n] for n in self.fitter_param_names], dtype=np.float64
+            )
+        else:
+            vec = np.asarray(cube, dtype=np.float64)
+        return float(fn(vec))
+
+    def grad_loglik_jax(self, cube):
+        """Gradient of log-likelihood w.r.t. fitter parameters (JAX autodiff)."""
+        fn, _ = jax_physics.build_jax_loglik_fn(self)
+        if fn is None:
+            raise NotImplementedError(
+                "No JAX log-likelihood for this fitter configuration."
+            )
+        if isinstance(cube, dict):
+            vec = np.array(
+                [cube[n] for n in self.fitter_param_names], dtype=np.float64
+            )
+        else:
+            vec = np.asarray(cube, dtype=np.float64)
+        return np.asarray(jax.grad(fn)(vec), dtype=np.float64)
 
     def callback_plotter(self, nSamples, nlive, nPar,
                  physLive, posterior, stats, maxLogLike, logZ, logZerr, foo):
@@ -2669,6 +2702,372 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
 
         return eff_weights
         
+
+#########################
+### PyMC Solver       ###
+#########################
+import pymc as pm
+import pytensor.tensor as pt
+from pytensor.graph.op import Op
+from pytensor.graph.basic import Apply
+
+def _prior_period(prior):
+    """Infer period for wrapped angle parameters from prior support."""
+    dist_name = prior.dist.name
+    if dist_name == 'uniform':
+        loc = prior.kwds.get('loc', 0.0)
+        scale = prior.kwds.get('scale', 1.0)
+        return scale, loc
+    return 360.0, 0.0
+
+
+def _apply_wrapped_transform(rv, prior, name):
+    """Map a prior RV onto a periodic domain for angle parameters."""
+    period, origin = _prior_period(prior)
+    if period <= 0:
+        return rv
+    return pm.Deterministic(
+        name,
+        pm.math.mod(rv - origin, period) + origin,
+    )
+
+
+def scipy_to_pymc(prior, name, wrapped=False):
+    """Convert a scipy.stats frozen distribution to a PyMC random variable."""
+    dist_name = prior.dist.name
+
+    if dist_name == 'uniform':
+        loc = prior.kwds.get('loc', 0.0)
+        scale = prior.kwds.get('scale', 1.0)
+        rv = pm.Uniform(name, lower=loc, upper=loc + scale)
+
+    elif dist_name == 'norm':
+        loc = prior.kwds['loc']
+        scale = prior.kwds['scale']
+        rv = pm.Normal(name, mu=loc, sigma=scale)
+
+    elif dist_name == 'lognorm':
+        sigma = prior.kwds['s']
+        mu = np.log(prior.kwds['scale'])
+        rv = pm.LogNormal(name, mu=mu, sigma=sigma)
+
+    elif dist_name == 'truncnorm':
+        a, b = prior.args
+        loc = prior.kwds['loc']
+        scale = prior.kwds['scale']
+        rv = pm.TruncatedNormal(
+            name,
+            mu=loc,
+            sigma=scale,
+            lower=loc + a * scale,
+            upper=loc + b * scale,
+        )
+
+    elif dist_name == 'invgamma':
+        alpha = prior.args[0]
+        beta = prior.kwds['scale']
+        rv = pm.InverseGamma(name, alpha=alpha, beta=beta)
+
+    else:
+        raise TypeError(
+            f"Unsupported prior type '{dist_name}' for parameter '{name}'"
+        )
+
+    if wrapped:
+        rv = _apply_wrapped_transform(rv, prior, name)
+
+    return rv
+
+
+class LogLikelihoodOp(Op):
+    """PyTensor Op wrapping MicrolensSolver.log_likely().
+
+    When ``use_jax_grad=True`` and the fitter layout is supported by
+    :mod:`bagle.jax_physics`, evaluates (and differentiates) a jitted Gaussian
+    photometry likelihood.  GP and astrometry configurations fall back to the
+    black-box ``log_likely`` without gradients.
+    """
+
+    __props__ = ('fitter', 'param_names', 'use_jax_grad')
+
+    def __init__(self, fitter, param_names, use_jax_grad=True):
+        self.fitter = fitter
+        self.param_names = tuple(param_names)
+        self.use_jax_grad = bool(use_jax_grad)
+        self._jax_loglik = None
+        self._jax_ctx = None
+        if self.use_jax_grad:
+            self._jax_loglik, self._jax_ctx = jax_physics.build_jax_loglik_fn(fitter)
+
+        return
+
+    def make_node(self, param_vec):
+        param_vec = pt.as_tensor_variable(param_vec)
+        outputs = [pt.dscalar()]
+        return Apply(self, [param_vec], outputs)
+
+    def perform(self, node, inputs, output_storage):
+        param_vec = np.asarray(inputs[0], dtype=np.float64)
+        if self._jax_loglik is not None:
+            logp = float(self._jax_loglik(param_vec))
+        else:
+            cube = {
+                name: float(param_vec[i])
+                for i, name in enumerate(self.param_names)
+            }
+            logp = self.fitter.log_likely(cube)
+        output_storage[0][0] = np.array(logp, dtype=np.float64)
+
+        return
+
+    def grad(self, inputs, output_grads):
+        if self._jax_loglik is None:
+            raise NotImplementedError(
+                'No JAX gradient for this likelihood configuration '
+                '(layout not registered or blocked parameters). '
+                'Use use_jax_grad=False or a Phot/PhotAstrom/Astrom layout '
+                'supported by bagle.jax.'
+            )
+        param_vec = jnp.asarray(inputs[0], dtype=jnp.float64)
+        g = jax.grad(self._jax_loglik)(param_vec)
+        return [np.asarray(output_grads[0] * g, dtype=np.float64)]
+
+
+class MicrolensPyMCModel:
+    """Build a PyMC model from a MicrolensSolver configuration.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Configured solver with priors and parameter names.
+    use_jax_grad : bool, optional
+        When ``True``, use :mod:`bagle.jax_physics` for phot-only models that
+        support autodiff.  GP and astrometry fits use the black-box likelihood.
+    """
+
+    def __init__(self, fitter, use_jax_grad=True):
+        """Store the MicrolensSolver used to build the PyMC model.
+
+        Parameters
+        ----------
+        fitter : MicrolensSolver
+            Solver instance with ``priors`` and ``fitter_param_names``.
+        use_jax_grad : bool, optional
+            Enable JAX gradients in :class:`LogLikelihoodOp` when supported.
+        """
+        self.fitter = fitter
+        self.use_jax_grad = use_jax_grad
+        return None
+
+    def build(self):
+        """Construct a PyMC model with priors and likelihood.
+
+        Returns
+        -------
+        pm.Model
+            PyMC model with parameter priors and ``likelihood`` potential.
+        """
+        fitter = self.fitter
+        names = fitter.fitter_param_names
+
+        with pm.Model() as model:
+            param_vars = {}
+            for i, name in enumerate(names):
+                wrapped = False
+                if fitter.wrapped_params is not None:
+                    wrapped = bool(fitter.wrapped_params[i])
+                param_vars[name] = scipy_to_pymc(fitter.priors[name], name, wrapped=wrapped)
+
+            param_vec = pt.stack([param_vars[n] for n in names])
+            logp = LogLikelihoodOp(
+                fitter, names, use_jax_grad=self.use_jax_grad
+            )(param_vec)
+            pm.Potential('likelihood', logp)
+
+        return model
+
+
+class MicrolensSolverPyMC(MicrolensSolver):
+    """MicrolensSolver that uses PyMC instead of MultiNest."""
+
+    def __init__(
+        self,
+        data,
+        model_class,
+        custom_additional_param_names=None,
+        add_error_on_photometry=False,
+        multiply_error_on_photometry=False,
+        use_phot_optional_params=True,
+        use_ast_optional_params=True,
+        wrapped_params=None,
+        outputfiles_basename='chains/pymc-',
+        verbose=False,
+        draws=1000,
+        tune=500,
+        chains=2,
+        cores=1,
+        pymc_random_seed=0,
+        sampler='metropolis',
+        use_jax_grad=True,
+        **kwargs,
+    ):
+        super().__init__(
+            data,
+            model_class,
+            custom_additional_param_names=custom_additional_param_names,
+            add_error_on_photometry=add_error_on_photometry,
+            multiply_error_on_photometry=multiply_error_on_photometry,
+            use_phot_optional_params=use_phot_optional_params,
+            use_ast_optional_params=use_ast_optional_params,
+            wrapped_params=wrapped_params,
+            outputfiles_basename=outputfiles_basename,
+            verbose=verbose,
+            dump_callback=None,
+            **kwargs,
+        )
+        self.draws = draws
+        self.tune = tune
+        self.chains = chains
+        self.cores = cores
+        self.pymc_random_seed = pymc_random_seed
+        self.sampler = sampler
+        self.use_jax_grad = use_jax_grad
+        self.idata = None
+        self.pymc_model = None
+        self._results_table = None
+        self._summary_table = None
+
+    def solve(self):
+        """Run PyMC sampling to find optimal parameters and posteriors."""
+        self.write_params_yaml()
+
+        print('*************************************************')
+        print('*** Using PyMC (Metropolis) for sampling.     ***')
+        print('*************************************************')
+
+        self.pymc_model = MicrolensPyMCModel(
+            self, use_jax_grad=self.use_jax_grad
+        ).build()
+
+        initvals = {
+            name: float(self.priors[name].ppf(0.5))
+            for name in self.fitter_param_names
+        }
+
+        with self.pymc_model:
+            step = pm.Metropolis()
+            self.idata = pm.sample(
+                draws=self.draws,
+                tune=self.tune,
+                chains=self.chains,
+                cores=self.cores,
+                step=step,
+                initvals=initvals,
+                random_seed=self.pymc_random_seed,
+                progressbar=self.verbose,
+                return_inferencedata=True,
+            )
+
+        self._results_table = None
+        self._summary_table = None
+        self._write_pymc_results()
+        self.load_pymc_results(remake_fits=True)
+        self.load_pymc_summary(remake_fits=True)
+        return
+
+    def _samples_from_idata(self):
+        stacked = []
+        for name in self.fitter_param_names:
+            stacked.append(self.idata.posterior[name].values.reshape(-1))
+        return np.column_stack(stacked)
+
+    def _build_results_table(self):
+        if self.idata is None:
+            raise RuntimeError('No PyMC results. Run solve() first.')
+
+        samples = self._samples_from_idata()
+        n_samples = samples.shape[0]
+        weights = np.ones(n_samples, dtype=float) / n_samples
+
+        loglikes = np.zeros(n_samples, dtype=float)
+        for ii in range(n_samples):
+            cube = {
+                name: samples[ii, jj]
+                for jj, name in enumerate(self.fitter_param_names)
+            }
+            loglikes[ii] = self.log_likely(cube)
+
+        tab = Table()
+        tab['weights'] = weights
+        tab['logLike'] = loglikes
+
+        for jj, name in enumerate(self.fitter_param_names):
+            tab[name] = samples[:, jj]
+
+        for add_idx, name in enumerate(self.additional_param_names):
+            col = np.zeros(n_samples, dtype=float)
+            for ii in range(n_samples):
+                cube = np.zeros(self.n_params, dtype=float)
+                for jj, pname in enumerate(self.fitter_param_names):
+                    cube[jj] = samples[ii, jj]
+                self.get_model(cube)
+                col[ii] = cube[self.n_dims + add_idx]
+            tab[name] = col
+
+        return tab
+
+    def _write_pymc_results(self):
+        tab = self._build_results_table()
+        outroot = self.outputfiles_basename
+
+        with open(outroot + '.txt', 'w') as f:
+            for row in tab:
+                line = [row['weights'], -2.0 * row['logLike']]
+                for name in self.all_param_names:
+                    line.append(row[name])
+                f.write(' '.join(f'{val:.12e}' for val in line) + '\n')
+
+        tab.write(outroot + '.fits', overwrite=True)
+        self._results_table = tab
+        return
+
+    def load_pymc_results(self, remake_fits=False):
+        if not remake_fits and self._results_table is not None:
+            return self._results_table
+        if self.idata is not None:
+            self._results_table = self._build_results_table()
+            return self._results_table
+
+        outroot = self.outputfiles_basename
+        if os.path.exists(outroot + '.fits'):
+            self._results_table = Table.read(outroot + '.fits')
+            return self._results_table
+
+        raise RuntimeError('No PyMC results found.')
+
+    def load_pymc_summary(self, remake_fits=False):
+        if not remake_fits and self._summary_table is not None:
+            return self._summary_table
+
+        tab = self.load_pymc_results(remake_fits=remake_fits)
+        row = {'logZ': np.nan, 'maxlogL': float(np.max(tab['logLike']))}
+
+        best_idx = int(np.argmax(tab['logLike']))
+        for name in self.all_param_names:
+            vals = tab[name]
+            row['Mean_' + name] = float(np.mean(vals))
+            row['StDev_' + name] = float(np.std(vals))
+            row['MaxLike_' + name] = float(vals[best_idx])
+            row['MAP_' + name] = float(vals[best_idx])
+
+        self._summary_table = Table([row])
+        return self._summary_table
+
+    def load_mnest_results(self, remake_fits=False):
+        return self.load_pymc_results(remake_fits=remake_fits)
+
+    def load_mnest_summary(self, remake_fits=False):
+        return self.load_pymc_summary(remake_fits=remake_fits)
 #########################
 ### For backwards compatibility
 #########################

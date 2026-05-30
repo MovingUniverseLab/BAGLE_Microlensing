@@ -102,7 +102,7 @@ def test_PSPL_other(plot=False):
     mag_src = 19.0
 
     run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
-                  outdir='tests/test_pspl_other/', plot=plot)
+                  outdir='tests/test_pspl_other_jax/', plot=plot)
 
     return
 
@@ -122,7 +122,7 @@ def test_PSPL_belokurov(plot=False):
     mag_src = 19.0
 
     run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
-                  outdir='tests/test_pspl_belokurov/', plot=plot)
+                  outdir='tests/test_pspl_belokurov_jax/', plot=plot)
 
     return
 
@@ -244,7 +244,7 @@ def run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
 
 
 def compare_pspl_parallax_belokurov():
-    outdir = 'tests/test_pspl_parallax_belokurov/'
+    outdir = 'tests/test_pspl_parallax_belokurov_jax/'
     dim_ang = u.dimensionless_angles()
 
     # Scenario from Belokurov and Evans 2002 (Figure 1)
@@ -375,7 +375,7 @@ def compare_pspl_parallax_han2000():
     imag = 19.0
 
     run_test_pspl_parallax(raL, decL, mL, t0, xS0, beta, muS, muL, dL, dS,
-                           b_sff, imag, outdir='tests/test_pspl_parallax_han2000/')
+                           b_sff, imag, outdir='tests/test_pspl_parallax_han2000_jax/')
 
     return
 
@@ -396,7 +396,7 @@ def compare_pspl_parallax_bulge1():
     imag = 19.0
 
     run_test_pspl_parallax(raL, decL, mL, t0, xS0, beta, muS, muL, dL, dS,
-                           b_sff, imag, outdir='tests/test_pspl_par_bulge1/')
+                           b_sff, imag, outdir='tests/test_pspl_par_bulge1_jax/')
 
     return
 
@@ -549,7 +549,7 @@ def compare_pspl_parallax_paczynski1998(t0=57000):
     i.e. just removed proper motions. 
     """
 
-    outdir = 'tests/test_pspl_parallax_paczynski1998/'
+    outdir = 'tests/test_pspl_parallax_paczynski1998_jax/'
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
 
@@ -1026,7 +1026,7 @@ def compare_PSPL_phot_Lu2016():
 
 
 def test_pspl_parallax2_bulge():
-    outdir = 'tests/test_pspl_par2_bulge1/'
+    outdir = 'tests/test_pspl_par2_bulge1_jax/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
@@ -3316,7 +3316,7 @@ def test_FSPL_PhotAstrom_source_astrometry(plot=False):
     decL = -29.0
 
     tests_dir = os.path.dirname(os.path.realpath(__file__))
-    outdir = tests_dir + '/test_FSPL_source_astrometry/'
+    outdir = tests_dir + '/test_FSPL_source_astrometry_jax/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
@@ -3526,7 +3526,7 @@ def test_FSPL_PhotAstrom_source_centroid_shift(plot=False):
     mag_src = np.array([18])
 
     tests_dir = os.path.dirname(os.path.realpath(__file__))
-    outdir = tests_dir + '/test_FSPL_source_astrometry/'
+    outdir = tests_dir + '/test_FSPL_source_astrometry_jax/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
@@ -5945,7 +5945,7 @@ def test_spitzer_zang2020(plot=False):
     piEE_helio = out[3]
     piEN_helio = out[4]
 
-    outdir = 'tests/test_pspl_par_spitzer_zang2020/'
+    outdir = 'tests/test_pspl_par_spitzer_zang2020_jax/'
 
     # Make Earth and Spitzer observations and make plots.
     if (outdir != '') and (outdir != None):
@@ -6076,7 +6076,7 @@ def test_spitzer_shvartzvald2019(plot=False):
     piEE_helio = out[3]
     piEN_helio = out[4]
 
-    outdir = 'tests/test_pspl_par_spitzer_shvartzvald2019/'
+    outdir = 'tests/test_pspl_par_spitzer_shvartzvald2019_jax/'
 
     # Make Earth and Spitzer observations and make plots.
     if (outdir != '') and (outdir != None):
@@ -6407,7 +6407,7 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
 
 
 def test_pspl_luminous_lens(plot=False):
-    outdir = 'tests/test_pspl_lumlens/'
+    outdir = 'tests/test_pspl_lumlens_jax/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
@@ -6603,7 +6603,7 @@ def test_pspl_luminous_lens(plot=False):
 
 
 def test_psbl_luminous_lens(plot=False):
-    outdir = 'tests/test_pspl_lumlens/'
+    outdir = 'tests/test_pspl_lumlens_jax/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)

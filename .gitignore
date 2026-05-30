@@ -64,3 +64,9 @@ ipython_config.py
 
 build/
 
+# Test figure output (generated when plot=True in tests)
+tests/figures/
+
+# Local virtual environment
+.venv/
+
