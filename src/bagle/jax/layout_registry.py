@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import ast
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
 
@@ -281,7 +281,13 @@ def resolve_layout(model_class) -> LayoutSpec | None:
     mixin = _find_param_mixin(model_class)
     if mixin is None:
         return None
-    return LAYOUT_BY_PARAM_MIXIN[mixin]
+    layout = LAYOUT_BY_PARAM_MIXIN[mixin]
+    cls_name = model_class.__name__
+    if "_GP_" not in cls_name and "GPnoJitter" not in cls_name:
+        return layout
+    phot_ast = "PhotAstrom" in cls_name
+    lm: LikelihoodMode = "joint_gp" if phot_ast else "phot_gp"
+    return replace(layout, has_gp=True, likelihood_mode=lm)
 
 
 def iter_phot_astrom_ast_concrete_classes(model_module):

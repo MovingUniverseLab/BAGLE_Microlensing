@@ -4175,10 +4175,10 @@
       "method_name": "get_photometry_with_gp",
       "family": "PSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
     },
     {
       "class_name": "PSPL_Phot_Par_GP_Param1",
@@ -6555,10 +6555,10 @@
       "method_name": "get_photometry_with_gp",
       "family": "PSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
     },
     {
       "class_name": "PSPL_Phot_noPar_GP_Param1",
@@ -39953,6 +39953,6 @@
   ],
   "summary": {
     "total_applicable": 1886,
-    "total_done": 214
+    "total_done": 216
   }
 }

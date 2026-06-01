@@ -2107,6 +2107,16 @@ class PSPL_GP(ABC):
         if self.use_gp_phot[filt_idx]:
             if t_pred is None:
                 t_pred = t
+            try:
+                from bagle.jax_model import try_get_photometry_with_gp
+
+                gp_jax = try_get_photometry_with_gp(
+                    self, t, mag_obs, mag_err_obs, filt_idx=filt_idx, t_pred=t_pred
+                )
+                if gp_jax is not None:
+                    return gp_jax
+            except ImportError:
+                pass
 
             gp = self.get_celerite_gp_object(mag_err_obs, filt_idx=filt_idx)
             try:
@@ -2269,6 +2279,16 @@ class PSPL_GPnoJitter(ABC):
         if self.use_gp_phot[filt_idx]:
             if t_pred is None:
                 t_pred = t
+            try:
+                from bagle.jax_model import try_get_photometry_with_gp
+
+                gp_jax = try_get_photometry_with_gp(
+                    self, t, mag_obs, mag_err_obs, filt_idx=filt_idx, t_pred=t_pred
+                )
+                if gp_jax is not None:
+                    return gp_jax
+            except ImportError:
+                pass
 
             gp = self.get_celerite_gp_object(filt_idx = filt_idx)
             try:

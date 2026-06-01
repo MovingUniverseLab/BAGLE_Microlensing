@@ -12,12 +12,14 @@ from model_old_vs_jax_fixtures import (
     call_method,
     grad_smoke_jax,
     psbl_phot_first_pairs,
+    pspl_gp_param1_pairs,
     pspl_non_gp_pairs,
     time_grid_ast,
     time_grid_phot,
 )
 
 RTOL = ATOL = 1e-6
+GP_STD_RTOL = GP_STD_ATOL = 1e-5
 PHOT_METHODS = {"get_photometry", "get_amplification", "get_photometry_with_gp"}
 
 
@@ -27,14 +29,28 @@ def _time_grid(method_name: str, instance):
     return time_grid_ast(instance)
 
 
+def _assert_parity(old_inst, jax_inst, method_name: str, t: np.ndarray):
+    ref_out = call_method(old_inst, method_name, t)
+    test_out = call_method(jax_inst, method_name, t)
+    if method_name == "get_photometry_with_gp":
+        ref_mean, ref_std = ref_out
+        test_mean, test_std = test_out
+        assert ref_mean.shape == test_mean.shape
+        assert ref_std.shape == test_std.shape
+        np.testing.assert_allclose(test_mean, ref_mean, rtol=RTOL, atol=ATOL)
+        np.testing.assert_allclose(test_std, ref_std, rtol=GP_STD_RTOL, atol=GP_STD_ATOL)
+        return
+    ref = np.asarray(ref_out, dtype=np.float64)
+    test = np.asarray(test_out, dtype=np.float64)
+    assert ref.shape == test.shape, f"shape mismatch {ref.shape} vs {test.shape}"
+    np.testing.assert_allclose(test, ref, rtol=RTOL, atol=ATOL)
+
+
 @pytest.mark.parametrize("class_name,method_name", pspl_non_gp_pairs())
 def test_parity_old_vs_jax(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
-    ref = np.asarray(call_method(old_inst, method_name, t), dtype=np.float64)
-    test = np.asarray(call_method(jax_inst, method_name, t), dtype=np.float64)
-    assert ref.shape == test.shape, f"shape mismatch {ref.shape} vs {test.shape}"
-    np.testing.assert_allclose(test, ref, rtol=RTOL, atol=ATOL)
+    _assert_parity(old_inst, jax_inst, method_name, t)
 
 
 @pytest.mark.parametrize("class_name,method_name", pspl_non_gp_pairs())
@@ -52,11 +68,27 @@ def test_grad_old_vs_jax(class_name, method_name):
     assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
 
 
+@pytest.mark.parametrize("class_name,method_name", pspl_gp_param1_pairs())
+def test_parity_pspl_gp_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", pspl_gp_param1_pairs())
+def test_grad_pspl_gp_param1(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
 @pytest.mark.parametrize("class_name,method_name", psbl_phot_first_pairs())
 def test_parity_psbl_first(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
-    ref = np.asarray(call_method(old_inst, method_name, t), dtype=np.float64)
-    test = np.asarray(call_method(jax_inst, method_name, t), dtype=np.float64)
-    assert ref.shape == test.shape
-    np.testing.assert_allclose(test, ref, rtol=RTOL, atol=ATOL)
+    _assert_parity(old_inst, jax_inst, method_name, t)

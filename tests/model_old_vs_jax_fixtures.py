@@ -104,8 +104,25 @@ def _param_mixin_cls(model_module, class_name: str):
     return getattr(model_module, layout.param_mixin)
 
 
+def _init_mixin_cls(model_module, class_name: str):
+    """Param mixin whose ``__init__`` matches the concrete model (includes GP args)."""
+    cls = getattr(model_module, class_name)
+    for base in cls.__mro__:
+        if base.__name__ == class_name:
+            continue
+        if not hasattr(base, "phot_optional_param_names"):
+            continue
+        if not any(p.startswith("gp_") for p in base.phot_optional_param_names):
+            continue
+        sig = inspect.signature(base.__init__)
+        if any(p.kind == inspect.Parameter.VAR_POSITIONAL for p in sig.parameters.values()):
+            continue
+        return base
+    return _param_mixin_cls(model_module, class_name)
+
+
 def build_init_args(cls: type, model_module) -> tuple[list[Any], dict[str, Any]]:
-    mixin = _param_mixin_cls(model_module, cls.__name__)
+    mixin = _init_mixin_cls(model_module, cls.__name__)
     sig = inspect.signature(mixin.__init__)
     args: list[Any] = []
     kwargs: dict[str, Any] = {}
@@ -156,6 +173,15 @@ def pspl_non_gp_pairs() -> list[tuple[str, str]]:
         and "GP" not in c
         and not any(s in c for s in SKIP_CLASS_SUBSTR)
     )
+
+
+def pspl_gp_param1_pairs() -> list[tuple[str, str]]:
+    """PSPL GP Param1 photometry parity (``get_photometry_with_gp``)."""
+    classes = (
+        "PSPL_Phot_noPar_GP_Param1",
+        "PSPL_Phot_Par_GP_Param1",
+    )
+    return [(c, "get_photometry_with_gp") for c in classes]
 
 
 def psbl_phot_first_pairs() -> list[tuple[str, str]]:
@@ -223,7 +249,7 @@ def numeric_init_param_names(jax_inst) -> tuple[str, ...]:
     """All numeric ``__init__`` parameters from the Param mixin (filter 0 for lists)."""
     import bagle.model_jax as model_module
 
-    mixin = _param_mixin_cls(model_module, jax_inst.__class__.__name__)
+    mixin = _init_mixin_cls(model_module, jax_inst.__class__.__name__)
     sig = inspect.signature(mixin.__init__)
     return tuple(p for p in sig.parameters if p not in INIT_PARAM_SKIP)
 
@@ -247,6 +273,8 @@ def _scalar_from_instance(instance, name: str) -> float:
         val = CANONICAL[name]
     if val is None:
         raise AttributeError(f"{instance.__class__.__name__} has no attribute {name!r}")
+    if isinstance(val, dict):
+        return float(val[0])
     arr = np.asarray(val).reshape(-1)
     if name in LIST_INIT_PARAMS or arr.size > 1:
         return float(arr[0])
@@ -614,6 +642,61 @@ def grad_smoke_jax(
                     piE_N=geom["piE_N"],
                 )
             return jnp.sum(out)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name == "get_photometry_with_gp" and layout.has_gp and ek in pspl_phot_kinds:
+        from bagle.jax.gp import _GP_QUALITY
+        import tinygp
+        from tinygp.kernels import quasisep as qk
+
+        t_obs = t_j
+        t_pred = t_j[: min(10, t_j.shape[0])]
+        mag_obs = jnp.asarray(jax_inst.get_photometry(np.asarray(t)), dtype=jnp.float64)
+        mag_err = jnp.full_like(mag_obs, 0.02, dtype=jnp.float64)
+        log_jit = jnp.log(jnp.mean(mag_err))
+
+        def forward(v):
+            geom = _pspl_geom(v)
+            b_sff = _init_param(v, init_names, "b_sff", 1.0)
+            mag = _mag_from_init(v, init_names, layout, b_sff)
+            if mag is None:
+                mag = jnp.asarray(_mag_scalar(jax_inst, layout), dtype=jnp.float64)
+            log_sigma = _init_param(v, init_names, "gp_log_sigma", -1.0)
+            log_rho = _init_param(v, init_names, "gp_log_rho", 0.5)
+            log_S0 = _init_param(v, init_names, "gp_log_S0", -2.0)
+            log_omega0 = _init_param(v, init_names, "gp_log_omega0", 0.0)
+            sigma = jnp.exp(log_sigma)
+            rho = jnp.exp(log_rho)
+            S0 = jnp.exp(log_S0)
+            omega0 = jnp.exp(log_omega0)
+            jitter = jnp.exp(log_jit)
+            kernel = qk.Matern32(scale=rho, sigma=sigma) + qk.SHO(
+                omega=omega0, quality=_GP_QUALITY, sigma=jnp.sqrt(S0)
+            )
+            diag = mag_err**2 + jitter**2
+
+            def mean_fn(x):
+                m = pspl_photometry(
+                    jnp.atleast_1d(x),
+                    geom["t0"],
+                    geom["tE"],
+                    geom["u0"],
+                    geom["thetaE_hat"],
+                    mag,
+                    b_sff=b_sff,
+                    parallax_vectors=pvec,
+                    piE_E=geom["piE_E"],
+                    piE_N=geom["piE_N"],
+                )
+                return m[0]
+
+            gp = tinygp.GaussianProcess(kernel, t_obs, diag=diag, mean=mean_fn)
+            cond = gp.condition(mag_obs, t_pred)
+            return jnp.sum(cond.gp.loc)
 
         g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
         if return_names:

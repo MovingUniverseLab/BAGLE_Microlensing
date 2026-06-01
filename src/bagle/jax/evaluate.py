@@ -873,6 +873,42 @@ def try_get_log_likely_astrometry_each(
     )
 
 
+def evaluate_photometry_with_gp_jax(
+    layout: LayoutSpec,
+    model,
+    t,
+    mag_obs,
+    mag_err_obs,
+    filt_idx: int = 0,
+    t_pred=None,
+):
+    """GP predictive photometry; returns ``(mean, std)`` or ``None``."""
+    from bagle.jax.gp import photometry_with_gp_jax, supports_gp_layout
+
+    if not supports_gp_layout(layout):
+        return None
+    return photometry_with_gp_jax(
+        layout, model, t, mag_obs, mag_err_obs, filt_idx, t_pred=t_pred
+    )
+
+
+def try_get_photometry_with_gp(
+    model,
+    t,
+    mag_obs,
+    mag_err_obs,
+    filt_idx: int = 0,
+    t_pred=None,
+):
+    """JAX GP photometry when supported; else ``None`` (NumPy/celerite fallback)."""
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_photometry_with_gp_jax(
+        layout, model, t, mag_obs, mag_err_obs, filt_idx, t_pred=t_pred
+    )
+
+
 def evaluate_forward_jax(
     model,
     method_name: str,
