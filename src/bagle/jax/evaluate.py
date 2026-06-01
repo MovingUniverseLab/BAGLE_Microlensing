@@ -461,6 +461,9 @@ def evaluate_amplification_jax(
         if ek.startswith("psbl_phot"):
             amp, _mag = _evaluate_psbl_phot(layout, model, t_j, pvec, 0.0, 1.0)
             return np.asarray(amp, dtype=np.float64)
+        if ek.startswith("psbl_photastrom"):
+            amp, _mag = _evaluate_psbl_phot(layout, model, t_j, pvec, 0.0, 1.0)
+            return np.asarray(amp, dtype=np.float64)
     except (AttributeError, NotImplementedError, TypeError):
         return None
     return None
@@ -481,11 +484,7 @@ def evaluate_lens_astrometry_jax(
     t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
     pvec = _parallax_table(model, t, filt_idx)
     try:
-        if layout.eval_kind in (
-            "pspl_photastrom_physical",
-            "pspl_photastrom_reduced",
-            "pspl_astrom_reduced",
-        ):
+        if _joint_astrom_kind(layout.eval_kind):
             pos = _linear_astrometry_jax(
                 t_j,
                 float(model.t0),
@@ -533,11 +532,7 @@ def evaluate_astrometry_unlensed_jax(
     pvec = _parallax_table(model, t, filt_idx)
     b_sff = _phot_attr(model, filt_idx, "b_sff") or 1.0
     try:
-        if layout.eval_kind in (
-            "pspl_photastrom_physical",
-            "pspl_photastrom_reduced",
-            "pspl_astrom_reduced",
-        ):
+        if _joint_astrom_kind(layout.eval_kind):
             xS = _linear_astrometry_jax(
                 t_j,
                 float(model.t0),
@@ -579,6 +574,11 @@ _PSPL_ASTROM_KINDS = (
     "pspl_photastrom_reduced",
     "pspl_astrom_reduced",
 )
+
+
+def _joint_astrom_kind(eval_kind: str) -> bool:
+    """Return True for PSPL/PSBL phot+astrom layouts with linear source/lens motion."""
+    return eval_kind in _PSPL_ASTROM_KINDS or eval_kind.startswith("psbl_photastrom")
 
 
 def _pspl_u_jax(model, t, filt_idx: int, pvec):

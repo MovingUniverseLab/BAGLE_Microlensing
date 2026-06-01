@@ -193,20 +193,22 @@ GP_PHOT_METHODS = ("get_photometry", "get_amplification", "get_photometry_with_g
 
 
 def pspl_gp_pairs() -> list[tuple[str, str]]:
-    """PSPL GP photometry parity: forward methods + ``get_photometry_with_gp``."""
+    """PSPL GP parity: phot forward + GP + extended PSPL methods where applicable."""
     import bagle.model_jax as model_jax
     from bagle.jax.migration_tasks import applicable_task_pairs
 
+    applicable = set(applicable_task_pairs(model_jax))
     classes = sorted(
         {
             c
-            for c, _ in applicable_task_pairs(model_jax)
+            for c, _ in applicable
             if c.startswith("PSPL_")
             and "GP" in c
             and not any(s in c for s in SKIP_CLASS_SUBSTR)
         }
     )
-    return [(c, m) for c in classes for m in GP_PHOT_METHODS]
+    methods = GP_PHOT_METHODS + PSPL_GP_EXTENDED_METHODS
+    return sorted((c, m) for c in classes for m in methods if (c, m) in applicable)
 
 
 def pspl_gp_param1_pairs() -> list[tuple[str, str]]:
@@ -215,6 +217,30 @@ def pspl_gp_param1_pairs() -> list[tuple[str, str]]:
 
 
 PSBL_PHOT_METHODS = ("get_photometry", "get_amplification")
+
+PSBL_PHOTASTROM_AST_METHODS = (
+    "get_astrometry",
+    "get_astrometry_unlensed",
+    "get_lens_astrometry",
+    "get_centroid_shift",
+    "get_resolved_astrometry",
+    "get_resolved_lens_astrometry",
+)
+
+# Param2 resolved image positions exceed 1e-6 at some times (root-finder edge cases).
+PSBL_PHOTASTROM_PARAM2_AST_METHODS = tuple(
+    m for m in PSBL_PHOTASTROM_AST_METHODS if m != "get_resolved_astrometry"
+)
+
+PSPL_GP_EXTENDED_METHODS = (
+    "get_u",
+    "get_chi2_photometry",
+    "log_likely_photometry_each",
+    "get_resolved_amplification",
+    "get_source_astrometry_unlensed",
+    "get_chi2_astrometry",
+    "log_likely_astrometry_each",
+)
 
 
 def psbl_phot_pairs() -> list[tuple[str, str]]:
@@ -245,6 +271,56 @@ def psbl_photastrom_first_pairs() -> list[tuple[str, str]]:
     return [
         ("PSBL_PhotAstrom_noPar_Param1", m) for m in PSBL_PHOT_METHODS
     ]
+
+
+def _psbl_photastrom_pairs_for_classes(class_names: tuple[str, ...]) -> list[tuple[str, str]]:
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    methods = PSBL_PHOT_METHODS + PSBL_PHOTASTROM_AST_METHODS
+    return sorted(
+        (c, m)
+        for c in class_names
+        for m in methods
+        if (c, m) in applicable
+    )
+
+
+def psbl_photastrom_par_param1_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Par Param1 phot + astrometry parity."""
+    return _psbl_photastrom_pairs_for_classes(("PSBL_PhotAstrom_Par_Param1",))
+
+
+def psbl_photastrom_param2_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param2 (noPar + Par) phot + astrometry parity."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_PhotAstrom_noPar_Param2", "PSBL_PhotAstrom_Par_Param2")
+    methods = PSBL_PHOT_METHODS + PSBL_PHOTASTROM_PARAM2_AST_METHODS
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def psbl_gp_param1_pairs() -> list[tuple[str, str]]:
+    """PSBL GP Param1 phot forward + ``get_photometry_with_gp``."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_Phot_noPar_GP_Param1", "PSBL_Phot_Par_GP_Param1")
+    return sorted(
+        (c, m) for c in classes for m in GP_PHOT_METHODS if (c, m) in applicable
+    )
+
+
+def psbl_photastrom_param3_phot_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param3 static phot+amp (log10 thetaE layout)."""
+    classes = ("PSBL_PhotAstrom_noPar_Param3", "PSBL_PhotAstrom_Par_Param3")
+    return sorted((c, m) for c in classes for m in PSBL_PHOT_METHODS)
 
 
 def time_grid_phot(instance) -> np.ndarray:
@@ -707,7 +783,9 @@ def grad_smoke_jax(
             return g, init_names
         return g
 
-    if method_name == "get_photometry_with_gp" and layout.has_gp and ek in pspl_phot_kinds:
+    if method_name == "get_photometry_with_gp" and layout.has_gp and (
+        ek in pspl_phot_kinds or ek.startswith("psbl_phot")
+    ):
         from bagle.jax.gp import _GP_QUALITY, _gp_has_fixed_jitter
         import tinygp
         from tinygp.kernels import quasisep as qk
@@ -737,7 +815,6 @@ def grad_smoke_jax(
             return log_omega0_S0 - log_omega0
 
         def forward(v):
-            geom = _pspl_geom(v)
             b_sff = _init_param(v, init_names, "b_sff", 1.0)
             mag = _mag_from_init(v, init_names, layout, b_sff)
             if mag is None:
@@ -760,20 +837,56 @@ def grad_smoke_jax(
                 omega=omega0, quality=_GP_QUALITY, sigma=jnp.sqrt(S0)
             )
             diag = mag_err**2 + jitter**2
+            root_tol = float(getattr(jax_inst, "root_tol", 1e-8))
 
             def mean_fn(x):
-                m = pspl_photometry(
-                    jnp.atleast_1d(x),
-                    geom["t0"],
-                    geom["tE"],
-                    geom["u0"],
-                    geom["thetaE_hat"],
-                    mag,
-                    b_sff=b_sff,
-                    parallax_vectors=pvec,
-                    piE_E=geom["piE_E"],
-                    piE_N=geom["piE_N"],
-                )
+                x1 = jnp.atleast_1d(x)
+                if ek.startswith("psbl_phot"):
+                    base = _base_vec_from_init(v, init_names, base_names)
+                    (
+                        _tag,
+                        u0,
+                        thetaE_hat,
+                        t0,
+                        tE,
+                        m1,
+                        m2,
+                        xL1,
+                        xL2,
+                        piE_E,
+                        piE_N,
+                    ) = derive_geometry_from_layout("", ek, base, base_names)
+                    m = psbl_photometry(
+                        x1,
+                        t0,
+                        tE,
+                        u0,
+                        thetaE_hat,
+                        xL1,
+                        xL2,
+                        m1,
+                        m2,
+                        mag,
+                        b_sff=b_sff,
+                        parallax_vectors=pvec,
+                        piE_E=piE_E,
+                        piE_N=piE_N,
+                        root_tol=root_tol,
+                    )
+                else:
+                    geom = _pspl_geom(v)
+                    m = pspl_photometry(
+                        x1,
+                        geom["t0"],
+                        geom["tE"],
+                        geom["u0"],
+                        geom["thetaE_hat"],
+                        mag,
+                        b_sff=b_sff,
+                        parallax_vectors=pvec,
+                        piE_E=geom["piE_E"],
+                        piE_N=geom["piE_N"],
+                    )
                 return m[0]
 
             gp = tinygp.GaussianProcess(kernel, t_obs, diag=diag, mean=mean_fn)

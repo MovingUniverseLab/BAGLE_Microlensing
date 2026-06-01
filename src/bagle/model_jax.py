@@ -6862,8 +6862,10 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         # Figure out the flux ratio between the lenses.
         fratio_1_2 = dmag2fratio(self.dmag_Lp_Ls[filt_idx])
 
-        # Flux-weighted centroid.
-        xL_centroid = (xL1 * fratio_1_2) + (xL2 * (1 - fratio_1_2))
+        # Flux-weighted centroid (match ``model.PSBL_PhotAstrom``).
+        fL1 = 1.0
+        fL2 = fL1 / fratio_1_2
+        xL_centroid = (xL1 * fL1 + xL2 * fL2) / (fL1 + fL2)
 
         return xL_centroid
 
