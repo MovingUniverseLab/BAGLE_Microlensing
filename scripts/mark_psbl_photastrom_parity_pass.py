@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mark PSBL phot seed pairs as jax_only + parity pass (grad not_run)."""
+"""Mark PSBL PhotAstrom seed pairs as jax_only + parity pass (grad not_run)."""
 from __future__ import annotations
 
 import json
@@ -10,13 +10,13 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "tests"))
 
-from model_old_vs_jax_fixtures import psbl_phot_pairs  # noqa: E402
+from model_old_vs_jax_fixtures import psbl_photastrom_first_pairs  # noqa: E402
 
 STATUS_JSON = REPO / "docs" / "jax_migration_status.json"
 
 
 def main() -> int:
-    pairs = set(psbl_phot_pairs())
+    pairs = set(psbl_photastrom_first_pairs())
     data = json.loads(STATUS_JSON.read_text(encoding="utf-8"))
     marked = 0
     for row in data["tasks"]:
@@ -39,7 +39,7 @@ def main() -> int:
         ),
     }
     STATUS_JSON.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    print(f"marked {marked} PSBL phot parity pairs")
+    print(f"marked {marked} PSBL PhotAstrom parity pairs")
     return 0
 
 

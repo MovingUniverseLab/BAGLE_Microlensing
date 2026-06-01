@@ -14625,20 +14625,20 @@
       "method_name": "get_amplification",
       "family": "PSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "PSBL_PhotAstrom_noPar_Param1",
       "method_name": "get_photometry",
       "family": "PSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "PSBL_PhotAstrom_noPar_Param1",
@@ -15305,20 +15305,20 @@
       "method_name": "get_amplification",
       "family": "PSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "PSBL_Phot_Par_CircOrbs_Param1",
       "method_name": "get_photometry",
       "family": "PSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "PSBL_Phot_Par_CircOrbs_Param1",
@@ -15475,20 +15475,20 @@
       "method_name": "get_amplification",
       "family": "PSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "PSBL_Phot_Par_EllOrbs_Param1",
       "method_name": "get_photometry",
       "family": "PSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "PSBL_Phot_Par_EllOrbs_Param1",
@@ -15985,20 +15985,20 @@
       "method_name": "get_amplification",
       "family": "PSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "PSBL_Phot_noPar_CircOrbs_Param1",
       "method_name": "get_photometry",
       "family": "PSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "PSBL_Phot_noPar_CircOrbs_Param1",
@@ -16155,20 +16155,20 @@
       "method_name": "get_amplification",
       "family": "PSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "PSBL_Phot_noPar_EllOrbs_Param1",
       "method_name": "get_photometry",
       "family": "PSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "PSBL_Phot_noPar_EllOrbs_Param1",

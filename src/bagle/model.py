@@ -6816,6 +6816,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
 
       # Get the position of the lenses (in units of Einstein radii)
         if self.orbitFlag:
+            self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
             z1 = self.xL1[:, 0] + self.xL1[:, 1] * 1j
             z2 = self.xL2[:, 0] + self.xL2[:, 1] * 1j
         else:    

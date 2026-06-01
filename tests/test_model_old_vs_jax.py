@@ -11,7 +11,8 @@ from model_old_vs_jax_fixtures import (
     build_paired_instances,
     call_method,
     grad_smoke_jax,
-    psbl_phot_first_pairs,
+    psbl_phot_pairs,
+    psbl_photastrom_first_pairs,
     pspl_gp_pairs,
     pspl_non_gp_pairs,
     time_grid_ast,
@@ -87,8 +88,15 @@ def test_grad_pspl_gp(class_name, method_name):
     assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
 
 
-@pytest.mark.parametrize("class_name,method_name", psbl_phot_first_pairs())
-def test_parity_psbl_first(class_name, method_name):
+@pytest.mark.parametrize("class_name,method_name", psbl_phot_pairs())
+def test_parity_psbl_phot(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_first_pairs())
+def test_parity_psbl_photastrom_first(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)

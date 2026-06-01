@@ -422,6 +422,52 @@ def psbl_complex_pos_static(
     return w, z1, z2
 
 
+def psbl_keplerian_lens_positions(t, w, o, i, e, p, tp, aleph, aleph_sec):
+    """Time-varying PSBL phot orbit lens positions (Einstein-radius units)."""
+    from bagle.jax.orbits import oal2xy
+
+    x, y, x2, y2 = oal2xy(t, w, o, i, e, p, tp, aleph, aleph_sec)
+    z1 = x + 1j * y
+    z2 = x2 + 1j * y2
+    return z1, z2
+
+
+def psbl_complex_pos_keplerian(
+    t,
+    t0,
+    tE,
+    u0,
+    thetaE_hat,
+    w,
+    o,
+    i,
+    e,
+    p,
+    tp,
+    aleph,
+    aleph_sec,
+    parallax_vectors=None,
+    piE_E=None,
+    piE_N=None,
+    parallax_correction=None,
+):
+    """Source and Keplerian binary-lens positions as complex arrays."""
+    t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+    src_w = psbl_source_position(
+        t,
+        t0,
+        tE,
+        u0,
+        thetaE_hat,
+        parallax_vectors=parallax_vectors,
+        piE_E=piE_E,
+        piE_N=piE_N,
+        parallax_correction=parallax_correction,
+    )
+    z1, z2 = psbl_keplerian_lens_positions(t, w, o, i, e, p, tp, aleph, aleph_sec)
+    return src_w, z1, z2
+
+
 # ---------------------------------------------------------------------------
 # PSPL amplification and photometry
 # ---------------------------------------------------------------------------

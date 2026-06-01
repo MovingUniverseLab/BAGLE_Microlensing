@@ -15,8 +15,10 @@ from bagle.jax_physics import (
     gaussian_log_likelihood_photometry_each,
     precompute_parallax_vectors,
     psbl_all_arrays,
+    psbl_complex_pos_keplerian,
     psbl_complex_pos_static,
     psbl_photometry,
+    psbl_photometry_from_amp,
     psbl_total_amplification,
     pspl_astrometry_param1,
     pspl_amplification,
@@ -48,44 +50,69 @@ def _phot_attr(model, filt_idx: int, base: str):
     val = getattr(model, base, None)
     if val is None:
         return None
-    if isinstance(val, (list, tuple, np.ndarray)):
-        return float(val[filt_idx])
-    return float(val)
+    arr = np.asarray(val).reshape(-1)
+    if arr.size == 0:
+        return None
+    return float(arr[filt_idx]) if arr.size > filt_idx else float(arr[0])
 
 
-def evaluate_amplification_jax(
+def _evaluate_psbl_phot(
     layout: LayoutSpec,
     model,
-    t,
-    filt_idx: int = 0,
-) -> np.ndarray | None:
-    """Compute total amplification; return None if unsupported."""
-    t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
-    pvec = _parallax_table(model, t, filt_idx)
-    ek = layout.eval_kind
-    try:
-        if ek in (
-            "pspl_phot_static",
-            "pspl_phot_log",
-            "pspl_photastrom_physical",
-            "pspl_photastrom_reduced",
-        ):
-            from bagle.jax_physics import pspl_amplification
+    t_j,
+    pvec,
+    mag_src: float,
+    b_sff: float,
+):
+    """Shared PSBL phot-only forward (static or Keplerian orbit)."""
+    m1 = float(model.m1)
+    m2 = float(model.m2)
+    root_tol = float(getattr(model, "root_tol", 1e-8))
+    piE_E = float(model.piE[0])
+    piE_N = float(model.piE[1])
+    t0 = float(model.t0)
+    tE = float(model.tE)
+    u0 = jnp.asarray(model.u0, dtype=jnp.float64)
+    thetaE_hat = jnp.asarray(model.thetaE_hat, dtype=jnp.float64)
 
-            amp = pspl_amplification(
-                t_j,
-                float(model.t0),
-                float(model.tE),
-                jnp.asarray(model.u0, dtype=jnp.float64),
-                jnp.asarray(model.thetaE_hat, dtype=jnp.float64),
-                parallax_vectors=pvec,
-                piE_E=float(model.piE[0]),
-                piE_N=float(model.piE[1]),
-            )
-            return np.asarray(amp, dtype=np.float64)
-    except (AttributeError, NotImplementedError, TypeError):
-        return None
-    return None
+    if layout.orbit == "keplerian":
+        w, z1, z2 = psbl_complex_pos_keplerian(
+            t_j,
+            t0,
+            tE,
+            u0,
+            thetaE_hat,
+            float(model.w),
+            float(model.o),
+            float(model.i),
+            float(model.e),
+            float(model.p),
+            float(model.tp),
+            float(model.aleph),
+            float(model.aleph_sec),
+            parallax_vectors=pvec,
+            piE_E=piE_E,
+            piE_N=piE_N,
+        )
+    else:
+        xL1 = jnp.asarray(model.xL1_over_theta, dtype=jnp.float64)
+        xL2 = jnp.asarray(model.xL2_over_theta, dtype=jnp.float64)
+        w, z1, z2 = psbl_complex_pos_static(
+            t_j,
+            t0,
+            tE,
+            u0,
+            thetaE_hat,
+            xL1,
+            xL2,
+            parallax_vectors=pvec,
+            piE_E=piE_E,
+            piE_N=piE_N,
+        )
+
+    _, amp_arr = psbl_all_arrays(w, z1, z2, m1, m2, root_tol)
+    amp = psbl_total_amplification(amp_arr)
+    return amp, psbl_photometry_from_amp(amp, mag_src, b_sff=b_sff)
 
 
 def evaluate_astrometry_unlensed_jax(
@@ -178,27 +205,7 @@ def evaluate_photometry_jax(
             return None  # no photometry
 
         if ek.startswith("psbl_phot"):
-            m1 = float(model.m1)
-            m2 = float(model.m2)
-            xL1 = jnp.asarray(model.xL1_over_theta, dtype=jnp.float64)
-            xL2 = jnp.asarray(model.xL2_over_theta, dtype=jnp.float64)
-            mag = psbl_photometry(
-                t_j,
-                float(model.t0),
-                float(model.tE),
-                jnp.asarray(model.u0, dtype=jnp.float64),
-                jnp.asarray(model.thetaE_hat, dtype=jnp.float64),
-                xL1,
-                xL2,
-                m1,
-                m2,
-                mag_src,
-                b_sff=b_sff,
-                parallax_vectors=pvec,
-                piE_E=float(model.piE[0]),
-                piE_N=float(model.piE[1]),
-                root_tol=float(getattr(model, "root_tol", 1e-8)),
-            )
+            _, mag = _evaluate_psbl_phot(layout, model, t_j, pvec, mag_src, b_sff)
             return np.asarray(mag, dtype=np.float64)
 
         if ek.startswith("bspl_phot"):
@@ -452,31 +459,7 @@ def evaluate_amplification_jax(
             )
             return np.asarray(amp, dtype=np.float64)
         if ek.startswith("psbl_phot"):
-            m1 = float(model.m1)
-            m2 = float(model.m2)
-            xL1 = jnp.asarray(model.xL1_over_theta, dtype=jnp.float64)
-            xL2 = jnp.asarray(model.xL2_over_theta, dtype=jnp.float64)
-            w, z1, z2 = psbl_complex_pos_static(
-                t_j,
-                float(model.t0),
-                float(model.tE),
-                jnp.asarray(model.u0, dtype=jnp.float64),
-                jnp.asarray(model.thetaE_hat, dtype=jnp.float64),
-                xL1,
-                xL2,
-                parallax_vectors=pvec,
-                piE_E=float(model.piE[0]),
-                piE_N=float(model.piE[1]),
-            )
-            _, amp_arr = psbl_all_arrays(
-                w,
-                z1,
-                z2,
-                m1,
-                m2,
-                float(getattr(model, "root_tol", 1e-8)),
-            )
-            amp = psbl_total_amplification(amp_arr)
+            amp, _mag = _evaluate_psbl_phot(layout, model, t_j, pvec, 0.0, 1.0)
             return np.asarray(amp, dtype=np.float64)
     except (AttributeError, NotImplementedError, TypeError):
         return None

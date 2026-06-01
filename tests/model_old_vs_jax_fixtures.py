@@ -54,6 +54,16 @@ CANONICAL: dict[str, Any] = {
     "rho": 0.01,
     "log_rho": math.log10(0.01),
     "root_tol": 1e-8,
+    "aleph": 0.4,
+    "aleph_sec": 0.8,
+    "v_para": 0.01,
+    "v_perp": 0.005,
+    "v_rad": -0.02,
+    "r_s": 0.5,
+    "a_s": 1.0,
+    "dmag_Lp_Ls": [0.0],
+    "mLp": 10.0,
+    "mLs": 3.0,
     "gp_log_sigma": [-1.0],
     "gp_log_rho": [0.5],
     "gp_rho": [math.exp(0.5)],
@@ -204,11 +214,37 @@ def pspl_gp_param1_pairs() -> list[tuple[str, str]]:
     return [(c, m) for c, m in pspl_gp_pairs() if m == "get_photometry_with_gp"]
 
 
+PSBL_PHOT_METHODS = ("get_photometry", "get_amplification")
+
+
+def psbl_phot_pairs() -> list[tuple[str, str]]:
+    """PSBL phot-only parity (static + keplerian orbit, no GP)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    classes = sorted(
+        {
+            c
+            for c, _ in applicable_task_pairs(model_jax)
+            if c.startswith("PSBL_Phot_")
+            and "PhotAstrom" not in c
+            and "GP" not in c
+            and not any(s in c for s in SKIP_CLASS_SUBSTR)
+        }
+    )
+    return [(c, m) for c in classes for m in PSBL_PHOT_METHODS]
+
+
 def psbl_phot_first_pairs() -> list[tuple[str, str]]:
-    """Seed PSBL parity harness (photometry Param1, no GP)."""
-    classes = ("PSBL_Phot_noPar_Param1", "PSBL_Phot_Par_Param1")
-    methods = ("get_photometry", "get_amplification")
-    return [(c, m) for c in classes for m in methods]
+    """Backward-compatible alias for :func:`psbl_phot_pairs`."""
+    return psbl_phot_pairs()
+
+
+def psbl_photastrom_first_pairs() -> list[tuple[str, str]]:
+    """Seed PSBL phot+astrom static Param1 parity (one class)."""
+    return [
+        ("PSBL_PhotAstrom_noPar_Param1", m) for m in PSBL_PHOT_METHODS
+    ]
 
 
 def time_grid_phot(instance) -> np.ndarray:
@@ -263,6 +299,7 @@ LIST_INIT_PARAMS = frozenset(
         "gp_log_omega0_S0",
         "gp_log_omega04_S0",
         "gp_log_jit_sigma",
+        "dmag_Lp_Ls",
     }
 )
 

@@ -18,7 +18,10 @@ def eccen_anomaly(M, e):
 
 def oal2xy(t, w, o, i, e, p, tp, aleph, aleph2, accel=False, ax=0.0, ay=0.0):
     """
-  Port of :meth:`bagle.orbits.Orbit.oal2xy` for primary/secondary positions (arcsec).
+    Port of :meth:`bagle.orbits.Orbit.oal2xy` for primary/secondary positions.
+
+    Positions are in the same units as ``aleph`` / ``aleph2`` (arcsec for
+    PhotAstrom, Einstein-radius units for PSBL phot-only orbit models).
     """
     t = jnp.asarray(t, dtype=jnp.float64)
     mean_motion = 2.0 * jnp.pi / p
@@ -35,16 +38,20 @@ def oal2xy(t, w, o, i, e, p, tp, aleph, aleph2, accel=False, ax=0.0, ay=0.0):
     sin_i = jnp.sin(jnp.deg2rad(i))
     cos_om = jnp.cos(jnp.deg2rad(w))
     sin_om = jnp.sin(jnp.deg2rad(w))
-    A = aleph * (cos_om * cos_bigOm - sin_om * sin_bigOm * cos_i)
-    B = aleph * (cos_om * sin_bigOm + sin_om * cos_bigOm * cos_i)
-    F = aleph * (-sin_om * sin_i)
-    G = aleph * (cos_om * cos_bigOm - sin_om * sin_bigOm * cos_i)
-    H = aleph * (cos_om * sin_bigOm + sin_om * cos_bigOm * cos_i)
-    C = aleph * (-sin_om * sin_i)
-    x = A * X + B * Y
-    y = F * X + G * Y
-    x2 = -A * X - B * Y
-    y2 = -F * X - G * Y
+    con_a = aleph * (cos_om * cos_bigOm - sin_om * sin_bigOm * cos_i)
+    con_b = aleph * (cos_om * sin_bigOm + sin_om * cos_bigOm * cos_i)
+    con_f = aleph * (-sin_om * cos_bigOm - cos_om * sin_bigOm * cos_i)
+    con_g = aleph * (-sin_om * sin_bigOm + cos_om * cos_bigOm * cos_i)
+    cos_om2 = jnp.cos(jnp.deg2rad(w + 180.0))
+    sin_om2 = jnp.sin(jnp.deg2rad(w + 180.0))
+    con_a2 = aleph2 * (cos_om2 * cos_bigOm - sin_om2 * sin_bigOm * cos_i)
+    con_b2 = aleph2 * (cos_om2 * sin_bigOm + sin_om2 * cos_bigOm * cos_i)
+    con_f2 = aleph2 * (-sin_om2 * cos_bigOm - cos_om2 * sin_bigOm * cos_i)
+    con_g2 = aleph2 * (-sin_om2 * sin_bigOm + cos_om2 * cos_bigOm * cos_i)
+    x = con_b * X + con_g * Y
+    y = con_a * X + con_f * Y
+    x2 = con_b2 * X + con_g2 * Y
+    y2 = con_a2 * X + con_f2 * Y
     if accel:
         dt = (t - tp) / 365.25
         x2 = x2 + ax * dt**2
