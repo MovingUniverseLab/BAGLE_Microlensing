@@ -22,6 +22,14 @@ ALL_FORWARD_METHODS: tuple[MethodName, ...] = (
     "get_resolved_lens_astrometry",
     "get_astrometry_outline_unlensed",
     "get_photometry_with_gp",
+    # PSPL extended (defined on ``PSPL`` ABC in ``model.py``; in addition to forward outputs above)
+    "get_source_astrometry_unlensed",
+    "get_resolved_amplification",
+    "get_u",
+    "get_chi2_photometry",
+    "get_chi2_astrometry",
+    "log_likely_photometry_each",
+    "log_likely_astrometry_each",
 )
 
 FAMILY_ORDER: tuple[str, ...] = (
@@ -83,6 +91,7 @@ def applicable_methods(cls: type) -> dict[MethodName, bool]:
     is_fsbl = name.startswith(("FSBL", "FSPL"))
     is_bsbl = name.startswith(("BSBL", "BSPL"))
     is_psbl = name.startswith("PSBL")
+    is_pspl = name.startswith("PSPL")
 
     out: dict[MethodName, bool] = {m: False for m in ALL_FORWARD_METHODS}
 
@@ -101,6 +110,24 @@ def applicable_methods(cls: type) -> dict[MethodName, bool]:
                 out[m] = True
         if _class_has_method(cls, "get_centroid_shift"):
             out["get_centroid_shift"] = True
+
+    if is_pspl:
+        if ast and _class_has_method(cls, "get_source_astrometry_unlensed"):
+            out["get_source_astrometry_unlensed"] = True
+        if ast and _class_has_method(cls, "get_resolved_astrometry"):
+            out["get_resolved_astrometry"] = True
+        if phot and _class_has_method(cls, "get_resolved_amplification"):
+            out["get_resolved_amplification"] = True
+        if (phot or ast) and _class_has_method(cls, "get_u"):
+            out["get_u"] = True
+        if phot and _class_has_method(cls, "get_chi2_photometry"):
+            out["get_chi2_photometry"] = True
+        if ast and _class_has_method(cls, "get_chi2_astrometry"):
+            out["get_chi2_astrometry"] = True
+        if phot and _class_has_method(cls, "log_likely_photometry_each"):
+            out["log_likely_photometry_each"] = True
+        if ast and _class_has_method(cls, "log_likely_astrometry_each"):
+            out["log_likely_astrometry_each"] = True
 
     if is_psbl or is_bsbl or is_fsbl:
         for m in ("get_resolved_astrometry", "get_resolved_lens_astrometry"):

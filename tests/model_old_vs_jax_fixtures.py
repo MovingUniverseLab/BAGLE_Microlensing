@@ -62,6 +62,13 @@ CANONICAL: dict[str, Any] = {
 
 PARALLAX_KW = dict(raL=259.5, decL=-29.0, obsLocation="earth")
 
+PHOT_LIKELIHOOD_METHODS = frozenset(
+    {"get_chi2_photometry", "log_likely_photometry_each"}
+)
+AST_LIKELIHOOD_METHODS = frozenset(
+    {"get_chi2_astrometry", "log_likely_astrometry_each"}
+)
+
 SKIP_CLASS_SUBSTR = (
     "RefPar",
     "LumLens",
@@ -180,6 +187,16 @@ def call_method(instance, method_name: str, t: np.ndarray):
         mag = instance.get_photometry(t) if hasattr(instance, "get_photometry") else np.full_like(t, 18.5)
         err = np.full_like(t, 0.02)
         return method(t, mag, err, filt_idx=0, t_pred=t[:10])
+    if method_name in PHOT_LIKELIHOOD_METHODS:
+        mag = np.asarray(instance.get_photometry(t), dtype=np.float64)
+        mag = mag + 0.05
+        err = np.full_like(t, 0.02, dtype=np.float64)
+        return method(t, mag, err, **kwargs)
+    if method_name in AST_LIKELIHOOD_METHODS:
+        pos = np.asarray(instance.get_astrometry(t), dtype=np.float64)
+        pos = pos + np.array([0.001, 0.001])
+        err = np.full_like(t, 0.001, dtype=np.float64)
+        return method(t, pos[:, 0], pos[:, 1], err, err, **kwargs)
     return method(t, **kwargs)
 
 
@@ -500,12 +517,22 @@ def grad_smoke_jax(
     from bagle.jax.layout_registry import resolve_layout
     from bagle.jax.geometry import derive_geometry_from_layout
     from bagle.jax_physics import (
+        gaussian_chi2_astrometry,
+        gaussian_chi2_photometry,
+        gaussian_log_likelihood_astrometry_each,
+        gaussian_log_likelihood_photometry_each,
         psbl_all_arrays,
         psbl_complex_pos_static,
         psbl_photometry,
         psbl_total_amplification,
         pspl_amplification,
+        pspl_astrometry_param1,
         pspl_photometry,
+        pspl_resolved_amplification,
+        pspl_resolved_amplification_from_u,
+        pspl_resolved_astrometry,
+        pspl_source_astrometry_unlensed,
+        pspl_u,
     )
 
     layout = resolve_layout(jax_inst.__class__)
@@ -518,6 +545,34 @@ def grad_smoke_jax(
     pvec = _parallax_vectors(jax_inst, t)
     vec0 = jnp.array(pack_init_vector(jax_inst)[0], dtype=jnp.float64)
     ek = layout.eval_kind
+    geom_names = _helio_geom_names(base_names)
+    pspl_phot_kinds = (
+        "pspl_phot_static",
+        "pspl_phot_log",
+        "pspl_photastrom_physical",
+        "pspl_photastrom_reduced",
+    )
+    pspl_astrom_kinds = (
+        "pspl_photastrom_physical",
+        "pspl_photastrom_reduced",
+        "pspl_astrom_reduced",
+    )
+
+    def _phot_obs():
+        mag = jnp.asarray(jax_inst.get_photometry(t), dtype=jnp.float64)
+        mag = mag + 0.05
+        err = jnp.full_like(mag, 0.02, dtype=jnp.float64)
+        return mag, err
+
+    def _ast_obs():
+        pos = jnp.asarray(jax_inst.get_astrometry(t), dtype=jnp.float64)
+        pos = pos + jnp.array([0.001, 0.001], dtype=jnp.float64)
+        err = jnp.full_like(pos[:, 0], 0.001, dtype=jnp.float64)
+        return pos[:, 0], pos[:, 1], err, err
+
+    def _pspl_geom(v):
+        base = _base_vec_for_layout(v, init_names, base_names, layout, jax_inst)
+        return _unpack_pspl_geom(ek, geom_names, base)
 
     if method_name in ("get_photometry", "get_amplification") and ek in (
         "pspl_phot_static",
@@ -649,6 +704,165 @@ def grad_smoke_jax(
             out = _pspl_astrom_forward(
                 method_name, geom, t_j, geom["t0"], b_sff, pvec
             )
+            return jnp.sum(out)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name == "get_u" and ek in set(pspl_phot_kinds) | set(pspl_astrom_kinds):
+
+        def forward(v):
+            geom = _pspl_geom(v)
+            u = pspl_u(
+                t_j,
+                geom["t0"],
+                geom["tE"],
+                geom["u0"],
+                geom["thetaE_hat"],
+                parallax_vectors=pvec,
+                piE_E=geom["piE_E"],
+                piE_N=geom["piE_N"],
+            )
+            return jnp.sum(u)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name == "get_resolved_amplification" and ek in pspl_phot_kinds:
+
+        def forward(v):
+            geom = _pspl_geom(v)
+            amp = pspl_resolved_amplification(
+                t_j,
+                geom["t0"],
+                geom["tE"],
+                geom["u0"],
+                geom["thetaE_hat"],
+                parallax_vectors=pvec,
+                piE_E=geom["piE_E"],
+                piE_N=geom["piE_N"],
+            )
+            return jnp.sum(amp)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name in ("get_chi2_photometry", "log_likely_photometry_each") and ek in (
+        pspl_phot_kinds
+    ):
+        mag_obs, mag_err = _phot_obs()
+
+        def forward(v):
+            geom = _pspl_geom(v)
+            b_sff = _init_param(v, init_names, "b_sff", 1.0)
+            mag = _mag_from_init(v, init_names, layout, b_sff)
+            if mag is None:
+                mag = jnp.asarray(_mag_scalar(jax_inst, layout), dtype=jnp.float64)
+            mag_model = pspl_photometry(
+                t_j,
+                geom["t0"],
+                geom["tE"],
+                geom["u0"],
+                geom["thetaE_hat"],
+                mag,
+                b_sff=b_sff,
+                parallax_vectors=pvec,
+                piE_E=geom["piE_E"],
+                piE_N=geom["piE_N"],
+            )
+            if method_name == "get_chi2_photometry":
+                out = gaussian_chi2_photometry(mag_model, mag_obs, mag_err)
+            else:
+                out = gaussian_log_likelihood_photometry_each(
+                    mag_model, mag_obs, mag_err
+                )
+            return jnp.sum(out)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name == "get_source_astrometry_unlensed" and ek in pspl_astrom_kinds:
+
+        def forward(v):
+            geom = _pspl_geom(v)
+            pos = pspl_source_astrometry_unlensed(
+                t_j,
+                geom["t0"],
+                geom["xS0"],
+                geom["muS"],
+                parallax_vectors=pvec,
+                piS=geom["piS"],
+            )
+            return jnp.sum(pos)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name == "get_resolved_astrometry" and ek in pspl_astrom_kinds:
+
+        def forward(v):
+            geom = _pspl_geom(v)
+            pos = pspl_resolved_astrometry(
+                t_j,
+                geom["t0"],
+                geom["tE"],
+                geom["u0"],
+                geom["thetaE_hat"],
+                geom["xL0"],
+                geom["muL"],
+                geom["thetaE_amp"],
+                parallax_vectors=pvec,
+                piE_E=geom["piE_E"],
+                piE_N=geom["piE_N"],
+                piL=geom["piL"],
+            )
+            return jnp.sum(pos)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name in ("get_chi2_astrometry", "log_likely_astrometry_each") and ek in (
+        pspl_astrom_kinds
+    ):
+        x_obs, y_obs, x_err, y_err = _ast_obs()
+        default_b = float(np.asarray(getattr(jax_inst, "b_sff", [1.0])).reshape(-1)[0])
+
+        def forward(v):
+            geom = _pspl_geom(v)
+            b_sff = _init_param(v, init_names, "b_sff", default_b)
+            pos_model = pspl_astrometry_param1(
+                t_j,
+                geom["t0"],
+                geom["xS0"],
+                geom["xL0"],
+                geom["muS"],
+                geom["muL"],
+                geom["thetaE_amp"],
+                b_sff,
+                parallax_vectors=pvec,
+                piS=geom["piS"],
+                piL=geom["piL"],
+            )
+            if method_name == "get_chi2_astrometry":
+                out = gaussian_chi2_astrometry(
+                    pos_model, x_obs, y_obs, x_err, y_err
+                )
+            else:
+                out = gaussian_log_likelihood_astrometry_each(
+                    pos_model, x_obs, y_obs, x_err, y_err
+                )
             return jnp.sum(out)
 
         g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)

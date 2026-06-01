@@ -591,6 +591,125 @@ def pspl_phot_astrometry_unlensed(
     return jnp.asarray(b_sff, dtype=jnp.float64) * u
 
 
+def pspl_linear_astrometry(t, t0, x0, mu, parallax_vectors=None, pi=None):
+    """Linear sky motion in arcsec (PSPL source or lens)."""
+    t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+    dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
+    pos = x0.reshape(1, 2) + dt * mu.reshape(1, 2) * 1e-3
+    if parallax_vectors is not None and pi is not None:
+        pos = pos + jnp.asarray(pi, dtype=jnp.float64) * jnp.asarray(
+            parallax_vectors, dtype=jnp.float64
+        ) * 1e-3
+    return pos
+
+
+def pspl_source_astrometry_unlensed(
+    t,
+    t0,
+    xS0,
+    muS,
+    parallax_vectors=None,
+    piS=None,
+):
+    """Unlensed source astrometry in arcsec."""
+    return pspl_linear_astrometry(t, t0, xS0, muS, parallax_vectors, piS)
+
+
+def pspl_resolved_amplification(
+    t,
+    t0,
+    tE,
+    u0,
+    thetaE_hat,
+    parallax_vectors=None,
+    piE_E=None,
+    piE_N=None,
+    parallax_correction=None,
+):
+    """Plus/minus PSPL amplifications; shape ``(2, N_times)``."""
+    u = pspl_u(
+        t,
+        t0,
+        tE,
+        u0,
+        thetaE_hat,
+        parallax_vectors=parallax_vectors,
+        piE_E=piE_E,
+        piE_N=piE_N,
+        parallax_correction=parallax_correction,
+    )
+    a_plus, a_minus = pspl_resolved_amplification_from_u(u)
+    return jnp.stack((a_plus, a_minus))
+
+
+def pspl_resolved_astrometry(
+    t,
+    t0,
+    tE,
+    u0,
+    thetaE_hat,
+    xL0,
+    muL,
+    thetaE_amp,
+    parallax_vectors=None,
+    piE_E=None,
+    piE_N=None,
+    piL=None,
+    parallax_correction=None,
+):
+    """Plus/minus PSPL image astrometry in arcsec; shape ``(2, N_times, 2)``."""
+    u = pspl_u(
+        t,
+        t0,
+        tE,
+        u0,
+        thetaE_hat,
+        parallax_vectors=parallax_vectors,
+        piE_E=piE_E,
+        piE_N=piE_N,
+        parallax_correction=parallax_correction,
+    )
+    u_plus, u_minus = pspl_resolved_astrometry_from_u(u)
+    xL = pspl_linear_astrometry(t, t0, xL0, muL, parallax_vectors, piL)
+    scale = jnp.asarray(thetaE_amp, dtype=jnp.float64) * 1e-3
+    return jnp.stack((xL + u_plus * scale, xL + u_minus * scale))
+
+
+def gaussian_chi2_photometry(mag_model, mag_obs, mag_err):
+    """Per-point photometric chi^2."""
+    mag_model = jnp.asarray(mag_model, dtype=jnp.float64)
+    mag_obs = jnp.asarray(mag_obs, dtype=jnp.float64)
+    mag_err = jnp.asarray(mag_err, dtype=jnp.float64)
+    return ((mag_obs - mag_model) / mag_err) ** 2
+
+
+def gaussian_log_likelihood_photometry_each(mag_model, mag_obs, mag_err):
+    """Per-point photometric ln(likelihood) including normalization."""
+    chi2 = gaussian_chi2_photometry(mag_model, mag_obs, mag_err)
+    lnL_const = -0.5 * jnp.log(2.0 * jnp.pi * mag_err**2)
+    return (-0.5 * chi2) + lnL_const
+
+
+def gaussian_chi2_astrometry(pos_model, x_obs, y_obs, x_err, y_err):
+    """Per-point joint x/y astrometric chi^2."""
+    pos_model = jnp.asarray(pos_model, dtype=jnp.float64)
+    x_obs = jnp.asarray(x_obs, dtype=jnp.float64)
+    y_obs = jnp.asarray(y_obs, dtype=jnp.float64)
+    x_err = jnp.asarray(x_err, dtype=jnp.float64)
+    y_err = jnp.asarray(y_err, dtype=jnp.float64)
+    chi2_x = ((x_obs - pos_model[:, 0]) / x_err) ** 2
+    chi2_y = ((y_obs - pos_model[:, 1]) / y_err) ** 2
+    return chi2_x + chi2_y
+
+
+def gaussian_log_likelihood_astrometry_each(pos_model, x_obs, y_obs, x_err, y_err):
+    """Per-point astrometric ln(likelihood) including normalization."""
+    chi2 = gaussian_chi2_astrometry(pos_model, x_obs, y_obs, x_err, y_err)
+    lnL_const_x = -0.5 * jnp.log(2.0 * jnp.pi * x_err**2)
+    lnL_const_y = -0.5 * jnp.log(2.0 * jnp.pi * y_err**2)
+    return (-0.5 * chi2) + lnL_const_x + lnL_const_y
+
+
 def pspl_photometry_from_fitter_vec(
     t,
     fitter_vec,

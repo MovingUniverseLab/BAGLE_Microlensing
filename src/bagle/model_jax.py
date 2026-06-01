@@ -577,6 +577,15 @@ class PSPL(ABC):
         xS_unlensed : numpy array, dtype=float, shape = [len(t), 2]
             The unlensed positions of the source in arcseconds.
         """
+        try:
+            from bagle.jax_model import try_get_source_astrometry_unlensed
+
+            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         # Equation of motion for just the background source.
         dt_in_years = (t - self.t0) / days_per_year
         xS_unlensed = self.xS0 + np.outer(dt_in_years, self.muS) * 1e-3
@@ -646,6 +655,15 @@ class PSPL(ABC):
         A : numpy array, dtype=float, shape = [len(t), [+/-]
             The amplification for the + and - lensed images.
         """
+        try:
+            from bagle.jax_model import try_get_resolved_amplification
+
+            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
+            if amp_jax is not None:
+                return amp_jax
+        except ImportError:
+            pass
+
         # Equation of relative motion (angular on sky) Eq. 16 from Hog+ 1995
         dt_in_years = (t - self.t0) / days_per_year
         thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)
@@ -745,6 +763,15 @@ class PSPL(ABC):
               with shape = [len(t), 2]
 
         """
+        try:
+            from bagle.jax_model import try_get_resolved_astrometry
+
+            pos_jax = try_get_resolved_astrometry(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         dt_in_years = (t - self.t0) / days_per_year
 
         # Equation of motion for the relative angular separation between the
@@ -976,6 +1003,15 @@ class PSPL(ABC):
         u_unlensed : numpy array, dtype=float, ``shape = len(t) x 2``
             The unlensed positions of the source in Einstein radii.
         """
+        try:
+            from bagle.jax_model import try_get_u
+
+            u_jax = try_get_u(self, t, filt_idx=filt_idx)
+            if u_jax is not None:
+                return u_jax
+        except ImportError:
+            pass
+
         # Calculate the position of the source w.r.t. lens (in Einstein radii)
         # Distance along muRel direction
         tau = (t - self.t0) / self.tE
@@ -1021,6 +1057,17 @@ class PSPL(ABC):
             List of chi^2 values from the model and photometric data.
 
         """
+        try:
+            from bagle.jax_model import try_get_chi2_photometry
+
+            chi2_jax = try_get_chi2_photometry(
+                self, t, mag_obs, mag_err_obs, filt_idx=filt_idx
+            )
+            if chi2_jax is not None:
+                return chi2_jax
+        except ImportError:
+            pass
+
         mag_model = self.get_photometry(t, filt_idx=filt_idx)
 
         chi2 = ((mag_obs - mag_model) / mag_err_obs) ** 2
@@ -1058,6 +1105,17 @@ class PSPL(ABC):
             List of chi^2 values from the model and astrometric data.
 
         """
+        try:
+            from bagle.jax_model import try_get_chi2_astrometry
+
+            chi2_jax = try_get_chi2_astrometry(
+                self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx
+            )
+            if chi2_jax is not None:
+                return chi2_jax
+        except ImportError:
+            pass
+
         pos_model = self.get_astrometry(t, filt_idx=filt_idx)
         chi2_x = ((x_obs - pos_model[:, 0]) / x_err_obs) ** 2
         chi2_y = ((y_obs - pos_model[:, 1]) / y_err_obs) ** 2
@@ -1113,6 +1171,17 @@ class PSPL(ABC):
             List of ln(likelihood) for each photometric measurement.
 
         """
+
+        try:
+            from bagle.jax_model import try_get_log_likely_photometry_each
+
+            lnL_jax = try_get_log_likely_photometry_each(
+                self, t, mag_obs, mag_err_obs, filt_idx=filt_idx
+            )
+            if lnL_jax is not None:
+                return lnL_jax
+        except ImportError:
+            pass
 
         chi2_m = self.get_chi2_photometry(t, mag_obs, mag_err_obs, filt_idx=filt_idx)
 
@@ -1184,6 +1253,17 @@ class PSPL(ABC):
             List of ln(likelihood) for each astrometric measurement.
 
         """
+        try:
+            from bagle.jax_model import try_get_log_likely_astrometry_each
+
+            lnL_jax = try_get_log_likely_astrometry_each(
+                self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx
+            )
+            if lnL_jax is not None:
+                return lnL_jax
+        except ImportError:
+            pass
+
         chi2_xy = self.get_chi2_astrometry(t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx)
 
         lnL_const_x = self.get_lnL_constant(x_err_obs)

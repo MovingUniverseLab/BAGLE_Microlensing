@@ -9,6 +9,10 @@ import numpy as np
 from bagle.jax import geometry as geom
 from bagle.jax.layout_registry import LayoutSpec, resolve_layout
 from bagle.jax_physics import (
+    gaussian_chi2_astrometry,
+    gaussian_chi2_photometry,
+    gaussian_log_likelihood_astrometry_each,
+    gaussian_log_likelihood_photometry_each,
     precompute_parallax_vectors,
     psbl_all_arrays,
     psbl_complex_pos_static,
@@ -19,6 +23,10 @@ from bagle.jax_physics import (
     pspl_phot_astrometry,
     pspl_phot_astrometry_unlensed,
     pspl_photometry,
+    pspl_resolved_amplification,
+    pspl_resolved_astrometry,
+    pspl_source_astrometry_unlensed,
+    pspl_u,
 )
 from bagle.jax.geometry import mag_src_from_fitter
 
@@ -574,6 +582,295 @@ def evaluate_centroid_shift_jax(
         return None
     shift = (jnp.asarray(ast) - jnp.asarray(unl)) * 1e3
     return np.asarray(shift, dtype=np.float64)
+
+
+_PSPL_U_KINDS = (
+    "pspl_phot_static",
+    "pspl_phot_log",
+    "pspl_photastrom_physical",
+    "pspl_photastrom_reduced",
+    "pspl_astrom_reduced",
+)
+_PSPL_ASTROM_KINDS = (
+    "pspl_photastrom_physical",
+    "pspl_photastrom_reduced",
+    "pspl_astrom_reduced",
+)
+
+
+def _pspl_u_jax(model, t, filt_idx: int, pvec):
+    t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+    return pspl_u(
+        t_j,
+        float(model.t0),
+        float(model.tE),
+        jnp.asarray(model.u0, dtype=jnp.float64),
+        jnp.asarray(model.thetaE_hat, dtype=jnp.float64),
+        parallax_vectors=pvec,
+        piE_E=float(model.piE[0]),
+        piE_N=float(model.piE[1]),
+    )
+
+
+def evaluate_u_jax(
+    layout: LayoutSpec,
+    model,
+    t,
+    filt_idx: int = 0,
+) -> np.ndarray | None:
+    if layout.eval_kind not in _PSPL_U_KINDS:
+        return None
+    try:
+        pvec = _parallax_table(model, t, filt_idx)
+        u = _pspl_u_jax(model, t, filt_idx, pvec)
+        return np.asarray(u, dtype=np.float64)
+    except (AttributeError, NotImplementedError, TypeError):
+        return None
+
+
+def evaluate_resolved_amplification_jax(
+    layout: LayoutSpec,
+    model,
+    t,
+    filt_idx: int = 0,
+) -> np.ndarray | None:
+    if layout.eval_kind not in _PSPL_U_KINDS:
+        return None
+    try:
+        pvec = _parallax_table(model, t, filt_idx)
+        amp = pspl_resolved_amplification(
+            jnp.asarray(t, dtype=jnp.float64).reshape(-1),
+            float(model.t0),
+            float(model.tE),
+            jnp.asarray(model.u0, dtype=jnp.float64),
+            jnp.asarray(model.thetaE_hat, dtype=jnp.float64),
+            parallax_vectors=pvec,
+            piE_E=float(model.piE[0]),
+            piE_N=float(model.piE[1]),
+        )
+        return np.asarray(amp, dtype=np.float64)
+    except (AttributeError, NotImplementedError, TypeError):
+        return None
+
+
+def evaluate_source_astrometry_unlensed_jax(
+    layout: LayoutSpec,
+    model,
+    t,
+    filt_idx: int = 0,
+) -> np.ndarray | None:
+    if layout.eval_kind not in _PSPL_ASTROM_KINDS:
+        return None
+    try:
+        t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+        pvec = _parallax_table(model, t, filt_idx)
+        pos = pspl_source_astrometry_unlensed(
+            t_j,
+            float(model.t0),
+            jnp.asarray(model.xS0, dtype=jnp.float64),
+            jnp.asarray(model.muS, dtype=jnp.float64),
+            parallax_vectors=pvec,
+            piS=float(model.piS),
+        )
+        return np.asarray(pos, dtype=np.float64)
+    except (AttributeError, NotImplementedError, TypeError):
+        return None
+
+
+def evaluate_resolved_astrometry_jax(
+    layout: LayoutSpec,
+    model,
+    t,
+    filt_idx: int = 0,
+) -> np.ndarray | None:
+    if layout.eval_kind not in _PSPL_ASTROM_KINDS:
+        return None
+    try:
+        t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+        pvec = _parallax_table(model, t, filt_idx)
+        pos = pspl_resolved_astrometry(
+            t_j,
+            float(model.t0),
+            float(model.tE),
+            jnp.asarray(model.u0, dtype=jnp.float64),
+            jnp.asarray(model.thetaE_hat, dtype=jnp.float64),
+            jnp.asarray(model.xL0, dtype=jnp.float64),
+            jnp.asarray(model.muL, dtype=jnp.float64),
+            float(model.thetaE_amp),
+            parallax_vectors=pvec,
+            piE_E=float(model.piE[0]),
+            piE_N=float(model.piE[1]),
+            piL=float(model.piL),
+        )
+        return np.asarray(pos, dtype=np.float64)
+    except (AttributeError, NotImplementedError, TypeError):
+        return None
+
+
+def evaluate_chi2_photometry_jax(
+    layout: LayoutSpec,
+    model,
+    t,
+    mag_obs,
+    mag_err_obs,
+    filt_idx: int = 0,
+) -> np.ndarray | None:
+    mag_model = evaluate_photometry_jax(layout, model, t, filt_idx)
+    if mag_model is None:
+        return None
+    try:
+        chi2 = gaussian_chi2_photometry(
+            jnp.asarray(mag_model, dtype=jnp.float64),
+            jnp.asarray(mag_obs, dtype=jnp.float64),
+            jnp.asarray(mag_err_obs, dtype=jnp.float64),
+        )
+        return np.asarray(chi2, dtype=np.float64)
+    except (AttributeError, NotImplementedError, TypeError):
+        return None
+
+
+def evaluate_log_likely_photometry_each_jax(
+    layout: LayoutSpec,
+    model,
+    t,
+    mag_obs,
+    mag_err_obs,
+    filt_idx: int = 0,
+) -> np.ndarray | None:
+    mag_model = evaluate_photometry_jax(layout, model, t, filt_idx)
+    if mag_model is None:
+        return None
+    try:
+        lnL = gaussian_log_likelihood_photometry_each(
+            jnp.asarray(mag_model, dtype=jnp.float64),
+            jnp.asarray(mag_obs, dtype=jnp.float64),
+            jnp.asarray(mag_err_obs, dtype=jnp.float64),
+        )
+        return np.asarray(lnL, dtype=np.float64)
+    except (AttributeError, NotImplementedError, TypeError):
+        return None
+
+
+def evaluate_chi2_astrometry_jax(
+    layout: LayoutSpec,
+    model,
+    t,
+    x_obs,
+    y_obs,
+    x_err_obs,
+    y_err_obs,
+    filt_idx: int = 0,
+) -> np.ndarray | None:
+    pos_model = evaluate_astrometry_jax(layout, model, t, filt_idx)
+    if pos_model is None:
+        return None
+    try:
+        chi2 = gaussian_chi2_astrometry(
+            jnp.asarray(pos_model, dtype=jnp.float64),
+            jnp.asarray(x_obs, dtype=jnp.float64),
+            jnp.asarray(y_obs, dtype=jnp.float64),
+            jnp.asarray(x_err_obs, dtype=jnp.float64),
+            jnp.asarray(y_err_obs, dtype=jnp.float64),
+        )
+        return np.asarray(chi2, dtype=np.float64)
+    except (AttributeError, NotImplementedError, TypeError):
+        return None
+
+
+def evaluate_log_likely_astrometry_each_jax(
+    layout: LayoutSpec,
+    model,
+    t,
+    x_obs,
+    y_obs,
+    x_err_obs,
+    y_err_obs,
+    filt_idx: int = 0,
+) -> np.ndarray | None:
+    pos_model = evaluate_astrometry_jax(layout, model, t, filt_idx)
+    if pos_model is None:
+        return None
+    try:
+        lnL = gaussian_log_likelihood_astrometry_each(
+            jnp.asarray(pos_model, dtype=jnp.float64),
+            jnp.asarray(x_obs, dtype=jnp.float64),
+            jnp.asarray(y_obs, dtype=jnp.float64),
+            jnp.asarray(x_err_obs, dtype=jnp.float64),
+            jnp.asarray(y_err_obs, dtype=jnp.float64),
+        )
+        return np.asarray(lnL, dtype=np.float64)
+    except (AttributeError, NotImplementedError, TypeError):
+        return None
+
+
+def try_get_u(model, t, filt_idx: int = 0):
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_u_jax(layout, model, t, filt_idx)
+
+
+def try_get_resolved_amplification(model, t, filt_idx: int = 0):
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_resolved_amplification_jax(layout, model, t, filt_idx)
+
+
+def try_get_source_astrometry_unlensed(model, t, filt_idx: int = 0):
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_source_astrometry_unlensed_jax(layout, model, t, filt_idx)
+
+
+def try_get_resolved_astrometry(model, t, filt_idx: int = 0):
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_resolved_astrometry_jax(layout, model, t, filt_idx)
+
+
+def try_get_chi2_photometry(model, t, mag_obs, mag_err_obs, filt_idx: int = 0):
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_chi2_photometry_jax(
+        layout, model, t, mag_obs, mag_err_obs, filt_idx
+    )
+
+
+def try_get_log_likely_photometry_each(
+    model, t, mag_obs, mag_err_obs, filt_idx: int = 0
+):
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_log_likely_photometry_each_jax(
+        layout, model, t, mag_obs, mag_err_obs, filt_idx
+    )
+
+
+def try_get_chi2_astrometry(
+    model, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx: int = 0
+):
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_chi2_astrometry_jax(
+        layout, model, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx
+    )
+
+
+def try_get_log_likely_astrometry_each(
+    model, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx: int = 0
+):
+    layout = resolve_layout(model.__class__)
+    if layout is None:
+        return None
+    return evaluate_log_likely_astrometry_each_jax(
+        layout, model, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx
+    )
 
 
 def evaluate_forward_jax(

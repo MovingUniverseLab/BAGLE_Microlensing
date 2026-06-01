@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Generate docs/jax_migration_tasks.md from concrete model classes."""
+"""Generate docs/jax_migration_tasks.md from concrete model classes.
+
+Method inventory and per-class applicability come from
+``bagle.jax.migration_tasks`` (``ALL_FORWARD_METHODS``, ``applicable_methods``).
+Regenerate after changing that module or adding PSPL extended methods.
+"""
 from __future__ import annotations
 
 import json
