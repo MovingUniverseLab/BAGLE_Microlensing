@@ -21,6 +21,14 @@ from bagle.jax_physics import (
 )
 
 
+def _filt_scalar(model, name: str, filt_idx: int) -> float:
+    val = getattr(model, name)
+    arr = np.asarray(val, dtype=np.float64).reshape(-1)
+    if arr.size == 0:
+        raise ValueError(f"empty parameter {name!r}")
+    return float(arr[filt_idx]) if arr.size > filt_idx else float(arr[0])
+
+
 def _bspl_u_dual(t, t0_pri, t0_sec, tE, u0_pri, u0_sec, thetaE_hat, pvec, piE_E, piE_N):
     u1 = einstein_source_position(
         t, t0_pri, tE, u0_pri, thetaE_hat, parallax_vectors=pvec, piE_E=piE_E, piE_N=piE_N
@@ -55,17 +63,22 @@ def bspl_photometry_jax(
     return flux2mag_jax(flux)
 
 
-def bspl_photometry_from_model(model, t, filt_idx, pvec):
+def _bspl_u0_pair(model, filt_idx: int):
     u0_pri, thetaE_hat, _ = derive_pspl_static_geometry(
-        float(model.u0_amp_pri[filt_idx]),
+        _filt_scalar(model, "u0_amp_pri"),
         float(model.piE[0]),
         float(model.piE[1]),
     )
     u0_sec, _, _ = derive_pspl_static_geometry(
-        float(model.u0_amp_sec[filt_idx]),
+        _filt_scalar(model, "u0_amp_sec"),
         float(model.piE[0]),
         float(model.piE[1]),
     )
+    return u0_pri, u0_sec, thetaE_hat
+
+
+def bspl_photometry_from_model(model, t, filt_idx, pvec):
+    u0_pri, u0_sec, thetaE_hat = _bspl_u0_pair(model, filt_idx)
     mag = bspl_photometry_jax(
         jnp.asarray(t, dtype=jnp.float64),
         float(model.t0_pri),
@@ -74,14 +87,37 @@ def bspl_photometry_from_model(model, t, filt_idx, pvec):
         u0_pri,
         u0_sec,
         thetaE_hat,
-        float(model.mag_src_pri[filt_idx]),
-        float(model.mag_src_sec[filt_idx]),
-        float(model.b_sff[filt_idx]),
+        _filt_scalar(model, "mag_src_pri"),
+        _filt_scalar(model, "mag_src_sec"),
+        _filt_scalar(model, "b_sff"),
         pvec=pvec,
         piE_E=float(model.piE[0]),
         piE_N=float(model.piE[1]),
     )
     return np.asarray(mag, dtype=np.float64)
+
+
+def bspl_amplification_from_model(model, t, filt_idx, pvec):
+    u0_pri, u0_sec, thetaE_hat = _bspl_u0_pair(model, filt_idx)
+    t_j = jnp.asarray(t, dtype=jnp.float64)
+    u1, u2 = _bspl_u_dual(
+        t_j,
+        float(model.t0_pri),
+        float(model.t0_sec),
+        float(model.tE),
+        u0_pri,
+        u0_sec,
+        thetaE_hat,
+        pvec,
+        float(model.piE[0]),
+        float(model.piE[1]),
+    )
+    a1 = pspl_amplification_from_u(u1)
+    a2 = pspl_amplification_from_u(u2)
+    f1 = mag2flux_jax(_filt_scalar(model, "mag_src_pri"))
+    f2 = mag2flux_jax(_filt_scalar(model, "mag_src_sec"))
+    amp = (f1 * a1 + f2 * a2) / (f1 + f2)
+    return np.asarray(amp, dtype=np.float64)
 
 
 def bspl_astrometry_from_model(model, t, filt_idx, pvec):
