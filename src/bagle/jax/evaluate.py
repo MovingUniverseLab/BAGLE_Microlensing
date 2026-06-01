@@ -16,6 +16,8 @@ from bagle.jax_physics import (
     psbl_total_amplification,
     pspl_astrometry_param1,
     pspl_amplification,
+    pspl_phot_astrometry,
+    pspl_phot_astrometry_unlensed,
     pspl_photometry,
 )
 from bagle.jax.geometry import mag_src_from_fitter
@@ -238,14 +240,46 @@ def evaluate_photometry_jax(
     return None
 
 
+def _pspl_phot_mag_src(model, filt_idx: int, b_sff: float) -> float | None:
+    mag_raw = _phot_attr(model, filt_idx, "mag_src")
+    if mag_raw is None:
+        mag_raw = _phot_attr(model, filt_idx, "mag_base")
+        mag_fitter = "mag_base"
+    else:
+        mag_fitter = "mag_src"
+    if mag_raw is None:
+        return None
+    return float(
+        mag_src_from_fitter(jnp.asarray(mag_raw), mag_fitter, jnp.asarray(b_sff))
+    )
+
+
+def _pspl_phot_astrometry_inputs(model, t, filt_idx: int):
+    t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+    pvec = _parallax_table(model, t, filt_idx)
+    b_sff = _phot_attr(model, filt_idx, "b_sff")
+    if b_sff is None:
+        b_sff = 1.0
+    mag_src = _pspl_phot_mag_src(model, filt_idx, b_sff)
+    if mag_src is None:
+        return None
+    return t_j, pvec, b_sff, mag_src
+
+
 def evaluate_astrometry_jax(
     layout: LayoutSpec,
     model,
     t,
     filt_idx: int = 0,
 ) -> np.ndarray | None:
-    """Compute model astrometry (arcsec); return None if unsupported."""
-    if layout.likelihood_mode not in ("ast", "joint", "joint_gp"):
+    """Compute model astrometry; PSPL_Phot returns Einstein radii, else arcsec."""
+    ek = layout.eval_kind
+    phot_only_pspl = ek in ("pspl_phot_static", "pspl_phot_log")
+    if not phot_only_pspl and layout.likelihood_mode not in (
+        "ast",
+        "joint",
+        "joint_gp",
+    ):
         return None
     t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
     pvec = _parallax_table(model, t, filt_idx)
@@ -253,8 +287,26 @@ def evaluate_astrometry_jax(
     if b_sff is None:
         b_sff = 1.0
 
-    ek = layout.eval_kind
     try:
+        if phot_only_pspl:
+            inputs = _pspl_phot_astrometry_inputs(model, t, filt_idx)
+            if inputs is None:
+                return None
+            t_j, pvec, b_sff, mag_src = inputs
+            pos = pspl_phot_astrometry(
+                t_j,
+                float(model.t0),
+                float(model.tE),
+                jnp.asarray(model.u0, dtype=jnp.float64),
+                jnp.asarray(model.thetaE_hat, dtype=jnp.float64),
+                mag_src,
+                b_sff,
+                parallax_vectors=pvec,
+                piE_E=float(model.piE[0]),
+                piE_N=float(model.piE[1]),
+            )
+            return np.asarray(pos, dtype=np.float64)
+
         if ek in (
             "pspl_photastrom_physical",
             "pspl_photastrom_reduced",
@@ -429,6 +481,10 @@ def evaluate_lens_astrometry_jax(
     t,
     filt_idx: int = 0,
 ) -> np.ndarray | None:
+    ek = layout.eval_kind
+    if ek in ("pspl_phot_static", "pspl_phot_log"):
+        t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+        return np.zeros((int(t_j.shape[0]), 2), dtype=np.float64)
     if layout.likelihood_mode not in ("ast", "joint", "joint_gp"):
         return None
     t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
@@ -459,6 +515,24 @@ def evaluate_astrometry_unlensed_jax(
     t,
     filt_idx: int = 0,
 ) -> np.ndarray | None:
+    ek = layout.eval_kind
+    if ek in ("pspl_phot_static", "pspl_phot_log"):
+        inputs = _pspl_phot_astrometry_inputs(model, t, filt_idx)
+        if inputs is None:
+            return None
+        t_j, pvec, b_sff, _mag_src = inputs
+        pos = pspl_phot_astrometry_unlensed(
+            t_j,
+            float(model.t0),
+            float(model.tE),
+            jnp.asarray(model.u0, dtype=jnp.float64),
+            jnp.asarray(model.thetaE_hat, dtype=jnp.float64),
+            b_sff,
+            parallax_vectors=pvec,
+            piE_E=float(model.piE[0]),
+            piE_N=float(model.piE[1]),
+        )
+        return np.asarray(pos, dtype=np.float64)
     if layout.likelihood_mode not in ("ast", "joint", "joint_gp"):
         return None
     xL = evaluate_lens_astrometry_jax(layout, model, t, filt_idx)

@@ -1489,9 +1489,15 @@ class PSPL_Phot(PSPL):
         return pos_unlensed
 
     def get_resolved_amplification(self, t, filt_idx=0):
-        raise RuntimeError(
-            "Astrometry is not supported on this object: " +
-            str(self.__class__))
+        u_vec = self.get_u(t, filt_idx=filt_idx)
+        u_amp = np.linalg.norm(u_vec, axis=1)
+        sqrt_term = np.sqrt(u_amp ** 2 + 4)
+        A_plus = 0.5 * ((u_amp ** 2 + 2) / (u_amp * sqrt_term) + 1)
+        A_minus = 0.5 * ((u_amp ** 2 + 2) / (u_amp * sqrt_term) - 1)
+        A = np.zeros((len(t), 1, 2), dtype=float)
+        A[:, 0, 0] = A_plus
+        A[:, 0, 1] = A_minus
+        return A
 
     def get_resolved_astrometry(self, t, filt_idx=0):
         '''
@@ -1507,7 +1513,7 @@ class PSPL_Phot(PSPL):
 
         Returns
         -------
-        model_pos : array_like. shape = [N_times, N_images, 2]
+        model_pos : array_like. shape = [N_times, N_sources, N_images, 2]
             Array of vector positions of the centroid at each t.
         '''
         u_vec = self.get_u(t, filt_idx=filt_idx)
@@ -1519,11 +1525,9 @@ class PSPL_Phot(PSPL):
         u_plus = ((u + np.sqrt(u ** 2 + 4)) / 2.0).reshape(u.size, 1) * u_hat
         u_minu = ((u - np.sqrt(u ** 2 + 4)) / 2.0).reshape(u.size, 1) * u_hat
 
-        # Shape = [len(t), [+, -], [E, N]]
-        u_lensed = np.zeros((len(t), 2, 2), dtype=float)
-
-        u_lensed[:, 0, :] = u_plus
-        u_lensed[:, 1, :] = u_minu
+        u_lensed = np.zeros((len(t), 1, 2, 2), dtype=float)
+        u_lensed[:, 0, 0, :] = u_plus
+        u_lensed[:, 0, 1, :] = u_minu
 
         return u_lensed
 
@@ -1566,7 +1570,11 @@ class PSPL_Phot(PSPL):
         A = np.sum(A_lensed2[:, 0, :, np.newaxis], axis=1)
 
         # Calculate un-magnified fluxes. Note, we ignore blended flux entirely.
-        fS = mag2flux(self.mag_src_pri[filt_idx])
+        if hasattr(self, 'mag_src_pri'):
+            mag = self.mag_src_pri[filt_idx]
+        else:
+            mag = self.mag_src[filt_idx]
+        fS = mag2flux(mag)
 
         # Assume all blended light comes from the lens.
         fL = fS * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]

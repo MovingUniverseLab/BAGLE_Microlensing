@@ -6828,3 +6828,20 @@ def test_psbl_luminous_lens(plot=False):
     return
 
 
+PSPL_PHOT_ASTROM_CLASSES = (
+    "PSPL_Phot_noPar_Param1",
+    "PSPL_Phot_Par_Param1",
+)
+
+
+@pytest.mark.parametrize("class_name", PSPL_PHOT_ASTROM_CLASSES)
+def test_pspl_phot_model_jax_get_astrometry_matches_numpy(class_name):
+    """model_jax.get_astrometry vs bagle.model reference (Einstein radii)."""
+    from model_old_vs_jax_fixtures import build_paired_instances, time_grid_ast
+
+    ref_inst, jax_inst = build_paired_instances(class_name)
+    t = time_grid_ast(ref_inst)
+    ref = np.asarray(ref_inst.get_astrometry(t), dtype=np.float64)
+    out = np.asarray(jax_inst.get_astrometry(t), dtype=np.float64)
+    np.testing.assert_allclose(out, ref, rtol=1e-10, atol=1e-12)
+

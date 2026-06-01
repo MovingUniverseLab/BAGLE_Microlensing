@@ -497,6 +497,100 @@ def pspl_photometry(
     return pspl_photometry_from_amp(amp, mag_src, b_sff=b_sff)
 
 
+def pspl_resolved_amplification_from_u(u):
+    """Plus/minus PSPL image amplifications from separation ``u`` (N, 2)."""
+    u = jnp.asarray(u, dtype=jnp.float64)
+    u_amp = jnp.linalg.norm(u, axis=1)
+    sqrt_term = jnp.sqrt(u_amp**2 + 4.0)
+    a_plus = 0.5 * ((u_amp**2 + 2.0) / (u_amp * sqrt_term) + 1.0)
+    a_minus = 0.5 * ((u_amp**2 + 2.0) / (u_amp * sqrt_term) - 1.0)
+    return a_plus, a_minus
+
+
+def pspl_resolved_astrometry_from_u(u):
+    """Plus/minus PSPL image positions in Einstein radii."""
+    u = jnp.asarray(u, dtype=jnp.float64)
+    u_amp = jnp.linalg.norm(u, axis=1, keepdims=True)
+    u_hat = u / u_amp
+    sqrt_term = jnp.sqrt(u_amp**2 + 4.0)
+    u_plus = ((u_amp + sqrt_term) / 2.0) * u_hat
+    u_minus = ((u_amp - sqrt_term) / 2.0) * u_hat
+    return u_plus, u_minus
+
+
+def pspl_phot_astrometry(
+    t,
+    t0,
+    tE,
+    u0,
+    thetaE_hat,
+    mag_src,
+    b_sff,
+    parallax_vectors=None,
+    piE_E=None,
+    piE_N=None,
+    parallax_correction=None,
+):
+    """
+    PSPL_Phot flux-weighted unresolved centroid in Einstein radii.
+
+    Matches :meth:`bagle.model.PSPL_Phot.get_astrometry`.
+    """
+    u = pspl_u(
+        t,
+        t0,
+        tE,
+        u0,
+        thetaE_hat,
+        parallax_vectors=parallax_vectors,
+        piE_E=piE_E,
+        piE_N=piE_N,
+        parallax_correction=parallax_correction,
+    )
+    u_plus, u_minus = pspl_resolved_astrometry_from_u(u)
+    a_plus, a_minus = pspl_resolved_amplification_from_u(u)
+    a_total = a_plus + a_minus
+    u_cent = (
+        u_plus * a_plus[:, jnp.newaxis] + u_minus * a_minus[:, jnp.newaxis]
+    ) / a_total[:, jnp.newaxis]
+    f_src = mag2flux_jax(mag_src)
+    f_l = f_src * (1.0 - b_sff) / b_sff
+    return (u_cent * f_src * a_total[:, jnp.newaxis]) / (
+        f_src * a_total[:, jnp.newaxis] + f_l
+    )
+
+
+def pspl_phot_astrometry_unlensed(
+    t,
+    t0,
+    tE,
+    u0,
+    thetaE_hat,
+    b_sff,
+    parallax_vectors=None,
+    piE_E=None,
+    piE_N=None,
+    parallax_correction=None,
+):
+    """
+    Unlensed PSPL_Phot flux-weighted centroid in Einstein radii.
+
+    Matches :meth:`bagle.model.PSPL_Phot.get_astrometry_unlensed`.
+    """
+    u = pspl_u(
+        t,
+        t0,
+        tE,
+        u0,
+        thetaE_hat,
+        parallax_vectors=parallax_vectors,
+        piE_E=piE_E,
+        piE_N=piE_N,
+        parallax_correction=parallax_correction,
+    )
+    return jnp.asarray(b_sff, dtype=jnp.float64) * u
+
+
 def pspl_photometry_from_fitter_vec(
     t,
     fitter_vec,
