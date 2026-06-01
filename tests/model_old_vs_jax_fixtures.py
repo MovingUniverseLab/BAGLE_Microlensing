@@ -56,8 +56,12 @@ CANONICAL: dict[str, Any] = {
     "root_tol": 1e-8,
     "gp_log_sigma": [-1.0],
     "gp_log_rho": [0.5],
+    "gp_rho": [math.exp(0.5)],
     "gp_log_S0": [-2.0],
     "gp_log_omega0": [0.0],
+    "gp_log_omega04_S0": [-6.0],
+    "gp_log_omega0_S0": [-2.0],
+    "gp_log_jit_sigma": [math.log(0.02)],
 }
 
 PARALLAX_KW = dict(raL=259.5, decL=-29.0, obsLocation="earth")
@@ -175,13 +179,29 @@ def pspl_non_gp_pairs() -> list[tuple[str, str]]:
     )
 
 
-def pspl_gp_param1_pairs() -> list[tuple[str, str]]:
-    """PSPL GP Param1 photometry parity (``get_photometry_with_gp``)."""
-    classes = (
-        "PSPL_Phot_noPar_GP_Param1",
-        "PSPL_Phot_Par_GP_Param1",
+GP_PHOT_METHODS = ("get_photometry", "get_amplification", "get_photometry_with_gp")
+
+
+def pspl_gp_pairs() -> list[tuple[str, str]]:
+    """PSPL GP photometry parity: forward methods + ``get_photometry_with_gp``."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    classes = sorted(
+        {
+            c
+            for c, _ in applicable_task_pairs(model_jax)
+            if c.startswith("PSPL_")
+            and "GP" in c
+            and not any(s in c for s in SKIP_CLASS_SUBSTR)
+        }
     )
-    return [(c, "get_photometry_with_gp") for c in classes]
+    return [(c, m) for c in classes for m in GP_PHOT_METHODS]
+
+
+def pspl_gp_param1_pairs() -> list[tuple[str, str]]:
+    """Backward-compatible alias: GP ``get_photometry_with_gp`` only."""
+    return [(c, m) for c, m in pspl_gp_pairs() if m == "get_photometry_with_gp"]
 
 
 def psbl_phot_first_pairs() -> list[tuple[str, str]]:
@@ -237,10 +257,12 @@ LIST_INIT_PARAMS = frozenset(
         "dmag_Lp_Ls",
         "gp_log_sigma",
         "gp_log_rho",
+        "gp_rho",
         "gp_log_S0",
         "gp_log_omega0",
         "gp_log_omega0_S0",
         "gp_log_omega04_S0",
+        "gp_log_jit_sigma",
     }
 )
 
@@ -649,7 +671,7 @@ def grad_smoke_jax(
         return g
 
     if method_name == "get_photometry_with_gp" and layout.has_gp and ek in pspl_phot_kinds:
-        from bagle.jax.gp import _GP_QUALITY
+        from bagle.jax.gp import _GP_QUALITY, _gp_has_fixed_jitter
         import tinygp
         from tinygp.kernels import quasisep as qk
 
@@ -658,6 +680,24 @@ def grad_smoke_jax(
         mag_obs = jnp.asarray(jax_inst.get_photometry(np.asarray(t)), dtype=jnp.float64)
         mag_err = jnp.full_like(mag_obs, 0.02, dtype=jnp.float64)
         log_jit = jnp.log(jnp.mean(mag_err))
+        use_jit_param = "gp_log_jit_sigma" in init_names
+        fixed_jitter = _gp_has_fixed_jitter(jax_inst)
+
+        def _gp_log_rho(v):
+            if "gp_log_rho" in init_names:
+                return _init_param(v, init_names, "gp_log_rho", 0.5)
+            return jnp.log(_init_param(v, init_names, "gp_rho", math.exp(0.5)))
+
+        def _gp_log_S0(v):
+            if "gp_log_S0" in init_names:
+                return _init_param(v, init_names, "gp_log_S0", -2.0)
+            if "gp_log_omega04_S0" in init_names:
+                log_omega04 = _init_param(v, init_names, "gp_log_omega04_S0", -6.0)
+                log_omega0 = _init_param(v, init_names, "gp_log_omega0", 0.0)
+                return log_omega04 - 4.0 * log_omega0
+            log_omega0_S0 = _init_param(v, init_names, "gp_log_omega0_S0", -2.0)
+            log_omega0 = _init_param(v, init_names, "gp_log_omega0", 0.0)
+            return log_omega0_S0 - log_omega0
 
         def forward(v):
             geom = _pspl_geom(v)
@@ -666,14 +706,19 @@ def grad_smoke_jax(
             if mag is None:
                 mag = jnp.asarray(_mag_scalar(jax_inst, layout), dtype=jnp.float64)
             log_sigma = _init_param(v, init_names, "gp_log_sigma", -1.0)
-            log_rho = _init_param(v, init_names, "gp_log_rho", 0.5)
-            log_S0 = _init_param(v, init_names, "gp_log_S0", -2.0)
+            log_rho = _gp_log_rho(v)
+            log_S0 = _gp_log_S0(v)
             log_omega0 = _init_param(v, init_names, "gp_log_omega0", 0.0)
             sigma = jnp.exp(log_sigma)
             rho = jnp.exp(log_rho)
             S0 = jnp.exp(log_S0)
             omega0 = jnp.exp(log_omega0)
-            jitter = jnp.exp(log_jit)
+            if use_jit_param:
+                jitter = jnp.exp(_init_param(v, init_names, "gp_log_jit_sigma", log_jit))
+            elif fixed_jitter:
+                jitter = jnp.exp(log_jit)
+            else:
+                jitter = jnp.asarray(0.0, dtype=jnp.float64)
             kernel = qk.Matern32(scale=rho, sigma=sigma) + qk.SHO(
                 omega=omega0, quality=_GP_QUALITY, sigma=jnp.sqrt(S0)
             )
