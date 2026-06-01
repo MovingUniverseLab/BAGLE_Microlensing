@@ -29,6 +29,8 @@ CANONICAL: dict[str, Any] = {
     "b_sff": 0.8,
     "b_sff1": 0.8,
     "mag_src": 18.5,
+    "mag_src_pri": 18.5,
+    "mag_src_sec": 19.0,
     "mag_src1": 18.5,
     "mag_base": 18.5,
     "mag_base1": 18.5,
@@ -227,11 +229,6 @@ PSBL_PHOTASTROM_AST_METHODS = (
     "get_resolved_lens_astrometry",
 )
 
-# Param2 resolved image positions exceed 1e-6 at some times (root-finder edge cases).
-PSBL_PHOTASTROM_PARAM2_AST_METHODS = tuple(
-    m for m in PSBL_PHOTASTROM_AST_METHODS if m != "get_resolved_astrometry"
-)
-
 PSPL_GP_EXTENDED_METHODS = (
     "get_u",
     "get_chi2_photometry",
@@ -267,10 +264,8 @@ def psbl_phot_first_pairs() -> list[tuple[str, str]]:
 
 
 def psbl_photastrom_first_pairs() -> list[tuple[str, str]]:
-    """Seed PSBL phot+astrom static Param1 parity (one class)."""
-    return [
-        ("PSBL_PhotAstrom_noPar_Param1", m) for m in PSBL_PHOT_METHODS
-    ]
+    """PSBL PhotAstrom noPar Param1 phot + core astrometry parity."""
+    return _psbl_photastrom_pairs_for_classes(("PSBL_PhotAstrom_noPar_Param1",))
 
 
 def _psbl_photastrom_pairs_for_classes(class_names: tuple[str, ...]) -> list[tuple[str, str]]:
@@ -299,7 +294,7 @@ def psbl_photastrom_param2_pairs() -> list[tuple[str, str]]:
 
     applicable = set(applicable_task_pairs(model_jax))
     classes = ("PSBL_PhotAstrom_noPar_Param2", "PSBL_PhotAstrom_Par_Param2")
-    methods = PSBL_PHOT_METHODS + PSBL_PHOTASTROM_PARAM2_AST_METHODS
+    methods = PSBL_PHOT_METHODS + PSBL_PHOTASTROM_AST_METHODS
     return sorted(
         (c, m) for c in classes for m in methods if (c, m) in applicable
     )
@@ -314,6 +309,48 @@ def psbl_gp_param1_pairs() -> list[tuple[str, str]]:
     classes = ("PSBL_Phot_noPar_GP_Param1", "PSBL_Phot_Par_GP_Param1")
     return sorted(
         (c, m) for c in classes for m in GP_PHOT_METHODS if (c, m) in applicable
+    )
+
+
+def psbl_gp_photastrom_param2_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom GP Param2 phot + ``get_photometry_with_gp``."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_PhotAstrom_noPar_GP_Param2", "PSBL_PhotAstrom_Par_GP_Param2")
+    return sorted(
+        (c, m) for c in classes for m in GP_PHOT_METHODS if (c, m) in applicable
+    )
+
+
+def psbl_photastrom_gp_param1_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom GP Param1 phot, GP, and core astrometry parity."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_PhotAstrom_noPar_GP_Param1", "PSBL_PhotAstrom_Par_GP_Param1")
+    core_ast = tuple(
+        m
+        for m in PSBL_PHOTASTROM_AST_METHODS
+        if m not in ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    )
+    methods = GP_PHOT_METHODS + core_ast
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def bspl_phot_param1_pairs() -> list[tuple[str, str]]:
+    """BSPL phot-only Param1 parity (noPar + Par)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("BSPL_Phot_noPar_Param1", "BSPL_Phot_Par_Param1")
+    return sorted(
+        (c, m) for c in classes for m in PSBL_PHOT_METHODS if (c, m) in applicable
     )
 
 

@@ -11,9 +11,12 @@ from model_old_vs_jax_fixtures import (
     build_paired_instances,
     call_method,
     grad_smoke_jax,
+    bspl_phot_param1_pairs,
     psbl_gp_param1_pairs,
+    psbl_gp_photastrom_param2_pairs,
     psbl_phot_pairs,
     psbl_photastrom_first_pairs,
+    psbl_photastrom_gp_param1_pairs,
     psbl_photastrom_param2_pairs,
     psbl_photastrom_param3_phot_pairs,
     psbl_photastrom_par_param1_pairs,
@@ -134,6 +137,27 @@ def test_parity_psbl_gp_param1(class_name, method_name):
 
 @pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param3_phot_pairs())
 def test_parity_psbl_photastrom_param3_phot(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_photastrom_param2_pairs())
+def test_parity_psbl_gp_photastrom_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_phot_param1_pairs())
+def test_parity_bspl_phot_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_gp_param1_pairs())
+def test_parity_psbl_photastrom_gp_param1(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)

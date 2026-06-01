@@ -5449,8 +5449,32 @@ class PSBL(PSPL):
         """
         Make sure everything is roughly centered on the origin
         in a 1 x 1 box.
+
+        Uses the same NumPy algorithm as :meth:`bagle.model.PSBL.rescale_complex_pos`
+        so ``get_all_arrays`` matches the reference model in old-vs-JAX tests.
         """
-        return jax_physics.rescale_complex_pos(w, z1, z2, self.m1, self.m2)
+        import copy
+
+        m1 = copy.deepcopy(self.m1)
+        m2 = copy.deepcopy(self.m2)
+        w = np.asarray(w, dtype=np.complex128)
+        z1 = np.asarray(z1, dtype=np.complex128)
+        z2 = np.asarray(z2, dtype=np.complex128)
+        pos = np.vstack([w, z1, z2]).T
+        shift = np.average(pos, axis=1)
+        w = w - shift
+        z1 = z1 - shift
+        z2 = z2 - shift
+        xscale = np.max(pos.real, axis=1) - np.min(pos.real, axis=1)
+        yscale = np.max(pos.imag, axis=1) - np.min(pos.imag, axis=1)
+        xyscale = np.concatenate([xscale, yscale]).reshape(len(xscale), 2)
+        scale = 1.0 / np.max(xyscale, axis=1)
+        w = w * scale
+        z1 = z1 * scale
+        z2 = z2 * scale
+        m1 = m1 * (scale**2)
+        m2 = m2 * (scale**2)
+        return w, z1, z2, m1, m2, scale, shift
 
     def get_image_pos_arr_old(self, w, z1, z2, check_sols=True):
         """Gets image positions.
