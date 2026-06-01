@@ -636,8 +636,8 @@ Updated: 2026-05-31 | Tasks: 415/1886 done
 | PSBL_PhotAstrom_Par_Param2 | get_centroid_shift | jax_only | pass | not_run | pending |
 | PSBL_PhotAstrom_Par_Param2 | get_resolved_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_Par_Param2 | get_resolved_lens_astrometry | jax_only | pass | not_run | pending |
-| PSBL_PhotAstrom_Par_Param3 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSBL_PhotAstrom_Par_Param3 | get_photometry | numpy_fallback | not_run | not_run | pending |
+| PSBL_PhotAstrom_Par_Param3 | get_amplification | jax_only | pass | not_run | pending |
+| PSBL_PhotAstrom_Par_Param3 | get_photometry | jax_only | pass | not_run | pending |
 | PSBL_PhotAstrom_Par_Param3 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_Par_Param3 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_Par_Param3 | get_astrometry | numpy_fallback | not_run | not_run | pending |
@@ -830,8 +830,8 @@ Updated: 2026-05-31 | Tasks: 415/1886 done
 | PSBL_PhotAstrom_noPar_Param2 | get_centroid_shift | jax_only | pass | not_run | pending |
 | PSBL_PhotAstrom_noPar_Param2 | get_resolved_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_noPar_Param2 | get_resolved_lens_astrometry | jax_only | pass | not_run | pending |
-| PSBL_PhotAstrom_noPar_Param3 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSBL_PhotAstrom_noPar_Param3 | get_photometry | numpy_fallback | not_run | not_run | pending |
+| PSBL_PhotAstrom_noPar_Param3 | get_amplification | jax_only | pass | not_run | pending |
+| PSBL_PhotAstrom_noPar_Param3 | get_photometry | jax_only | pass | not_run | pending |
 | PSBL_PhotAstrom_noPar_Param3 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_noPar_Param3 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_noPar_Param3 | get_astrometry | numpy_fallback | not_run | not_run | pending |
