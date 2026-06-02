@@ -136,15 +136,6 @@ def evaluate_lens_astrometry_jax(
     return evaluate_astrometry_jax(layout, model, t, filt_idx)
 
 
-def evaluate_centroid_shift_jax(
-    layout: LayoutSpec,
-    model,
-    t,
-    filt_idx: int = 0,
-) -> np.ndarray | None:
-    return None
-
-
 def evaluate_photometry_jax(
     layout: LayoutSpec,
     model,
@@ -477,6 +468,10 @@ def evaluate_amplification_jax(
             from bagle.jax.bspl import bspl_amplification_from_model
 
             return bspl_amplification_from_model(model, t, filt_idx, pvec)
+        if ek.startswith(("fsbl_phot", "fsbl_photastrom")):
+            from bagle.jax.fspl import fspl_amplification_from_model
+
+            return fspl_amplification_from_model(model, t, filt_idx, pvec)
     except (AttributeError, NotImplementedError, TypeError):
         return None
     return None

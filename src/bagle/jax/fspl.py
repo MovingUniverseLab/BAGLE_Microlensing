@@ -19,6 +19,11 @@ def fspl_photometry_from_model(model, t, filt_idx, pvec):
     return np.asarray(model.get_photometry(t, filt_idx=filt_idx), dtype=np.float64)
 
 
+def fspl_amplification_from_model(model, t, filt_idx, pvec):
+    """Host numpy amplification (finite-source); AMG path until JAX contour wired."""
+    return np.asarray(model.get_amplification(t, filt_idx=filt_idx), dtype=np.float64)
+
+
 def fspl_astrometry_from_model(model, t, filt_idx, pvec):
     if not getattr(model, "astrometryFlag", False):
         return None
