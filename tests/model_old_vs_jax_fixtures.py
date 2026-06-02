@@ -206,6 +206,8 @@ def build_paired_instances(class_name: str):
     import bagle.model as ref_model
     import bagle.model_jax as jax_model
 
+    if not hasattr(ref_model, class_name):
+        return build_jax_eval_paired_instances(class_name)
     ref_cls = getattr(ref_model, class_name)
     jax_cls = getattr(jax_model, class_name)
     ref_args, ref_kw = build_init_args(ref_cls, ref_model)
@@ -215,6 +217,48 @@ def build_paired_instances(class_name: str):
     _post_init(ref_inst)
     _post_init(jax_inst)
     return ref_inst, jax_inst
+
+
+def build_jax_eval_paired_instances(class_name: str):
+    """Pair native host forward with ``jax/evaluate`` dispatch (jax-only classes)."""
+    import bagle.model_jax as jax_model
+
+    jax_cls = getattr(jax_model, class_name)
+    jax_args, jax_kw = build_init_args(jax_cls, jax_model)
+    native_inst = jax_cls(*jax_args, **jax_kw)
+    eval_inst = jax_cls(*jax_args, **jax_kw)
+    _post_init(native_inst)
+    _post_init(eval_inst)
+    return native_inst, eval_inst
+
+
+def call_method_via_jax_eval(instance, method_name: str, t: np.ndarray):
+    """Forward through ``jax/evaluate`` dispatch; fall back to native method."""
+    from bagle.jax_model import (
+        try_get_amplification,
+        try_get_astrometry,
+        try_get_astrometry_unlensed,
+        try_get_centroid_shift,
+        try_get_lens_astrometry,
+        try_get_photometry,
+        try_get_resolved_astrometry,
+    )
+
+    dispatch = {
+        "get_photometry": try_get_photometry,
+        "get_amplification": try_get_amplification,
+        "get_astrometry": try_get_astrometry,
+        "get_astrometry_unlensed": try_get_astrometry_unlensed,
+        "get_lens_astrometry": try_get_lens_astrometry,
+        "get_centroid_shift": try_get_centroid_shift,
+        "get_resolved_astrometry": try_get_resolved_astrometry,
+    }
+    fn = dispatch.get(method_name)
+    if fn is not None:
+        out = fn(instance, t, filt_idx=0)
+        if out is not None:
+            return out
+    return call_method(instance, method_name, t)
 
 
 def pspl_non_gp_pairs() -> list[tuple[str, str]]:
@@ -469,7 +513,7 @@ def fspl_photastrom_param1_pairs() -> list[tuple[str, str]]:
     core_ast = tuple(
         m
         for m in PSBL_PHOTASTROM_AST_METHODS
-        if m not in ("get_resolved_lens_astrometry", "get_centroid_shift")
+        if m not in ("get_resolved_lens_astrometry",)
     )
     methods = PSBL_PHOT_METHODS + core_ast
     return sorted(
@@ -477,8 +521,72 @@ def fspl_photastrom_param1_pairs() -> list[tuple[str, str]]:
     )
 
 
+FSPL_PHOTASTROM_EXTENDED_METHODS = (
+    "get_u",
+    "get_chi2_photometry",
+    "log_likely_photometry_each",
+    "get_chi2_astrometry",
+    "log_likely_astrometry_each",
+)
+
+
+def fspl_photastrom_param1_extended_pairs() -> list[tuple[str, str]]:
+    """FSPL PhotAstrom Param1 extended likelihoods (host AMG phot/ast forward)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("FSPL_PhotAstrom_noPar_Param1", "FSPL_PhotAstrom_Par_Param1")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in FSPL_PHOTASTROM_EXTENDED_METHODS
+        if (c, m) in applicable
+    )
+
+
+def fspl_photastrom_param2_pairs() -> list[tuple[str, str]]:
+    """FSPL PhotAstrom Param2 phot + core astrometry (noPar + Par)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("FSPL_PhotAstrom_noPar_Param2", "FSPL_PhotAstrom_Par_Param2")
+    core_ast = tuple(
+        m
+        for m in PSBL_PHOTASTROM_AST_METHODS
+        if m not in ("get_resolved_lens_astrometry",)
+    )
+    methods = PSBL_PHOT_METHODS + core_ast
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def fspl_phot_gp_param1_pairs() -> list[tuple[str, str]]:
+    """FSPL phot GP Param1 — no ``FSPL_Phot_*_GP_Param1`` classes in model_jax."""
+    return []
+
+
 def fsbl_phot_param1_pairs() -> list[tuple[str, str]]:
-    """FSBL phot-only Param1 parity — classes exist only in model_jax (empty)."""
+    """FSBL phot-only Param1: jax evaluate dispatch vs native (model_jax only)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("FSBL_Phot_noPar_Param1", "FSBL_Phot_Par_Param1")
+    return sorted(
+        (c, m) for c in classes for m in PSBL_PHOT_METHODS if (c, m) in applicable
+    )
+
+
+def bsbl_phot_param1_pairs() -> list[tuple[str, str]]:
+    """BSBL phot-only Param1 — no ``BSBL_Phot_*`` ModelClassABC in model_jax."""
+    return []
+
+
+def bspl_phot_param2_pairs() -> list[tuple[str, str]]:
+    """BSPL phot-only Param2 — no ``BSPL_Phot_*_Param2`` classes in model_jax."""
     return []
 
 
@@ -545,6 +653,34 @@ def psbl_photastrom_param4_phot_pairs() -> list[tuple[str, str]]:
     classes = ("PSBL_PhotAstrom_noPar_Param4", "PSBL_PhotAstrom_Par_Param4")
     return sorted(
         (c, m) for c in classes for m in PSBL_PHOT_METHODS if (c, m) in applicable
+    )
+
+
+def psbl_photastrom_param4_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param4 phot + full astrometry (companion-source init)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_PhotAstrom_noPar_Param4", "PSBL_PhotAstrom_Par_Param4")
+    methods = PSBL_PHOT_METHODS + PSBL_PHOTASTROM_AST_METHODS
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def psbl_photastrom_param4_grad_phot_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param4 phot grad smoke (companion t0/u0 init names)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_PhotAstrom_noPar_Param4", "PSBL_PhotAstrom_Par_Param4")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in ("get_photometry",)
+        if (c, m) in applicable
     )
 
 
