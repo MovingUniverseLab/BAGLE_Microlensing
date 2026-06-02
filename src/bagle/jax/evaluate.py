@@ -213,6 +213,11 @@ def evaluate_photometry_jax(
 
             return bspl_photometry_from_model(model, t, filt_idx, pvec)
 
+        if ek.startswith("bspl_photastrom"):
+            from bagle.jax.bspl import bspl_photometry_from_model
+
+            return bspl_photometry_from_model(model, t, filt_idx, pvec)
+
         if ek.startswith(("fsbl_phot", "fsbl_photastrom")):
             from bagle.jax.fspl import fspl_photometry_from_model
 
@@ -465,6 +470,10 @@ def evaluate_amplification_jax(
             amp, _mag = _evaluate_psbl_phot(layout, model, t_j, pvec, 0.0, 1.0)
             return np.asarray(amp, dtype=np.float64)
         if ek.startswith("bspl_phot"):
+            from bagle.jax.bspl import bspl_amplification_from_model
+
+            return bspl_amplification_from_model(model, t, filt_idx, pvec)
+        if ek.startswith("bspl_photastrom"):
             from bagle.jax.bspl import bspl_amplification_from_model
 
             return bspl_amplification_from_model(model, t, filt_idx, pvec)

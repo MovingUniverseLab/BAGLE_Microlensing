@@ -63,33 +63,55 @@ def bspl_photometry_jax(
     return flux2mag_jax(flux)
 
 
+def _bspl_times(model):
+    t0_pri = float(model.t0_pri)
+    if hasattr(model, "get_t0_sec"):
+        t0_sec = float(model.get_t0_sec())
+    elif hasattr(model, "t0_sec"):
+        t0_sec = float(model.t0_sec)
+    else:
+        t0_sec = t0_pri
+    return t0_pri, t0_sec
+
+
 def _bspl_u0_pair(model, filt_idx: int):
-    u0_pri, thetaE_hat, _ = derive_pspl_static_geometry(
-        _filt_scalar(model, "u0_amp_pri"),
+    u0_pri = float(getattr(model, "u0_amp_pri", model.u0_amp))
+    if hasattr(model, "u0_amp_sec"):
+        u0_sec = float(model.u0_amp_sec)
+        thetaE_hat = np.asarray(model.thetaE_hat, dtype=np.float64)
+        return (
+            jnp.asarray(u0_pri, dtype=jnp.float64),
+            jnp.asarray(u0_sec, dtype=jnp.float64),
+            jnp.asarray(thetaE_hat, dtype=jnp.float64),
+        )
+    u0_pri_j, thetaE_hat, _ = derive_pspl_static_geometry(
+        u0_pri,
         float(model.piE[0]),
         float(model.piE[1]),
     )
-    u0_sec, _, _ = derive_pspl_static_geometry(
-        _filt_scalar(model, "u0_amp_sec"),
-        float(model.piE[0]),
-        float(model.piE[1]),
+    sep_th = float(model.sep) / float(model.thetaE_amp)
+    alpha = float(getattr(model, "phi_rho1_rad", getattr(model, "alpha_rad", 0.0)))
+    u0_sec_vec = np.asarray(model.u0, dtype=np.float64) + sep_th * np.array(
+        [np.sin(alpha), np.cos(alpha)]
     )
-    return u0_pri, u0_sec, thetaE_hat
+    u0_sec_j = jnp.linalg.norm(jnp.asarray(u0_sec_vec, dtype=jnp.float64))
+    return u0_pri_j, u0_sec_j, thetaE_hat
 
 
 def bspl_photometry_from_model(model, t, filt_idx, pvec):
     u0_pri, u0_sec, thetaE_hat = _bspl_u0_pair(model, filt_idx)
+    t0_pri, t0_sec = _bspl_times(model)
     mag = bspl_photometry_jax(
         jnp.asarray(t, dtype=jnp.float64),
-        float(model.t0_pri),
-        float(model.t0_sec),
+        t0_pri,
+        t0_sec,
         float(model.tE),
         u0_pri,
         u0_sec,
         thetaE_hat,
-        _filt_scalar(model, "mag_src_pri"),
-        _filt_scalar(model, "mag_src_sec"),
-        _filt_scalar(model, "b_sff"),
+        _filt_scalar(model, "mag_src_pri", filt_idx),
+        _filt_scalar(model, "mag_src_sec", filt_idx),
+        _filt_scalar(model, "b_sff", filt_idx),
         pvec=pvec,
         piE_E=float(model.piE[0]),
         piE_N=float(model.piE[1]),
@@ -99,11 +121,12 @@ def bspl_photometry_from_model(model, t, filt_idx, pvec):
 
 def bspl_amplification_from_model(model, t, filt_idx, pvec):
     u0_pri, u0_sec, thetaE_hat = _bspl_u0_pair(model, filt_idx)
+    t0_pri, t0_sec = _bspl_times(model)
     t_j = jnp.asarray(t, dtype=jnp.float64)
     u1, u2 = _bspl_u_dual(
         t_j,
-        float(model.t0_pri),
-        float(model.t0_sec),
+        t0_pri,
+        t0_sec,
         float(model.tE),
         u0_pri,
         u0_sec,
@@ -114,8 +137,8 @@ def bspl_amplification_from_model(model, t, filt_idx, pvec):
     )
     a1 = pspl_amplification_from_u(u1)
     a2 = pspl_amplification_from_u(u2)
-    f1 = mag2flux_jax(_filt_scalar(model, "mag_src_pri"))
-    f2 = mag2flux_jax(_filt_scalar(model, "mag_src_sec"))
+    f1 = mag2flux_jax(_filt_scalar(model, "mag_src_pri", filt_idx))
+    f2 = mag2flux_jax(_filt_scalar(model, "mag_src_sec", filt_idx))
     amp = (f1 * a1 + f2 * a2) / (f1 + f2)
     return np.asarray(amp, dtype=np.float64)
 

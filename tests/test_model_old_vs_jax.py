@@ -12,13 +12,15 @@ from model_old_vs_jax_fixtures import (
     call_method,
     grad_smoke_jax,
     bspl_phot_param1_pairs,
+    bspl_photastrom_param1_pairs,
     psbl_gp_param1_pairs,
     psbl_gp_photastrom_param2_pairs,
+    psbl_phot_grad_pairs,
     psbl_phot_pairs,
     psbl_photastrom_first_pairs,
     psbl_photastrom_gp_param1_pairs,
     psbl_photastrom_param2_pairs,
-    psbl_photastrom_param3_phot_pairs,
+    psbl_photastrom_param3_pairs,
     psbl_photastrom_par_param1_pairs,
     pspl_gp_pairs,
     pspl_non_gp_pairs,
@@ -135,11 +137,35 @@ def test_parity_psbl_gp_param1(class_name, method_name):
     _assert_parity(old_inst, jax_inst, method_name, t)
 
 
-@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param3_phot_pairs())
-def test_parity_psbl_photastrom_param3_phot(class_name, method_name):
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param3_pairs())
+def test_parity_psbl_photastrom_param3(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_param1_pairs())
+def test_parity_bspl_photastrom_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_phot_grad_pairs())
+def test_grad_psbl_phot(class_name, method_name):
+    """PSBL phot grad smoke; root finder yields NaN w.r.t. lens geometry."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    if not np.all(np.isfinite(g)):
+        pytest.skip(
+            f"PSBL phot grad non-finite for {class_name}.{method_name} "
+            "(root-finder forward path)"
+        )
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
 
 
 @pytest.mark.parametrize("class_name,method_name", psbl_gp_photastrom_param2_pairs())

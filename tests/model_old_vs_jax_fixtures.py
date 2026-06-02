@@ -107,7 +107,13 @@ def _value_for(name: str) -> Any:
         val = [v] if name.startswith(("b_sff", "mag_", "gp_")) else v
     else:
         raise KeyError(f"No canonical value for parameter {name!r}")
-    if name in ("b_sff", "mag_src", "mag_base") and not isinstance(val, (list, tuple)):
+    if name in (
+        "b_sff",
+        "mag_src",
+        "mag_base",
+        "mag_src_pri",
+        "mag_src_sec",
+    ) and not isinstance(val, (list, tuple)):
         return [val]
     return val
 
@@ -313,14 +319,20 @@ def psbl_gp_param1_pairs() -> list[tuple[str, str]]:
 
 
 def psbl_gp_photastrom_param2_pairs() -> list[tuple[str, str]]:
-    """PSBL PhotAstrom GP Param2 phot + ``get_photometry_with_gp``."""
+    """PSBL PhotAstrom GP Param2 phot, GP, and core astrometry parity."""
     import bagle.model_jax as model_jax
     from bagle.jax.migration_tasks import applicable_task_pairs
 
     applicable = set(applicable_task_pairs(model_jax))
     classes = ("PSBL_PhotAstrom_noPar_GP_Param2", "PSBL_PhotAstrom_Par_GP_Param2")
+    core_ast = tuple(
+        m
+        for m in PSBL_PHOTASTROM_AST_METHODS
+        if m not in ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    )
+    methods = GP_PHOT_METHODS + core_ast
     return sorted(
-        (c, m) for c in classes for m in GP_PHOT_METHODS if (c, m) in applicable
+        (c, m) for c in classes for m in methods if (c, m) in applicable
     )
 
 
@@ -354,10 +366,74 @@ def bspl_phot_param1_pairs() -> list[tuple[str, str]]:
     )
 
 
-def psbl_photastrom_param3_phot_pairs() -> list[tuple[str, str]]:
-    """PSBL PhotAstrom Param3 static phot+amp (log10 thetaE layout)."""
+def psbl_phot_param2_pairs() -> list[tuple[str, str]]:
+    """PSBL phot-only Param2 parity (noPar + Par, static/orbit as applicable).
+
+    Note: the model hierarchy has no ``PSBL_Phot_*_Param2`` classes; this
+    returns an empty list until such classes exist.
+    """
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_Phot_noPar_Param2", "PSBL_Phot_Par_Param2")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOT_METHODS
+        if (c, m) in applicable
+    )
+
+
+def psbl_photastrom_param3_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param3 phot + full astrom (log10 thetaE layout)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
     classes = ("PSBL_PhotAstrom_noPar_Param3", "PSBL_PhotAstrom_Par_Param3")
-    return sorted((c, m) for c in classes for m in PSBL_PHOT_METHODS)
+    methods = PSBL_PHOT_METHODS + PSBL_PHOTASTROM_AST_METHODS
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def psbl_phot_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL static phot-only classes for grad smoke (root finder => often NaN)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_Phot_noPar_Param1", "PSBL_Phot_Par_Param1")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOT_METHODS
+        if (c, m) in applicable
+    )
+
+
+def bspl_photastrom_param1_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom Param1 phot + core astrometry parity (noPar + Par)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("BSPL_PhotAstrom_noPar_Param1", "BSPL_PhotAstrom_Par_Param1")
+    core_ast = tuple(
+        m
+        for m in PSBL_PHOTASTROM_AST_METHODS
+        if m not in ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    )
+    methods = PSBL_PHOT_METHODS + core_ast
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def psbl_photastrom_param3_phot_pairs() -> list[tuple[str, str]]:
+    """Backward-compatible alias: Param3 phot+amp only."""
+    return [(c, m) for c, m in psbl_photastrom_param3_pairs() if m in PSBL_PHOT_METHODS]
 
 
 def time_grid_phot(instance) -> np.ndarray:
