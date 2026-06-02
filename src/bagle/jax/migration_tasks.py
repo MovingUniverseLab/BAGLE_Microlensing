@@ -118,6 +118,8 @@ def applicable_methods(cls: type) -> dict[MethodName, bool]:
             out["get_resolved_astrometry"] = True
         if phot and _class_has_method(cls, "get_resolved_amplification"):
             out["get_resolved_amplification"] = True
+
+    if is_pspl or is_psbl or is_bsbl or is_fsbl:
         if (phot or ast) and _class_has_method(cls, "get_u"):
             out["get_u"] = True
         if phot and _class_has_method(cls, "get_chi2_photometry"):

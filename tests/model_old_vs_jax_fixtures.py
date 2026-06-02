@@ -15,6 +15,7 @@ CANONICAL: dict[str, Any] = {
     "t0_geotr": 57100.0,
     "t0par": 57100.0,
     "u0_amp": 0.05,
+    "u0_amp_com": 0.4,
     "u0_amp_geotr": 0.05,
     "tE": 45.0,
     "tE_geotr": 45.0,
@@ -66,6 +67,21 @@ CANONICAL: dict[str, Any] = {
     "dmag_Lp_Ls": [0.0],
     "mLp": 10.0,
     "mLs": 3.0,
+    "sepL": 3.0,
+    "alphaL": -35.0,
+    "sepS": 0.5,
+    "alphaS": 0.0,
+    "beta_com": 1.0,
+    "t0_com": 57100.0,
+    "omega_pri": 90.0,
+    "big_omega_sec": 0.0,
+    "i": 45.0,
+    "e": 0.1,
+    "tp": 40.0,
+    "a": 1.0,
+    "fratio_bin": [1.0],
+    "radiusS": 1e-3,
+    "n_outline": 20,
     "gp_log_sigma": [-1.0],
     "gp_log_rho": [0.5],
     "gp_rho": [math.exp(0.5)],
@@ -337,7 +353,7 @@ def psbl_gp_photastrom_param2_pairs() -> list[tuple[str, str]]:
 
 
 def psbl_photastrom_gp_param1_pairs() -> list[tuple[str, str]]:
-    """PSBL PhotAstrom GP Param1 phot, GP, and core astrometry parity."""
+    """PSBL PhotAstrom GP Param1 phot, GP, core astrom, and extended likelihoods."""
     import bagle.model_jax as model_jax
     from bagle.jax.migration_tasks import applicable_task_pairs
 
@@ -348,9 +364,82 @@ def psbl_photastrom_gp_param1_pairs() -> list[tuple[str, str]]:
         for m in PSBL_PHOTASTROM_AST_METHODS
         if m not in ("get_resolved_astrometry", "get_resolved_lens_astrometry")
     )
-    methods = GP_PHOT_METHODS + core_ast
+    methods = GP_PHOT_METHODS + core_ast + PSBL_GP_EXTENDED_METHODS
     return sorted(
         (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def psbl_gp_photastrom_param3_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom GP Param3 — no such classes in model_jax (empty harness)."""
+    return []
+
+
+def psbl_gp_param2_phot_pairs() -> list[tuple[str, str]]:
+    """PSBL phot-only GP Param2 — classes do not exist (empty harness)."""
+    return []
+
+
+def bsbl_photastrom_param1_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom Param1 (noPar + Par) phot + core astrometry parity."""
+    return _psbl_photastrom_pairs_for_classes(
+        ("BSBL_PhotAstrom_noPar_Param1", "BSBL_PhotAstrom_Par_Param1")
+    )
+
+
+def psbl_photastrom_circorbs_param1_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom CircOrbs Param1 phot + core astrometry."""
+    return _psbl_photastrom_pairs_for_classes(
+        (
+            "PSBL_PhotAstrom_noPar_CircOrbs_Param1",
+            "PSBL_PhotAstrom_Par_CircOrbs_Param1",
+        )
+    )
+
+
+def psbl_photastrom_ellorbs_param1_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom EllOrbs Param1 phot + core astrometry."""
+    return _psbl_photastrom_pairs_for_classes(
+        (
+            "PSBL_PhotAstrom_noPar_EllOrbs_Param1",
+            "PSBL_PhotAstrom_Par_EllOrbs_Param1",
+        )
+    )
+
+
+def bspl_phot_gp_param1_pairs() -> list[tuple[str, str]]:
+    """BSPL phot-only GP Param1 parity (noPar + Par)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("BSPL_Phot_noPar_GP_Param1", "BSPL_Phot_Par_GP_Param1")
+    return sorted(
+        (c, m) for c in classes for m in GP_PHOT_METHODS if (c, m) in applicable
+    )
+
+
+def bspl_photastrom_param2_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom Param2 phot + core astrometry (noPar + Par)."""
+    return _psbl_photastrom_pairs_for_classes(
+        ("BSPL_PhotAstrom_noPar_Param2", "BSPL_PhotAstrom_Par_Param2")
+    )
+
+
+def psbl_photastrom_param4_phot_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param4 phot seed — blocked: init uses mag_src, mixin expects mag_base."""
+    return []
+
+
+def fspl_phot_param2_pairs() -> list[tuple[str, str]]:
+    """FSPL phot-only Param2 parity (noPar + Par)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("FSPL_Phot_noPar_Param2", "FSPL_Phot_Par_Param2")
+    return sorted(
+        (c, m) for c in classes for m in PSBL_PHOT_METHODS if (c, m) in applicable
     )
 
 
@@ -489,7 +578,14 @@ LIST_INIT_PARAMS = frozenset(
         "gp_log_omega04_S0",
         "gp_log_jit_sigma",
         "dmag_Lp_Ls",
+        "fratio_bin",
     }
+)
+
+PSBL_GP_EXTENDED_METHODS = (
+    "get_u",
+    "get_chi2_photometry",
+    "log_likely_photometry_each",
 )
 
 
