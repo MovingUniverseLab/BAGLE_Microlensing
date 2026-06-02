@@ -1,6 +1,6 @@
 # JAX migration task queue
 
-Updated: 2026-05-31 | Applicable tasks: 1886
+Updated: 2026-06-02 | Applicable tasks: 2848
 
 
 ## PSPL (470 tasks)
@@ -83,27 +83,27 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_source_astrometry_unlensed::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_source_astrometry_unlensed::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_source_astrometry_unlensed::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_u::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_u::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_u::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_source_astrometry_unlensed::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_source_astrometry_unlensed::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_source_astrometry_unlensed::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_u::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_u::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_u::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::grad
 - [x] PSPL_PhotAstrom_Par_GP_Param2::get_amplification::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param2::get_amplification::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param2::get_amplification::grad
@@ -128,27 +128,27 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_source_astrometry_unlensed::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_source_astrometry_unlensed::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_source_astrometry_unlensed::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_u::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_u::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_u::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_source_astrometry_unlensed::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_source_astrometry_unlensed::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_source_astrometry_unlensed::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_u::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_u::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_u::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::grad
 - [x] PSPL_PhotAstrom_Par_GP_Param3::get_amplification::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param3::get_amplification::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param3::get_amplification::grad
@@ -173,27 +173,27 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_PhotAstrom_Par_GP_Param3::get_photometry_with_gp::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param3::get_photometry_with_gp::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param3::get_photometry_with_gp::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_source_astrometry_unlensed::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_source_astrometry_unlensed::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_source_astrometry_unlensed::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_u::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_u::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_u::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_photometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_photometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_photometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_astrometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_astrometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_astrometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::log_likely_photometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::log_likely_photometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::log_likely_photometry_each::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::log_likely_astrometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::log_likely_astrometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3::log_likely_astrometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_source_astrometry_unlensed::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_source_astrometry_unlensed::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_source_astrometry_unlensed::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_u::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_u::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_u::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_photometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_photometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_photometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_astrometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_astrometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3::get_chi2_astrometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3::log_likely_photometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3::log_likely_photometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3::log_likely_photometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3::log_likely_astrometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3::log_likely_astrometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3::log_likely_astrometry_each::grad
 - [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_amplification::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_amplification::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_amplification::grad
@@ -218,27 +218,27 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_photometry_with_gp::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_photometry_with_gp::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_photometry_with_gp::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_source_astrometry_unlensed::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_source_astrometry_unlensed::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_source_astrometry_unlensed::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_resolved_amplification::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_resolved_amplification::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_resolved_amplification::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_u::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_u::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_u::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_photometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_photometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_photometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_astrometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_astrometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_astrometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_photometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_photometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_photometry_each::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_astrometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_astrometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_astrometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_source_astrometry_unlensed::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_source_astrometry_unlensed::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_source_astrometry_unlensed::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_resolved_amplification::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_resolved_amplification::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_resolved_amplification::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_u::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_u::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_u::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_photometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_photometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_photometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_astrometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_astrometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::get_chi2_astrometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_photometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_photometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_photometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_astrometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_astrometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_1::log_likely_astrometry_each::grad
 - [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_amplification::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_amplification::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_amplification::grad
@@ -263,27 +263,27 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_photometry_with_gp::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_photometry_with_gp::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_photometry_with_gp::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_source_astrometry_unlensed::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_source_astrometry_unlensed::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_source_astrometry_unlensed::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_resolved_amplification::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_resolved_amplification::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_resolved_amplification::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_u::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_u::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_u::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_photometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_photometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_photometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_astrometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_astrometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_astrometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_photometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_photometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_photometry_each::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_astrometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_astrometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_astrometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_source_astrometry_unlensed::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_source_astrometry_unlensed::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_source_astrometry_unlensed::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_resolved_amplification::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_resolved_amplification::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_resolved_amplification::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_u::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_u::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_u::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_photometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_photometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_photometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_astrometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_astrometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::get_chi2_astrometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_photometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_photometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_photometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_astrometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_astrometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param3_2::log_likely_astrometry_each::grad
 - [x] PSPL_PhotAstrom_Par_GP_Param4::get_amplification::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param4::get_amplification::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param4::get_amplification::grad
@@ -308,27 +308,27 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_PhotAstrom_Par_GP_Param4::get_photometry_with_gp::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param4::get_photometry_with_gp::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param4::get_photometry_with_gp::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_source_astrometry_unlensed::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_source_astrometry_unlensed::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_source_astrometry_unlensed::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_resolved_amplification::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_resolved_amplification::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_resolved_amplification::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_u::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_u::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_u::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_photometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_photometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_photometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_astrometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_astrometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_astrometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::log_likely_photometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::log_likely_photometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::log_likely_photometry_each::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::log_likely_astrometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::log_likely_astrometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4::log_likely_astrometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_source_astrometry_unlensed::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_source_astrometry_unlensed::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_source_astrometry_unlensed::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_resolved_amplification::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_resolved_amplification::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_resolved_amplification::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_u::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_u::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_u::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_photometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_photometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_photometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_astrometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_astrometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4::get_chi2_astrometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4::log_likely_photometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4::log_likely_photometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4::log_likely_photometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4::log_likely_astrometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4::log_likely_astrometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4::log_likely_astrometry_each::grad
 - [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_amplification::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_amplification::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_amplification::grad
@@ -353,27 +353,27 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_photometry_with_gp::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_photometry_with_gp::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_photometry_with_gp::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_source_astrometry_unlensed::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_source_astrometry_unlensed::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_source_astrometry_unlensed::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_resolved_amplification::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_resolved_amplification::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_resolved_amplification::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_u::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_u::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_u::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_photometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_photometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_photometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_astrometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_astrometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_astrometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_photometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_photometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_photometry_each::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_astrometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_astrometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_astrometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_source_astrometry_unlensed::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_source_astrometry_unlensed::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_source_astrometry_unlensed::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_resolved_amplification::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_resolved_amplification::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_resolved_amplification::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_u::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_u::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_u::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_photometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_photometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_photometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_astrometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_astrometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::get_chi2_astrometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_photometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_photometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_photometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_astrometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_astrometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_1::log_likely_astrometry_each::grad
 - [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_amplification::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_amplification::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_amplification::grad
@@ -398,27 +398,27 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_photometry_with_gp::jax_forward
 - [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_photometry_with_gp::parity
 - [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_photometry_with_gp::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_source_astrometry_unlensed::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_source_astrometry_unlensed::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_source_astrometry_unlensed::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_resolved_amplification::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_resolved_amplification::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_resolved_amplification::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_u::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_u::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_u::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_photometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_photometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_photometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_astrometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_astrometry::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_astrometry::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_photometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_photometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_photometry_each::grad
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_astrometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_astrometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_astrometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_source_astrometry_unlensed::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_source_astrometry_unlensed::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_source_astrometry_unlensed::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_resolved_amplification::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_resolved_amplification::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_resolved_amplification::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_u::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_u::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_u::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_photometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_photometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_photometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_astrometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_astrometry::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::get_chi2_astrometry::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_photometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_photometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_photometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_astrometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_astrometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GP_Param4_2::log_likely_astrometry_each::grad
 - [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_amplification::jax_forward
 - [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_amplification::parity
 - [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_amplification::grad
@@ -443,27 +443,27 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_photometry_with_gp::jax_forward
 - [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_photometry_with_gp::parity
 - [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_photometry_with_gp::grad
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_source_astrometry_unlensed::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_source_astrometry_unlensed::parity
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_source_astrometry_unlensed::grad
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_resolved_amplification::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_resolved_amplification::parity
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_resolved_amplification::grad
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_u::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_u::parity
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_u::grad
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_photometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_photometry::parity
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_photometry::grad
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_astrometry::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_astrometry::parity
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_astrometry::grad
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_photometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_photometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_photometry_each::grad
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_astrometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_astrometry_each::parity
-- [ ] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_astrometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_source_astrometry_unlensed::jax_forward
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_source_astrometry_unlensed::parity
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_source_astrometry_unlensed::grad
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_resolved_amplification::jax_forward
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_resolved_amplification::parity
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_resolved_amplification::grad
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_u::jax_forward
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_u::parity
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_u::grad
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_photometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_photometry::parity
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_photometry::grad
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_astrometry::jax_forward
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_astrometry::parity
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::get_chi2_astrometry::grad
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_photometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_photometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_photometry_each::grad
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_astrometry_each::jax_forward
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_astrometry_each::parity
+- [x] PSPL_PhotAstrom_Par_GPnoJitter_Param3_1::log_likely_astrometry_each::grad
 - [x] PSPL_PhotAstrom_Par_Param1::get_amplification::jax_forward
 - [x] PSPL_PhotAstrom_Par_Param1::get_amplification::parity
 - [x] PSPL_PhotAstrom_Par_Param1::get_amplification::grad
@@ -782,27 +782,27 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::jax_forward
 - [x] PSPL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::parity
 - [x] PSPL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_source_astrometry_unlensed::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_source_astrometry_unlensed::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_source_astrometry_unlensed::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_u::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_u::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_u::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_source_astrometry_unlensed::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_source_astrometry_unlensed::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_source_astrometry_unlensed::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_u::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_u::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_u::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::grad
 - [x] PSPL_PhotAstrom_noPar_GP_Param2::get_amplification::jax_forward
 - [x] PSPL_PhotAstrom_noPar_GP_Param2::get_amplification::parity
 - [x] PSPL_PhotAstrom_noPar_GP_Param2::get_amplification::grad
@@ -827,27 +827,27 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::jax_forward
 - [x] PSPL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::parity
 - [x] PSPL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_source_astrometry_unlensed::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_source_astrometry_unlensed::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_source_astrometry_unlensed::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_u::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_u::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_u::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::grad
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::jax_forward
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::parity
-- [ ] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_source_astrometry_unlensed::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_source_astrometry_unlensed::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_source_astrometry_unlensed::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_u::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_u::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_u::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::grad
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::jax_forward
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::parity
+- [x] PSPL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::grad
 - [x] PSPL_PhotAstrom_noPar_Param1::get_amplification::jax_forward
 - [x] PSPL_PhotAstrom_noPar_Param1::get_amplification::parity
 - [x] PSPL_PhotAstrom_noPar_Param1::get_amplification::grad
@@ -1025,18 +1025,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_Par_GP_Param1::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_Par_GP_Param1::get_photometry_with_gp::parity
 - [x] PSPL_Phot_Par_GP_Param1::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_Par_GP_Param1::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param1::get_resolved_amplification::parity
-- [ ] PSPL_Phot_Par_GP_Param1::get_resolved_amplification::grad
-- [ ] PSPL_Phot_Par_GP_Param1::get_u::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param1::get_u::parity
-- [ ] PSPL_Phot_Par_GP_Param1::get_u::grad
-- [ ] PSPL_Phot_Par_GP_Param1::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param1::get_chi2_photometry::parity
-- [ ] PSPL_Phot_Par_GP_Param1::get_chi2_photometry::grad
-- [ ] PSPL_Phot_Par_GP_Param1::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param1::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_Par_GP_Param1::log_likely_photometry_each::grad
+- [x] PSPL_Phot_Par_GP_Param1::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_Par_GP_Param1::get_resolved_amplification::parity
+- [x] PSPL_Phot_Par_GP_Param1::get_resolved_amplification::grad
+- [x] PSPL_Phot_Par_GP_Param1::get_u::jax_forward
+- [x] PSPL_Phot_Par_GP_Param1::get_u::parity
+- [x] PSPL_Phot_Par_GP_Param1::get_u::grad
+- [x] PSPL_Phot_Par_GP_Param1::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_Par_GP_Param1::get_chi2_photometry::parity
+- [x] PSPL_Phot_Par_GP_Param1::get_chi2_photometry::grad
+- [x] PSPL_Phot_Par_GP_Param1::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_Par_GP_Param1::log_likely_photometry_each::parity
+- [x] PSPL_Phot_Par_GP_Param1::log_likely_photometry_each::grad
 - [x] PSPL_Phot_Par_GP_Param1_2::get_amplification::jax_forward
 - [x] PSPL_Phot_Par_GP_Param1_2::get_amplification::parity
 - [x] PSPL_Phot_Par_GP_Param1_2::get_amplification::grad
@@ -1046,18 +1046,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_Par_GP_Param1_2::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_Par_GP_Param1_2::get_photometry_with_gp::parity
 - [x] PSPL_Phot_Par_GP_Param1_2::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_Par_GP_Param1_2::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param1_2::get_resolved_amplification::parity
-- [ ] PSPL_Phot_Par_GP_Param1_2::get_resolved_amplification::grad
-- [ ] PSPL_Phot_Par_GP_Param1_2::get_u::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param1_2::get_u::parity
-- [ ] PSPL_Phot_Par_GP_Param1_2::get_u::grad
-- [ ] PSPL_Phot_Par_GP_Param1_2::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param1_2::get_chi2_photometry::parity
-- [ ] PSPL_Phot_Par_GP_Param1_2::get_chi2_photometry::grad
-- [ ] PSPL_Phot_Par_GP_Param1_2::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param1_2::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_Par_GP_Param1_2::log_likely_photometry_each::grad
+- [x] PSPL_Phot_Par_GP_Param1_2::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_Par_GP_Param1_2::get_resolved_amplification::parity
+- [x] PSPL_Phot_Par_GP_Param1_2::get_resolved_amplification::grad
+- [x] PSPL_Phot_Par_GP_Param1_2::get_u::jax_forward
+- [x] PSPL_Phot_Par_GP_Param1_2::get_u::parity
+- [x] PSPL_Phot_Par_GP_Param1_2::get_u::grad
+- [x] PSPL_Phot_Par_GP_Param1_2::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_Par_GP_Param1_2::get_chi2_photometry::parity
+- [x] PSPL_Phot_Par_GP_Param1_2::get_chi2_photometry::grad
+- [x] PSPL_Phot_Par_GP_Param1_2::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_Par_GP_Param1_2::log_likely_photometry_each::parity
+- [x] PSPL_Phot_Par_GP_Param1_2::log_likely_photometry_each::grad
 - [x] PSPL_Phot_Par_GP_Param2::get_amplification::jax_forward
 - [x] PSPL_Phot_Par_GP_Param2::get_amplification::parity
 - [x] PSPL_Phot_Par_GP_Param2::get_amplification::grad
@@ -1067,18 +1067,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_Par_GP_Param2::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_Par_GP_Param2::get_photometry_with_gp::parity
 - [x] PSPL_Phot_Par_GP_Param2::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_Par_GP_Param2::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2::get_resolved_amplification::parity
-- [ ] PSPL_Phot_Par_GP_Param2::get_resolved_amplification::grad
-- [ ] PSPL_Phot_Par_GP_Param2::get_u::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2::get_u::parity
-- [ ] PSPL_Phot_Par_GP_Param2::get_u::grad
-- [ ] PSPL_Phot_Par_GP_Param2::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2::get_chi2_photometry::parity
-- [ ] PSPL_Phot_Par_GP_Param2::get_chi2_photometry::grad
-- [ ] PSPL_Phot_Par_GP_Param2::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_Par_GP_Param2::log_likely_photometry_each::grad
+- [x] PSPL_Phot_Par_GP_Param2::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2::get_resolved_amplification::parity
+- [x] PSPL_Phot_Par_GP_Param2::get_resolved_amplification::grad
+- [x] PSPL_Phot_Par_GP_Param2::get_u::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2::get_u::parity
+- [x] PSPL_Phot_Par_GP_Param2::get_u::grad
+- [x] PSPL_Phot_Par_GP_Param2::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2::get_chi2_photometry::parity
+- [x] PSPL_Phot_Par_GP_Param2::get_chi2_photometry::grad
+- [x] PSPL_Phot_Par_GP_Param2::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2::log_likely_photometry_each::parity
+- [x] PSPL_Phot_Par_GP_Param2::log_likely_photometry_each::grad
 - [x] PSPL_Phot_Par_GP_Param2_2::get_amplification::jax_forward
 - [x] PSPL_Phot_Par_GP_Param2_2::get_amplification::parity
 - [x] PSPL_Phot_Par_GP_Param2_2::get_amplification::grad
@@ -1088,18 +1088,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_Par_GP_Param2_2::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_Par_GP_Param2_2::get_photometry_with_gp::parity
 - [x] PSPL_Phot_Par_GP_Param2_2::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_Par_GP_Param2_2::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_2::get_resolved_amplification::parity
-- [ ] PSPL_Phot_Par_GP_Param2_2::get_resolved_amplification::grad
-- [ ] PSPL_Phot_Par_GP_Param2_2::get_u::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_2::get_u::parity
-- [ ] PSPL_Phot_Par_GP_Param2_2::get_u::grad
-- [ ] PSPL_Phot_Par_GP_Param2_2::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_2::get_chi2_photometry::parity
-- [ ] PSPL_Phot_Par_GP_Param2_2::get_chi2_photometry::grad
-- [ ] PSPL_Phot_Par_GP_Param2_2::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_2::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_Par_GP_Param2_2::log_likely_photometry_each::grad
+- [x] PSPL_Phot_Par_GP_Param2_2::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_2::get_resolved_amplification::parity
+- [x] PSPL_Phot_Par_GP_Param2_2::get_resolved_amplification::grad
+- [x] PSPL_Phot_Par_GP_Param2_2::get_u::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_2::get_u::parity
+- [x] PSPL_Phot_Par_GP_Param2_2::get_u::grad
+- [x] PSPL_Phot_Par_GP_Param2_2::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_2::get_chi2_photometry::parity
+- [x] PSPL_Phot_Par_GP_Param2_2::get_chi2_photometry::grad
+- [x] PSPL_Phot_Par_GP_Param2_2::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_2::log_likely_photometry_each::parity
+- [x] PSPL_Phot_Par_GP_Param2_2::log_likely_photometry_each::grad
 - [x] PSPL_Phot_Par_GP_Param2_3::get_amplification::jax_forward
 - [x] PSPL_Phot_Par_GP_Param2_3::get_amplification::parity
 - [x] PSPL_Phot_Par_GP_Param2_3::get_amplification::grad
@@ -1109,18 +1109,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_Par_GP_Param2_3::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_Par_GP_Param2_3::get_photometry_with_gp::parity
 - [x] PSPL_Phot_Par_GP_Param2_3::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_Par_GP_Param2_3::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_3::get_resolved_amplification::parity
-- [ ] PSPL_Phot_Par_GP_Param2_3::get_resolved_amplification::grad
-- [ ] PSPL_Phot_Par_GP_Param2_3::get_u::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_3::get_u::parity
-- [ ] PSPL_Phot_Par_GP_Param2_3::get_u::grad
-- [ ] PSPL_Phot_Par_GP_Param2_3::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_3::get_chi2_photometry::parity
-- [ ] PSPL_Phot_Par_GP_Param2_3::get_chi2_photometry::grad
-- [ ] PSPL_Phot_Par_GP_Param2_3::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_3::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_Par_GP_Param2_3::log_likely_photometry_each::grad
+- [x] PSPL_Phot_Par_GP_Param2_3::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_3::get_resolved_amplification::parity
+- [x] PSPL_Phot_Par_GP_Param2_3::get_resolved_amplification::grad
+- [x] PSPL_Phot_Par_GP_Param2_3::get_u::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_3::get_u::parity
+- [x] PSPL_Phot_Par_GP_Param2_3::get_u::grad
+- [x] PSPL_Phot_Par_GP_Param2_3::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_3::get_chi2_photometry::parity
+- [x] PSPL_Phot_Par_GP_Param2_3::get_chi2_photometry::grad
+- [x] PSPL_Phot_Par_GP_Param2_3::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_3::log_likely_photometry_each::parity
+- [x] PSPL_Phot_Par_GP_Param2_3::log_likely_photometry_each::grad
 - [x] PSPL_Phot_Par_GP_Param2_4::get_amplification::jax_forward
 - [x] PSPL_Phot_Par_GP_Param2_4::get_amplification::parity
 - [x] PSPL_Phot_Par_GP_Param2_4::get_amplification::grad
@@ -1130,18 +1130,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_Par_GP_Param2_4::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_Par_GP_Param2_4::get_photometry_with_gp::parity
 - [x] PSPL_Phot_Par_GP_Param2_4::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_Par_GP_Param2_4::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_4::get_resolved_amplification::parity
-- [ ] PSPL_Phot_Par_GP_Param2_4::get_resolved_amplification::grad
-- [ ] PSPL_Phot_Par_GP_Param2_4::get_u::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_4::get_u::parity
-- [ ] PSPL_Phot_Par_GP_Param2_4::get_u::grad
-- [ ] PSPL_Phot_Par_GP_Param2_4::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_4::get_chi2_photometry::parity
-- [ ] PSPL_Phot_Par_GP_Param2_4::get_chi2_photometry::grad
-- [ ] PSPL_Phot_Par_GP_Param2_4::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_4::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_Par_GP_Param2_4::log_likely_photometry_each::grad
+- [x] PSPL_Phot_Par_GP_Param2_4::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_4::get_resolved_amplification::parity
+- [x] PSPL_Phot_Par_GP_Param2_4::get_resolved_amplification::grad
+- [x] PSPL_Phot_Par_GP_Param2_4::get_u::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_4::get_u::parity
+- [x] PSPL_Phot_Par_GP_Param2_4::get_u::grad
+- [x] PSPL_Phot_Par_GP_Param2_4::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_4::get_chi2_photometry::parity
+- [x] PSPL_Phot_Par_GP_Param2_4::get_chi2_photometry::grad
+- [x] PSPL_Phot_Par_GP_Param2_4::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_4::log_likely_photometry_each::parity
+- [x] PSPL_Phot_Par_GP_Param2_4::log_likely_photometry_each::grad
 - [x] PSPL_Phot_Par_GP_Param2_5::get_amplification::jax_forward
 - [x] PSPL_Phot_Par_GP_Param2_5::get_amplification::parity
 - [x] PSPL_Phot_Par_GP_Param2_5::get_amplification::grad
@@ -1151,18 +1151,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_Par_GP_Param2_5::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_Par_GP_Param2_5::get_photometry_with_gp::parity
 - [x] PSPL_Phot_Par_GP_Param2_5::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_Par_GP_Param2_5::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_5::get_resolved_amplification::parity
-- [ ] PSPL_Phot_Par_GP_Param2_5::get_resolved_amplification::grad
-- [ ] PSPL_Phot_Par_GP_Param2_5::get_u::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_5::get_u::parity
-- [ ] PSPL_Phot_Par_GP_Param2_5::get_u::grad
-- [ ] PSPL_Phot_Par_GP_Param2_5::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_5::get_chi2_photometry::parity
-- [ ] PSPL_Phot_Par_GP_Param2_5::get_chi2_photometry::grad
-- [ ] PSPL_Phot_Par_GP_Param2_5::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param2_5::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_Par_GP_Param2_5::log_likely_photometry_each::grad
+- [x] PSPL_Phot_Par_GP_Param2_5::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_5::get_resolved_amplification::parity
+- [x] PSPL_Phot_Par_GP_Param2_5::get_resolved_amplification::grad
+- [x] PSPL_Phot_Par_GP_Param2_5::get_u::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_5::get_u::parity
+- [x] PSPL_Phot_Par_GP_Param2_5::get_u::grad
+- [x] PSPL_Phot_Par_GP_Param2_5::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_5::get_chi2_photometry::parity
+- [x] PSPL_Phot_Par_GP_Param2_5::get_chi2_photometry::grad
+- [x] PSPL_Phot_Par_GP_Param2_5::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_Par_GP_Param2_5::log_likely_photometry_each::parity
+- [x] PSPL_Phot_Par_GP_Param2_5::log_likely_photometry_each::grad
 - [x] PSPL_Phot_Par_GP_Param3::get_amplification::jax_forward
 - [x] PSPL_Phot_Par_GP_Param3::get_amplification::parity
 - [x] PSPL_Phot_Par_GP_Param3::get_amplification::grad
@@ -1172,18 +1172,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_Par_GP_Param3::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_Par_GP_Param3::get_photometry_with_gp::parity
 - [x] PSPL_Phot_Par_GP_Param3::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_Par_GP_Param3::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param3::get_resolved_amplification::parity
-- [ ] PSPL_Phot_Par_GP_Param3::get_resolved_amplification::grad
-- [ ] PSPL_Phot_Par_GP_Param3::get_u::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param3::get_u::parity
-- [ ] PSPL_Phot_Par_GP_Param3::get_u::grad
-- [ ] PSPL_Phot_Par_GP_Param3::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param3::get_chi2_photometry::parity
-- [ ] PSPL_Phot_Par_GP_Param3::get_chi2_photometry::grad
-- [ ] PSPL_Phot_Par_GP_Param3::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_Par_GP_Param3::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_Par_GP_Param3::log_likely_photometry_each::grad
+- [x] PSPL_Phot_Par_GP_Param3::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_Par_GP_Param3::get_resolved_amplification::parity
+- [x] PSPL_Phot_Par_GP_Param3::get_resolved_amplification::grad
+- [x] PSPL_Phot_Par_GP_Param3::get_u::jax_forward
+- [x] PSPL_Phot_Par_GP_Param3::get_u::parity
+- [x] PSPL_Phot_Par_GP_Param3::get_u::grad
+- [x] PSPL_Phot_Par_GP_Param3::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_Par_GP_Param3::get_chi2_photometry::parity
+- [x] PSPL_Phot_Par_GP_Param3::get_chi2_photometry::grad
+- [x] PSPL_Phot_Par_GP_Param3::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_Par_GP_Param3::log_likely_photometry_each::parity
+- [x] PSPL_Phot_Par_GP_Param3::log_likely_photometry_each::grad
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_amplification::jax_forward
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_amplification::parity
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_amplification::grad
@@ -1193,18 +1193,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_photometry_with_gp::parity
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::get_resolved_amplification::parity
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::get_resolved_amplification::grad
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::get_u::jax_forward
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::get_u::parity
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::get_u::grad
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::get_chi2_photometry::parity
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::get_chi2_photometry::grad
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_2::log_likely_photometry_each::grad
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_resolved_amplification::parity
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_resolved_amplification::grad
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_u::jax_forward
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_u::parity
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_u::grad
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_chi2_photometry::parity
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::get_chi2_photometry::grad
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::log_likely_photometry_each::parity
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_2::log_likely_photometry_each::grad
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_amplification::jax_forward
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_amplification::parity
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_amplification::grad
@@ -1214,18 +1214,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_photometry_with_gp::parity
 - [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::get_resolved_amplification::parity
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::get_resolved_amplification::grad
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::get_u::jax_forward
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::get_u::parity
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::get_u::grad
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::get_chi2_photometry::parity
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::get_chi2_photometry::grad
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_Par_GPnoJitter_Param2_3::log_likely_photometry_each::grad
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_resolved_amplification::parity
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_resolved_amplification::grad
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_u::jax_forward
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_u::parity
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_u::grad
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_chi2_photometry::parity
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::get_chi2_photometry::grad
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::log_likely_photometry_each::parity
+- [x] PSPL_Phot_Par_GPnoJitter_Param2_3::log_likely_photometry_each::grad
 - [x] PSPL_Phot_Par_Param1::get_amplification::jax_forward
 - [x] PSPL_Phot_Par_Param1::get_amplification::parity
 - [x] PSPL_Phot_Par_Param1::get_amplification::grad
@@ -1307,18 +1307,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_noPar_GP_Param1::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_noPar_GP_Param1::get_photometry_with_gp::parity
 - [x] PSPL_Phot_noPar_GP_Param1::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_noPar_GP_Param1::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param1::get_resolved_amplification::parity
-- [ ] PSPL_Phot_noPar_GP_Param1::get_resolved_amplification::grad
-- [ ] PSPL_Phot_noPar_GP_Param1::get_u::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param1::get_u::parity
-- [ ] PSPL_Phot_noPar_GP_Param1::get_u::grad
-- [ ] PSPL_Phot_noPar_GP_Param1::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param1::get_chi2_photometry::parity
-- [ ] PSPL_Phot_noPar_GP_Param1::get_chi2_photometry::grad
-- [ ] PSPL_Phot_noPar_GP_Param1::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param1::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_noPar_GP_Param1::log_likely_photometry_each::grad
+- [x] PSPL_Phot_noPar_GP_Param1::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param1::get_resolved_amplification::parity
+- [x] PSPL_Phot_noPar_GP_Param1::get_resolved_amplification::grad
+- [x] PSPL_Phot_noPar_GP_Param1::get_u::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param1::get_u::parity
+- [x] PSPL_Phot_noPar_GP_Param1::get_u::grad
+- [x] PSPL_Phot_noPar_GP_Param1::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param1::get_chi2_photometry::parity
+- [x] PSPL_Phot_noPar_GP_Param1::get_chi2_photometry::grad
+- [x] PSPL_Phot_noPar_GP_Param1::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param1::log_likely_photometry_each::parity
+- [x] PSPL_Phot_noPar_GP_Param1::log_likely_photometry_each::grad
 - [x] PSPL_Phot_noPar_GP_Param2::get_amplification::jax_forward
 - [x] PSPL_Phot_noPar_GP_Param2::get_amplification::parity
 - [x] PSPL_Phot_noPar_GP_Param2::get_amplification::grad
@@ -1328,18 +1328,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_noPar_GP_Param2::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_noPar_GP_Param2::get_photometry_with_gp::parity
 - [x] PSPL_Phot_noPar_GP_Param2::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_noPar_GP_Param2::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param2::get_resolved_amplification::parity
-- [ ] PSPL_Phot_noPar_GP_Param2::get_resolved_amplification::grad
-- [ ] PSPL_Phot_noPar_GP_Param2::get_u::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param2::get_u::parity
-- [ ] PSPL_Phot_noPar_GP_Param2::get_u::grad
-- [ ] PSPL_Phot_noPar_GP_Param2::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param2::get_chi2_photometry::parity
-- [ ] PSPL_Phot_noPar_GP_Param2::get_chi2_photometry::grad
-- [ ] PSPL_Phot_noPar_GP_Param2::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param2::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_noPar_GP_Param2::log_likely_photometry_each::grad
+- [x] PSPL_Phot_noPar_GP_Param2::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param2::get_resolved_amplification::parity
+- [x] PSPL_Phot_noPar_GP_Param2::get_resolved_amplification::grad
+- [x] PSPL_Phot_noPar_GP_Param2::get_u::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param2::get_u::parity
+- [x] PSPL_Phot_noPar_GP_Param2::get_u::grad
+- [x] PSPL_Phot_noPar_GP_Param2::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param2::get_chi2_photometry::parity
+- [x] PSPL_Phot_noPar_GP_Param2::get_chi2_photometry::grad
+- [x] PSPL_Phot_noPar_GP_Param2::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param2::log_likely_photometry_each::parity
+- [x] PSPL_Phot_noPar_GP_Param2::log_likely_photometry_each::grad
 - [x] PSPL_Phot_noPar_GP_Param3::get_amplification::jax_forward
 - [x] PSPL_Phot_noPar_GP_Param3::get_amplification::parity
 - [x] PSPL_Phot_noPar_GP_Param3::get_amplification::grad
@@ -1349,18 +1349,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_noPar_GP_Param3::get_photometry_with_gp::jax_forward
 - [x] PSPL_Phot_noPar_GP_Param3::get_photometry_with_gp::parity
 - [x] PSPL_Phot_noPar_GP_Param3::get_photometry_with_gp::grad
-- [ ] PSPL_Phot_noPar_GP_Param3::get_resolved_amplification::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param3::get_resolved_amplification::parity
-- [ ] PSPL_Phot_noPar_GP_Param3::get_resolved_amplification::grad
-- [ ] PSPL_Phot_noPar_GP_Param3::get_u::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param3::get_u::parity
-- [ ] PSPL_Phot_noPar_GP_Param3::get_u::grad
-- [ ] PSPL_Phot_noPar_GP_Param3::get_chi2_photometry::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param3::get_chi2_photometry::parity
-- [ ] PSPL_Phot_noPar_GP_Param3::get_chi2_photometry::grad
-- [ ] PSPL_Phot_noPar_GP_Param3::log_likely_photometry_each::jax_forward
-- [ ] PSPL_Phot_noPar_GP_Param3::log_likely_photometry_each::parity
-- [ ] PSPL_Phot_noPar_GP_Param3::log_likely_photometry_each::grad
+- [x] PSPL_Phot_noPar_GP_Param3::get_resolved_amplification::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param3::get_resolved_amplification::parity
+- [x] PSPL_Phot_noPar_GP_Param3::get_resolved_amplification::grad
+- [x] PSPL_Phot_noPar_GP_Param3::get_u::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param3::get_u::parity
+- [x] PSPL_Phot_noPar_GP_Param3::get_u::grad
+- [x] PSPL_Phot_noPar_GP_Param3::get_chi2_photometry::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param3::get_chi2_photometry::parity
+- [x] PSPL_Phot_noPar_GP_Param3::get_chi2_photometry::grad
+- [x] PSPL_Phot_noPar_GP_Param3::log_likely_photometry_each::jax_forward
+- [x] PSPL_Phot_noPar_GP_Param3::log_likely_photometry_each::parity
+- [x] PSPL_Phot_noPar_GP_Param3::log_likely_photometry_each::grad
 - [x] PSPL_Phot_noPar_Param1::get_amplification::jax_forward
 - [x] PSPL_Phot_noPar_Param1::get_amplification::parity
 - [x] PSPL_Phot_noPar_Param1::get_amplification::grad
@@ -1416,7 +1416,7 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [x] PSPL_Phot_noPar_Param3::log_likely_photometry_each::parity
 - [x] PSPL_Phot_noPar_Param3::log_likely_photometry_each::grad
 
-## PSBL (406 tasks)
+## PSBL (712 tasks)
 
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::parity
@@ -1442,6 +1442,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_amplification::grad
@@ -1466,6 +1481,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_amplification::grad
@@ -1490,30 +1520,99 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::grad
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_photometry::parity
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_photometry::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_photometry::grad
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_centroid_shift::grad
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_amplification::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_amplification::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_amplification::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_astrometry_unlensed::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_astrometry_unlensed::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_astrometry_unlensed::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_lens_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_lens_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_centroid_shift::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_centroid_shift::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_centroid_shift::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_lens_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_lens_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::grad
@@ -1538,6 +1637,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_amplification::grad
@@ -1562,6 +1676,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_amplification::grad
@@ -1586,6 +1715,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_amplification::grad
@@ -1610,30 +1754,99 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::grad
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_photometry::parity
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_photometry::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_photometry::grad
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_centroid_shift::grad
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_amplification::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_amplification::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_amplification::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_astrometry_unlensed::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_astrometry_unlensed::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_astrometry_unlensed::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_lens_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_lens_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_centroid_shift::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_centroid_shift::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_centroid_shift::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_lens_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_lens_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::grad
@@ -1658,6 +1871,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_amplification::grad
@@ -1682,6 +1910,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_amplification::grad
@@ -1706,6 +1949,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_amplification::grad
@@ -1730,23 +1988,38 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_amplification::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_amplification::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_photometry::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_photometry::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_photometry::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_centroid_shift::grad
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_resolved_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_resolved_astrometry::parity
@@ -1754,26 +2027,41 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_amplification::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_u::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_u::grad
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::grad
+- [x] PSBL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_amplification::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_photometry::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_photometry::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_photometry::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_centroid_shift::grad
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_resolved_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_resolved_astrometry::parity
@@ -1781,9 +2069,24 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::jax_forward
-- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::parity
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::parity
 - [ ] PSBL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::grad
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_u::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_u::grad
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::grad
+- [x] PSBL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::jax_forward
+- [x] PSBL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::grad
@@ -1808,6 +2111,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_amplification::grad
@@ -1832,6 +2150,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_amplification::grad
@@ -1856,83 +2189,143 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param1::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param1::get_amplification::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_Par_Param1::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param1::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_Param1::get_amplification::grad
-- [ ] PSBL_PhotAstrom_Par_Param1::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param1::get_photometry::parity
+- [x] PSBL_PhotAstrom_Par_Param1::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param1::get_photometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param1::get_photometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param1::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param1::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_Par_Param1::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param1::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_Par_Param1::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_Par_Param1::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param1::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param1::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param1::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param1::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param1::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param1::get_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param1::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param1::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param1::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param1::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param1::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_Par_Param1::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param1::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_Par_Param1::get_centroid_shift::grad
-- [ ] PSBL_PhotAstrom_Par_Param1::get_resolved_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param1::get_resolved_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param1::get_resolved_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param1::get_resolved_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param1::get_resolved_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param2::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param2::get_amplification::parity
+- [ ] PSBL_PhotAstrom_Par_Param1::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_Param1::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param1::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param1::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_Par_Param2::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param2::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_Param2::get_amplification::grad
-- [ ] PSBL_PhotAstrom_Par_Param2::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param2::get_photometry::parity
+- [x] PSBL_PhotAstrom_Par_Param2::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param2::get_photometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param2::get_photometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param2::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param2::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_Par_Param2::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param2::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_Par_Param2::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_Par_Param2::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param2::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param2::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param2::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param2::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param2::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param2::get_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param2::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param2::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param2::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param2::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param2::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_Par_Param2::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param2::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_Par_Param2::get_centroid_shift::grad
-- [ ] PSBL_PhotAstrom_Par_Param2::get_resolved_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param2::get_resolved_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param2::get_resolved_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param2::get_resolved_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param2::get_resolved_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param3::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param3::get_amplification::parity
+- [ ] PSBL_PhotAstrom_Par_Param2::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param2::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_Param2::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_Param2::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param2::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param2::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param2::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param2::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param2::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param2::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param2::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param2::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_Param2::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param2::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param2::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_Par_Param3::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param3::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_Param3::get_amplification::grad
-- [ ] PSBL_PhotAstrom_Par_Param3::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param3::get_photometry::parity
+- [x] PSBL_PhotAstrom_Par_Param3::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param3::get_photometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param3::get_photometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param3::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param3::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_Par_Param3::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param3::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_Par_Param3::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_Par_Param3::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param3::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param3::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param3::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param3::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param3::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param3::get_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param3::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param3::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param3::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param3::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param3::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_Par_Param3::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param3::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_Par_Param3::get_centroid_shift::grad
-- [ ] PSBL_PhotAstrom_Par_Param3::get_resolved_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param3::get_resolved_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param3::get_resolved_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param3::get_resolved_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param3::get_resolved_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param3::get_resolved_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param3::get_resolved_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_Par_Param3::get_resolved_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param3::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param3::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_Par_Param4::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param4::get_amplification::parity
+- [ ] PSBL_PhotAstrom_Par_Param3::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param3::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_Param3::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_Param3::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param3::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param3::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param3::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param3::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param3::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param3::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param3::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param3::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_Param3::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param3::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param3::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_Par_Param4::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param4::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_Param4::get_amplification::grad
-- [ ] PSBL_PhotAstrom_Par_Param4::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_Par_Param4::get_photometry::parity
+- [x] PSBL_PhotAstrom_Par_Param4::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_Par_Param4::get_photometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param4::get_photometry::grad
 - [ ] PSBL_PhotAstrom_Par_Param4::get_astrometry_unlensed::jax_forward
 - [ ] PSBL_PhotAstrom_Par_Param4::get_astrometry_unlensed::parity
@@ -1952,6 +2345,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_Param4::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param4::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param4::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param4::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_Param4::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_Param4::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param4::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param4::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param4::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param4::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param4::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param4::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param4::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param4::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_Param4::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param4::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param4::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_Param5::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_Param5::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_Param5::get_amplification::grad
@@ -1976,6 +2384,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_Param5::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_Param5::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param5::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param5::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param5::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_Param5::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_Param5::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param5::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param5::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param5::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param5::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param5::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param5::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param5::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param5::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_Param5::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param5::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param5::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_Par_Param7::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_Par_Param7::get_amplification::parity
 - [ ] PSBL_PhotAstrom_Par_Param7::get_amplification::grad
@@ -2000,6 +2423,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_Par_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_Par_Param7::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_Par_Param7::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param7::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param7::get_u::parity
+- [ ] PSBL_PhotAstrom_Par_Param7::get_u::grad
+- [ ] PSBL_PhotAstrom_Par_Param7::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param7::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param7::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param7::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param7::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_Par_Param7::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_Par_Param7::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param7::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param7::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_Par_Param7::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_Par_Param7::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_Par_Param7::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::grad
@@ -2024,6 +2462,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_amplification::grad
@@ -2048,6 +2501,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_amplification::grad
@@ -2072,30 +2540,99 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::grad
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_photometry::parity
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_photometry::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_photometry::grad
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_centroid_shift::grad
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_amplification::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_amplification::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_amplification::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_astrometry_unlensed::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_astrometry_unlensed::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_astrometry_unlensed::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_lens_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_lens_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_centroid_shift::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_centroid_shift::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_centroid_shift::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_lens_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_lens_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::grad
@@ -2120,6 +2657,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_amplification::grad
@@ -2144,6 +2696,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_amplification::grad
@@ -2168,6 +2735,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_amplification::grad
@@ -2192,30 +2774,99 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::grad
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_photometry::parity
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_photometry::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_photometry::grad
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_centroid_shift::grad
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_amplification::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_amplification::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_amplification::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_astrometry_unlensed::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_astrometry_unlensed::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_astrometry_unlensed::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_lens_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_lens_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_centroid_shift::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_centroid_shift::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_centroid_shift::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_lens_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_lens_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::grad
@@ -2240,6 +2891,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_amplification::grad
@@ -2264,6 +2930,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_amplification::grad
@@ -2288,6 +2969,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_amplification::grad
@@ -2312,23 +3008,38 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_amplification::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_amplification::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_photometry::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_photometry::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_photometry::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_centroid_shift::grad
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_resolved_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_resolved_astrometry::parity
@@ -2336,26 +3047,41 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_amplification::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_u::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_u::grad
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::grad
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_amplification::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_photometry::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_photometry::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_photometry::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_centroid_shift::grad
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_resolved_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_resolved_astrometry::parity
@@ -2363,9 +3089,24 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::parity
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::parity
 - [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::grad
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_u::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_u::grad
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::grad
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::jax_forward
+- [x] PSBL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::grad
@@ -2390,6 +3131,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_amplification::grad
@@ -2414,6 +3170,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_resolved_lens_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_astrometry_each::grad
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_amplification::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_amplification::grad
@@ -2438,83 +3209,143 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_amplification::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_noPar_Param1::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param1::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_Param1::get_amplification::grad
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_photometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param1::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param1::get_photometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param1::get_photometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param1::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param1::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param1::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param1::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param1::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param1::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_noPar_Param1::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param1::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_noPar_Param1::get_centroid_shift::grad
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_resolved_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_resolved_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param1::get_resolved_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param1::get_resolved_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param1::get_resolved_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_amplification::parity
+- [ ] PSBL_PhotAstrom_noPar_Param1::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param1::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_Param1::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param1::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_Param1::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_Param1::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param1::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_Param1::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_Param1::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_noPar_Param2::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param2::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_Param2::get_amplification::grad
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_photometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param2::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param2::get_photometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param2::get_photometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param2::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param2::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param2::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param2::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param2::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param2::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_noPar_Param2::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param2::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_noPar_Param2::get_centroid_shift::grad
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_resolved_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_resolved_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param2::get_resolved_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param2::get_resolved_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param2::get_resolved_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_amplification::parity
+- [ ] PSBL_PhotAstrom_noPar_Param2::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param2::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_Param2::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_Param2::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param2::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_Param2::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_Param2::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param2::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_Param2::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_Param2::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param2::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_Param2::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_noPar_Param3::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param3::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_Param3::get_amplification::grad
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_photometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param3::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param3::get_photometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param3::get_photometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_astrometry_unlensed::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_astrometry_unlensed::parity
+- [x] PSBL_PhotAstrom_noPar_Param3::get_astrometry_unlensed::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param3::get_astrometry_unlensed::parity
 - [ ] PSBL_PhotAstrom_noPar_Param3::get_astrometry_unlensed::grad
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param3::get_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param3::get_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param3::get_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param3::get_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param3::get_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param3::get_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_centroid_shift::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_centroid_shift::parity
+- [x] PSBL_PhotAstrom_noPar_Param3::get_centroid_shift::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param3::get_centroid_shift::parity
 - [ ] PSBL_PhotAstrom_noPar_Param3::get_centroid_shift::grad
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_resolved_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_resolved_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param3::get_resolved_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param3::get_resolved_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param3::get_resolved_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_resolved_lens_astrometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param3::get_resolved_lens_astrometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param3::get_resolved_lens_astrometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param3::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param3::get_resolved_lens_astrometry::grad
-- [ ] PSBL_PhotAstrom_noPar_Param4::get_amplification::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param4::get_amplification::parity
+- [ ] PSBL_PhotAstrom_noPar_Param3::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param3::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_Param3::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_Param3::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param3::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_Param3::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_Param3::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param3::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_Param3::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_Param3::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param3::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_Param3::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_Param3::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param3::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_Param3::log_likely_astrometry_each::grad
+- [x] PSBL_PhotAstrom_noPar_Param4::get_amplification::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param4::get_amplification::parity
 - [ ] PSBL_PhotAstrom_noPar_Param4::get_amplification::grad
-- [ ] PSBL_PhotAstrom_noPar_Param4::get_photometry::jax_forward
-- [ ] PSBL_PhotAstrom_noPar_Param4::get_photometry::parity
+- [x] PSBL_PhotAstrom_noPar_Param4::get_photometry::jax_forward
+- [x] PSBL_PhotAstrom_noPar_Param4::get_photometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param4::get_photometry::grad
 - [ ] PSBL_PhotAstrom_noPar_Param4::get_astrometry_unlensed::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_Param4::get_astrometry_unlensed::parity
@@ -2534,11 +3365,26 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_PhotAstrom_noPar_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_PhotAstrom_noPar_Param4::get_resolved_lens_astrometry::parity
 - [ ] PSBL_PhotAstrom_noPar_Param4::get_resolved_lens_astrometry::grad
-- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_amplification::jax_forward
-- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_amplification::parity
+- [ ] PSBL_PhotAstrom_noPar_Param4::get_u::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param4::get_u::parity
+- [ ] PSBL_PhotAstrom_noPar_Param4::get_u::grad
+- [ ] PSBL_PhotAstrom_noPar_Param4::get_chi2_photometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param4::get_chi2_photometry::parity
+- [ ] PSBL_PhotAstrom_noPar_Param4::get_chi2_photometry::grad
+- [ ] PSBL_PhotAstrom_noPar_Param4::get_chi2_astrometry::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param4::get_chi2_astrometry::parity
+- [ ] PSBL_PhotAstrom_noPar_Param4::get_chi2_astrometry::grad
+- [ ] PSBL_PhotAstrom_noPar_Param4::log_likely_photometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param4::log_likely_photometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_Param4::log_likely_photometry_each::grad
+- [ ] PSBL_PhotAstrom_noPar_Param4::log_likely_astrometry_each::jax_forward
+- [ ] PSBL_PhotAstrom_noPar_Param4::log_likely_astrometry_each::parity
+- [ ] PSBL_PhotAstrom_noPar_Param4::log_likely_astrometry_each::grad
+- [x] PSBL_Phot_Par_CircOrbs_Param1::get_amplification::jax_forward
+- [x] PSBL_Phot_Par_CircOrbs_Param1::get_amplification::parity
 - [ ] PSBL_Phot_Par_CircOrbs_Param1::get_amplification::grad
-- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_photometry::jax_forward
-- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_photometry::parity
+- [x] PSBL_Phot_Par_CircOrbs_Param1::get_photometry::jax_forward
+- [x] PSBL_Phot_Par_CircOrbs_Param1::get_photometry::parity
 - [ ] PSBL_Phot_Par_CircOrbs_Param1::get_photometry::grad
 - [ ] PSBL_Phot_Par_CircOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] PSBL_Phot_Par_CircOrbs_Param1::get_resolved_astrometry::parity
@@ -2546,11 +3392,20 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_Phot_Par_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_Phot_Par_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_Phot_Par_CircOrbs_Param1::get_resolved_lens_astrometry::grad
-- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_amplification::jax_forward
-- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_amplification::parity
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_u::parity
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_u::grad
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::log_likely_photometry_each::grad
+- [x] PSBL_Phot_Par_EllOrbs_Param1::get_amplification::jax_forward
+- [x] PSBL_Phot_Par_EllOrbs_Param1::get_amplification::parity
 - [ ] PSBL_Phot_Par_EllOrbs_Param1::get_amplification::grad
-- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_photometry::jax_forward
-- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_photometry::parity
+- [x] PSBL_Phot_Par_EllOrbs_Param1::get_photometry::jax_forward
+- [x] PSBL_Phot_Par_EllOrbs_Param1::get_photometry::parity
 - [ ] PSBL_Phot_Par_EllOrbs_Param1::get_photometry::grad
 - [ ] PSBL_Phot_Par_EllOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] PSBL_Phot_Par_EllOrbs_Param1::get_resolved_astrometry::parity
@@ -2558,11 +3413,20 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_Phot_Par_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_Phot_Par_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_Phot_Par_EllOrbs_Param1::get_resolved_lens_astrometry::grad
-- [ ] PSBL_Phot_Par_GP_Param1::get_amplification::jax_forward
-- [ ] PSBL_Phot_Par_GP_Param1::get_amplification::parity
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_u::parity
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_u::grad
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::log_likely_photometry_each::grad
+- [x] PSBL_Phot_Par_GP_Param1::get_amplification::jax_forward
+- [x] PSBL_Phot_Par_GP_Param1::get_amplification::parity
 - [ ] PSBL_Phot_Par_GP_Param1::get_amplification::grad
-- [ ] PSBL_Phot_Par_GP_Param1::get_photometry::jax_forward
-- [ ] PSBL_Phot_Par_GP_Param1::get_photometry::parity
+- [x] PSBL_Phot_Par_GP_Param1::get_photometry::jax_forward
+- [x] PSBL_Phot_Par_GP_Param1::get_photometry::parity
 - [ ] PSBL_Phot_Par_GP_Param1::get_photometry::grad
 - [ ] PSBL_Phot_Par_GP_Param1::get_resolved_astrometry::jax_forward
 - [ ] PSBL_Phot_Par_GP_Param1::get_resolved_astrometry::parity
@@ -2570,9 +3434,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_Phot_Par_GP_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_Phot_Par_GP_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_Phot_Par_GP_Param1::get_resolved_lens_astrometry::grad
-- [ ] PSBL_Phot_Par_GP_Param1::get_photometry_with_gp::jax_forward
-- [ ] PSBL_Phot_Par_GP_Param1::get_photometry_with_gp::parity
+- [x] PSBL_Phot_Par_GP_Param1::get_photometry_with_gp::jax_forward
+- [x] PSBL_Phot_Par_GP_Param1::get_photometry_with_gp::parity
 - [ ] PSBL_Phot_Par_GP_Param1::get_photometry_with_gp::grad
+- [ ] PSBL_Phot_Par_GP_Param1::get_u::jax_forward
+- [ ] PSBL_Phot_Par_GP_Param1::get_u::parity
+- [ ] PSBL_Phot_Par_GP_Param1::get_u::grad
+- [ ] PSBL_Phot_Par_GP_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_Phot_Par_GP_Param1::get_chi2_photometry::parity
+- [ ] PSBL_Phot_Par_GP_Param1::get_chi2_photometry::grad
+- [ ] PSBL_Phot_Par_GP_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_Phot_Par_GP_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_Phot_Par_GP_Param1::log_likely_photometry_each::grad
 - [x] PSBL_Phot_Par_Param1::get_amplification::jax_forward
 - [x] PSBL_Phot_Par_Param1::get_amplification::parity
 - [ ] PSBL_Phot_Par_Param1::get_amplification::grad
@@ -2585,11 +3458,20 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_Phot_Par_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_Phot_Par_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_Phot_Par_Param1::get_resolved_lens_astrometry::grad
-- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_amplification::jax_forward
-- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_amplification::parity
+- [ ] PSBL_Phot_Par_Param1::get_u::jax_forward
+- [ ] PSBL_Phot_Par_Param1::get_u::parity
+- [ ] PSBL_Phot_Par_Param1::get_u::grad
+- [ ] PSBL_Phot_Par_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_Phot_Par_Param1::get_chi2_photometry::parity
+- [ ] PSBL_Phot_Par_Param1::get_chi2_photometry::grad
+- [ ] PSBL_Phot_Par_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_Phot_Par_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_Phot_Par_Param1::log_likely_photometry_each::grad
+- [x] PSBL_Phot_noPar_CircOrbs_Param1::get_amplification::jax_forward
+- [x] PSBL_Phot_noPar_CircOrbs_Param1::get_amplification::parity
 - [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_amplification::grad
-- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_photometry::jax_forward
-- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_photometry::parity
+- [x] PSBL_Phot_noPar_CircOrbs_Param1::get_photometry::jax_forward
+- [x] PSBL_Phot_noPar_CircOrbs_Param1::get_photometry::parity
 - [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_photometry::grad
 - [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_resolved_astrometry::parity
@@ -2597,11 +3479,20 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::grad
-- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_amplification::jax_forward
-- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_amplification::parity
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_u::parity
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_u::grad
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::log_likely_photometry_each::grad
+- [x] PSBL_Phot_noPar_EllOrbs_Param1::get_amplification::jax_forward
+- [x] PSBL_Phot_noPar_EllOrbs_Param1::get_amplification::parity
 - [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_amplification::grad
-- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_photometry::jax_forward
-- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_photometry::parity
+- [x] PSBL_Phot_noPar_EllOrbs_Param1::get_photometry::jax_forward
+- [x] PSBL_Phot_noPar_EllOrbs_Param1::get_photometry::parity
 - [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_photometry::grad
 - [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_resolved_astrometry::parity
@@ -2609,11 +3500,20 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::grad
-- [ ] PSBL_Phot_noPar_GP_Param1::get_amplification::jax_forward
-- [ ] PSBL_Phot_noPar_GP_Param1::get_amplification::parity
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_u::jax_forward
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_u::parity
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_u::grad
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::log_likely_photometry_each::grad
+- [x] PSBL_Phot_noPar_GP_Param1::get_amplification::jax_forward
+- [x] PSBL_Phot_noPar_GP_Param1::get_amplification::parity
 - [ ] PSBL_Phot_noPar_GP_Param1::get_amplification::grad
-- [ ] PSBL_Phot_noPar_GP_Param1::get_photometry::jax_forward
-- [ ] PSBL_Phot_noPar_GP_Param1::get_photometry::parity
+- [x] PSBL_Phot_noPar_GP_Param1::get_photometry::jax_forward
+- [x] PSBL_Phot_noPar_GP_Param1::get_photometry::parity
 - [ ] PSBL_Phot_noPar_GP_Param1::get_photometry::grad
 - [ ] PSBL_Phot_noPar_GP_Param1::get_resolved_astrometry::jax_forward
 - [ ] PSBL_Phot_noPar_GP_Param1::get_resolved_astrometry::parity
@@ -2621,9 +3521,18 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_Phot_noPar_GP_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_Phot_noPar_GP_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_Phot_noPar_GP_Param1::get_resolved_lens_astrometry::grad
-- [ ] PSBL_Phot_noPar_GP_Param1::get_photometry_with_gp::jax_forward
-- [ ] PSBL_Phot_noPar_GP_Param1::get_photometry_with_gp::parity
+- [x] PSBL_Phot_noPar_GP_Param1::get_photometry_with_gp::jax_forward
+- [x] PSBL_Phot_noPar_GP_Param1::get_photometry_with_gp::parity
 - [ ] PSBL_Phot_noPar_GP_Param1::get_photometry_with_gp::grad
+- [ ] PSBL_Phot_noPar_GP_Param1::get_u::jax_forward
+- [ ] PSBL_Phot_noPar_GP_Param1::get_u::parity
+- [ ] PSBL_Phot_noPar_GP_Param1::get_u::grad
+- [ ] PSBL_Phot_noPar_GP_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_Phot_noPar_GP_Param1::get_chi2_photometry::parity
+- [ ] PSBL_Phot_noPar_GP_Param1::get_chi2_photometry::grad
+- [ ] PSBL_Phot_noPar_GP_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_Phot_noPar_GP_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_Phot_noPar_GP_Param1::log_likely_photometry_each::grad
 - [x] PSBL_Phot_noPar_Param1::get_amplification::jax_forward
 - [x] PSBL_Phot_noPar_Param1::get_amplification::parity
 - [ ] PSBL_Phot_noPar_Param1::get_amplification::grad
@@ -2636,8 +3545,17 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] PSBL_Phot_noPar_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] PSBL_Phot_noPar_Param1::get_resolved_lens_astrometry::parity
 - [ ] PSBL_Phot_noPar_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_Phot_noPar_Param1::get_u::jax_forward
+- [ ] PSBL_Phot_noPar_Param1::get_u::parity
+- [ ] PSBL_Phot_noPar_Param1::get_u::grad
+- [ ] PSBL_Phot_noPar_Param1::get_chi2_photometry::jax_forward
+- [ ] PSBL_Phot_noPar_Param1::get_chi2_photometry::parity
+- [ ] PSBL_Phot_noPar_Param1::get_chi2_photometry::grad
+- [ ] PSBL_Phot_noPar_Param1::log_likely_photometry_each::jax_forward
+- [ ] PSBL_Phot_noPar_Param1::log_likely_photometry_each::parity
+- [ ] PSBL_Phot_noPar_Param1::log_likely_photometry_each::grad
 
-## BSPL (382 tasks)
+## BSPL (644 tasks)
 
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::parity
@@ -2660,6 +3578,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_amplification::grad
@@ -2681,6 +3614,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_amplification::grad
@@ -2702,6 +3650,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::grad
@@ -2723,6 +3686,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_amplification::grad
@@ -2744,6 +3722,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::grad
@@ -2765,6 +3758,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::grad
@@ -2786,6 +3794,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_amplification::grad
@@ -2807,6 +3830,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::grad
@@ -2828,6 +3866,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_amplification::grad
@@ -2849,6 +3902,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_amplification::grad
@@ -2873,6 +3941,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_amplification::grad
@@ -2897,6 +3980,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_amplification::grad
@@ -2921,6 +4019,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_amplification::grad
@@ -2945,6 +4058,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_amplification::grad
@@ -2969,6 +4097,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_amplification::grad
@@ -2993,30 +4136,60 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_amplification::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::log_likely_astrometry_each::grad
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param1::get_amplification::grad
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_photometry::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_photometry::parity
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_photometry::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_photometry::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param1::get_photometry::grad
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_astrometry_unlensed::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_astrometry_unlensed::parity
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_astrometry_unlensed::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_astrometry_unlensed::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param1::get_astrometry_unlensed::grad
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_lens_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_lens_astrometry::parity
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_lens_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_lens_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param1::get_lens_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_astrometry::parity
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param1::get_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_centroid_shift::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_centroid_shift::parity
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_centroid_shift::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_centroid_shift::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param1::get_centroid_shift::grad
 - [ ] BSPL_PhotAstrom_Par_GP_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::parity
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_GP_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param2::get_amplification::grad
@@ -3041,6 +4214,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_GP_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param3::get_amplification::grad
@@ -3065,6 +4253,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_GP_Param3::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_Par_GP_Param3::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_Par_GP_Param3::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::grad
@@ -3086,6 +4289,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_amplification::grad
@@ -3107,6 +4325,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_amplification::grad
@@ -3128,48 +4361,93 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_Param1::get_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param1::get_amplification::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::log_likely_astrometry_each::grad
+- [x] BSPL_PhotAstrom_Par_Param1::get_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_Param1::get_amplification::grad
-- [ ] BSPL_PhotAstrom_Par_Param1::get_photometry::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param1::get_photometry::parity
+- [x] BSPL_PhotAstrom_Par_Param1::get_photometry::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param1::get_photometry::parity
 - [ ] BSPL_PhotAstrom_Par_Param1::get_photometry::grad
-- [ ] BSPL_PhotAstrom_Par_Param1::get_astrometry_unlensed::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param1::get_astrometry_unlensed::parity
+- [x] BSPL_PhotAstrom_Par_Param1::get_astrometry_unlensed::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param1::get_astrometry_unlensed::parity
 - [ ] BSPL_PhotAstrom_Par_Param1::get_astrometry_unlensed::grad
-- [ ] BSPL_PhotAstrom_Par_Param1::get_lens_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param1::get_lens_astrometry::parity
+- [x] BSPL_PhotAstrom_Par_Param1::get_lens_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param1::get_lens_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_Param1::get_lens_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_Param1::get_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param1::get_astrometry::parity
+- [x] BSPL_PhotAstrom_Par_Param1::get_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param1::get_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_Param1::get_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_Param1::get_centroid_shift::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param1::get_centroid_shift::parity
+- [x] BSPL_PhotAstrom_Par_Param1::get_centroid_shift::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param1::get_centroid_shift::parity
 - [ ] BSPL_PhotAstrom_Par_Param1::get_centroid_shift::grad
 - [ ] BSPL_PhotAstrom_Par_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_Param2::get_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param2::get_amplification::parity
+- [ ] BSPL_PhotAstrom_Par_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_Param1::log_likely_astrometry_each::grad
+- [x] BSPL_PhotAstrom_Par_Param2::get_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_Param2::get_amplification::grad
-- [ ] BSPL_PhotAstrom_Par_Param2::get_photometry::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param2::get_photometry::parity
+- [x] BSPL_PhotAstrom_Par_Param2::get_photometry::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param2::get_photometry::parity
 - [ ] BSPL_PhotAstrom_Par_Param2::get_photometry::grad
-- [ ] BSPL_PhotAstrom_Par_Param2::get_astrometry_unlensed::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param2::get_astrometry_unlensed::parity
+- [x] BSPL_PhotAstrom_Par_Param2::get_astrometry_unlensed::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param2::get_astrometry_unlensed::parity
 - [ ] BSPL_PhotAstrom_Par_Param2::get_astrometry_unlensed::grad
-- [ ] BSPL_PhotAstrom_Par_Param2::get_lens_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param2::get_lens_astrometry::parity
+- [x] BSPL_PhotAstrom_Par_Param2::get_lens_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param2::get_lens_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_Param2::get_lens_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_Param2::get_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param2::get_astrometry::parity
+- [x] BSPL_PhotAstrom_Par_Param2::get_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param2::get_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_Param2::get_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_Param2::get_centroid_shift::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param2::get_centroid_shift::parity
+- [x] BSPL_PhotAstrom_Par_Param2::get_centroid_shift::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param2::get_centroid_shift::parity
 - [ ] BSPL_PhotAstrom_Par_Param2::get_centroid_shift::grad
-- [ ] BSPL_PhotAstrom_Par_Param2::get_resolved_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param2::get_resolved_astrometry::parity
+- [x] BSPL_PhotAstrom_Par_Param2::get_resolved_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param2::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_Param2::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_Par_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_Par_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_Par_Param3::get_amplification::grad
@@ -3191,6 +4469,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_Par_Param3::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_Par_Param3::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_Par_Param3::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_Par_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_Par_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_Par_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_Par_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_Par_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_Par_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_Par_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_Par_Param3::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::grad
@@ -3212,6 +4505,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_amplification::grad
@@ -3233,6 +4541,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_amplification::grad
@@ -3254,6 +4577,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::grad
@@ -3275,6 +4613,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_amplification::grad
@@ -3296,6 +4649,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::grad
@@ -3317,6 +4685,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::grad
@@ -3338,6 +4721,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_amplification::grad
@@ -3359,6 +4757,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::grad
@@ -3380,6 +4793,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_amplification::grad
@@ -3401,6 +4829,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_amplification::grad
@@ -3425,6 +4868,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_amplification::grad
@@ -3449,6 +4907,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_amplification::grad
@@ -3473,6 +4946,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_amplification::grad
@@ -3497,6 +4985,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_amplification::grad
@@ -3521,6 +5024,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_amplification::grad
@@ -3545,30 +5063,60 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_amplification::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::log_likely_astrometry_each::grad
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_amplification::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry::parity
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_astrometry_unlensed::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_astrometry_unlensed::parity
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_astrometry_unlensed::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_astrometry_unlensed::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_astrometry_unlensed::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_lens_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_lens_astrometry::parity
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_lens_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_lens_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_lens_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_astrometry::parity
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_centroid_shift::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_centroid_shift::parity
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_centroid_shift::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_centroid_shift::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_centroid_shift::grad
 - [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::parity
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_amplification::grad
@@ -3593,6 +5141,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_amplification::grad
@@ -3617,6 +5180,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_photometry_with_gp::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_photometry_with_gp::parity
 - [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_photometry_with_gp::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::grad
@@ -3638,6 +5216,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_amplification::grad
@@ -3659,6 +5252,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_amplification::grad
@@ -3680,48 +5288,93 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_amplification::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_astrometry_each::grad
+- [x] BSPL_PhotAstrom_noPar_Param1::get_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param1::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_Param1::get_amplification::grad
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_photometry::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_photometry::parity
+- [x] BSPL_PhotAstrom_noPar_Param1::get_photometry::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param1::get_photometry::parity
 - [ ] BSPL_PhotAstrom_noPar_Param1::get_photometry::grad
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::parity
+- [x] BSPL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::parity
 - [ ] BSPL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::grad
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_lens_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_lens_astrometry::parity
+- [x] BSPL_PhotAstrom_noPar_Param1::get_lens_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param1::get_lens_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_Param1::get_lens_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_astrometry::parity
+- [x] BSPL_PhotAstrom_noPar_Param1::get_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param1::get_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_Param1::get_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_centroid_shift::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_centroid_shift::parity
+- [x] BSPL_PhotAstrom_noPar_Param1::get_centroid_shift::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param1::get_centroid_shift::parity
 - [ ] BSPL_PhotAstrom_noPar_Param1::get_centroid_shift::grad
 - [ ] BSPL_PhotAstrom_noPar_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_amplification::parity
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_Param1::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::grad
+- [x] BSPL_PhotAstrom_noPar_Param2::get_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param2::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_Param2::get_amplification::grad
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_photometry::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_photometry::parity
+- [x] BSPL_PhotAstrom_noPar_Param2::get_photometry::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param2::get_photometry::parity
 - [ ] BSPL_PhotAstrom_noPar_Param2::get_photometry::grad
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::parity
+- [x] BSPL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::parity
 - [ ] BSPL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::grad
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_lens_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_lens_astrometry::parity
+- [x] BSPL_PhotAstrom_noPar_Param2::get_lens_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param2::get_lens_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_Param2::get_lens_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_astrometry::parity
+- [x] BSPL_PhotAstrom_noPar_Param2::get_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param2::get_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_Param2::get_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_centroid_shift::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_centroid_shift::parity
+- [x] BSPL_PhotAstrom_noPar_Param2::get_centroid_shift::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param2::get_centroid_shift::parity
 - [ ] BSPL_PhotAstrom_noPar_Param2::get_centroid_shift::grad
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_resolved_astrometry::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_resolved_astrometry::parity
+- [x] BSPL_PhotAstrom_noPar_Param2::get_resolved_astrometry::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param2::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_Param2::get_resolved_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param2::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_Param2::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::grad
 - [ ] BSPL_PhotAstrom_noPar_Param3::get_amplification::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_Param3::get_amplification::parity
 - [ ] BSPL_PhotAstrom_noPar_Param3::get_amplification::grad
@@ -3743,65 +5396,116 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSPL_PhotAstrom_noPar_Param3::get_resolved_astrometry::jax_forward
 - [ ] BSPL_PhotAstrom_noPar_Param3::get_resolved_astrometry::parity
 - [ ] BSPL_PhotAstrom_noPar_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_Phot_Par_GP_Param1::get_amplification::jax_forward
-- [ ] BSPL_Phot_Par_GP_Param1::get_amplification::parity
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_u::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_u::parity
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_u::grad
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_chi2_photometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_chi2_photometry::parity
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_chi2_photometry::grad
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_chi2_astrometry::parity
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_chi2_astrometry::grad
+- [ ] BSPL_PhotAstrom_noPar_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param3::log_likely_photometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_Param3::log_likely_photometry_each::grad
+- [ ] BSPL_PhotAstrom_noPar_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param3::log_likely_astrometry_each::parity
+- [ ] BSPL_PhotAstrom_noPar_Param3::log_likely_astrometry_each::grad
+- [x] BSPL_Phot_Par_GP_Param1::get_amplification::jax_forward
+- [x] BSPL_Phot_Par_GP_Param1::get_amplification::parity
 - [ ] BSPL_Phot_Par_GP_Param1::get_amplification::grad
-- [ ] BSPL_Phot_Par_GP_Param1::get_photometry::jax_forward
-- [ ] BSPL_Phot_Par_GP_Param1::get_photometry::parity
+- [x] BSPL_Phot_Par_GP_Param1::get_photometry::jax_forward
+- [x] BSPL_Phot_Par_GP_Param1::get_photometry::parity
 - [ ] BSPL_Phot_Par_GP_Param1::get_photometry::grad
 - [ ] BSPL_Phot_Par_GP_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_Phot_Par_GP_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_Phot_Par_GP_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_Phot_Par_GP_Param1::get_photometry_with_gp::jax_forward
-- [ ] BSPL_Phot_Par_GP_Param1::get_photometry_with_gp::parity
+- [x] BSPL_Phot_Par_GP_Param1::get_photometry_with_gp::jax_forward
+- [x] BSPL_Phot_Par_GP_Param1::get_photometry_with_gp::parity
 - [ ] BSPL_Phot_Par_GP_Param1::get_photometry_with_gp::grad
-- [ ] BSPL_Phot_Par_Param1::get_amplification::jax_forward
-- [ ] BSPL_Phot_Par_Param1::get_amplification::parity
+- [ ] BSPL_Phot_Par_GP_Param1::get_u::jax_forward
+- [ ] BSPL_Phot_Par_GP_Param1::get_u::parity
+- [ ] BSPL_Phot_Par_GP_Param1::get_u::grad
+- [ ] BSPL_Phot_Par_GP_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_Phot_Par_GP_Param1::get_chi2_photometry::parity
+- [ ] BSPL_Phot_Par_GP_Param1::get_chi2_photometry::grad
+- [ ] BSPL_Phot_Par_GP_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_Phot_Par_GP_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_Phot_Par_GP_Param1::log_likely_photometry_each::grad
+- [x] BSPL_Phot_Par_Param1::get_amplification::jax_forward
+- [x] BSPL_Phot_Par_Param1::get_amplification::parity
 - [ ] BSPL_Phot_Par_Param1::get_amplification::grad
-- [ ] BSPL_Phot_Par_Param1::get_photometry::jax_forward
-- [ ] BSPL_Phot_Par_Param1::get_photometry::parity
+- [x] BSPL_Phot_Par_Param1::get_photometry::jax_forward
+- [x] BSPL_Phot_Par_Param1::get_photometry::parity
 - [ ] BSPL_Phot_Par_Param1::get_photometry::grad
 - [ ] BSPL_Phot_Par_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_Phot_Par_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_Phot_Par_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_Phot_noPar_GP_Param1::get_amplification::jax_forward
-- [ ] BSPL_Phot_noPar_GP_Param1::get_amplification::parity
+- [ ] BSPL_Phot_Par_Param1::get_u::jax_forward
+- [ ] BSPL_Phot_Par_Param1::get_u::parity
+- [ ] BSPL_Phot_Par_Param1::get_u::grad
+- [ ] BSPL_Phot_Par_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_Phot_Par_Param1::get_chi2_photometry::parity
+- [ ] BSPL_Phot_Par_Param1::get_chi2_photometry::grad
+- [ ] BSPL_Phot_Par_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_Phot_Par_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_Phot_Par_Param1::log_likely_photometry_each::grad
+- [x] BSPL_Phot_noPar_GP_Param1::get_amplification::jax_forward
+- [x] BSPL_Phot_noPar_GP_Param1::get_amplification::parity
 - [ ] BSPL_Phot_noPar_GP_Param1::get_amplification::grad
-- [ ] BSPL_Phot_noPar_GP_Param1::get_photometry::jax_forward
-- [ ] BSPL_Phot_noPar_GP_Param1::get_photometry::parity
+- [x] BSPL_Phot_noPar_GP_Param1::get_photometry::jax_forward
+- [x] BSPL_Phot_noPar_GP_Param1::get_photometry::parity
 - [ ] BSPL_Phot_noPar_GP_Param1::get_photometry::grad
 - [ ] BSPL_Phot_noPar_GP_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_Phot_noPar_GP_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_Phot_noPar_GP_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_Phot_noPar_GP_Param1::get_photometry_with_gp::jax_forward
-- [ ] BSPL_Phot_noPar_GP_Param1::get_photometry_with_gp::parity
+- [x] BSPL_Phot_noPar_GP_Param1::get_photometry_with_gp::jax_forward
+- [x] BSPL_Phot_noPar_GP_Param1::get_photometry_with_gp::parity
 - [ ] BSPL_Phot_noPar_GP_Param1::get_photometry_with_gp::grad
-- [ ] BSPL_Phot_noPar_Param1::get_amplification::jax_forward
-- [ ] BSPL_Phot_noPar_Param1::get_amplification::parity
+- [ ] BSPL_Phot_noPar_GP_Param1::get_u::jax_forward
+- [ ] BSPL_Phot_noPar_GP_Param1::get_u::parity
+- [ ] BSPL_Phot_noPar_GP_Param1::get_u::grad
+- [ ] BSPL_Phot_noPar_GP_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_Phot_noPar_GP_Param1::get_chi2_photometry::parity
+- [ ] BSPL_Phot_noPar_GP_Param1::get_chi2_photometry::grad
+- [ ] BSPL_Phot_noPar_GP_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_Phot_noPar_GP_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_Phot_noPar_GP_Param1::log_likely_photometry_each::grad
+- [x] BSPL_Phot_noPar_Param1::get_amplification::jax_forward
+- [x] BSPL_Phot_noPar_Param1::get_amplification::parity
 - [ ] BSPL_Phot_noPar_Param1::get_amplification::grad
-- [ ] BSPL_Phot_noPar_Param1::get_photometry::jax_forward
-- [ ] BSPL_Phot_noPar_Param1::get_photometry::parity
+- [x] BSPL_Phot_noPar_Param1::get_photometry::jax_forward
+- [x] BSPL_Phot_noPar_Param1::get_photometry::parity
 - [ ] BSPL_Phot_noPar_Param1::get_photometry::grad
 - [ ] BSPL_Phot_noPar_Param1::get_resolved_astrometry::jax_forward
 - [ ] BSPL_Phot_noPar_Param1::get_resolved_astrometry::parity
 - [ ] BSPL_Phot_noPar_Param1::get_resolved_astrometry::grad
+- [ ] BSPL_Phot_noPar_Param1::get_u::jax_forward
+- [ ] BSPL_Phot_noPar_Param1::get_u::parity
+- [ ] BSPL_Phot_noPar_Param1::get_u::grad
+- [ ] BSPL_Phot_noPar_Param1::get_chi2_photometry::jax_forward
+- [ ] BSPL_Phot_noPar_Param1::get_chi2_photometry::parity
+- [ ] BSPL_Phot_noPar_Param1::get_chi2_photometry::grad
+- [ ] BSPL_Phot_noPar_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSPL_Phot_noPar_Param1::log_likely_photometry_each::parity
+- [ ] BSPL_Phot_noPar_Param1::log_likely_photometry_each::grad
 
-## FSPL (38 tasks)
+## FSPL (64 tasks)
 
-- [ ] FSPL_PhotAstrom_Par_Param1::get_amplification::jax_forward
-- [ ] FSPL_PhotAstrom_Par_Param1::get_amplification::parity
+- [x] FSPL_PhotAstrom_Par_Param1::get_amplification::jax_forward
+- [x] FSPL_PhotAstrom_Par_Param1::get_amplification::parity
 - [ ] FSPL_PhotAstrom_Par_Param1::get_amplification::grad
-- [ ] FSPL_PhotAstrom_Par_Param1::get_photometry::jax_forward
-- [ ] FSPL_PhotAstrom_Par_Param1::get_photometry::parity
+- [x] FSPL_PhotAstrom_Par_Param1::get_photometry::jax_forward
+- [x] FSPL_PhotAstrom_Par_Param1::get_photometry::parity
 - [ ] FSPL_PhotAstrom_Par_Param1::get_photometry::grad
-- [ ] FSPL_PhotAstrom_Par_Param1::get_astrometry_unlensed::jax_forward
-- [ ] FSPL_PhotAstrom_Par_Param1::get_astrometry_unlensed::parity
+- [x] FSPL_PhotAstrom_Par_Param1::get_astrometry_unlensed::jax_forward
+- [x] FSPL_PhotAstrom_Par_Param1::get_astrometry_unlensed::parity
 - [ ] FSPL_PhotAstrom_Par_Param1::get_astrometry_unlensed::grad
-- [ ] FSPL_PhotAstrom_Par_Param1::get_lens_astrometry::jax_forward
-- [ ] FSPL_PhotAstrom_Par_Param1::get_lens_astrometry::parity
+- [x] FSPL_PhotAstrom_Par_Param1::get_lens_astrometry::jax_forward
+- [x] FSPL_PhotAstrom_Par_Param1::get_lens_astrometry::parity
 - [ ] FSPL_PhotAstrom_Par_Param1::get_lens_astrometry::grad
-- [ ] FSPL_PhotAstrom_Par_Param1::get_astrometry::jax_forward
-- [ ] FSPL_PhotAstrom_Par_Param1::get_astrometry::parity
+- [x] FSPL_PhotAstrom_Par_Param1::get_astrometry::jax_forward
+- [x] FSPL_PhotAstrom_Par_Param1::get_astrometry::parity
 - [ ] FSPL_PhotAstrom_Par_Param1::get_astrometry::grad
 - [ ] FSPL_PhotAstrom_Par_Param1::get_centroid_shift::jax_forward
 - [ ] FSPL_PhotAstrom_Par_Param1::get_centroid_shift::parity
@@ -3812,6 +5516,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSPL_PhotAstrom_Par_Param1::get_astrometry_outline_unlensed::jax_forward
 - [ ] FSPL_PhotAstrom_Par_Param1::get_astrometry_outline_unlensed::parity
 - [ ] FSPL_PhotAstrom_Par_Param1::get_astrometry_outline_unlensed::grad
+- [ ] FSPL_PhotAstrom_Par_Param1::get_u::jax_forward
+- [ ] FSPL_PhotAstrom_Par_Param1::get_u::parity
+- [ ] FSPL_PhotAstrom_Par_Param1::get_u::grad
+- [ ] FSPL_PhotAstrom_Par_Param1::get_chi2_photometry::jax_forward
+- [ ] FSPL_PhotAstrom_Par_Param1::get_chi2_photometry::parity
+- [ ] FSPL_PhotAstrom_Par_Param1::get_chi2_photometry::grad
+- [ ] FSPL_PhotAstrom_Par_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSPL_PhotAstrom_Par_Param1::get_chi2_astrometry::parity
+- [ ] FSPL_PhotAstrom_Par_Param1::get_chi2_astrometry::grad
+- [ ] FSPL_PhotAstrom_Par_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSPL_PhotAstrom_Par_Param1::log_likely_photometry_each::parity
+- [ ] FSPL_PhotAstrom_Par_Param1::log_likely_photometry_each::grad
+- [ ] FSPL_PhotAstrom_Par_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSPL_PhotAstrom_Par_Param1::log_likely_astrometry_each::parity
+- [ ] FSPL_PhotAstrom_Par_Param1::log_likely_astrometry_each::grad
 - [ ] FSPL_PhotAstrom_Par_Param2::get_amplification::jax_forward
 - [ ] FSPL_PhotAstrom_Par_Param2::get_amplification::parity
 - [ ] FSPL_PhotAstrom_Par_Param2::get_amplification::grad
@@ -3836,20 +5555,35 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSPL_PhotAstrom_Par_Param2::get_astrometry_outline_unlensed::jax_forward
 - [ ] FSPL_PhotAstrom_Par_Param2::get_astrometry_outline_unlensed::parity
 - [ ] FSPL_PhotAstrom_Par_Param2::get_astrometry_outline_unlensed::grad
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_amplification::jax_forward
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_amplification::parity
+- [ ] FSPL_PhotAstrom_Par_Param2::get_u::jax_forward
+- [ ] FSPL_PhotAstrom_Par_Param2::get_u::parity
+- [ ] FSPL_PhotAstrom_Par_Param2::get_u::grad
+- [ ] FSPL_PhotAstrom_Par_Param2::get_chi2_photometry::jax_forward
+- [ ] FSPL_PhotAstrom_Par_Param2::get_chi2_photometry::parity
+- [ ] FSPL_PhotAstrom_Par_Param2::get_chi2_photometry::grad
+- [ ] FSPL_PhotAstrom_Par_Param2::get_chi2_astrometry::jax_forward
+- [ ] FSPL_PhotAstrom_Par_Param2::get_chi2_astrometry::parity
+- [ ] FSPL_PhotAstrom_Par_Param2::get_chi2_astrometry::grad
+- [ ] FSPL_PhotAstrom_Par_Param2::log_likely_photometry_each::jax_forward
+- [ ] FSPL_PhotAstrom_Par_Param2::log_likely_photometry_each::parity
+- [ ] FSPL_PhotAstrom_Par_Param2::log_likely_photometry_each::grad
+- [ ] FSPL_PhotAstrom_Par_Param2::log_likely_astrometry_each::jax_forward
+- [ ] FSPL_PhotAstrom_Par_Param2::log_likely_astrometry_each::parity
+- [ ] FSPL_PhotAstrom_Par_Param2::log_likely_astrometry_each::grad
+- [x] FSPL_PhotAstrom_noPar_Param1::get_amplification::jax_forward
+- [x] FSPL_PhotAstrom_noPar_Param1::get_amplification::parity
 - [ ] FSPL_PhotAstrom_noPar_Param1::get_amplification::grad
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_photometry::jax_forward
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_photometry::parity
+- [x] FSPL_PhotAstrom_noPar_Param1::get_photometry::jax_forward
+- [x] FSPL_PhotAstrom_noPar_Param1::get_photometry::parity
 - [ ] FSPL_PhotAstrom_noPar_Param1::get_photometry::grad
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::jax_forward
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::parity
+- [x] FSPL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::jax_forward
+- [x] FSPL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::parity
 - [ ] FSPL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::grad
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_lens_astrometry::jax_forward
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_lens_astrometry::parity
+- [x] FSPL_PhotAstrom_noPar_Param1::get_lens_astrometry::jax_forward
+- [x] FSPL_PhotAstrom_noPar_Param1::get_lens_astrometry::parity
 - [ ] FSPL_PhotAstrom_noPar_Param1::get_lens_astrometry::grad
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_astrometry::jax_forward
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_astrometry::parity
+- [x] FSPL_PhotAstrom_noPar_Param1::get_astrometry::jax_forward
+- [x] FSPL_PhotAstrom_noPar_Param1::get_astrometry::parity
 - [ ] FSPL_PhotAstrom_noPar_Param1::get_astrometry::grad
 - [ ] FSPL_PhotAstrom_noPar_Param1::get_centroid_shift::jax_forward
 - [ ] FSPL_PhotAstrom_noPar_Param1::get_centroid_shift::parity
@@ -3860,6 +5594,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSPL_PhotAstrom_noPar_Param1::get_astrometry_outline_unlensed::jax_forward
 - [ ] FSPL_PhotAstrom_noPar_Param1::get_astrometry_outline_unlensed::parity
 - [ ] FSPL_PhotAstrom_noPar_Param1::get_astrometry_outline_unlensed::grad
+- [ ] FSPL_PhotAstrom_noPar_Param1::get_u::jax_forward
+- [ ] FSPL_PhotAstrom_noPar_Param1::get_u::parity
+- [ ] FSPL_PhotAstrom_noPar_Param1::get_u::grad
+- [ ] FSPL_PhotAstrom_noPar_Param1::get_chi2_photometry::jax_forward
+- [ ] FSPL_PhotAstrom_noPar_Param1::get_chi2_photometry::parity
+- [ ] FSPL_PhotAstrom_noPar_Param1::get_chi2_photometry::grad
+- [ ] FSPL_PhotAstrom_noPar_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSPL_PhotAstrom_noPar_Param1::get_chi2_astrometry::parity
+- [ ] FSPL_PhotAstrom_noPar_Param1::get_chi2_astrometry::grad
+- [ ] FSPL_PhotAstrom_noPar_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSPL_PhotAstrom_noPar_Param1::log_likely_photometry_each::parity
+- [ ] FSPL_PhotAstrom_noPar_Param1::log_likely_photometry_each::grad
+- [ ] FSPL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSPL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::parity
+- [ ] FSPL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::grad
 - [ ] FSPL_PhotAstrom_noPar_Param2::get_amplification::jax_forward
 - [ ] FSPL_PhotAstrom_noPar_Param2::get_amplification::parity
 - [ ] FSPL_PhotAstrom_noPar_Param2::get_amplification::grad
@@ -3884,26 +5633,59 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSPL_PhotAstrom_noPar_Param2::get_astrometry_outline_unlensed::jax_forward
 - [ ] FSPL_PhotAstrom_noPar_Param2::get_astrometry_outline_unlensed::parity
 - [ ] FSPL_PhotAstrom_noPar_Param2::get_astrometry_outline_unlensed::grad
-- [ ] FSPL_Phot_Par_Param2::get_amplification::jax_forward
-- [ ] FSPL_Phot_Par_Param2::get_amplification::parity
+- [ ] FSPL_PhotAstrom_noPar_Param2::get_u::jax_forward
+- [ ] FSPL_PhotAstrom_noPar_Param2::get_u::parity
+- [ ] FSPL_PhotAstrom_noPar_Param2::get_u::grad
+- [ ] FSPL_PhotAstrom_noPar_Param2::get_chi2_photometry::jax_forward
+- [ ] FSPL_PhotAstrom_noPar_Param2::get_chi2_photometry::parity
+- [ ] FSPL_PhotAstrom_noPar_Param2::get_chi2_photometry::grad
+- [ ] FSPL_PhotAstrom_noPar_Param2::get_chi2_astrometry::jax_forward
+- [ ] FSPL_PhotAstrom_noPar_Param2::get_chi2_astrometry::parity
+- [ ] FSPL_PhotAstrom_noPar_Param2::get_chi2_astrometry::grad
+- [ ] FSPL_PhotAstrom_noPar_Param2::log_likely_photometry_each::jax_forward
+- [ ] FSPL_PhotAstrom_noPar_Param2::log_likely_photometry_each::parity
+- [ ] FSPL_PhotAstrom_noPar_Param2::log_likely_photometry_each::grad
+- [ ] FSPL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::jax_forward
+- [ ] FSPL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::parity
+- [ ] FSPL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::grad
+- [x] FSPL_Phot_Par_Param2::get_amplification::jax_forward
+- [x] FSPL_Phot_Par_Param2::get_amplification::parity
 - [ ] FSPL_Phot_Par_Param2::get_amplification::grad
-- [ ] FSPL_Phot_Par_Param2::get_photometry::jax_forward
-- [ ] FSPL_Phot_Par_Param2::get_photometry::parity
+- [x] FSPL_Phot_Par_Param2::get_photometry::jax_forward
+- [x] FSPL_Phot_Par_Param2::get_photometry::parity
 - [ ] FSPL_Phot_Par_Param2::get_photometry::grad
 - [ ] FSPL_Phot_Par_Param2::get_resolved_astrometry::jax_forward
 - [ ] FSPL_Phot_Par_Param2::get_resolved_astrometry::parity
 - [ ] FSPL_Phot_Par_Param2::get_resolved_astrometry::grad
-- [ ] FSPL_Phot_noPar_Param2::get_amplification::jax_forward
-- [ ] FSPL_Phot_noPar_Param2::get_amplification::parity
+- [ ] FSPL_Phot_Par_Param2::get_u::jax_forward
+- [ ] FSPL_Phot_Par_Param2::get_u::parity
+- [ ] FSPL_Phot_Par_Param2::get_u::grad
+- [ ] FSPL_Phot_Par_Param2::get_chi2_photometry::jax_forward
+- [ ] FSPL_Phot_Par_Param2::get_chi2_photometry::parity
+- [ ] FSPL_Phot_Par_Param2::get_chi2_photometry::grad
+- [ ] FSPL_Phot_Par_Param2::log_likely_photometry_each::jax_forward
+- [ ] FSPL_Phot_Par_Param2::log_likely_photometry_each::parity
+- [ ] FSPL_Phot_Par_Param2::log_likely_photometry_each::grad
+- [x] FSPL_Phot_noPar_Param2::get_amplification::jax_forward
+- [x] FSPL_Phot_noPar_Param2::get_amplification::parity
 - [ ] FSPL_Phot_noPar_Param2::get_amplification::grad
-- [ ] FSPL_Phot_noPar_Param2::get_photometry::jax_forward
-- [ ] FSPL_Phot_noPar_Param2::get_photometry::parity
+- [x] FSPL_Phot_noPar_Param2::get_photometry::jax_forward
+- [x] FSPL_Phot_noPar_Param2::get_photometry::parity
 - [ ] FSPL_Phot_noPar_Param2::get_photometry::grad
 - [ ] FSPL_Phot_noPar_Param2::get_resolved_astrometry::jax_forward
 - [ ] FSPL_Phot_noPar_Param2::get_resolved_astrometry::parity
 - [ ] FSPL_Phot_noPar_Param2::get_resolved_astrometry::grad
+- [ ] FSPL_Phot_noPar_Param2::get_u::jax_forward
+- [ ] FSPL_Phot_noPar_Param2::get_u::parity
+- [ ] FSPL_Phot_noPar_Param2::get_u::grad
+- [ ] FSPL_Phot_noPar_Param2::get_chi2_photometry::jax_forward
+- [ ] FSPL_Phot_noPar_Param2::get_chi2_photometry::parity
+- [ ] FSPL_Phot_noPar_Param2::get_chi2_photometry::grad
+- [ ] FSPL_Phot_noPar_Param2::log_likely_photometry_each::jax_forward
+- [ ] FSPL_Phot_noPar_Param2::log_likely_photometry_each::parity
+- [ ] FSPL_Phot_noPar_Param2::log_likely_photometry_each::grad
 
-## FSBL (424 tasks)
+## FSBL (692 tasks)
 
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::parity
@@ -3929,6 +5711,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_amplification::grad
@@ -3953,6 +5750,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_amplification::grad
@@ -3977,6 +5789,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param6::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_amplification::grad
@@ -4001,6 +5828,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_AccOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::grad
@@ -4025,6 +5867,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::grad
@@ -4049,6 +5906,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_amplification::grad
@@ -4073,6 +5945,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param4::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_amplification::grad
@@ -4097,6 +5984,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_amplification::grad
@@ -4121,6 +6023,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_CircOrbs_Param8::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::grad
@@ -4145,6 +6062,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::grad
@@ -4169,6 +6101,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_amplification::grad
@@ -4193,6 +6140,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param4::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_amplification::grad
@@ -4217,6 +6179,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_amplification::grad
@@ -4241,6 +6218,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_EllOrbs_Param8::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::grad
@@ -4265,6 +6257,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_amplification::grad
@@ -4289,6 +6296,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_amplification::grad
@@ -4313,6 +6335,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param6::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_amplification::grad
@@ -4337,6 +6374,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_LinOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_Param1::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param1::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_Param1::get_amplification::grad
@@ -4361,6 +6413,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param1::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param1::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_Param1::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param1::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param1::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param1::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param1::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param1::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param1::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param1::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_Param2::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param2::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_Param2::get_amplification::grad
@@ -4385,6 +6452,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param2::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param2::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_Param2::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_Param2::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param2::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param2::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param2::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param2::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param2::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param2::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param2::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param2::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_Param2::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param2::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param2::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_Param3::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param3::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_Param3::get_amplification::grad
@@ -4409,6 +6491,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param3::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_Param3::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param3::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param3::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_Param3::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_Param3::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param3::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param3::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param3::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param3::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param3::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param3::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param3::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param3::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_Param3::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param3::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param3::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_Param4::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param4::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_Param4::get_amplification::grad
@@ -4433,6 +6530,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param4::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_Param4::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param4::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param4::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_Param4::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_Param4::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param4::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param4::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param4::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param4::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param4::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param4::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param4::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param4::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_Param4::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param4::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param4::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_Param5::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param5::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_Param5::get_amplification::grad
@@ -4457,6 +6569,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_Param5::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param5::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_Param5::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param5::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param5::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_Param5::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_Param5::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param5::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param5::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param5::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param5::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param5::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param5::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param5::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param5::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_Param5::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param5::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param5::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_Param6::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param6::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_Param6::get_amplification::grad
@@ -4481,6 +6608,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_Param6::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param6::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_Param6::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param6::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param6::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_Param6::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_Param6::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param6::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param6::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param6::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param6::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param6::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param6::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param6::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param6::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_Param6::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param6::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param6::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_Param7::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param7::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_Param7::get_amplification::grad
@@ -4505,6 +6647,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param7::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_Param7::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param7::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param7::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_Param7::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_Param7::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param7::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param7::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param7::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param7::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param7::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param7::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param7::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param7::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_Param7::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param7::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param7::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_Par_Param8::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param8::get_amplification::parity
 - [ ] FSBL_PhotAstrom_Par_Param8::get_amplification::grad
@@ -4529,6 +6686,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_Par_Param8::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_Par_Param8::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_Par_Param8::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param8::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param8::get_u::parity
+- [ ] FSBL_PhotAstrom_Par_Param8::get_u::grad
+- [ ] FSBL_PhotAstrom_Par_Param8::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param8::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param8::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param8::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param8::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_Par_Param8::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_Par_Param8::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param8::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param8::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_Par_Param8::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_Par_Param8::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_Par_Param8::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::grad
@@ -4553,6 +6725,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_amplification::grad
@@ -4577,6 +6764,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_amplification::grad
@@ -4601,6 +6803,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param6::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_amplification::grad
@@ -4625,6 +6842,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_AccOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::grad
@@ -4649,6 +6881,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::grad
@@ -4673,6 +6920,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_amplification::grad
@@ -4697,6 +6959,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param4::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_amplification::grad
@@ -4721,6 +6998,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_amplification::grad
@@ -4745,6 +7037,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_CircOrbs_Param8::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::grad
@@ -4769,6 +7076,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::grad
@@ -4793,6 +7115,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_amplification::grad
@@ -4817,6 +7154,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param4::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_amplification::grad
@@ -4841,6 +7193,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_amplification::grad
@@ -4865,6 +7232,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_EllOrbs_Param8::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::grad
@@ -4889,6 +7271,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_amplification::grad
@@ -4913,6 +7310,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_amplification::grad
@@ -4937,6 +7349,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param6::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_amplification::grad
@@ -4961,6 +7388,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_LinOrbs_Param7::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_Param1::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param1::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_Param1::get_amplification::grad
@@ -4985,6 +7427,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param1::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param1::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_Param1::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param1::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param1::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param1::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param1::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param1::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param1::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_Param2::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param2::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_Param2::get_amplification::grad
@@ -5009,6 +7466,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param2::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param2::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_Param2::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_Param2::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param2::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param2::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param2::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param2::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param2::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param2::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param2::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param2::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_Param3::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param3::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_Param3::get_amplification::grad
@@ -5033,6 +7505,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param3::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_Param3::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param3::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param3::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_Param3::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_Param3::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param3::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param3::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param3::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param3::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param3::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param3::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param3::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param3::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_Param3::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param3::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param3::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_Param4::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param4::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_Param4::get_amplification::grad
@@ -5057,6 +7544,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_Param4::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param4::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_Param4::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param4::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param4::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_Param4::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_Param4::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param4::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param4::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param4::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param4::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param4::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param4::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param4::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param4::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_Param4::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param4::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param4::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_Param6::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param6::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_Param6::get_amplification::grad
@@ -5081,6 +7583,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_Param6::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param6::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_Param6::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param6::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param6::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_Param6::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_Param6::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param6::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param6::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param6::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param6::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param6::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param6::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param6::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param6::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_Param6::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param6::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param6::log_likely_astrometry_each::grad
 - [ ] FSBL_PhotAstrom_noPar_Param8::get_amplification::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param8::get_amplification::parity
 - [ ] FSBL_PhotAstrom_noPar_Param8::get_amplification::grad
@@ -5105,6 +7622,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_PhotAstrom_noPar_Param8::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_PhotAstrom_noPar_Param8::get_resolved_lens_astrometry::parity
 - [ ] FSBL_PhotAstrom_noPar_Param8::get_resolved_lens_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param8::get_u::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param8::get_u::parity
+- [ ] FSBL_PhotAstrom_noPar_Param8::get_u::grad
+- [ ] FSBL_PhotAstrom_noPar_Param8::get_chi2_photometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param8::get_chi2_photometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param8::get_chi2_photometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param8::get_chi2_astrometry::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param8::get_chi2_astrometry::parity
+- [ ] FSBL_PhotAstrom_noPar_Param8::get_chi2_astrometry::grad
+- [ ] FSBL_PhotAstrom_noPar_Param8::log_likely_photometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param8::log_likely_photometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param8::log_likely_photometry_each::grad
+- [ ] FSBL_PhotAstrom_noPar_Param8::log_likely_astrometry_each::jax_forward
+- [ ] FSBL_PhotAstrom_noPar_Param8::log_likely_astrometry_each::parity
+- [ ] FSBL_PhotAstrom_noPar_Param8::log_likely_astrometry_each::grad
 - [ ] FSBL_Phot_Par_CircOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_Phot_Par_CircOrbs_Param1::get_amplification::parity
 - [ ] FSBL_Phot_Par_CircOrbs_Param1::get_amplification::grad
@@ -5117,6 +7649,15 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_Phot_Par_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_Phot_Par_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_Phot_Par_CircOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_Phot_Par_CircOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_Phot_Par_CircOrbs_Param1::get_u::parity
+- [ ] FSBL_Phot_Par_CircOrbs_Param1::get_u::grad
+- [ ] FSBL_Phot_Par_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_Phot_Par_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_Phot_Par_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_Phot_Par_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_Phot_Par_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_Phot_Par_CircOrbs_Param1::log_likely_photometry_each::grad
 - [ ] FSBL_Phot_Par_EllOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_Phot_Par_EllOrbs_Param1::get_amplification::parity
 - [ ] FSBL_Phot_Par_EllOrbs_Param1::get_amplification::grad
@@ -5129,6 +7670,15 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_Phot_Par_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_Phot_Par_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_Phot_Par_EllOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_Phot_Par_EllOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_Phot_Par_EllOrbs_Param1::get_u::parity
+- [ ] FSBL_Phot_Par_EllOrbs_Param1::get_u::grad
+- [ ] FSBL_Phot_Par_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_Phot_Par_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_Phot_Par_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_Phot_Par_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_Phot_Par_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_Phot_Par_EllOrbs_Param1::log_likely_photometry_each::grad
 - [ ] FSBL_Phot_Par_Param1::get_amplification::jax_forward
 - [ ] FSBL_Phot_Par_Param1::get_amplification::parity
 - [ ] FSBL_Phot_Par_Param1::get_amplification::grad
@@ -5141,6 +7691,15 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_Phot_Par_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_Phot_Par_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_Phot_Par_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_Phot_Par_Param1::get_u::jax_forward
+- [ ] FSBL_Phot_Par_Param1::get_u::parity
+- [ ] FSBL_Phot_Par_Param1::get_u::grad
+- [ ] FSBL_Phot_Par_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_Phot_Par_Param1::get_chi2_photometry::parity
+- [ ] FSBL_Phot_Par_Param1::get_chi2_photometry::grad
+- [ ] FSBL_Phot_Par_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_Phot_Par_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_Phot_Par_Param1::log_likely_photometry_each::grad
 - [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_amplification::parity
 - [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_amplification::grad
@@ -5153,6 +7712,15 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_u::parity
+- [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_u::grad
+- [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_Phot_noPar_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_Phot_noPar_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_Phot_noPar_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_Phot_noPar_CircOrbs_Param1::log_likely_photometry_each::grad
 - [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_amplification::jax_forward
 - [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_amplification::parity
 - [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_amplification::grad
@@ -5165,6 +7733,15 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_u::jax_forward
+- [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_u::parity
+- [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_u::grad
+- [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] FSBL_Phot_noPar_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] FSBL_Phot_noPar_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_Phot_noPar_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_Phot_noPar_EllOrbs_Param1::log_likely_photometry_each::grad
 - [ ] FSBL_Phot_noPar_Param1::get_amplification::jax_forward
 - [ ] FSBL_Phot_noPar_Param1::get_amplification::parity
 - [ ] FSBL_Phot_noPar_Param1::get_amplification::grad
@@ -5177,8 +7754,17 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] FSBL_Phot_noPar_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] FSBL_Phot_noPar_Param1::get_resolved_lens_astrometry::parity
 - [ ] FSBL_Phot_noPar_Param1::get_resolved_lens_astrometry::grad
+- [ ] FSBL_Phot_noPar_Param1::get_u::jax_forward
+- [ ] FSBL_Phot_noPar_Param1::get_u::parity
+- [ ] FSBL_Phot_noPar_Param1::get_u::grad
+- [ ] FSBL_Phot_noPar_Param1::get_chi2_photometry::jax_forward
+- [ ] FSBL_Phot_noPar_Param1::get_chi2_photometry::parity
+- [ ] FSBL_Phot_noPar_Param1::get_chi2_photometry::grad
+- [ ] FSBL_Phot_noPar_Param1::log_likely_photometry_each::jax_forward
+- [ ] FSBL_Phot_noPar_Param1::log_likely_photometry_each::parity
+- [ ] FSBL_Phot_noPar_Param1::log_likely_photometry_each::grad
 
-## BSBL (160 tasks)
+## BSBL (260 tasks)
 
 - [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::parity
@@ -5204,30 +7790,60 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::jax_forward
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::parity
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_u::parity
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_u::grad
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_AccOrbs_Param1::log_likely_astrometry_each::grad
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::jax_forward
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_amplification::grad
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_photometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_photometry::parity
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_photometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_photometry::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_photometry::grad
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry_unlensed::jax_forward
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry_unlensed::parity
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry_unlensed::jax_forward
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry_unlensed::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry_unlensed::grad
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_centroid_shift::jax_forward
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_centroid_shift::parity
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_centroid_shift::jax_forward
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_centroid_shift::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_centroid_shift::grad
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_u::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_u::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_amplification::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_amplification::grad
@@ -5252,6 +7868,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_u::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_u::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_amplification::grad
@@ -5276,30 +7907,60 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::jax_forward
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_u::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_u::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_CircOrbs_Param3::log_likely_astrometry_each::grad
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::jax_forward
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_amplification::grad
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_photometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_photometry::parity
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_photometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_photometry::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_photometry::grad
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry_unlensed::jax_forward
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry_unlensed::parity
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry_unlensed::jax_forward
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry_unlensed::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry_unlensed::grad
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_centroid_shift::jax_forward
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_centroid_shift::parity
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_centroid_shift::jax_forward
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_centroid_shift::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_centroid_shift::grad
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_u::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_u::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_amplification::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_amplification::grad
@@ -5324,6 +7985,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_u::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_u::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_amplification::grad
@@ -5348,6 +8024,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_u::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_u::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_EllOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::parity
 - [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_amplification::grad
@@ -5372,54 +8063,99 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_Param1::get_amplification::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param1::get_amplification::parity
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_u::parity
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_u::grad
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_LinOrbs_Param1::log_likely_astrometry_each::grad
+- [x] BSBL_PhotAstrom_Par_Param1::get_amplification::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param1::get_amplification::parity
 - [ ] BSBL_PhotAstrom_Par_Param1::get_amplification::grad
-- [ ] BSBL_PhotAstrom_Par_Param1::get_photometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param1::get_photometry::parity
+- [x] BSBL_PhotAstrom_Par_Param1::get_photometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param1::get_photometry::parity
 - [ ] BSBL_PhotAstrom_Par_Param1::get_photometry::grad
-- [ ] BSBL_PhotAstrom_Par_Param1::get_astrometry_unlensed::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param1::get_astrometry_unlensed::parity
+- [x] BSBL_PhotAstrom_Par_Param1::get_astrometry_unlensed::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param1::get_astrometry_unlensed::parity
 - [ ] BSBL_PhotAstrom_Par_Param1::get_astrometry_unlensed::grad
-- [ ] BSBL_PhotAstrom_Par_Param1::get_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param1::get_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_Param1::get_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param1::get_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_Param1::get_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_Param1::get_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param1::get_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_Param1::get_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param1::get_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_Param1::get_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_Param1::get_centroid_shift::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param1::get_centroid_shift::parity
+- [x] BSBL_PhotAstrom_Par_Param1::get_centroid_shift::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param1::get_centroid_shift::parity
 - [ ] BSBL_PhotAstrom_Par_Param1::get_centroid_shift::grad
-- [ ] BSBL_PhotAstrom_Par_Param1::get_resolved_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param1::get_resolved_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_Param1::get_resolved_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param1::get_resolved_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_Param1::get_resolved_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_Param1::get_resolved_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_Param2::get_amplification::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param2::get_amplification::parity
+- [ ] BSBL_PhotAstrom_Par_Param1::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_Par_Param1::get_u::parity
+- [ ] BSBL_PhotAstrom_Par_Param1::get_u::grad
+- [ ] BSBL_PhotAstrom_Par_Param1::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_Param1::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_Par_Param1::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_Par_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_Param1::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_Par_Param1::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_Param1::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_Param1::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_Par_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_Param1::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_Param1::log_likely_astrometry_each::grad
+- [x] BSBL_PhotAstrom_Par_Param2::get_amplification::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param2::get_amplification::parity
 - [ ] BSBL_PhotAstrom_Par_Param2::get_amplification::grad
-- [ ] BSBL_PhotAstrom_Par_Param2::get_photometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param2::get_photometry::parity
+- [x] BSBL_PhotAstrom_Par_Param2::get_photometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param2::get_photometry::parity
 - [ ] BSBL_PhotAstrom_Par_Param2::get_photometry::grad
-- [ ] BSBL_PhotAstrom_Par_Param2::get_astrometry_unlensed::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param2::get_astrometry_unlensed::parity
+- [x] BSBL_PhotAstrom_Par_Param2::get_astrometry_unlensed::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param2::get_astrometry_unlensed::parity
 - [ ] BSBL_PhotAstrom_Par_Param2::get_astrometry_unlensed::grad
-- [ ] BSBL_PhotAstrom_Par_Param2::get_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param2::get_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_Param2::get_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param2::get_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_Param2::get_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_Param2::get_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param2::get_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_Param2::get_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param2::get_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_Param2::get_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_Param2::get_centroid_shift::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param2::get_centroid_shift::parity
+- [x] BSBL_PhotAstrom_Par_Param2::get_centroid_shift::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param2::get_centroid_shift::parity
 - [ ] BSBL_PhotAstrom_Par_Param2::get_centroid_shift::grad
-- [ ] BSBL_PhotAstrom_Par_Param2::get_resolved_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param2::get_resolved_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_Param2::get_resolved_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param2::get_resolved_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_Param2::get_resolved_astrometry::grad
-- [ ] BSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_Par_Param2::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_Param2::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_Par_Param2::get_u::parity
+- [ ] BSBL_PhotAstrom_Par_Param2::get_u::grad
+- [ ] BSBL_PhotAstrom_Par_Param2::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_Param2::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_Par_Param2::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_Par_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_Par_Param2::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_Par_Param2::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_Par_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_Param2::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_Param2::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_Par_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_Par_Param2::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_Par_Param2::log_likely_astrometry_each::grad
 - [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::parity
 - [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_amplification::grad
@@ -5444,30 +8180,60 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::parity
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_u::parity
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_u::grad
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_AccOrbs_Param1::log_likely_astrometry_each::grad
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::jax_forward
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_amplification::grad
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_photometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_photometry::parity
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_photometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_photometry::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_photometry::grad
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry_unlensed::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry_unlensed::parity
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry_unlensed::jax_forward
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry_unlensed::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry_unlensed::grad
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_centroid_shift::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_centroid_shift::parity
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_centroid_shift::jax_forward
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_centroid_shift::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_centroid_shift::grad
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_u::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_u::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_amplification::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_amplification::grad
@@ -5492,6 +8258,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_u::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_u::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_amplification::grad
@@ -5516,30 +8297,60 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_u::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_u::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_CircOrbs_Param3::log_likely_astrometry_each::grad
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::jax_forward
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_amplification::grad
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_photometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_photometry::parity
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_photometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_photometry::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_photometry::grad
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry_unlensed::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry_unlensed::parity
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry_unlensed::jax_forward
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry_unlensed::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry_unlensed::grad
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_centroid_shift::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_centroid_shift::parity
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_centroid_shift::jax_forward
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_centroid_shift::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_centroid_shift::grad
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_u::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_u::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param1::log_likely_astrometry_each::grad
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_amplification::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_amplification::grad
@@ -5564,6 +8375,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_u::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_u::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param2::log_likely_astrometry_each::grad
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_amplification::grad
@@ -5588,6 +8414,21 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_u::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_u::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_EllOrbs_Param3::log_likely_astrometry_each::grad
 - [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::parity
 - [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_amplification::grad
@@ -5612,54 +8453,99 @@ Updated: 2026-05-31 | Applicable tasks: 1886
 - [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_amplification::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_amplification::parity
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_u::parity
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_u::grad
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_LinOrbs_Param1::log_likely_astrometry_each::grad
+- [x] BSBL_PhotAstrom_noPar_Param1::get_amplification::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param1::get_amplification::parity
 - [ ] BSBL_PhotAstrom_noPar_Param1::get_amplification::grad
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_photometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_photometry::parity
+- [x] BSBL_PhotAstrom_noPar_Param1::get_photometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param1::get_photometry::parity
 - [ ] BSBL_PhotAstrom_noPar_Param1::get_photometry::grad
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::parity
+- [x] BSBL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::parity
 - [ ] BSBL_PhotAstrom_noPar_Param1::get_astrometry_unlensed::grad
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_Param1::get_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param1::get_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_Param1::get_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_Param1::get_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param1::get_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_Param1::get_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_centroid_shift::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_centroid_shift::parity
+- [x] BSBL_PhotAstrom_noPar_Param1::get_centroid_shift::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param1::get_centroid_shift::parity
 - [ ] BSBL_PhotAstrom_noPar_Param1::get_centroid_shift::grad
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_resolved_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_resolved_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_Param1::get_resolved_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param1::get_resolved_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_Param1::get_resolved_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_Param1::get_resolved_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_amplification::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_amplification::parity
+- [ ] BSBL_PhotAstrom_noPar_Param1::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_Param1::get_u::parity
+- [ ] BSBL_PhotAstrom_noPar_Param1::get_u::grad
+- [ ] BSBL_PhotAstrom_noPar_Param1::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_Param1::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_noPar_Param1::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_noPar_Param1::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_Param1::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_noPar_Param1::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_Param1::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_Param1::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_Param1::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_Param1::log_likely_astrometry_each::grad
+- [x] BSBL_PhotAstrom_noPar_Param2::get_amplification::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param2::get_amplification::parity
 - [ ] BSBL_PhotAstrom_noPar_Param2::get_amplification::grad
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_photometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_photometry::parity
+- [x] BSBL_PhotAstrom_noPar_Param2::get_photometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param2::get_photometry::parity
 - [ ] BSBL_PhotAstrom_noPar_Param2::get_photometry::grad
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::parity
+- [x] BSBL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::parity
 - [ ] BSBL_PhotAstrom_noPar_Param2::get_astrometry_unlensed::grad
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_Param2::get_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param2::get_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_Param2::get_lens_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_Param2::get_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param2::get_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_Param2::get_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_centroid_shift::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_centroid_shift::parity
+- [x] BSBL_PhotAstrom_noPar_Param2::get_centroid_shift::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param2::get_centroid_shift::parity
 - [ ] BSBL_PhotAstrom_noPar_Param2::get_centroid_shift::grad
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_resolved_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_resolved_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_Param2::get_resolved_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param2::get_resolved_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_Param2::get_resolved_astrometry::grad
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::jax_forward
-- [ ] BSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::parity
+- [x] BSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::jax_forward
+- [x] BSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::parity
 - [ ] BSBL_PhotAstrom_noPar_Param2::get_resolved_lens_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_Param2::get_u::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_Param2::get_u::parity
+- [ ] BSBL_PhotAstrom_noPar_Param2::get_u::grad
+- [ ] BSBL_PhotAstrom_noPar_Param2::get_chi2_photometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_Param2::get_chi2_photometry::parity
+- [ ] BSBL_PhotAstrom_noPar_Param2::get_chi2_photometry::grad
+- [ ] BSBL_PhotAstrom_noPar_Param2::get_chi2_astrometry::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_Param2::get_chi2_astrometry::parity
+- [ ] BSBL_PhotAstrom_noPar_Param2::get_chi2_astrometry::grad
+- [ ] BSBL_PhotAstrom_noPar_Param2::log_likely_photometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_Param2::log_likely_photometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_Param2::log_likely_photometry_each::grad
+- [ ] BSBL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::jax_forward
+- [ ] BSBL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::parity
+- [ ] BSBL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::grad
 
 ## BFSPL (6 tasks)
 
