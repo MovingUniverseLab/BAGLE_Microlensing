@@ -16,13 +16,16 @@ from model_old_vs_jax_fixtures import (
     bsbl_photastrom_param1_pairs,
     bsbl_photastrom_circorbs_param1_pairs,
     bsbl_photastrom_ellorbs_param1_pairs,
+    bsbl_photastrom_ellorbs_param2_pairs,
     bsbl_photastrom_param2_pairs,
     fspl_photastrom_param1_pairs,
+    fspl_photastrom_param1_grad_phot_pairs,
     bspl_photastrom_gp_param1_pairs,
     bspl_phot_gp_param1_pairs,
     bspl_phot_param1_pairs,
     bspl_photastrom_param1_pairs,
     bspl_photastrom_param2_pairs,
+    bspl_photastrom_ellorbs_param2_pairs,
     fspl_phot_param2_pairs,
     psbl_gp_param1_pairs,
     psbl_gp_photastrom_param2_pairs,
@@ -296,6 +299,33 @@ def test_parity_fspl_photastrom_param1(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_ellorbs_param2_pairs())
+def test_parity_bsbl_photastrom_ellorbs_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_ellorbs_param2_pairs())
+def test_parity_bspl_photastrom_ellorbs_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param1_grad_phot_pairs())
+def test_grad_fspl_photastrom_param1_phot(class_name, method_name):
+    """FSPL phot grad smoke via host AMG finite-difference."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
 
 
 @pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param4_phot_pairs())

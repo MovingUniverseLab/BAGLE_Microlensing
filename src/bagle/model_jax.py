@@ -15358,8 +15358,9 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
 
         self.fratio_bin = np.array(fratio_bin)
-        self.mag_src_pri = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fratio_bin)
-        self.mag_src_sec = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + (1.0 / fratio_bin))
+        fb = np.asarray(self.fratio_bin, dtype=float).reshape(-1)
+        self.mag_src_pri = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fb)
+        self.mag_src_sec = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + (1.0 / fb))
 
         self.sep = aleph + aleph_sec
 
@@ -20570,14 +20571,14 @@ class FSPL(PSPL):
             Cminus_y[i] =  0.125 * np.sum((qy[:-1] + qy[1:])**2 * d1_qx)
 
             #Eq 21 and 22 Bozza 2021. Parabolic corrections
-            Cplus_x[i]  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + d1_px[:-1] * wp_d1_d2_i_plus) +
-                                                             (d1_px[1: ]**2 * d1_py[1: ] + d1_px[1: ] * wp_d1_d2_ip1_plus)))
-            Cplus_y[i]  += -(1. / 24.) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + d1_py[:-1] * wp_d1_d2_i_plus) +
-                                                             (d1_py[1: ]**2 * d1_px[1: ] + d1_py[1: ] * wp_d1_d2_ip1_plus)))
-            Cminus_x[i] += -(1. / 24.) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + d1_qx[:-1] * wp_d1_d2_i_minus) +
-                                                             (d1_qx[1: ]**2 * d1_qy[1: ] + d1_qx[1: ] * wp_d1_d2_ip1_minus)))
-            Cminus_y[i] +=  (1. / 24.) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + d1_qy[:-1] * wp_d1_d2_i_minus) +
-                                                             (d1_qy[1: ]**2 * d1_qx[1: ] + d1_qy[1: ] * wp_d1_d2_ip1_minus)))
+            Cplus_x[i]  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + px[:-2]  * wp_d1_d2_i_plus) +
+                                                             (d1_px[1: ]**2 * d1_py[1: ] + px[1:-1] * wp_d1_d2_ip1_plus)))
+            Cplus_y[i]  += -(1. / 24.) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + py[:-2]  * wp_d1_d2_i_plus) +
+                                                             (d1_py[1: ]**2 * d1_px[1: ] + py[1:-1] * wp_d1_d2_ip1_plus)))
+            Cminus_x[i] += -(1. / 24.) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + qx[:-2]  * wp_d1_d2_i_minus) +
+                                                             (d1_qx[1: ]**2 * d1_qy[1: ] + qx[1:-1] * wp_d1_d2_ip1_minus)))
+            Cminus_y[i] +=  (1. / 24.) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + qy[:-2]  * wp_d1_d2_i_minus) +
+                                                             (d1_qy[1: ]**2 * d1_qx[1: ] + qy[1:-1] * wp_d1_d2_ip1_minus)))
         
         Aplus = np.array(Aplus)
         Aminus = np.array(Aminus)
@@ -20768,14 +20769,14 @@ class FSPL(PSPL):
             Cminus_y[i] =  0.125 * np.sum((qy[:-1] + qy[1:])**2 * d1_qx)
 
             #Eq 21 and 22 Bozza 2021. Parabolic corrections
-            Cplus_x[i]  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + d1_px[:-1] * wp_d1_d2_i_plus) +
-                                                             (d1_px[1: ]**2 * d1_py[1: ] + d1_px[1: ] * wp_d1_d2_ip1_plus)))
-            Cplus_y[i]  += -(1. / 24.) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + d1_py[:-1] * wp_d1_d2_i_plus) +
+            Cplus_x[i]  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + px[:-2]  * wp_d1_d2_i_plus) +
+                                                             (d1_px[1: ]**2 * d1_py[1: ] + px[1:-1] * wp_d1_d2_ip1_plus)))
+            Cplus_y[i]  += -(1. / 24.) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + py[:-2]  * wp_d1_d2_i_plus) +
                                                              (d1_py[1: ]**2 * d1_px[1: ] + d1_py[1: ] * wp_d1_d2_ip1_plus)))
-            Cminus_x[i] += -(1. / 24.) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + d1_qx[:-1] * wp_d1_d2_i_minus) +
-                                                             (d1_qx[1: ]**2 * d1_qy[1: ] + d1_qx[1: ] * wp_d1_d2_ip1_minus)))
-            Cminus_y[i] +=  (1. / 24.) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + d1_qy[:-1] * wp_d1_d2_i_minus) +
-                                                             (d1_qy[1: ]**2 * d1_qx[1: ] + d1_qy[1: ] * wp_d1_d2_ip1_minus)))
+            Cminus_x[i] += -(1. / 24.) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + qx[:-2]  * wp_d1_d2_i_minus) +
+                                                             (d1_qx[1: ]**2 * d1_qy[1: ] + qx[1:-1] * wp_d1_d2_ip1_minus)))
+            Cminus_y[i] +=  (1. / 24.) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + qy[:-2]  * wp_d1_d2_i_minus) +
+                                                             (d1_qy[1: ]**2 * d1_qx[1: ] + qy[1:-1] * wp_d1_d2_ip1_minus)))
         
         Aplus = np.array(Aplus)
         Aminus = np.array(Aminus)
@@ -21338,6 +21339,15 @@ decL - if parallax model
             Array of vector positions of the centroid at each t.
             Last axis contains East/North positions.
         """
+        if (image_arr is None) and (amp_arr is None):
+            try:
+                from bagle.jax_model import try_get_resolved_astrometry
+
+                pos_jax = try_get_resolved_astrometry(self, t, filt_idx=filt_idx)
+                if pos_jax is not None:
+                    return pos_jax
+            except ImportError:
+                pass
         if (image_arr is None) or (amp_arr is None):
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
         xS_lensed_pos = img_arr
@@ -21554,6 +21564,15 @@ decL - if parallax model
         centroid_shift : numpy array
             [shape = len(t), 2] in milliarcseoncds
         """
+        if (image_arr is None) and (amp_arr is None):
+            try:
+                from bagle.jax_model import try_get_centroid_shift
+
+                shift_jax = try_get_centroid_shift(self, t, filt_idx=filt_idx)
+                if shift_jax is not None:
+                    return shift_jax
+            except ImportError:
+                pass
         # Note that xS is actually the observed centroid position
         # including all light from the source and lens.
         xS = self.get_astrometry(t, filt_idx=filt_idx, image_arr=image_arr, amp_arr=amp_arr)

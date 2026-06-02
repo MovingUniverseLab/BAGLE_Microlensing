@@ -25,6 +25,25 @@ def fspl_astrometry_from_model(model, t, filt_idx, pvec):
     return np.asarray(model.get_astrometry(t, filt_idx=filt_idx), dtype=np.float64)
 
 
+def fspl_resolved_astrometry_from_model(model, t, filt_idx, pvec):
+    """Finite-source resolved image positions via AMG ``get_all_arrays``."""
+    if not getattr(model, "astrometryFlag", False):
+        return None
+    img_arr, _amp_arr = model.get_all_arrays(t, filt_idx=filt_idx)
+    return np.asarray(img_arr, dtype=np.float64)
+
+
+def fspl_centroid_shift_from_model(model, t, filt_idx, pvec):
+    """Finite-source centroid shift (mas) from AMG astrometry minus unlensed."""
+    if not getattr(model, "astrometryFlag", False):
+        return None
+    ast = fspl_astrometry_from_model(model, t, filt_idx, pvec)
+    unl = np.asarray(
+        model.get_astrometry_unlensed(t, filt_idx=filt_idx), dtype=np.float64
+    )
+    return (ast - unl) * 1e3
+
+
 def build_fsbl_joint_loglik(fitter, layout: LayoutSpec):
     """Joint likelihood using PSPL point-source JAX when FSBL uses PSPL-like params."""
     if "PhotAstromParam1" in layout.param_mixin or layout.eval_kind == "fsbl_photastrom":

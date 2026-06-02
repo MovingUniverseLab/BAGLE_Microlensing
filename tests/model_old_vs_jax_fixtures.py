@@ -88,6 +88,7 @@ CANONICAL: dict[str, Any] = {
     "iS": 45.0,
     "eS": 0.1,
     "pS": 3000.0,
+    "p": 3000.0,
     "tpS": 40.0,
     "alephS": 0.4,
     "aleph_secS": 0.8,
@@ -468,16 +469,51 @@ def fspl_photastrom_param1_pairs() -> list[tuple[str, str]]:
     core_ast = tuple(
         m
         for m in PSBL_PHOTASTROM_AST_METHODS
-        if m
-        not in (
-            "get_resolved_astrometry",
-            "get_resolved_lens_astrometry",
-            "get_centroid_shift",
-        )
+        if m not in ("get_resolved_lens_astrometry", "get_centroid_shift")
     )
     methods = PSBL_PHOT_METHODS + core_ast
     return sorted(
         (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def fsbl_phot_param1_pairs() -> list[tuple[str, str]]:
+    """FSBL phot-only Param1 parity — classes exist only in model_jax (empty)."""
+    return []
+
+
+def bsbl_photastrom_ellorbs_param2_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom EllOrbs Param2 phot + core astrometry."""
+    return _psbl_photastrom_pairs_for_classes(
+        (
+            "BSBL_PhotAstrom_noPar_EllOrbs_Param2",
+            "BSBL_PhotAstrom_Par_EllOrbs_Param2",
+        )
+    )
+
+
+def bspl_photastrom_ellorbs_param2_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom EllOrbs Param2 phot + core astrometry."""
+    return _psbl_photastrom_pairs_for_classes(
+        (
+            "BSPL_PhotAstrom_noPar_EllOrbs_Param2",
+            "BSPL_PhotAstrom_Par_EllOrbs_Param2",
+        )
+    )
+
+
+def fspl_photastrom_param1_grad_phot_pairs() -> list[tuple[str, str]]:
+    """FSPL PhotAstrom Param1 phot-only grad smoke (host AMG callback)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("FSPL_PhotAstrom_noPar_Param1", "FSPL_PhotAstrom_Par_Param1")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in ("get_photometry",)
+        if (c, m) in applicable
     )
 
 
@@ -714,6 +750,25 @@ def pack_init_vector(instance) -> tuple[np.ndarray, tuple[str, ...]]:
     names = numeric_init_param_names(instance)
     vec = np.array([_scalar_from_instance(instance, n) for n in names], dtype=np.float64)
     return vec, names
+
+
+def scatter_init_vector(instance, vec, init_names: tuple[str, ...]) -> None:
+    """Write a packed init vector back onto a model instance (filter-0 lists)."""
+    for i, name in enumerate(init_names):
+        val = float(vec[i])
+        if name in _ARRAY_COMPONENT:
+            attr, idx = _ARRAY_COMPONENT[name]
+            arr = np.array(getattr(instance, attr), dtype=np.float64, copy=True)
+            arr.reshape(-1)[idx] = val
+            setattr(instance, attr, arr)
+        elif name in LIST_INIT_PARAMS:
+            setattr(instance, name, [val])
+        elif name == "thetaE":
+            instance.thetaE_amp = val
+        elif name == "log10_thetaE":
+            instance.thetaE_amp = 10.0 ** val
+        else:
+            setattr(instance, name, val)
 
 
 def _scalar_from_instance(instance, name: str) -> float:
@@ -1464,6 +1519,31 @@ def grad_smoke_jax(
             return jnp.sum(out)
 
         g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name == "get_photometry" and ek.startswith(("fsbl_phot", "fsbl_photastrom")):
+        from bagle.jax.fspl import fspl_photometry_from_model
+
+        pvec_np = np.asarray(pvec, dtype=np.float64)
+        t_np = np.asarray(t, dtype=np.float64)
+        vec0_np = np.asarray(vec0, dtype=np.float64)
+        eps = 1e-5
+
+        def _phot_sum(vec_np: np.ndarray) -> float:
+            _, inst = build_paired_instances(class_name)
+            scatter_init_vector(inst, vec_np, init_names)
+            mag = fspl_photometry_from_model(inst, t_np, 0, pvec_np)
+            return float(np.sum(mag))
+
+        g = np.zeros(len(vec0_np), dtype=np.float64)
+        for i in range(len(vec0_np)):
+            vp = vec0_np.copy()
+            vm = vec0_np.copy()
+            vp[i] += eps
+            vm[i] -= eps
+            g[i] = (_phot_sum(vp) - _phot_sum(vm)) / (2.0 * eps)
         if return_names:
             return g, init_names
         return g

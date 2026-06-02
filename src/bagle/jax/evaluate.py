@@ -567,6 +567,15 @@ def evaluate_centroid_shift_jax(
     t,
     filt_idx: int = 0,
 ) -> np.ndarray | None:
+    ek = layout.eval_kind
+    if ek.startswith("fsbl_photastrom"):
+        try:
+            from bagle.jax.fspl import fspl_centroid_shift_from_model
+
+            pvec = _parallax_table(model, t, filt_idx)
+            return fspl_centroid_shift_from_model(model, t, filt_idx, pvec)
+        except (AttributeError, NotImplementedError, TypeError):
+            return None
     ast = evaluate_astrometry_jax(layout, model, t, filt_idx)
     unl = evaluate_astrometry_unlensed_jax(layout, model, t, filt_idx)
     if ast is None or unl is None:
@@ -590,8 +599,10 @@ _PSPL_ASTROM_KINDS = (
 
 
 def _joint_astrom_kind(eval_kind: str) -> bool:
-    """Return True for PSPL/PSBL phot+astrom layouts with linear source/lens motion."""
-    return eval_kind in _PSPL_ASTROM_KINDS or eval_kind.startswith("psbl_photastrom")
+    """Return True for phot+astrom layouts with linear source/lens motion."""
+    return eval_kind in _PSPL_ASTROM_KINDS or eval_kind.startswith(
+        ("psbl_photastrom", "fsbl_photastrom")
+    )
 
 
 def _pspl_u_jax(model, t, filt_idx: int, pvec):
@@ -679,7 +690,16 @@ def evaluate_resolved_astrometry_jax(
     t,
     filt_idx: int = 0,
 ) -> np.ndarray | None:
-    if layout.eval_kind not in _PSPL_ASTROM_KINDS:
+    ek = layout.eval_kind
+    if ek.startswith("fsbl_photastrom"):
+        try:
+            from bagle.jax.fspl import fspl_resolved_astrometry_from_model
+
+            pvec = _parallax_table(model, t, filt_idx)
+            return fspl_resolved_astrometry_from_model(model, t, filt_idx, pvec)
+        except (AttributeError, NotImplementedError, TypeError):
+            return None
+    if ek not in _PSPL_ASTROM_KINDS:
         return None
     try:
         t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)

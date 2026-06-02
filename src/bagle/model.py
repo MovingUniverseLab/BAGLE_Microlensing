@@ -15455,8 +15455,9 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
 
         self.fratio_bin = np.array(fratio_bin)
-        self.mag_src_pri = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fratio_bin)
-        self.mag_src_sec = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + (1.0 / fratio_bin))
+        fb = np.asarray(self.fratio_bin, dtype=float).reshape(-1)
+        self.mag_src_pri = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fb)
+        self.mag_src_sec = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + (1.0 / fb))
 
         self.sep = aleph + aleph_sec
 
