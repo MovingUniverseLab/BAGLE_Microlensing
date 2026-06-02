@@ -1,6 +1,6 @@
 # JAX migration dashboard
 
-Updated: 2026-06-02 | Tasks: 415/2796 done
+Updated: 2026-06-02 | Tasks: 415/2848 done
 
 | Class | Method | JAX forward | Parity | Grad | Overall |
 |-------|--------|-------------|--------|------|---------|
@@ -644,8 +644,8 @@ Updated: 2026-06-02 | Tasks: 415/2796 done
 | PSBL_PhotAstrom_Par_Param3 | get_centroid_shift | jax_only | pass | not_run | pending |
 | PSBL_PhotAstrom_Par_Param3 | get_resolved_astrometry | jax_only | pass | not_run | pending |
 | PSBL_PhotAstrom_Par_Param3 | get_resolved_lens_astrometry | jax_only | pass | not_run | pending |
-| PSBL_PhotAstrom_Par_Param4 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSBL_PhotAstrom_Par_Param4 | get_photometry | numpy_fallback | not_run | not_run | pending |
+| PSBL_PhotAstrom_Par_Param4 | get_amplification | jax_only | pass | not_run | pending |
+| PSBL_PhotAstrom_Par_Param4 | get_photometry | jax_only | pass | not_run | pending |
 | PSBL_PhotAstrom_Par_Param4 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_Par_Param4 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_Par_Param4 | get_astrometry | numpy_fallback | not_run | not_run | pending |
@@ -838,8 +838,8 @@ Updated: 2026-06-02 | Tasks: 415/2796 done
 | PSBL_PhotAstrom_noPar_Param3 | get_centroid_shift | jax_only | pass | not_run | pending |
 | PSBL_PhotAstrom_noPar_Param3 | get_resolved_astrometry | jax_only | pass | not_run | pending |
 | PSBL_PhotAstrom_noPar_Param3 | get_resolved_lens_astrometry | jax_only | pass | not_run | pending |
-| PSBL_PhotAstrom_noPar_Param4 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| PSBL_PhotAstrom_noPar_Param4 | get_photometry | numpy_fallback | not_run | not_run | pending |
+| PSBL_PhotAstrom_noPar_Param4 | get_amplification | jax_only | pass | not_run | pending |
+| PSBL_PhotAstrom_noPar_Param4 | get_photometry | jax_only | pass | not_run | pending |
 | PSBL_PhotAstrom_noPar_Param4 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_noPar_Param4 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
 | PSBL_PhotAstrom_noPar_Param4 | get_astrometry | numpy_fallback | not_run | not_run | pending |
@@ -1262,11 +1262,11 @@ Updated: 2026-06-02 | Tasks: 415/2796 done
 | BSPL_Phot_noPar_Param1 | get_amplification | jax_only | pass | not_run | pending |
 | BSPL_Phot_noPar_Param1 | get_photometry | jax_only | pass | not_run | pending |
 | BSPL_Phot_noPar_Param1 | get_resolved_astrometry | numpy_fallback | not_run | not_run | pending |
-| FSPL_PhotAstrom_Par_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| FSPL_PhotAstrom_Par_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| FSPL_PhotAstrom_Par_Param1 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| FSPL_PhotAstrom_Par_Param1 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| FSPL_PhotAstrom_Par_Param1 | get_astrometry | numpy_fallback | not_run | not_run | pending |
+| FSPL_PhotAstrom_Par_Param1 | get_amplification | jax_only | pass | not_run | pending |
+| FSPL_PhotAstrom_Par_Param1 | get_photometry | jax_only | pass | not_run | pending |
+| FSPL_PhotAstrom_Par_Param1 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
+| FSPL_PhotAstrom_Par_Param1 | get_lens_astrometry | jax_only | pass | not_run | pending |
+| FSPL_PhotAstrom_Par_Param1 | get_astrometry | jax_only | pass | not_run | pending |
 | FSPL_PhotAstrom_Par_Param1 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
 | FSPL_PhotAstrom_Par_Param1 | get_resolved_astrometry | numpy_fallback | not_run | not_run | pending |
 | FSPL_PhotAstrom_Par_Param1 | get_astrometry_outline_unlensed | numpy_fallback | not_run | not_run | pending |
@@ -1278,11 +1278,11 @@ Updated: 2026-06-02 | Tasks: 415/2796 done
 | FSPL_PhotAstrom_Par_Param2 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
 | FSPL_PhotAstrom_Par_Param2 | get_resolved_astrometry | numpy_fallback | not_run | not_run | pending |
 | FSPL_PhotAstrom_Par_Param2 | get_astrometry_outline_unlensed | numpy_fallback | not_run | not_run | pending |
-| FSPL_PhotAstrom_noPar_Param1 | get_amplification | numpy_fallback | not_run | not_run | pending |
-| FSPL_PhotAstrom_noPar_Param1 | get_photometry | numpy_fallback | not_run | not_run | pending |
-| FSPL_PhotAstrom_noPar_Param1 | get_astrometry_unlensed | numpy_fallback | not_run | not_run | pending |
-| FSPL_PhotAstrom_noPar_Param1 | get_lens_astrometry | numpy_fallback | not_run | not_run | pending |
-| FSPL_PhotAstrom_noPar_Param1 | get_astrometry | numpy_fallback | not_run | not_run | pending |
+| FSPL_PhotAstrom_noPar_Param1 | get_amplification | jax_only | pass | not_run | pending |
+| FSPL_PhotAstrom_noPar_Param1 | get_photometry | jax_only | pass | not_run | pending |
+| FSPL_PhotAstrom_noPar_Param1 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
+| FSPL_PhotAstrom_noPar_Param1 | get_lens_astrometry | jax_only | pass | not_run | pending |
+| FSPL_PhotAstrom_noPar_Param1 | get_astrometry | jax_only | pass | not_run | pending |
 | FSPL_PhotAstrom_noPar_Param1 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
 | FSPL_PhotAstrom_noPar_Param1 | get_resolved_astrometry | numpy_fallback | not_run | not_run | pending |
 | FSPL_PhotAstrom_noPar_Param1 | get_astrometry_outline_unlensed | numpy_fallback | not_run | not_run | pending |
@@ -1892,14 +1892,14 @@ Updated: 2026-06-02 | Tasks: 415/2796 done
 | BFSPL_PhotAstrom_noPar_Param1 | get_centroid_shift | numpy_fallback | not_run | not_run | pending |
 
 **PSPL methods:** 415/470 done
-**PSBL methods:** 0/660 done
+**PSBL methods:** 0/712 done
 **BSPL methods:** 0/644 done
 **FSPL methods:** 0/64 done
 **FSBL methods:** 0/692 done
 **BSBL methods:** 0/260 done
 **BFSPL methods:** 0/6 done
 
-**Total methods:** 415/2796 done
+**Total methods:** 415/2848 done
 
 See also [`jax_migration_tasks.md`](jax_migration_tasks.md).
 

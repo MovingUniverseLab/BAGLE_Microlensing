@@ -8553,7 +8553,7 @@ class PSBL_PhotAstrom_CircOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         e = 0  # no eccentricity
-        super().__init__(self, t0, u0_amp, tE, thetaE, piS,
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, a, big_omega_sec, omega_pri, i, e, tp,
                  b_sff, mag_src, dmag_Lp_Ls,
@@ -9331,7 +9331,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_src, dmag_Lp_Ls,
+                 b_sff, mag_base, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_com = t0_com
         self.u0_amp_com = u0_amp_com
@@ -9346,7 +9346,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         self.alpha = alpha
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
-        self.mag_src = mag_src
+        self.mag_base = mag_base
         self.dmag_Lp_Ls = dmag_Lp_Ls
         self.raL = raL
         self.decL = decL
@@ -9355,6 +9355,8 @@ class PSBL_PhotAstromParam4(PSPL_Param):
 
         # Check variable formatting.
         super().__init__()
+
+        self.mag_src = self.mag_base - 2.5 * np.log10(self.b_sff)
 
         # Derived quantities
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
@@ -20947,8 +20949,13 @@ class FSPL(PSPL):
 
     def get_all_arrays(self, t, filt_idx=0):
         u_vectors = np.linalg.norm(self.get_u(t), axis=1)
-        images, amps = self.get_all_arrays_CI(t, filt_idx)
-        return images, amps 
+        if self.astrometryFlag == True:
+            self.amgFlag = True
+            images, amps = self.get_all_arrays_amg_only(t, filt_idx)
+        else:
+            self.amgFlag = False
+            images, amps = self.get_all_arrays_CI(t, filt_idx)
+        return images, amps
   
     def get_u(self, t, filt_idx=0):
         """
@@ -20998,8 +21005,8 @@ class FSPL(PSPL):
                 img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
                 amp_arr_mskd = amp_arr
                 amp = np.sum(amp_arr_mskd, axis=1)
-        index = np.where(amp<=1)
-        amp[index]*=-1
+        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
+            amp = -1 * amp
         return amp
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
@@ -29410,6 +29417,50 @@ class PSBL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
                                             PSBL_PhotAstrom,
                                             PSBL_noParallax,
                                             PSBL_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_CircOrbs_Param2(ModelClassABC,
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_CircOrbs_Param2(ModelClassABC,
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
