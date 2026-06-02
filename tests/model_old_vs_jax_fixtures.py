@@ -83,7 +83,10 @@ CANONICAL: dict[str, Any] = {
     "big_omegaS_sec": 0.0,
     "iL": 45.0,
     "tpL": 40.0,
+    "eL": 0.1,
+    "aL": 1.0,
     "iS": 45.0,
+    "eS": 0.1,
     "pS": 3000.0,
     "tpS": 40.0,
     "alephS": 0.4,
@@ -510,18 +513,33 @@ def psbl_photastrom_param4_phot_pairs() -> list[tuple[str, str]]:
 
 
 def bsbl_photastrom_ellorbs_param1_pairs() -> list[tuple[str, str]]:
-    """BSBL PhotAstrom EllOrbs Param1 — blocked: orbit phot/ast parity vs CircOrbs Param1."""
-    return []
+    """BSBL PhotAstrom EllOrbs Param1 phot + core astrometry (noPar + Par)."""
+    return _psbl_photastrom_pairs_for_classes(
+        (
+            "BSBL_PhotAstrom_noPar_EllOrbs_Param1",
+            "BSBL_PhotAstrom_Par_EllOrbs_Param1",
+        )
+    )
 
 
 def psbl_photastrom_circorbs_param2_pairs() -> list[tuple[str, str]]:
-    """PSBL PhotAstrom CircOrbs Param2 — blocked: EllOrbs_Param2 init unit error."""
-    return []
+    """PSBL PhotAstrom CircOrbs Param2 phot + core astrometry."""
+    return _psbl_photastrom_pairs_for_classes(
+        (
+            "PSBL_PhotAstrom_noPar_CircOrbs_Param2",
+            "PSBL_PhotAstrom_Par_CircOrbs_Param2",
+        )
+    )
 
 
 def psbl_photastrom_ellorbs_param2_pairs() -> list[tuple[str, str]]:
-    """PSBL PhotAstrom EllOrbs Param2 — blocked: same EllOrbs_Param2 init unit error."""
-    return []
+    """PSBL PhotAstrom EllOrbs Param2 phot + core astrometry."""
+    return _psbl_photastrom_pairs_for_classes(
+        (
+            "PSBL_PhotAstrom_noPar_EllOrbs_Param2",
+            "PSBL_PhotAstrom_Par_EllOrbs_Param2",
+        )
+    )
 
 
 def fspl_phot_param2_pairs() -> list[tuple[str, str]]:

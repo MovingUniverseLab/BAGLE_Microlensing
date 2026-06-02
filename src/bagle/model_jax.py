@@ -8333,7 +8333,7 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'Keplarian'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
@@ -8439,7 +8439,7 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.a = a
         self.aleph_sec = (self.mLp / (self.mLp + self.mLs)) * self.a  # mas
         self.aleph = self.a - self.aleph_sec  # mas
-        self.a_AU = dL * (self.a * 1e-3) * units.AU
+        self.a_AU = self.dL * (self.a * 1e-3) * units.AU
         mL = self.mL * units.Msun
         p = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mL))).to('day')
         self.p = p.value  # Period in Days
@@ -8458,7 +8458,16 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
         self.alpha = np.rad2deg(self.alpha_rad)
-        self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
+        self.phi_rad = self.alpha_rad - np.arctan2(self.piE[0], self.piE[1])
+
+        qeff = (1 - self.q) / (1 + self.q)
+        self.t0_com = self.t0 + 0.5 * qeff * self.tE * self.sep * np.cos(self.phi_rad) / self.thetaE_amp
+        self.u0_amp_com = self.u0_amp + 0.5 * qeff * self.sep * np.sin(self.phi_rad) / self.thetaE_amp
+        self.beta_com = self.u0_amp_com * self.thetaE_amp
+        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
+        self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
+        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
+        self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
 
         return
 
@@ -8544,7 +8553,7 @@ class PSBL_PhotAstrom_CircOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'Keplarian'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
