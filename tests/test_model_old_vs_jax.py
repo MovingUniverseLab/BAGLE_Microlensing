@@ -27,6 +27,21 @@ from model_old_vs_jax_fixtures import (
     fsbl_phot_ellorbs_param1_pairs,
     fsbl_phot_circorbs_param1_pairs,
     fsbl_photastrom_param1_pairs,
+    fsbl_photastrom_linorbs_param1_pairs,
+    fsbl_photastrom_accorbs_param1_pairs,
+    fsbl_photastrom_circorbs_param1_pairs,
+    fsbl_phot_ellorbs_param2_pairs,
+    fsbl_photastrom_param2_pairs,
+    fspl_photastrom_param2_extended_pairs,
+    fspl_photastrom_param2_resolved_astrometry_pairs,
+    fspl_phot_param2_extended_pairs,
+    fspl_photastrom_param2_grad_phot_pairs,
+    psbl_photastrom_param1_resolved_lens_pairs,
+    bsbl_photastrom_param1_resolved_lens_pairs,
+    psbl_photastrom_param5_pairs,
+    psbl_photastrom_param6_pairs,
+    bsbl_photastrom_gp_param1_pairs,
+    psbl_gp_photastrom_param3_pairs,
     bsbl_phot_param1_pairs,
     bspl_phot_param2_pairs,
     bspl_photastrom_gp_param1_pairs,
@@ -63,7 +78,8 @@ from model_old_vs_jax_fixtures import (
 RTOL = ATOL = 1e-6
 GP_STD_RTOL = GP_STD_ATOL = 1e-5
 # AMG finite-source: model.py vs model_jax image positions differ ~1e-8 arcsec
-# (~1e-5 mas in centroid shift).
+# (~5e-5 mas in centroid shift). Tighter atol (1e-6 mas) is not achievable without
+# changing the host AMG path; keep 1e-4 mas as the permanent parity tolerance.
 CENTROID_SHIFT_ATOL = 1e-4
 PHOT_METHODS = {"get_photometry", "get_amplification", "get_photometry_with_gp"}
 
@@ -416,6 +432,31 @@ def test_parity_fsbl_photastrom_param1(class_name, method_name):
     _assert_jax_eval_parity(class_name, method_name)
 
 
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_linorbs_param1_pairs())
+def test_parity_fsbl_photastrom_linorbs_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_accorbs_param1_pairs())
+def test_parity_fsbl_photastrom_accorbs_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_circorbs_param1_pairs())
+def test_parity_fsbl_photastrom_circorbs_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_ellorbs_param2_pairs())
+def test_parity_fsbl_phot_ellorbs_param2(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param2_pairs())
+def test_parity_fsbl_photastrom_param2(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
 @pytest.mark.parametrize("class_name,method_name", bsbl_phot_param1_pairs())
 def test_parity_bsbl_phot_param1(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
@@ -437,9 +478,85 @@ def test_parity_fspl_phot_gp_param1(class_name, method_name):
     _assert_parity(old_inst, jax_inst, method_name, t)
 
 
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param2_extended_pairs())
+def test_parity_fspl_photastrom_param2_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param2_resolved_astrometry_pairs())
+def test_parity_fspl_photastrom_param2_resolved_astrometry(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_phot_param2_extended_pairs())
+def test_parity_fspl_phot_param2_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param1_resolved_lens_pairs())
+def test_parity_psbl_photastrom_resolved_lens(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_param1_resolved_lens_pairs())
+def test_parity_bsbl_photastrom_resolved_lens(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param5_pairs())
+def test_parity_psbl_photastrom_param5(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param6_pairs())
+def test_parity_psbl_photastrom_param6(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_gp_param1_pairs())
+def test_parity_bsbl_photastrom_gp_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_photastrom_param3_pairs())
+def test_parity_psbl_gp_photastrom_param3(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param2_grad_phot_pairs())
+def test_grad_fspl_photastrom_param2_phot(class_name, method_name):
+    """FSPL PhotAstrom Param2 phot grad smoke via host AMG finite-difference."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
 @pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param4_grad_phot_pairs())
 def test_grad_psbl_photastrom_param4_phot(class_name, method_name):
-    """Param4 uses companion t0/u0 init names; grad not wired (skip)."""
+    """Param4 COM-frame init names (t0_com, u0_amp_com) wired in grad_smoke."""
     _, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, jax_inst)
     try:

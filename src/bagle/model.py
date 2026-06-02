@@ -9991,7 +9991,8 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
 
-        # IS THIS IT? DOES IT WORK?
+        self.thetaS0 = self.u0 * self.thetaE_amp
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         return
 
