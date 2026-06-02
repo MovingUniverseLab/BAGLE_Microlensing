@@ -126,6 +126,26 @@ def derive_pspl_phot_log(
     return u0, thetaE_hat, tE, piE_E, piE_N
 
 
+def derive_psbl_param4_heliocentric(
+    t0_com,
+    u0_amp_com,
+    tE,
+    thetaE,
+    piE_E,
+    piE_N,
+    q,
+    sep,
+    alpha_deg,
+):
+    """Heliocentric t0, u0_amp from COM-frame PSBL PhotAstrom Param4 inputs."""
+    alpha_rad = alpha_deg * jnp.pi / 180.0
+    phi_rad = alpha_rad - jnp.arctan2(piE_E, piE_N)
+    qeff = (1.0 - q) / (1.0 + q)
+    t0 = t0_com - 0.5 * qeff * tE * sep * jnp.cos(phi_rad) / thetaE
+    u0_amp = u0_amp_com - 0.5 * qeff * sep * jnp.sin(phi_rad) / thetaE
+    return t0, u0_amp
+
+
 def derive_psbl_photastrom_param1(
     mLp,
     mLs,
@@ -263,19 +283,34 @@ def derive_geometry_from_layout(layout_id: str, eval_kind: str, base_vec, names:
             piE_N = p["piE_N"]
         return ("pspl_phot", u0, thetaE_hat, tE, piE_E, piE_N)
     if eval_kind.startswith("psbl_phot"):
+        phi_key = "phi" if "phi" in p else "alpha"
+        u0_amp = p["u0_amp"]
+        t0 = p["t0"]
+        if "t0_com" in p:
+            t0, u0_amp = derive_psbl_param4_heliocentric(
+                p["t0_com"],
+                p["u0_amp_com"],
+                p["tE"],
+                p["thetaE"],
+                p["piE_E"],
+                p["piE_N"],
+                p["q"],
+                p["sep"],
+                p[phi_key],
+            )
         m1, m2, u0, thetaE_hat, xL1, xL2, _ = derive_psbl_static_geometry(
-            p["u0_amp"],
+            u0_amp,
             p["piE_E"],
             p["piE_N"],
             p["q"],
             p["sep"],
-            p["phi"],
+            p[phi_key],
         )
         return (
             "psbl_phot",
             u0,
             thetaE_hat,
-            p["t0"],
+            t0,
             p["tE"],
             m1,
             m2,

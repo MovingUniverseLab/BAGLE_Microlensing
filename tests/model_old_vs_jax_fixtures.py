@@ -75,6 +75,13 @@ CANONICAL: dict[str, Any] = {
     "beta_p": 0.4,
     "t0_p": 57100.0,
     "t0_com": 57100.0,
+    "t0_prim": 57100.0,
+    "u0_amp_prim": 0.4,
+    "piEN_piEE": 2.0,
+    "delta_muL_sec_E": 0.01,
+    "delta_muL_sec_N": -0.01,
+    "accLsec_E": 1e-4,
+    "accLsec_N": -1e-4,
     "omega_pri": 90.0,
     "omegaL_pri": 90.0,
     "omegaS_pri": 90.0,
@@ -563,6 +570,122 @@ def fspl_photastrom_param2_pairs() -> list[tuple[str, str]]:
     )
 
 
+def fspl_photastrom_param2_extended_pairs() -> list[tuple[str, str]]:
+    """FSPL PhotAstrom Param2 extended likelihoods (host AMG phot/ast forward)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("FSPL_PhotAstrom_noPar_Param2", "FSPL_PhotAstrom_Par_Param2")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in FSPL_PHOTASTROM_EXTENDED_METHODS
+        if (c, m) in applicable
+    )
+
+
+def fspl_photastrom_param2_resolved_astrometry_pairs() -> list[tuple[str, str]]:
+    """FSPL PhotAstrom Param2 ``get_resolved_astrometry`` parity."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("FSPL_PhotAstrom_noPar_Param2", "FSPL_PhotAstrom_Par_Param2")
+    return sorted(
+        (c, "get_resolved_astrometry")
+        for c in classes
+        if (c, "get_resolved_astrometry") in applicable
+    )
+
+
+def fspl_phot_param2_extended_pairs() -> list[tuple[str, str]]:
+    """FSPL phot-only Param2 ``get_u`` and chi2 photometry."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("FSPL_Phot_noPar_Param2", "FSPL_Phot_Par_Param2")
+    methods = ("get_u", "get_chi2_photometry", "log_likely_photometry_each")
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def fspl_photastrom_param2_grad_phot_pairs() -> list[tuple[str, str]]:
+    """FSPL PhotAstrom Param2 phot grad smoke (host AMG finite-difference)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("FSPL_PhotAstrom_noPar_Param2", "FSPL_PhotAstrom_Par_Param2")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in ("get_photometry", "get_amplification")
+        if (c, m) in applicable
+    )
+
+
+def _psbl_resolved_lens_pairs_for_classes(class_names: tuple[str, ...]) -> list[tuple[str, str]]:
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    return sorted(
+        (c, "get_resolved_lens_astrometry")
+        for c in class_names
+        if (c, "get_resolved_lens_astrometry") in applicable
+    )
+
+
+def psbl_photastrom_param1_resolved_lens_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param1/2 ``get_resolved_lens_astrometry`` parity."""
+    return _psbl_resolved_lens_pairs_for_classes(
+        (
+            "PSBL_PhotAstrom_noPar_Param1",
+            "PSBL_PhotAstrom_Par_Param1",
+            "PSBL_PhotAstrom_noPar_Param2",
+            "PSBL_PhotAstrom_Par_Param2",
+        )
+    )
+
+
+def bsbl_photastrom_param1_resolved_lens_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom Param1 ``get_resolved_lens_astrometry`` parity."""
+    return _psbl_resolved_lens_pairs_for_classes(
+        ("BSBL_PhotAstrom_noPar_Param1", "BSBL_PhotAstrom_Par_Param1")
+    )
+
+
+def psbl_photastrom_param5_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param5 (Par only) phot + full astrometry."""
+    return _psbl_photastrom_pairs_for_classes(("PSBL_PhotAstrom_Par_Param5",))
+
+
+def psbl_photastrom_param6_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param6 static + orbit variants (noPar + Par)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = sorted(
+        c
+        for c, _ in applicable
+        if c.startswith("PSBL_PhotAstrom_")
+        and "Param6" in c
+        and "GP" not in c
+        and not any(s in c for s in SKIP_CLASS_SUBSTR)
+    )
+    methods = PSBL_PHOT_METHODS + PSBL_PHOTASTROM_AST_METHODS
+    return sorted((c, m) for c in classes for m in methods if (c, m) in applicable)
+
+
+def bsbl_photastrom_gp_param1_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom GP Param1 — no BSBL GP classes in model_jax."""
+    return []
+
+
 def fspl_phot_gp_param1_pairs() -> list[tuple[str, str]]:
     """FSPL phot GP Param1 — no ``FSPL_Phot_*_GP_Param1`` classes in model_jax."""
     return []
@@ -619,6 +742,56 @@ def fsbl_photastrom_param1_pairs() -> list[tuple[str, str]]:
     )
     return _fsbl_jax_eval_pairs(
         ("FSBL_PhotAstrom_noPar_Param1", "FSBL_PhotAstrom_Par_Param1"),
+        methods=PSBL_PHOT_METHODS + core_ast,
+    )
+
+
+def _fsbl_photastrom_orbit_param1_pairs(orbit: str) -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param1 with keplerian orbit (jax-eval)."""
+    core_ast = tuple(
+        m
+        for m in PSBL_PHOTASTROM_AST_METHODS
+        if m not in ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    )
+    no_par = f"FSBL_PhotAstrom_noPar_{orbit}_Param1"
+    par = f"FSBL_PhotAstrom_Par_{orbit}_Param1"
+    return _fsbl_jax_eval_pairs(
+        (no_par, par),
+        methods=PSBL_PHOT_METHODS + core_ast,
+    )
+
+
+def fsbl_photastrom_linorbs_param1_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom LinOrbs Param1 phot + core astrometry (jax-eval)."""
+    return _fsbl_photastrom_orbit_param1_pairs("LinOrbs")
+
+
+def fsbl_photastrom_accorbs_param1_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom AccOrbs Param1 phot + core astrometry (jax-eval)."""
+    return _fsbl_photastrom_orbit_param1_pairs("AccOrbs")
+
+
+def fsbl_photastrom_circorbs_param1_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom CircOrbs Param1 phot only (jax-eval; astrom lacks xL0)."""
+    no_par = "FSBL_PhotAstrom_noPar_CircOrbs_Param1"
+    par = "FSBL_PhotAstrom_Par_CircOrbs_Param1"
+    return _fsbl_jax_eval_pairs((no_par, par), methods=PSBL_PHOT_METHODS)
+
+
+def fsbl_phot_ellorbs_param2_pairs() -> list[tuple[str, str]]:
+    """FSBL phot EllOrbs Param2 — no such ModelClassABC in model_jax."""
+    return []
+
+
+def fsbl_photastrom_param2_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param2 phot + core astrometry (jax-eval)."""
+    core_ast = tuple(
+        m
+        for m in PSBL_PHOTASTROM_AST_METHODS
+        if m not in ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    )
+    return _fsbl_jax_eval_pairs(
+        ("FSBL_PhotAstrom_noPar_Param2", "FSBL_PhotAstrom_Par_Param2"),
         methods=PSBL_PHOT_METHODS + core_ast,
     )
 
@@ -972,9 +1145,49 @@ def _scalar_from_instance(instance, name: str) -> float:
     return float(arr[0])
 
 
+_COMPANION_INIT_ALIASES: dict[str, tuple[str, ...]] = {
+    "t0": ("t0_prim", "t0_p"),
+    "u0_amp": ("u0_amp_prim",),
+    "piE_N": ("piEN_piEE",),
+}
+
+
 def _init_value_for_base_name(v, init_names: tuple[str, ...], base_name: str):
+    from bagle.jax.geometry import derive_psbl_param4_heliocentric
+
+    if base_name == "t0" and "t0_com" in init_names:
+        t0, _ = derive_psbl_param4_heliocentric(
+            v[init_names.index("t0_com")],
+            v[init_names.index("u0_amp_com")],
+            v[init_names.index("tE")],
+            v[init_names.index("thetaE")],
+            v[init_names.index("piE_E")],
+            v[init_names.index("piE_N")],
+            v[init_names.index("q")],
+            v[init_names.index("sep")],
+            v[init_names.index("alpha")],
+        )
+        return t0
+    if base_name == "u0_amp" and "u0_amp_com" in init_names:
+        _, u0_amp = derive_psbl_param4_heliocentric(
+            v[init_names.index("t0_com")],
+            v[init_names.index("u0_amp_com")],
+            v[init_names.index("tE")],
+            v[init_names.index("thetaE")],
+            v[init_names.index("piE_E")],
+            v[init_names.index("piE_N")],
+            v[init_names.index("q")],
+            v[init_names.index("sep")],
+            v[init_names.index("alpha")],
+        )
+        return u0_amp
     if base_name in init_names:
         return v[init_names.index(base_name)]
+    if base_name == "piE_N" and "piEN_piEE" in init_names:
+        return v[init_names.index("piE_E")] * v[init_names.index("piEN_piEE")]
+    for alias in _COMPANION_INIT_ALIASES.get(base_name, ()):
+        if alias in init_names:
+            return v[init_names.index(alias)]
     if base_name == "log10_thetaE" and "thetaE" in init_names:
         return jnp.log10(v[init_names.index("thetaE")])
     if base_name == "thetaE" and "log10_thetaE" in init_names:
