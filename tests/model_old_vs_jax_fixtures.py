@@ -72,9 +72,22 @@ CANONICAL: dict[str, Any] = {
     "sepS": 0.5,
     "alphaS": 0.0,
     "beta_com": 1.0,
+    "beta_p": 0.4,
+    "t0_p": 57100.0,
     "t0_com": 57100.0,
     "omega_pri": 90.0,
+    "omegaL_pri": 90.0,
+    "omegaS_pri": 90.0,
     "big_omega_sec": 0.0,
+    "big_omegaL_sec": 0.0,
+    "big_omegaS_sec": 0.0,
+    "iL": 45.0,
+    "tpL": 40.0,
+    "iS": 45.0,
+    "pS": 3000.0,
+    "tpS": 40.0,
+    "alephS": 0.4,
+    "aleph_secS": 0.8,
     "i": 45.0,
     "e": 0.1,
     "tp": 40.0,
@@ -387,6 +400,13 @@ def bsbl_photastrom_param1_pairs() -> list[tuple[str, str]]:
     )
 
 
+def bsbl_photastrom_param2_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom Param2 (noPar + Par) phot + core astrometry parity."""
+    return _psbl_photastrom_pairs_for_classes(
+        ("BSBL_PhotAstrom_noPar_Param2", "BSBL_PhotAstrom_Par_Param2")
+    )
+
+
 def psbl_photastrom_circorbs_param1_pairs() -> list[tuple[str, str]]:
     """PSBL PhotAstrom CircOrbs Param1 phot + core astrometry."""
     return _psbl_photastrom_pairs_for_classes(
@@ -405,6 +425,39 @@ def psbl_photastrom_ellorbs_param1_pairs() -> list[tuple[str, str]]:
             "PSBL_PhotAstrom_Par_EllOrbs_Param1",
         )
     )
+
+
+def bspl_photastrom_gp_param1_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom GP Param1 phot, GP, and core astrometry (noPar + Par)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("BSPL_PhotAstrom_noPar_GP_Param1", "BSPL_PhotAstrom_Par_GP_Param1")
+    core_ast = tuple(
+        m
+        for m in PSBL_PHOTASTROM_AST_METHODS
+        if m not in ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    )
+    methods = GP_PHOT_METHODS + core_ast
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def bsbl_photastrom_circorbs_param1_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom CircOrbs Param1 phot + core astrometry (noPar + Par)."""
+    return _psbl_photastrom_pairs_for_classes(
+        (
+            "BSBL_PhotAstrom_noPar_CircOrbs_Param1",
+            "BSBL_PhotAstrom_Par_CircOrbs_Param1",
+        )
+    )
+
+
+def fspl_photastrom_param1_pairs() -> list[tuple[str, str]]:
+    """FSPL PhotAstrom Param1 — blocked: model vs model_jax finite-source mismatch."""
+    return []
 
 
 def bspl_phot_gp_param1_pairs() -> list[tuple[str, str]]:
