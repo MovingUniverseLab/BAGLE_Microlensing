@@ -22424,6 +22424,12 @@ class FSBL(PSBL):
     def detJac(self, z, z1):
         return 1.0 - 1.0 / jnp.abs(z - z1)**4
 
+    def source_radius_thetaE_units(self):
+        """Source radius in :math:`\\theta_E` units for finite-source integration."""
+        if hasattr(self, "thetaE_amp"):
+            return self.radiusS * 1e3 / self.thetaE_amp
+        return self.radiusS
+
     def quintic_roots(self, a5, a4, a3, a2, a1, a0):
         """JAX root finder via companion matrix eigenvalues (Witt 1995 / BAGLE)."""
         C = jnp.complex128([
@@ -23141,6 +23147,11 @@ class FSBL(PSBL):
 class FSBL_Phot(FSBL, PSPL_Phot):
     photometryFlag = True
     astrometryFlag = False
+
+    def get_me_some_orbital_parameters(self, t0, sep, r_s, a_s, v_para, v_perp, v_rad):
+        return PSBL_Phot.get_me_some_orbital_parameters(
+            self, t0, sep, r_s, a_s, v_para, v_perp, v_rad
+        )
 
     def get_resolved_lens_astrometry(self, t, filt_idx=0):
         """Equation of motion for just the foreground lenses, individually.

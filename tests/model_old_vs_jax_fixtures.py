@@ -570,13 +570,56 @@ def fspl_phot_gp_param1_pairs() -> list[tuple[str, str]]:
 
 def fsbl_phot_param1_pairs() -> list[tuple[str, str]]:
     """FSBL phot-only Param1: jax evaluate dispatch vs native (model_jax only)."""
+    return _fsbl_jax_eval_pairs(
+        ("FSBL_Phot_noPar_Param1", "FSBL_Phot_Par_Param1")
+    )
+
+
+def _fsbl_jax_eval_pairs(
+    class_names: tuple[str, ...],
+    methods: tuple[str, ...] | None = None,
+) -> list[tuple[str, str]]:
+    """FSBL jax-only classes: native host forward vs ``jax/evaluate`` dispatch."""
     import bagle.model_jax as model_jax
     from bagle.jax.migration_tasks import applicable_task_pairs
 
     applicable = set(applicable_task_pairs(model_jax))
-    classes = ("FSBL_Phot_noPar_Param1", "FSBL_Phot_Par_Param1")
+    meth = methods or PSBL_PHOT_METHODS
     return sorted(
-        (c, m) for c in classes for m in PSBL_PHOT_METHODS if (c, m) in applicable
+        (c, m) for c in class_names for m in meth if (c, m) in applicable
+    )
+
+
+def fsbl_phot_ellorbs_param1_pairs() -> list[tuple[str, str]]:
+    """FSBL phot EllOrbs Param1 jax-eval harness (noPar + Par)."""
+    return _fsbl_jax_eval_pairs(
+        (
+            "FSBL_Phot_noPar_EllOrbs_Param1",
+            "FSBL_Phot_Par_EllOrbs_Param1",
+        )
+    )
+
+
+def fsbl_phot_circorbs_param1_pairs() -> list[tuple[str, str]]:
+    """FSBL phot CircOrbs Param1 jax-eval harness (noPar + Par)."""
+    return _fsbl_jax_eval_pairs(
+        (
+            "FSBL_Phot_noPar_CircOrbs_Param1",
+            "FSBL_Phot_Par_CircOrbs_Param1",
+        )
+    )
+
+
+def fsbl_photastrom_param1_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param1 phot + core astrometry (jax-eval only)."""
+    core_ast = tuple(
+        m
+        for m in PSBL_PHOTASTROM_AST_METHODS
+        if m not in ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    )
+    return _fsbl_jax_eval_pairs(
+        ("FSBL_PhotAstrom_noPar_Param1", "FSBL_PhotAstrom_Par_Param1"),
+        methods=PSBL_PHOT_METHODS + core_ast,
     )
 
 
@@ -611,7 +654,7 @@ def bspl_photastrom_ellorbs_param2_pairs() -> list[tuple[str, str]]:
 
 
 def fspl_photastrom_param1_grad_phot_pairs() -> list[tuple[str, str]]:
-    """FSPL PhotAstrom Param1 phot-only grad smoke (host AMG callback)."""
+    """FSPL PhotAstrom Param1 phot grad smoke (host AMG finite-difference)."""
     import bagle.model_jax as model_jax
     from bagle.jax.migration_tasks import applicable_task_pairs
 
@@ -620,7 +663,7 @@ def fspl_photastrom_param1_grad_phot_pairs() -> list[tuple[str, str]]:
     return sorted(
         (c, m)
         for c in classes
-        for m in ("get_photometry",)
+        for m in ("get_photometry", "get_amplification")
         if (c, m) in applicable
     )
 
@@ -1659,8 +1702,13 @@ def grad_smoke_jax(
             return g, init_names
         return g
 
-    if method_name == "get_photometry" and ek.startswith(("fsbl_phot", "fsbl_photastrom")):
-        from bagle.jax.fspl import fspl_photometry_from_model
+    if method_name in ("get_photometry", "get_amplification") and ek.startswith(
+        ("fsbl_phot", "fsbl_photastrom")
+    ):
+        from bagle.jax.fspl import (
+            fspl_amplification_from_model,
+            fspl_photometry_from_model,
+        )
 
         pvec_np = np.asarray(pvec, dtype=np.float64)
         t_np = np.asarray(t, dtype=np.float64)
@@ -1670,8 +1718,11 @@ def grad_smoke_jax(
         def _phot_sum(vec_np: np.ndarray) -> float:
             _, inst = build_paired_instances(class_name)
             scatter_init_vector(inst, vec_np, init_names)
-            mag = fspl_photometry_from_model(inst, t_np, 0, pvec_np)
-            return float(np.sum(mag))
+            if method_name == "get_photometry":
+                out = fspl_photometry_from_model(inst, t_np, 0, pvec_np)
+            else:
+                out = fspl_amplification_from_model(inst, t_np, 0, pvec_np)
+            return float(np.sum(out))
 
         g = np.zeros(len(vec0_np), dtype=np.float64)
         for i in range(len(vec0_np)):

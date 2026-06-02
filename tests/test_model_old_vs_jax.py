@@ -24,6 +24,9 @@ from model_old_vs_jax_fixtures import (
     fspl_photastrom_param2_pairs,
     fspl_phot_gp_param1_pairs,
     fsbl_phot_param1_pairs,
+    fsbl_phot_ellorbs_param1_pairs,
+    fsbl_phot_circorbs_param1_pairs,
+    fsbl_photastrom_param1_pairs,
     bsbl_phot_param1_pairs,
     bspl_phot_param2_pairs,
     bspl_photastrom_gp_param1_pairs,
@@ -97,6 +100,25 @@ def _assert_parity(old_inst, jax_inst, method_name: str, t: np.ndarray):
             test, ref, rtol=RTOL, atol=CENTROID_SHIFT_ATOL, equal_nan=True
         )
         return
+    np.testing.assert_allclose(test, ref, rtol=RTOL, atol=ATOL, equal_nan=True)
+
+
+def _assert_jax_eval_parity(class_name: str, method_name: str):
+    native_inst, eval_inst = build_jax_eval_paired_instances(class_name)
+    t = _time_grid(method_name, native_inst)
+    ref_out = call_method(native_inst, method_name, t)
+    test_out = call_method_via_jax_eval(eval_inst, method_name, t)
+    if method_name == "get_centroid_shift":
+        ref = np.asarray(ref_out, dtype=np.float64)
+        test = np.asarray(test_out, dtype=np.float64)
+        assert ref.shape == test.shape
+        np.testing.assert_allclose(
+            test, ref, rtol=RTOL, atol=CENTROID_SHIFT_ATOL, equal_nan=True
+        )
+        return
+    ref = np.asarray(ref_out, dtype=np.float64)
+    test = np.asarray(test_out, dtype=np.float64)
+    assert ref.shape == test.shape
     np.testing.assert_allclose(test, ref, rtol=RTOL, atol=ATOL, equal_nan=True)
 
 
@@ -376,14 +398,22 @@ def test_parity_fspl_photastrom_param2(class_name, method_name):
 
 @pytest.mark.parametrize("class_name,method_name", fsbl_phot_param1_pairs())
 def test_parity_fsbl_phot_param1(class_name, method_name):
-    native_inst, eval_inst = build_jax_eval_paired_instances(class_name)
-    t = _time_grid(method_name, native_inst)
-    ref_out = call_method(native_inst, method_name, t)
-    test_out = call_method_via_jax_eval(eval_inst, method_name, t)
-    ref = np.asarray(ref_out, dtype=np.float64)
-    test = np.asarray(test_out, dtype=np.float64)
-    assert ref.shape == test.shape
-    np.testing.assert_allclose(test, ref, rtol=RTOL, atol=ATOL, equal_nan=True)
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_ellorbs_param1_pairs())
+def test_parity_fsbl_phot_ellorbs_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_circorbs_param1_pairs())
+def test_parity_fsbl_phot_circorbs_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param1_pairs())
+def test_parity_fsbl_photastrom_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
 
 
 @pytest.mark.parametrize("class_name,method_name", bsbl_phot_param1_pairs())
