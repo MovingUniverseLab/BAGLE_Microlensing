@@ -762,6 +762,23 @@ def evaluate_log_likely_photometry_each_jax(
         return None
 
 
+def _astrometry_for_likelihood_jax(
+    layout: LayoutSpec,
+    model,
+    t,
+    filt_idx: int = 0,
+) -> np.ndarray | None:
+    """Astrometry for chi2 / log-likelihood; PSBL uses host ``get_astrometry``."""
+    if layout.eval_kind.startswith("psbl_photastrom"):
+        try:
+            return np.asarray(
+                model.get_astrometry(t, filt_idx=filt_idx), dtype=np.float64
+            )
+        except (AttributeError, NotImplementedError, TypeError):
+            return None
+    return evaluate_astrometry_jax(layout, model, t, filt_idx)
+
+
 def evaluate_chi2_astrometry_jax(
     layout: LayoutSpec,
     model,
@@ -772,7 +789,7 @@ def evaluate_chi2_astrometry_jax(
     y_err_obs,
     filt_idx: int = 0,
 ) -> np.ndarray | None:
-    pos_model = evaluate_astrometry_jax(layout, model, t, filt_idx)
+    pos_model = _astrometry_for_likelihood_jax(layout, model, t, filt_idx)
     if pos_model is None:
         return None
     try:
@@ -798,7 +815,7 @@ def evaluate_log_likely_astrometry_each_jax(
     y_err_obs,
     filt_idx: int = 0,
 ) -> np.ndarray | None:
-    pos_model = evaluate_astrometry_jax(layout, model, t, filt_idx)
+    pos_model = _astrometry_for_likelihood_jax(layout, model, t, filt_idx)
     if pos_model is None:
         return None
     try:
