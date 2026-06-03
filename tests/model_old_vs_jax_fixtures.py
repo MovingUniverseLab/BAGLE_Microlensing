@@ -80,8 +80,12 @@ CANONICAL: dict[str, Any] = {
     "piEN_piEE": 2.0,
     "delta_muL_sec_E": 0.01,
     "delta_muL_sec_N": -0.01,
+    "delta_muS_sec_E": 0.01,
+    "delta_muS_sec_N": -0.01,
     "accLsec_E": 1e-4,
     "accLsec_N": -1e-4,
+    "accSsec_E": 1e-4,
+    "accSsec_N": -1e-4,
     "omega_pri": 90.0,
     "omegaL_pri": 90.0,
     "omegaS_pri": 90.0,
@@ -501,6 +505,27 @@ def bsbl_photastrom_param2_pairs() -> list[tuple[str, str]]:
     """BSBL PhotAstrom Param2 (noPar + Par) phot + core astrometry parity."""
     return _psbl_photastrom_pairs_for_classes(
         ("BSBL_PhotAstrom_noPar_Param2", "BSBL_PhotAstrom_Par_Param2")
+    )
+
+
+_BSBL_PHOT_LIKELIHOOD_NO_U = (
+    "get_chi2_photometry",
+    "log_likely_photometry_each",
+)
+
+
+def bsbl_photastrom_param2_phot_likelihood_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom Param2 phot chi2 / log-likelihood (no ``get_u``)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("BSBL_PhotAstrom_noPar_Param2", "BSBL_PhotAstrom_Par_Param2")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in _BSBL_PHOT_LIKELIHOOD_NO_U
+        if (c, m) in applicable
     )
 
 
@@ -998,6 +1023,41 @@ def psbl_photastrom_ellorbs_param2_pairs() -> list[tuple[str, str]]:
         (
             "PSBL_PhotAstrom_noPar_EllOrbs_Param2",
             "PSBL_PhotAstrom_Par_EllOrbs_Param2",
+        )
+    )
+
+
+def psbl_photastrom_circorbs_ellorbs_param38_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom CircOrbs/EllOrbs Param3/8 phot + full astrometry.
+
+    Param4 orbit classes use ``mag_src`` in the EllOrbs mixin but pass it into
+    the Param4 base as ``mag_base``; host ``model.py`` cannot construct them
+    with the standard fixture init (see static ``psbl_photastrom_param4_pairs``).
+    """
+    classes: list[str] = []
+    for orbit in ("CircOrbs", "EllOrbs"):
+        for suffix in ("Param3", "Param8"):
+            for par in ("noPar", "Par"):
+                classes.append(f"PSBL_PhotAstrom_{par}_{orbit}_{suffix}")
+    return _psbl_photastrom_pairs_for_classes(tuple(classes))
+
+
+def bsbl_photastrom_linorbs_param1_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom LinOrbs Param1 phot + core astrometry (noPar + Par)."""
+    return _psbl_photastrom_pairs_for_classes(
+        (
+            "BSBL_PhotAstrom_noPar_LinOrbs_Param1",
+            "BSBL_PhotAstrom_Par_LinOrbs_Param1",
+        )
+    )
+
+
+def bsbl_photastrom_accorbs_param1_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom AccOrbs Param1 phot + core astrometry (noPar + Par)."""
+    return _psbl_photastrom_pairs_for_classes(
+        (
+            "BSBL_PhotAstrom_noPar_AccOrbs_Param1",
+            "BSBL_PhotAstrom_Par_AccOrbs_Param1",
         )
     )
 
