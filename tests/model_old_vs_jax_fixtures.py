@@ -207,7 +207,34 @@ def build_init_args(cls: type, model_module) -> tuple[list[Any], dict[str, Any]]
     return args, kwargs
 
 
+def _ensure_bsbl_primary_source_frame(instance) -> None:
+    """Wire ``t0_pri`` / secondary source frame when orbit init omits them."""
+    if hasattr(instance, "t0_pri") or not hasattr(instance, "t0"):
+        return
+    instance.t0_pri = instance.t0
+    if hasattr(instance, "xS0"):
+        instance.xS0_pri = instance.xS0
+    if hasattr(instance, "u0_amp"):
+        instance.u0_amp_pri = instance.u0_amp
+    if hasattr(instance, "u0"):
+        instance.u0_pri = instance.u0
+    if not all(
+        hasattr(instance, name)
+        for name in ("sepS", "alphaS_rad", "u0_hat", "thetaE_amp", "xS0_pri")
+    ):
+        return
+    sepS_vec = instance.sepS * np.array(
+        (np.sin(instance.alphaS_rad), np.cos(instance.alphaS_rad))
+    )
+    instance.u0_amp_sec = instance.u0_amp_pri + (
+        np.dot(sepS_vec, instance.u0_hat) / instance.thetaE_amp
+    )
+    instance.u0_sec = instance.u0_amp_sec * instance.u0_hat
+    instance.xS0_sec = instance.xS0_pri + (sepS_vec * 1e-3)
+
+
 def _post_init(instance):
+    _ensure_bsbl_primary_source_frame(instance)
     if getattr(instance, "astrometryFlag", False) and not getattr(instance, "photometryFlag", False):
         if not hasattr(instance, "b_sff"):
             instance.b_sff = [1.0]
@@ -512,6 +539,72 @@ _BSBL_PHOT_LIKELIHOOD_NO_U = (
     "get_chi2_photometry",
     "log_likely_photometry_each",
 )
+
+
+def bsbl_photastrom_param1_phot_likelihood_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom Param1 phot chi2 / log-likelihood / ``get_u``."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("BSBL_PhotAstrom_noPar_Param1", "BSBL_PhotAstrom_Par_Param1")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOTASTROM_PHOT_LIKELIHOOD_METHODS
+        if (c, m) in applicable
+    )
+
+
+def bsbl_photastrom_linorbs_param1_likelihood_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom LinOrbs Param1 likelihood parity."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = (
+        "BSBL_PhotAstrom_noPar_LinOrbs_Param1",
+        "BSBL_PhotAstrom_Par_LinOrbs_Param1",
+    )
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+        if (c, m) in applicable
+    )
+
+
+def bsbl_photastrom_accorbs_param1_likelihood_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom AccOrbs Param1 likelihood parity."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = (
+        "BSBL_PhotAstrom_noPar_AccOrbs_Param1",
+        "BSBL_PhotAstrom_Par_AccOrbs_Param1",
+    )
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+        if (c, m) in applicable
+    )
+
+
+def psbl_photastrom_param5_likelihood_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Par Param5 likelihood parity."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_PhotAstrom_Par_Param5",)
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+        if (c, m) in applicable
+    )
 
 
 def bsbl_photastrom_param2_phot_likelihood_pairs() -> list[tuple[str, str]]:
@@ -1049,6 +1142,53 @@ _BSBL_AST_LIKELIHOOD = (
 )
 
 
+def bsbl_photastrom_circorbs_param2_phot_likelihood_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom CircOrbs Param2 phot chi2 / log-likelihood / ``get_u``."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = (
+        "BSBL_PhotAstrom_noPar_CircOrbs_Param2",
+        "BSBL_PhotAstrom_Par_CircOrbs_Param2",
+    )
+    methods = PSBL_PHOTASTROM_PHOT_LIKELIHOOD_METHODS
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def bsbl_photastrom_ellorbs_param2_phot_likelihood_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom EllOrbs Param2 phot chi2 / log-likelihood / ``get_u``."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = (
+        "BSBL_PhotAstrom_noPar_EllOrbs_Param2",
+        "BSBL_PhotAstrom_Par_EllOrbs_Param2",
+    )
+    methods = PSBL_PHOTASTROM_PHOT_LIKELIHOOD_METHODS
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def psbl_photastrom_param2_likelihood_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param2 ``get_u`` and chi2 / log-likelihood parity."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_PhotAstrom_noPar_Param2", "PSBL_PhotAstrom_Par_Param2")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+        if (c, m) in applicable
+    )
+
+
 def bsbl_photastrom_circorbs_param2_ast_likelihood_pairs() -> list[tuple[str, str]]:
     """BSBL PhotAstrom CircOrbs Param2 astrom chi2 / log-likelihood."""
     import bagle.model_jax as model_jax
@@ -1094,6 +1234,66 @@ def bsbl_photastrom_accorbs_param1_pairs() -> list[tuple[str, str]]:
             "BSBL_PhotAstrom_noPar_AccOrbs_Param1",
             "BSBL_PhotAstrom_Par_AccOrbs_Param1",
         )
+    )
+
+
+def bsbl_photastrom_circorbs_param1_likelihood_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom CircOrbs Param1 likelihood parity."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = (
+        "BSBL_PhotAstrom_noPar_CircOrbs_Param1",
+        "BSBL_PhotAstrom_Par_CircOrbs_Param1",
+    )
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+        if (c, m) in applicable
+    )
+
+
+def bsbl_photastrom_ellorbs_param1_likelihood_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom EllOrbs Param1 likelihood parity."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = (
+        "BSBL_PhotAstrom_noPar_EllOrbs_Param1",
+        "BSBL_PhotAstrom_Par_EllOrbs_Param1",
+    )
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+        if (c, m) in applicable
+    )
+
+
+def psbl_photastrom_param6_likelihood_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param6 static + orbit likelihood parity."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = sorted(
+        {
+            c
+            for c, _ in applicable
+            if c.startswith("PSBL_PhotAstrom_")
+            and "Param6" in c
+            and "GP" not in c
+            and not any(s in c for s in SKIP_CLASS_SUBSTR)
+        }
+    )
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+        if (c, m) in applicable
     )
 
 
@@ -1189,6 +1389,21 @@ def bspl_photastrom_param1_pairs() -> list[tuple[str, str]]:
 def psbl_photastrom_param3_phot_pairs() -> list[tuple[str, str]]:
     """Backward-compatible alias: Param3 phot+amp only."""
     return [(c, m) for c, m in psbl_photastrom_param3_pairs() if m in PSBL_PHOT_METHODS]
+
+
+def psbl_photastrom_param3_likelihood_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param3 likelihood parity (log10 thetaE layout)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_PhotAstrom_noPar_Param3", "PSBL_PhotAstrom_Par_Param3")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+        if (c, m) in applicable
+    )
 
 
 def time_grid_phot(instance) -> np.ndarray:
