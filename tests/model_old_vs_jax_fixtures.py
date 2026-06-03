@@ -393,7 +393,7 @@ def _psbl_photastrom_pairs_for_classes(class_names: tuple[str, ...]) -> list[tup
 def _psbl_photastrom_full_pairs_for_classes(
     class_names: tuple[str, ...],
 ) -> list[tuple[str, str]]:
-    """PSBL PhotAstrom phot + astrom + phot likelihood parity for named classes."""
+    """PSBL PhotAstrom phot + astrom + likelihood parity for named classes."""
     import bagle.model_jax as model_jax
     from bagle.jax.migration_tasks import applicable_task_pairs
 
@@ -401,7 +401,7 @@ def _psbl_photastrom_full_pairs_for_classes(
     methods = (
         PSBL_PHOT_METHODS
         + PSBL_PHOTASTROM_AST_METHODS
-        + PSBL_PHOTASTROM_PHOT_LIKELIHOOD_METHODS
+        + PSBL_PHOTASTROM_LIKELIHOOD_METHODS
     )
     return sorted(
         (c, m)
@@ -1008,38 +1008,73 @@ def bsbl_photastrom_ellorbs_param1_pairs() -> list[tuple[str, str]]:
 
 
 def psbl_photastrom_circorbs_param2_pairs() -> list[tuple[str, str]]:
-    """PSBL PhotAstrom CircOrbs Param2 phot + core astrometry."""
+    """PSBL PhotAstrom CircOrbs Param2 phot + astrom + likelihoods."""
+    return _psbl_photastrom_orbit_param2_pairs("CircOrbs")
+
+
+def psbl_photastrom_ellorbs_param2_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom EllOrbs Param2 phot + astrom + likelihoods."""
+    return _psbl_photastrom_orbit_param2_pairs("EllOrbs")
+
+
+def _psbl_photastrom_orbit_param2_pairs(orbit: str) -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param2 with keplerian orbit (noPar + Par)."""
+    no_par = f"PSBL_PhotAstrom_noPar_{orbit}_Param2"
+    par = f"PSBL_PhotAstrom_Par_{orbit}_Param2"
+    return _psbl_photastrom_full_pairs_for_classes((no_par, par))
+
+
+def psbl_photastrom_orbit_param4_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom CircOrbs/EllOrbs Param4 phot + astrom + likelihoods."""
+    classes: list[str] = []
+    for orbit in ("CircOrbs", "EllOrbs"):
+        for par in ("noPar", "Par"):
+            classes.append(f"PSBL_PhotAstrom_{par}_{orbit}_Param4")
+    return _psbl_photastrom_full_pairs_for_classes(tuple(classes))
+
+
+def bsbl_photastrom_circorbs_param2_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom CircOrbs Param2 phot + core astrometry (noPar + Par)."""
     return _psbl_photastrom_pairs_for_classes(
         (
-            "PSBL_PhotAstrom_noPar_CircOrbs_Param2",
-            "PSBL_PhotAstrom_Par_CircOrbs_Param2",
+            "BSBL_PhotAstrom_noPar_CircOrbs_Param2",
+            "BSBL_PhotAstrom_Par_CircOrbs_Param2",
         )
     )
 
 
-def psbl_photastrom_ellorbs_param2_pairs() -> list[tuple[str, str]]:
-    """PSBL PhotAstrom EllOrbs Param2 phot + core astrometry."""
-    return _psbl_photastrom_pairs_for_classes(
-        (
-            "PSBL_PhotAstrom_noPar_EllOrbs_Param2",
-            "PSBL_PhotAstrom_Par_EllOrbs_Param2",
-        )
+_BSBL_AST_LIKELIHOOD = (
+    "get_chi2_astrometry",
+    "log_likely_astrometry_each",
+)
+
+
+def bsbl_photastrom_circorbs_param2_ast_likelihood_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom CircOrbs Param2 astrom chi2 / log-likelihood."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = (
+        "BSBL_PhotAstrom_noPar_CircOrbs_Param2",
+        "BSBL_PhotAstrom_Par_CircOrbs_Param2",
+    )
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in _BSBL_AST_LIKELIHOOD
+        if (c, m) in applicable
     )
 
 
 def psbl_photastrom_circorbs_ellorbs_param38_pairs() -> list[tuple[str, str]]:
-    """PSBL PhotAstrom CircOrbs/EllOrbs Param3/8 phot + full astrometry.
-
-    Param4 orbit classes use ``mag_src`` in the EllOrbs mixin but pass it into
-    the Param4 base as ``mag_base``; host ``model.py`` cannot construct them
-    with the standard fixture init (see static ``psbl_photastrom_param4_pairs``).
-    """
+    """PSBL PhotAstrom CircOrbs/EllOrbs Param3/8 phot + astrom + likelihoods."""
     classes: list[str] = []
     for orbit in ("CircOrbs", "EllOrbs"):
         for suffix in ("Param3", "Param8"):
             for par in ("noPar", "Par"):
                 classes.append(f"PSBL_PhotAstrom_{par}_{orbit}_{suffix}")
-    return _psbl_photastrom_pairs_for_classes(tuple(classes))
+    return _psbl_photastrom_full_pairs_for_classes(tuple(classes))
 
 
 def bsbl_photastrom_linorbs_param1_pairs() -> list[tuple[str, str]]:
