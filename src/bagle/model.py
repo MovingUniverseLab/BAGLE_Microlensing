@@ -10460,6 +10460,7 @@ class PSBL_PhotAstromParam7(PSPL_Param):
         self.xS0 = np.array([xS0_E, xS0_N])
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
+        self.muL_E, self.muL_N = self.muL
         self.muS = np.array([muS_E, muS_N])
         self.dL = dL
         self.dS = dS
