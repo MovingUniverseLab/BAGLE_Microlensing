@@ -7539,7 +7539,7 @@ class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
 
         self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
         self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
-        self.muL_sec = np.array([self.muL_E + delta_muL_sec_E, self.muL_N + delta_muL_sec_N])
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
 
         return
 
@@ -7636,7 +7636,7 @@ class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
 
         self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
         self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
-        self.muL_sec = np.array([self.muL_E + delta_muL_sec_E, self.muL_N + delta_muL_sec_N])
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
         self.accL = np.array([accLsec_E, accLsec_N])
 
         return
@@ -18749,7 +18749,7 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
 
         self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
         self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
-        self.muL_sec = np.array([self.muL_E + delta_muL_sec_E, self.muL_N + delta_muL_sec_N])
+        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
 
         return
 
