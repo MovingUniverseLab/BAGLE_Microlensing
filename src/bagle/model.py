@@ -16624,6 +16624,7 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
+        self.muS_sec = self.muS + self.delta_muS_sec
 
         #self.muRel_sec = self.muRel + self.delta_muS_sec
         #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
@@ -16870,6 +16871,7 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
+        self.muS_sec = self.muS + self.delta_muS_sec
 
         #self.muRel_sec = self.muRel + self.delta_muS_sec
         #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
@@ -17108,6 +17110,7 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
+        self.muS_sec = self.muS + self.delta_muS_sec
 
         #self.muRel_sec = self.muRel + self.delta_muS_sec
         #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec

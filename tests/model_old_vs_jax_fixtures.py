@@ -685,6 +685,40 @@ def bspl_photastrom_gp_param1_pairs() -> list[tuple[str, str]]:
     )
 
 
+_BSPL_GP_ORBIT_CLASS_PREFIXES = (
+    "BSPL_PhotAstrom_noPar_GP_AccOrbs_Param",
+    "BSPL_PhotAstrom_Par_GP_AccOrbs_Param",
+    "BSPL_PhotAstrom_noPar_GP_LinOrbs_Param",
+    "BSPL_PhotAstrom_Par_GP_LinOrbs_Param",
+    "BSPL_PhotAstrom_noPar_GP_Param2",
+    "BSPL_PhotAstrom_Par_GP_Param2",
+    "BSPL_PhotAstrom_noPar_GP_Param3",
+    "BSPL_PhotAstrom_Par_GP_Param3",
+)
+
+
+def bspl_photastrom_gp_orbit_and_param23_pairs() -> list[tuple[str, str]]:
+    """BSPL GP LinOrbs/AccOrbs Param1-3 and GP Param2/3 phot/GP/core astrometry."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    class_names = {
+        c
+        for c, _ in applicable
+        if any(c.startswith(p) for p in _BSPL_GP_ORBIT_CLASS_PREFIXES)
+    }
+    core_ast = tuple(
+        m
+        for m in PSBL_PHOTASTROM_AST_METHODS
+        if m not in ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    )
+    methods = GP_PHOT_METHODS + core_ast
+    return sorted(
+        (c, m) for c in class_names for m in methods if (c, m) in applicable
+    )
+
+
 def bsbl_photastrom_circorbs_param1_pairs() -> list[tuple[str, str]]:
     """BSBL PhotAstrom CircOrbs Param1 phot + core astrometry (noPar + Par)."""
     return _psbl_photastrom_pairs_for_classes(

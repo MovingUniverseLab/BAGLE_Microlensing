@@ -54,6 +54,7 @@ from model_old_vs_jax_fixtures import (
     bsbl_phot_param1_pairs,
     bspl_phot_param2_pairs,
     bspl_photastrom_gp_param1_pairs,
+    bspl_photastrom_gp_orbit_and_param23_pairs,
     bspl_phot_gp_param1_pairs,
     bspl_phot_param1_pairs,
     bspl_photastrom_param1_pairs,
@@ -453,6 +454,17 @@ def test_parity_fspl_phot_param2(class_name, method_name):
 
 @pytest.mark.parametrize("class_name,method_name", bspl_photastrom_gp_param1_pairs())
 def test_parity_bspl_photastrom_gp_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_gp_orbit_and_param23_pairs()
+)
+def test_parity_bspl_photastrom_gp_orbit_and_param23(
+    class_name, method_name
+):
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)
