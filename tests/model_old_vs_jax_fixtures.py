@@ -319,6 +319,20 @@ PSBL_PHOTASTROM_AST_METHODS = (
     "get_resolved_lens_astrometry",
 )
 
+PSBL_PHOTASTROM_LIKELIHOOD_METHODS = (
+    "get_u",
+    "get_chi2_photometry",
+    "log_likely_photometry_each",
+    "get_chi2_astrometry",
+    "log_likely_astrometry_each",
+)
+
+PSBL_PHOTASTROM_PHOT_LIKELIHOOD_METHODS = (
+    "get_u",
+    "get_chi2_photometry",
+    "log_likely_photometry_each",
+)
+
 PSPL_GP_EXTENDED_METHODS = (
     "get_u",
     "get_chi2_photometry",
@@ -370,6 +384,34 @@ def _psbl_photastrom_pairs_for_classes(class_names: tuple[str, ...]) -> list[tup
         for m in methods
         if (c, m) in applicable
     )
+
+
+def _psbl_photastrom_full_pairs_for_classes(
+    class_names: tuple[str, ...],
+) -> list[tuple[str, str]]:
+    """PSBL PhotAstrom phot + astrom + phot likelihood parity for named classes."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    methods = (
+        PSBL_PHOT_METHODS
+        + PSBL_PHOTASTROM_AST_METHODS
+        + PSBL_PHOTASTROM_PHOT_LIKELIHOOD_METHODS
+    )
+    return sorted(
+        (c, m)
+        for c in class_names
+        for m in methods
+        if (c, m) in applicable and hasattr(model_jax, c)
+    )
+
+
+def _psbl_photastrom_orbit_param1_pairs(orbit: str) -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param1 with keplerian orbit (noPar + Par)."""
+    no_par = f"PSBL_PhotAstrom_noPar_{orbit}_Param1"
+    par = f"PSBL_PhotAstrom_Par_{orbit}_Param1"
+    return _psbl_photastrom_full_pairs_for_classes((no_par, par))
 
 
 def psbl_photastrom_par_param1_pairs() -> list[tuple[str, str]]:
@@ -463,23 +505,48 @@ def bsbl_photastrom_param2_pairs() -> list[tuple[str, str]]:
 
 
 def psbl_photastrom_circorbs_param1_pairs() -> list[tuple[str, str]]:
-    """PSBL PhotAstrom CircOrbs Param1 phot + core astrometry."""
-    return _psbl_photastrom_pairs_for_classes(
-        (
-            "PSBL_PhotAstrom_noPar_CircOrbs_Param1",
-            "PSBL_PhotAstrom_Par_CircOrbs_Param1",
-        )
-    )
+    """PSBL PhotAstrom CircOrbs Param1 phot + astrom + likelihoods."""
+    return _psbl_photastrom_orbit_param1_pairs("CircOrbs")
 
 
 def psbl_photastrom_ellorbs_param1_pairs() -> list[tuple[str, str]]:
-    """PSBL PhotAstrom EllOrbs Param1 phot + core astrometry."""
-    return _psbl_photastrom_pairs_for_classes(
-        (
-            "PSBL_PhotAstrom_noPar_EllOrbs_Param1",
-            "PSBL_PhotAstrom_Par_EllOrbs_Param1",
-        )
+    """PSBL PhotAstrom EllOrbs Param1 phot + astrom + likelihoods."""
+    return _psbl_photastrom_orbit_param1_pairs("EllOrbs")
+
+
+def psbl_photastrom_accorbs_param1_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom AccOrbs Param1 phot + astrom + likelihoods."""
+    return _psbl_photastrom_orbit_param1_pairs("AccOrbs")
+
+
+def psbl_photastrom_linorbs_param1_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom LinOrbs Param1 phot + astrom + likelihoods."""
+    return _psbl_photastrom_orbit_param1_pairs("LinOrbs")
+
+
+def psbl_photastrom_param7_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param7 static + orbit variants (phot/ast/phot likelihood)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = sorted(
+        {
+            c
+            for c, _ in applicable
+            if c.startswith("PSBL_PhotAstrom_")
+            and "Param7" in c
+            and "GP" not in c
+            and not any(s in c for s in SKIP_CLASS_SUBSTR)
+            and hasattr(model_jax, c)
+        }
     )
+    methods = (
+        PSBL_PHOT_METHODS
+        + PSBL_PHOTASTROM_AST_METHODS
+        + PSBL_PHOTASTROM_PHOT_LIKELIHOOD_METHODS
+    )
+    return sorted((c, m) for c in classes for m in methods if (c, m) in applicable)
 
 
 def bspl_photastrom_gp_param1_pairs() -> list[tuple[str, str]]:
@@ -670,12 +737,14 @@ def psbl_photastrom_param6_pairs() -> list[tuple[str, str]]:
 
     applicable = set(applicable_task_pairs(model_jax))
     classes = sorted(
-        c
-        for c, _ in applicable
-        if c.startswith("PSBL_PhotAstrom_")
-        and "Param6" in c
-        and "GP" not in c
-        and not any(s in c for s in SKIP_CLASS_SUBSTR)
+        {
+            c
+            for c, _ in applicable
+            if c.startswith("PSBL_PhotAstrom_")
+            and "Param6" in c
+            and "GP" not in c
+            and not any(s in c for s in SKIP_CLASS_SUBSTR)
+        }
     )
     methods = PSBL_PHOT_METHODS + PSBL_PHOTASTROM_AST_METHODS
     return sorted((c, m) for c in classes for m in methods if (c, m) in applicable)
@@ -772,10 +841,13 @@ def fsbl_photastrom_accorbs_param1_pairs() -> list[tuple[str, str]]:
 
 
 def fsbl_photastrom_circorbs_param1_pairs() -> list[tuple[str, str]]:
-    """FSBL PhotAstrom CircOrbs Param1 phot only (jax-eval; astrom lacks xL0)."""
-    no_par = "FSBL_PhotAstrom_noPar_CircOrbs_Param1"
-    par = "FSBL_PhotAstrom_Par_CircOrbs_Param1"
-    return _fsbl_jax_eval_pairs((no_par, par), methods=PSBL_PHOT_METHODS)
+    """FSBL PhotAstrom CircOrbs Param1 phot + core astrometry (jax-eval)."""
+    return _fsbl_photastrom_orbit_param1_pairs("CircOrbs")
+
+
+def fsbl_photastrom_ellorbs_param1_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom EllOrbs Param1 phot + core astrometry (jax-eval)."""
+    return _fsbl_photastrom_orbit_param1_pairs("EllOrbs")
 
 
 def fsbl_phot_ellorbs_param2_pairs() -> list[tuple[str, str]]:

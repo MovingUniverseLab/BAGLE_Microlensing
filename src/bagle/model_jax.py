@@ -7755,9 +7755,8 @@ root_tol : float
         self.thetaS0 = self.u0 * self.thetaE_amp  # mas
 
         # Calculate the position of the lens on the sky at time, t0
-        #self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        #self.xL0_E = self.xL0[0]
-        #self.xL0_N = self.xL0[1]
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+        self.xL0_E, self.xL0_N = self.xL0
 
         thetaS0_com = self.u0_com * self.thetaE_amp
         self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
@@ -10639,7 +10638,7 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
                  sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
-                         beta, muL_E, muL_N, delta_muL_sec_E,
+                         beta_p, muL_E, muL_N, delta_muL_sec_E,
                          delta_muL_sec_N, 0, 0, muS_E, muS_N, dL, dS,
                          sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
@@ -10977,11 +10976,14 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
                  beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        e=0
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, a, tp, sep, muS_E, muS_N, dL, dS,
-                 b_sff, mag_src, dmag_Lp_Ls,
-                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        e = 0
+        super().__init__(
+            mLp, mLs, t0_p, xS0_E, xS0_N,
+            beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a,
+            muS_E, muS_N, dL, dS,
+            b_sff, mag_src, dmag_Lp_Ls,
+            raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol,
+        )
 
         return
 
