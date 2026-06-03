@@ -41,6 +41,7 @@ from model_old_vs_jax_fixtures import (
     fsbl_photastrom_ellorbs_param1_pairs,
     fsbl_phot_ellorbs_param2_pairs,
     fsbl_photastrom_param2_pairs,
+    fsbl_photastrom_param3plus_pairs,
     fspl_photastrom_param2_extended_pairs,
     fspl_photastrom_param2_resolved_astrometry_pairs,
     fspl_phot_param2_extended_pairs,
@@ -59,6 +60,7 @@ from model_old_vs_jax_fixtures import (
     bspl_phot_param1_pairs,
     bspl_photastrom_param1_pairs,
     bspl_photastrom_param2_pairs,
+    bspl_photastrom_param34_pairs,
     bspl_photastrom_ellorbs_param2_pairs,
     fspl_phot_param2_pairs,
     psbl_gp_param1_pairs,
@@ -154,6 +156,14 @@ def _assert_jax_eval_parity(class_name: str, method_name: str):
         np.testing.assert_allclose(
             test, ref, rtol=RTOL, atol=CENTROID_SHIFT_ATOL, equal_nan=True
         )
+        return
+    if method_name == "get_resolved_astrometry":
+        ref = np.asarray(ref_out, dtype=np.float64)
+        test = np.asarray(test_out, dtype=np.float64)
+        assert ref.shape == test.shape
+        mask = np.isfinite(ref) & np.isfinite(test)
+        assert mask.any(), f"no overlapping finite values for {method_name}"
+        np.testing.assert_allclose(test[mask], ref[mask], rtol=RTOL, atol=ATOL)
         return
     ref = np.asarray(ref_out, dtype=np.float64)
     test = np.asarray(test_out, dtype=np.float64)
@@ -445,6 +455,13 @@ def test_parity_bspl_photastrom_param2(class_name, method_name):
     _assert_parity(old_inst, jax_inst, method_name, t)
 
 
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_param34_pairs())
+def test_parity_bspl_photastrom_param34(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
 @pytest.mark.parametrize("class_name,method_name", fspl_phot_param2_pairs())
 def test_parity_fspl_phot_param2(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
@@ -662,6 +679,11 @@ def test_parity_fsbl_phot_ellorbs_param2(class_name, method_name):
 
 @pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param2_pairs())
 def test_parity_fsbl_photastrom_param2(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param3plus_pairs())
+def test_parity_fsbl_photastrom_param3plus(class_name, method_name):
     _assert_jax_eval_parity(class_name, method_name)
 
 

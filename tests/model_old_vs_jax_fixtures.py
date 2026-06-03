@@ -107,6 +107,9 @@ CANONICAL: dict[str, Any] = {
     "e": 0.1,
     "tp": 40.0,
     "a": 1.0,
+    "log_a": math.log10(1.0),
+    "mass_source_p": 1.0,
+    "mass_source_s": 1.0,
     "fratio_bin": [1.0],
     "radiusS": 1e-3,
     "n_outline": 20,
@@ -277,9 +280,14 @@ def call_method_via_jax_eval(instance, method_name: str, t: np.ndarray):
         try_get_astrometry,
         try_get_astrometry_unlensed,
         try_get_centroid_shift,
+        try_get_chi2_astrometry,
+        try_get_chi2_photometry,
         try_get_lens_astrometry,
+        try_get_log_likely_astrometry_each,
+        try_get_log_likely_photometry_each,
         try_get_photometry,
         try_get_resolved_astrometry,
+        try_get_u,
     )
 
     dispatch = {
@@ -290,12 +298,39 @@ def call_method_via_jax_eval(instance, method_name: str, t: np.ndarray):
         "get_lens_astrometry": try_get_lens_astrometry,
         "get_centroid_shift": try_get_centroid_shift,
         "get_resolved_astrometry": try_get_resolved_astrometry,
+        "get_u": try_get_u,
     }
     fn = dispatch.get(method_name)
     if fn is not None:
         out = fn(instance, t, filt_idx=0)
         if out is not None:
             return out
+    if method_name in PHOT_LIKELIHOOD_METHODS:
+        mag = np.asarray(instance.get_photometry(t), dtype=np.float64)
+        mag = mag + 0.05
+        err = np.full_like(t, 0.02, dtype=np.float64)
+        phot_fn = {
+            "get_chi2_photometry": try_get_chi2_photometry,
+            "log_likely_photometry_each": try_get_log_likely_photometry_each,
+        }.get(method_name)
+        if phot_fn is not None:
+            out = phot_fn(instance, t, mag, err, filt_idx=0)
+            if out is not None:
+                return out
+    if method_name in AST_LIKELIHOOD_METHODS:
+        pos = np.asarray(instance.get_astrometry(t), dtype=np.float64)
+        pos = pos + np.array([0.001, 0.001])
+        err = np.full_like(t, 0.001, dtype=np.float64)
+        ast_fn = {
+            "get_chi2_astrometry": try_get_chi2_astrometry,
+            "log_likely_astrometry_each": try_get_log_likely_astrometry_each,
+        }.get(method_name)
+        if ast_fn is not None:
+            out = ast_fn(
+                instance, t, pos[:, 0], pos[:, 1], err, err, filt_idx=0
+            )
+            if out is not None:
+                return out
     return call_method(instance, method_name, t)
 
 
@@ -1017,6 +1052,84 @@ def fsbl_photastrom_param2_pairs() -> list[tuple[str, str]]:
     return _fsbl_jax_eval_pairs(
         ("FSBL_PhotAstrom_noPar_Param2", "FSBL_PhotAstrom_Par_Param2"),
         methods=PSBL_PHOT_METHODS + core_ast,
+    )
+
+
+def _fsbl_photastrom_param3plus_class_names() -> tuple[str, ...]:
+    """FSBL PhotAstrom Param3+ classes (base + orbit variants)."""
+    import re
+
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = {c for c, _ in applicable_task_pairs(model_jax)}
+    out: set[str] = set()
+    for c in applicable:
+        if not c.startswith("FSBL_PhotAstrom_"):
+            continue
+        m = re.search(r"_Param(\d+)$", c)
+        if m is None or int(m.group(1)) < 3:
+            continue
+        if hasattr(model_jax, c):
+            out.add(c)
+    return tuple(sorted(out))
+
+
+def fsbl_photastrom_param3plus_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param3–8 jax-eval phot + astrom + likelihood parity."""
+    return _fsbl_jax_eval_pairs(
+        _fsbl_photastrom_param3plus_class_names(),
+        methods=(
+            PSBL_PHOT_METHODS
+            + PSBL_PHOTASTROM_AST_METHODS
+            + PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+        ),
+    )
+
+
+_BSPL_PHOTASTROM_PARAM34_PREFIXES = (
+    "BSPL_PhotAstrom_noPar_Param3",
+    "BSPL_PhotAstrom_Par_Param3",
+    "BSPL_PhotAstrom_noPar_Param4",
+    "BSPL_PhotAstrom_Par_Param4",
+    "BSPL_PhotAstrom_noPar_AccOrbs_Param3",
+    "BSPL_PhotAstrom_Par_AccOrbs_Param3",
+    "BSPL_PhotAstrom_noPar_AccOrbs_Param4",
+    "BSPL_PhotAstrom_Par_AccOrbs_Param4",
+    "BSPL_PhotAstrom_noPar_CircOrbs_Param3",
+    "BSPL_PhotAstrom_Par_CircOrbs_Param3",
+    "BSPL_PhotAstrom_noPar_CircOrbs_Param4",
+    "BSPL_PhotAstrom_Par_CircOrbs_Param4",
+    "BSPL_PhotAstrom_noPar_LinOrbs_Param3",
+    "BSPL_PhotAstrom_Par_LinOrbs_Param3",
+    "BSPL_PhotAstrom_noPar_LinOrbs_Param4",
+    "BSPL_PhotAstrom_Par_LinOrbs_Param4",
+    "BSPL_PhotAstrom_noPar_EllOrbs_Param3",
+    "BSPL_PhotAstrom_Par_EllOrbs_Param3",
+    "BSPL_PhotAstrom_noPar_EllOrbs_Param4",
+    "BSPL_PhotAstrom_Par_EllOrbs_Param4",
+)
+
+
+def bspl_photastrom_param34_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom Param3/4 base + orbit phot + core astrometry."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    class_names = {
+        c
+        for c, _ in applicable
+        if any(c.startswith(p) for p in _BSPL_PHOTASTROM_PARAM34_PREFIXES)
+    }
+    core_ast = tuple(
+        m
+        for m in PSBL_PHOTASTROM_AST_METHODS
+        if m not in ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    )
+    methods = PSBL_PHOT_METHODS + core_ast
+    return sorted(
+        (c, m) for c in class_names for m in methods if (c, m) in applicable
     )
 
 
@@ -1967,7 +2080,7 @@ def grad_smoke_jax(
         return g
 
     if method_name == "get_photometry_with_gp" and layout.has_gp and (
-        ek in pspl_phot_kinds or ek.startswith("psbl_phot")
+        ek in pspl_phot_kinds or ek.startswith(("psbl_phot", "bspl_phot"))
     ):
         from bagle.jax.gp import _GP_QUALITY, _gp_has_fixed_jitter
         import tinygp

@@ -31,11 +31,12 @@ def fspl_astrometry_from_model(model, t, filt_idx, pvec):
 
 
 def fspl_resolved_astrometry_from_model(model, t, filt_idx, pvec):
-    """Finite-source resolved image positions via AMG ``get_all_arrays``."""
+    """Finite-source resolved image positions via host ``get_resolved_astrometry``."""
     if not getattr(model, "astrometryFlag", False):
         return None
-    img_arr, _amp_arr = model.get_all_arrays(t, filt_idx=filt_idx)
-    return np.asarray(img_arr, dtype=np.float64)
+    return np.asarray(
+        model.get_resolved_astrometry(t, filt_idx=filt_idx), dtype=np.float64
+    )
 
 
 def fspl_centroid_shift_from_model(model, t, filt_idx, pvec):
