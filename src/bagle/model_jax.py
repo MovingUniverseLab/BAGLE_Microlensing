@@ -17304,7 +17304,7 @@ class BSBL(PSBL):
         tau_pri = (t - self.t0_pri) / self.tE
 
         if self.astrometryFlag == True:
-            xS_unlensed = self.get_resolved_astrometry_unlensed(t)
+            xS_unlensed = self.get_resolved_source_astrometry_unlensed(t)
             xS1_unlens = xS_unlensed[:, 0, :]
             xS2_unlens = xS_unlensed[:, 1, :]
 
@@ -19770,6 +19770,20 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         self.xL0 = self.xL0_com
         self.xS0_com = self.xS0 + com_vec *1e-3
+
+        #####
+        # Derived binary source parameters. Origin is at the primary.
+        #####
+        self.t0_pri = self.t0
+        self.xS0_pri = self.xS0
+        self.u0_amp_pri = self.u0_amp
+        self.u0_pri = self.u0
+
+        sepS_vec = self.sepS * np.array((np.sin(self.alphaS_rad),
+                                         np.cos(self.alphaS_rad)))  # mas
+        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sepS_vec, self.u0_hat) / self.thetaE_amp)
+        self.u0_sec = self.u0_amp_sec * self.u0_hat
+        self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3)
 
         return
 

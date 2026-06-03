@@ -17401,7 +17401,7 @@ class BSBL(PSBL):
         tau_pri = (t - self.t0_pri) / self.tE
 
         if self.astrometryFlag == True:
-            xS_unlensed = self.get_resolved_astrometry_unlensed(t)
+            xS_unlensed = self.get_resolved_source_astrometry_unlensed(t)
             xS1_unlens = xS_unlensed[:, 0, :]
             xS2_unlens = xS_unlensed[:, 1, :]
 
