@@ -21718,6 +21718,18 @@ class FSPL_Phot(FSPL):
     photometryFlag = True
     astrometryFlag = False
 
+    def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
+        """Resolved finite-source image positions from AMG (phot-only Param2)."""
+        if (image_arr is None) or (amp_arr is None):
+            out = self.get_all_arrays(t, filt_idx=filt_idx)
+            if isinstance(out, tuple) and len(out) == 4:
+                image_arr = out[0]
+            else:
+                image_arr, amp_arr = out
+        from bagle.jax.fspl import finite_source_image_positions
+
+        return finite_source_image_positions(image_arr)
+
     def get_u_outline(self, t, filt_idx=0):
         """
         Get the separation vector, \\vec{u}(t), which is the unlensed
@@ -23402,16 +23414,9 @@ class FSBL_Phot(FSBL, PSPL_Phot):
                 t, filt_idx=filt_idx
             )
 
-        # In units of Einstein radii.
-        xS_lensed_pos = image_arr.view('(2,)float')
+        from bagle.jax.fspl import finite_source_image_positions
 
-
-        #xS_lensed_pos = jnp.stack(
-         #   [jnp.real(image_arr), jnp.imag(image_arr)],
-          #  axis=-1
-        #)
-
-        return xS_lensed_pos
+        return finite_source_image_positions(image_arr)
 
 class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
     """
@@ -23796,9 +23801,11 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
             img_arr, parity_arr, amp_arr, _ = self.get_all_arrays(
                 t, filt_idx=filt_idx
             )
-        xS_lensed_pos = img_arr
+        else:
+            img_arr = image_arr
+        from bagle.jax.fspl import finite_source_image_positions
 
-        return xS_lensed_pos
+        return finite_source_image_positions(img_arr)
 
     def get_resolved_amplification(self, t, filt_idx=0, amp_arr=None):
         """Get the photometric amplification term at a set of times, t for both the

@@ -620,7 +620,13 @@ def evaluate_u_jax(
     t,
     filt_idx: int = 0,
 ) -> np.ndarray | None:
-    if layout.eval_kind not in _PSPL_U_KINDS:
+    ek = layout.eval_kind
+    if ek.startswith(("fsbl_phot", "fsbl_photastrom")):
+        try:
+            return np.asarray(model.get_u(t, filt_idx=filt_idx), dtype=np.float64)
+        except (AttributeError, NotImplementedError, TypeError):
+            return None
+    if ek not in _PSPL_U_KINDS:
         return None
     try:
         pvec = _parallax_table(model, t, filt_idx)
@@ -686,7 +692,7 @@ def evaluate_resolved_astrometry_jax(
     filt_idx: int = 0,
 ) -> np.ndarray | None:
     ek = layout.eval_kind
-    if ek.startswith("fsbl_photastrom"):
+    if ek.startswith(("fsbl_photastrom", "fsbl_phot")):
         try:
             from bagle.jax.fspl import fspl_resolved_astrometry_from_model
 
@@ -768,8 +774,8 @@ def _astrometry_for_likelihood_jax(
     t,
     filt_idx: int = 0,
 ) -> np.ndarray | None:
-    """Astrometry for chi2 / log-likelihood; PSBL uses host ``get_astrometry``."""
-    if layout.eval_kind.startswith("psbl_photastrom"):
+    """Astrometry for chi2 / log-likelihood; PSBL/FSBL use host ``get_astrometry``."""
+    if layout.eval_kind.startswith(("psbl_photastrom", "fsbl_photastrom")):
         try:
             return np.asarray(
                 model.get_astrometry(t, filt_idx=filt_idx), dtype=np.float64

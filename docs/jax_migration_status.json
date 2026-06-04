@@ -17465,50 +17465,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_AccOrbs_Param2",
@@ -17635,50 +17635,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_AccOrbs_Param2",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_AccOrbs_Param2",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_AccOrbs_Param2",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_AccOrbs_Param2",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_AccOrbs_Param3",
@@ -17975,50 +17975,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_CircOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_CircOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_CircOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_CircOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_CircOrbs_Param2",
@@ -18145,50 +18145,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_CircOrbs_Param2",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_CircOrbs_Param2",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_CircOrbs_Param2",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_CircOrbs_Param2",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_CircOrbs_Param3",
@@ -18485,50 +18485,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param2",
@@ -18655,50 +18655,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param2",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param2",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param2",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param2",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param3",
@@ -18935,10 +18935,10 @@
       "method_name": "get_resolved_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param4",
@@ -18995,50 +18995,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param4",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param4",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param4",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_EllOrbs_Param4",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_GP_AccOrbs_Param1",
@@ -20695,50 +20695,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_LinOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_LinOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_LinOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_LinOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_LinOrbs_Param2",
@@ -20865,50 +20865,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_LinOrbs_Param2",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_LinOrbs_Param2",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_LinOrbs_Param2",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_LinOrbs_Param2",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_Par_LinOrbs_Param3",
@@ -21715,50 +21715,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_AccOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_AccOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_AccOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_AccOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_AccOrbs_Param2",
@@ -21885,50 +21885,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_AccOrbs_Param2",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_AccOrbs_Param2",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_AccOrbs_Param2",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_AccOrbs_Param2",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_AccOrbs_Param3",
@@ -22225,50 +22225,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_CircOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_CircOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_CircOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_CircOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_CircOrbs_Param2",
@@ -22395,50 +22395,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_CircOrbs_Param2",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_CircOrbs_Param2",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_CircOrbs_Param2",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_CircOrbs_Param2",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_CircOrbs_Param3",
@@ -22735,50 +22735,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param2",
@@ -22905,50 +22905,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param2",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param2",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param2",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param2",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param3",
@@ -23185,10 +23185,10 @@
       "method_name": "get_resolved_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param4",
@@ -23245,50 +23245,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param4",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param4",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param4",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_EllOrbs_Param4",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1",
@@ -24945,50 +24945,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_LinOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_LinOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_LinOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_LinOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_LinOrbs_Param2",
@@ -25115,50 +25115,50 @@
       "method_name": "get_u",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_LinOrbs_Param2",
       "method_name": "get_chi2_photometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_LinOrbs_Param2",
       "method_name": "get_chi2_astrometry",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_LinOrbs_Param2",
       "method_name": "log_likely_photometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_LinOrbs_Param2",
       "method_name": "log_likely_astrometry_each",
       "family": "BSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "BSPL_PhotAstrom_noPar_LinOrbs_Param3",
@@ -26605,10 +26605,10 @@
       "method_name": "get_astrometry_outline_unlensed",
       "family": "FSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSPL_PhotAstrom_Par_Param1",
@@ -26775,10 +26775,10 @@
       "method_name": "get_astrometry_outline_unlensed",
       "family": "FSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSPL_PhotAstrom_Par_Param2",
@@ -26945,10 +26945,10 @@
       "method_name": "get_astrometry_outline_unlensed",
       "family": "FSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSPL_PhotAstrom_noPar_Param1",
@@ -27115,24 +27115,14 @@
       "method_name": "get_astrometry_outline_unlensed",
       "family": "FSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSPL_PhotAstrom_noPar_Param2",
       "method_name": "get_photometry_with_gp",
-      "family": "FSPL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "FSPL_PhotAstrom_noPar_Param2",
-      "method_name": "get_source_astrometry_unlensed",
       "family": "FSPL",
       "applicable": false,
       "jax_forward": "numpy_fallback",
@@ -27142,6 +27132,16 @@
     },
     {
       "class_name": "FSPL_PhotAstrom_noPar_Param2",
+      "method_name": "get_source_astrometry_unlensed",
+      "family": "FSPL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "FSPL_PhotAstrom_noPar_Param2",
       "method_name": "get_resolved_amplification",
       "family": "FSPL",
       "applicable": false,
@@ -27265,24 +27265,14 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSPL_Phot_Par_Param2",
       "method_name": "get_resolved_lens_astrometry",
-      "family": "FSPL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "FSPL_Phot_Par_Param2",
-      "method_name": "get_astrometry_outline_unlensed",
       "family": "FSPL",
       "applicable": false,
       "jax_forward": "numpy_fallback",
@@ -27292,6 +27282,16 @@
     },
     {
       "class_name": "FSPL_Phot_Par_Param2",
+      "method_name": "get_astrometry_outline_unlensed",
+      "family": "FSPL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "FSPL_Phot_Par_Param2",
       "method_name": "get_photometry_with_gp",
       "family": "FSPL",
       "applicable": false,
@@ -27435,10 +27435,10 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSPL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSPL_Phot_noPar_Param2",
@@ -27605,34 +27605,24 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "get_astrometry_outline_unlensed",
-      "family": "FSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param1",
-      "method_name": "get_photometry_with_gp",
       "family": "FSBL",
       "applicable": false,
       "jax_forward": "numpy_fallback",
@@ -27642,6 +27632,16 @@
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param1",
+      "method_name": "get_photometry_with_gp",
+      "family": "FSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "get_source_astrometry_unlensed",
       "family": "FSBL",
       "applicable": false,
@@ -27665,50 +27665,50 @@
       "method_name": "get_u",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param3",
@@ -28285,20 +28285,20 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_CircOrbs_Param1",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_CircOrbs_Param1",
@@ -28345,50 +28345,50 @@
       "method_name": "get_u",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_CircOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_CircOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_CircOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_CircOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_CircOrbs_Param3",
@@ -29135,20 +29135,20 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_EllOrbs_Param1",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_EllOrbs_Param1",
@@ -29195,50 +29195,50 @@
       "method_name": "get_u",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_EllOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_EllOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_EllOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_EllOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_EllOrbs_Param3",
@@ -29985,20 +29985,20 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_LinOrbs_Param1",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_LinOrbs_Param1",
@@ -30045,50 +30045,50 @@
       "method_name": "get_u",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_LinOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_LinOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_LinOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_LinOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_LinOrbs_Param3",
@@ -30665,20 +30665,20 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_Param1",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_Param1",
@@ -30835,20 +30835,20 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_Param2",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_Param2",
@@ -32025,34 +32025,24 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param1",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param1",
       "method_name": "get_astrometry_outline_unlensed",
-      "family": "FSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param1",
-      "method_name": "get_photometry_with_gp",
       "family": "FSBL",
       "applicable": false,
       "jax_forward": "numpy_fallback",
@@ -32062,6 +32052,16 @@
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param1",
+      "method_name": "get_photometry_with_gp",
+      "family": "FSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param1",
       "method_name": "get_source_astrometry_unlensed",
       "family": "FSBL",
       "applicable": false,
@@ -32085,50 +32085,50 @@
       "method_name": "get_u",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param3",
@@ -32705,20 +32705,20 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_CircOrbs_Param1",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_CircOrbs_Param1",
@@ -32765,50 +32765,50 @@
       "method_name": "get_u",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_CircOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_CircOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_CircOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_CircOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_CircOrbs_Param3",
@@ -33555,20 +33555,20 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_EllOrbs_Param1",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_EllOrbs_Param1",
@@ -33615,50 +33615,50 @@
       "method_name": "get_u",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_EllOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_EllOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_EllOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_EllOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_EllOrbs_Param3",
@@ -34405,20 +34405,20 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_LinOrbs_Param1",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_LinOrbs_Param1",
@@ -34465,50 +34465,50 @@
       "method_name": "get_u",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_LinOrbs_Param1",
       "method_name": "get_chi2_photometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_LinOrbs_Param1",
       "method_name": "get_chi2_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_LinOrbs_Param1",
       "method_name": "log_likely_photometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_LinOrbs_Param1",
       "method_name": "log_likely_astrometry_each",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_LinOrbs_Param3",
@@ -35085,20 +35085,20 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_Param1",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_Param1",
@@ -35255,20 +35255,20 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_Param2",
       "method_name": "get_resolved_lens_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_Param2",
@@ -36105,10 +36105,10 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_Phot_Par_CircOrbs_Param1",
@@ -36275,10 +36275,10 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_Phot_Par_EllOrbs_Param1",
@@ -36445,10 +36445,10 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_Phot_Par_Param1",
@@ -36615,10 +36615,10 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_Phot_noPar_CircOrbs_Param1",
@@ -36785,10 +36785,10 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_Phot_noPar_EllOrbs_Param1",
@@ -36955,10 +36955,10 @@
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
+      "jax_forward": "jax_only",
+      "parity": "pass",
       "grad": "not_run",
-      "parity_enabled": false
+      "parity_enabled": true
     },
     {
       "class_name": "FSBL_Phot_noPar_Param1",

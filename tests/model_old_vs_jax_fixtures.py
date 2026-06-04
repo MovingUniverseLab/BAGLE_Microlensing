@@ -1060,6 +1060,36 @@ def fsbl_photastrom_ellorbs_param1_pairs() -> list[tuple[str, str]]:
     return _fsbl_photastrom_orbit_param1_pairs("EllOrbs")
 
 
+def fsbl_photastrom_orbit_param1_extended_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom orbit Param1 extended + resolved astrometry (jax-eval)."""
+    classes: list[str] = []
+    for orb in ("LinOrbs", "AccOrbs", "CircOrbs", "EllOrbs"):
+        classes.extend(
+            (
+                f"FSBL_PhotAstrom_noPar_{orb}_Param1",
+                f"FSBL_PhotAstrom_Par_{orb}_Param1",
+            )
+        )
+    methods = FSPL_PHOTASTROM_EXTENDED_METHODS + (
+        "get_resolved_astrometry",
+        "get_resolved_lens_astrometry",
+    )
+    return _fsbl_jax_eval_pairs(tuple(classes), methods=methods)
+
+
+def fsbl_photastrom_param12_resolved_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param1/2 resolved astrometry (jax-eval)."""
+    return _fsbl_jax_eval_pairs(
+        (
+            "FSBL_PhotAstrom_noPar_Param1",
+            "FSBL_PhotAstrom_Par_Param1",
+            "FSBL_PhotAstrom_noPar_Param2",
+            "FSBL_PhotAstrom_Par_Param2",
+        ),
+        methods=("get_resolved_astrometry", "get_resolved_lens_astrometry"),
+    )
+
+
 def fsbl_phot_ellorbs_param2_pairs() -> list[tuple[str, str]]:
     """FSBL phot EllOrbs Param2 — no such ModelClassABC in model_jax."""
     return []
@@ -1179,6 +1209,19 @@ def bspl_photastrom_orbit_param12_pairs() -> list[tuple[str, str]]:
     return _psbl_photastrom_pairs_for_classes(_bspl_photastrom_orbit_param12_class_names())
 
 
+def bspl_photastrom_orbit_param12_extended_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom orbit Param1/2 extended likelihoods + ``get_u``."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    class_names = _bspl_photastrom_orbit_param12_class_names()
+    methods = FSPL_PHOTASTROM_EXTENDED_METHODS
+    return sorted(
+        (c, m) for c in class_names for m in methods if (c, m) in applicable
+    )
+
+
 _BSPL_PHOTASTROM_EXTENDED_PREFIXES = (
     "BSPL_PhotAstrom_noPar_Param",
     "BSPL_PhotAstrom_Par_Param",
@@ -1188,6 +1231,8 @@ _BSPL_PHOTASTROM_EXTENDED_PREFIXES = (
     "BSPL_PhotAstrom_Par_CircOrbs_Param3",
     "BSPL_PhotAstrom_noPar_EllOrbs_Param3",
     "BSPL_PhotAstrom_Par_EllOrbs_Param3",
+    "BSPL_PhotAstrom_noPar_EllOrbs_Param4",
+    "BSPL_PhotAstrom_Par_EllOrbs_Param4",
     "BSPL_PhotAstrom_noPar_LinOrbs_Param3",
     "BSPL_PhotAstrom_Par_LinOrbs_Param3",
 )
@@ -1291,7 +1336,8 @@ def fsbl_photastrom_extended_pairs() -> list[tuple[str, str]]:
             "FSBL_PhotAstrom_noPar_Param2",
             "FSBL_PhotAstrom_Par_Param2",
         ),
-        methods=FSPL_PHOTASTROM_EXTENDED_METHODS,
+        methods=FSPL_PHOTASTROM_EXTENDED_METHODS
+        + ("get_resolved_astrometry", "get_resolved_lens_astrometry"),
     )
 
 
@@ -1311,6 +1357,7 @@ def fsbl_phot_extended_pairs() -> list[tuple[str, str]]:
         )
     )
     methods = (
+        "get_resolved_astrometry",
         "get_resolved_lens_astrometry",
         "get_u",
         "get_chi2_photometry",
@@ -1426,7 +1473,7 @@ def psbl_photastrom_gp_extended_pairs() -> list[tuple[str, str]]:
 
 
 def fspl_outline_and_resolved_pairs() -> list[tuple[str, str]]:
-    """FSPL outline unlensed astrometry + phot Param2 resolved astrometry."""
+    """FSPL outline unlensed astrometry (PhotAstrom Param1/2)."""
     import bagle.model_jax as model_jax
     from bagle.jax.migration_tasks import applicable_task_pairs
 
@@ -1440,10 +1487,33 @@ def fspl_outline_and_resolved_pairs() -> list[tuple[str, str]]:
     ):
         if (c, "get_astrometry_outline_unlensed") in applicable:
             pairs.append((c, "get_astrometry_outline_unlensed"))
-    for c in ("FSPL_Phot_noPar_Param2", "FSPL_Phot_Par_Param2"):
-        if (c, "get_resolved_astrometry") in applicable:
-            pairs.append((c, "get_resolved_astrometry"))
     return sorted(pairs)
+
+
+def fspl_phot_param2_resolved_pairs() -> list[tuple[str, str]]:
+    """FSPL phot-only Param2 ``get_resolved_astrometry`` (jax-eval)."""
+    return _fsbl_jax_eval_pairs(
+        ("FSPL_Phot_noPar_Param2", "FSPL_Phot_Par_Param2"),
+        methods=("get_resolved_astrometry",),
+    )
+
+
+def migration_numpy_fallback_pairs() -> list[tuple[str, str]]:
+    """Union of harness pairs for applicable tasks still on numpy_fallback."""
+    fns = (
+        fsbl_photastrom_orbit_param1_extended_pairs,
+        fsbl_photastrom_param12_resolved_pairs,
+        fsbl_photastrom_extended_pairs,
+        fsbl_phot_extended_pairs,
+        bspl_photastrom_orbit_param12_extended_pairs,
+        bspl_photastrom_extended_pairs,
+        fspl_outline_and_resolved_pairs,
+        fspl_phot_param2_resolved_pairs,
+    )
+    out: set[tuple[str, str]] = set()
+    for fn in fns:
+        out.update(fn())
+    return sorted(out)
 
 
 def bfspl_photastrom_param1_pairs() -> list[tuple[str, str]]:

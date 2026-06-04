@@ -21576,6 +21576,23 @@ class FSPL_Phot(FSPL):
     photometryFlag = True
     astrometryFlag = False
 
+    def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
+        """Resolved finite-source image positions from AMG (phot-only)."""
+        if (image_arr is None) or (amp_arr is None):
+            out = self.get_all_arrays(t, filt_idx=filt_idx)
+            if isinstance(out, tuple) and len(out) == 4:
+                image_arr = out[0]
+            else:
+                image_arr, amp_arr = out
+        img = np.asarray(image_arr)
+        if np.iscomplexobj(img):
+            return np.stack(
+                [np.real(img), np.imag(img)], axis=-1
+            ).astype(np.float64, copy=False)
+        if getattr(img.dtype, "names", None) is not None:
+            return img.view("(2,)float")
+        return np.asarray(img, dtype=np.float64)
+
     def get_u_outline(self, t, filt_idx=0):
         """
         Get the separation vector, \\vec{u}(t), which is the unlensed
