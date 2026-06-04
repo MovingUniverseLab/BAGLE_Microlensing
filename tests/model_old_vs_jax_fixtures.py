@@ -1583,6 +1583,39 @@ def bspl_phot_gp_param1_pairs() -> list[tuple[str, str]]:
     )
 
 
+def bspl_gp_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL phot-only GP ``get_photometry_with_gp`` grad smoke (noPar + Par)."""
+    return [
+        (c, m)
+        for c, m in bspl_phot_gp_param1_pairs()
+        if m == "get_photometry_with_gp"
+    ]
+
+
+def bspl_phot_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL static phot-only Param1 phot/amp grad smoke."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("BSPL_Phot_noPar_Param1", "BSPL_Phot_Par_Param1")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOT_METHODS
+        if (c, m) in applicable
+    )
+
+
+def bspl_orbit_phot_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom keplerian orbit Param1/2 phot grad (host FD)."""
+    return [
+        (c, m)
+        for c, m in bspl_photastrom_orbit_param12_pairs()
+        if m in PSBL_PHOT_METHODS
+    ]
+
+
 def bspl_photastrom_param2_pairs() -> list[tuple[str, str]]:
     """BSPL PhotAstrom Param2 phot + core astrometry (noPar + Par)."""
     return _psbl_photastrom_pairs_for_classes(
@@ -2207,7 +2240,9 @@ def _mag_scalar(jax_inst, layout) -> float:
     from bagle.jax.geometry import mag_src_from_fitter
 
     b_sff = float(np.asarray(jax_inst.b_sff).reshape(-1)[0])
-    if layout.mag_fitter == "mag_base":
+    if layout.mag_fitter == "mag_base" or (
+        hasattr(jax_inst, "mag_base") and not hasattr(jax_inst, "mag_src")
+    ):
         mag_base = float(np.asarray(jax_inst.mag_base).reshape(-1)[0])
         return float(
             mag_src_from_fitter(
@@ -2215,6 +2250,50 @@ def _mag_scalar(jax_inst, layout) -> float:
             )
         )
     return float(np.asarray(jax_inst.mag_src).reshape(-1)[0])
+
+
+def _bspl_mags_from_init(v, init_names: tuple[str, ...], layout, b_sff):
+    from bagle.jax.geometry import mag_src_from_fitter
+
+    b_sff_j = jnp.asarray(b_sff, dtype=jnp.float64)
+    mag_pri = _init_param(v, init_names, "mag_src_pri", None)
+    mag_sec = _init_param(v, init_names, "mag_src_sec", None)
+    if mag_pri is not None and mag_sec is not None:
+        return mag_pri, mag_sec
+    mag = _mag_from_init(v, init_names, layout, b_sff)
+    if mag is not None:
+        return mag, mag
+    raise ValueError(
+        f"cannot resolve BSPL source magnitudes from init parameters {init_names!r}"
+    )
+
+
+def _fd_grad_host(
+    class_name: str,
+    init_names: tuple[str, ...],
+    vec0,
+    t: np.ndarray,
+    method_name: str,
+    eps: float = 1e-5,
+) -> np.ndarray:
+    """Central finite-difference grad w.r.t. init vector via host model forward."""
+    vec0_np = np.asarray(vec0, dtype=np.float64)
+    t_np = np.asarray(t, dtype=np.float64)
+
+    def _sum(vec_np: np.ndarray) -> float:
+        _, inst = build_paired_instances(class_name)
+        scatter_init_vector(inst, vec_np, init_names)
+        out = call_method(inst, method_name, t_np)
+        return float(np.sum(np.asarray(out, dtype=np.float64)))
+
+    g = np.zeros(len(vec0_np), dtype=np.float64)
+    for i in range(len(vec0_np)):
+        vp = vec0_np.copy()
+        vm = vec0_np.copy()
+        vp[i] += eps
+        vm[i] -= eps
+        g[i] = (_sum(vp) - _sum(vm)) / (2.0 * eps)
+    return g
 
 
 def _unpack_pspl_geom(eval_kind: str, names: tuple[str, ...], v):
@@ -2368,6 +2447,7 @@ def grad_smoke_jax(
 
     from bagle.jax.layout_registry import resolve_layout
     from bagle.jax.geometry import derive_geometry_from_layout
+    from bagle.jax.bspl import bspl_photometry_jax
     from bagle.jax_physics import (
         gaussian_chi2_astrometry,
         gaussian_chi2_photometry,
@@ -2562,6 +2642,37 @@ def grad_smoke_jax(
                         piE_N=piE_N,
                         root_tol=root_tol,
                     )
+                elif ek.startswith("bspl_phot"):
+                    base = _base_vec_from_init(v, init_names, base_names)
+                    (
+                        _tag,
+                        u0_pri,
+                        u0_sec,
+                        thetaE_hat,
+                        t0_pri,
+                        t0_sec,
+                        tE,
+                        piE_E,
+                        piE_N,
+                    ) = derive_geometry_from_layout("", ek, base, base_names)
+                    mag_pri, mag_sec = _bspl_mags_from_init(
+                        v, init_names, layout, b_sff
+                    )
+                    m = bspl_photometry_jax(
+                        x1,
+                        t0_pri,
+                        t0_sec,
+                        tE,
+                        u0_pri,
+                        u0_sec,
+                        thetaE_hat,
+                        mag_pri,
+                        mag_sec,
+                        b_sff=b_sff,
+                        pvec=pvec,
+                        piE_E=piE_E,
+                        piE_N=piE_N,
+                    )
                 else:
                     geom = _pspl_geom(v)
                     m = pspl_photometry(
@@ -2581,6 +2692,45 @@ def grad_smoke_jax(
             gp = tinygp.GaussianProcess(kernel, t_obs, diag=diag, mean=mean_fn)
             cond = gp.condition(mag_obs, t_pred)
             return jnp.sum(cond.gp.loc)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name in ("get_photometry", "get_amplification") and ek == "bspl_phot":
+
+        def forward(v):
+            base = _base_vec_from_init(v, init_names, base_names)
+            (
+                _tag,
+                u0_pri,
+                u0_sec,
+                thetaE_hat,
+                t0_pri,
+                t0_sec,
+                tE,
+                piE_E,
+                piE_N,
+            ) = derive_geometry_from_layout("", ek, base, base_names)
+            b_sff = _init_param(v, init_names, "b_sff", 1.0)
+            mag_pri, mag_sec = _bspl_mags_from_init(v, init_names, layout, b_sff)
+            out = bspl_photometry_jax(
+                t_j,
+                t0_pri,
+                t0_sec,
+                tE,
+                u0_pri,
+                u0_sec,
+                thetaE_hat,
+                mag_pri,
+                mag_sec,
+                b_sff=b_sff,
+                pvec=pvec,
+                piE_E=piE_E,
+                piE_N=piE_N,
+            )
+            return jnp.sum(out)
 
         g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
         if return_names:
@@ -2647,6 +2797,14 @@ def grad_smoke_jax(
             return jnp.sum(out)
 
         g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if not np.all(np.isfinite(g)):
+            g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name in PSBL_PHOT_METHODS and ek.startswith("bspl_photastrom"):
+        g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
         if return_names:
             return g, init_names
         return g

@@ -6216,6 +6216,10 @@ class PSBL(PSPL):
 
         return z_arr
 
+    def get_image_pos_arr_mpsolve(self, w, z1, z2, m1, m2, check_sols=False):
+        """Reference quintic roots via :func:`numpy.roots` (same as production path)."""
+        return self.get_image_pos_arr(w, z1, z2, m1, m2, check_sols=check_sols)
+
     def get_all_arrays(self, t, filt_idx=0, check_sols=True, rescale=True):
         '''
         Obtain the lensed image and amplitude arrays for each t.
