@@ -20464,8 +20464,9 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
     """
     fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
                           'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'tpL', 'aL',
-                 'omegaS_pri', 'big_omegaS_sec', 'iS',  'pS', 'tpS', 'alephS', 'aleph_secS']
+                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'eL',
+                          'tpL', 'aL', 'omegaS_pri', 'big_omegaS_sec', 'iS', 'eS',
+                          'pS', 'tpS', 'alephS', 'aleph_secS']
     phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
@@ -20473,8 +20474,9 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
     orbitFlag = 'Keplerian'
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,omegaL_pri, big_omegaL_sec, iL, tpL, aL,
-                 omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS,
+                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                 omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                 omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 

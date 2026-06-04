@@ -61,6 +61,20 @@ from model_old_vs_jax_fixtures import (
     bspl_photastrom_param1_pairs,
     bspl_photastrom_param2_pairs,
     bspl_photastrom_param34_pairs,
+    bspl_photastrom_orbit_param12_pairs,
+    bspl_photastrom_extended_pairs,
+    bspl_phot_extended_pairs,
+    bspl_gp_extended_pairs,
+    bsbl_photastrom_param3_pairs,
+    bsbl_photastrom_ast_likelihood_gaps_pairs,
+    fsbl_photastrom_extended_pairs,
+    fsbl_phot_extended_pairs,
+    psbl_phot_extended_pairs,
+    psbl_photastrom_param1_ast_likelihood_pairs,
+    psbl_photastrom_param7_ast_likelihood_pairs,
+    psbl_photastrom_gp_extended_pairs,
+    fspl_outline_and_resolved_pairs,
+    bfspl_photastrom_param1_pairs,
     bspl_photastrom_ellorbs_param2_pairs,
     fspl_phot_param2_pairs,
     psbl_gp_param1_pairs,
@@ -214,6 +228,13 @@ def test_grad_pspl_gp(class_name, method_name):
 
 @pytest.mark.parametrize("class_name,method_name", psbl_phot_pairs())
 def test_parity_psbl_phot(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_phot_extended_pairs())
+def test_parity_psbl_phot_extended(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)
@@ -375,6 +396,31 @@ def test_parity_psbl_photastrom_param7(class_name, method_name):
     _assert_parity(old_inst, jax_inst, method_name, t)
 
 
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param7_ast_likelihood_pairs()
+)
+def test_parity_psbl_photastrom_param7_ast_likelihood(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param1_ast_likelihood_pairs()
+)
+def test_parity_psbl_photastrom_param1_ast_likelihood(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_gp_extended_pairs())
+def test_parity_psbl_photastrom_gp_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
 @pytest.mark.parametrize("class_name,method_name", psbl_photastrom_ellorbs_param1_pairs())
 def test_parity_psbl_photastrom_ellorbs_param1(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
@@ -457,6 +503,34 @@ def test_parity_bspl_photastrom_param2(class_name, method_name):
 
 @pytest.mark.parametrize("class_name,method_name", bspl_photastrom_param34_pairs())
 def test_parity_bspl_photastrom_param34(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_orbit_param12_pairs())
+def test_parity_bspl_photastrom_orbit_param12(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_extended_pairs())
+def test_parity_bspl_photastrom_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_phot_extended_pairs())
+def test_parity_bspl_phot_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_gp_extended_pairs())
+def test_parity_bspl_gp_extended(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)
@@ -687,6 +761,16 @@ def test_parity_fsbl_photastrom_param3plus(class_name, method_name):
     _assert_jax_eval_parity(class_name, method_name)
 
 
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_extended_pairs())
+def test_parity_fsbl_photastrom_extended(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_extended_pairs())
+def test_parity_fsbl_phot_extended(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
 @pytest.mark.parametrize("class_name,method_name", bsbl_phot_param1_pairs())
 def test_parity_bsbl_phot_param1(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
@@ -777,6 +861,36 @@ def test_parity_psbl_photastrom_param6_likelihood(class_name, method_name):
 
 @pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_gp_param1_pairs())
 def test_parity_bsbl_photastrom_gp_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_param3_pairs())
+def test_parity_bsbl_photastrom_param3(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_ast_likelihood_gaps_pairs()
+)
+def test_parity_bsbl_photastrom_ast_likelihood_gaps(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bfspl_photastrom_param1_pairs())
+def test_parity_bfspl_photastrom_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_outline_and_resolved_pairs())
+def test_parity_fspl_outline_and_resolved(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)
