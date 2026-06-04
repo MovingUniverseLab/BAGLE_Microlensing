@@ -5694,12 +5694,12 @@ class PSBL(PSPL):
         """
         Binary lens image positions (production path).
 
-        Delegates to the jitted companion-matrix solver in
-        :meth:`get_image_pos_arr_fast`.
+        Uses :func:`numpy.roots` to match ``bagle.model`` reference parity.
         """
         assert (len(w) == len(z1)) & (len(w) == len(z2))
-        z_arr = self.get_image_pos_arr_fast(w, z1, z2, m1, m2, check_sols=check_sols)
-        return np.asarray(z_arr)
+        return self.get_image_pos_arr_mpsolve(
+            w, z1, z2, m1, m2, check_sols=check_sols
+        )
 
 
 
@@ -5837,14 +5837,6 @@ class PSBL(PSPL):
         Binary lens images from Witt/BAGLE quintic coefficients; solves each timestep
         with :func:`numpy.roots`.
         """
-        warnings.warn(
-            "get_image_pos_arr_mpsolve is deprecated; use get_image_pos_arr or "
-            "get_image_pos_arr_fast.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        # pdb.set_trace()
-
         w = np.asarray(w, dtype=np.complex128).reshape(-1)
         z1 = np.asarray(z1, dtype=np.complex128).reshape(-1)
         z2 = np.asarray(z2, dtype=np.complex128).reshape(-1)
@@ -6117,8 +6109,7 @@ class PSBL(PSPL):
             self.root_tol *= rcomp[5]
 
             # Image positions derived from rescale complex positions.
-            #rimages = self.get_image_pos_arr(*rcomp[0:5], **kwargs)
-            rimages = self.get_image_pos_arr_fast(*rcomp[0:5], **kwargs)
+            rimages = self.get_image_pos_arr(*rcomp[0:5], **kwargs)
             self.root_tol = orig_root_tol
 
             # Take the image positions derived from the rescaled complex positions
@@ -6130,7 +6121,7 @@ class PSBL(PSPL):
 
         else:
             comp = self.get_complex_pos(t, filt_idx=filt_idx)
-            images = self.get_image_pos_arr_fast(*comp)
+            images = self.get_image_pos_arr(*comp)
             amps = self.get_amp_arr(images, *comp[1:])
 
         return images, amps

@@ -96,6 +96,7 @@ CANONICAL: dict[str, Any] = {
     "tpL": 40.0,
     "eL": 0.1,
     "aL": 1.0,
+    "aS": 1.0,
     "iS": 45.0,
     "eS": 0.1,
     "pS": 3000.0,
@@ -115,6 +116,8 @@ CANONICAL: dict[str, Any] = {
     "radiusS_pri": 1e-3,
     "radiusS_sec": 1e-3,
     "n_outline": 20,
+    "n_outline_pri": 20,
+    "n_outline_sec": 20,
     "gp_log_sigma": [-1.0],
     "gp_log_rho": [0.5],
     "gp_rho": [math.exp(0.5)],
@@ -203,6 +206,11 @@ def build_init_args(cls: type, model_module) -> tuple[list[Any], dict[str, Any]]
         if pname in ("raL", "decL", "obsLocation"):
             continue
         val = _value_for(pname)
+        if pname in ("mag_src_pri", "mag_src_sec") and cls.__name__.startswith(
+            "BFSPL"
+        ):
+            if isinstance(val, (list, tuple)):
+                val = val[0]
         if param.default is not inspect.Parameter.empty:
             kwargs[pname] = val
         else:
@@ -238,8 +246,21 @@ def _ensure_bsbl_primary_source_frame(instance) -> None:
     instance.xS0_sec = instance.xS0_pri + (sepS_vec * 1e-3)
 
 
+def _ensure_per_filter_arrays(instance) -> None:
+    """Wrap scalar photometry attrs so ``[filt_idx]`` indexing works."""
+    for name in ("mag_src_pri", "mag_src_sec", "mag_src", "mag_base", "b_sff"):
+        if not hasattr(instance, name):
+            continue
+        val = getattr(instance, name)
+        if isinstance(val, (int, float)):
+            setattr(instance, name, np.array([val]))
+        elif isinstance(val, (list, tuple)):
+            setattr(instance, name, np.asarray(val))
+
+
 def _post_init(instance):
     _ensure_bsbl_primary_source_frame(instance)
+    _ensure_per_filter_arrays(instance)
     if getattr(instance, "astrometryFlag", False) and not getattr(instance, "photometryFlag", False):
         if not hasattr(instance, "b_sff"):
             instance.b_sff = [1.0]
