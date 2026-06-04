@@ -2447,7 +2447,16 @@ class MicrolensSolverWeighted(MicrolensSolver):
 
                 weight = self.weights[self.n_phot_sets + i]
 
-                lnL_ast_unwgt = model.log_likely_astrometry(t_ast, xpos, ypos, xpos_err, ypos_err)
+                #lnL_ast_unwgt = model.log_likely_astrometry(t_ast, xpos, ypos, xpos_err, ypos_err)
+                # If no photometry
+                if len(self.map_phot_idx_to_ast_idx) == 0:
+                    filt_idx = i
+                # If photometry
+                else:
+                    filt_idx = self.map_phot_idx_to_ast_idx[i]
+
+                lnL_ast_unwgt = model.log_likely_astrometry(t_ast, xpos, ypos, xpos_err, ypos_err,
+                                                            filt_idx=filt_idx)
                 lnL_ast_i = lnL_ast_unwgt * weight
                 lnL_ast += lnL_ast_i
 
