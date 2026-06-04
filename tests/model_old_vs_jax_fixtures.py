@@ -1714,6 +1714,91 @@ def psbl_photastrom_param4_grad_phot_pairs() -> list[tuple[str, str]]:
     )
 
 
+def psbl_photastrom_param4_grad_ast_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param4 astrometry + ast likelihood JAX grad smoke."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_PhotAstrom_noPar_Param4", "PSBL_PhotAstrom_Par_Param4")
+    methods = _BSPL_PHOTASTROM_PARAM1_CORE_AST + (
+        "get_chi2_astrometry",
+        "log_likely_astrometry_each",
+    )
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def psbl_photastrom_likelihood_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param2/3 phot+ast chi2 / log-likelihood JAX grad smoke."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = (
+        "PSBL_PhotAstrom_noPar_Param2",
+        "PSBL_PhotAstrom_Par_Param2",
+        "PSBL_PhotAstrom_noPar_Param3",
+        "PSBL_PhotAstrom_Par_Param3",
+    )
+    param3 = {
+        "PSBL_PhotAstrom_noPar_Param3",
+        "PSBL_PhotAstrom_Par_Param3",
+    }
+    phot_lik = PHOT_LIKELIHOOD_METHODS
+    methods = (
+        "get_chi2_photometry",
+        "log_likely_photometry_each",
+        "get_chi2_astrometry",
+        "log_likely_astrometry_each",
+    )
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in methods
+        if (c, m) in applicable
+        and not (c in param3 and m in phot_lik)
+        and not (c.endswith("_Par_Param2") and m in phot_lik)
+    )
+
+
+def psbl_gp_param2_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom GP Param2 ``get_photometry_with_gp`` grad smoke."""
+    return [
+        (c, m)
+        for c, m in psbl_gp_photastrom_param2_pairs()
+        if m == "get_photometry_with_gp"
+    ]
+
+
+def bspl_photastrom_gp_orbit_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL static GP Param2/3 phot + GP grad (host FD for orbit GP classes)."""
+    methods = GP_PHOT_METHODS
+    return sorted(
+        (c, m)
+        for c, m in bspl_photastrom_gp_orbit_and_param23_pairs()
+        if m in methods
+        and "Orbs" not in c
+        and c.endswith(("GP_Param2", "GP_Param3"))
+    )
+
+
+def psbl_photastrom_orbit_param1_grad_bulk_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom keplerian orbit Param1 bulk grad (FD for orbit params)."""
+    methods = PSBL_PHOT_METHODS + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+    pair_fns = (
+        psbl_photastrom_circorbs_param1_pairs,
+        psbl_photastrom_ellorbs_param1_pairs,
+        psbl_photastrom_accorbs_param1_pairs,
+        psbl_photastrom_linorbs_param1_pairs,
+    )
+    out: list[tuple[str, str]] = []
+    for fn in pair_fns:
+        out.extend((c, m) for c, m in fn() if m in methods)
+    return sorted(set(out))
+
+
 def bsbl_photastrom_ellorbs_param1_pairs() -> list[tuple[str, str]]:
     """BSBL PhotAstrom EllOrbs Param1 phot + core astrometry (noPar + Par)."""
     return _psbl_photastrom_pairs_for_classes(
@@ -2311,12 +2396,191 @@ def _bspl_mags_from_init(v, init_names: tuple[str, ...], layout, b_sff):
     mag_sec = _init_param(v, init_names, "mag_src_sec", None)
     if mag_pri is not None and mag_sec is not None:
         return mag_pri, mag_sec
+    if "fratio_bin" in init_names and "mag_base" in init_names:
+        mag_base = _init_param(v, init_names, "mag_base")
+        fratio = _init_param(v, init_names, "fratio_bin", 1.0)
+        b = jnp.asarray(b_sff, dtype=jnp.float64)
+        mag_pri = mag_base - 2.5 * jnp.log10(b) + 2.5 * jnp.log10(1.0 + fratio)
+        mag_sec = mag_base - 2.5 * jnp.log10(b) + 2.5 * jnp.log10(
+            1.0 + 1.0 / fratio
+        )
+        return mag_pri, mag_sec
     mag = _mag_from_init(v, init_names, layout, b_sff)
     if mag is not None:
         return mag, mag
     raise ValueError(
         f"cannot resolve BSPL source magnitudes from init parameters {init_names!r}"
     )
+
+
+_DAYS_PER_YEAR = 365.25
+
+
+def _psbl_reduced_static_geom(base, base_names: tuple[str, ...]) -> dict:
+    """Static PSBL reduced fitter (Param2/4/GP) geometry for JAX grad smoke."""
+    from bagle.jax.geometry import unpack_base_params
+    from bagle.jax_physics import derive_psbl_static_geometry
+
+    p = unpack_base_params(base_names, base)
+    phi_key = "phi" if "phi" in p else "alpha"
+    phi = p[phi_key]
+    t0 = p["t0"]
+    u0_amp = p["u0_amp"]
+    tE = p["tE"]
+    if "thetaE" in p:
+        thetaE_amp = p["thetaE"]
+    else:
+        thetaE_amp = jnp.power(10.0, p["log10_thetaE"])
+    piS = p["piS"]
+    piE_E = p["piE_E"]
+    piE_N = p["piE_N"]
+    xS0 = jnp.stack([p["xS0_E"], p["xS0_N"]])
+    muS = jnp.stack([p["muS_E"], p["muS_N"]])
+    m1, m2, u0, thetaE_hat, xL1, xL2, piE_amp = derive_psbl_static_geometry(
+        u0_amp, piE_E, piE_N, p["q"], p["sep"], phi
+    )
+    piRel = piE_amp * thetaE_amp
+    piL = piRel + piS
+    muRel_amp = thetaE_amp / (tE / _DAYS_PER_YEAR)
+    muRel = muRel_amp * thetaE_hat
+    muL = muS - muRel
+    xL0 = xS0 - u0 * thetaE_amp * 1e-3
+    return {
+        "t0": t0,
+        "tE": tE,
+        "u0": u0,
+        "thetaE_hat": thetaE_hat,
+        "m1": m1,
+        "m2": m2,
+        "xL1": xL1,
+        "xL2": xL2,
+        "xS0": xS0,
+        "xL0": xL0,
+        "muS": muS,
+        "muL": muL,
+        "thetaE_amp": thetaE_amp,
+        "piS": piS,
+        "piL": piL,
+        "piE_E": piE_E,
+        "piE_N": piE_N,
+    }
+
+
+def _psbl_param1_geom(base, base_names: tuple[str, ...]) -> dict:
+    from bagle.jax.geometry import derive_psbl_photastrom_param1, unpack_base_params
+
+    p = unpack_base_params(base_names, base)
+    (
+        u0,
+        thetaE_hat,
+        tE,
+        piE_E,
+        piE_N,
+        xS0,
+        xL0,
+        muS,
+        muL,
+        thetaE_amp,
+        piS,
+        piL,
+        m1,
+        m2,
+        xL1,
+        xL2,
+        _mLp,
+        _mLs,
+    ) = derive_psbl_photastrom_param1(
+        p["mLp"],
+        p["mLs"],
+        p["t0"],
+        p["xS0_E"],
+        p["xS0_N"],
+        p["beta"],
+        p["muL_E"],
+        p["muL_N"],
+        p["muS_E"],
+        p["muS_N"],
+        p["dL"],
+        p["dS"],
+        p["sep"],
+        p["alpha"],
+    )
+    return {
+        "t0": p["t0"],
+        "tE": tE,
+        "u0": u0,
+        "thetaE_hat": thetaE_hat,
+        "m1": m1,
+        "m2": m2,
+        "xL1": xL1,
+        "xL2": xL2,
+        "xS0": xS0,
+        "xL0": xL0,
+        "muS": muS,
+        "muL": muL,
+        "thetaE_amp": thetaE_amp,
+        "piS": piS,
+        "piL": piL,
+        "piE_E": piE_E,
+        "piE_N": piE_N,
+    }
+
+
+def _psbl_geom_from_base(base, base_names: tuple[str, ...]) -> dict:
+    if "mLp" in base_names:
+        return _psbl_param1_geom(base, base_names)
+    return _psbl_reduced_static_geom(base, base_names)
+
+
+def _bspl_phot_geom_from_base(base, base_names: tuple[str, ...]) -> dict:
+    from bagle.jax.geometry import unpack_base_params
+    from bagle.jax_physics import u0_hat_from_thetaE_hat_jax
+
+    p = unpack_base_params(base_names, base)
+    piE = jnp.stack([p["piE_E"], p["piE_N"]])
+    piE_amp = jnp.linalg.norm(piE)
+    thetaE_hat = piE / piE_amp
+    u0_hat = u0_hat_from_thetaE_hat_jax(thetaE_hat, p["u0_amp"])
+    u0_pri = jnp.abs(p["u0_amp"]) * u0_hat
+    phi_key = "phi" if "phi" in p else "alpha"
+    phi_rad = p[phi_key] * jnp.pi / 180.0
+    phi_piE = jnp.arctan2(p["piE_E"], p["piE_N"])
+    phi_rho1 = phi_piE + phi_rad
+    sep_vec = p["sep"] * jnp.stack([jnp.sin(phi_rho1), jnp.cos(phi_rho1)])
+    u0_amp_sec = p["u0_amp"] + jnp.dot(sep_vec, u0_hat)
+    u0_sec = u0_amp_sec * u0_hat
+    out = (
+        "bspl_phot",
+        u0_pri,
+        u0_sec,
+        thetaE_hat,
+        p["t0"],
+        p["t0"],
+        p["tE"],
+        p["piE_E"],
+        p["piE_N"],
+    )
+    (
+        _tag,
+        u0_pri,
+        u0_sec,
+        thetaE_hat,
+        t0_pri,
+        t0_sec,
+        tE,
+        piE_E,
+        piE_N,
+    ) = out
+    return {
+        "u0_pri": u0_pri,
+        "u0_sec": u0_sec,
+        "thetaE_hat": thetaE_hat,
+        "t0_pri": t0_pri,
+        "t0_sec": t0_sec,
+        "tE": tE,
+        "piE_E": piE_E,
+        "piE_N": piE_N,
+    }
 
 
 def _fd_grad_host(
@@ -2604,8 +2868,18 @@ def grad_smoke_jax(
         return g
 
     _psbl_phot_only = ek.startswith("psbl_phot_")
-    if method_name == "get_photometry_with_gp" and layout.has_gp and ek.startswith(
-        ("bspl_photastrom", "psbl_photastrom")
+    _static_psbl_photastrom = (
+        ek.startswith("psbl_photastrom")
+        and "none" in ek
+        and "u0_amp" in base_names
+    )
+    _static_bspl_photastrom = (
+        ek.startswith("bspl_photastrom")
+        and "none" in ek
+        and "u0_amp" in base_names
+    )
+    if method_name == "get_photometry_with_gp" and layout.has_gp and (
+        ek.startswith("bspl_photastrom") and not _static_bspl_photastrom
     ):
         g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
         if return_names:
@@ -2613,7 +2887,11 @@ def grad_smoke_jax(
         return g
 
     if method_name == "get_photometry_with_gp" and layout.has_gp and (
-        ek in pspl_phot_kinds or ek == "bspl_phot" or _psbl_phot_only
+        ek in pspl_phot_kinds
+        or ek == "bspl_phot"
+        or _psbl_phot_only
+        or _static_psbl_photastrom
+        or _static_bspl_photastrom
     ):
         from bagle.jax.gp import _GP_QUALITY, _gp_has_fixed_jitter
         import tinygp
@@ -2702,36 +2980,46 @@ def grad_smoke_jax(
                         piE_N=piE_N,
                         root_tol=root_tol,
                     )
-                elif ek.startswith("bspl_phot"):
+                elif _static_psbl_photastrom:
                     base = _base_vec_from_init(v, init_names, base_names)
-                    (
-                        _tag,
-                        u0_pri,
-                        u0_sec,
-                        thetaE_hat,
-                        t0_pri,
-                        t0_sec,
-                        tE,
-                        piE_E,
-                        piE_N,
-                    ) = derive_geometry_from_layout("", ek, base, base_names)
+                    geom = _psbl_geom_from_base(base, base_names)
+                    m = psbl_photometry(
+                        x1,
+                        geom["t0"],
+                        geom["tE"],
+                        geom["u0"],
+                        geom["thetaE_hat"],
+                        geom["xL1"],
+                        geom["xL2"],
+                        geom["m1"],
+                        geom["m2"],
+                        mag,
+                        b_sff=b_sff,
+                        parallax_vectors=pvec,
+                        piE_E=geom["piE_E"],
+                        piE_N=geom["piE_N"],
+                        root_tol=root_tol,
+                    )
+                elif ek == "bspl_phot" or _static_bspl_photastrom:
+                    base = _base_vec_from_init(v, init_names, base_names)
+                    bg = _bspl_phot_geom_from_base(base, base_names)
                     mag_pri, mag_sec = _bspl_mags_from_init(
                         v, init_names, layout, b_sff
                     )
                     m = bspl_photometry_jax(
                         x1,
-                        t0_pri,
-                        t0_sec,
-                        tE,
-                        u0_pri,
-                        u0_sec,
-                        thetaE_hat,
+                        bg["t0_pri"],
+                        bg["t0_sec"],
+                        bg["tE"],
+                        bg["u0_pri"],
+                        bg["u0_sec"],
+                        bg["thetaE_hat"],
                         mag_pri,
                         mag_sec,
                         b_sff=b_sff,
                         pvec=pvec,
-                        piE_E=piE_E,
-                        piE_N=piE_N,
+                        piE_E=bg["piE_E"],
+                        piE_N=bg["piE_N"],
                     )
                 else:
                     geom = _pspl_geom(v)
@@ -2865,13 +3153,233 @@ def grad_smoke_jax(
             return g, init_names
         return g
 
-    _photastrom_grad_methods = (
-        PSBL_PHOT_METHODS
-        + _BSPL_PHOTASTROM_PARAM1_CORE_AST
-        + PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+    _photastrom_ek = ek.startswith(("bspl_photastrom", "psbl_photastrom"))
+    _fd_photastrom_methods = (
+        ("get_u",)
+        + tuple(
+            m
+            for m in PSBL_PHOTASTROM_AST_METHODS
+            if m not in _BSPL_PHOTASTROM_PARAM1_CORE_AST
+        )
     )
-    if method_name in _photastrom_grad_methods and ek.startswith(
-        ("bspl_photastrom", "psbl_photastrom")
+
+    if method_name in PSBL_PHOT_METHODS and _static_psbl_photastrom:
+        root_tol = float(getattr(jax_inst, "root_tol", 1e-8))
+
+        def forward(v):
+            base = _base_vec_from_init(v, init_names, base_names)
+            geom = _psbl_geom_from_base(base, base_names)
+            b_sff = _init_param(v, init_names, "b_sff", 1.0)
+            mag = _mag_from_init(v, init_names, layout, b_sff)
+            if mag is None:
+                mag = jnp.asarray(_mag_scalar(jax_inst, layout), dtype=jnp.float64)
+            if method_name == "get_photometry":
+                out = psbl_photometry(
+                    t_j,
+                    geom["t0"],
+                    geom["tE"],
+                    geom["u0"],
+                    geom["thetaE_hat"],
+                    geom["xL1"],
+                    geom["xL2"],
+                    geom["m1"],
+                    geom["m2"],
+                    mag,
+                    b_sff=b_sff,
+                    parallax_vectors=pvec,
+                    piE_E=geom["piE_E"],
+                    piE_N=geom["piE_N"],
+                    root_tol=root_tol,
+                )
+            else:
+                w, z1, z2 = psbl_complex_pos_static(
+                    t_j,
+                    geom["t0"],
+                    geom["tE"],
+                    geom["u0"],
+                    geom["thetaE_hat"],
+                    geom["xL1"],
+                    geom["xL2"],
+                    parallax_vectors=pvec,
+                    piE_E=geom["piE_E"],
+                    piE_N=geom["piE_N"],
+                )
+                _, amp_arr = psbl_all_arrays(w, z1, z2, geom["m1"], geom["m2"], root_tol)
+                out = psbl_total_amplification(amp_arr)
+            return jnp.sum(out)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if not np.all(np.isfinite(g)):
+            g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name in PSBL_PHOT_METHODS and _static_bspl_photastrom:
+
+        def forward(v):
+            base = _base_vec_from_init(v, init_names, base_names)
+            bg = _bspl_phot_geom_from_base(base, base_names)
+            b_sff = _init_param(v, init_names, "b_sff", 1.0)
+            mag_pri, mag_sec = _bspl_mags_from_init(v, init_names, layout, b_sff)
+            out = bspl_photometry_jax(
+                t_j,
+                bg["t0_pri"],
+                bg["t0_sec"],
+                bg["tE"],
+                bg["u0_pri"],
+                bg["u0_sec"],
+                bg["thetaE_hat"],
+                mag_pri,
+                mag_sec,
+                b_sff=b_sff,
+                pvec=pvec,
+                piE_E=bg["piE_E"],
+                piE_N=bg["piE_N"],
+            )
+            return jnp.sum(out)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if not np.all(np.isfinite(g)) or np.linalg.norm(g) == 0.0:
+            g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
+        if return_names:
+            return g, init_names
+        return g
+
+    if (
+        method_name in _BSPL_PHOTASTROM_PARAM1_CORE_AST
+        and _static_psbl_photastrom
+    ):
+        default_b = float(np.asarray(getattr(jax_inst, "b_sff", [1.0])).reshape(-1)[0])
+
+        def forward(v):
+            base = _base_vec_from_init(v, init_names, base_names)
+            geom = _psbl_geom_from_base(base, base_names)
+            b_sff = _init_param(v, init_names, "b_sff", default_b)
+            out = _pspl_astrom_forward(
+                method_name, geom, t_j, geom["t0"], b_sff, pvec
+            )
+            return jnp.sum(out)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if not np.all(np.isfinite(g)) or np.linalg.norm(g) == 0.0:
+            g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name in PHOT_LIKELIHOOD_METHODS and (
+        _static_psbl_photastrom or _static_bspl_photastrom
+    ):
+        mag_obs, mag_err = _phot_obs()
+
+        def forward(v):
+            base = _base_vec_from_init(v, init_names, base_names)
+            b_sff = _init_param(v, init_names, "b_sff", 1.0)
+            mag = _mag_from_init(v, init_names, layout, b_sff)
+            if mag is None:
+                mag = jnp.asarray(_mag_scalar(jax_inst, layout), dtype=jnp.float64)
+            root_tol = float(getattr(jax_inst, "root_tol", 1e-8))
+            if _static_psbl_photastrom:
+                geom = _psbl_geom_from_base(base, base_names)
+                mag_model = psbl_photometry(
+                    t_j,
+                    geom["t0"],
+                    geom["tE"],
+                    geom["u0"],
+                    geom["thetaE_hat"],
+                    geom["xL1"],
+                    geom["xL2"],
+                    geom["m1"],
+                    geom["m2"],
+                    mag,
+                    b_sff=b_sff,
+                    parallax_vectors=pvec,
+                    piE_E=geom["piE_E"],
+                    piE_N=geom["piE_N"],
+                    root_tol=root_tol,
+                )
+            else:
+                bg = _bspl_phot_geom_from_base(base, base_names)
+                mag_pri, mag_sec = _bspl_mags_from_init(
+                    v, init_names, layout, b_sff
+                )
+                mag_model = bspl_photometry_jax(
+                    t_j,
+                    bg["t0_pri"],
+                    bg["t0_sec"],
+                    bg["tE"],
+                    bg["u0_pri"],
+                    bg["u0_sec"],
+                    bg["thetaE_hat"],
+                    mag_pri,
+                    mag_sec,
+                    b_sff=b_sff,
+                    pvec=pvec,
+                    piE_E=bg["piE_E"],
+                    piE_N=bg["piE_N"],
+                )
+            if method_name == "get_chi2_photometry":
+                out = gaussian_chi2_photometry(mag_model, mag_obs, mag_err)
+            else:
+                out = gaussian_log_likelihood_photometry_each(
+                    mag_model, mag_obs, mag_err
+                )
+            return jnp.sum(out)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if not np.all(np.isfinite(g)) or np.linalg.norm(g) == 0.0:
+            g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
+        if return_names:
+            return g, init_names
+        return g
+
+    if method_name in AST_LIKELIHOOD_METHODS and _static_psbl_photastrom:
+        x_obs, y_obs, x_err, y_err = _ast_obs()
+        default_b = float(np.asarray(getattr(jax_inst, "b_sff", [1.0])).reshape(-1)[0])
+
+        def forward(v):
+            base = _base_vec_from_init(v, init_names, base_names)
+            geom = _psbl_geom_from_base(base, base_names)
+            b_sff = _init_param(v, init_names, "b_sff", default_b)
+            pos_model = pspl_astrometry_param1(
+                t_j,
+                geom["t0"],
+                geom["xS0"],
+                geom["xL0"],
+                geom["muS"],
+                geom["muL"],
+                geom["thetaE_amp"],
+                b_sff,
+                parallax_vectors=pvec,
+                piS=geom["piS"],
+                piL=geom["piL"],
+            )
+            if method_name == "get_chi2_astrometry":
+                out = gaussian_chi2_astrometry(
+                    pos_model, x_obs, y_obs, x_err, y_err
+                )
+            else:
+                out = gaussian_log_likelihood_astrometry_each(
+                    pos_model, x_obs, y_obs, x_err, y_err
+                )
+            return jnp.sum(out)
+
+        g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if not np.all(np.isfinite(g)) or np.linalg.norm(g) == 0.0:
+            g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
+        if return_names:
+            return g, init_names
+        return g
+
+    if _photastrom_ek and (
+        method_name in _fd_photastrom_methods
+        or (ek.startswith("psbl_photastrom") and not _static_psbl_photastrom)
+        or (ek.startswith("bspl_photastrom") and not _static_bspl_photastrom)
+        or (
+            ek.startswith("bspl_photastrom")
+            and method_name in _BSPL_PHOTASTROM_PARAM1_CORE_AST
+        )
     ):
         g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
         if return_names:

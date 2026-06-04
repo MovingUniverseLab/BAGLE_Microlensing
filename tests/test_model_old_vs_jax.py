@@ -111,6 +111,11 @@ from model_old_vs_jax_fixtures import (
     psbl_photastrom_param4_phot_pairs,
     psbl_photastrom_param4_pairs,
     psbl_photastrom_param4_grad_phot_pairs,
+    psbl_photastrom_param4_grad_ast_pairs,
+    psbl_photastrom_likelihood_grad_pairs,
+    psbl_gp_param2_grad_pairs,
+    bspl_photastrom_gp_orbit_grad_pairs,
+    psbl_photastrom_orbit_param1_grad_bulk_pairs,
     build_jax_eval_paired_instances,
     call_method_via_jax_eval,
     psbl_photastrom_first_pairs,
@@ -1015,6 +1020,72 @@ def test_grad_fspl_photastrom_param2_phot(class_name, method_name):
 @pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param4_grad_phot_pairs())
 def test_grad_psbl_photastrom_param4_phot(class_name, method_name):
     """Param4 COM-frame init names (t0_com, u0_amp_com) wired in grad_smoke."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param4_grad_ast_pairs())
+def test_grad_psbl_photastrom_param4_ast(class_name, method_name):
+    """Param4 astrometry + ast likelihood via JAX gaussian kernels."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_likelihood_grad_pairs())
+def test_grad_psbl_photastrom_likelihood(class_name, method_name):
+    """PSBL PhotAstrom Param2/3 chi2 / log-likelihood JAX grad smoke."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_param2_grad_pairs())
+def test_grad_psbl_gp_param2(class_name, method_name):
+    """PSBL PhotAstrom GP Param2 ``get_photometry_with_gp`` grad smoke."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_gp_orbit_grad_pairs())
+def test_grad_bspl_photastrom_gp_orbit(class_name, method_name):
+    """BSPL GP orbit / Param2/3 phot + GP grad smoke."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_orbit_param1_grad_bulk_pairs()
+)
+def test_grad_psbl_photastrom_orbit_param1_bulk(class_name, method_name):
     _, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, jax_inst)
     g, init_names = grad_smoke_jax(
