@@ -1239,7 +1239,7 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
 
     pnames = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
               'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-              'q', 'sep', 'alpha', 'b_sff1', 'mag_src1']
+              'q', 'sep', 'alpha', 'b_sff1', 'mag_src1', 'dmag_Lp_Ls1']
 
     # There should be a better way to do this.
     p_in_params = {k: p_in[k] for k in pnames}
@@ -1811,7 +1811,7 @@ def test_plot_model_and_data_GP_err():
                           phot_data=['I_OGLE'],
                           ast_data=[])
 
-    outdir = '/u/jlu/work/microlens/OB120169/a_2020_08_18/model_fits/201_phot_ogle_gp/base_a/'
+    outdir = _resolve_data_path('/u/jlu/work/microlens/OB120169/a_2020_08_18/model_fits/201_phot_ogle_gp/base_a/')
     outbase = 'a1_'
 
     fitter = model_fitter.MicrolensSolver(data,
