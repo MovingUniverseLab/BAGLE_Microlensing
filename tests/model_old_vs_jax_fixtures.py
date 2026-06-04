@@ -1592,6 +1592,57 @@ def bspl_gp_grad_pairs() -> list[tuple[str, str]]:
     ]
 
 
+def bspl_photastrom_gp_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom GP Param1 ``get_photometry_with_gp`` grad smoke."""
+    return [
+        (c, m)
+        for c, m in bspl_photastrom_gp_param1_pairs()
+        if m == "get_photometry_with_gp"
+    ]
+
+
+def psbl_gp_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL phot / PhotAstrom GP Param1 ``get_photometry_with_gp`` grad smoke."""
+    out: list[tuple[str, str]] = []
+    for pairs_fn in (psbl_gp_param1_pairs, psbl_photastrom_gp_param1_pairs):
+        out.extend(
+            (c, m)
+            for c, m in pairs_fn()
+            if m == "get_photometry_with_gp"
+        )
+    return sorted(set(out))
+
+
+_BSPL_PHOTASTROM_PARAM1_CORE_AST = tuple(
+    m
+    for m in PSBL_PHOTASTROM_AST_METHODS
+    if m not in ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+)
+
+
+def bspl_photastrom_param1_grad_bulk_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom Param1 phot + core astrometry (FD grad)."""
+    methods = PSBL_PHOT_METHODS + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+    return sorted(
+        (c, m)
+        for c, m in bspl_photastrom_param1_pairs()
+        if m in methods
+    )
+
+
+def psbl_photastrom_param1_grad_bulk_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param1 phot + core astrometry (FD grad; chi2 flat at fixture)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("PSBL_PhotAstrom_noPar_Param1", "PSBL_PhotAstrom_Par_Param1")
+    methods = PSBL_PHOT_METHODS + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+    return sorted(
+        (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
 def bspl_phot_grad_pairs() -> list[tuple[str, str]]:
     """BSPL static phot-only Param1 phot/amp grad smoke."""
     import bagle.model_jax as model_jax
@@ -2552,8 +2603,17 @@ def grad_smoke_jax(
             return g, init_names
         return g
 
+    _psbl_phot_only = ek.startswith("psbl_phot_")
+    if method_name == "get_photometry_with_gp" and layout.has_gp and ek.startswith(
+        ("bspl_photastrom", "psbl_photastrom")
+    ):
+        g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
+        if return_names:
+            return g, init_names
+        return g
+
     if method_name == "get_photometry_with_gp" and layout.has_gp and (
-        ek in pspl_phot_kinds or ek.startswith(("psbl_phot", "bspl_phot"))
+        ek in pspl_phot_kinds or ek == "bspl_phot" or _psbl_phot_only
     ):
         from bagle.jax.gp import _GP_QUALITY, _gp_has_fixed_jitter
         import tinygp
@@ -2610,7 +2670,7 @@ def grad_smoke_jax(
 
             def mean_fn(x):
                 x1 = jnp.atleast_1d(x)
-                if ek.startswith("psbl_phot"):
+                if _psbl_phot_only:
                     base = _base_vec_from_init(v, init_names, base_names)
                     (
                         _tag,
@@ -2694,6 +2754,8 @@ def grad_smoke_jax(
             return jnp.sum(cond.gp.loc)
 
         g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if not np.all(np.isfinite(g)) or np.linalg.norm(g) == 0.0:
+            g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
         if return_names:
             return g, init_names
         return g
@@ -2733,13 +2795,13 @@ def grad_smoke_jax(
             return jnp.sum(out)
 
         g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if not np.all(np.isfinite(g)) or np.linalg.norm(g) == 0.0:
+            g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
         if return_names:
             return g, init_names
         return g
 
-    if method_name in ("get_photometry", "get_amplification") and ek.startswith(
-        "psbl_phot"
-    ):
+    if method_name in ("get_photometry", "get_amplification") and _psbl_phot_only:
 
         def forward(v):
             base = _base_vec_from_init(v, init_names, base_names)
@@ -2803,7 +2865,14 @@ def grad_smoke_jax(
             return g, init_names
         return g
 
-    if method_name in PSBL_PHOT_METHODS and ek.startswith("bspl_photastrom"):
+    _photastrom_grad_methods = (
+        PSBL_PHOT_METHODS
+        + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+        + PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+    )
+    if method_name in _photastrom_grad_methods and ek.startswith(
+        ("bspl_photastrom", "psbl_photastrom")
+    ):
         g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
         if return_names:
             return g, init_names
