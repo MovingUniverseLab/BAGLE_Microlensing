@@ -329,9 +329,7 @@ def call_method_via_jax_eval(instance, method_name: str, t: np.ndarray):
         if out is not None:
             return out
     if method_name in PHOT_LIKELIHOOD_METHODS:
-        mag = np.asarray(instance.get_photometry(t), dtype=np.float64)
-        mag = mag + 0.05
-        err = np.full_like(t, 0.02, dtype=np.float64)
+        mag, err = synthetic_phot_obs(instance, t)
         phot_fn = {
             "get_chi2_photometry": try_get_chi2_photometry,
             "log_likely_photometry_each": try_get_log_likely_photometry_each,
@@ -341,16 +339,14 @@ def call_method_via_jax_eval(instance, method_name: str, t: np.ndarray):
             if out is not None:
                 return out
     if method_name in AST_LIKELIHOOD_METHODS:
-        pos = np.asarray(instance.get_astrometry(t), dtype=np.float64)
-        pos = pos + np.array([0.001, 0.001])
-        err = np.full_like(t, 0.001, dtype=np.float64)
+        x_obs, y_obs, x_err, y_err = synthetic_ast_obs(instance, t)
         ast_fn = {
             "get_chi2_astrometry": try_get_chi2_astrometry,
             "log_likely_astrometry_each": try_get_log_likely_astrometry_each,
         }.get(method_name)
         if ast_fn is not None:
             out = ast_fn(
-                instance, t, pos[:, 0], pos[:, 1], err, err, filt_idx=0
+                instance, t, x_obs, y_obs, x_err, y_err, filt_idx=0
             )
             if out is not None:
                 return out
@@ -1834,11 +1830,102 @@ def psbl_photastrom_param6_grad_pairs() -> list[tuple[str, str]]:
 
 
 def psbl_photastrom_orbit_param2_grad_bulk_pairs() -> list[tuple[str, str]]:
-    """PSBL PhotAstrom CircOrbs/EllOrbs Param2 phot + core astrometry grad smoke."""
+    """PSBL PhotAstrom keplerian orbit Param2 phot + core astrometry grad smoke."""
     methods = PSBL_PHOT_METHODS + _BSPL_PHOTASTROM_PARAM1_CORE_AST
     out: list[tuple[str, str]] = []
-    for fn in (psbl_photastrom_circorbs_param2_pairs, psbl_photastrom_ellorbs_param2_pairs):
-        out.extend((c, m) for c, m in fn() if m in methods)
+    for orbit in ("CircOrbs", "EllOrbs", "AccOrbs", "LinOrbs"):
+        no_par = f"PSBL_PhotAstrom_noPar_{orbit}_Param2"
+        par = f"PSBL_PhotAstrom_Par_{orbit}_Param2"
+        pairs = _psbl_photastrom_full_pairs_for_classes((no_par, par))
+        out.extend((c, m) for c, m in pairs if m in methods)
+    return sorted(set(out))
+
+
+def psbl_photastrom_circorbs_ellorbs_param38_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom CircOrbs/EllOrbs Param3/8 grad (FD)."""
+    methods = (
+        PSBL_PHOT_METHODS
+        + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+        + ("get_u",)
+        + PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+    )
+    return sorted(
+        (c, m)
+        for c, m in psbl_photastrom_circorbs_ellorbs_param38_pairs()
+        if m in methods
+    )
+
+
+def psbl_photastrom_param7_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param7 static + orbit variants grad (FD; ``get_u`` flat)."""
+    methods = (
+        PSBL_PHOT_METHODS
+        + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+        + ("get_chi2_photometry", "log_likely_photometry_each")
+    )
+    return sorted(
+        (c, m) for c, m in psbl_photastrom_param7_pairs() if m in methods
+    )
+
+
+def psbl_photastrom_orbit_param4_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom CircOrbs/EllOrbs Param4 grad (FD)."""
+    methods = (
+        PSBL_PHOT_METHODS
+        + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+        + ("get_u",)
+        + PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+    )
+    return sorted(
+        (c, m) for c, m in psbl_photastrom_orbit_param4_pairs() if m in methods
+    )
+
+
+def bspl_gp_extended_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom GP orbit Param extended grad (host FD for orbit GP)."""
+    skip = {("BSPL_PhotAstrom_Par_GP_Param1", "get_u")}
+    methods = (
+        GP_PHOT_METHODS
+        + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+        + FSPL_PHOTASTROM_EXTENDED_METHODS
+    )
+    return sorted(
+        (c, m)
+        for c, m in bspl_gp_extended_pairs()
+        if m in methods and (c, m) not in skip
+    )
+
+
+def bspl_photastrom_gp_orbit_phot_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL GP LinOrbs/AccOrbs phot + GP grad (host FD)."""
+    return sorted(
+        (c, m)
+        for c, m in bspl_photastrom_gp_orbit_and_param23_pairs()
+        if m in GP_PHOT_METHODS and "Orbs" in c
+    )
+
+
+def bspl_photastrom_extended_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom extended phot + likelihood grad (host FD)."""
+    skip = {("BSPL_PhotAstrom_Par_Param1", "get_u")}
+    methods = (
+        PSBL_PHOT_METHODS
+        + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+        + FSPL_PHOTASTROM_EXTENDED_METHODS
+    )
+    return sorted(
+        (c, m)
+        for c, m in bspl_photastrom_extended_pairs()
+        if m in methods and (c, m) not in skip
+    )
+
+
+def psbl_photastrom_gp_param1_extended_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL GP Param1 ``get_photometry_with_gp`` + extended likelihood grad."""
+    methods = GP_PHOT_METHODS + PSBL_GP_EXTENDED_METHODS
+    out: list[tuple[str, str]] = []
+    for pairs_fn in (psbl_gp_param1_pairs, psbl_photastrom_gp_param1_pairs):
+        out.extend((c, m) for c, m in pairs_fn() if m in methods)
     return sorted(set(out))
 
 
@@ -2206,7 +2293,44 @@ def time_grid_ast(instance, n: int = 60) -> np.ndarray:
     return np.linspace(t0 - 3.0 * tE, t0 + 3.0 * tE, n)
 
 
-def call_method(instance, method_name: str, t: np.ndarray):
+def synthetic_phot_obs(
+    instance,
+    t: np.ndarray,
+    *,
+    mag_offset: float = 0.05,
+    err: float = 0.02,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Synthetic photometry obs offset from model at the current init vector."""
+    mag = np.asarray(instance.get_photometry(t), dtype=np.float64)
+    mag_obs = mag + mag_offset
+    mag_err = np.full_like(t, err, dtype=np.float64)
+    return mag_obs, mag_err
+
+
+def synthetic_ast_obs(
+    instance,
+    t: np.ndarray,
+    *,
+    pos_offset: tuple[float, float] = (0.001, 0.001),
+    err: float = 0.001,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Synthetic astrometry obs offset from model at the current init vector."""
+    pos = np.asarray(instance.get_astrometry(t), dtype=np.float64)
+    x_obs = pos[:, 0] + pos_offset[0]
+    y_obs = pos[:, 1] + pos_offset[1]
+    x_err = np.full_like(t, err, dtype=np.float64)
+    y_err = np.full_like(t, err, dtype=np.float64)
+    return x_obs, y_obs, x_err, y_err
+
+
+def call_method(
+    instance,
+    method_name: str,
+    t: np.ndarray,
+    *,
+    fixed_phot: tuple[np.ndarray, np.ndarray] | None = None,
+    fixed_ast: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray] | None = None,
+):
     method = getattr(instance, method_name)
     sig = inspect.signature(method)
     kwargs: dict[str, Any] = {}
@@ -2217,15 +2341,17 @@ def call_method(instance, method_name: str, t: np.ndarray):
         err = np.full_like(t, 0.02)
         return method(t, mag, err, filt_idx=0, t_pred=t[:10])
     if method_name in PHOT_LIKELIHOOD_METHODS:
-        mag = np.asarray(instance.get_photometry(t), dtype=np.float64)
-        mag = mag + 0.05
-        err = np.full_like(t, 0.02, dtype=np.float64)
+        if fixed_phot is not None:
+            mag, err = fixed_phot
+        else:
+            mag, err = synthetic_phot_obs(instance, t)
         return method(t, mag, err, **kwargs)
     if method_name in AST_LIKELIHOOD_METHODS:
-        pos = np.asarray(instance.get_astrometry(t), dtype=np.float64)
-        pos = pos + np.array([0.001, 0.001])
-        err = np.full_like(t, 0.001, dtype=np.float64)
-        return method(t, pos[:, 0], pos[:, 1], err, err, **kwargs)
+        if fixed_ast is not None:
+            x_obs, y_obs, x_err, y_err = fixed_ast
+        else:
+            x_obs, y_obs, x_err, y_err = synthetic_ast_obs(instance, t)
+        return method(t, x_obs, y_obs, x_err, y_err, **kwargs)
     return method(t, **kwargs)
 
 
@@ -2724,11 +2850,25 @@ def _fd_grad_host(
     """Central finite-difference grad w.r.t. init vector via host model forward."""
     vec0_np = np.asarray(vec0, dtype=np.float64)
     t_np = np.asarray(t, dtype=np.float64)
+    fixed_phot = fixed_ast = None
+    if method_name in PHOT_LIKELIHOOD_METHODS or method_name in AST_LIKELIHOOD_METHODS:
+        _, inst0 = build_paired_instances(class_name)
+        scatter_init_vector(inst0, vec0_np, init_names)
+        if method_name in PHOT_LIKELIHOOD_METHODS:
+            fixed_phot = synthetic_phot_obs(inst0, t_np)
+        else:
+            fixed_ast = synthetic_ast_obs(inst0, t_np)
 
     def _sum(vec_np: np.ndarray) -> float:
         _, inst = build_paired_instances(class_name)
         scatter_init_vector(inst, vec_np, init_names)
-        out = call_method(inst, method_name, t_np)
+        out = call_method(
+            inst,
+            method_name,
+            t_np,
+            fixed_phot=fixed_phot,
+            fixed_ast=fixed_ast,
+        )
         return float(np.sum(np.asarray(out, dtype=np.float64)))
 
     g = np.zeros(len(vec0_np), dtype=np.float64)
@@ -2936,16 +3076,17 @@ def grad_smoke_jax(
     )
 
     def _phot_obs():
-        mag = jnp.asarray(jax_inst.get_photometry(t), dtype=jnp.float64)
-        mag = mag + 0.05
-        err = jnp.full_like(mag, 0.02, dtype=jnp.float64)
-        return mag, err
+        mag, err = synthetic_phot_obs(jax_inst, t)
+        return jnp.asarray(mag, dtype=jnp.float64), jnp.asarray(err, dtype=jnp.float64)
 
     def _ast_obs():
-        pos = jnp.asarray(jax_inst.get_astrometry(t), dtype=jnp.float64)
-        pos = pos + jnp.array([0.001, 0.001], dtype=jnp.float64)
-        err = jnp.full_like(pos[:, 0], 0.001, dtype=jnp.float64)
-        return pos[:, 0], pos[:, 1], err, err
+        x_obs, y_obs, x_err, y_err = synthetic_ast_obs(jax_inst, t)
+        return (
+            jnp.asarray(x_obs, dtype=jnp.float64),
+            jnp.asarray(y_obs, dtype=jnp.float64),
+            jnp.asarray(x_err, dtype=jnp.float64),
+            jnp.asarray(y_err, dtype=jnp.float64),
+        )
 
     def _pspl_geom(v):
         base = _base_vec_for_layout(v, init_names, base_names, layout, jax_inst)

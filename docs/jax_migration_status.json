@@ -7827,7 +7827,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7837,7 +7837,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7847,7 +7847,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7857,7 +7857,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7867,7 +7867,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7877,7 +7877,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7957,7 +7957,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7977,7 +7977,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8337,7 +8337,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8347,7 +8347,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8357,7 +8357,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8367,7 +8367,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8377,7 +8377,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8387,7 +8387,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8457,7 +8457,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8467,7 +8467,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8477,7 +8477,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8487,7 +8487,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8497,7 +8497,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8507,7 +8507,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8517,7 +8517,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8527,7 +8527,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8537,7 +8537,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8547,7 +8547,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8557,7 +8557,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8627,7 +8627,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8637,7 +8637,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8647,7 +8647,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8657,7 +8657,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8667,7 +8667,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8677,7 +8677,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8687,7 +8687,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8697,7 +8697,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8707,7 +8707,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8717,7 +8717,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8727,7 +8727,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8807,7 +8807,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8827,7 +8827,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8847,7 +8847,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8857,7 +8857,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8867,7 +8867,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8877,7 +8877,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8887,7 +8887,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8897,7 +8897,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8967,7 +8967,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8977,7 +8977,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8987,7 +8987,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8997,7 +8997,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9007,7 +9007,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9357,7 +9357,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9367,7 +9367,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9377,7 +9377,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9387,7 +9387,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9397,7 +9397,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9407,7 +9407,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9477,7 +9477,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9487,7 +9487,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9497,7 +9497,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9507,7 +9507,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9517,7 +9517,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9527,7 +9527,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9537,7 +9537,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9547,7 +9547,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9557,7 +9557,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9567,7 +9567,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9577,7 +9577,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9647,7 +9647,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9657,7 +9657,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9667,7 +9667,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9677,7 +9677,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9687,7 +9687,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9697,7 +9697,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9707,7 +9707,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9717,7 +9717,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9727,7 +9727,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9737,7 +9737,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9747,7 +9747,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9827,7 +9827,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9847,7 +9847,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9867,7 +9867,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9877,7 +9877,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9887,7 +9887,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9897,7 +9897,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9907,7 +9907,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9917,7 +9917,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9987,7 +9987,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9997,7 +9997,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10007,7 +10007,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10017,7 +10017,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10027,7 +10027,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10037,7 +10037,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10047,7 +10047,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10157,7 +10157,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10167,7 +10167,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10187,7 +10187,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10717,7 +10717,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10727,7 +10727,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10737,7 +10737,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10747,7 +10747,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10757,7 +10757,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10767,7 +10767,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10847,7 +10847,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10867,7 +10867,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -11737,7 +11737,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -11747,7 +11747,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -11757,7 +11757,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -11767,7 +11767,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -11777,7 +11777,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -11787,7 +11787,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -11867,7 +11867,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -11887,7 +11887,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12247,7 +12247,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12257,7 +12257,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12267,7 +12267,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12277,7 +12277,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12287,7 +12287,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12297,7 +12297,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12377,7 +12377,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12397,7 +12397,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12757,7 +12757,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12767,7 +12767,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12777,7 +12777,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12787,7 +12787,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12797,7 +12797,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12807,7 +12807,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12877,7 +12877,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12887,7 +12887,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12897,7 +12897,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12907,7 +12907,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12917,7 +12917,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12927,7 +12927,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12937,7 +12937,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12947,7 +12947,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12957,7 +12957,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12967,7 +12967,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12977,7 +12977,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13047,7 +13047,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13057,7 +13057,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13067,7 +13067,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13077,7 +13077,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13087,7 +13087,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13097,7 +13097,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13107,7 +13107,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13117,7 +13117,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13127,7 +13127,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13137,7 +13137,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13147,7 +13147,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13227,7 +13227,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13247,7 +13247,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13267,7 +13267,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13277,7 +13277,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13287,7 +13287,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13297,7 +13297,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13307,7 +13307,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13317,7 +13317,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13387,7 +13387,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13397,7 +13397,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13407,7 +13407,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13417,7 +13417,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13427,7 +13427,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13777,7 +13777,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13787,7 +13787,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13797,7 +13797,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13807,7 +13807,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13817,7 +13817,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13827,7 +13827,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13897,7 +13897,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13907,7 +13907,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13917,7 +13917,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13927,7 +13927,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13937,7 +13937,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13947,7 +13947,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13957,7 +13957,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13967,7 +13967,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13977,7 +13977,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13987,7 +13987,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13997,7 +13997,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14067,7 +14067,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14077,7 +14077,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14087,7 +14087,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14097,7 +14097,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14107,7 +14107,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14117,7 +14117,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14127,7 +14127,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14137,7 +14137,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14147,7 +14147,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14157,7 +14157,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14167,7 +14167,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14247,7 +14247,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14267,7 +14267,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14287,7 +14287,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14297,7 +14297,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14307,7 +14307,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14317,7 +14317,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14327,7 +14327,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14337,7 +14337,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14407,7 +14407,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14417,7 +14417,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14427,7 +14427,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14437,7 +14437,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14447,7 +14447,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14457,7 +14457,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14467,7 +14467,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14577,7 +14577,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14587,7 +14587,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14607,7 +14607,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15137,7 +15137,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15147,7 +15147,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15157,7 +15157,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15167,7 +15167,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15177,7 +15177,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15187,7 +15187,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15267,7 +15267,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15287,7 +15287,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -16327,92 +16327,12 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "PSBL_Phot_Par_GP_Param1",
       "method_name": "get_photometry",
-      "family": "PSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
-      "grad": "not_run",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "PSBL_Phot_Par_GP_Param1",
-      "method_name": "get_astrometry_unlensed",
-      "family": "PSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "PSBL_Phot_Par_GP_Param1",
-      "method_name": "get_lens_astrometry",
-      "family": "PSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "PSBL_Phot_Par_GP_Param1",
-      "method_name": "get_astrometry",
-      "family": "PSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "PSBL_Phot_Par_GP_Param1",
-      "method_name": "get_centroid_shift",
-      "family": "PSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "PSBL_Phot_Par_GP_Param1",
-      "method_name": "get_resolved_astrometry",
-      "family": "PSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
-      "grad": "not_run",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "PSBL_Phot_Par_GP_Param1",
-      "method_name": "get_resolved_lens_astrometry",
-      "family": "PSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
-      "grad": "not_run",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "PSBL_Phot_Par_GP_Param1",
-      "method_name": "get_astrometry_outline_unlensed",
-      "family": "PSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "PSBL_Phot_Par_GP_Param1",
-      "method_name": "get_photometry_with_gp",
       "family": "PSBL",
       "applicable": true,
       "jax_forward": "jax_only",
@@ -16422,6 +16342,86 @@
     },
     {
       "class_name": "PSBL_Phot_Par_GP_Param1",
+      "method_name": "get_astrometry_unlensed",
+      "family": "PSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "PSBL_Phot_Par_GP_Param1",
+      "method_name": "get_lens_astrometry",
+      "family": "PSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "PSBL_Phot_Par_GP_Param1",
+      "method_name": "get_astrometry",
+      "family": "PSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "PSBL_Phot_Par_GP_Param1",
+      "method_name": "get_centroid_shift",
+      "family": "PSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "PSBL_Phot_Par_GP_Param1",
+      "method_name": "get_resolved_astrometry",
+      "family": "PSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "not_run",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "PSBL_Phot_Par_GP_Param1",
+      "method_name": "get_resolved_lens_astrometry",
+      "family": "PSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "not_run",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "PSBL_Phot_Par_GP_Param1",
+      "method_name": "get_astrometry_outline_unlensed",
+      "family": "PSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "PSBL_Phot_Par_GP_Param1",
+      "method_name": "get_photometry_with_gp",
+      "family": "PSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "PSBL_Phot_Par_GP_Param1",
       "method_name": "get_source_astrometry_unlensed",
       "family": "PSBL",
       "applicable": false,
@@ -17007,92 +17007,12 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "PSBL_Phot_noPar_GP_Param1",
       "method_name": "get_photometry",
-      "family": "PSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
-      "grad": "not_run",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "PSBL_Phot_noPar_GP_Param1",
-      "method_name": "get_astrometry_unlensed",
-      "family": "PSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "PSBL_Phot_noPar_GP_Param1",
-      "method_name": "get_lens_astrometry",
-      "family": "PSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "PSBL_Phot_noPar_GP_Param1",
-      "method_name": "get_astrometry",
-      "family": "PSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "PSBL_Phot_noPar_GP_Param1",
-      "method_name": "get_centroid_shift",
-      "family": "PSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "PSBL_Phot_noPar_GP_Param1",
-      "method_name": "get_resolved_astrometry",
-      "family": "PSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
-      "grad": "not_run",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "PSBL_Phot_noPar_GP_Param1",
-      "method_name": "get_resolved_lens_astrometry",
-      "family": "PSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
-      "grad": "not_run",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "PSBL_Phot_noPar_GP_Param1",
-      "method_name": "get_astrometry_outline_unlensed",
-      "family": "PSBL",
-      "applicable": false,
-      "jax_forward": "numpy_fallback",
-      "parity": "not_run",
-      "grad": "not_run",
-      "parity_enabled": false
-    },
-    {
-      "class_name": "PSBL_Phot_noPar_GP_Param1",
-      "method_name": "get_photometry_with_gp",
       "family": "PSBL",
       "applicable": true,
       "jax_forward": "jax_only",
@@ -17102,6 +17022,86 @@
     },
     {
       "class_name": "PSBL_Phot_noPar_GP_Param1",
+      "method_name": "get_astrometry_unlensed",
+      "family": "PSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "PSBL_Phot_noPar_GP_Param1",
+      "method_name": "get_lens_astrometry",
+      "family": "PSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "PSBL_Phot_noPar_GP_Param1",
+      "method_name": "get_astrometry",
+      "family": "PSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "PSBL_Phot_noPar_GP_Param1",
+      "method_name": "get_centroid_shift",
+      "family": "PSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "PSBL_Phot_noPar_GP_Param1",
+      "method_name": "get_resolved_astrometry",
+      "family": "PSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "not_run",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "PSBL_Phot_noPar_GP_Param1",
+      "method_name": "get_resolved_lens_astrometry",
+      "family": "PSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "not_run",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "PSBL_Phot_noPar_GP_Param1",
+      "method_name": "get_astrometry_outline_unlensed",
+      "family": "PSBL",
+      "applicable": false,
+      "jax_forward": "numpy_fallback",
+      "parity": "not_run",
+      "grad": "not_run",
+      "parity_enabled": false
+    },
+    {
+      "class_name": "PSBL_Phot_noPar_GP_Param1",
+      "method_name": "get_photometry_with_gp",
+      "family": "PSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "PSBL_Phot_noPar_GP_Param1",
       "method_name": "get_source_astrometry_unlensed",
       "family": "PSBL",
       "applicable": false,
@@ -17807,7 +17807,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -17817,7 +17817,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -17827,7 +17827,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -17837,7 +17837,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -17847,7 +17847,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -18317,7 +18317,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -18327,7 +18327,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -18337,7 +18337,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -18347,7 +18347,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -18357,7 +18357,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -18827,7 +18827,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -18837,7 +18837,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -18847,7 +18847,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -18857,7 +18857,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -18867,7 +18867,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -18997,7 +18997,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19007,7 +19007,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19017,7 +19017,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19027,7 +19027,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19037,7 +19037,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19047,7 +19047,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19057,7 +19057,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19137,7 +19137,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19167,7 +19167,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19177,7 +19177,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19187,7 +19187,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19197,7 +19197,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19207,7 +19207,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19217,7 +19217,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19227,7 +19227,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19307,7 +19307,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19337,7 +19337,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19347,7 +19347,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19357,7 +19357,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19367,7 +19367,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19377,7 +19377,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19387,7 +19387,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19397,7 +19397,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19477,7 +19477,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19507,7 +19507,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19517,7 +19517,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19527,7 +19527,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19537,7 +19537,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19547,7 +19547,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19557,7 +19557,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19567,7 +19567,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19647,7 +19647,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19677,7 +19677,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19687,7 +19687,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19697,7 +19697,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19707,7 +19707,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19717,7 +19717,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19727,7 +19727,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19737,7 +19737,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19817,7 +19817,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19847,7 +19847,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19857,7 +19857,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19867,7 +19867,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19877,7 +19877,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19887,7 +19887,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19897,7 +19897,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19907,7 +19907,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -19987,7 +19987,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20017,7 +20017,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20027,7 +20027,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20037,7 +20037,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20047,7 +20047,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20057,7 +20057,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20197,7 +20197,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20207,7 +20207,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20217,7 +20217,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20227,7 +20227,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20357,7 +20357,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20367,7 +20367,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20377,7 +20377,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20387,7 +20387,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20397,7 +20397,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20527,7 +20527,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20537,7 +20537,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20547,7 +20547,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20557,7 +20557,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -20567,7 +20567,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21037,7 +21037,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21047,7 +21047,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21057,7 +21057,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21067,7 +21067,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21077,7 +21077,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21217,7 +21217,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21227,7 +21227,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21237,7 +21237,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21247,7 +21247,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21377,7 +21377,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21387,7 +21387,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21397,7 +21397,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21407,7 +21407,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21417,7 +21417,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21547,7 +21547,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21557,7 +21557,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21567,7 +21567,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21577,7 +21577,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -21587,7 +21587,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -22057,7 +22057,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -22067,7 +22067,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -22077,7 +22077,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -22087,7 +22087,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -22097,7 +22097,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -22567,7 +22567,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -22577,7 +22577,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -22587,7 +22587,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -22597,7 +22597,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -22607,7 +22607,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23077,7 +23077,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23087,7 +23087,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23097,7 +23097,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23107,7 +23107,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23117,7 +23117,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23247,7 +23247,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23257,7 +23257,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23267,7 +23267,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23277,7 +23277,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23287,7 +23287,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23297,7 +23297,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23307,7 +23307,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23387,7 +23387,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23417,7 +23417,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23427,7 +23427,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23437,7 +23437,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23447,7 +23447,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23457,7 +23457,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23467,7 +23467,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23477,7 +23477,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23557,7 +23557,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23587,7 +23587,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23597,7 +23597,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23607,7 +23607,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23617,7 +23617,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23627,7 +23627,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23637,7 +23637,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23647,7 +23647,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23727,7 +23727,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23757,7 +23757,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23767,7 +23767,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23777,7 +23777,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23787,7 +23787,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23797,7 +23797,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23807,7 +23807,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23817,7 +23817,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23897,7 +23897,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23927,7 +23927,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23937,7 +23937,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23947,7 +23947,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23957,7 +23957,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23967,7 +23967,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23977,7 +23977,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -23987,7 +23987,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24067,7 +24067,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24097,7 +24097,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24107,7 +24107,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24117,7 +24117,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24127,7 +24127,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24137,7 +24137,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24147,7 +24147,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24157,7 +24157,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24237,7 +24237,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24267,7 +24267,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24277,7 +24277,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24287,7 +24287,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24297,7 +24297,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24307,7 +24307,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24437,7 +24437,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24447,7 +24447,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24457,7 +24457,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24467,7 +24467,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24477,7 +24477,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24607,7 +24607,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24617,7 +24617,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24627,7 +24627,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24637,7 +24637,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24647,7 +24647,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24777,7 +24777,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24787,7 +24787,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24797,7 +24797,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24807,7 +24807,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -24817,7 +24817,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25287,7 +25287,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25297,7 +25297,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25307,7 +25307,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25317,7 +25317,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25327,7 +25327,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25457,7 +25457,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25467,7 +25467,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25477,7 +25477,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25487,7 +25487,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25497,7 +25497,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25647,7 +25647,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25667,7 +25667,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25797,7 +25797,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25807,7 +25807,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25817,7 +25817,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25827,7 +25827,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -25837,7 +25837,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40633,6 +40633,6 @@
   ],
   "summary": {
     "total_applicable": 2848,
-    "total_done": 713
+    "total_done": 1132
   }
 }
