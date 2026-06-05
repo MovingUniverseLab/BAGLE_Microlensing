@@ -8407,6 +8407,8 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
+        self.piE_E = piE_E
+        self.piE_N = piE_N
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
         self.xS0 = np.array([xS0_E, xS0_N])
@@ -8502,7 +8504,7 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.a = a
         self.aleph_sec = (self.mLp / (self.mLp + self.mLs)) * self.a  # mas
         self.aleph = self.a - self.aleph_sec  # mas
-        self.a_AU = dL * (self.a * 1e-3) * units.AU
+        self.a_AU = self.dL * (self.a * 1e-3) * units.AU
         mL = self.mL * units.Msun
         p = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mL))).to('day')
         self.p = p.value  # Period in Days
@@ -8524,7 +8526,6 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
 
         return
-
 
 class PSBL_PhotAstrom_CircOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
     """
@@ -28511,6 +28512,2965 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         return
 
 
+######################################################
+### POINT SOURCE BINARY LENS (PSBL) CLASSES ###
+######################################################
+# --------------------------------------------------
+#
+# Data Class Family - PSBL
+#
+# --------------------------------------------------
+
+class PSTL(PSPL):
+    """
+    Contains methods for model a PSBL photometry + astrometry.
+    This is a Data-type class in our hierarchy. It is abstract and should not
+    be instantiated.
+    """
+
+    def get_amp_arr(self, z_arr, z1, z2, z3):
+        """Calculations amplification array
+
+        Calculates the amplification A from the Jacobian J, :math:`A = 1/|J|`
+
+        Parameters
+        ----------
+        z_arr : array_like
+            | Complex position of images. ``Shape = [N_times, N_solutions, 1]``
+            | -- note this could be jagged.
+
+        z1 : array_like
+            Complex position(s) of lens 1 (primary). ``Shape = [N_times, 1]``
+
+        z2 : array_like
+            Complex position(s) of lens 2 (secondary). ``Shape = [N_times, 1]``
+
+        z3 : array_like
+            Complex position(s) of lens 3 (secondary). ``Shape = [N_times, 1]``
+
+        Returns
+        -------
+        amp_arr : array_like
+        """
+        z_arr = jnp.atleast_2d(jnp.asarray(z_arr))
+        z1 = jnp.atleast_1d(jnp.asarray(z1))
+        z2 = jnp.atleast_1d(jnp.asarray(z2))
+        z3 = jnp.atleast_1d(jnp.asarray(z3))
+        N_times = z1.shape[0]
+        # print(z_arr)
+        # print(z1)
+        # print(z2)
+        dwbardz = self.m1 / (z_arr - z1.reshape((N_times, 1))) ** 2
+        dwbardz += self.m2 / (z_arr - z2.reshape((N_times, 1))) ** 2
+        dwbardz += self.m3 / (z_arr - z3.reshape((N_times, 1))) ** 2
+        jacobian = 1 - jnp.absolute(dwbardz) ** 2
+        amp_arr = 1.0 / jnp.absolute(jacobian)  # Absolute value of J
+
+        return amp_arr
+
+    def rescale_complex_pos(self, w, z1, z2, z3):
+        """
+        Make sure everything is roughly centered on the origin
+        in a 1 x 1 box.
+        """
+        w = jnp.asarray(w, dtype=jnp.complex128)
+        z1 = jnp.asarray(z1, dtype=jnp.complex128)
+        z2 = jnp.asarray(z2, dtype=jnp.complex128)
+        z3 = jnp.asarray(z3, dtype=jnp.complex128)
+        m1 = jnp.array(jnp.asarray(self.m1, dtype=jnp.float64), copy=True)
+        m2 = jnp.array(jnp.asarray(self.m2, dtype=jnp.float64), copy=True)
+        m3 = jnp.array(jnp.asarray(self.m3, dtype=jnp.float64), copy=True)
+
+        # Put the positions of the source and lenses into
+        # an array, so we can calculate the average position
+        # and "width" of points at each time, in order to center
+        # and scale them.
+        pos = jnp.vstack([w, z1, z2, z3]).T
+
+        # Calculate the average position to get the shift.
+        shift = jnp.average(pos, axis=1)
+        s = shift[:, jnp.newaxis] if w.ndim > 1 else shift
+        w = w - s
+        z1 = z1 - s
+        z2 = z2 - s
+        z3 = z3 - s
+
+        # Calculate the average spread to get the scale.
+        pr, pi = jnp.real(pos), jnp.imag(pos)
+        xscale = jnp.max(pr, axis=1) - jnp.min(pr, axis=1)
+        yscale = jnp.max(pi, axis=1) - jnp.min(pi, axis=1)
+        xyscale = jnp.stack([xscale, yscale], axis=1)
+        scale = 1.0 / jnp.max(xyscale, axis=1)
+        sc = scale[:, jnp.newaxis] if w.ndim > 1 else scale
+        w = w * sc
+        z1 = z1 * sc
+        z2 = z2 * sc
+        z3 = z3 * sc
+        m1 = m1 * (scale ** 2)
+        m2 = m2 * (scale ** 2)
+        m3 = m3 * (scale ** 2)
+
+        return w, z1, z2, z3, m1, m2, m3, scale, shift
+
+    def get_image_pos_arr_old(self, w, z1, z2, z3, check_sols=True):
+        """Gets image positions for a triple lens (wrapper around :meth:`get_image_pos_arr`)."""
+
+        z_arr = self.get_image_pos_arr(
+            w, z1, z2, z3, self.m1, self.m2, self.m3, check_sols=check_sols
+        )
+        return z_arr
+
+    @staticmethod
+    def _decic_roots(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10):
+        """Solve degree-10 polynomial via companion matrix (scalar coeffs)."""
+        C = jnp.complex128([
+            [-p1 / p0, -p2 / p0, -p3 / p0, -p4 / p0, -p5 / p0,
+             -p6 / p0, -p7 / p0, -p8 / p0, -p9 / p0, -p10 / p0],
+            [1.0 + 0j, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1.0 + 0j, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1.0 + 0j, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1.0 + 0j, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1.0 + 0j, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1.0 + 0j, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1.0 + 0j, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1.0 + 0j, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1.0 + 0j, 0],
+        ])
+        return jnp.linalg.eigvals(C)
+
+    @staticmethod
+    def _triple_lens_poly_coeffs(w, wbar, a, r3, r3bar, e1, e2):
+        """Degree-10 lens equation coefficients (caustics frame)."""
+        p_0 = -(a**2) * wbar + a**2 * r3bar + wbar**3 - wbar**2 * r3bar
+
+        p_1 = (
+            a**2 * w * wbar
+            - a**2 * w * r3bar
+            + 3 * a**2 * wbar * r3
+            - 3 * a**2 * r3bar * r3
+            - a**2 * e1
+            - a**2 * e2
+            - a * wbar * e1
+            + a * wbar * e2
+            + a * r3bar * e1
+            - a * r3bar * e2
+            - w * wbar**3
+            + w * wbar**2 * r3bar
+            - 3 * wbar**3 * r3
+            + 3 * wbar**2 * r3bar * r3
+            + 2 * wbar**2
+            + wbar * r3bar * e1
+            + wbar * r3bar * e2
+            - 2 * wbar * r3bar
+        )
+
+        p_2 = (
+            3 * a**4 * wbar
+            - 3 * a**4 * r3bar
+            - a**3 * e1
+            + a**3 * e2
+            - 3 * a**2 * w * wbar * r3
+            + 3 * a**2 * w * r3bar * r3
+            + a**2 * w
+            - 3 * a**2 * wbar**3
+            + 3 * a**2 * wbar**2 * r3bar
+            - 3 * a**2 * wbar * r3**2
+            + 3 * a**2 * r3bar * r3**2
+            + 4 * a**2 * e1 * r3
+            + 4 * a**2 * e2 * r3
+            - a**2 * r3
+            + 3 * a * wbar**2 * e1
+            - 3 * a * wbar**2 * e2
+            - 2 * a * wbar * r3bar * e1
+            + 2 * a * wbar * r3bar * e2
+            + 3 * a * wbar * e1 * r3
+            - 3 * a * wbar * e2 * r3
+            - 3 * a * r3bar * e1 * r3
+            + 3 * a * r3bar * e2 * r3
+            - a * e1
+            + a * e2
+            + 3 * w * wbar**3 * r3
+            - 3 * w * wbar**2 * r3bar * r3
+            - 3 * w * wbar**2
+            + 2 * w * wbar * r3bar
+            + 3 * wbar**3 * r3**2
+            - 3 * wbar**2 * r3bar * r3**2
+            - 3 * wbar**2 * e1 * r3
+            - 3 * wbar**2 * e2 * r3
+            - 3 * wbar**2 * r3
+            - wbar * r3bar * e1 * r3
+            - wbar * r3bar * e2 * r3
+            + 4 * wbar * r3bar * r3
+            + wbar
+            + r3bar * e1
+            + r3bar * e2
+            - r3bar
+        )
+
+        p_3 = (
+            -3 * a**4 * w * wbar
+            + 3 * a**4 * w * r3bar
+            - 9 * a**4 * wbar * r3
+            + 9 * a**4 * r3bar * r3
+            + 2 * a**4 * e1
+            + 2 * a**4 * e2
+            + a**3 * w * e1
+            - a**3 * w * e2
+            + 3 * a**3 * wbar * e1
+            - 3 * a**3 * wbar * e2
+            - 3 * a**3 * r3bar * e1
+            + 3 * a**3 * r3bar * e2
+            + 3 * a**3 * e1 * r3
+            - 3 * a**3 * e2 * r3
+            + 3 * a**2 * w * wbar**3
+            - 3 * a**2 * w * wbar**2 * r3bar
+            + 3 * a**2 * w * wbar * r3**2
+            - 3 * a**2 * w * r3bar * r3**2
+            - a**2 * w * e1 * r3
+            - a**2 * w * e2 * r3
+            - 2 * a**2 * w * r3
+            + 9 * a**2 * wbar**3 * r3
+            - 9 * a**2 * wbar**2 * r3bar * r3
+            + 3 * a**2 * wbar**2 * e1
+            + 3 * a**2 * wbar**2 * e2
+            - 6 * a**2 * wbar**2
+            - 5 * a**2 * wbar * r3bar * e1
+            - 5 * a**2 * wbar * r3bar * e2
+            + 6 * a**2 * wbar * r3bar
+            + a**2 * wbar * r3**3
+            - a**2 * r3bar * r3**3
+            - a**2 * e1**2
+            + 2 * a**2 * e1 * e2
+            - 5 * a**2 * e1 * r3**2
+            - a**2 * e2**2
+            - 5 * a**2 * e2 * r3**2
+            + 2 * a**2 * r3**2
+            - 3 * a * w * wbar**2 * e1
+            + 3 * a * w * wbar**2 * e2
+            + 2 * a * w * wbar * r3bar * e1
+            - 2 * a * w * wbar * r3bar * e2
+            - 9 * a * wbar**2 * e1 * r3
+            + 9 * a * wbar**2 * e2 * r3
+            + 6 * a * wbar * r3bar * e1 * r3
+            - 6 * a * wbar * r3bar * e2 * r3
+            - 3 * a * wbar * e1 * r3**2
+            + 4 * a * wbar * e1
+            + 3 * a * wbar * e2 * r3**2
+            - 4 * a * wbar * e2
+            + a * r3bar * e1**2
+            + 3 * a * r3bar * e1 * r3**2
+            - 2 * a * r3bar * e1
+            - a * r3bar * e2**2
+            - 3 * a * r3bar * e2 * r3**2
+            + 2 * a * r3bar * e2
+            + a * e1**2 * r3
+            + 2 * a * e1 * r3
+            - a * e2**2 * r3
+            - 2 * a * e2 * r3
+            - 3 * w * wbar**3 * r3**2
+            + 3 * w * wbar**2 * r3bar * r3**2
+            + 3 * w * wbar**2 * e1 * r3
+            + 3 * w * wbar**2 * e2 * r3
+            + 6 * w * wbar**2 * r3
+            - 2 * w * wbar * r3bar * e1 * r3
+            - 2 * w * wbar * r3bar * e2 * r3
+            - 4 * w * wbar * r3bar * r3
+            - 3 * w * wbar
+            + w * r3bar
+            - wbar**3 * r3**3
+            + wbar**2 * r3bar * r3**3
+            + 6 * wbar**2 * e1 * r3**2
+            + 6 * wbar**2 * e2 * r3**2
+            - wbar * r3bar * e1 * r3**2
+            - wbar * r3bar * e2 * r3**2
+            - 2 * wbar * r3bar * r3**2
+            - 4 * wbar * e1 * r3
+            - 4 * wbar * e2 * r3
+            + wbar * r3
+            - r3bar * e1**2 * r3
+            - 2 * r3bar * e1 * e2 * r3
+            - r3bar * e2**2 * r3
+            + r3bar * r3
+        )
+
+        p_4 = (
+            -3 * a**6 * wbar
+            + 3 * a**6 * r3bar
+            + 2 * a**5 * e1
+            - 2 * a**5 * e2
+            + 9 * a**4 * w * wbar * r3
+            - 9 * a**4 * w * r3bar * r3
+            + a**4 * w * e1
+            + a**4 * w * e2
+            - 3 * a**4 * w
+            + 3 * a**4 * wbar**3
+            - 3 * a**4 * wbar**2 * r3bar
+            + 9 * a**4 * wbar * r3**2
+            - 9 * a**4 * r3bar * r3**2
+            - 9 * a**4 * e1 * r3
+            - 9 * a**4 * e2 * r3
+            + 3 * a**4 * r3
+            - 3 * a**3 * w * e1 * r3
+            + 3 * a**3 * w * e2 * r3
+            - 6 * a**3 * wbar**2 * e1
+            + 6 * a**3 * wbar**2 * e2
+            + 4 * a**3 * wbar * r3bar * e1
+            - 4 * a**3 * wbar * r3bar * e2
+            - 9 * a**3 * wbar * e1 * r3
+            + 9 * a**3 * wbar * e2 * r3
+            + 9 * a**3 * r3bar * e1 * r3
+            - 9 * a**3 * r3bar * e2 * r3
+            - a**3 * e1**2
+            - 3 * a**3 * e1 * r3**2
+            + 3 * a**3 * e1
+            + a**3 * e2**2
+            + 3 * a**3 * e2 * r3**2
+            - 3 * a**3 * e2
+            - 9 * a**2 * w * wbar**3 * r3
+            + 9 * a**2 * w * wbar**2 * r3bar * r3
+            - 3 * a**2 * w * wbar**2 * e1
+            - 3 * a**2 * w * wbar**2 * e2
+            + 9 * a**2 * w * wbar**2
+            + 2 * a**2 * w * wbar * r3bar * e1
+            + 2 * a**2 * w * wbar * r3bar * e2
+            - 6 * a**2 * w * wbar * r3bar
+            - a**2 * w * wbar * r3**3
+            + a**2 * w * r3bar * r3**3
+            + 2 * a**2 * w * e1 * r3**2
+            + 2 * a**2 * w * e2 * r3**2
+            + a**2 * w * r3**2
+            - 9 * a**2 * wbar**3 * r3**2
+            + 9 * a**2 * wbar**2 * r3bar * r3**2
+            + 9 * a**2 * wbar**2 * r3
+            + 9 * a**2 * wbar * r3bar * e1 * r3
+            + 9 * a**2 * wbar * r3bar * e2 * r3
+            - 12 * a**2 * wbar * r3bar * r3
+            + 3 * a**2 * wbar * e1**2
+            - 6 * a**2 * wbar * e1 * e2
+            + 4 * a**2 * wbar * e1
+            + 3 * a**2 * wbar * e2**2
+            + 4 * a**2 * wbar * e2
+            - 3 * a**2 * wbar
+            + 4 * a**2 * r3bar * e1 * e2
+            - 5 * a**2 * r3bar * e1
+            - 5 * a**2 * r3bar * e2
+            + 3 * a**2 * r3bar
+            + 3 * a**2 * e1**2 * r3
+            - 6 * a**2 * e1 * e2 * r3
+            + 2 * a**2 * e1 * r3**3
+            + 3 * a**2 * e2**2 * r3
+            + 2 * a**2 * e2 * r3**3
+            - a**2 * r3**3
+            + 9 * a * w * wbar**2 * e1 * r3
+            - 9 * a * w * wbar**2 * e2 * r3
+            - 6 * a * w * wbar * r3bar * e1 * r3
+            + 6 * a * w * wbar * r3bar * e2 * r3
+            - 6 * a * w * wbar * e1
+            + 6 * a * w * wbar * e2
+            + 2 * a * w * r3bar * e1
+            - 2 * a * w * r3bar * e2
+            + 9 * a * wbar**2 * e1 * r3**2
+            - 9 * a * wbar**2 * e2 * r3**2
+            - 6 * a * wbar * r3bar * e1 * r3**2
+            + 6 * a * wbar * r3bar * e2 * r3**2
+            - 6 * a * wbar * e1**2 * r3
+            + a * wbar * e1 * r3**3
+            - 6 * a * wbar * e1 * r3
+            + 6 * a * wbar * e2**2 * r3
+            - a * wbar * e2 * r3**3
+            + 6 * a * wbar * e2 * r3
+            - a * r3bar * e1**2 * r3
+            - a * r3bar * e1 * r3**3
+            + 4 * a * r3bar * e1 * r3
+            + a * r3bar * e2**2 * r3
+            + a * r3bar * e2 * r3**3
+            - 4 * a * r3bar * e2 * r3
+            - 2 * a * e1**2 * r3**2
+            - a * e1 * r3**2
+            + a * e1
+            + 2 * a * e2**2 * r3**2
+            + a * e2 * r3**2
+            - a * e2
+            + w * wbar**3 * r3**3
+            - w * wbar**2 * r3bar * r3**3
+            - 6 * w * wbar**2 * e1 * r3**2
+            - 6 * w * wbar**2 * e2 * r3**2
+            - 3 * w * wbar**2 * r3**2
+            + 4 * w * wbar * r3bar * e1 * r3**2
+            + 4 * w * wbar * r3bar * e2 * r3**2
+            + 2 * w * wbar * r3bar * r3**2
+            + 6 * w * wbar * e1 * r3
+            + 6 * w * wbar * e2 * r3
+            + 3 * w * wbar * r3
+            - 2 * w * r3bar * e1 * r3
+            - 2 * w * r3bar * e2 * r3
+            - w * r3bar * r3
+            - w
+            - 3 * wbar**2 * e1 * r3**3
+            - 3 * wbar**2 * e2 * r3**3
+            + wbar**2 * r3**3
+            + wbar * r3bar * e1 * r3**3
+            + wbar * r3bar * e2 * r3**3
+            + 3 * wbar * e1**2 * r3**2
+            + 6 * wbar * e1 * e2 * r3**2
+            + 2 * wbar * e1 * r3**2
+            + 3 * wbar * e2**2 * r3**2
+            + 2 * wbar * e2 * r3**2
+            - 2 * wbar * r3**2
+            + r3bar * e1**2 * r3**2
+            + 2 * r3bar * e1 * e2 * r3**2
+            - r3bar * e1 * r3**2
+            + r3bar * e2**2 * r3**2
+            - r3bar * e2 * r3**2
+            - e1 * r3
+            - e2 * r3
+            + r3
+        )
+
+        p_5 = (
+            3 * a**6 * w * wbar
+            - 3 * a**6 * w * r3bar
+            + 9 * a**6 * wbar * r3
+            - 9 * a**6 * r3bar * r3
+            - a**6 * e1
+            - a**6 * e2
+            - 2 * a**5 * w * e1
+            + 2 * a**5 * w * e2
+            - 3 * a**5 * wbar * e1
+            + 3 * a**5 * wbar * e2
+            + 3 * a**5 * r3bar * e1
+            - 3 * a**5 * r3bar * e2
+            - 6 * a**5 * e1 * r3
+            + 6 * a**5 * e2 * r3
+            - 3 * a**4 * w * wbar**3
+            + 3 * a**4 * w * wbar**2 * r3bar
+            - 9 * a**4 * w * wbar * r3**2
+            + 9 * a**4 * w * r3bar * r3**2
+            + 6 * a**4 * w * r3
+            - 9 * a**4 * wbar**3 * r3
+            + 9 * a**4 * wbar**2 * r3bar * r3
+            - 6 * a**4 * wbar**2 * e1
+            - 6 * a**4 * wbar**2 * e2
+            + 6 * a**4 * wbar**2
+            + 7 * a**4 * wbar * r3bar * e1
+            + 7 * a**4 * wbar * r3bar * e2
+            - 6 * a**4 * wbar * r3bar
+            - 3 * a**4 * wbar * r3**3
+            + 3 * a**4 * r3bar * r3**3
+            + 2 * a**4 * e1**2
+            - 4 * a**4 * e1 * e2
+            + 12 * a**4 * e1 * r3**2
+            + 2 * a**4 * e2**2
+            + 12 * a**4 * e2 * r3**2
+            - 6 * a**4 * r3**2
+            + 6 * a**3 * w * wbar**2 * e1
+            - 6 * a**3 * w * wbar**2 * e2
+            - 4 * a**3 * w * wbar * r3bar * e1
+            + 4 * a**3 * w * wbar * r3bar * e2
+            + 3 * a**3 * w * e1 * r3**2
+            - 3 * a**3 * w * e2 * r3**2
+            + 18 * a**3 * wbar**2 * e1 * r3
+            - 18 * a**3 * wbar**2 * e2 * r3
+            - 12 * a**3 * wbar * r3bar * e1 * r3
+            + 12 * a**3 * wbar * r3bar * e2 * r3
+            + 6 * a**3 * wbar * e1**2
+            + 9 * a**3 * wbar * e1 * r3**2
+            - 8 * a**3 * wbar * e1
+            - 6 * a**3 * wbar * e2**2
+            - 9 * a**3 * wbar * e2 * r3**2
+            + 8 * a**3 * wbar * e2
+            - 4 * a**3 * r3bar * e1**2
+            - 9 * a**3 * r3bar * e1 * r3**2
+            + 4 * a**3 * r3bar * e1
+            + 4 * a**3 * r3bar * e2**2
+            + 9 * a**3 * r3bar * e2 * r3**2
+            - 4 * a**3 * r3bar * e2
+            + a**3 * e1 * r3**3
+            - 6 * a**3 * e1 * r3
+            - a**3 * e2 * r3**3
+            + 6 * a**3 * e2 * r3
+            + 9 * a**2 * w * wbar**3 * r3**2
+            - 9 * a**2 * w * wbar**2 * r3bar * r3**2
+            - 18 * a**2 * w * wbar**2 * r3
+            + 12 * a**2 * w * wbar * r3bar * r3
+            - 3 * a**2 * w * wbar * e1**2
+            + 6 * a**2 * w * wbar * e1 * e2
+            - 6 * a**2 * w * wbar * e1
+            - 3 * a**2 * w * wbar * e2**2
+            - 6 * a**2 * w * wbar * e2
+            + 9 * a**2 * w * wbar
+            + a**2 * w * r3bar * e1**2
+            - 2 * a**2 * w * r3bar * e1 * e2
+            + 2 * a**2 * w * r3bar * e1
+            + a**2 * w * r3bar * e2**2
+            + 2 * a**2 * w * r3bar * e2
+            - 3 * a**2 * w * r3bar
+            - a**2 * w * e1 * r3**3
+            - a**2 * w * e2 * r3**3
+            + 3 * a**2 * wbar**3 * r3**3
+            - 3 * a**2 * wbar**2 * r3bar * r3**3
+            - 9 * a**2 * wbar**2 * e1 * r3**2
+            - 9 * a**2 * wbar**2 * e2 * r3**2
+            - 3 * a**2 * wbar * r3bar * e1 * r3**2
+            - 3 * a**2 * wbar * r3bar * e2 * r3**2
+            + 6 * a**2 * wbar * r3bar * r3**2
+            - 15 * a**2 * wbar * e1**2 * r3
+            + 6 * a**2 * wbar * e1 * e2 * r3
+            + 6 * a**2 * wbar * e1 * r3
+            - 15 * a**2 * wbar * e2**2 * r3
+            + 6 * a**2 * wbar * e2 * r3
+            - 3 * a**2 * wbar * r3
+            + 5 * a**2 * r3bar * e1**2 * r3
+            - 2 * a**2 * r3bar * e1 * e2 * r3
+            + 4 * a**2 * r3bar * e1 * r3
+            + 5 * a**2 * r3bar * e2**2 * r3
+            + 4 * a**2 * r3bar * e2 * r3
+            - 3 * a**2 * r3bar * r3
+            - 3 * a**2 * e1**2 * r3**2
+            + 2 * a**2 * e1**2
+            + 6 * a**2 * e1 * e2 * r3**2
+            - 4 * a**2 * e1 * e2
+            + a**2 * e1
+            - 3 * a**2 * e2**2 * r3**2
+            + 2 * a**2 * e2**2
+            + a**2 * e2
+            - 9 * a * w * wbar**2 * e1 * r3**2
+            + 9 * a * w * wbar**2 * e2 * r3**2
+            + 6 * a * w * wbar * r3bar * e1 * r3**2
+            - 6 * a * w * wbar * r3bar * e2 * r3**2
+            + 6 * a * w * wbar * e1**2 * r3
+            + 12 * a * w * wbar * e1 * r3
+            - 6 * a * w * wbar * e2**2 * r3
+            - 12 * a * w * wbar * e2 * r3
+            - 2 * a * w * r3bar * e1**2 * r3
+            - 4 * a * w * r3bar * e1 * r3
+            + 2 * a * w * r3bar * e2**2 * r3
+            + 4 * a * w * r3bar * e2 * r3
+            - 3 * a * w * e1
+            + 3 * a * w * e2
+            - 3 * a * wbar**2 * e1 * r3**3
+            + 3 * a * wbar**2 * e2 * r3**3
+            + 2 * a * wbar * r3bar * e1 * r3**3
+            - 2 * a * wbar * r3bar * e2 * r3**3
+            + 12 * a * wbar * e1**2 * r3**2
+            - 12 * a * wbar * e2**2 * r3**2
+            - a * r3bar * e1**2 * r3**2
+            - 2 * a * r3bar * e1 * r3**2
+            + a * r3bar * e2**2 * r3**2
+            + 2 * a * r3bar * e2 * r3**2
+            + a * e1**2 * r3**3
+            - 4 * a * e1**2 * r3
+            + a * e1 * r3
+            - a * e2**2 * r3**3
+            + 4 * a * e2**2 * r3
+            - a * e2 * r3
+            + 3 * w * wbar**2 * e1 * r3**3
+            + 3 * w * wbar**2 * e2 * r3**3
+            - 2 * w * wbar * r3bar * e1 * r3**3
+            - 2 * w * wbar * r3bar * e2 * r3**3
+            - 3 * w * wbar * e1**2 * r3**2
+            - 6 * w * wbar * e1 * e2 * r3**2
+            - 6 * w * wbar * e1 * r3**2
+            - 3 * w * wbar * e2**2 * r3**2
+            - 6 * w * wbar * e2 * r3**2
+            + w * r3bar * e1**2 * r3**2
+            + 2 * w * r3bar * e1 * e2 * r3**2
+            + 2 * w * r3bar * e1 * r3**2
+            + w * r3bar * e2**2 * r3**2
+            + 2 * w * r3bar * e2 * r3**2
+            + 3 * w * e1 * r3
+            + 3 * w * e2 * r3
+            - 3 * wbar * e1**2 * r3**3
+            - 6 * wbar * e1 * e2 * r3**3
+            + 2 * wbar * e1 * r3**3
+            - 3 * wbar * e2**2 * r3**3
+            + 2 * wbar * e2 * r3**3
+            + 2 * e1**2 * r3**2
+            + 4 * e1 * e2 * r3**2
+            - 2 * e1 * r3**2
+            + 2 * e2**2 * r3**2
+            - 2 * e2 * r3**2
+        )
+
+        p_6 = (
+            a**8 * wbar
+            - a**8 * r3bar
+            - a**7 * e1
+            + a**7 * e2
+            - 9 * a**6 * w * wbar * r3
+            + 9 * a**6 * w * r3bar * r3
+            - 2 * a**6 * w * e1
+            - 2 * a**6 * w * e2
+            + 3 * a**6 * w
+            - a**6 * wbar**3
+            + a**6 * wbar**2 * r3bar
+            - 9 * a**6 * wbar * r3**2
+            + 9 * a**6 * r3bar * r3**2
+            + 6 * a**6 * e1 * r3
+            + 6 * a**6 * e2 * r3
+            - 3 * a**6 * r3
+            + 6 * a**5 * w * e1 * r3
+            - 6 * a**5 * w * e2 * r3
+            + 3 * a**5 * wbar**2 * e1
+            - 3 * a**5 * wbar**2 * e2
+            - 2 * a**5 * wbar * r3bar * e1
+            + 2 * a**5 * wbar * r3bar * e2
+            + 9 * a**5 * wbar * e1 * r3
+            - 9 * a**5 * wbar * e2 * r3
+            - 9 * a**5 * r3bar * e1 * r3
+            + 9 * a**5 * r3bar * e2 * r3
+            + 2 * a**5 * e1**2
+            + 6 * a**5 * e1 * r3**2
+            - 3 * a**5 * e1
+            - 2 * a**5 * e2**2
+            - 6 * a**5 * e2 * r3**2
+            + 3 * a**5 * e2
+            + 9 * a**4 * w * wbar**3 * r3
+            - 9 * a**4 * w * wbar**2 * r3bar * r3
+            + 6 * a**4 * w * wbar**2 * e1
+            + 6 * a**4 * w * wbar**2 * e2
+            - 9 * a**4 * w * wbar**2
+            - 4 * a**4 * w * wbar * r3bar * e1
+            - 4 * a**4 * w * wbar * r3bar * e2
+            + 6 * a**4 * w * wbar * r3bar
+            + 3 * a**4 * w * wbar * r3**3
+            - 3 * a**4 * w * r3bar * r3**3
+            - 3 * a**4 * w * e1 * r3**2
+            - 3 * a**4 * w * e2 * r3**2
+            - 3 * a**4 * w * r3**2
+            + 9 * a**4 * wbar**3 * r3**2
+            - 9 * a**4 * wbar**2 * r3bar * r3**2
+            + 9 * a**4 * wbar**2 * e1 * r3
+            + 9 * a**4 * wbar**2 * e2 * r3
+            - 9 * a**4 * wbar**2 * r3
+            - 15 * a**4 * wbar * r3bar * e1 * r3
+            - 15 * a**4 * wbar * r3bar * e2 * r3
+            + 12 * a**4 * wbar * r3bar * r3
+            + 12 * a**4 * wbar * e1 * e2
+            - 8 * a**4 * wbar * e1
+            - 8 * a**4 * wbar * e2
+            + 3 * a**4 * wbar
+            - 2 * a**4 * r3bar * e1**2
+            - 8 * a**4 * r3bar * e1 * e2
+            + 7 * a**4 * r3bar * e1
+            - 2 * a**4 * r3bar * e2**2
+            + 7 * a**4 * r3bar * e2
+            - 3 * a**4 * r3bar
+            - 6 * a**4 * e1**2 * r3
+            + 12 * a**4 * e1 * e2 * r3
+            - 5 * a**4 * e1 * r3**3
+            - 6 * a**4 * e2**2 * r3
+            - 5 * a**4 * e2 * r3**3
+            + 3 * a**4 * r3**3
+            - 18 * a**3 * w * wbar**2 * e1 * r3
+            + 18 * a**3 * w * wbar**2 * e2 * r3
+            + 12 * a**3 * w * wbar * r3bar * e1 * r3
+            - 12 * a**3 * w * wbar * r3bar * e2 * r3
+            - 6 * a**3 * w * wbar * e1**2
+            + 12 * a**3 * w * wbar * e1
+            + 6 * a**3 * w * wbar * e2**2
+            - 12 * a**3 * w * wbar * e2
+            + 2 * a**3 * w * r3bar * e1**2
+            - 4 * a**3 * w * r3bar * e1
+            - 2 * a**3 * w * r3bar * e2**2
+            + 4 * a**3 * w * r3bar * e2
+            - a**3 * w * e1 * r3**3
+            + a**3 * w * e2 * r3**3
+            - 18 * a**3 * wbar**2 * e1 * r3**2
+            + 18 * a**3 * wbar**2 * e2 * r3**2
+            + 12 * a**3 * wbar * r3bar * e1 * r3**2
+            - 12 * a**3 * wbar * r3bar * e2 * r3**2
+            - 6 * a**3 * wbar * e1**2 * r3
+            - 3 * a**3 * wbar * e1 * r3**3
+            + 12 * a**3 * wbar * e1 * r3
+            + 6 * a**3 * wbar * e2**2 * r3
+            + 3 * a**3 * wbar * e2 * r3**3
+            - 12 * a**3 * wbar * e2 * r3
+            + 8 * a**3 * r3bar * e1**2 * r3
+            + 3 * a**3 * r3bar * e1 * r3**3
+            - 8 * a**3 * r3bar * e1 * r3
+            - 8 * a**3 * r3bar * e2**2 * r3
+            - 3 * a**3 * r3bar * e2 * r3**3
+            + 8 * a**3 * r3bar * e2 * r3
+            + a**3 * e1**3
+            - 3 * a**3 * e1**2 * e2
+            + 3 * a**3 * e1**2 * r3**2
+            + 4 * a**3 * e1**2
+            + 3 * a**3 * e1 * e2**2
+            + 3 * a**3 * e1 * r3**2
+            - 2 * a**3 * e1
+            - a**3 * e2**3
+            - 3 * a**3 * e2**2 * r3**2
+            - 4 * a**3 * e2**2
+            - 3 * a**3 * e2 * r3**2
+            + 2 * a**3 * e2
+            - 3 * a**2 * w * wbar**3 * r3**3
+            + 3 * a**2 * w * wbar**2 * r3bar * r3**3
+            + 9 * a**2 * w * wbar**2 * e1 * r3**2
+            + 9 * a**2 * w * wbar**2 * e2 * r3**2
+            + 9 * a**2 * w * wbar**2 * r3**2
+            - 6 * a**2 * w * wbar * r3bar * e1 * r3**2
+            - 6 * a**2 * w * wbar * r3bar * e2 * r3**2
+            - 6 * a**2 * w * wbar * r3bar * r3**2
+            + 15 * a**2 * w * wbar * e1**2 * r3
+            - 6 * a**2 * w * wbar * e1 * e2 * r3
+            - 6 * a**2 * w * wbar * e1 * r3
+            + 15 * a**2 * w * wbar * e2**2 * r3
+            - 6 * a**2 * w * wbar * e2 * r3
+            - 9 * a**2 * w * wbar * r3
+            - 5 * a**2 * w * r3bar * e1**2 * r3
+            + 2 * a**2 * w * r3bar * e1 * e2 * r3
+            + 2 * a**2 * w * r3bar * e1 * r3
+            - 5 * a**2 * w * r3bar * e2**2 * r3
+            + 2 * a**2 * w * r3bar * e2 * r3
+            + 3 * a**2 * w * r3bar * r3
+            - 3 * a**2 * w * e1**2
+            + 6 * a**2 * w * e1 * e2
+            - 3 * a**2 * w * e1
+            - 3 * a**2 * w * e2**2
+            - 3 * a**2 * w * e2
+            + 3 * a**2 * w
+            + 6 * a**2 * wbar**2 * e1 * r3**3
+            + 6 * a**2 * wbar**2 * e2 * r3**3
+            - 3 * a**2 * wbar**2 * r3**3
+            - a**2 * wbar * r3bar * e1 * r3**3
+            - a**2 * wbar * r3bar * e2 * r3**3
+            + 12 * a**2 * wbar * e1**2 * r3**2
+            - 12 * a**2 * wbar * e1 * e2 * r3**2
+            - 6 * a**2 * wbar * e1 * r3**2
+            + 12 * a**2 * wbar * e2**2 * r3**2
+            - 6 * a**2 * wbar * e2 * r3**2
+            + 6 * a**2 * wbar * r3**2
+            - 7 * a**2 * r3bar * e1**2 * r3**2
+            - 2 * a**2 * r3bar * e1 * e2 * r3**2
+            + a**2 * r3bar * e1 * r3**2
+            - 7 * a**2 * r3bar * e2**2 * r3**2
+            + a**2 * r3bar * e2 * r3**2
+            - 3 * a**2 * e1**3 * r3
+            + 3 * a**2 * e1**2 * e2 * r3
+            + a**2 * e1**2 * r3**3
+            - 7 * a**2 * e1**2 * r3
+            + 3 * a**2 * e1 * e2**2 * r3
+            - 2 * a**2 * e1 * e2 * r3**3
+            - 2 * a**2 * e1 * e2 * r3
+            + 4 * a**2 * e1 * r3
+            - 3 * a**2 * e2**3 * r3
+            + a**2 * e2**2 * r3**3
+            - 7 * a**2 * e2**2 * r3
+            + 4 * a**2 * e2 * r3
+            - 3 * a**2 * r3
+            + 3 * a * w * wbar**2 * e1 * r3**3
+            - 3 * a * w * wbar**2 * e2 * r3**3
+            - 2 * a * w * wbar * r3bar * e1 * r3**3
+            + 2 * a * w * wbar * r3bar * e2 * r3**3
+            - 12 * a * w * wbar * e1**2 * r3**2
+            - 6 * a * w * wbar * e1 * r3**2
+            + 12 * a * w * wbar * e2**2 * r3**2
+            + 6 * a * w * wbar * e2 * r3**2
+            + 4 * a * w * r3bar * e1**2 * r3**2
+            + 2 * a * w * r3bar * e1 * r3**2
+            - 4 * a * w * r3bar * e2**2 * r3**2
+            - 2 * a * w * r3bar * e2 * r3**2
+            + 6 * a * w * e1**2 * r3
+            + 3 * a * w * e1 * r3
+            - 6 * a * w * e2**2 * r3
+            - 3 * a * w * e2 * r3
+            - 6 * a * wbar * e1**2 * r3**3
+            + 2 * a * wbar * e1 * r3**3
+            + 6 * a * wbar * e2**2 * r3**3
+            - 2 * a * wbar * e2 * r3**3
+            + a * r3bar * e1**2 * r3**3
+            - a * r3bar * e2**2 * r3**3
+            + 3 * a * e1**3 * r3**2
+            + 3 * a * e1**2 * e2 * r3**2
+            + 2 * a * e1**2 * r3**2
+            - 3 * a * e1 * e2**2 * r3**2
+            - 2 * a * e1 * r3**2
+            - 3 * a * e2**3 * r3**2
+            - 2 * a * e2**2 * r3**2
+            + 2 * a * e2 * r3**2
+            + 3 * w * wbar * e1**2 * r3**3
+            + 6 * w * wbar * e1 * e2 * r3**3
+            + 3 * w * wbar * e2**2 * r3**3
+            - w * r3bar * e1**2 * r3**3
+            - 2 * w * r3bar * e1 * e2 * r3**3
+            - w * r3bar * e2**2 * r3**3
+            - 3 * w * e1**2 * r3**2
+            - 6 * w * e1 * e2 * r3**2
+            - 3 * w * e2**2 * r3**2
+            - e1**3 * r3**3
+            - 3 * e1**2 * e2 * r3**3
+            + e1**2 * r3**3
+            - 3 * e1 * e2**2 * r3**3
+            + 2 * e1 * e2 * r3**3
+            - e2**3 * r3**3
+            + e2**2 * r3**3
+        )
+
+        p_7 = (
+            -(a**8) * w * wbar
+            + a**8 * w * r3bar
+            - 3 * a**8 * wbar * r3
+            + 3 * a**8 * r3bar * r3
+            + a**7 * w * e1
+            - a**7 * w * e2
+            + a**7 * wbar * e1
+            - a**7 * wbar * e2
+            - a**7 * r3bar * e1
+            + a**7 * r3bar * e2
+            + 3 * a**7 * e1 * r3
+            - 3 * a**7 * e2 * r3
+            + a**6 * w * wbar**3
+            - a**6 * w * wbar**2 * r3bar
+            + 9 * a**6 * w * wbar * r3**2
+            - 9 * a**6 * w * r3bar * r3**2
+            + 3 * a**6 * w * e1 * r3
+            + 3 * a**6 * w * e2 * r3
+            - 6 * a**6 * w * r3
+            + 3 * a**6 * wbar**3 * r3
+            - 3 * a**6 * wbar**2 * r3bar * r3
+            + 3 * a**6 * wbar**2 * e1
+            + 3 * a**6 * wbar**2 * e2
+            - 2 * a**6 * wbar**2
+            - 3 * a**6 * wbar * r3bar * e1
+            - 3 * a**6 * wbar * r3bar * e2
+            + 2 * a**6 * wbar * r3bar
+            + 3 * a**6 * wbar * r3**3
+            - 3 * a**6 * r3bar * r3**3
+            - a**6 * e1**2
+            + 2 * a**6 * e1 * e2
+            - 9 * a**6 * e1 * r3**2
+            - a**6 * e2**2
+            - 9 * a**6 * e2 * r3**2
+            + 6 * a**6 * r3**2
+            - 3 * a**5 * w * wbar**2 * e1
+            + 3 * a**5 * w * wbar**2 * e2
+            + 2 * a**5 * w * wbar * r3bar * e1
+            - 2 * a**5 * w * wbar * r3bar * e2
+            - 6 * a**5 * w * e1 * r3**2
+            + 6 * a**5 * w * e2 * r3**2
+            - 9 * a**5 * wbar**2 * e1 * r3
+            + 9 * a**5 * wbar**2 * e2 * r3
+            + 6 * a**5 * wbar * r3bar * e1 * r3
+            - 6 * a**5 * wbar * r3bar * e2 * r3
+            - 6 * a**5 * wbar * e1**2
+            - 9 * a**5 * wbar * e1 * r3**2
+            + 4 * a**5 * wbar * e1
+            + 6 * a**5 * wbar * e2**2
+            + 9 * a**5 * wbar * e2 * r3**2
+            - 4 * a**5 * wbar * e2
+            + 3 * a**5 * r3bar * e1**2
+            + 9 * a**5 * r3bar * e1 * r3**2
+            - 2 * a**5 * r3bar * e1
+            - 3 * a**5 * r3bar * e2**2
+            - 9 * a**5 * r3bar * e2 * r3**2
+            + 2 * a**5 * r3bar * e2
+            - 3 * a**5 * e1**2 * r3
+            - 2 * a**5 * e1 * r3**3
+            + 6 * a**5 * e1 * r3
+            + 3 * a**5 * e2**2 * r3
+            + 2 * a**5 * e2 * r3**3
+            - 6 * a**5 * e2 * r3
+            - 9 * a**4 * w * wbar**3 * r3**2
+            + 9 * a**4 * w * wbar**2 * r3bar * r3**2
+            - 9 * a**4 * w * wbar**2 * e1 * r3
+            - 9 * a**4 * w * wbar**2 * e2 * r3
+            + 18 * a**4 * w * wbar**2 * r3
+            + 6 * a**4 * w * wbar * r3bar * e1 * r3
+            + 6 * a**4 * w * wbar * r3bar * e2 * r3
+            - 12 * a**4 * w * wbar * r3bar * r3
+            - 12 * a**4 * w * wbar * e1 * e2
+            + 12 * a**4 * w * wbar * e1
+            + 12 * a**4 * w * wbar * e2
+            - 9 * a**4 * w * wbar
+            + 4 * a**4 * w * r3bar * e1 * e2
+            - 4 * a**4 * w * r3bar * e1
+            - 4 * a**4 * w * r3bar * e2
+            + 3 * a**4 * w * r3bar
+            + 2 * a**4 * w * e1 * r3**3
+            + 2 * a**4 * w * e2 * r3**3
+            - 3 * a**4 * wbar**3 * r3**3
+            + 3 * a**4 * wbar**2 * r3bar * r3**3
+            + 9 * a**4 * wbar * r3bar * e1 * r3**2
+            + 9 * a**4 * wbar * r3bar * e2 * r3**2
+            - 6 * a**4 * wbar * r3bar * r3**2
+            + 12 * a**4 * wbar * e1**2 * r3
+            - 12 * a**4 * wbar * e1 * e2 * r3
+            + 12 * a**4 * wbar * e2**2 * r3
+            + 3 * a**4 * wbar * r3
+            - a**4 * r3bar * e1**2 * r3
+            + 10 * a**4 * r3bar * e1 * e2 * r3
+            - 8 * a**4 * r3bar * e1 * r3
+            - a**4 * r3bar * e2**2 * r3
+            - 8 * a**4 * r3bar * e2 * r3
+            + 3 * a**4 * r3bar * r3
+            + 3 * a**4 * e1**3
+            - 3 * a**4 * e1**2 * e2
+            + 6 * a**4 * e1**2 * r3**2
+            - 3 * a**4 * e1 * e2**2
+            - 12 * a**4 * e1 * e2 * r3**2
+            + 8 * a**4 * e1 * e2
+            - 2 * a**4 * e1
+            + 3 * a**4 * e2**3
+            + 6 * a**4 * e2**2 * r3**2
+            - 2 * a**4 * e2
+            + 18 * a**3 * w * wbar**2 * e1 * r3**2
+            - 18 * a**3 * w * wbar**2 * e2 * r3**2
+            - 12 * a**3 * w * wbar * r3bar * e1 * r3**2
+            + 12 * a**3 * w * wbar * r3bar * e2 * r3**2
+            + 6 * a**3 * w * wbar * e1**2 * r3
+            - 24 * a**3 * w * wbar * e1 * r3
+            - 6 * a**3 * w * wbar * e2**2 * r3
+            + 24 * a**3 * w * wbar * e2 * r3
+            - 2 * a**3 * w * r3bar * e1**2 * r3
+            + 8 * a**3 * w * r3bar * e1 * r3
+            + 2 * a**3 * w * r3bar * e2**2 * r3
+            - 8 * a**3 * w * r3bar * e2 * r3
+            - a**3 * w * e1**3
+            + 3 * a**3 * w * e1**2 * e2
+            - 6 * a**3 * w * e1**2
+            - 3 * a**3 * w * e1 * e2**2
+            + 6 * a**3 * w * e1
+            + a**3 * w * e2**3
+            + 6 * a**3 * w * e2**2
+            - 6 * a**3 * w * e2
+            + 6 * a**3 * wbar**2 * e1 * r3**3
+            - 6 * a**3 * wbar**2 * e2 * r3**3
+            - 4 * a**3 * wbar * r3bar * e1 * r3**3
+            + 4 * a**3 * wbar * r3bar * e2 * r3**3
+            - 6 * a**3 * wbar * e1**2 * r3**2
+            + 6 * a**3 * wbar * e2**2 * r3**2
+            - 4 * a**3 * r3bar * e1**2 * r3**2
+            + 4 * a**3 * r3bar * e1 * r3**2
+            + 4 * a**3 * r3bar * e2**2 * r3**2
+            - 4 * a**3 * r3bar * e2 * r3**2
+            - 9 * a**3 * e1**3 * r3
+            + 3 * a**3 * e1**2 * e2 * r3
+            - 2 * a**3 * e1**2 * r3**3
+            + 2 * a**3 * e1**2 * r3
+            - 3 * a**3 * e1 * e2**2 * r3
+            - 2 * a**3 * e1 * r3
+            + 9 * a**3 * e2**3 * r3
+            + 2 * a**3 * e2**2 * r3**3
+            - 2 * a**3 * e2**2 * r3
+            + 2 * a**3 * e2 * r3
+            - 6 * a**2 * w * wbar**2 * e1 * r3**3
+            - 6 * a**2 * w * wbar**2 * e2 * r3**3
+            + 4 * a**2 * w * wbar * r3bar * e1 * r3**3
+            + 4 * a**2 * w * wbar * r3bar * e2 * r3**3
+            - 12 * a**2 * w * wbar * e1**2 * r3**2
+            + 12 * a**2 * w * wbar * e1 * e2 * r3**2
+            + 12 * a**2 * w * wbar * e1 * r3**2
+            - 12 * a**2 * w * wbar * e2**2 * r3**2
+            + 12 * a**2 * w * wbar * e2 * r3**2
+            + 4 * a**2 * w * r3bar * e1**2 * r3**2
+            - 4 * a**2 * w * r3bar * e1 * e2 * r3**2
+            - 4 * a**2 * w * r3bar * e1 * r3**2
+            + 4 * a**2 * w * r3bar * e2**2 * r3**2
+            - 4 * a**2 * w * r3bar * e2 * r3**2
+            + 3 * a**2 * w * e1**3 * r3
+            - 3 * a**2 * w * e1**2 * e2 * r3
+            + 12 * a**2 * w * e1**2 * r3
+            - 3 * a**2 * w * e1 * e2**2 * r3
+            - 6 * a**2 * w * e1 * r3
+            + 3 * a**2 * w * e2**3 * r3
+            + 12 * a**2 * w * e2**2 * r3
+            - 6 * a**2 * w * e2 * r3
+            + 12 * a**2 * wbar * e1 * e2 * r3**3
+            - 4 * a**2 * wbar * e1 * r3**3
+            - 4 * a**2 * wbar * e2 * r3**3
+            + 2 * a**2 * r3bar * e1**2 * r3**3
+            + 2 * a**2 * r3bar * e2**2 * r3**3
+            + 9 * a**2 * e1**3 * r3**2
+            + 3 * a**2 * e1**2 * e2 * r3**2
+            - 4 * a**2 * e1**2 * r3**2
+            + 3 * a**2 * e1 * e2**2 * r3**2
+            - 8 * a**2 * e1 * e2 * r3**2
+            + 4 * a**2 * e1 * r3**2
+            + 9 * a**2 * e2**3 * r3**2
+            - 4 * a**2 * e2**2 * r3**2
+            + 4 * a**2 * e2 * r3**2
+            + 6 * a * w * wbar * e1**2 * r3**3
+            - 6 * a * w * wbar * e2**2 * r3**3
+            - 2 * a * w * r3bar * e1**2 * r3**3
+            + 2 * a * w * r3bar * e2**2 * r3**3
+            - 3 * a * w * e1**3 * r3**2
+            - 3 * a * w * e1**2 * e2 * r3**2
+            - 6 * a * w * e1**2 * r3**2
+            + 3 * a * w * e1 * e2**2 * r3**2
+            + 3 * a * w * e2**3 * r3**2
+            + 6 * a * w * e2**2 * r3**2
+            - 3 * a * e1**3 * r3**3
+            - 3 * a * e1**2 * e2 * r3**3
+            + 2 * a * e1**2 * r3**3
+            + 3 * a * e1 * e2**2 * r3**3
+            + 3 * a * e2**3 * r3**3
+            - 2 * a * e2**2 * r3**3
+            + w * e1**3 * r3**3
+            + 3 * w * e1**2 * e2 * r3**3
+            + 3 * w * e1 * e2**2 * r3**3
+            + w * e2**3 * r3**3
+        )
+
+        p_8 = (
+            3 * a**8 * w * wbar * r3
+            - 3 * a**8 * w * r3bar * r3
+            + a**8 * w * e1
+            + a**8 * w * e2
+            - a**8 * w
+            + 3 * a**8 * wbar * r3**2
+            - 3 * a**8 * r3bar * r3**2
+            - a**8 * e1 * r3
+            - a**8 * e2 * r3
+            + a**8 * r3
+            - 3 * a**7 * w * e1 * r3
+            + 3 * a**7 * w * e2 * r3
+            - 3 * a**7 * wbar * e1 * r3
+            + 3 * a**7 * wbar * e2 * r3
+            + 3 * a**7 * r3bar * e1 * r3
+            - 3 * a**7 * r3bar * e2 * r3
+            - a**7 * e1**2
+            - 3 * a**7 * e1 * r3**2
+            + a**7 * e1
+            + a**7 * e2**2
+            + 3 * a**7 * e2 * r3**2
+            - a**7 * e2
+            - 3 * a**6 * w * wbar**3 * r3
+            + 3 * a**6 * w * wbar**2 * r3bar * r3
+            - 3 * a**6 * w * wbar**2 * e1
+            - 3 * a**6 * w * wbar**2 * e2
+            + 3 * a**6 * w * wbar**2
+            + 2 * a**6 * w * wbar * r3bar * e1
+            + 2 * a**6 * w * wbar * r3bar * e2
+            - 2 * a**6 * w * wbar * r3bar
+            - 3 * a**6 * w * wbar * r3**3
+            + 3 * a**6 * w * r3bar * r3**3
+            + 3 * a**6 * w * r3**2
+            - 3 * a**6 * wbar**3 * r3**2
+            + 3 * a**6 * wbar**2 * r3bar * r3**2
+            - 6 * a**6 * wbar**2 * e1 * r3
+            - 6 * a**6 * wbar**2 * e2 * r3
+            + 3 * a**6 * wbar**2 * r3
+            + 7 * a**6 * wbar * r3bar * e1 * r3
+            + 7 * a**6 * wbar * r3bar * e2 * r3
+            - 4 * a**6 * wbar * r3bar * r3
+            - 3 * a**6 * wbar * e1**2
+            - 6 * a**6 * wbar * e1 * e2
+            + 4 * a**6 * wbar * e1
+            - 3 * a**6 * wbar * e2**2
+            + 4 * a**6 * wbar * e2
+            - a**6 * wbar
+            + 2 * a**6 * r3bar * e1**2
+            + 4 * a**6 * r3bar * e1 * e2
+            - 3 * a**6 * r3bar * e1
+            + 2 * a**6 * r3bar * e2**2
+            - 3 * a**6 * r3bar * e2
+            + a**6 * r3bar
+            + 3 * a**6 * e1**2 * r3
+            - 6 * a**6 * e1 * e2 * r3
+            + 4 * a**6 * e1 * r3**3
+            + 3 * a**6 * e2**2 * r3
+            + 4 * a**6 * e2 * r3**3
+            - 3 * a**6 * r3**3
+            + 9 * a**5 * w * wbar**2 * e1 * r3
+            - 9 * a**5 * w * wbar**2 * e2 * r3
+            - 6 * a**5 * w * wbar * r3bar * e1 * r3
+            + 6 * a**5 * w * wbar * r3bar * e2 * r3
+            + 6 * a**5 * w * wbar * e1**2
+            - 6 * a**5 * w * wbar * e1
+            - 6 * a**5 * w * wbar * e2**2
+            + 6 * a**5 * w * wbar * e2
+            - 2 * a**5 * w * r3bar * e1**2
+            + 2 * a**5 * w * r3bar * e1
+            + 2 * a**5 * w * r3bar * e2**2
+            - 2 * a**5 * w * r3bar * e2
+            + 2 * a**5 * w * e1 * r3**3
+            - 2 * a**5 * w * e2 * r3**3
+            + 9 * a**5 * wbar**2 * e1 * r3**2
+            - 9 * a**5 * wbar**2 * e2 * r3**2
+            - 6 * a**5 * wbar * r3bar * e1 * r3**2
+            + 6 * a**5 * wbar * r3bar * e2 * r3**2
+            + 12 * a**5 * wbar * e1**2 * r3
+            + 3 * a**5 * wbar * e1 * r3**3
+            - 6 * a**5 * wbar * e1 * r3
+            - 12 * a**5 * wbar * e2**2 * r3
+            - 3 * a**5 * wbar * e2 * r3**3
+            + 6 * a**5 * wbar * e2 * r3
+            - 7 * a**5 * r3bar * e1**2 * r3
+            - 3 * a**5 * r3bar * e1 * r3**3
+            + 4 * a**5 * r3bar * e1 * r3
+            + 7 * a**5 * r3bar * e2**2 * r3
+            + 3 * a**5 * r3bar * e2 * r3**3
+            - 4 * a**5 * r3bar * e2 * r3
+            + 3 * a**5 * e1**3
+            + 3 * a**5 * e1**2 * e2
+            - 4 * a**5 * e1**2
+            - 3 * a**5 * e1 * e2**2
+            - 3 * a**5 * e1 * r3**2
+            + a**5 * e1
+            - 3 * a**5 * e2**3
+            + 4 * a**5 * e2**2
+            + 3 * a**5 * e2 * r3**2
+            - a**5 * e2
+            + 3 * a**4 * w * wbar**3 * r3**3
+            - 3 * a**4 * w * wbar**2 * r3bar * r3**3
+            - 9 * a**4 * w * wbar**2 * r3**2
+            + 6 * a**4 * w * wbar * r3bar * r3**2
+            - 12 * a**4 * w * wbar * e1**2 * r3
+            + 12 * a**4 * w * wbar * e1 * e2 * r3
+            - 6 * a**4 * w * wbar * e1 * r3
+            - 12 * a**4 * w * wbar * e2**2 * r3
+            - 6 * a**4 * w * wbar * e2 * r3
+            + 9 * a**4 * w * wbar * r3
+            + 4 * a**4 * w * r3bar * e1**2 * r3
+            - 4 * a**4 * w * r3bar * e1 * e2 * r3
+            + 2 * a**4 * w * r3bar * e1 * r3
+            + 4 * a**4 * w * r3bar * e2**2 * r3
+            + 2 * a**4 * w * r3bar * e2 * r3
+            - 3 * a**4 * w * r3bar * r3
+            - 3 * a**4 * w * e1**3
+            + 3 * a**4 * w * e1**2 * e2
+            + 3 * a**4 * w * e1 * e2**2
+            - 12 * a**4 * w * e1 * e2
+            + 6 * a**4 * w * e1
+            - 3 * a**4 * w * e2**3
+            + 6 * a**4 * w * e2
+            - 3 * a**4 * w
+            - 3 * a**4 * wbar**2 * e1 * r3**3
+            - 3 * a**4 * wbar**2 * e2 * r3**3
+            + 3 * a**4 * wbar**2 * r3**3
+            - a**4 * wbar * r3bar * e1 * r3**3
+            - a**4 * wbar * r3bar * e2 * r3**3
+            - 15 * a**4 * wbar * e1**2 * r3**2
+            + 6 * a**4 * wbar * e1 * e2 * r3**2
+            + 6 * a**4 * wbar * e1 * r3**2
+            - 15 * a**4 * wbar * e2**2 * r3**2
+            + 6 * a**4 * wbar * e2 * r3**2
+            - 6 * a**4 * wbar * r3**2
+            + 5 * a**4 * r3bar * e1**2 * r3**2
+            - 2 * a**4 * r3bar * e1 * e2 * r3**2
+            + a**4 * r3bar * e1 * r3**2
+            + 5 * a**4 * r3bar * e2**2 * r3**2
+            + a**4 * r3bar * e2 * r3**2
+            - 9 * a**4 * e1**3 * r3
+            - 3 * a**4 * e1**2 * e2 * r3
+            - 2 * a**4 * e1**2 * r3**3
+            + 8 * a**4 * e1**2 * r3
+            - 3 * a**4 * e1 * e2**2 * r3
+            + 4 * a**4 * e1 * e2 * r3**3
+            + 4 * a**4 * e1 * e2 * r3
+            - 5 * a**4 * e1 * r3
+            - 9 * a**4 * e2**3 * r3
+            - 2 * a**4 * e2**2 * r3**3
+            + 8 * a**4 * e2**2 * r3
+            - 5 * a**4 * e2 * r3
+            + 3 * a**4 * r3
+            - 6 * a**3 * w * wbar**2 * e1 * r3**3
+            + 6 * a**3 * w * wbar**2 * e2 * r3**3
+            + 4 * a**3 * w * wbar * r3bar * e1 * r3**3
+            - 4 * a**3 * w * wbar * r3bar * e2 * r3**3
+            + 6 * a**3 * w * wbar * e1**2 * r3**2
+            + 12 * a**3 * w * wbar * e1 * r3**2
+            - 6 * a**3 * w * wbar * e2**2 * r3**2
+            - 12 * a**3 * w * wbar * e2 * r3**2
+            - 2 * a**3 * w * r3bar * e1**2 * r3**2
+            - 4 * a**3 * w * r3bar * e1 * r3**2
+            + 2 * a**3 * w * r3bar * e2**2 * r3**2
+            + 4 * a**3 * w * r3bar * e2 * r3**2
+            + 9 * a**3 * w * e1**3 * r3
+            - 3 * a**3 * w * e1**2 * e2 * r3
+            + 3 * a**3 * w * e1 * e2**2 * r3
+            - 6 * a**3 * w * e1 * r3
+            - 9 * a**3 * w * e2**3 * r3
+            + 6 * a**3 * w * e2 * r3
+            + 6 * a**3 * wbar * e1**2 * r3**3
+            - 4 * a**3 * wbar * e1 * r3**3
+            - 6 * a**3 * wbar * e2**2 * r3**3
+            + 4 * a**3 * wbar * e2 * r3**3
+            + 9 * a**3 * e1**3 * r3**2
+            - 3 * a**3 * e1**2 * e2 * r3**2
+            - 4 * a**3 * e1**2 * r3**2
+            + 3 * a**3 * e1 * e2**2 * r3**2
+            + 4 * a**3 * e1 * r3**2
+            - 9 * a**3 * e2**3 * r3**2
+            + 4 * a**3 * e2**2 * r3**2
+            - 4 * a**3 * e2 * r3**2
+            - 12 * a**2 * w * wbar * e1 * e2 * r3**3
+            + 4 * a**2 * w * r3bar * e1 * e2 * r3**3
+            - 9 * a**2 * w * e1**3 * r3**2
+            - 3 * a**2 * w * e1**2 * e2 * r3**2
+            - 3 * a**2 * w * e1 * e2**2 * r3**2
+            + 12 * a**2 * w * e1 * e2 * r3**2
+            - 9 * a**2 * w * e2**3 * r3**2
+            - 3 * a**2 * e1**3 * r3**3
+            + 3 * a**2 * e1**2 * e2 * r3**3
+            + 3 * a**2 * e1 * e2**2 * r3**3
+            - 4 * a**2 * e1 * e2 * r3**3
+            - 3 * a**2 * e2**3 * r3**3
+            + 3 * a * w * e1**3 * r3**3
+            + 3 * a * w * e1**2 * e2 * r3**3
+            - 3 * a * w * e1 * e2**2 * r3**3
+            - 3 * a * w * e2**3 * r3**3
+        )
+
+        p_9 = (
+            -3 * a**8 * w * wbar * r3**2
+            + 3 * a**8 * w * r3bar * r3**2
+            - 2 * a**8 * w * e1 * r3
+            - 2 * a**8 * w * e2 * r3
+            + 2 * a**8 * w * r3
+            - a**8 * wbar * r3**3
+            + a**8 * r3bar * r3**3
+            + 2 * a**8 * e1 * r3**2
+            + 2 * a**8 * e2 * r3**2
+            - 2 * a**8 * r3**2
+            + 3 * a**7 * w * e1 * r3**2
+            - 3 * a**7 * w * e2 * r3**2
+            + 3 * a**7 * wbar * e1 * r3**2
+            - 3 * a**7 * wbar * e2 * r3**2
+            - 3 * a**7 * r3bar * e1 * r3**2
+            + 3 * a**7 * r3bar * e2 * r3**2
+            + 2 * a**7 * e1**2 * r3
+            + a**7 * e1 * r3**3
+            - 2 * a**7 * e1 * r3
+            - 2 * a**7 * e2**2 * r3
+            - a**7 * e2 * r3**3
+            + 2 * a**7 * e2 * r3
+            + 3 * a**6 * w * wbar**3 * r3**2
+            - 3 * a**6 * w * wbar**2 * r3bar * r3**2
+            + 6 * a**6 * w * wbar**2 * e1 * r3
+            + 6 * a**6 * w * wbar**2 * e2 * r3
+            - 6 * a**6 * w * wbar**2 * r3
+            - 4 * a**6 * w * wbar * r3bar * e1 * r3
+            - 4 * a**6 * w * wbar * r3bar * e2 * r3
+            + 4 * a**6 * w * wbar * r3bar * r3
+            + 3 * a**6 * w * wbar * e1**2
+            + 6 * a**6 * w * wbar * e1 * e2
+            - 6 * a**6 * w * wbar * e1
+            + 3 * a**6 * w * wbar * e2**2
+            - 6 * a**6 * w * wbar * e2
+            + 3 * a**6 * w * wbar
+            - a**6 * w * r3bar * e1**2
+            - 2 * a**6 * w * r3bar * e1 * e2
+            + 2 * a**6 * w * r3bar * e1
+            - a**6 * w * r3bar * e2**2
+            + 2 * a**6 * w * r3bar * e2
+            - a**6 * w * r3bar
+            - a**6 * w * e1 * r3**3
+            - a**6 * w * e2 * r3**3
+            + a**6 * wbar**3 * r3**3
+            - a**6 * wbar**2 * r3bar * r3**3
+            + 3 * a**6 * wbar**2 * e1 * r3**2
+            + 3 * a**6 * wbar**2 * e2 * r3**2
+            - 5 * a**6 * wbar * r3bar * e1 * r3**2
+            - 5 * a**6 * wbar * r3bar * e2 * r3**2
+            + 2 * a**6 * wbar * r3bar * r3**2
+            + 3 * a**6 * wbar * e1**2 * r3
+            + 6 * a**6 * wbar * e1 * e2 * r3
+            - 2 * a**6 * wbar * e1 * r3
+            + 3 * a**6 * wbar * e2**2 * r3
+            - 2 * a**6 * wbar * e2 * r3
+            - a**6 * wbar * r3
+            - 3 * a**6 * r3bar * e1**2 * r3
+            - 6 * a**6 * r3bar * e1 * e2 * r3
+            + 4 * a**6 * r3bar * e1 * r3
+            - 3 * a**6 * r3bar * e2**2 * r3
+            + 4 * a**6 * r3bar * e2 * r3
+            - a**6 * r3bar * r3
+            + a**6 * e1**3
+            + 3 * a**6 * e1**2 * e2
+            - 3 * a**6 * e1**2 * r3**2
+            - 2 * a**6 * e1**2
+            + 3 * a**6 * e1 * e2**2
+            + 6 * a**6 * e1 * e2 * r3**2
+            - 4 * a**6 * e1 * e2
+            + a**6 * e1
+            + a**6 * e2**3
+            - 3 * a**6 * e2**2 * r3**2
+            - 2 * a**6 * e2**2
+            + a**6 * e2
+            - 9 * a**5 * w * wbar**2 * e1 * r3**2
+            + 9 * a**5 * w * wbar**2 * e2 * r3**2
+            + 6 * a**5 * w * wbar * r3bar * e1 * r3**2
+            - 6 * a**5 * w * wbar * r3bar * e2 * r3**2
+            - 12 * a**5 * w * wbar * e1**2 * r3
+            + 12 * a**5 * w * wbar * e1 * r3
+            + 12 * a**5 * w * wbar * e2**2 * r3
+            - 12 * a**5 * w * wbar * e2 * r3
+            + 4 * a**5 * w * r3bar * e1**2 * r3
+            - 4 * a**5 * w * r3bar * e1 * r3
+            - 4 * a**5 * w * r3bar * e2**2 * r3
+            + 4 * a**5 * w * r3bar * e2 * r3
+            - 3 * a**5 * w * e1**3
+            - 3 * a**5 * w * e1**2 * e2
+            + 6 * a**5 * w * e1**2
+            + 3 * a**5 * w * e1 * e2**2
+            - 3 * a**5 * w * e1
+            + 3 * a**5 * w * e2**3
+            - 6 * a**5 * w * e2**2
+            + 3 * a**5 * w * e2
+            - 3 * a**5 * wbar**2 * e1 * r3**3
+            + 3 * a**5 * wbar**2 * e2 * r3**3
+            + 2 * a**5 * wbar * r3bar * e1 * r3**3
+            - 2 * a**5 * wbar * r3bar * e2 * r3**3
+            - 6 * a**5 * wbar * e1**2 * r3**2
+            + 6 * a**5 * wbar * e2**2 * r3**2
+            + 5 * a**5 * r3bar * e1**2 * r3**2
+            - 2 * a**5 * r3bar * e1 * r3**2
+            - 5 * a**5 * r3bar * e2**2 * r3**2
+            + 2 * a**5 * r3bar * e2 * r3**2
+            - 3 * a**5 * e1**3 * r3
+            - 3 * a**5 * e1**2 * e2 * r3
+            + a**5 * e1**2 * r3**3
+            + 2 * a**5 * e1**2 * r3
+            + 3 * a**5 * e1 * e2**2 * r3
+            + a**5 * e1 * r3
+            + 3 * a**5 * e2**3 * r3
+            - a**5 * e2**2 * r3**3
+            - 2 * a**5 * e2**2 * r3
+            - a**5 * e2 * r3
+            + 3 * a**4 * w * wbar**2 * e1 * r3**3
+            + 3 * a**4 * w * wbar**2 * e2 * r3**3
+            - 2 * a**4 * w * wbar * r3bar * e1 * r3**3
+            - 2 * a**4 * w * wbar * r3bar * e2 * r3**3
+            + 15 * a**4 * w * wbar * e1**2 * r3**2
+            - 6 * a**4 * w * wbar * e1 * e2 * r3**2
+            - 6 * a**4 * w * wbar * e1 * r3**2
+            + 15 * a**4 * w * wbar * e2**2 * r3**2
+            - 6 * a**4 * w * wbar * e2 * r3**2
+            - 5 * a**4 * w * r3bar * e1**2 * r3**2
+            + 2 * a**4 * w * r3bar * e1 * e2 * r3**2
+            + 2 * a**4 * w * r3bar * e1 * r3**2
+            - 5 * a**4 * w * r3bar * e2**2 * r3**2
+            + 2 * a**4 * w * r3bar * e2 * r3**2
+            + 9 * a**4 * w * e1**3 * r3
+            + 3 * a**4 * w * e1**2 * e2 * r3
+            - 12 * a**4 * w * e1**2 * r3
+            + 3 * a**4 * w * e1 * e2**2 * r3
+            + 3 * a**4 * w * e1 * r3
+            + 9 * a**4 * w * e2**3 * r3
+            - 12 * a**4 * w * e2**2 * r3
+            + 3 * a**4 * w * e2 * r3
+            + 3 * a**4 * wbar * e1**2 * r3**3
+            - 6 * a**4 * wbar * e1 * e2 * r3**3
+            + 2 * a**4 * wbar * e1 * r3**3
+            + 3 * a**4 * wbar * e2**2 * r3**3
+            + 2 * a**4 * wbar * e2 * r3**3
+            - 2 * a**4 * r3bar * e1**2 * r3**3
+            - 2 * a**4 * r3bar * e2**2 * r3**3
+            + 3 * a**4 * e1**3 * r3**2
+            - 3 * a**4 * e1**2 * e2 * r3**2
+            + 2 * a**4 * e1**2 * r3**2
+            - 3 * a**4 * e1 * e2**2 * r3**2
+            + 4 * a**4 * e1 * e2 * r3**2
+            - 2 * a**4 * e1 * r3**2
+            + 3 * a**4 * e2**3 * r3**2
+            + 2 * a**4 * e2**2 * r3**2
+            - 2 * a**4 * e2 * r3**2
+            - 6 * a**3 * w * wbar * e1**2 * r3**3
+            + 6 * a**3 * w * wbar * e2**2 * r3**3
+            + 2 * a**3 * w * r3bar * e1**2 * r3**3
+            - 2 * a**3 * w * r3bar * e2**2 * r3**3
+            - 9 * a**3 * w * e1**3 * r3**2
+            + 3 * a**3 * w * e1**2 * e2 * r3**2
+            + 6 * a**3 * w * e1**2 * r3**2
+            - 3 * a**3 * w * e1 * e2**2 * r3**2
+            + 9 * a**3 * w * e2**3 * r3**2
+            - 6 * a**3 * w * e2**2 * r3**2
+            - a**3 * e1**3 * r3**3
+            + 3 * a**3 * e1**2 * e2 * r3**3
+            - 2 * a**3 * e1**2 * r3**3
+            - 3 * a**3 * e1 * e2**2 * r3**3
+            + a**3 * e2**3 * r3**3
+            + 2 * a**3 * e2**2 * r3**3
+            + 3 * a**2 * w * e1**3 * r3**3
+            - 3 * a**2 * w * e1**2 * e2 * r3**3
+            - 3 * a**2 * w * e1 * e2**2 * r3**3
+            + 3 * a**2 * w * e2**3 * r3**3
+        )
+
+        p_10 = (
+            a**8 * w * wbar * r3**3
+            - a**8 * w * r3bar * r3**3
+            + a**8 * w * e1 * r3**2
+            + a**8 * w * e2 * r3**2
+            - a**8 * w * r3**2
+            - a**8 * e1 * r3**3
+            - a**8 * e2 * r3**3
+            + a**8 * r3**3
+            - a**7 * w * e1 * r3**3
+            + a**7 * w * e2 * r3**3
+            - a**7 * wbar * e1 * r3**3
+            + a**7 * wbar * e2 * r3**3
+            + a**7 * r3bar * e1 * r3**3
+            - a**7 * r3bar * e2 * r3**3
+            - a**7 * e1**2 * r3**2
+            + a**7 * e1 * r3**2
+            + a**7 * e2**2 * r3**2
+            - a**7 * e2 * r3**2
+            - a**6 * w * wbar**3 * r3**3
+            + a**6 * w * wbar**2 * r3bar * r3**3
+            - 3 * a**6 * w * wbar**2 * e1 * r3**2
+            - 3 * a**6 * w * wbar**2 * e2 * r3**2
+            + 3 * a**6 * w * wbar**2 * r3**2
+            + 2 * a**6 * w * wbar * r3bar * e1 * r3**2
+            + 2 * a**6 * w * wbar * r3bar * e2 * r3**2
+            - 2 * a**6 * w * wbar * r3bar * r3**2
+            - 3 * a**6 * w * wbar * e1**2 * r3
+            - 6 * a**6 * w * wbar * e1 * e2 * r3
+            + 6 * a**6 * w * wbar * e1 * r3
+            - 3 * a**6 * w * wbar * e2**2 * r3
+            + 6 * a**6 * w * wbar * e2 * r3
+            - 3 * a**6 * w * wbar * r3
+            + a**6 * w * r3bar * e1**2 * r3
+            + 2 * a**6 * w * r3bar * e1 * e2 * r3
+            - 2 * a**6 * w * r3bar * e1 * r3
+            + a**6 * w * r3bar * e2**2 * r3
+            - 2 * a**6 * w * r3bar * e2 * r3
+            + a**6 * w * r3bar * r3
+            - a**6 * w * e1**3
+            - 3 * a**6 * w * e1**2 * e2
+            + 3 * a**6 * w * e1**2
+            - 3 * a**6 * w * e1 * e2**2
+            + 6 * a**6 * w * e1 * e2
+            - 3 * a**6 * w * e1
+            - a**6 * w * e2**3
+            + 3 * a**6 * w * e2**2
+            - 3 * a**6 * w * e2
+            + a**6 * w
+            - a**6 * wbar**2 * r3**3
+            + a**6 * wbar * r3bar * e1 * r3**3
+            + a**6 * wbar * r3bar * e2 * r3**3
+            - 2 * a**6 * wbar * e1 * r3**2
+            - 2 * a**6 * wbar * e2 * r3**2
+            + 2 * a**6 * wbar * r3**2
+            + a**6 * r3bar * e1**2 * r3**2
+            + 2 * a**6 * r3bar * e1 * e2 * r3**2
+            - a**6 * r3bar * e1 * r3**2
+            + a**6 * r3bar * e2**2 * r3**2
+            - a**6 * r3bar * e2 * r3**2
+            + a**6 * e1**2 * r3**3
+            - a**6 * e1**2 * r3
+            - 2 * a**6 * e1 * e2 * r3**3
+            - 2 * a**6 * e1 * e2 * r3
+            + 2 * a**6 * e1 * r3
+            + a**6 * e2**2 * r3**3
+            - a**6 * e2**2 * r3
+            + 2 * a**6 * e2 * r3
+            - a**6 * r3
+            + 3 * a**5 * w * wbar**2 * e1 * r3**3
+            - 3 * a**5 * w * wbar**2 * e2 * r3**3
+            - 2 * a**5 * w * wbar * r3bar * e1 * r3**3
+            + 2 * a**5 * w * wbar * r3bar * e2 * r3**3
+            + 6 * a**5 * w * wbar * e1**2 * r3**2
+            - 6 * a**5 * w * wbar * e1 * r3**2
+            - 6 * a**5 * w * wbar * e2**2 * r3**2
+            + 6 * a**5 * w * wbar * e2 * r3**2
+            - 2 * a**5 * w * r3bar * e1**2 * r3**2
+            + 2 * a**5 * w * r3bar * e1 * r3**2
+            + 2 * a**5 * w * r3bar * e2**2 * r3**2
+            - 2 * a**5 * w * r3bar * e2 * r3**2
+            + 3 * a**5 * w * e1**3 * r3
+            + 3 * a**5 * w * e1**2 * e2 * r3
+            - 6 * a**5 * w * e1**2 * r3
+            - 3 * a**5 * w * e1 * e2**2 * r3
+            + 3 * a**5 * w * e1 * r3
+            - 3 * a**5 * w * e2**3 * r3
+            + 6 * a**5 * w * e2**2 * r3
+            - 3 * a**5 * w * e2 * r3
+            + 2 * a**5 * wbar * e1 * r3**3
+            - 2 * a**5 * wbar * e2 * r3**3
+            - a**5 * r3bar * e1**2 * r3**3
+            + a**5 * r3bar * e2**2 * r3**3
+            + 2 * a**5 * e1**2 * r3**2
+            - 2 * a**5 * e1 * r3**2
+            - 2 * a**5 * e2**2 * r3**2
+            + 2 * a**5 * e2 * r3**2
+            - 3 * a**4 * w * wbar * e1**2 * r3**3
+            + 6 * a**4 * w * wbar * e1 * e2 * r3**3
+            - 3 * a**4 * w * wbar * e2**2 * r3**3
+            + a**4 * w * r3bar * e1**2 * r3**3
+            - 2 * a**4 * w * r3bar * e1 * e2 * r3**3
+            + a**4 * w * r3bar * e2**2 * r3**3
+            - 3 * a**4 * w * e1**3 * r3**2
+            + 3 * a**4 * w * e1**2 * e2 * r3**2
+            + 3 * a**4 * w * e1**2 * r3**2
+            + 3 * a**4 * w * e1 * e2**2 * r3**2
+            - 6 * a**4 * w * e1 * e2 * r3**2
+            - 3 * a**4 * w * e2**3 * r3**2
+            + 3 * a**4 * w * e2**2 * r3**2
+            - a**4 * e1**2 * r3**3
+            + 2 * a**4 * e1 * e2 * r3**3
+            - a**4 * e2**2 * r3**3
+            + a**3 * w * e1**3 * r3**3
+            - 3 * a**3 * w * e1**2 * e2 * r3**3
+            + 3 * a**3 * w * e1 * e2**2 * r3**3
+            - a**3 * w * e2**3 * r3**3
+        )
+
+
+
+        return p_0, p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8, p_9, p_10
+
+    @staticmethod
+    def _triple_lens_solve(w, z1, z2, z3, m1, m2, m3, check_sols, root_tol):
+        """Frame transform, degree-10 roots, optional solution masking."""
+        w_src = jnp.asarray(w, dtype=jnp.complex128)
+        z1 = jnp.asarray(z1, dtype=jnp.complex128)
+        z2 = jnp.asarray(z2, dtype=jnp.complex128)
+        z3 = jnp.asarray(z3, dtype=jnp.complex128)
+
+        z_cm = (z1 + z2) / 2.0
+        a_half = (z1 - z2) / 2.0
+        a_abs = jnp.abs(a_half)
+        safe_a = jnp.where(a_abs > 0, a_abs, 1.0)
+        rot = jnp.where(
+            a_abs > 0,
+            a_half / safe_a,
+            jnp.ones_like(a_half, dtype=jnp.complex128),
+        )
+        rot_inv = jnp.conj(rot)
+
+        w_work = (w_src - z_cm) * rot_inv
+        r3 = (z3 - z_cm) * rot_inv
+        a = a_abs
+
+        m_sum = m1 + m2 + m3
+        e1 = m1 / m_sum
+        e2 = m2 / m_sum
+
+        thetaE = jnp.sqrt(jnp.asarray(m_sum, dtype=jnp.float64))
+        inv_thetaE = 1.0 / thetaE
+        w_work = w_work * inv_thetaE
+        a = a * inv_thetaE
+        r3 = r3 * inv_thetaE
+        w = w_work
+        wbar = jnp.conj(w)
+        r3bar = jnp.conj(r3)
+
+        p_0, p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8, p_9, p_10 = PSTL._triple_lens_poly_coeffs(
+            w, wbar, a, r3, r3bar, e1, e2)
+
+        n = w_src.shape[0]
+        vmap_roots = jax.vmap(PSTL._decic_roots, in_axes=(0,) * 11)
+        roots_dim = vmap_roots(p_0, p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8, p_9, p_10)
+        thetaE_arr = jnp.broadcast_to(jnp.asarray(thetaE, dtype=jnp.float64), (n,))
+        z_arr = roots_dim * thetaE_arr[:, jnp.newaxis] * rot[:, jnp.newaxis] + z_cm[:, jnp.newaxis]
+        z_arr = jnp.where(thetaE_arr[:, jnp.newaxis] > 0, z_arr, jnp.nan + 0j)
+
+        def _mask(z_arr):
+            m1_arr = m1 if jnp.ndim(m1) else jnp.full((n,), m1)
+            m2_arr = m2 if jnp.ndim(m2) else jnp.full((n,), m2)
+            m3_arr = m3 if jnp.ndim(m3) else jnp.full((n,), m3)
+            tol = root_tol if jnp.ndim(root_tol) else jnp.full((n,), root_tol)
+            diff = w_src[:, jnp.newaxis] - (
+                z_arr
+                - m1_arr[:, jnp.newaxis] / jnp.conj(z_arr - z1[:, jnp.newaxis])
+                - m2_arr[:, jnp.newaxis] / jnp.conj(z_arr - z2[:, jnp.newaxis])
+                - m3_arr[:, jnp.newaxis] / jnp.conj(z_arr - z3[:, jnp.newaxis])
+            )
+            scale = jnp.maximum(1.0, jnp.abs(w_src))
+            bad = (
+                ~jnp.isfinite(z_arr)
+                | ~jnp.isfinite(diff)
+                | (jnp.abs(diff) > tol[:, jnp.newaxis] * scale[:, jnp.newaxis])
+            )
+            return jnp.where(bad, jnp.nan + 0j, z_arr)
+
+        return jax.lax.cond(check_sols, _mask, lambda x: x, z_arr)
+
+    @staticmethod
+    def _complex_to_xy(image_arr):
+        image_arr = jnp.asarray(image_arr)
+        return jnp.stack([jnp.real(image_arr), jnp.imag(image_arr)], axis=-1)
+
+    def get_image_pos_arr(self, w, z1, z2, z3, m1, m2, m3, check_sols=True):
+        """Image positions for a static triple lens (degree-10 polynomial).
+
+        Coefficients match
+        https://github.com/fbartolic/caustics/blob/main/notebooks/ComplexPolynomialCoefficients.ipynb
+        (lenses at r1=+a, r2=-a, third at r3; mass fractions e1, e2).
+
+        Parameters w, z1, z2, z3 must share the same angular units (typically
+        arcsec for PSTL astrometry). m1, m2, m3 are component Einstein radii
+        squared in those same angular units (arcsec^2 for astrometry).
+
+        Returns z_arr in the same units as the input positions (arcsec if inputs
+        are arcsec). Complex convention: z = east + i * north.
+        """
+        assert (len(w) == len(z1)) & (len(w) == len(z2)) & (len(w) == len(z3))
+        rt = self.root_tol
+        return PSTL._triple_lens_solve(w, z1, z2, z3, m1, m2, m3, check_sols, rt)
+
+    def get_image_pos_arr_fast(self, w, z1, z2, z3, m1, m2, m3, check_sols=False):
+        """Fast PSTL image positions (cached ``jax.jit`` companion-matrix solve)."""
+        fn = getattr(PSTL.get_image_pos_arr_fast, "_jit_fn", None)
+        if fn is None:
+            fn = jax.jit(PSTL._triple_lens_solve, static_argnames=("check_sols",))
+            PSTL.get_image_pos_arr_fast._jit_fn = fn
+        rt = getattr(self, "root_tol", 1e-8)
+        return fn(w, z1, z2, z3, m1, m2, m3, check_sols, rt)
+
+    def get_all_arrays(self, t_obs, filt_idx=0, check_sols=True, rescale=True):
+        '''
+        Obtain the image and amplitude arrays for each t_obs.
+
+        Parameters
+        ----------
+        t_obs : array_like
+            Array of times to model.
+
+        Returns
+        -------
+        images : array_like
+            Array/tuple of complex positions of each images at each t_obs.
+        amp_arr : array_like
+            Array/tuple of amplification of each images at each t_obs.
+        '''
+        kwargs = {'check_sols': check_sols}
+
+        if rescale:
+            # Get complex positions (no rescaling).
+            _comp = self.get_complex_pos(t_obs, filt_idx=filt_idx)
+
+            # Copy so rescaling does not mutate shared lens state.
+            comp = tuple(jnp.array(jnp.asarray(x), copy=True) for x in _comp)
+
+            # Rescaled complex positions.
+            rcomp = self.rescale_complex_pos(*_comp)
+
+            # Temporarily rescale the root tolerance.
+            # Extremeley un-threadsafe
+            orig_root_tol = self.root_tol
+            self.root_tol *= rcomp[7]
+
+            # Image positions derived from rescale complex positions.
+            rimages = self.get_image_pos_arr_fast(*rcomp[0:7], **kwargs)
+
+            self.root_tol = orig_root_tol
+
+            # Take the image positions derived from the rescaled complex positions
+            # and rescale them to get the images back in the original scale.
+            images = (rimages / rcomp[7].reshape(len(rcomp[7]), 1)) + rcomp[8].reshape(len(rcomp[8]), 1)
+            # Get amplifications.
+            amps = self.get_amp_arr(images, comp[1], comp[2], comp[3])
+
+        else:
+            comp = self.get_complex_pos(t_obs, filt_idx=filt_idx)
+            images = self.get_image_pos_arr_fast(
+                comp[0], comp[1], comp[2], comp[3],
+                self.m1, self.m2, self.m3, **kwargs
+            )
+            amps = self.get_amp_arr(images, comp[1], comp[2], comp[3])
+
+        return images, amps
+
+    def get_resolved_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
+        '''
+        Get the photometry for each of the lensed source images.
+        Implement with no blending (since we don't support different
+        blendings for the different images).
+
+        Parameters
+        ----------
+        t_obs : array_like
+            Array of times to model.
+
+        Other Parameters
+        ----------------
+        amp_arr : array_like
+            Amplifications of each individual image at each time,
+            i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
+
+            This will over-ride t_obs; but is more efficient when calculating
+            both photometry and astrometry. If None, then just use t_obs.
+        filt_idx : int
+            The filter index (def=0).
+
+        Returns
+        -------
+        mag_model : array_like
+            Magnitude of each lensed image centroid at t_obs.
+            Shape = [5, len(t_obs)]
+        '''
+        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
+        flux_zp = 1.0
+
+        t_obs = jnp.atleast_1d(jnp.asarray(t_obs, dtype=float))
+
+        if amp_arr is None:
+            img_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
+
+        amp_arr = jnp.atleast_2d(jnp.asarray(amp_arr))
+        amp_clean = jnp.where(jnp.isfinite(amp_arr), amp_arr, jnp.nan)
+
+        flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
+        flux_model = flux_src * amp_clean
+
+        # Account for blending, if necessary.
+        try:
+            # Adding flux of neighbors and lens
+            # b_sff = fS / (fS + fN + fL)
+            flux_model = flux_model + flux_src * (1.0 - self.b_sff[filt_idx]) / \
+                          self.b_sff[filt_idx]
+        except AttributeError:
+            pass
+
+        flux_fill = jnp.where(jnp.isfinite(flux_model), flux_model, jnp.nan)
+        bad_flux = flux_fill <= 0
+        if print_warning and bool(np.any(np.asarray(bad_flux))):
+            print('!! ! ! !! Warning: get_resolved_photometry: bad flux encountered.')
+        flux_fill = jnp.where(bad_flux, jnp.nan, flux_fill)
+
+        mag_model = -2.5 * jnp.log10(flux_fill / flux_zp) + mag_zp
+
+        return mag_model
+
+    def get_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
+        '''
+        Get the photometry for each of the lensed source images.
+
+        Parameters
+        ----------
+        t_obs : array_like
+            Array of times to model.
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+
+        Other Parameters
+        ----------------
+        amp_arr : array_like
+            Amplifications of each individual image at each time,
+            i.e. ``amp_arr.shape = (len(t_obs)``, number of images at each t_obs).
+
+            This will over-ride t_obs; but is more efficient when calculating
+            both photometry and astrometry. If None, then just use t_obs.
+        print_warning : bool, optional
+            Print a warning in the rare case that the magnitude exceeds a 
+            zeropoint of 30 and conversions result in NaN returned.
+
+        Returns
+        -------
+        mag_model : array_like
+            Magnitude of the unresolved microlensing event at t_obs.
+        '''
+        t_obs = jnp.atleast_1d(jnp.asarray(t_obs, dtype=float))
+
+        if amp_arr is None:
+            img_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
+
+        amp_arr = jnp.atleast_2d(jnp.asarray(amp_arr))
+        amp = jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=1)
+        amp = jnp.atleast_1d(jnp.where(jnp.isfinite(amp), amp, jnp.nan))
+
+        flux_src = jnp.nan_to_num(mag2flux(self.mag_src[filt_idx]), nan=0)
+        flux_model = jnp.atleast_1d(flux_src * amp)
+
+        # Account for blending, if necessary.
+        try:
+            # Adding flux of neighbors and lenses
+            # b_sff = fS / (fS + fN + fL)
+            flux_model = flux_model + flux_src * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+        except AttributeError:
+            pass
+
+        bad_flux = flux_model <= 0
+        if print_warning and bool(np.any(np.asarray(bad_flux))):
+            print('!!!!!!!!!! Warning: get_photometry: bad flux encountered.')
+            print('')
+        flux_model = jnp.where(bad_flux, jnp.nan, flux_model)
+
+        return flux2mag(flux_model)
+
+
+class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
+    """
+    Contains methods for model a PSPL photometry + astrometry.
+    This is a Data-type class in our hierarchy. It is abstract and should not
+    be instantiated. 
+    """
+    photometryFlag = True
+    astrometryFlag = True
+
+    def get_lens_origin_astrometry(self, t, filt_idx=0):
+        """Equation of motion for just the foreground lens system.
+        This returns the lens-system origin motion (not the observed
+        flux-weighted centroid).
+
+        Parameters
+        ----------
+        t : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+
+        Returns
+        -------
+        xL : array_like, shape = [N_times, 2 directions]
+            Position of the lens system (geometric center) over time.
+        """
+        dt_in_years = (t - self.t0) / days_per_year
+        xL = self.xL0 + jnp.outer(dt_in_years, self.muL) * 1e-3
+
+        if self.parallaxFlag:
+            # Get the parallax vector for each date.
+            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
+                                                          obsLocation=self.obsLocation[filt_idx])
+            xL += (self.piL * parallax_vec) * 1e-3  # arcsec
+
+        return xL
+
+    def get_complex_pos(self, t_obs, filt_idx=0):
+        """
+        Get the positions of the lenses and source as
+        complex numbers. This is needed for further calculations.
+        Note that all units are still the same as before, this
+        is just rewriting vectors :math:`z = (x,y)` as :math:`z = x + iy`.
+
+        Parameters
+        ----------
+        t : array_like
+            Array of times to model.
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+
+        Returns
+        -------
+        w : complex array
+            Source position (arcsec) as an array of complex numbers with
+            real = east component, imaginary = north component
+            shape = [N_times, N_sources].
+
+        z1 : complex array
+            Lens primary component position (arcsec) as an array of complex numbers with
+            real = east component, imaginary = north component
+            shape = [N_times]
+
+        z2 : complex array
+            Lens secondary component position (arcsec) as an array of complex numbers with
+            real = east component, imaginary = north component
+            shape = [N_times]
+
+        z3 : complex array
+            Lens tertiary component position (arcsec) as an array of complex numbers with
+            real = east component, imaginary = north component
+            shape = [N_times]
+        """
+        t_obs = np.atleast_1d(np.asarray(t_obs, dtype=float))
+
+        # Find positions of lens and source over t_obs
+        xS_vec = self.get_astrometry_unlensed(t_obs, filt_idx=filt_idx)
+        xL1_vec, xL2_vec, xL3_vec = self.get_resolved_lens_astrometry(t_obs, filt_idx=filt_idx)
+        
+
+        # Convert positions to complex coordinates
+        w = xS_vec[:, 0] + xS_vec[:, 1] * 1j
+
+        z1 = xL1_vec[:, 0] + xL1_vec[:, 1] * 1j
+        z2 = xL2_vec[:, 0] + xL2_vec[:, 1] * 1j
+        z3 = xL3_vec[:, 0] + xL3_vec[:, 1] * 1j
+
+        return w, z1, z2, z3
+
+    def get_resolved_astrometry(self, t_obs, image_arr=None, amp_arr=None, filt_idx=0):
+        '''
+        Position of the observed source position in arcsec.
+
+        Parameters
+        ----------
+        t_obs : array_like, shape = [N_times]
+            Array of times to model.
+
+        Other Parameters
+        ----------------
+        image_arr : array_like
+            Array of complex image positions at each t_obs,
+            i.e. `image_arr.shape = (len(t_obs)`, number of images at each t_obs).
+            Each value in this array is complex
+            (real = north component, imaginary = east component)
+
+        amp_arr : array_like
+            Array of magnifications of each images.
+            Same shape as image_arr.
+
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+
+        Returns
+        -------
+        model_pos : array_like. shape = [N_times, N_images, 2]
+            Array of vector positions of the centroid at each t_obs.
+        '''
+        if (image_arr is None) or (amp_arr is None):
+            image_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
+
+        return PSTL._complex_to_xy(image_arr)
+
+    def get_astrometry(self, t_obs, image_arr=None, amp_arr=None, filt_idx=0):
+        """
+        Position of the observed (unresolved) source position in arcsec.
+
+        Parameters
+        ----------
+        t_obs : array_like
+            Array of times to model.
+
+        Other Parameters
+        ----------------
+        image_arr : array_like
+            Array of complex image positions at each t_obs,
+            i.e. `image_arr.shape = (len(t_obs)`, number of images at each t_obs).
+            Each value in this array is complex
+            (real = north component, imaginary = east component)
+
+        amp_arr : array_like
+            Array of magnifications of each images.
+            Same shape as image_arr.
+
+        filt_idx : int
+            The filter index for the astrometry.
+
+        Returns
+        -------
+        model_pos : array_like
+            Array of vector positions of the centroid at each t_obs.
+        """
+        if (image_arr is None) or (amp_arr is None):
+            image_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
+
+        image_arr = jnp.asarray(image_arr)
+        amp_arr = jnp.asarray(amp_arr)
+        xS_lensed_res = PSTL._complex_to_xy(image_arr)
+
+        amp_f = jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0)
+        amp_arr_mskd2 = amp_f.reshape((amp_f.shape[0], amp_f.shape[1], 1))
+        xS_f = jnp.where(jnp.isfinite(xS_lensed_res), xS_lensed_res, 0.0)
+
+        xS_lensed_ures = jnp.sum(xS_f * amp_arr_mskd2, axis=1) / jnp.sum(amp_arr_mskd2, axis=1)
+
+        return xS_lensed_ures
+
+    def get_astrometry_unlensed(self, t_obs, filt_idx=0):
+        """Get the astrometry of the source if the lens didn't exist.
+
+        Returns
+        -------
+        xS_unlensed : numpy array, dtype=float, shape = len(t_obs) x 2
+            The unlensed positions of the source in arcseconds.
+        """
+        # Equation of motion for just the background source.
+        dt_in_years = (t_obs - self.t0) / days_per_year
+        xS_unlensed = self.xS0 + jnp.outer(dt_in_years, self.muS) * 1e-3
+
+        if self.parallaxFlag:
+            # Get the parallax vector for each date.
+            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t_obs,
+                                                          obsLocation=self.obsLocation[filt_idx])
+            xS_unlensed += (self.piS * parallax_vec) * 1e-3  # arcsec
+
+        return xS_unlensed
+
+    def get_lens_astrometry(self, t_obs, filt_idx=0):
+        """Equation of motion for just the foreground lens system.
+
+        Parameters
+        ----------
+        t_obs : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+
+        Return
+        ------
+        xL : array_like, shape = [N_times, 2 directions]
+            Position of the lens system (geometric center) over time.
+        """
+        dt_in_years = (t_obs - self.t0) / days_per_year
+        xL = self.xL0 + jnp.outer(dt_in_years, self.muL) * 1e-3
+
+        if self.parallaxFlag:
+            # Get the parallax vector for each date.
+            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t_obs,
+                                                          obsLocation=self.obsLocation[filt_idx])
+            xL += (self.piL * parallax_vec) * 1e-3  # arcsec
+
+        return xL
+
+    def get_resolved_lens_astrometry(self, t_obs, filt_idx=0):
+        """Equation of motion for just the foreground lenses, individually.
+
+        Parameters
+        ----------
+        t_obs : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+
+        Returns
+        -------
+        xL1 : array_like, shape = [N_times, 2 directions]
+            Position of the lens primary (arcsec)
+        xL2 : array_like, shape = [N_times, 2 directions]
+            Position of the lens secondary (arcsec)
+        """
+        # orbits.oal2xy needs NumPy time arrays (not JAX).
+        t_obs = np.atleast_1d(np.asarray(t_obs, dtype=float))
+
+        offset = 0.5 * self.sep_12 * np.array([np.sin(self.alpha_rad),
+                                               np.cos(self.alpha_rad)])
+        offset *= 1e-3  # convert to arcsec
+        offset_2 = self.sep_23 * np.array([np.sin(self.psi_rad),
+                                           np.cos(self.psi_rad)])
+        offset_2 *= 1e-3  # convert to arcsec
+
+        if self.orbitFlag == False:
+            xL = np.asarray(self.get_lens_origin_astrometry(t_obs, filt_idx=filt_idx))
+            xL1 = xL + offset
+            xL2 = xL - offset
+            xL3 = xL2 + offset_2
+            #pdb.set_trace()
+        else:
+            dt_in_years = (t_obs - self.t0_com) / days_per_year
+            xL1 = np.zeros((len(t_obs), 2), dtype=float)
+            xL2 = np.zeros((len(t_obs), 2), dtype=float)
+            xL3 = np.zeros((len(t_obs), 2), dtype=float)
+
+            xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3
+            
+            orb1 = orbits.Orbit()
+            orb1.w = self.omega_pri
+            orb1.o = self.big_omega_sec
+            orb1.i = self.i_12
+            orb1.e = self.e_12
+            orb1.tp = (self.tp_12)
+            orb1.p = self.p_12
+                
+            orb1.aleph = self.aleph_12 *1e-3 #arcseconds
+            orb1.aleph2 = self.aleph_sec_12*1e-3 #arcseconds
+
+
+            (x, y, x2, y2) = orb1.oal2xy(t_obs) #Motion of primary and secondary orbits. Returned quantities are in arcseconds.
+
+            orb2 = orbits.Orbit()
+            orb2.w = self.omega_sec
+            orb2.o = self.big_omega_ter
+            orb2.i = self.i_23
+            orb2.e = self.e_23
+            orb2.tp = (self.tp_23)
+            orb2.p = self.p_23
+
+            orb2.aleph = self.aleph_23 *1e-3 #arcseconds
+            orb2.aleph2 = self.aleph_sec_23*1e-3 #arcseconds
+                
+            (_, _, x3, y3) = orb2.oal2xy(t_obs) #Motion of primary and secondary orbits. Returned quantities are in arcseconds.
+
+            self.x = x
+            self.y = y
+            self.x2 = x2
+            self.y2 = y2
+            self.x3 = x3
+            self.y3 = y3
+
+            xL1[:, 0] = xLCoM[:, 0] + x
+            xL1[:, 1] = xLCoM[:, 1] + y
+            xL2[:, 0] = xLCoM[:, 0] + x2
+            xL2[:, 1] = xLCoM[:, 1] + y2
+            xL3[:, 0] = xLCoM[:, 0] + x3
+            xL3[:, 1] = xLCoM[:, 1] + y3
+
+        if self.parallaxFlag:
+            parallax_vec = parallax.parallax_in_direction(
+                self.raL, self.decL, t_obs,
+                obsLocation=self.obsLocation[filt_idx])
+            plx = (self.piL * parallax_vec) * 1e-3
+            xL1 = xL1 + plx
+            xL2 = xL2 + plx
+
+        self.xL1 = xL1
+        self.xL2 = xL2
+        self.xL3 = xL3
+
+        return np.stack((xL1, xL2, xL3))
+
+    def get_centroid_shift(self, t_obs, amp_arr=None, image_arr=None, filt_idx=0):
+        """PSPL: Get the centroid shift (in mas) for a list of
+        observation times (in MJD).
+
+        Parameters
+        ----------
+        t_obs : array or float
+
+        Other Parameters
+        ----------------
+        image_arr : list
+            List returned from PSPL get_all_arrays() used to improve efficiency.
+        amp_arr : list
+            List returned from PSPL get_all_arrays() used to improve efficiency.
+        filt_idx : int
+            Index into the photometry parameter lists for the photometry that
+            corresponds to this astrometry data set.
+
+        Returns
+        -------
+        Centroid offset on the plane of the sky in arcseoncds.
+        """
+        # Observed position in arcsec
+        xS_lensed = self.get_astrometry(t_obs,
+                                        image_arr=image_arr,
+                                        amp_arr=amp_arr,
+                                        filt_idx=filt_idx)
+
+        # Unlensed position in arcsec
+        xS_unlens = self.get_astrometry_unlensed(t_obs, filt_idx=filt_idx)
+
+        # Centroid offset in arcseconds.
+        shift = (xS_lensed - xS_unlens)
+
+        return shift * 1e3 #mas
+
+    def animate(self, tE, time_steps, frame_time, name, size, zoom, astrometry, loc):
+        """ Produces animation of microlensing event.
+        This function takes the PSPL and makes an animation, the input variables are as follows
+
+        Parameters
+        ----------
+
+        tE:
+            number of einstein crossings times before/after the peak you want the animation to plot
+                e.g tE = 2 => graph will go from -2 tE to 2 tE
+        time_steps:
+            number of time steps before/after peak, so total number of time steps will
+            be 2 times this value
+        frame_time:
+            times in ms of each frame in the animation
+        name: string
+            the animation will be saved as name.html
+        size: list
+            [horizontal, vertical] cm's
+        zoom:
+            # of einstein radii plotted in vertical direction
+        """
+        def _anim_set_point(pt_line, tr_line, xy, frame):
+            x, y = xy[frame, 0], xy[frame, 1]
+            if np.isfinite(x) and np.isfinite(y):
+                pt_line.set_data([x], [y])
+            else:
+                pt_line.set_data([], [])
+            seg = xy[: frame + 1]
+            ok = np.isfinite(seg).all(axis=1)
+            if ok.any():
+                tr_line.set_data(seg[ok, 0], seg[ok, 1])
+            else:
+                tr_line.set_data([], [])
+
+        times = np.arange(-time_steps, time_steps + 1, dtype=float)
+        tau = tE * times / float(-times[0])
+        t = np.atleast_1d(self.t0 + tau * self.tE)
+
+        img, amp = self.get_all_arrays(t)
+        img = np.asarray(img)
+        amp = np.asarray(amp)
+        n_img = img.shape[1]
+        img_xy = np.stack([np.real(img), np.imag(img)], axis=-1)
+
+        lens_stack = self.get_resolved_lens_astrometry(t)
+        xL1, xL2, xL3 = lens_stack[0], lens_stack[1], lens_stack[2]
+        source = np.asarray(self.get_astrometry_unlensed(t))
+        images_xy = [img_xy[:, k, :] for k in range(n_img)]
+
+        show_lc = bool(astrometry)
+        phot = np.asarray(self.get_photometry(t, amp_arr=amp))
+        t_rel = t - self.t0
+
+        fig_h = size[1] + (2.0 if show_lc else 0.5)
+        fig = plt.figure(figsize=[size[0], fig_h])
+        if show_lc:
+            ax1 = fig.add_subplot(2, 1, 1)
+            ax2 = fig.add_subplot(2, 1, 2)
+            fig.subplots_adjust(hspace=0.45)
+            mag_line, = ax2.plot(t_rel, phot, 'r-', lw=1.5)
+            ax2.set_xlabel('Time (days from t0)')
+            ax2.set_ylabel('Magnitude')
+            ax2.invert_yaxis()
+        else:
+            ax1 = fig.add_subplot(1, 1, 1)
+            mag_line = None
+
+        ms = size[0]
+        l1_pt, = ax1.plot([], '.', ms=ms * 1.3, color='purple', label='Primary Lens')
+        l1_tr, = ax1.plot([], '-', ms=ms * 0.3, color='purple')
+        l2_pt, = ax1.plot([], '.', ms=ms * 1.3, color='black', label='Secondary Lens')
+        l2_tr, = ax1.plot([], '-', ms=ms * 0.3, color='black')
+        l3_pt, = ax1.plot([], '.', ms=ms * 1.3, color='palegreen', label='Tertiary Lens')
+        l3_tr, = ax1.plot([], '-', ms=ms * 0.3, color='palegreen')
+        s_pt, = ax1.plot([], '.', ms=ms * 1.3, color='orange', label='Unlensed Source')
+        s_tr, = ax1.plot([], '-', ms=ms * 0.3, color='orange')
+
+        img_lines = []
+        for k in range(n_img):
+            lbl = 'Lensed Image' if k == 0 else None
+            pt, = ax1.plot([], '.', ms=ms * 1.0, color='gold', label=lbl)
+            tr, = ax1.plot([], '.', ms=ms * 0.2, color='gold')
+            img_lines.append((pt, tr))
+
+        ax1.set_xlabel('RA (")')
+        ax1.set_ylabel('Dec (")')
+        ax1.set_xlim(zoom, -zoom)
+        ax1.set_ylim(-zoom, zoom)
+        ax1.legend(fontsize=10, loc=loc)
+
+        artists = [l1_pt, l1_tr, l2_pt, l2_tr, l3_pt, l3_tr, s_pt, s_tr]
+        artists += [ln for pair in img_lines for ln in pair]
+        if mag_line is not None:
+            artists.append(mag_line)
+
+        def update(frame):
+            _anim_set_point(l1_pt, l1_tr, xL1, frame)
+            _anim_set_point(l2_pt, l2_tr, xL2, frame)
+            _anim_set_point(l3_pt, l3_tr, xL3, frame)
+            _anim_set_point(s_pt, s_tr, source, frame)
+            for k, (pt, tr) in enumerate(img_lines):
+                _anim_set_point(pt, tr, images_xy[k], frame)
+            if mag_line is not None:
+                mag_line.set_data(t_rel[: frame + 1], phot[: frame + 1])
+            return artists
+
+        ani = animation.FuncAnimation(
+            fig, update, frames=len(tau), interval=frame_time, blit=False
+        )
+        ani.save('%s.mp4' % name, writer='ffmpeg')
+
+        return ani
+
+
+# --------------------------------------------------
+#
+# Parallax Class Family - PSBL
+#
+# --------------------------------------------------
+class PSTL_Parallax(PSPL_Parallax):
+    parallaxFlag = True
+
+    def get_amplification(self, t_obs, amp_arr=None, filt_idx=0):
+        """noParallax: Get the photometric amplification term at a set of times, t.
+        
+        Parameters
+        ----------
+        t: 
+            Array of times in MJD.DDD
+        """
+        if amp_arr is None:
+            img_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
+
+        # Mask invalid values from the amplification array.
+        amp_arr_msk = jnp.ma.masked_invalid(amp_arr)
+
+        # Sum up all the amplifications b/c surface brightness is conserved.
+        amp = jnp.sum(amp_arr_msk, axis=1)
+
+        return amp
+
+
+class PSTL_noParallax(PSPL_noParallax):
+    parallaxFlag = False
+
+    def get_amplification(self, t_obs, amp_arr=None, filt_idx=0):
+        """noParallax: Get the photometric amplification term at a set of times, t.
+        
+        Parameters
+        ----------
+        t: 
+            Array of times in MJD.DDD
+        """
+        if amp_arr is None:
+            img_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
+
+        # Mask invalid values from the amplification array.
+        amp_arr_msk = jnp.ma.masked_invalid(amp_arr)
+
+        # Sum up all the amplifications b/c surface brightness is conserved.
+        amp = jnp.sum(amp_arr_msk, axis=1)
+
+        return amp
+
+
+# --------------------------------------------------
+#
+# Parameterization Class Family - PSBL
+#
+# --------------------------------------------------
+
+class PSTL_PhotAstrom_EllOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
+    """
+    Point source binary lens.
+    Note that this is a non-STATIC binary lens,
+    i.e. there is orbital motion.
+
+    Attributes
+    ----------
+    mLp, mLs, mLt : float
+        Masses of the lenses (Msun)
+    t0_com : float
+        Time of closest approach between the source and the primary+secondary lens system's COM
+    xS0_E : float
+        R.A. of source position on the sky at t = t0_com (arcseconds) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on the sky at t = t0_com (arcseconds) in an
+        arbitrary ref. frame.
+    beta_com: float
+        Angular distance between the source and the CoM
+        of the primary+secondary lenses on the plane of the sky (mas). Can be
+        * positive (u0_amp > 0 when u0_hat[0] > 0) or
+        * negative (u0_amp < 0 when u0_hat[0] < 0).
+    muL_E : float
+        Lens System proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Lens System proper motion in the Dec. direction (mas/yr)
+
+    omega_pri: float
+        The argument of periastron of the primary lens's orbit in degrees.
+        omega_sec = omega_pri + 180 deg
+
+    omega_sec: float
+        The argument of periastron of the secondary lens's orbit in degrees.
+        omega_sec = omega_pri + 180 deg
+
+    big_omega_sec: float
+        The longitude of the ascending node of the secondary lens's orbit
+        in degrees.
+    
+    big_omega_ter: float
+        The longitude of the ascending node of the tertiary lens's orbit
+        in degrees.
+
+    i_12: float
+        The inclination angle of the primary+secondary system in degrees.
+    e_12: float
+        The eccentricity of the primary+secondary system
+    tp_12: float
+        This is the time of the periastron of the primary+secondary system in days.
+    a_12: float
+        The semi-major axis of the binary primary+secondary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
+
+    i_23: float
+        The inclination angle of the secondary+tertiary in degrees.
+    e_23: float
+        The eccentricity of the secondary+tertiary system
+    tp_23: float
+        This is the time of the periastron of the secondary+tertiary system in days.
+    a_23: float
+        The semi-major axis of the binary secondary+tertiary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
+
+    muS_E : float
+        Source proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source proper motion in the Dec. direction (mas/yr)
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source's CoM (pc)
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+        radiusS: float
+            Projected radius of the source star in arcsec on the sky plane.
+        n_outline: int
+            Number of outline points used on the boundary of this source. 
+    """
+
+    fitter_param_names = ['mLp', 'mLs', 'mLt','t0_com', 'xS0_E', 'xS0_N',
+                          'beta', 'muL_E', 'muL_N',
+                          'omega_pri', 'omega_sec', 'big_omega_sec', 'big_omega_ter', 'i', 'e', 'tp', 'a',
+                          'muS_E', 'muS_N', 'dL', 'dS']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'Keplerian'
+
+    def __init__(self, mLp, mLs, mLt, t0_com, xS0_E, xS0_N,
+                 beta_com, muL_E, muL_N,
+                 omega_pri, omega_sec, big_omega_sec, big_omega_ter, i_12, e_12, tp_12, a_12, i_23, e_23, tp_23, a_23,
+                 muS_E, muS_N, dL, dS,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N,
+                 beta_com, muL_E, muL_N,
+                 omega_pri, big_omega_sec, i_12, e_12, tp_12, a_12,
+                 muS_E, muS_N, dL, dS,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        self.mLt = mLt  # Msun
+        self.mL = mLp + mLs + mLt  
+        # Calculate the relative parallax
+        inv_dist_diff = (1.0 / (dL * units.pc)) - (1.0 / (dS * units.pc))
+        # Calculate period, and semi-major axes
+        self.a_12 = a_12
+        self.a_23 = a_23
+        self.sep_12 = self.a_12
+        self.sep_23 = self.a_23
+        self.aleph_sec_12 = self.aleph_sec
+        self.aleph_12 = self.aleph
+        self.aleph_sec_23 = (self.mLs / (self.mLs + self.mLt)) * self.a_23  # mas
+        self.aleph_23 = self.a_23 - self.aleph_sec  # mas
+        self.a_AU_12 = dL * (self.a * 1e-3) * units.AU
+        self.a_AU_23 = dL * (self.a_23 * 1e-3) * units.AU
+        
+        mL_12 = (self.mLp + self.mLs) * units.Msun
+        p = (2 * np.pi * np.sqrt(self.a_AU_12 ** 3 / (const.G * mL_12))).to('day')
+        self.p_12 = p.value  # Period in Days
+        self.p = p
+
+        mL_23 = (self.mLs + self.mLt) * units.Msun
+        p = (2 * np.pi * np.sqrt(self.a_AU_23 ** 3 / (const.G * mL_23))).to('day')
+        self.p_23 = p.value # Period in days
+        
+        self.omega_sec = omega_sec
+        self.big_omega_ter = big_omega_ter
+        self.i_12 = i_12
+        self.e_12 = e_12
+        self.tp_12 = tp_12
+        self.a_12 = a_12
+        self.i_23 = i_23
+        self.e_23 = e_23
+        self.tp_23 = tp_23
+        orb = orbits.Orbit()
+        orb.w = self.omega_sec
+        orb.o = self.big_omega_ter
+        orb.i = self.i_23
+        orb.e = self.e_23
+        orb.tp = (self.tp_23)
+        orb.aleph = self.aleph_23 *1e-3 #arcseconds
+        orb.aleph2 = self.aleph_sec_23 *1e-3
+        orb.p = self.p_23
+        (x, y, x2, y2) = orb.oal2xy(np.array([tp_23]))
+        
+        self.psi_rad = np.arctan2(x-x2, y-y2)[0]
+        self.psi = np.rad2deg(self.psi_rad)
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
+        self.m3 = m3.to(units.arcsec ** 2).value
+        return
+
+
+class PSTL_PhotAstrom_EllOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
+    """
+    Point source binary lens.
+    Note that this is a NON-STATIC binary lens with
+    orbital motion.
+
+    Attributes
+    ----------
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    q : float
+        Mass ratio (M2 / M1)
+    a: float
+        The semi-major axis of the binary system; but in mas.
+        This is actually lens system semi-major axis / distance to lens.
+    big_omega_sec: float
+        The longitude of the ascending node of the secondary lens's orbit
+        in degrees.
+    omega_pri: float
+        The argument of periastron of the primary lens's orbit in degrees.
+        omega_sec = omega_pri + 180 deg
+    i: float
+        The inclination angle of the system in degrees.
+    e: float
+        The eccentricity of the System
+    tp: float
+        This is the time of the periastron of the system in days.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_Lp_Ls should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
+        then dmag_Lp_Ls=0 and b_sff=1.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    """
+    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
+                          'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat', 'muS_E',
+                          'muS_N', 'dL', 'dS', 'alpha']
+
+    phot_param_names = ['b_sff', 'mag_src']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = 'Keplerian'
+    specialFlag = True
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q_12, q_13 ,omega_pri, omega_sec, big_omega_sec, big_omega_ter, i_12, 
+                 e_12, tp_12, a_12, i_23, e_23, tp_23, a_23,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+                 
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q_12, a_12, big_omega_sec, omega_pri, i_12, e_12, tp_12,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+
+        kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
+        kappa = kappa_tmp.to(units.mas / units.Msun,
+                             equivalencies=units.dimensionless_angles()).value
+
+        self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
+        self.q_12 = q_12
+        self.q_13 = q_13
+        self.mLp = self.mL / (1.0 + self.q_12)
+        self.mLs = self.mLp * self.q_12
+        self.mLt = self.mLp * self.q_13
+        # Calculate the relative parallax
+        inv_dist_diff = (1.0 / (self.dL * units.pc)) - (1.0 / (self.dS * units.pc))
+        # Calculate period, and semi-major axes
+        self.a_12 = a_12
+        self.a_23 = a_23
+        self.sep_12 = self.a_12
+        self.sep_23 = self.a_23
+        self.aleph_sec_12 = self.aleph_sec
+        self.aleph_12 = self.aleph
+        self.aleph_sec_23 = (self.mLs / (self.mLs + self.mLt)) * self.a_23  # mas
+        self.aleph_23 = self.a_23 - self.aleph_sec  # mas
+        self.a_AU_12 = self.dL * (self.a * 1e-3) * units.AU
+        self.a_AU_23 = self.dL * (self.a_23 * 1e-3) * units.AU
+        mL_12 = (self.mLp + self.mLs) * units.Msun
+        p = (2 * np.pi * np.sqrt(self.a_AU_12 ** 3 / (const.G * mL_12))).to('day')
+        self.p_12 = p.value  # Period in Days
+        self.p = p
+        mL_23 = (self.mLs + self.mLt) * units.Msun
+        p = (2 * np.pi * np.sqrt(self.a_AU_23 ** 3 / (const.G * mL_23))).to('day')
+        self.t0_com = t0
+        self.xL0_com = self.xL0
+        self.p_23 = p.value # Period in days
+        self.omega_sec = omega_sec
+        self.big_omega_ter = big_omega_ter
+        self.i_12 = i_12
+        self.e_12 = e_12
+        self.tp_12 = tp_12
+        self.a_12 = a_12
+        self.i_23 = i_23
+        self.e_23 = e_23
+        self.tp_23 = tp_23
+        orb = orbits.Orbit()
+        orb.w = self.omega_sec
+        orb.o = self.big_omega_ter
+        orb.i = self.i_23
+        orb.e = self.e_23
+        orb.tp = (self.tp_23)
+        orb.aleph = self.aleph_23 *1e-3 #arcseconds
+        orb.aleph2 = self.aleph_sec_23 *1e-3
+        orb.p = self.p_23
+        (x, y, x2, y2) = orb.oal2xy(np.array([tp_23]))
+        
+        self.psi_rad = np.arctan2(x-x2, y-y2)[0]
+        self.psi = np.rad2deg(self.psi_rad)
+        m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
+        m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
+        self.m3 = m3.to(units.arcsec ** 2).value
+        return
+
+class PSTL_PhotAstromParam1(PSBL_PhotAstromParam1):
+    """
+    Point source binary lens.
+    Note that this is a non-STATIC binary lens, i.e. there is orbital motion.
+
+    Attributes
+    ----------
+    mLp, mLs, mLt : float
+        Masses of the lenses (Msun)
+    t0_com : float
+        Time of closest approach between the source and binary lens system's COM
+    xS0_E : float
+        R.A. of source position on the sky at t = t0_com (arcseconds) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on the sky at t = t0_com (arcseconds) in an
+        arbitrary ref. frame.
+
+    beta_com: float
+        Angular distance between the source and the CoM
+        of the lenses on the plane of the sky (mas). Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+
+    muL_E : float
+        Lens System proper motion in the RA direction (mas/yr)
+    muL_N : float
+        Lens System proper motion in the Dec. direction (mas/yr)
+
+        
+    sep: float
+        The semi-major axis of the lenses (mas)
+
+
+    muS_E : float
+        Source proper motion in the RA direction (mas/yr)
+    muS_N : float
+        Source proper motion in the Dec. direction (mas/yr)
+
+    dL : float
+        Distance from the observer to the lens system (pc)
+    dS : float
+        Distance from the observer to the source's CoM (pc)
+
+    alpha : float
+        Angle made between the binary axis and North;
+        measured in degrees East of North.
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+
+    """
+    fitter_param_names = ['mLp', 'mLs', 'mLt','t0', 'xS0_E', 'xS0_N',
+                          'beta', 'muL_E', 'muL_N', 'sep_12', 'sep_23' 'muS_E',
+                          'muS_N', 'dL', 'dS', 'alpha']
+
+    phot_param_names = ['b_sff', 'mag_src']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = False
+
+    def __init__(self, mLp, mLs, mLt,
+                t0, xS0_E, xS0_N, 
+                beta, muL_E, muL_N, sep_12, sep_23,  
+                muS_E, muS_N, dL, dS,
+                alpha, psi, b_sff, mag_src, dmag_Lp_Ls,
+                raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N,
+                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                 sep_12, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        self.mLt = mLt
+        self.psi = psi
+        self.psi_rad = self.psi * np.pi / 180.0
+        # Calculate the relative parallax
+        inv_dist_diff = (1.0 / (dL * units.pc)) - (1.0 / (dS * units.pc))
+        self.mL = self.mLp + self.mLs + self.mLt  # Total lens mass
+        self.sep_12 = sep_12
+        self.sep_23 = sep_23
+        self.q_12 = self.mLs / self.mLp
+        self.q_13 = self.mLt / self.mLp
+        m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
+        self.m3 = m3.to(units.arcsec ** 2).value
+
+        return
+
+
+
+class PSTL_PhotAstromParam2(PSBL_PhotAstromParam2):
+    """
+    Point source binary lens.
+    It has 3 more parameters than PSPL (additional mass term, separation,
+    and angle of approach). Note that this is a STATIC binary lens, i.e.
+    there is no orbital motion.
+
+    Attributes
+    ----------
+    t0 : float
+        Time of closest approach to GEOMETRIC center of the first two lenses. (MJD.DDD)
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the first two lenses
+        on the plane of the sky at closest approach in units of thetaE. Can be
+        * positive (u0_amp > 0 when u0_hat[0] > 0) or
+        * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    q_12 : float
+        Mass ratio (M2 / M1)
+    q_13: float
+        Mass ratio (M3 / M1)
+    sep_12 : float
+        Angular separation of the primary and secondary lenses (mas)
+    sep_23 : float
+        Angular separation of the secondary and tertiary lenses (mas)
+    alpha : float
+        Angle made between the binary axis of the first two lenses and North;
+        measured in degrees East of North.
+    psi : float
+        Angle made between the binary axis of the second and third lenses and North;
+        measured in degrees East of North. 
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+    mag_src : numpy array or list
+        Source magnitude, unlensed. One in each filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_Lp_Ls should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20. If they are both dark,
+        then dmag_Lp_Ls=0 and b_sff=1.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+        radiusS: float
+            Projected radius of the source star in arcsec on the sky plane.
+        n_outline: int
+            Number of outline points used on the boundary of this source. 
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
+                          'q_12', 'q_13', 'sep_12', 'sep_23','alpha', 'psi']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = False
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q_12, q_13, sep_12, sep_23, alpha, psi,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q_12, sep_12, alpha,
+                 b_sff, mag_src, dmag_Lp_Ls,
+                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        # Calculate the distance to source and lens.
+        dL = (self.piL * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        dS = (self.piS * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        self.dL = dL.to('pc').value
+        self.dS = dS.to('pc').value
+        self.sep_23 = sep_23
+        self.sep_12 = sep_12
+        self.q_12 = q_12
+        self.q_13 = q_13
+        self.mLt = self.mLp * self.q_13
+        self.mL = self.mLp + self.mLs + self.mLt
+       # self.t0_com = self.t0
+       # self.xL0_com = self.xL0
+        self.psi = psi
+        self.psi_rad = self.psi * np.pi / 180.0
+        inv_dist_diff = (1.0 / dL) - (1.0 / dS)
+        m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
+        self.m3 = m3.to(units.arcsec ** 2).value
+        return
+
+class PSTL_PhotAstromParam3(PSBL_PhotAstromParam3):
+    """
+    Point source binary lens.
+    It has 3 more parameters than PSPL (additional mass term, separation,
+    and angle of approach). Note that this is a STATIC binary lens, i.e.
+    there is no orbital motion.
+
+    Attributes
+    ----------
+    t0 : float
+        Time of projected closest approach between the source and the geometric center of the
+        lens system (before parallax is applied and in the SSB frame).
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE : float
+        Einstein crossing time (days).
+    log10_thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+    q_12 : float
+        Mass ratio (M2 / M1)
+    q_13: float
+        Mass ratio (M3 / M1)
+    sep_12 : float
+        Angular separation of the primary and secondary lenses (mas)
+    sep_23 : float
+        Angular separation of the secondary and tertiary lenses (mas)
+    alpha : float
+        Angle made between the binary axis of the first two lenses and North;
+        measured in degrees East of North.
+    psi : float
+        Angle made between the binary axis of the second and third lenses and North;
+        measured in degrees East of North. 
+    b_sff : numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lenses). One
+        for each filter.
+           :math:`b_sff = f_S / (f_S + f_L + f_N)`.
+        This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base : numpy array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    dmag_Lp_Ls : numpy array or list
+        Magnitude difference of lens primary - lens secondary. If the primary lens
+        is dark, then dmag_L1_L2 should be set to 20 (or some other large, positive number).
+        If the secondary lens 2 is dark, then it should be set to -20.
+        Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
+        comes from the lenses, not any neighbors.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+    root_tol : float
+        Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+                          'piE_E', 'piE_N',
+                          'xS0_E', 'xS0_N',
+                          'muS_E', 'muS_N',
+                          'q', 'sep', 'alpha']
+    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N',
+                              'mag_src']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = False
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q_12, q_13, sep_12, sep_23, alpha, psi,
+                 b_sff, mag_base, dmag_Lp_Ls,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                 q_12, sep_12, alpha,
+                 b_sff, mag_base, dmag_Lp_Ls,
+                 raL, decL, obsLocation, root_tol)
+
+        dL = (self.piL * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        dS = (self.piS * units.mas).to(units.parsec,
+                                       equivalencies=units.parallax())
+        self.dL = dL.to('pc').value
+        self.dS = dS.to('pc').value
+        self.sep_23 = sep_23
+        self.sep_12 = sep_12
+        self.q_12 = q_12
+        self.q_13 = q_13
+        self.mLt = self.mLp * self.q_13
+        self.mL = self.mLp + self.mLs + self.mLt
+       # self.t0_com = self.t0
+       # self.xL0_com = self.xL0
+        self.psi = psi
+        self.psi_rad = self.psi * np.pi / 180.0
+        inv_dist_diff = (1.0 / dL) - (1.0 / dS)
+        m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
+        self.m3 = m3.to(units.arcsec ** 2).value
+        return
+
+
+
 #############################################
 ### POINT SOURCE POINT LENS (PSPL) MODELS ###
 #############################################
@@ -29163,6 +32123,109 @@ class PSPL_PhotAstrom_noPar_GP_Param2(ModelClassABC,
         startbases(self)
         checkconflicts(self)
 
+
+
+@inheritdocstring
+class PSTL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC,
+                                           PSTL_PhotAstrom,
+                                           PSTL_noParallax,
+                                           PSTL_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+@inheritdocstring
+class PSTL_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC,
+                                           PSTL_PhotAstrom,
+                                           PSTL_Parallax,
+                                           PSTL_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSTL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC,
+                                           PSTL_PhotAstrom,
+                                           PSTL_noParallax,
+                                           PSTL_PhotAstrom_EllOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+@inheritdocstring
+class PSTL_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC,
+                                           PSTL_PhotAstrom,
+                                           PSTL_Parallax,
+                                           PSTL_PhotAstrom_EllOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSTL_PhotAstrom_noPar_Param1(ModelClassABC,
+                                           PSTL_PhotAstrom,
+                                           PSTL_noParallax,
+                                           PSTL_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+@inheritdocstring
+class PSTL_PhotAstrom_Par_Param1(ModelClassABC,
+                                           PSTL_PhotAstrom,
+                                           PSTL_Parallax,
+                                           PSTL_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSTL_PhotAstrom_noPar_Param2(ModelClassABC,
+                                           PSTL_PhotAstrom,
+                                           PSTL_noParallax,
+                                           PSTL_PhotAstromParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+@inheritdocstring
+class PSTL_PhotAstrom_Par_Param2(ModelClassABC,
+                                           PSTL_PhotAstrom,
+                                           PSTL_Parallax,
+                                           PSTL_PhotAstromParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+@inheritdocstring
+class PSTL_PhotAstrom_noPar_Param3(ModelClassABC,
+                                           PSTL_PhotAstrom,
+                                           PSTL_noParallax,
+                                           PSTL_PhotAstromParam3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+@inheritdocstring
+class PSTL_PhotAstrom_Par_Param3(ModelClassABC,
+                                           PSTL_PhotAstrom,
+                                           PSTL_Parallax,
+                                           PSTL_PhotAstromParam3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
 
 # =====
 # PSBL Model Classes
