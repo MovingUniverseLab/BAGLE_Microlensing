@@ -114,6 +114,13 @@ from model_old_vs_jax_fixtures import (
     psbl_photastrom_param4_grad_ast_pairs,
     psbl_photastrom_likelihood_grad_pairs,
     psbl_gp_param2_grad_pairs,
+    psbl_gp_param2_extended_grad_pairs,
+    bspl_photastrom_param2_grad_pairs,
+    bspl_photastrom_param2_likelihood_grad_pairs,
+    psbl_photastrom_param5_grad_pairs,
+    psbl_photastrom_param6_grad_pairs,
+    psbl_photastrom_orbit_param2_grad_bulk_pairs,
+    bsbl_photastrom_ellorbs_param1_likelihood_grad_pairs,
     bspl_photastrom_gp_orbit_grad_pairs,
     psbl_photastrom_orbit_param1_grad_bulk_pairs,
     build_jax_eval_paired_instances,
@@ -1114,6 +1121,97 @@ def test_grad_bspl_photastrom_param1_bulk(class_name, method_name):
     "class_name,method_name", psbl_photastrom_param1_grad_bulk_pairs()
 )
 def test_grad_psbl_photastrom_param1_bulk(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_param2_extended_grad_pairs())
+def test_grad_psbl_gp_param2_extended(class_name, method_name):
+    """PSBL PhotAstrom GP Param2 get_u + phot likelihood JAX grad smoke."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_param2_grad_pairs())
+def test_grad_bspl_photastrom_param2(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_param2_likelihood_grad_pairs()
+)
+def test_grad_bspl_photastrom_param2_likelihood(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param5_grad_pairs())
+def test_grad_psbl_photastrom_param5(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param6_grad_pairs())
+def test_grad_psbl_photastrom_param6(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_orbit_param2_grad_bulk_pairs()
+)
+def test_grad_psbl_photastrom_orbit_param2_bulk(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_ellorbs_param1_likelihood_grad_pairs()
+)
+def test_grad_bsbl_photastrom_ellorbs_param1_likelihood(class_name, method_name):
     _, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, jax_inst)
     g, init_names = grad_smoke_jax(
