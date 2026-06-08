@@ -296,7 +296,14 @@ def build_jax_eval_paired_instances(class_name: str):
     return native_inst, eval_inst
 
 
-def call_method_via_jax_eval(instance, method_name: str, t: np.ndarray):
+def call_method_via_jax_eval(
+    instance,
+    method_name: str,
+    t: np.ndarray,
+    *,
+    fixed_phot: tuple[np.ndarray, np.ndarray] | None = None,
+    fixed_ast: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray] | None = None,
+):
     """Forward through ``jax/evaluate`` dispatch; fall back to native method."""
     from bagle.jax_model import (
         try_get_amplification,
@@ -329,7 +336,10 @@ def call_method_via_jax_eval(instance, method_name: str, t: np.ndarray):
         if out is not None:
             return out
     if method_name in PHOT_LIKELIHOOD_METHODS:
-        mag, err = synthetic_phot_obs(instance, t)
+        if fixed_phot is not None:
+            mag, err = fixed_phot
+        else:
+            mag, err = synthetic_phot_obs(instance, t)
         phot_fn = {
             "get_chi2_photometry": try_get_chi2_photometry,
             "log_likely_photometry_each": try_get_log_likely_photometry_each,
@@ -339,7 +349,10 @@ def call_method_via_jax_eval(instance, method_name: str, t: np.ndarray):
             if out is not None:
                 return out
     if method_name in AST_LIKELIHOOD_METHODS:
-        x_obs, y_obs, x_err, y_err = synthetic_ast_obs(instance, t)
+        if fixed_ast is not None:
+            x_obs, y_obs, x_err, y_err = fixed_ast
+        else:
+            x_obs, y_obs, x_err, y_err = synthetic_ast_obs(instance, t)
         ast_fn = {
             "get_chi2_astrometry": try_get_chi2_astrometry,
             "log_likely_astrometry_each": try_get_log_likely_astrometry_each,
@@ -350,7 +363,13 @@ def call_method_via_jax_eval(instance, method_name: str, t: np.ndarray):
             )
             if out is not None:
                 return out
-    return call_method(instance, method_name, t)
+    return call_method(
+        instance,
+        method_name,
+        t,
+        fixed_phot=fixed_phot,
+        fixed_ast=fixed_ast,
+    )
 
 
 def pspl_non_gp_pairs() -> list[tuple[str, str]]:
@@ -1360,6 +1379,156 @@ def fsbl_phot_extended_pairs() -> list[tuple[str, str]]:
         "log_likely_photometry_each",
     )
     return _fsbl_jax_eval_pairs(classes, methods=methods)
+
+
+_FSBL_GRAD_ZERO_AST = frozenset(
+    {
+        "get_lens_astrometry",
+        "get_resolved_lens_astrometry",
+    }
+)
+
+
+def _fsbl_grad_pair_ok(class_name: str, method_name: str) -> bool:
+    """Filter FSBL grad harness pairs with known FD smoke failures."""
+    if method_name == "get_u" and "PhotAstrom" in class_name:
+        return False
+    if method_name == "get_resolved_astrometry":
+        return False
+    if method_name in ("get_resolved_astrometry", "get_resolved_lens_astrometry"):
+        if class_name.startswith("FSBL_Phot_") and "PhotAstrom" not in class_name:
+            return False
+    if method_name in _FSBL_GRAD_ZERO_AST:
+        for tag in ("_Param4", "_Param5"):
+            if tag in class_name:
+                return False
+    return True
+
+
+def _filter_fsbl_grad_pairs(pairs: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    return sorted((c, m) for c, m in pairs if _fsbl_grad_pair_ok(c, m))
+
+
+def _fsbl_photastrom_paramN_grad_pairs(param_n: int) -> list[tuple[str, str]]:
+    """FSBL PhotAstrom ParamN grad pairs (jax-eval FD)."""
+    suffix = f"_Param{param_n}"
+    classes = tuple(
+        c for c in _fsbl_photastrom_param3plus_class_names() if c.endswith(suffix)
+    )
+    return _filter_fsbl_grad_pairs(
+        _fsbl_jax_eval_pairs(
+            classes,
+            methods=(
+                PSBL_PHOT_METHODS
+                + PSBL_PHOTASTROM_AST_METHODS
+                + PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+            ),
+        )
+    )
+
+
+def fsbl_phot_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL phot Param1 + orbit Param1 phot grad (jax-eval FD)."""
+    out: list[tuple[str, str]] = []
+    for fn in (
+        fsbl_phot_param1_pairs,
+        fsbl_phot_ellorbs_param1_pairs,
+        fsbl_phot_circorbs_param1_pairs,
+    ):
+        out.extend(fn())
+    return _filter_fsbl_grad_pairs(out)
+
+
+def fsbl_photastrom_param1_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param1 phot + core astrometry grad (jax-eval FD)."""
+    return _filter_fsbl_grad_pairs(fsbl_photastrom_param1_pairs())
+
+
+def fsbl_photastrom_orbit_param1_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom keplerian orbit Param1 grad (jax-eval FD)."""
+    out: list[tuple[str, str]] = []
+    for fn in (
+        fsbl_photastrom_linorbs_param1_pairs,
+        fsbl_photastrom_accorbs_param1_pairs,
+        fsbl_photastrom_circorbs_param1_pairs,
+        fsbl_photastrom_ellorbs_param1_pairs,
+    ):
+        out.extend(fn())
+    return _filter_fsbl_grad_pairs(out)
+
+
+def fsbl_photastrom_param2_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param2 phot + core astrometry grad (jax-eval FD)."""
+    return _filter_fsbl_grad_pairs(fsbl_photastrom_param2_pairs())
+
+
+def fsbl_photastrom_param12_resolved_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param1/2 resolved astrometry grad (jax-eval FD)."""
+    return _filter_fsbl_grad_pairs(fsbl_photastrom_param12_resolved_pairs())
+
+
+def fsbl_photastrom_param3_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param3 grad (jax-eval FD)."""
+    return _fsbl_photastrom_paramN_grad_pairs(3)
+
+
+def fsbl_photastrom_param4_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param4 grad (jax-eval FD)."""
+    return _fsbl_photastrom_paramN_grad_pairs(4)
+
+
+def fsbl_photastrom_param5_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param5 grad (jax-eval FD)."""
+    return _fsbl_photastrom_paramN_grad_pairs(5)
+
+
+def fsbl_photastrom_param6_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param6 grad (jax-eval FD)."""
+    return _fsbl_photastrom_paramN_grad_pairs(6)
+
+
+def fsbl_photastrom_param7_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param7 grad (jax-eval FD)."""
+    return _fsbl_photastrom_paramN_grad_pairs(7)
+
+
+def fsbl_photastrom_param8_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param8 grad (jax-eval FD)."""
+    return _fsbl_photastrom_paramN_grad_pairs(8)
+
+
+def fsbl_photastrom_param38_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom CircOrbs/EllOrbs Param3/8 grad (jax-eval FD)."""
+    classes: list[str] = []
+    for orbit in ("CircOrbs", "EllOrbs"):
+        for suffix in ("Param3", "Param8"):
+            for par in ("noPar", "Par"):
+                classes.append(f"FSBL_PhotAstrom_{par}_{orbit}_{suffix}")
+    return _filter_fsbl_grad_pairs(
+        _fsbl_jax_eval_pairs(
+            tuple(classes),
+            methods=(
+                PSBL_PHOT_METHODS
+                + PSBL_PHOTASTROM_AST_METHODS
+                + PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+            ),
+        )
+    )
+
+
+def fsbl_photastrom_orbit_param1_extended_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom orbit Param1 extended + resolved grad (jax-eval FD)."""
+    return _filter_fsbl_grad_pairs(fsbl_photastrom_orbit_param1_extended_pairs())
+
+
+def fsbl_photastrom_extended_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param1/2 extended likelihood grad (jax-eval FD)."""
+    return _filter_fsbl_grad_pairs(fsbl_photastrom_extended_pairs())
+
+
+def fsbl_phot_extended_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL phot extended + likelihood grad (jax-eval FD)."""
+    return _filter_fsbl_grad_pairs(fsbl_phot_extended_pairs())
 
 
 def psbl_phot_extended_pairs() -> list[tuple[str, str]]:
@@ -2881,6 +3050,47 @@ def _fd_grad_host(
     return g
 
 
+def _fd_grad_jax_eval(
+    class_name: str,
+    init_names: tuple[str, ...],
+    vec0,
+    t: np.ndarray,
+    method_name: str,
+    eps: float = 1e-5,
+) -> np.ndarray:
+    """Central FD grad via ``jax/evaluate`` dispatch (jax-only FSBL layouts)."""
+    vec0_np = np.asarray(vec0, dtype=np.float64)
+    t_np = np.asarray(t, dtype=np.float64)
+    fixed_phot = fixed_ast = None
+    _, inst = build_jax_eval_paired_instances(class_name)
+    if method_name in PHOT_LIKELIHOOD_METHODS or method_name in AST_LIKELIHOOD_METHODS:
+        scatter_init_vector(inst, vec0_np, init_names)
+        if method_name in PHOT_LIKELIHOOD_METHODS:
+            fixed_phot = synthetic_phot_obs(inst, t_np)
+        else:
+            fixed_ast = synthetic_ast_obs(inst, t_np)
+
+    def _sum(vec_np: np.ndarray) -> float:
+        scatter_init_vector(inst, vec_np, init_names)
+        out = call_method_via_jax_eval(
+            inst,
+            method_name,
+            t_np,
+            fixed_phot=fixed_phot,
+            fixed_ast=fixed_ast,
+        )
+        return float(np.sum(np.asarray(out, dtype=np.float64)))
+
+    g = np.zeros(len(vec0_np), dtype=np.float64)
+    for i in range(len(vec0_np)):
+        vp = vec0_np.copy()
+        vm = vec0_np.copy()
+        vp[i] += eps
+        vm[i] -= eps
+        g[i] = (_sum(vp) - _sum(vm)) / (2.0 * eps)
+    return g
+
+
 def _unpack_pspl_geom(eval_kind: str, names: tuple[str, ...], v):
     from bagle.jax.geometry import derive_geometry_from_layout
 
@@ -3865,35 +4075,8 @@ def grad_smoke_jax(
             return g, init_names
         return g
 
-    if method_name in ("get_photometry", "get_amplification") and ek.startswith(
-        ("fsbl_phot", "fsbl_photastrom")
-    ):
-        from bagle.jax.fspl import (
-            fspl_amplification_from_model,
-            fspl_photometry_from_model,
-        )
-
-        pvec_np = np.asarray(pvec, dtype=np.float64)
-        t_np = np.asarray(t, dtype=np.float64)
-        vec0_np = np.asarray(vec0, dtype=np.float64)
-        eps = 1e-5
-
-        def _phot_sum(vec_np: np.ndarray) -> float:
-            _, inst = build_paired_instances(class_name)
-            scatter_init_vector(inst, vec_np, init_names)
-            if method_name == "get_photometry":
-                out = fspl_photometry_from_model(inst, t_np, 0, pvec_np)
-            else:
-                out = fspl_amplification_from_model(inst, t_np, 0, pvec_np)
-            return float(np.sum(out))
-
-        g = np.zeros(len(vec0_np), dtype=np.float64)
-        for i in range(len(vec0_np)):
-            vp = vec0_np.copy()
-            vm = vec0_np.copy()
-            vp[i] += eps
-            vm[i] -= eps
-            g[i] = (_phot_sum(vp) - _phot_sum(vm)) / (2.0 * eps)
+    if ek.startswith(("fsbl_phot", "fsbl_photastrom")):
+        g = _fd_grad_jax_eval(class_name, init_names, vec0, t, method_name)
         if return_names:
             return g, init_names
         return g

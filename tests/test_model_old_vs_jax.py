@@ -72,6 +72,21 @@ from model_old_vs_jax_fixtures import (
     bsbl_photastrom_ast_likelihood_gaps_pairs,
     fsbl_photastrom_extended_pairs,
     fsbl_phot_extended_pairs,
+    fsbl_phot_grad_pairs,
+    fsbl_photastrom_param1_grad_pairs,
+    fsbl_photastrom_orbit_param1_grad_pairs,
+    fsbl_photastrom_param2_grad_pairs,
+    fsbl_photastrom_param12_resolved_grad_pairs,
+    fsbl_photastrom_param3_grad_pairs,
+    fsbl_photastrom_param4_grad_pairs,
+    fsbl_photastrom_param5_grad_pairs,
+    fsbl_photastrom_param6_grad_pairs,
+    fsbl_photastrom_param7_grad_pairs,
+    fsbl_photastrom_param8_grad_pairs,
+    fsbl_photastrom_param38_grad_pairs,
+    fsbl_photastrom_orbit_param1_extended_grad_pairs,
+    fsbl_photastrom_extended_grad_pairs,
+    fsbl_phot_extended_grad_pairs,
     psbl_phot_extended_pairs,
     psbl_photastrom_param1_ast_likelihood_pairs,
     psbl_photastrom_param7_ast_likelihood_pairs,
@@ -1282,6 +1297,89 @@ def test_grad_bspl_photastrom_extended(class_name, method_name):
     "class_name,method_name", psbl_photastrom_gp_param1_extended_grad_pairs()
 )
 def test_grad_psbl_photastrom_gp_param1_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_grad_pairs())
+def test_grad_fsbl_phot(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param1_grad_pairs())
+def test_grad_fsbl_photastrom_param1(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_orbit_param1_grad_pairs()
+)
+def test_grad_fsbl_photastrom_orbit_param1(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param2_grad_pairs())
+def test_grad_fsbl_photastrom_param2(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_param12_resolved_grad_pairs()
+)
+def test_grad_fsbl_photastrom_param12_resolved(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param3_grad_pairs())
+def test_grad_fsbl_photastrom_param3(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param4_grad_pairs())
+def test_grad_fsbl_photastrom_param4(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param5_grad_pairs())
+def test_grad_fsbl_photastrom_param5(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param6_grad_pairs())
+def test_grad_fsbl_photastrom_param6(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param7_grad_pairs())
+def test_grad_fsbl_photastrom_param7(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param8_grad_pairs())
+def test_grad_fsbl_photastrom_param8(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param38_grad_pairs())
+def test_grad_fsbl_photastrom_param38(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_orbit_param1_extended_grad_pairs()
+)
+def test_grad_fsbl_photastrom_orbit_param1_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_extended_grad_pairs()
+)
+def test_grad_fsbl_photastrom_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_extended_grad_pairs())
+def test_grad_fsbl_phot_extended(class_name, method_name):
     _assert_grad_smoke(class_name, method_name)
 
 
