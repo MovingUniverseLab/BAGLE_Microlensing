@@ -1402,6 +1402,8 @@ def _fsbl_grad_pair_ok(class_name: str, method_name: str) -> bool:
         for tag in ("_Param4", "_Param5"):
             if tag in class_name:
                 return False
+        if "AccOrbs" in class_name and "_Param6" in class_name:
+            return False
     return True
 
 

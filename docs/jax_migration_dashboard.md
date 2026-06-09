@@ -1,6 +1,6 @@
 # JAX migration dashboard
 
-Updated: 2026-06-08 | Tasks: 1467/2848 done
+Updated: 2026-06-09 | Tasks: 1529/2848 done
 
 | Class | Method | JAX forward | Parity | Grad | Overall |
 |-------|--------|-------------|--------|------|---------|
@@ -1920,19 +1920,19 @@ Updated: 2026-06-08 | Tasks: 1467/2848 done
 | FSBL_PhotAstrom_Par_AccOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param3 | log_likely_photometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param3 | log_likely_astrometry_each | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_amplification | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_amplification | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_astrometry_unlensed | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_lens_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_centroid_shift | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_resolved_astrometry | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_u | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_chi2_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_chi2_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_AccOrbs_Param6 | log_likely_photometry_each | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_AccOrbs_Param6 | log_likely_astrometry_each | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_chi2_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_AccOrbs_Param6 | log_likely_photometry_each | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_AccOrbs_Param6 | log_likely_astrometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_amplification | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_photometry | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
@@ -2102,19 +2102,19 @@ Updated: 2026-06-08 | Tasks: 1467/2848 done
 | FSBL_PhotAstrom_Par_LinOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param3 | log_likely_photometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param3 | log_likely_astrometry_each | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_amplification | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_lens_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_centroid_shift | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_amplification | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_resolved_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_u | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_chi2_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_chi2_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | log_likely_photometry_each | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | log_likely_astrometry_each | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_chi2_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | log_likely_photometry_each | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | log_likely_astrometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_amplification | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_photometry | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
@@ -2193,19 +2193,19 @@ Updated: 2026-06-08 | Tasks: 1467/2848 done
 | FSBL_PhotAstrom_Par_Param5 | get_chi2_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param5 | log_likely_photometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param5 | log_likely_astrometry_each | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_Param6 | get_amplification | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_Param6 | get_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_Param6 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_Param6 | get_lens_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_Param6 | get_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_Param6 | get_centroid_shift | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_Par_Param6 | get_amplification | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param6 | get_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param6 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param6 | get_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param6 | get_centroid_shift | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param6 | get_resolved_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_Param6 | get_resolved_lens_astrometry | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_Par_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param6 | get_u | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_Param6 | get_chi2_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_Param6 | get_chi2_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_Param6 | log_likely_photometry_each | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_Par_Param6 | log_likely_astrometry_each | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_Par_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param6 | get_chi2_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param6 | log_likely_photometry_each | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param6 | log_likely_astrometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param7 | get_amplification | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_Par_Param7 | get_photometry | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_Par_Param7 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
@@ -2258,19 +2258,19 @@ Updated: 2026-06-08 | Tasks: 1467/2848 done
 | FSBL_PhotAstrom_noPar_AccOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param3 | log_likely_photometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param3 | log_likely_astrometry_each | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_amplification | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_amplification | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_astrometry_unlensed | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_lens_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_centroid_shift | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_resolved_astrometry | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_u | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_chi2_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_chi2_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | log_likely_photometry_each | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | log_likely_astrometry_each | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_chi2_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | log_likely_photometry_each | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | log_likely_astrometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_amplification | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_photometry | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
@@ -2440,19 +2440,19 @@ Updated: 2026-06-08 | Tasks: 1467/2848 done
 | FSBL_PhotAstrom_noPar_LinOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param3 | log_likely_photometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param3 | log_likely_astrometry_each | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_amplification | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_lens_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_centroid_shift | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_amplification | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_resolved_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_u | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_chi2_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_chi2_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | log_likely_photometry_each | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | log_likely_astrometry_each | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_chi2_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | log_likely_photometry_each | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | log_likely_astrometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_amplification | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_photometry | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
@@ -2518,19 +2518,19 @@ Updated: 2026-06-08 | Tasks: 1467/2848 done
 | FSBL_PhotAstrom_noPar_Param4 | get_chi2_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param4 | log_likely_photometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param4 | log_likely_astrometry_each | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_Param6 | get_amplification | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_Param6 | get_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_Param6 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_Param6 | get_lens_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_Param6 | get_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_Param6 | get_centroid_shift | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_noPar_Param6 | get_amplification | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_Param6 | get_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_Param6 | get_astrometry_unlensed | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_Param6 | get_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_Param6 | get_centroid_shift | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param6 | get_resolved_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_Param6 | get_resolved_lens_astrometry | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_noPar_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param6 | get_u | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_Param6 | get_chi2_photometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_Param6 | get_chi2_astrometry | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_Param6 | log_likely_photometry_each | jax_only | pass | not_run | pending |
-| FSBL_PhotAstrom_noPar_Param6 | log_likely_astrometry_each | jax_only | pass | not_run | pending |
+| FSBL_PhotAstrom_noPar_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_Param6 | get_chi2_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_Param6 | log_likely_photometry_each | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_Param6 | log_likely_astrometry_each | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param8 | get_amplification | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_noPar_Param8 | get_photometry | jax_only | pass | not_run | pending |
 | FSBL_PhotAstrom_noPar_Param8 | get_astrometry_unlensed | jax_only | pass | not_run | pending |
@@ -2857,11 +2857,11 @@ Updated: 2026-06-08 | Tasks: 1467/2848 done
 **PSBL methods:** 370/712 done
 **BSPL methods:** 282/644 done
 **FSPL methods:** 8/64 done
-**FSBL methods:** 335/692 done
+**FSBL methods:** 397/692 done
 **BSBL methods:** 2/260 done
 **BFSPL methods:** 0/6 done
 
-**Total methods:** 1467/2848 done
+**Total methods:** 1529/2848 done
 
 See also [`jax_migration_tasks.md`](jax_migration_tasks.md).
 
