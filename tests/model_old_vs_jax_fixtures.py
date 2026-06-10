@@ -1399,7 +1399,7 @@ def _fsbl_grad_pair_ok(class_name: str, method_name: str) -> bool:
         if class_name.startswith("FSBL_Phot_") and "PhotAstrom" not in class_name:
             return False
     if method_name in _FSBL_GRAD_ZERO_AST:
-        for tag in ("_Param4", "_Param5", "_Param7"):
+        for tag in ("_Param4", "_Param5", "_Param7", "_Param8"):
             if tag in class_name:
                 return False
         if "AccOrbs" in class_name and "_Param6" in class_name:
