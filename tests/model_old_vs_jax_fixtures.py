@@ -2100,6 +2100,26 @@ def psbl_photastrom_gp_param1_extended_grad_pairs() -> list[tuple[str, str]]:
     return sorted(set(out))
 
 
+def psbl_photastrom_gp_extended_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom GP Param1–2 extended ast likelihood grad (host FD)."""
+    skip = ("get_resolved_astrometry",)
+    return sorted(
+        (c, m)
+        for c, m in psbl_photastrom_gp_extended_pairs()
+        if c.startswith("PSBL_PhotAstrom_") and m not in skip
+    )
+
+
+def psbl_photastrom_param6_likelihood_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param6 chi2 / log-likelihood grad smoke."""
+    return list(psbl_photastrom_param6_likelihood_pairs())
+
+
+def psbl_photastrom_param7_ast_likelihood_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param7 ast chi2 / log-likelihood grad smoke."""
+    return list(psbl_photastrom_param7_ast_likelihood_pairs())
+
+
 def bsbl_photastrom_ellorbs_param1_likelihood_grad_pairs() -> list[tuple[str, str]]:
     """BSBL PhotAstrom EllOrbs Param1 ``get_u`` grad smoke (host FD; chi2 flat)."""
     return [

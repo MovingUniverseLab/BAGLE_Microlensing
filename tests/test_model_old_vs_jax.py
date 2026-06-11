@@ -145,6 +145,9 @@ from model_old_vs_jax_fixtures import (
     bspl_photastrom_gp_orbit_phot_grad_pairs,
     bspl_photastrom_extended_grad_pairs,
     psbl_photastrom_gp_param1_extended_grad_pairs,
+    psbl_photastrom_gp_extended_grad_pairs,
+    psbl_photastrom_param6_likelihood_grad_pairs,
+    psbl_photastrom_param7_ast_likelihood_grad_pairs,
     build_jax_eval_paired_instances,
     call_method_via_jax_eval,
     psbl_photastrom_first_pairs,
@@ -1297,6 +1300,27 @@ def test_grad_bspl_photastrom_extended(class_name, method_name):
     "class_name,method_name", psbl_photastrom_gp_param1_extended_grad_pairs()
 )
 def test_grad_psbl_photastrom_gp_param1_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_gp_extended_grad_pairs()
+)
+def test_grad_psbl_photastrom_gp_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param6_likelihood_grad_pairs()
+)
+def test_grad_psbl_photastrom_param6_likelihood(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param7_ast_likelihood_grad_pairs()
+)
+def test_grad_psbl_photastrom_param7_ast_likelihood(class_name, method_name):
     _assert_grad_smoke(class_name, method_name)
 
 

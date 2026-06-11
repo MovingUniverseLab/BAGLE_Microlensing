@@ -7777,7 +7777,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7787,7 +7787,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7797,7 +7797,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7807,7 +7807,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7817,7 +7817,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -7967,27 +7967,27 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "PSBL_PhotAstrom_Par_AccOrbs_Param7",
-      "method_name": "log_likely_photometry_each",
-      "family": "PSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
       "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "PSBL_PhotAstrom_Par_AccOrbs_Param7",
+      "method_name": "log_likely_photometry_each",
+      "family": "PSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "PSBL_PhotAstrom_Par_AccOrbs_Param7",
       "method_name": "log_likely_astrometry_each",
       "family": "PSBL",
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8817,7 +8817,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -8837,7 +8837,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -9837,27 +9837,27 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "PSBL_PhotAstrom_Par_EllOrbs_Param7",
-      "method_name": "log_likely_photometry_each",
-      "family": "PSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
       "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "PSBL_PhotAstrom_Par_EllOrbs_Param7",
+      "method_name": "log_likely_photometry_each",
+      "family": "PSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "PSBL_PhotAstrom_Par_EllOrbs_Param7",
       "method_name": "log_likely_astrometry_each",
       "family": "PSBL",
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10107,7 +10107,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10177,7 +10177,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10197,7 +10197,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10277,7 +10277,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10347,7 +10347,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10367,7 +10367,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10667,7 +10667,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10677,7 +10677,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10687,7 +10687,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10697,7 +10697,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10707,7 +10707,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10857,7 +10857,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -10877,7 +10877,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -11877,27 +11877,27 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "PSBL_PhotAstrom_Par_Param7",
-      "method_name": "log_likely_photometry_each",
-      "family": "PSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
       "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "PSBL_PhotAstrom_Par_Param7",
+      "method_name": "log_likely_photometry_each",
+      "family": "PSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "PSBL_PhotAstrom_Par_Param7",
       "method_name": "log_likely_astrometry_each",
       "family": "PSBL",
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12197,7 +12197,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12207,7 +12207,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12217,7 +12217,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12227,7 +12227,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12237,7 +12237,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -12387,27 +12387,27 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "PSBL_PhotAstrom_noPar_AccOrbs_Param7",
-      "method_name": "log_likely_photometry_each",
-      "family": "PSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
       "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "PSBL_PhotAstrom_noPar_AccOrbs_Param7",
+      "method_name": "log_likely_photometry_each",
+      "family": "PSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "PSBL_PhotAstrom_noPar_AccOrbs_Param7",
       "method_name": "log_likely_astrometry_each",
       "family": "PSBL",
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13237,7 +13237,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -13257,7 +13257,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14257,27 +14257,27 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "PSBL_PhotAstrom_noPar_EllOrbs_Param7",
-      "method_name": "log_likely_photometry_each",
-      "family": "PSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
       "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "PSBL_PhotAstrom_noPar_EllOrbs_Param7",
+      "method_name": "log_likely_photometry_each",
+      "family": "PSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "PSBL_PhotAstrom_noPar_EllOrbs_Param7",
       "method_name": "log_likely_astrometry_each",
       "family": "PSBL",
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14527,7 +14527,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14597,7 +14597,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14617,7 +14617,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14697,7 +14697,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14767,7 +14767,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -14787,7 +14787,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15087,7 +15087,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15097,7 +15097,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15107,7 +15107,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15117,7 +15117,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15127,7 +15127,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15277,7 +15277,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -15297,7 +15297,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "not_run",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40633,6 +40633,6 @@
   ],
   "summary": {
     "total_applicable": 2848,
-    "total_done": 1664
+    "total_done": 1714
   }
 }
