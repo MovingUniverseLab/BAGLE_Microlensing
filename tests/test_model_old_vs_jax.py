@@ -65,6 +65,7 @@ from model_old_vs_jax_fixtures import (
     bspl_photastrom_param34_pairs,
     bspl_photastrom_orbit_param12_pairs,
     bspl_photastrom_orbit_param12_extended_pairs,
+    bspl_photastrom_orbit_param12_extended_grad_pairs,
     bspl_photastrom_extended_pairs,
     bspl_phot_extended_pairs,
     bspl_gp_extended_pairs,
@@ -88,6 +89,7 @@ from model_old_vs_jax_fixtures import (
     fsbl_photastrom_extended_grad_pairs,
     fsbl_phot_extended_grad_pairs,
     psbl_phot_extended_pairs,
+    psbl_phot_extended_grad_pairs,
     psbl_photastrom_param1_ast_likelihood_pairs,
     psbl_photastrom_param7_ast_likelihood_pairs,
     psbl_photastrom_gp_extended_pairs,
@@ -138,6 +140,7 @@ from model_old_vs_jax_fixtures import (
     bsbl_photastrom_ellorbs_param1_likelihood_grad_pairs,
     bspl_photastrom_gp_orbit_grad_pairs,
     psbl_photastrom_orbit_param1_grad_bulk_pairs,
+    psbl_photastrom_orbit_param1_extended_grad_pairs,
     psbl_photastrom_circorbs_ellorbs_param38_grad_pairs,
     psbl_photastrom_param7_grad_pairs,
     psbl_photastrom_orbit_param4_grad_pairs,
@@ -1404,6 +1407,28 @@ def test_grad_fsbl_photastrom_extended(class_name, method_name):
 
 @pytest.mark.parametrize("class_name,method_name", fsbl_phot_extended_grad_pairs())
 def test_grad_fsbl_phot_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_phot_extended_grad_pairs())
+def test_grad_psbl_phot_extended(class_name, method_name):
+    """PSBL phot extended likelihood grad (host FD through roots)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_orbit_param1_extended_grad_pairs()
+)
+def test_grad_psbl_photastrom_orbit_param1_extended(class_name, method_name):
+    """PSBL PhotAstrom AccOrbs/LinOrbs Param1 extended grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_orbit_param12_extended_grad_pairs()
+)
+def test_grad_bspl_photastrom_orbit_param12_extended(class_name, method_name):
+    """BSPL PhotAstrom orbit Param1/2 extended likelihood grad (host FD)."""
     _assert_grad_smoke(class_name, method_name)
 
 

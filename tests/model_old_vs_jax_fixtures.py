@@ -1237,6 +1237,20 @@ def bspl_photastrom_orbit_param12_extended_pairs() -> list[tuple[str, str]]:
     )
 
 
+def bspl_photastrom_orbit_param12_extended_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom orbit Param1/2 extended likelihood grad (host FD)."""
+    skip = {
+        (c, "get_u")
+        for c in _bspl_photastrom_orbit_param12_class_names()
+        if "_Par_" in c
+    }
+    return sorted(
+        (c, m)
+        for c, m in bspl_photastrom_orbit_param12_extended_pairs()
+        if (c, m) not in skip
+    )
+
+
 _BSPL_PHOTASTROM_EXTENDED_PREFIXES = (
     "BSPL_PhotAstrom_noPar_Param",
     "BSPL_PhotAstrom_Par_Param",
@@ -1557,6 +1571,16 @@ def psbl_phot_extended_pairs() -> list[tuple[str, str]]:
     )
     return sorted(
         (c, m) for c in classes for m in methods if (c, m) in applicable
+    )
+
+
+def psbl_phot_extended_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL phot extended + likelihood grad (host FD through roots)."""
+    skip_resolved = ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    return sorted(
+        (c, m)
+        for c, m in psbl_phot_extended_pairs()
+        if m not in PSBL_PHOT_METHODS and m not in skip_resolved
     )
 
 
@@ -2153,6 +2177,19 @@ def psbl_photastrom_orbit_param1_grad_bulk_pairs() -> list[tuple[str, str]]:
     out: list[tuple[str, str]] = []
     for fn in pair_fns:
         out.extend((c, m) for c, m in fn() if m in methods)
+    return sorted(set(out))
+
+
+def psbl_photastrom_orbit_param1_extended_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom AccOrbs/LinOrbs Param1 extended grad (host FD)."""
+    skip = ("get_resolved_astrometry",)
+    methods = FSPL_PHOTASTROM_EXTENDED_METHODS + (
+        "get_resolved_astrometry",
+        "get_resolved_lens_astrometry",
+    )
+    out: list[tuple[str, str]] = []
+    for fn in (psbl_photastrom_accorbs_param1_pairs, psbl_photastrom_linorbs_param1_pairs):
+        out.extend((c, m) for c, m in fn() if m in methods and m not in skip)
     return sorted(set(out))
 
 
@@ -3661,6 +3698,18 @@ def grad_smoke_jax(
         g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
         if not np.all(np.isfinite(g)):
             g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
+        if return_names:
+            return g, init_names
+        return g
+
+    if _psbl_phot_only and method_name in (
+        "get_u",
+        "get_chi2_photometry",
+        "log_likely_photometry_each",
+        "get_resolved_astrometry",
+        "get_resolved_lens_astrometry",
+    ):
+        g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
         if return_names:
             return g, init_names
         return g
