@@ -172,6 +172,14 @@ from model_old_vs_jax_fixtures import (
     bspl_photastrom_gp_param1_remaining_grad_pairs,
     psbl_photastrom_param3_likelihood_remaining_grad_pairs,
     psbl_photastrom_param2_likelihood_remaining_grad_pairs,
+    fsbl_photastrom_get_u_probe_grad_pairs,
+    fsbl_photastrom_lens_ast_probe_grad_pairs,
+    bsbl_lens_u_probe_grad_pairs,
+    bspl_gp_probe_grad_pairs,
+    psbl_gp_param_probe_grad_pairs,
+    grad_probe_nonresolved_pass_pairs,
+    grad_probe_resolved_pass_pairs,
+    bspl_phot_extended_probe_grad_pairs,
     psbl_photastrom_circorbs_ellorbs_param38_grad_pairs,
     psbl_photastrom_param7_grad_pairs,
     psbl_photastrom_orbit_param4_grad_pairs,
@@ -1692,4 +1700,47 @@ def test_grad_psbl_photastrom_param2_likelihood_remaining(class_name, method_nam
     """PSBL PhotAstrom Param2 likelihood grad (host FD)."""
     _assert_grad_smoke(class_name, method_name)
 
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_get_u_probe_grad_pairs())
+def test_grad_fsbl_photastrom_get_u_probe(class_name, method_name):
+    """FSBL PhotAstrom ``get_u`` grad verified by non-resolved probe."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_lens_ast_probe_grad_pairs()
+)
+def test_grad_fsbl_photastrom_lens_ast_probe(class_name, method_name):
+    """FSBL PhotAstrom ``get_lens_astrometry`` grad from non-resolved probe."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_lens_u_probe_grad_pairs())
+def test_grad_bsbl_lens_u_probe(class_name, method_name):
+    """BSBL Param1/2 lens ast / ``get_u`` grad from non-resolved probe."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_gp_probe_grad_pairs())
+def test_grad_bspl_gp_probe(class_name, method_name):
+    """BSPL GP Param1 core ast + phot grad from non-resolved probe."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_param_probe_grad_pairs())
+def test_grad_psbl_gp_param_probe(class_name, method_name):
+    """PSBL GP/Param4/5 grad from non-resolved probe."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", grad_probe_resolved_pass_pairs())
+def test_grad_probe_resolved_pass(class_name, method_name):
+    """Resolved astrometry grad pairs verified by family probe batches."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_phot_extended_probe_grad_pairs())
+def test_grad_bspl_phot_extended_probe(class_name, method_name):
+    """BSPL phot-only extended ``get_u`` + likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
 

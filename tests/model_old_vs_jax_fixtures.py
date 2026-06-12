@@ -2423,6 +2423,99 @@ def fsbl_photastrom_orbit_param1_extended_remaining_grad_pairs() -> list[
     )
 
 
+def _grad_probe_nonresolved_pass_raw() -> list[tuple[str, str]]:
+    """Load non-resolved grad probe passes from ``docs/grad_probe_nonresolved.json``."""
+    import json
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "docs" / "grad_probe_nonresolved.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return [tuple(pair) for pair in data["pass"]]
+
+
+def grad_probe_nonresolved_pass_pairs() -> list[tuple[str, str]]:
+    """Grad pairs passing finite-diff smoke (non-resolved probe batch)."""
+    return sorted(_grad_probe_nonresolved_pass_raw())
+
+
+def fsbl_photastrom_get_u_probe_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom ``get_u`` pairs verified by non-resolved grad probe."""
+    return sorted(
+        (c, m)
+        for c, m in _grad_probe_nonresolved_pass_raw()
+        if c.startswith("FSBL_") and m == "get_u"
+    )
+
+
+def fsbl_photastrom_lens_ast_probe_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom ``get_lens_astrometry`` pairs from non-resolved probe."""
+    return sorted(
+        (c, m)
+        for c, m in _grad_probe_nonresolved_pass_raw()
+        if c.startswith("FSBL_") and m == "get_lens_astrometry"
+    )
+
+
+def bsbl_lens_u_probe_grad_pairs() -> list[tuple[str, str]]:
+    """BSBL Param1/2 ``get_lens_astrometry`` / ``get_u`` pairs from probe."""
+    return sorted(
+        (c, m)
+        for c, m in _grad_probe_nonresolved_pass_raw()
+        if c.startswith("BSBL_") and m in ("get_lens_astrometry", "get_u")
+    )
+
+
+def bspl_gp_probe_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL GP Param1 core ast + phot pairs from non-resolved probe."""
+    return sorted(
+        (c, m) for c, m in _grad_probe_nonresolved_pass_raw() if c.startswith("BSPL_")
+    )
+
+
+def psbl_gp_param_probe_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL GP/Param4/5 grad pairs from non-resolved probe."""
+    return sorted(
+        (c, m) for c, m in _grad_probe_nonresolved_pass_raw() if c.startswith("PSBL_")
+    )
+
+
+def _grad_probe_resolved_pass_raw() -> list[tuple[str, str]]:
+    """Load resolved grad probe passes from ``docs/grad_probe_resolved_*.json``."""
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1] / "docs"
+    passes: list[tuple[str, str]] = []
+    for name in ("bsbl", "bspl", "psbl", "fsbl"):
+        path = root / f"grad_probe_resolved_{name}.json"
+        if not path.is_file():
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        passes.extend(tuple(pair) for pair in data["pass"])
+    return passes
+
+
+def grad_probe_resolved_pass_pairs() -> list[tuple[str, str]]:
+    """Grad pairs passing finite-diff smoke (resolved astrometry probe batches)."""
+    return sorted(set(_grad_probe_resolved_pass_raw()))
+
+
+def bspl_phot_extended_probe_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL phot-only extended likelihood + ``get_u`` (host FD)."""
+    skip = frozenset(
+        (
+            ("BSPL_Phot_noPar_GP_Param1", "get_u"),
+            ("BSPL_Phot_noPar_Param1", "get_u"),
+        )
+    )
+    methods = ("get_u", "get_chi2_photometry", "log_likely_photometry_each")
+    return sorted(
+        (c, m)
+        for c, m in bspl_phot_extended_pairs()
+        if m in methods and (c, m) not in skip
+    )
+
+
 def psbl_photastrom_circorbs_ellorbs_param38_grad_pairs() -> list[tuple[str, str]]:
     """PSBL PhotAstrom CircOrbs/EllOrbs Param3/8 grad (FD)."""
     methods = (
@@ -4104,6 +4197,17 @@ def grad_smoke_jax(
         "log_likely_photometry_each",
         "get_resolved_astrometry",
         "get_resolved_lens_astrometry",
+    ):
+        g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
+        if return_names:
+            return g, init_names
+        return g
+
+    if ek == "bspl_phot" and method_name in (
+        "get_u",
+        "get_chi2_photometry",
+        "log_likely_photometry_each",
+        "get_resolved_astrometry",
     ):
         g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
         if return_names:
