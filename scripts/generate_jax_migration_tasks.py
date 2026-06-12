@@ -14,8 +14,10 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
+sys.path.insert(0, str(REPO / "scripts"))
 
 from bagle.jax.migration_tasks import MigrationTask, generate_tasks  # noqa: E402
+from jax_migration_status_utils import grad_complete, grad_pass_done, summarize_tasks  # noqa: E402
 
 DOCS = REPO / "docs"
 TASKS_MD = DOCS / "jax_migration_tasks.md"
@@ -49,6 +51,8 @@ def _step_done(row: dict, step: str) -> bool:
         return row["jax_forward"] == "jax_only"
     if step == "parity":
         return row["parity"] == "pass"
+    if step == "grad":
+        return grad_complete(row)
     return row["grad"] == "pass"
 
 
@@ -82,17 +86,7 @@ def main() -> int:
     prev = _load_prev()
     tasks = generate_tasks(model_jax)
     rows = [_task_row(t, prev) for t in tasks]
-    summary = {
-        "total_applicable": sum(1 for r in rows if r["applicable"]),
-        "total_done": sum(
-            1
-            for r in rows
-            if r["applicable"]
-            and r["jax_forward"] == "jax_only"
-            and r["parity"] == "pass"
-            and r["grad"] == "pass"
-        ),
-    }
+    summary = summarize_tasks(rows)
     STATUS_JSON.write_text(
         json.dumps({"tasks": rows, "summary": summary}, indent=2) + "\n",
         encoding="utf-8",

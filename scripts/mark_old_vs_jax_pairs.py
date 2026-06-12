@@ -11,6 +11,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "tests"))
+sys.path.insert(0, str(REPO / "scripts"))
+
+from jax_migration_status_utils import summarize_tasks  # noqa: E402
 
 STATUS_JSON = REPO / "docs" / "jax_migration_status.json"
 
@@ -23,7 +26,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--grad",
-        choices=("pass", "not_run"),
+        choices=("pass", "not_run", "skip"),
         default="not_run",
         help="Grad status to record (default: not_run)",
     )
@@ -44,16 +47,7 @@ def main() -> int:
             row["parity_enabled"] = True
             marked += 1
     applicable = [r for r in data["tasks"] if r["applicable"]]
-    data["summary"] = {
-        "total_applicable": len(applicable),
-        "total_done": sum(
-            1
-            for r in applicable
-            if r["jax_forward"] == "jax_only"
-            and r["parity"] == "pass"
-            and r["grad"] == "pass"
-        ),
-    }
+    data["summary"] = summarize_tasks(data["tasks"])
     STATUS_JSON.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     print(
         f"marked {marked} pairs from {args.pairs_fn} "

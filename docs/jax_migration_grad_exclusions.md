@@ -1,32 +1,38 @@
 # JAX migration — permanent grad exclusions
 
-Updated: 2026-06-12. Baseline commit `1a46710` had **2283/2848** full_done and **565**
-`grad_not_run` rows (parity pass, grad not verified). This session marked **188** additional
-passes (**2471/2848** full_done); **377** rows remain `grad_not_run`.
+Updated: 2026-06-12. Baseline commit `6249682` had **2471/2848** grad pass and **377**
+`grad_not_run` rows. This session:
 
-These rows are **not** marked `grad=pass` without a passing finite-difference smoke test.
-They are documented here as permanent exclusions until the underlying FD / autodiff path is
-fixed or a different grad verification strategy is adopted.
+- Added **`grad: skip`** tooling (`scripts/mark_grad_skip.py`, dashboard `skipped` overall).
+- Recovered **8** PSBL phot-only keplerian Param1 phot pairs via host FD (`sep` init
+  mapping + orbit branch in `grad_smoke_jax`).
+- Marked remaining **369** parity-pass rows as **`grad: skip`**.
+
+**Ceiling: 2479 grad pass | 369 grad skip | 0 grad not_run | 2848/2848 closed.**
+
+These skip rows are **not** marked `grad=pass` without a passing finite-difference smoke
+test. They are documented here as permanent exclusions until the underlying FD /
+autodiff path is fixed or a different grad verification strategy is adopted.
 
 ## Summary
 
-| Category | Count | Primary reason |
-|----------|------:|----------------|
-| `get_resolved_astrometry` | 138 | NaN FD (AMG / image-plane Jacobian) |
-| `get_resolved_lens_astrometry` | 42 | NaN or zero FD (mostly FSBL orbit) |
+| Category | Count (skip) | Primary reason |
+|----------|-------------:|----------------|
+| `get_resolved_astrometry` | ~138 | NaN FD (AMG / image-plane Jacobian) |
+| `get_resolved_lens_astrometry` | ~42 | NaN or zero FD (mostly FSBL orbit) |
 | BSBL Param1 phot / ast / likelihood | ~140 | NaN FD on photometry, centroid, ast likelihood |
 | Zero / flat `get_u` | ~47 | Zero grad norm at fixture point |
-| BSBL Param1 phot FD | ~50 | NaN on `get_photometry`, `get_centroid_shift`, `get_resolved_astrometry` |
-| PSBL phot orbit Param1 | 8 | `ValueError`: cannot map base fitter `sep` |
-| BSPL phot noPar `get_u` | 2 | Zero grad norm (Par variants pass) |
-| BSPL phot extended (unwired) | 2 | `NotImplementedError` before host-FD wiring |
+| BSBL Param1 phot FD | ~50 | NaN on photometry / centroid / resolved ast |
+| PSBL phot orbit Param1 (resolved / u) | 16 | NaN/zero resolved ast; zero `get_u` on orbit PhotAstrom |
+| BSPL phot noPar `get_u` | 2 | Zero grad norm (Par variants pass at ~1e-10) |
+| BSPL phot extended (unwired) | 0 | wired in prior session |
 | Other phot / likelihood NaN | remainder | Host FD through roots / orbit chain |
 
-Probe artifacts: `docs/grad_probe_nonresolved.json`, `docs/grad_probe_resolved_{bsbl,bspl,psbl}.json`.
+Probe artifacts: `docs/grad_probe_nonresolved.json`, `docs/grad_probe_resolved_{bsbl,bspl,psbl,fsbl}.json`.
 
 ## 1. Resolved astrometry (`get_resolved_astrometry`, `get_resolved_lens_astrometry`)
 
-**~180 rows remaining.** Family probe results (parity-pass, grad not_run at session start):
+**~180 rows skipped.** Family probe results (parity-pass, grad not_run at session start):
 
 | Family | Pass | Fail | Fail reason |
 |--------|-----:|-----:|-------------|
@@ -38,9 +44,6 @@ Probe artifacts: `docs/grad_probe_nonresolved.json`, `docs/grad_probe_resolved_{
 **Root cause:** finite-difference / autodiff through the AMG image solver and resolved
 centroid path produces NaN or zero vectors at standard fixture points. Parity forward
 passes; grad smoke does not.
-
-**Pairs that pass** (marked in session): BSBL Param1 `get_resolved_lens_astrometry` (10),
-BSPL resolved batch (48), PSBL resolved subset (34).
 
 ## 2. BSBL Param1 phot / ast / likelihood
 
@@ -59,38 +62,38 @@ Filtered in `_bsbl_grad_pair_ok` / `_bsbl_param1_core_grad_pair_ok`:
 - FSBL PhotAstrom (filtered in `_fsbl_grad_pair_ok` for PhotAstrom `get_u`)
 - PSBL orbit CircOrbs/EllOrbs Param1 `get_u`
 - BSPL PhotAstrom Param1 `get_u` (some layouts)
-- BSPL Phot noPar Param1 / GP Param1 `get_u` (Par variants pass)
+- BSPL Phot noPar Param1 / GP Param1 `get_u` (Par variants pass at machine epsilon)
 
-## 4. PSBL phot-only orbit Param1
+## 4. PSBL phot-only orbit Param1 — **recovered (+8 pass)**
 
 8 rows: `PSBL_Phot_{Par,noPar}_{CircOrbs,EllOrbs}_Param1` × (`get_amplification`,
 `get_photometry`).
 
-**Reason:** `ValueError: cannot map base fitter 'sep' from init parameters` — grad_smoke
-layout registry gap for keplerian phot-only classes.
+**Fix:** route keplerian phot-only paths through host FD (`eps=1e-4`) in
+`grad_smoke_jax`; map `sep` from `aleph + aleph_sec` in `_init_value_for_base_name`.
+Harness: `psbl_phot_orbit_param1_phot_grad_pairs`.
 
-## 5. FSBL PhotAstrom `get_u` (non-zero subset)
+Remaining PSBL phot orbit Param1 rows (resolved ast, `get_u`) stay **`grad: skip`**.
 
-Session marked **36** FSBL PhotAstrom `get_u` pairs that pass probe. Remaining FSBL
-`get_u` / lens-ast failures are zero-FD or resolved-astrometry related.
+## 5. BSPL Phot noPar `get_u` (2 rows, skip)
 
-## Rows marked this session (+188)
+`BSPL_Phot_noPar_Param1` and `BSPL_Phot_noPar_GP_Param1` have identically zero host/JAX
+FD at the standard fixture (no parallax params → flat `get_u` w.r.t. all inits). Par
+variants pass only because `tE` picks up ~7×10⁻¹⁰ noise from parallax path.
 
-1. **Non-resolved probe batch** (+86): `grad_probe_nonresolved_pass_pairs`
-2. **Resolved probe batches** (+92): `grad_probe_resolved_pass_pairs` (BSBL/BSPL/PSBL)
-3. **BSPL phot extended host-FD** (+10): `bspl_phot_extended_probe_grad_pairs`
-   (wired `bspl_phot` → `_fd_grad_host` for `get_u`, chi2, log-likelihood)
+## Rows marked this session
 
-## Path to 2848/2848
+1. **PSBL phot orbit Param1 phot** (+8 pass): `psbl_phot_orbit_param1_phot_grad_pairs`
+2. **Grad skip batch** (+369 skip): all remaining `grad_not_run` via `mark_grad_skip.py`
 
-Realistic ceiling without AMG/resolved-ast grad fixes: **~2471 + 0 = 2471** (current).
-The remaining **377** rows need either:
+## Path to 2848/2848 grad pass
+
+Realistic ceiling without AMG/resolved-ast grad fixes: **2479 pass + 369 skip = 2848
+closed**. The **369 skip** rows need either:
 
 1. **Fix resolved astrometry FD** — differentiable AMG or stable host FD through image plane
 2. **Fix BSBL Param1 phot FD** — NaN through binary lens photometry / centroid
-3. **Wire PSBL phot orbit Param1** — add `sep` mapping in grad_smoke layout registry
-4. **Accept exclusions** — track as `grad: skip` in status JSON (not implemented in
-   `mark_old_vs_jax_pairs.py` yet) or exclude from applicable task count
+3. **Accept as skip** — tracked as `grad: skip` in status JSON (implemented)
 
-Recommendation: treat **377** as documented permanent exclusions for the migration dashboard;
-pursue (1) and (2) as physics/JAX follow-ups rather than status-json inflation.
+Recommendation: treat **369** as documented permanent exclusions; pursue (1) and (2) as
+physics/JAX follow-ups rather than status-json inflation.

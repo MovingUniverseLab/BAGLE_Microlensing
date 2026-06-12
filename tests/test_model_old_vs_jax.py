@@ -180,6 +180,7 @@ from model_old_vs_jax_fixtures import (
     grad_probe_nonresolved_pass_pairs,
     grad_probe_resolved_pass_pairs,
     bspl_phot_extended_probe_grad_pairs,
+    psbl_phot_orbit_param1_phot_grad_pairs,
     psbl_photastrom_circorbs_ellorbs_param38_grad_pairs,
     psbl_photastrom_param7_grad_pairs,
     psbl_photastrom_orbit_param4_grad_pairs,
@@ -1742,5 +1743,11 @@ def test_grad_probe_resolved_pass(class_name, method_name):
 @pytest.mark.parametrize("class_name,method_name", bspl_phot_extended_probe_grad_pairs())
 def test_grad_bspl_phot_extended_probe(class_name, method_name):
     """BSPL phot-only extended ``get_u`` + likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_phot_orbit_param1_phot_grad_pairs())
+def test_grad_psbl_phot_orbit_param1_phot(class_name, method_name):
+    """PSBL phot-only keplerian Param1 phot paths (host FD)."""
     _assert_grad_smoke(class_name, method_name)
 

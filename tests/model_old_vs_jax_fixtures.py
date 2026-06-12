@@ -2516,6 +2516,21 @@ def bspl_phot_extended_probe_grad_pairs() -> list[tuple[str, str]]:
     )
 
 
+def psbl_phot_orbit_param1_phot_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL phot-only CircOrbs/EllOrbs Param1 phot paths (host FD)."""
+    classes = (
+        "PSBL_Phot_Par_CircOrbs_Param1",
+        "PSBL_Phot_noPar_CircOrbs_Param1",
+        "PSBL_Phot_Par_EllOrbs_Param1",
+        "PSBL_Phot_noPar_EllOrbs_Param1",
+    )
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in ("get_photometry", "get_amplification")
+    )
+
+
 def psbl_photastrom_circorbs_ellorbs_param38_grad_pairs() -> list[tuple[str, str]]:
     """PSBL PhotAstrom CircOrbs/EllOrbs Param3/8 grad (FD)."""
     methods = (
@@ -3196,6 +3211,8 @@ def _init_value_for_base_name(v, init_names: tuple[str, ...], base_name: str):
         return u0_amp
     if base_name in init_names:
         return v[init_names.index(base_name)]
+    if base_name == "sep" and "aleph" in init_names and "aleph_sec" in init_names:
+        return v[init_names.index("aleph")] + v[init_names.index("aleph_sec")]
     if base_name == "piE_N" and "piEN_piEE" in init_names:
         return v[init_names.index("piE_E")] * v[init_names.index("piEN_piEE")]
     for alias in _COMPANION_INIT_ALIASES.get(base_name, ()):
@@ -4128,6 +4145,13 @@ def grad_smoke_jax(
         return g
 
     if method_name in ("get_photometry", "get_amplification") and _psbl_phot_only:
+        if layout.orbit != "none":
+            g = _fd_grad_host(
+                class_name, init_names, vec0, t, method_name, eps=1e-4
+            )
+            if return_names:
+                return g, init_names
+            return g
 
         def forward(v):
             base = _base_vec_from_init(v, init_names, base_names)

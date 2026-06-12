@@ -9,8 +9,10 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
+sys.path.insert(0, str(REPO / "scripts"))
 
 from bagle.jax.migration_tasks import FAMILY_ORDER, family_summary, generate_tasks  # noqa: E402
+from jax_migration_status_utils import grad_pass_done, overall_status, summarize_tasks  # noqa: E402
 
 DOCS = REPO / "docs"
 STATUS_JSON = DOCS / "jax_migration_status.json"
@@ -18,17 +20,7 @@ DASHBOARD_MD = DOCS / "jax_migration_dashboard.md"
 
 
 def _overall(row: dict) -> str:
-    if not row["applicable"]:
-        return "n/a"
-    if (
-        row["jax_forward"] == "jax_only"
-        and row["parity"] == "pass"
-        and row["grad"] == "pass"
-    ):
-        return "done"
-    if row["parity"] == "fail" or row["grad"] == "fail":
-        return "blocked"
-    return "pending"
+    return overall_status(row)
 
 
 def main() -> int:
@@ -41,20 +33,25 @@ def main() -> int:
     done_ids = {
         f"{r['class_name']}::{r['method_name']}"
         for r in rows
-        if _overall(r) == "done"
+        if grad_pass_done(r)
     }
+    summary = summarize_tasks(data.get("tasks", []))
 
     import bagle.model_jax as model_jax
 
     all_tasks = generate_tasks(model_jax)
     fam = family_summary(all_tasks, done_ids)
-    total_done = len(done_ids)
     total = sum(1 for t in all_tasks if t.applicable)
 
     lines = [
         "# JAX migration dashboard",
         "",
-        f"Updated: {date.today().isoformat()} | Tasks: {total_done}/{total} done",
+        (
+            f"Updated: {date.today().isoformat()} | "
+            f"Grad pass: {summary['grad_pass']}/{total} | "
+            f"Skip: {summary['grad_skip']} | "
+            f"Pending: {summary['grad_not_run']}"
+        ),
         "",
         "| Class | Method | JAX forward | Parity | Grad | Overall |",
         "|-------|--------|-------------|--------|------|---------|",
@@ -72,7 +69,11 @@ def main() -> int:
     lines.extend(
         [
             "",
-            f"**Total methods:** {total_done}/{total} done",
+            (
+                f"**Grad verified:** {summary['grad_pass']}/{total} pass | "
+                f"{summary['grad_skip']} skip | "
+                f"{summary['grad_not_run']} pending"
+            ),
             "",
             "See also [`jax_migration_tasks.md`](jax_migration_tasks.md).",
             "",
