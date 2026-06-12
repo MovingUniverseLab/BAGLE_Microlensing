@@ -1,0 +1,45 @@
+{
+  "pass": [],
+  "fail": [
+    [
+      "FSBL_PhotAstrom_Par_Param1",
+      "get_resolved_astrometry",
+      "nan"
+    ],
+    [
+      "FSBL_PhotAstrom_Par_Param2",
+      "get_resolved_astrometry",
+      "nan"
+    ],
+    [
+      "FSBL_PhotAstrom_noPar_Param1",
+      "get_resolved_astrometry",
+      "nan"
+    ],
+    [
+      "FSBL_PhotAstrom_noPar_Param2",
+      "get_resolved_astrometry",
+      "nan"
+    ],
+    [
+      "FSBL_Phot_Par_Param1",
+      "get_resolved_astrometry",
+      "nan"
+    ],
+    [
+      "FSBL_Phot_Par_Param1",
+      "get_resolved_lens_astrometry",
+      "zero"
+    ],
+    [
+      "FSBL_Phot_noPar_Param1",
+      "get_resolved_astrometry",
+      "nan"
+    ],
+    [
+      "FSBL_Phot_noPar_Param1",
+      "get_resolved_lens_astrometry",
+      "zero"
+    ]
+  ]
+}

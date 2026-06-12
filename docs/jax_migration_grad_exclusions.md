@@ -33,7 +33,7 @@ Probe artifacts: `docs/grad_probe_nonresolved.json`, `docs/grad_probe_resolved_{
 | BSBL | 10 | 20 | all `get_resolved_astrometry` → NaN |
 | BSPL | 48 | 4 | 4 × `NotImplementedError` (phot-only resolved; wired in session) |
 | PSBL | 34 | 70 | 58 NaN, 8 zero, 4 LinAlgError |
-| FSBL | — | ~86 | probe incomplete (orbit resolved very slow); Param1/2 static `get_resolved_astrometry` → NaN |
+| FSBL | 0 | 8 (static Param1/2) | 6 NaN `get_resolved_astrometry`, 2 zero `get_resolved_lens_astrometry` (phot-only); see `grad_probe_resolved_fsbl.json` |
 
 **Root cause:** finite-difference / autodiff through the AMG image solver and resolved
 centroid path produces NaN or zero vectors at standard fixture points. Parity forward
