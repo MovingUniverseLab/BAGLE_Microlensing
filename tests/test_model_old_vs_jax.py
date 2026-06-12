@@ -137,6 +137,18 @@ from model_old_vs_jax_fixtures import (
     psbl_photastrom_param5_grad_pairs,
     psbl_photastrom_param6_grad_pairs,
     psbl_photastrom_orbit_param2_grad_bulk_pairs,
+    psbl_photastrom_param2_grad_bulk_pairs,
+    psbl_photastrom_param3_grad_bulk_pairs,
+    psbl_photastrom_circorbs_ellorbs_param2_extended_grad_pairs,
+    psbl_gp_param2_bulk_grad_pairs,
+    fspl_photastrom_param1_grad_ast_pairs,
+    fspl_photastrom_param2_grad_ast_pairs,
+    fspl_photastrom_param1_extended_grad_pairs,
+    fspl_photastrom_param2_extended_grad_pairs,
+    fspl_phot_param2_grad_pairs,
+    fspl_phot_param2_extended_grad_pairs,
+    fspl_phot_param2_resolved_grad_pairs,
+    bspl_photastrom_param34_grad_pairs,
     bsbl_photastrom_ellorbs_param1_likelihood_grad_pairs,
     bspl_photastrom_gp_orbit_grad_pairs,
     psbl_photastrom_orbit_param1_grad_bulk_pairs,
@@ -1429,6 +1441,88 @@ def test_grad_psbl_photastrom_orbit_param1_extended(class_name, method_name):
 )
 def test_grad_bspl_photastrom_orbit_param12_extended(class_name, method_name):
     """BSPL PhotAstrom orbit Param1/2 extended likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param2_grad_bulk_pairs()
+)
+def test_grad_psbl_photastrom_param2_bulk(class_name, method_name):
+    """PSBL PhotAstrom static Param2 phot + core astrometry grad smoke."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param3_grad_bulk_pairs()
+)
+def test_grad_psbl_photastrom_param3_bulk(class_name, method_name):
+    """PSBL PhotAstrom static Param3 phot + core astrometry + ``get_u`` grad."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_circorbs_ellorbs_param2_extended_grad_pairs()
+)
+def test_grad_psbl_photastrom_circorbs_ellorbs_param2_extended(class_name, method_name):
+    """PSBL PhotAstrom CircOrbs/EllOrbs Param2 extended likelihood grad."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_param2_bulk_grad_pairs())
+def test_grad_psbl_gp_param2_bulk(class_name, method_name):
+    """PSBL PhotAstrom GP Param2 phot + core astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param1_grad_ast_pairs())
+def test_grad_fspl_photastrom_param1_ast(class_name, method_name):
+    """FSPL PhotAstrom Param1 core astrometry grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param2_grad_ast_pairs())
+def test_grad_fspl_photastrom_param2_ast(class_name, method_name):
+    """FSPL PhotAstrom Param2 core astrometry grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fspl_photastrom_param1_extended_grad_pairs()
+)
+def test_grad_fspl_photastrom_param1_extended(class_name, method_name):
+    """FSPL PhotAstrom Param1 extended likelihood grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fspl_photastrom_param2_extended_grad_pairs()
+)
+def test_grad_fspl_photastrom_param2_extended(class_name, method_name):
+    """FSPL PhotAstrom Param2 extended likelihood grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_phot_param2_grad_pairs())
+def test_grad_fspl_phot_param2(class_name, method_name):
+    """FSPL phot-only Param2 phot/amp grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_phot_param2_extended_grad_pairs())
+def test_grad_fspl_phot_param2_extended(class_name, method_name):
+    """FSPL phot-only Param2 ``get_u`` + phot likelihood grad."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_phot_param2_resolved_grad_pairs())
+def test_grad_fspl_phot_param2_resolved(class_name, method_name):
+    """FSPL phot-only Param2 ``get_resolved_astrometry`` grad."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_param34_grad_pairs())
+def test_grad_bspl_photastrom_param34(class_name, method_name):
+    """BSPL PhotAstrom Param3/4 phot + core astrometry grad (host FD)."""
     _assert_grad_smoke(class_name, method_name)
 
 

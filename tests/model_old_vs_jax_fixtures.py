@@ -2036,6 +2036,97 @@ def psbl_photastrom_orbit_param2_grad_bulk_pairs() -> list[tuple[str, str]]:
     return sorted(set(out))
 
 
+def psbl_photastrom_param2_grad_bulk_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom static Param2 phot + core astrometry grad smoke."""
+    methods = PSBL_PHOT_METHODS + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+    return sorted(
+        (c, m) for c, m in psbl_photastrom_param2_pairs() if m in methods
+    )
+
+
+def psbl_photastrom_param3_grad_bulk_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom static Param3 phot + core astrometry + ``get_u`` grad smoke."""
+    methods = PSBL_PHOT_METHODS + _BSPL_PHOTASTROM_PARAM1_CORE_AST + ("get_u",)
+    return sorted(
+        (c, m) for c, m in psbl_photastrom_param3_pairs() if m in methods
+    )
+
+
+def psbl_photastrom_circorbs_ellorbs_param2_extended_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom CircOrbs/EllOrbs Param2 extended likelihood grad (host FD)."""
+    methods = FSPL_PHOTASTROM_EXTENDED_METHODS
+    out: list[tuple[str, str]] = []
+    for fn in (psbl_photastrom_circorbs_param2_pairs, psbl_photastrom_ellorbs_param2_pairs):
+        out.extend((c, m) for c, m in fn() if m in methods)
+    return sorted(set(out))
+
+
+def psbl_gp_param2_bulk_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom GP Param2 phot + core astrometry grad (host FD for GP)."""
+    methods = PSBL_PHOT_METHODS + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+    return sorted(
+        (c, m)
+        for c, m in psbl_gp_photastrom_param2_pairs()
+        if m in methods
+    )
+
+
+def fspl_photastrom_param1_grad_ast_pairs() -> list[tuple[str, str]]:
+    """FSPL PhotAstrom Param1 core astrometry grad (jax-eval FD)."""
+    return sorted(
+        (c, m)
+        for c, m in fspl_photastrom_param1_pairs()
+        if m in _BSPL_PHOTASTROM_PARAM1_CORE_AST
+    )
+
+
+def fspl_photastrom_param2_grad_ast_pairs() -> list[tuple[str, str]]:
+    """FSPL PhotAstrom Param2 core astrometry grad (jax-eval FD)."""
+    return sorted(
+        (c, m)
+        for c, m in fspl_photastrom_param2_pairs()
+        if m in _BSPL_PHOTASTROM_PARAM1_CORE_AST
+    )
+
+
+def fspl_photastrom_param1_extended_grad_pairs() -> list[tuple[str, str]]:
+    """FSPL PhotAstrom Param1 extended likelihood grad (jax-eval FD)."""
+    skip = {("FSPL_PhotAstrom_Par_Param1", "get_u")}
+    return sorted(
+        (c, m)
+        for c, m in fspl_photastrom_param1_extended_pairs()
+        if (c, m) not in skip
+    )
+
+
+def fspl_photastrom_param2_extended_grad_pairs() -> list[tuple[str, str]]:
+    """FSPL PhotAstrom Param2 extended likelihood grad (jax-eval FD)."""
+    return list(fspl_photastrom_param2_extended_pairs())
+
+
+def fspl_phot_param2_grad_pairs() -> list[tuple[str, str]]:
+    """FSPL phot-only Param2 phot/amp grad (jax-eval FD)."""
+    return list(fspl_phot_param2_pairs())
+
+
+def fspl_phot_param2_extended_grad_pairs() -> list[tuple[str, str]]:
+    """FSPL phot-only Param2 ``get_u`` + phot likelihood grad (jax-eval FD)."""
+    return list(fspl_phot_param2_extended_pairs())
+
+
+def fspl_phot_param2_resolved_grad_pairs() -> list[tuple[str, str]]:
+    """FSPL phot-only Param2 ``get_resolved_astrometry`` grad (jax-eval FD)."""
+    return list(fspl_phot_param2_resolved_pairs())
+
+
+def bspl_photastrom_param34_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom Param3/4 phot + core astrometry grad (host FD)."""
+    methods = PSBL_PHOT_METHODS + _BSPL_PHOTASTROM_PARAM1_CORE_AST
+    return sorted(
+        (c, m) for c, m in bspl_photastrom_param34_pairs() if m in methods
+    )
+
+
 def psbl_photastrom_circorbs_ellorbs_param38_grad_pairs() -> list[tuple[str, str]]:
     """PSBL PhotAstrom CircOrbs/EllOrbs Param3/8 grad (FD)."""
     methods = (
@@ -2584,6 +2675,13 @@ def call_method(
 
 
 INIT_PARAM_SKIP = frozenset({"self", "raL", "decL", "obsLocation"})
+INT_INIT_PARAMS = frozenset(
+    {
+        "n_outline",
+        "n_outline_pri",
+        "n_outline_sec",
+    }
+)
 LIST_INIT_PARAMS = frozenset(
     {
         "b_sff",
@@ -2639,6 +2737,8 @@ def scatter_init_vector(instance, vec, init_names: tuple[str, ...]) -> None:
             setattr(instance, attr, arr)
         elif name in LIST_INIT_PARAMS:
             setattr(instance, name, [val])
+        elif name in INT_INIT_PARAMS:
+            setattr(instance, name, int(round(val)))
         elif name == "thetaE":
             instance.thetaE_amp = val
         elif name == "log10_thetaE":
