@@ -1239,16 +1239,7 @@ def bspl_photastrom_orbit_param12_extended_pairs() -> list[tuple[str, str]]:
 
 def bspl_photastrom_orbit_param12_extended_grad_pairs() -> list[tuple[str, str]]:
     """BSPL PhotAstrom orbit Param1/2 extended likelihood grad (host FD)."""
-    skip = {
-        (c, "get_u")
-        for c in _bspl_photastrom_orbit_param12_class_names()
-        if "_Par_" in c
-    }
-    return sorted(
-        (c, m)
-        for c, m in bspl_photastrom_orbit_param12_extended_pairs()
-        if (c, m) not in skip
-    )
+    return sorted(bspl_photastrom_orbit_param12_extended_pairs())
 
 
 _BSPL_PHOTASTROM_EXTENDED_PREFIXES = (
@@ -1423,6 +1414,38 @@ def _fsbl_grad_pair_ok(class_name: str, method_name: str) -> bool:
 
 def _filter_fsbl_grad_pairs(pairs: list[tuple[str, str]]) -> list[tuple[str, str]]:
     return sorted((c, m) for c, m in pairs if _fsbl_grad_pair_ok(c, m))
+
+
+def _psbl_orbit_param1_likelihood_grad_pair_ok(
+    class_name: str, method_name: str
+) -> bool:
+    """Filter PSBL orbit Param1 extended grad pairs with NaN/zero FD smoke."""
+    if method_name == "get_resolved_astrometry":
+        return False
+    if method_name == "get_u" and any(
+        tag in class_name for tag in ("CircOrbs", "EllOrbs")
+    ):
+        return False
+    return True
+
+
+_BSBL_PARAM1_CORE_GRAD_METHODS = frozenset(
+    (
+        "get_amplification",
+        "get_astrometry_unlensed",
+        "get_lens_astrometry",
+        "get_resolved_lens_astrometry",
+    )
+)
+
+
+def _bsbl_param1_core_grad_pair_ok(class_name: str, method_name: str) -> bool:
+    """Filter BSBL Param1/orbit Param1 grad pairs with known FD smoke failures."""
+    if method_name not in _BSBL_PARAM1_CORE_GRAD_METHODS:
+        return False
+    if method_name in _FSBL_GRAD_ZERO_AST:
+        return False
+    return True
 
 
 def _fsbl_photastrom_paramN_grad_pairs(param_n: int) -> list[tuple[str, str]]:
@@ -2125,6 +2148,94 @@ def bspl_photastrom_param34_grad_pairs() -> list[tuple[str, str]]:
     return sorted(
         (c, m) for c, m in bspl_photastrom_param34_pairs() if m in methods
     )
+
+
+def psbl_photastrom_orbit_param1_likelihood_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom orbit Param1 likelihood + ``get_u`` grad (host FD)."""
+    methods = PSBL_PHOTASTROM_LIKELIHOOD_METHODS + (
+        "get_u",
+        "get_resolved_astrometry",
+        "get_resolved_lens_astrometry",
+    )
+    pair_fns = (
+        psbl_photastrom_circorbs_param1_pairs,
+        psbl_photastrom_ellorbs_param1_pairs,
+        psbl_photastrom_accorbs_param1_pairs,
+        psbl_photastrom_linorbs_param1_pairs,
+    )
+    out: list[tuple[str, str]] = []
+    for fn in pair_fns:
+        out.extend((c, m) for c, m in fn() if m in methods)
+    return sorted(
+        (c, m)
+        for c, m in set(out)
+        if _psbl_orbit_param1_likelihood_grad_pair_ok(c, m)
+    )
+
+
+def bspl_photastrom_gp_orbit_ast_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL GP orbit Param1-3 core astrometry grad (host FD)."""
+    return sorted(
+        (c, m)
+        for c, m in bspl_photastrom_gp_orbit_and_param23_pairs()
+        if m in _BSPL_PHOTASTROM_PARAM1_CORE_AST and "Orbs" in c
+    )
+
+
+def bfspl_photastrom_param1_grad_pairs() -> list[tuple[str, str]]:
+    """BFSPL PhotAstrom Param1 phot + core astrometry grad (host FD)."""
+    return list(bfspl_photastrom_param1_pairs())
+
+
+def fspl_outline_and_resolved_grad_pairs() -> list[tuple[str, str]]:
+    """FSPL outline unlensed + resolved astrometry grad (jax-eval FD)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    skip = {("FSPL_PhotAstrom_Par_Param1", "get_u")}
+    classes = (
+        "FSPL_PhotAstrom_noPar_Param1",
+        "FSPL_PhotAstrom_Par_Param1",
+        "FSPL_PhotAstrom_noPar_Param2",
+        "FSPL_PhotAstrom_Par_Param2",
+    )
+    methods = ("get_astrometry_outline_unlensed", "get_resolved_astrometry")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in methods
+        if (c, m) in applicable and (c, m) not in skip
+    )
+
+
+def bsbl_photastrom_param1_core_grad_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom Param1/orbit Param1 core ast + amp grad (jax-eval FD)."""
+    pair_fns = (
+        bsbl_photastrom_param1_pairs,
+        bsbl_photastrom_circorbs_param1_pairs,
+        bsbl_photastrom_ellorbs_param1_pairs,
+        bsbl_photastrom_linorbs_param1_pairs,
+        bsbl_photastrom_accorbs_param1_pairs,
+    )
+    out: list[tuple[str, str]] = []
+    for fn in pair_fns:
+        out.extend(fn())
+    return sorted((c, m) for c, m in set(out) if _bsbl_param1_core_grad_pair_ok(c, m))
+
+
+def bsbl_photastrom_orbit_param1_get_u_grad_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom Param1/orbit Param1 ``get_u`` grad (jax-eval FD)."""
+    pair_fns = (
+        bsbl_photastrom_param1_phot_likelihood_pairs,
+        bsbl_photastrom_circorbs_param1_likelihood_pairs,
+        bsbl_photastrom_linorbs_param1_likelihood_pairs,
+        bsbl_photastrom_accorbs_param1_likelihood_pairs,
+    )
+    out: list[tuple[str, str]] = []
+    for fn in pair_fns:
+        out.extend((c, m) for c, m in fn() if m == "get_u")
+    return sorted(set(out))
 
 
 def psbl_photastrom_circorbs_ellorbs_param38_grad_pairs() -> list[tuple[str, str]]:

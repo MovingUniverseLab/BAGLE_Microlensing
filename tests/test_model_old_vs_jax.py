@@ -151,8 +151,14 @@ from model_old_vs_jax_fixtures import (
     bspl_photastrom_param34_grad_pairs,
     bsbl_photastrom_ellorbs_param1_likelihood_grad_pairs,
     bspl_photastrom_gp_orbit_grad_pairs,
+    bspl_photastrom_gp_orbit_ast_grad_pairs,
     psbl_photastrom_orbit_param1_grad_bulk_pairs,
+    psbl_photastrom_orbit_param1_likelihood_grad_pairs,
     psbl_photastrom_orbit_param1_extended_grad_pairs,
+    bfspl_photastrom_param1_grad_pairs,
+    fspl_outline_and_resolved_grad_pairs,
+    bsbl_photastrom_param1_core_grad_pairs,
+    bsbl_photastrom_orbit_param1_get_u_grad_pairs,
     psbl_photastrom_circorbs_ellorbs_param38_grad_pairs,
     psbl_photastrom_param7_grad_pairs,
     psbl_photastrom_orbit_param4_grad_pairs,
@@ -1525,5 +1531,52 @@ def test_grad_bspl_photastrom_param34(class_name, method_name):
     """BSPL PhotAstrom Param3/4 phot + core astrometry grad (host FD)."""
     _assert_grad_smoke(class_name, method_name)
 
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_orbit_param1_likelihood_grad_pairs()
+)
+def test_grad_psbl_photastrom_orbit_param1_likelihood(class_name, method_name):
+    """PSBL PhotAstrom orbit Param1 likelihood + get_u grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_gp_orbit_ast_grad_pairs()
+)
+def test_grad_bspl_photastrom_gp_orbit_ast(class_name, method_name):
+    """BSPL GP orbit Param1-3 core astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bfspl_photastrom_param1_grad_pairs()
+)
+def test_grad_bfspl_photastrom_param1(class_name, method_name):
+    """BFSPL PhotAstrom Param1 phot + core astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fspl_outline_and_resolved_grad_pairs()
+)
+def test_grad_fspl_outline_and_resolved(class_name, method_name):
+    """FSPL outline unlensed + resolved astrometry grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_param1_core_grad_pairs()
+)
+def test_grad_bsbl_photastrom_param1_core(class_name, method_name):
+    """BSBL PhotAstrom Param1/orbit Param1 core ast + amp grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_orbit_param1_get_u_grad_pairs()
+)
+def test_grad_bsbl_photastrom_orbit_param1_get_u(class_name, method_name):
+    """BSBL PhotAstrom Param1/orbit Param1 get_u grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
 
 
