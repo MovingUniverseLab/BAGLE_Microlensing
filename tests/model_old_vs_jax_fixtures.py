@@ -1448,6 +1448,54 @@ def _bsbl_param1_core_grad_pair_ok(class_name: str, method_name: str) -> bool:
     return True
 
 
+_BSBL_PARAM1_FD_FAIL_METHODS = frozenset(
+    (
+        "get_photometry",
+        "get_centroid_shift",
+        "get_resolved_astrometry",
+    )
+)
+
+
+def _is_bsbl_param1(class_name: str) -> bool:
+    """True for BSBL static/orbit Param1 layouts (not Param2+)."""
+    if "_Param2" in class_name or "_Param3" in class_name:
+        return False
+    return "_Param1" in class_name
+
+
+def _bsbl_grad_pair_ok(class_name: str, method_name: str) -> bool:
+    """Filter BSBL grad harness pairs with known FD smoke failures."""
+    if _is_bsbl_param1(class_name):
+        if method_name in _BSBL_PARAM1_FD_FAIL_METHODS:
+            return False
+        if method_name in _FSBL_GRAD_ZERO_AST:
+            return False
+    return True
+
+
+def _filter_bsbl_grad_pairs(pairs: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    return sorted((c, m) for c, m in pairs if _bsbl_grad_pair_ok(c, m))
+
+
+_BSBL_CORE_GRAD_METHODS = frozenset(
+    (
+        "get_amplification",
+        "get_astrometry_unlensed",
+        "get_lens_astrometry",
+        "get_resolved_lens_astrometry",
+    )
+)
+_BSBL_BULK_GRAD_METHODS = _BSBL_CORE_GRAD_METHODS | frozenset(("get_u",))
+
+
+def _bsbl_bulk_grad_from_pairs(
+    pairs: list[tuple[str, str]], *, include_get_u: bool = True
+) -> list[tuple[str, str]]:
+    methods = _BSBL_BULK_GRAD_METHODS if include_get_u else _BSBL_CORE_GRAD_METHODS
+    return _filter_bsbl_grad_pairs([(c, m) for c, m in pairs if m in methods])
+
+
 def _fsbl_photastrom_paramN_grad_pairs(param_n: int) -> list[tuple[str, str]]:
     """FSBL PhotAstrom ParamN grad pairs (jax-eval FD)."""
     suffix = f"_Param{param_n}"
@@ -2236,6 +2284,143 @@ def bsbl_photastrom_orbit_param1_get_u_grad_pairs() -> list[tuple[str, str]]:
     for fn in pair_fns:
         out.extend((c, m) for c, m in fn() if m == "get_u")
     return sorted(set(out))
+
+
+def bsbl_photastrom_param2_grad_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom Param2 core ast + ``get_u`` grad (host FD)."""
+    out: list[tuple[str, str]] = []
+    out.extend(bsbl_photastrom_param2_pairs())
+    out.extend(bsbl_photastrom_param2_phot_likelihood_pairs())
+    return _bsbl_bulk_grad_from_pairs(out)
+
+
+def bsbl_photastrom_param3_grad_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom CircOrbs/EllOrbs Param3 core ast + ``get_u`` grad."""
+    return _bsbl_bulk_grad_from_pairs(list(bsbl_photastrom_param3_pairs()))
+
+
+def bsbl_photastrom_circorbs_param2_grad_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom CircOrbs Param2 core ast + ``get_u`` grad (host FD)."""
+    out: list[tuple[str, str]] = []
+    for fn in (
+        bsbl_photastrom_circorbs_param2_pairs,
+        bsbl_photastrom_circorbs_param2_phot_likelihood_pairs,
+    ):
+        out.extend(fn())
+    return _bsbl_bulk_grad_from_pairs(out)
+
+
+def bsbl_photastrom_ellorbs_param2_grad_pairs() -> list[tuple[str, str]]:
+    """BSBL PhotAstrom EllOrbs Param2 core ast grad (host FD; ``get_u`` flat)."""
+    out: list[tuple[str, str]] = []
+    for fn in (
+        bsbl_photastrom_ellorbs_param2_pairs,
+        bsbl_photastrom_ellorbs_param2_phot_likelihood_pairs,
+    ):
+        out.extend(fn())
+    return _bsbl_bulk_grad_from_pairs(out, include_get_u=False)
+
+
+def bspl_photastrom_orbit_param12_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom orbit Param1/2 core astrometry grad (host FD)."""
+    skip = frozenset(("get_resolved_astrometry", "get_resolved_lens_astrometry"))
+    methods = tuple(m for m in PSBL_PHOTASTROM_AST_METHODS if m not in skip)
+    return sorted(
+        (c, m) for c, m in bspl_photastrom_orbit_param12_pairs() if m in methods
+    )
+
+
+def fsbl_photastrom_param3plus_remaining_grad_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom Param3+ ``get_u`` + lens astrometry grad (jax-eval FD)."""
+    methods = ("get_u", "get_lens_astrometry", "get_resolved_lens_astrometry")
+    return _filter_fsbl_grad_pairs(
+        [(c, m) for c, m in fsbl_photastrom_param3plus_pairs() if m in methods]
+    )
+
+
+def psbl_photastrom_param1_ast_likelihood_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param1 ast chi2 / log-likelihood grad (host FD)."""
+    return list(psbl_photastrom_param1_ast_likelihood_pairs())
+
+
+def bspl_photastrom_gp_orbit_param23_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL GP Param2/3 + orbit GP core astrometry grad (host FD)."""
+    skip = frozenset(("get_resolved_astrometry", "get_resolved_lens_astrometry"))
+    methods = tuple(m for m in _BSPL_PHOTASTROM_PARAM1_CORE_AST if m not in skip)
+    return sorted(
+        (c, m)
+        for c, m in bspl_photastrom_gp_orbit_and_param23_pairs()
+        if m in methods
+    )
+
+
+def psbl_photastrom_param7_remaining_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param7 phot + likelihood grad not yet marked."""
+    methods = (
+        "get_photometry",
+        "get_amplification",
+        "get_chi2_photometry",
+        "log_likely_photometry_each",
+    )
+    return sorted((c, m) for c, m in psbl_photastrom_param7_pairs() if m in methods)
+
+
+def psbl_phot_extended_remaining_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL phot-only extended likelihood grad (host FD)."""
+    methods = ("get_chi2_photometry", "log_likely_photometry_each", "get_u")
+    return sorted((c, m) for c, m in psbl_phot_extended_pairs() if m in methods)
+
+
+def bspl_photastrom_gp_param1_remaining_grad_pairs() -> list[tuple[str, str]]:
+    """BSPL PhotAstrom GP Param1 phot + GP grad (host FD)."""
+    methods = GP_PHOT_METHODS
+    return sorted(
+        (c, m) for c, m in bspl_photastrom_gp_param1_pairs() if m in methods
+    )
+
+
+def psbl_photastrom_gp_param1_remaining_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom GP Param1 phot + GP + likelihood grad (host FD)."""
+    methods = GP_PHOT_METHODS + PSBL_PHOTASTROM_LIKELIHOOD_METHODS
+    return sorted(
+        (c, m) for c, m in psbl_photastrom_gp_param1_pairs() if m in methods
+    )
+
+
+def psbl_phot_remaining_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL phot-only phot + likelihood grad (host FD)."""
+    methods = PSBL_PHOT_METHODS + (
+        "get_chi2_photometry",
+        "log_likely_photometry_each",
+        "get_u",
+    )
+    return sorted((c, m) for c, m in psbl_phot_pairs() if m in methods)
+
+
+def psbl_photastrom_param3_likelihood_remaining_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param3 likelihood grad (host FD)."""
+    return list(psbl_photastrom_param3_likelihood_pairs())
+
+
+def psbl_photastrom_param2_likelihood_remaining_grad_pairs() -> list[tuple[str, str]]:
+    """PSBL PhotAstrom Param2 likelihood grad (host FD)."""
+    return list(psbl_photastrom_param2_likelihood_pairs())
+
+
+def fsbl_photastrom_orbit_param1_extended_remaining_grad_pairs() -> list[
+    tuple[str, str]
+]:
+    """FSBL PhotAstrom orbit Param1 extended likelihood grad (jax-eval FD)."""
+    skip = frozenset(
+        ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    )
+    return _filter_fsbl_grad_pairs(
+        [
+            (c, m)
+            for c, m in fsbl_photastrom_orbit_param1_extended_pairs()
+            if m not in skip
+        ]
+    )
 
 
 def psbl_photastrom_circorbs_ellorbs_param38_grad_pairs() -> list[tuple[str, str]]:

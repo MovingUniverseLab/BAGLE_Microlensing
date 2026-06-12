@@ -159,6 +159,19 @@ from model_old_vs_jax_fixtures import (
     fspl_outline_and_resolved_grad_pairs,
     bsbl_photastrom_param1_core_grad_pairs,
     bsbl_photastrom_orbit_param1_get_u_grad_pairs,
+    bsbl_photastrom_param2_grad_pairs,
+    bsbl_photastrom_param3_grad_pairs,
+    bsbl_photastrom_circorbs_param2_grad_pairs,
+    bsbl_photastrom_ellorbs_param2_grad_pairs,
+    bspl_photastrom_orbit_param12_grad_pairs,
+    fsbl_photastrom_param3plus_remaining_grad_pairs,
+    psbl_photastrom_param1_ast_likelihood_grad_pairs,
+    bspl_photastrom_gp_orbit_param23_grad_pairs,
+    psbl_photastrom_param7_remaining_grad_pairs,
+    psbl_phot_extended_remaining_grad_pairs,
+    bspl_photastrom_gp_param1_remaining_grad_pairs,
+    psbl_photastrom_param3_likelihood_remaining_grad_pairs,
+    psbl_photastrom_param2_likelihood_remaining_grad_pairs,
     psbl_photastrom_circorbs_ellorbs_param38_grad_pairs,
     psbl_photastrom_param7_grad_pairs,
     psbl_photastrom_orbit_param4_grad_pairs,
@@ -1577,6 +1590,106 @@ def test_grad_bsbl_photastrom_param1_core(class_name, method_name):
 )
 def test_grad_bsbl_photastrom_orbit_param1_get_u(class_name, method_name):
     """BSBL PhotAstrom Param1/orbit Param1 get_u grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_param3_grad_pairs())
+def test_grad_bsbl_photastrom_param3(class_name, method_name):
+    """BSBL PhotAstrom CircOrbs/EllOrbs Param3 grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_param2_grad_pairs())
+def test_grad_bsbl_photastrom_param2(class_name, method_name):
+    """BSBL PhotAstrom Param2 phot + ast + likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_circorbs_param2_grad_pairs()
+)
+def test_grad_bsbl_photastrom_circorbs_param2(class_name, method_name):
+    """BSBL PhotAstrom CircOrbs Param2 grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_ellorbs_param2_grad_pairs()
+)
+def test_grad_bsbl_photastrom_ellorbs_param2(class_name, method_name):
+    """BSBL PhotAstrom EllOrbs Param2 grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_orbit_param12_grad_pairs()
+)
+def test_grad_bspl_photastrom_orbit_param12(class_name, method_name):
+    """BSPL PhotAstrom orbit Param1/2 core astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_param3plus_remaining_grad_pairs()
+)
+def test_grad_fsbl_photastrom_param3plus_remaining(class_name, method_name):
+    """FSBL PhotAstrom Param3+ get_u + lens astrometry grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param1_ast_likelihood_grad_pairs()
+)
+def test_grad_psbl_photastrom_param1_ast_likelihood(class_name, method_name):
+    """PSBL PhotAstrom Param1 ast likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_gp_orbit_param23_grad_pairs()
+)
+def test_grad_bspl_photastrom_gp_orbit_param23(class_name, method_name):
+    """BSPL GP Param2/3 + orbit GP core astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param7_remaining_grad_pairs()
+)
+def test_grad_psbl_photastrom_param7_remaining(class_name, method_name):
+    """PSBL PhotAstrom Param7 phot + likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_phot_extended_remaining_grad_pairs()
+)
+def test_grad_psbl_phot_extended_remaining(class_name, method_name):
+    """PSBL phot extended likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_gp_param1_remaining_grad_pairs()
+)
+def test_grad_bspl_photastrom_gp_param1_remaining(class_name, method_name):
+    """BSPL PhotAstrom GP Param1 phot + GP grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param3_likelihood_remaining_grad_pairs()
+)
+def test_grad_psbl_photastrom_param3_likelihood_remaining(class_name, method_name):
+    """PSBL PhotAstrom Param3 likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param2_likelihood_remaining_grad_pairs()
+)
+def test_grad_psbl_photastrom_param2_likelihood_remaining(class_name, method_name):
+    """PSBL PhotAstrom Param2 likelihood grad (host FD)."""
     _assert_grad_smoke(class_name, method_name)
 
 
