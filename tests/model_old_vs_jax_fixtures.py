@@ -2596,13 +2596,16 @@ def fsbl_lens_ast_grad_recovered_pairs() -> list[tuple[str, str]]:
     Returns
     ----
     list of tuple[str, str]
-        Three ``(class_name, method_name)`` rows that pass host FD after
-        derived-geometry refresh at the standard fixture point.
+        Six ``(class_name, method_name)`` rows that pass jax-eval FD after
+        derived-geometry refresh and/or squared FD objective at the fixture.
     """
     return sorted(
         [
             ("FSBL_PhotAstrom_Par_AccOrbs_Param6", "get_lens_astrometry"),
+            ("FSBL_PhotAstrom_Par_AccOrbs_Param7", "get_lens_astrometry"),
+            ("FSBL_PhotAstrom_Par_LinOrbs_Param7", "get_lens_astrometry"),
             ("FSBL_PhotAstrom_Par_Param5", "get_lens_astrometry"),
+            ("FSBL_PhotAstrom_Par_Param7", "get_lens_astrometry"),
             ("FSBL_PhotAstrom_noPar_AccOrbs_Param6", "get_lens_astrometry"),
         ]
     )
@@ -3833,7 +3836,11 @@ def _bspl_phot_geom_from_base(base, base_names: tuple[str, ...]) -> dict:
 
 
 _RESOLVED_AST_FD_METHODS = frozenset(
-    ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    (
+        "get_resolved_astrometry",
+        "get_resolved_lens_astrometry",
+        "get_lens_astrometry",
+    )
 )
 
 

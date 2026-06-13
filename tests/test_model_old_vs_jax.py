@@ -1782,6 +1782,6 @@ def test_grad_bsbl_param1_phot_ast_likelihood_recovered(class_name, method_name)
 
 @pytest.mark.parametrize("class_name,method_name", fsbl_lens_ast_grad_recovered_pairs())
 def test_grad_fsbl_lens_ast_recovered(class_name, method_name):
-    """FSBL PhotAstrom ``get_lens_astrometry`` recovered via derived-geometry refresh."""
+    """FSBL PhotAstrom ``get_lens_astrometry`` recovered via squared FD objective."""
     _assert_grad_smoke(class_name, method_name)
 

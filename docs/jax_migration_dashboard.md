@@ -1,6 +1,6 @@
 # JAX migration dashboard
 
-Updated: 2026-06-13 | Grad pass: 2802/2848 | Skip: 46 | Pending: 0
+Updated: 2026-06-13 | Grad pass: 2805/2848 | Skip: 43 | Pending: 0
 
 | Class | Method | JAX forward | Parity | Grad | Overall |
 |-------|--------|-------------|--------|------|---------|
@@ -1936,7 +1936,7 @@ Updated: 2026-06-13 | Grad pass: 2802/2848 | Skip: 46 | Pending: 0
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_amplification | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_astrometry_unlensed | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
@@ -2118,7 +2118,7 @@ Updated: 2026-06-13 | Grad pass: 2802/2848 | Skip: 46 | Pending: 0
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_amplification | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_astrometry_unlensed | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
@@ -2209,7 +2209,7 @@ Updated: 2026-06-13 | Grad pass: 2802/2848 | Skip: 46 | Pending: 0
 | FSBL_PhotAstrom_Par_Param7 | get_amplification | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param7 | get_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param7 | get_astrometry_unlensed | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_Param7 | get_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param7 | get_centroid_shift | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
@@ -2857,11 +2857,11 @@ Updated: 2026-06-13 | Grad pass: 2802/2848 | Skip: 46 | Pending: 0
 **PSBL methods:** 699/712 done
 **BSPL methods:** 640/644 done
 **FSPL methods:** 63/64 done
-**FSBL methods:** 664/692 done
+**FSBL methods:** 667/692 done
 **BSBL methods:** 260/260 done
 **BFSPL methods:** 6/6 done
 
-**Grad verified:** 2802/2848 pass | 46 skip | 0 pending
+**Grad verified:** 2805/2848 pass | 43 skip | 0 pending
 
 See also [`jax_migration_tasks.md`](jax_migration_tasks.md).
 
