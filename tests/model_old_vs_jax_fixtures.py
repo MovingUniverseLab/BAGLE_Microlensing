@@ -1398,9 +1398,7 @@ def _fsbl_grad_pair_ok(class_name: str, method_name: str) -> bool:
     """Filter FSBL grad harness pairs with known FD smoke failures."""
     if method_name == "get_u" and "PhotAstrom" in class_name:
         return False
-    if method_name == "get_resolved_astrometry":
-        return False
-    if method_name in ("get_resolved_astrometry", "get_resolved_lens_astrometry"):
+    if method_name == "get_resolved_lens_astrometry":
         if class_name.startswith("FSBL_Phot_") and "PhotAstrom" not in class_name:
             return False
     if method_name in _FSBL_GRAD_ZERO_AST:
@@ -1420,8 +1418,6 @@ def _psbl_orbit_param1_likelihood_grad_pair_ok(
     class_name: str, method_name: str
 ) -> bool:
     """Filter PSBL orbit Param1 extended grad pairs with NaN/zero FD smoke."""
-    if method_name == "get_resolved_astrometry":
-        return False
     if method_name == "get_u" and any(
         tag in class_name for tag in ("CircOrbs", "EllOrbs")
     ):
@@ -1452,7 +1448,6 @@ _BSBL_PARAM1_FD_FAIL_METHODS = frozenset(
     (
         "get_photometry",
         "get_centroid_shift",
-        "get_resolved_astrometry",
     )
 )
 
@@ -1647,7 +1642,7 @@ def psbl_phot_extended_pairs() -> list[tuple[str, str]]:
 
 def psbl_phot_extended_grad_pairs() -> list[tuple[str, str]]:
     """PSBL phot extended + likelihood grad (host FD through roots)."""
-    skip_resolved = ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+    skip_resolved = ("get_resolved_lens_astrometry",)
     return sorted(
         (c, m)
         for c, m in psbl_phot_extended_pairs()
@@ -2323,7 +2318,7 @@ def bsbl_photastrom_ellorbs_param2_grad_pairs() -> list[tuple[str, str]]:
 
 def bspl_photastrom_orbit_param12_grad_pairs() -> list[tuple[str, str]]:
     """BSPL PhotAstrom orbit Param1/2 core astrometry grad (host FD)."""
-    skip = frozenset(("get_resolved_astrometry", "get_resolved_lens_astrometry"))
+    skip = frozenset(("get_resolved_lens_astrometry",))
     methods = tuple(m for m in PSBL_PHOTASTROM_AST_METHODS if m not in skip)
     return sorted(
         (c, m) for c, m in bspl_photastrom_orbit_param12_pairs() if m in methods
@@ -2345,7 +2340,7 @@ def psbl_photastrom_param1_ast_likelihood_grad_pairs() -> list[tuple[str, str]]:
 
 def bspl_photastrom_gp_orbit_param23_grad_pairs() -> list[tuple[str, str]]:
     """BSPL GP Param2/3 + orbit GP core astrometry grad (host FD)."""
-    skip = frozenset(("get_resolved_astrometry", "get_resolved_lens_astrometry"))
+    skip = frozenset(("get_resolved_lens_astrometry",))
     methods = tuple(m for m in _BSPL_PHOTASTROM_PARAM1_CORE_AST if m not in skip)
     return sorted(
         (c, m)
@@ -2411,9 +2406,7 @@ def fsbl_photastrom_orbit_param1_extended_remaining_grad_pairs() -> list[
     tuple[str, str]
 ]:
     """FSBL PhotAstrom orbit Param1 extended likelihood grad (jax-eval FD)."""
-    skip = frozenset(
-        ("get_resolved_astrometry", "get_resolved_lens_astrometry")
-    )
+    skip = frozenset(("get_resolved_lens_astrometry",))
     return _filter_fsbl_grad_pairs(
         [
             (c, m)
@@ -2621,11 +2614,10 @@ def psbl_photastrom_gp_param1_extended_grad_pairs() -> list[tuple[str, str]]:
 
 def psbl_photastrom_gp_extended_grad_pairs() -> list[tuple[str, str]]:
     """PSBL PhotAstrom GP Param1–2 extended ast likelihood grad (host FD)."""
-    skip = ("get_resolved_astrometry",)
     return sorted(
         (c, m)
         for c, m in psbl_photastrom_gp_extended_pairs()
-        if c.startswith("PSBL_PhotAstrom_") and m not in skip
+        if c.startswith("PSBL_PhotAstrom_")
     )
 
 
@@ -2677,14 +2669,13 @@ def psbl_photastrom_orbit_param1_grad_bulk_pairs() -> list[tuple[str, str]]:
 
 def psbl_photastrom_orbit_param1_extended_grad_pairs() -> list[tuple[str, str]]:
     """PSBL PhotAstrom AccOrbs/LinOrbs Param1 extended grad (host FD)."""
-    skip = ("get_resolved_astrometry",)
     methods = FSPL_PHOTASTROM_EXTENDED_METHODS + (
         "get_resolved_astrometry",
         "get_resolved_lens_astrometry",
     )
     out: list[tuple[str, str]] = []
     for fn in (psbl_photastrom_accorbs_param1_pairs, psbl_photastrom_linorbs_param1_pairs):
-        out.extend((c, m) for c, m in fn() if m in methods and m not in skip)
+        out.extend((c, m) for c, m in fn() if m in methods)
     return sorted(set(out))
 
 
@@ -3573,6 +3564,19 @@ def _bspl_phot_geom_from_base(base, base_names: tuple[str, ...]) -> dict:
     }
 
 
+_RESOLVED_AST_FD_METHODS = frozenset(
+    ("get_resolved_astrometry", "get_resolved_lens_astrometry")
+)
+
+
+def _fd_scalar_from_output(out, method_name: str) -> float:
+    """Scalar objective for FD; resolved astrometry may contain NaN padding."""
+    arr = np.asarray(out, dtype=np.float64)
+    if method_name in _RESOLVED_AST_FD_METHODS:
+        return float(np.nansum(arr))
+    return float(np.sum(arr))
+
+
 def _fd_grad_host(
     class_name: str,
     init_names: tuple[str, ...],
@@ -3603,7 +3607,7 @@ def _fd_grad_host(
             fixed_phot=fixed_phot,
             fixed_ast=fixed_ast,
         )
-        return float(np.sum(np.asarray(out, dtype=np.float64)))
+        return _fd_scalar_from_output(out, method_name)
 
     g = np.zeros(len(vec0_np), dtype=np.float64)
     for i in range(len(vec0_np)):
@@ -3627,15 +3631,16 @@ def _fd_grad_jax_eval(
     vec0_np = np.asarray(vec0, dtype=np.float64)
     t_np = np.asarray(t, dtype=np.float64)
     fixed_phot = fixed_ast = None
-    _, inst = build_jax_eval_paired_instances(class_name)
     if method_name in PHOT_LIKELIHOOD_METHODS or method_name in AST_LIKELIHOOD_METHODS:
-        scatter_init_vector(inst, vec0_np, init_names)
+        _, inst0 = build_jax_eval_paired_instances(class_name)
+        scatter_init_vector(inst0, vec0_np, init_names)
         if method_name in PHOT_LIKELIHOOD_METHODS:
-            fixed_phot = synthetic_phot_obs(inst, t_np)
+            fixed_phot = synthetic_phot_obs(inst0, t_np)
         else:
-            fixed_ast = synthetic_ast_obs(inst, t_np)
+            fixed_ast = synthetic_ast_obs(inst0, t_np)
 
     def _sum(vec_np: np.ndarray) -> float:
+        _, inst = build_jax_eval_paired_instances(class_name)
         scatter_init_vector(inst, vec_np, init_names)
         out = call_method_via_jax_eval(
             inst,
@@ -3644,7 +3649,7 @@ def _fd_grad_jax_eval(
             fixed_phot=fixed_phot,
             fixed_ast=fixed_ast,
         )
-        return float(np.sum(np.asarray(out, dtype=np.float64)))
+        return _fd_scalar_from_output(out, method_name)
 
     g = np.zeros(len(vec0_np), dtype=np.float64)
     for i in range(len(vec0_np)):
