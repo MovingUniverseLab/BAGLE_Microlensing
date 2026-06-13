@@ -642,7 +642,24 @@ def evaluate_resolved_amplification_jax(
     t,
     filt_idx: int = 0,
 ) -> np.ndarray | None:
-    if layout.eval_kind not in _PSPL_U_KINDS:
+    ek = layout.eval_kind
+    if ek.startswith("bspl_phot"):
+        try:
+            from bagle.jax.bspl import bspl_resolved_amplification_from_model
+
+            pvec = _parallax_table(model, t, filt_idx)
+            return bspl_resolved_amplification_from_model(model, t, filt_idx, pvec)
+        except (AttributeError, NotImplementedError, TypeError):
+            return None
+    if ek.startswith(("fsbl_phot", "fsbl_photastrom")):
+        try:
+            from bagle.jax.fspl import fspl_resolved_amplification_from_model
+
+            pvec = _parallax_table(model, t, filt_idx)
+            return fspl_resolved_amplification_from_model(model, t, filt_idx, pvec)
+        except (AttributeError, NotImplementedError, TypeError):
+            return None
+    if ek not in _PSPL_U_KINDS:
         return None
     try:
         pvec = _parallax_table(model, t, filt_idx)

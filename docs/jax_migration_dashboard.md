@@ -1,6 +1,6 @@
 # JAX migration dashboard
 
-Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
+Updated: 2026-06-13 | Grad pass: 2907/2907 | Skip: 0 | Pending: 0
 
 | Class | Method | JAX forward | Parity | Grad | Overall |
 |-------|--------|-------------|--------|------|---------|
@@ -1193,6 +1193,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_AccOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_AccOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1205,6 +1206,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_AccOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_AccOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1217,6 +1219,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_AccOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_AccOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_AccOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1229,6 +1232,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_CircOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_CircOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1241,6 +1245,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_CircOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_CircOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1253,6 +1258,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_CircOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_CircOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_CircOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1265,6 +1271,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_EllOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_EllOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1277,6 +1284,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_EllOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_EllOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1289,6 +1297,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_EllOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_EllOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1301,6 +1310,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_EllOrbs_Param4 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param4 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_EllOrbs_Param4 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param4 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_EllOrbs_Param4 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1314,6 +1324,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_GP_AccOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1327,6 +1338,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param2 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_GP_AccOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1340,6 +1352,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param3 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_GP_AccOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_AccOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1353,6 +1366,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_GP_LinOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1366,6 +1380,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param2 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_GP_LinOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1379,6 +1394,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param3 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_GP_LinOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_LinOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1392,6 +1408,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_GP_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_GP_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1405,6 +1422,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_GP_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param2 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_GP_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1418,6 +1436,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_GP_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param3 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_GP_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_GP_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1430,6 +1449,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_LinOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_LinOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1442,6 +1462,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_LinOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_LinOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1454,6 +1475,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_LinOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_LinOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_LinOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1466,6 +1488,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_Param1 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1478,6 +1501,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_Param2 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1490,6 +1514,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_Par_Param3 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_Par_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_Par_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1502,6 +1527,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_AccOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_AccOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1514,6 +1540,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_AccOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_AccOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1526,6 +1553,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_AccOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_AccOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_AccOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1538,6 +1566,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_CircOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_CircOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1550,6 +1579,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_CircOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_CircOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1562,6 +1592,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_CircOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_CircOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_CircOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1574,6 +1605,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_EllOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_EllOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1586,6 +1618,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_EllOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_EllOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1598,6 +1631,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_EllOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_EllOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1610,6 +1644,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_EllOrbs_Param4 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param4 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_EllOrbs_Param4 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param4 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_EllOrbs_Param4 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1623,6 +1658,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1636,6 +1672,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1649,6 +1686,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1662,6 +1700,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1675,6 +1714,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1688,6 +1728,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1701,6 +1742,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_GP_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_GP_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1714,6 +1756,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_GP_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param2 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_GP_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1727,6 +1770,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_GP_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param3 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_GP_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_GP_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1739,6 +1783,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_LinOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_LinOrbs_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1751,6 +1796,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_LinOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_LinOrbs_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1763,6 +1809,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_LinOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_LinOrbs_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_LinOrbs_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1775,6 +1822,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_Param1 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1787,6 +1835,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_Param2 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param2 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1799,6 +1848,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_PhotAstrom_noPar_Param3 | get_astrometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param3 | get_centroid_shift | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_PhotAstrom_noPar_Param3 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param3 | get_u | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_PhotAstrom_noPar_Param3 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1808,12 +1858,14 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_Phot_Par_GP_Param1 | get_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_Par_GP_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_Phot_Par_GP_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_Phot_Par_GP_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_Phot_Par_GP_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_Phot_Par_GP_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_Par_GP_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | BSPL_Phot_Par_Param1 | get_amplification | jax_only | pass | pass | done |
 | BSPL_Phot_Par_Param1 | get_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_Par_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_Phot_Par_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_Phot_Par_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_Phot_Par_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_Par_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
@@ -1821,12 +1873,14 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BSPL_Phot_noPar_GP_Param1 | get_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_GP_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_GP_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
+| BSPL_Phot_noPar_GP_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_GP_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_GP_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_GP_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_Param1 | get_amplification | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_Param1 | get_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| BSPL_Phot_noPar_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
@@ -1838,6 +1892,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | FSPL_PhotAstrom_Par_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_Par_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_Par_Param1 | get_astrometry_outline_unlensed | jax_only | pass | pass | done |
+| FSPL_PhotAstrom_Par_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_Par_Param1 | get_u | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_Par_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_Par_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1851,6 +1906,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | FSPL_PhotAstrom_Par_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_Par_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_Par_Param2 | get_astrometry_outline_unlensed | jax_only | pass | pass | done |
+| FSPL_PhotAstrom_Par_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_Par_Param2 | get_u | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_Par_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_Par_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1864,6 +1920,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | FSPL_PhotAstrom_noPar_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_noPar_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_noPar_Param1 | get_astrometry_outline_unlensed | jax_only | pass | pass | done |
+| FSPL_PhotAstrom_noPar_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_noPar_Param1 | get_u | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_noPar_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_noPar_Param1 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1877,6 +1934,7 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | FSPL_PhotAstrom_noPar_Param2 | get_centroid_shift | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_noPar_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_noPar_Param2 | get_astrometry_outline_unlensed | jax_only | pass | pass | done |
+| FSPL_PhotAstrom_noPar_Param2 | get_resolved_amplification | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_noPar_Param2 | get_u | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_noPar_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSPL_PhotAstrom_noPar_Param2 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2852,16 +2910,17 @@ Updated: 2026-06-13 | Grad pass: 2848/2848 | Skip: 0 | Pending: 0
 | BFSPL_PhotAstrom_noPar_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | BFSPL_PhotAstrom_noPar_Param1 | get_astrometry | jax_only | pass | pass | done |
 | BFSPL_PhotAstrom_noPar_Param1 | get_centroid_shift | jax_only | pass | pass | done |
+| BFSPL_PhotAstrom_noPar_Param1 | get_resolved_amplification | jax_only | pass | pass | done |
 
 **PSPL methods:** 470/470 done
 **PSBL methods:** 712/712 done
-**BSPL methods:** 644/644 done
-**FSPL methods:** 64/64 done
+**BSPL methods:** 698/698 done
+**FSPL methods:** 68/68 done
 **FSBL methods:** 692/692 done
 **BSBL methods:** 260/260 done
-**BFSPL methods:** 6/6 done
+**BFSPL methods:** 7/7 done
 
-**Grad verified:** 2848/2848 pass | 0 skip | 0 pending
+**Grad verified:** 2907/2907 pass | 0 skip | 0 pending
 
 See also [`jax_migration_tasks.md`](jax_migration_tasks.md).
 

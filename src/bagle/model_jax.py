@@ -12007,6 +12007,15 @@ class BSPL(PSPL):
             xS[0, 0, 1] returns the amplification of the
             first source's "minus" image at the first time.
         """
+        try:
+            from bagle.jax_model import try_get_resolved_amplification
+
+            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
+            if amp_jax is not None:
+                return amp_jax
+        except ImportError:
+            pass
+
         # Get u for the primary and secondary at all times.
         u_vec = self.get_u(t, filt_idx=filt_idx)
 
@@ -21388,6 +21397,15 @@ decL - if parallax model
             Array/tuple of amplification of each lensed image at each t.
             Shape = [n_images=2, len(t)]
         """
+        try:
+            from bagle.jax_model import try_get_resolved_amplification
+
+            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
+            if amp_jax is not None:
+                return amp_jax
+        except ImportError:
+            pass
+
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
@@ -28090,6 +28108,15 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
             Array/tuple of amplification of each lensed image at each t.
             Shape = [n_images=2, len(t)]
         """
+        try:
+            from bagle.jax_model import try_get_resolved_amplification
+
+            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
+            if amp_jax is not None:
+                return amp_jax
+        except ImportError:
+            pass
+
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 

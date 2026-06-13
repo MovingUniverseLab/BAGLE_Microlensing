@@ -95,6 +95,8 @@ from model_old_vs_jax_fixtures import (
     psbl_photastrom_gp_extended_pairs,
     fspl_outline_and_resolved_pairs,
     fspl_phot_param2_resolved_pairs,
+    resolved_amplification_extension_pairs,
+    resolved_amplification_extension_grad_pairs,
     bfspl_photastrom_param1_pairs,
     bspl_photastrom_ellorbs_param2_pairs,
     fspl_phot_param2_pairs,
@@ -695,6 +697,16 @@ def test_parity_bspl_phot_extended(class_name, method_name):
 
 @pytest.mark.parametrize("class_name,method_name", bspl_gp_extended_pairs())
 def test_parity_bspl_gp_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", resolved_amplification_extension_pairs()
+)
+def test_parity_resolved_amplification_extension(class_name, method_name):
+    """BSPL / FSPL_PhotAstrom / BFSPL own-override resolved amplification."""
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)
@@ -1588,6 +1600,14 @@ def test_grad_bfspl_photastrom_param1(class_name, method_name):
 )
 def test_grad_fspl_outline_and_resolved(class_name, method_name):
     """FSPL outline unlensed + resolved astrometry grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", resolved_amplification_extension_grad_pairs()
+)
+def test_grad_resolved_amplification_extension(class_name, method_name):
+    """BSPL / FSPL_PhotAstrom / BFSPL resolved amplification grad (jax-eval FD)."""
     _assert_grad_smoke(class_name, method_name)
 
 

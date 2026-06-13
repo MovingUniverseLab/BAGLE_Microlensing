@@ -1,6 +1,9 @@
 # JAX migration — permanent grad exclusions
 
-Updated: 2026-06-13. This session recovered the final **12** FSBL
+Updated: 2026-06-13. **Extension batch A** (+59 applicable): BSPL / FSPL_PhotAstrom /
+BFSPL own-override ``get_resolved_amplification`` (see §Extension backlog below).
+
+Prior session recovered the final **12** FSBL
 ``get_lens_astrometry`` Param4/8 skip rows: static layouts via heliocentric COM
 geometry refresh (``t0_com``/``u0_amp_com`` → ``t0``/``u0``/``xL0``); orbit
 layouts already had nonzero squared FD at the fixture (status JSON lag).
@@ -8,7 +11,29 @@ layouts already had nonzero squared FD at the fixture (status JSON lag).
 Prior session recovered **31** ``get_u`` skip rows and **6** FSBL
 ``get_lens_astrometry`` Param5/6/7 rows.
 
-**Ceiling: 2848 grad pass | 0 grad skip | 0 grad not_run | 2848/2848 closed.**
+**Ceiling before extension: 2848 grad pass | 0 grad skip | 0 grad not_run | 2848/2848 closed.**
+
+After batch A: **2907 applicable** (+59 ``get_resolved_amplification`` on BSPL / FSPL_PhotAstrom / BFSPL).
+
+## Extension backlog (prioritized)
+
+| Priority | Method family | Families / definer | Count | Semantics | JAX forward | Notes |
+|----------|---------------|-------------------|------:|-----------|-------------|-------|
+| **A (done)** | ``get_resolved_amplification`` | ``BSPL``, ``FSPL_PhotAstrom``, ``BFSPL_PhotAstrom`` | **+59** | Dual-source ± (BSPL) or ``get_all_arrays`` amp (FSPL/BFSPL) | ``bspl_resolved_amplification_from_model``, ``fspl_resolved_amplification_from_model`` | Excludes PSBL/BSBL/FSBL inheriting PSPL ± |
+| B | ``get_source_astrometry_unlensed`` | ``PSBL_Phot`` (8), ``BSPL_Phot``/``PhotAstrom`` (55) | ~63 | ``get_u`` in Einstein radii (phot) or arcsec astrom | Partial (PSPL astrom kinds only) | PSPL phot-only rows intentionally N/A (astrometryFlag=False) |
+| C | ``get_photometry_with_gp`` | GP classes | 0 gap | — | Wired | 54/54 already applicable |
+| D | ``get_astrometry_outline_unlensed`` | FSPL PhotAstrom | 0 gap | Outline AMG | Host AMG | 4/4 already applicable |
+| — | ``get_resolved_amplification`` (excluded) | PSBL/BSBL/FSBL PhotAstrom via ``PSPL`` definer | ~82 | Wrong: single-lens 2-image ± on binary lens | PSPL formula only | Do not mark applicable |
+| — | ``get_resolved_amplification`` (excluded) | ``PSPL_Phot`` on PSBL phot (8) | 8 | Wrong: PSPL ``get_u`` on binary | Inherited | Do not mark applicable |
+| — | ``get_source_astrometry_unlensed`` (excluded) | PSBL/BSBL PhotAstrom via ``PSPL`` | ~78 | PSPL astrometry ABC only | — | Use resolved astrometry paths instead |
+
+### Batch A detail (implemented)
+
+- **BSPL (54)**: ``BSPL.get_resolved_amplification`` — per-source PSPL ± from ``get_u`` ``[t, 2 sources, 2]``.
+- **FSPL_PhotAstrom (4)**: ``FSPL_PhotAstrom.get_resolved_amplification`` — ``swapaxes(get_all_arrays amp, 0, 1)``.
+- **BFSPL_PhotAstrom (1)**: ``BFSPL_PhotAstrom.get_resolved_amplification`` — ``swapaxes(get_all_arrays amp, 1, 2)``.
+
+Harness: ``resolved_amplification_extension_pairs()``, ``test_parity_resolved_amplification_extension``, ``test_grad_resolved_amplification_extension``.
 
 These skip rows are **not** marked `grad=pass` without a passing finite-difference smoke
 test. They are documented here as permanent exclusions until the underlying FD /

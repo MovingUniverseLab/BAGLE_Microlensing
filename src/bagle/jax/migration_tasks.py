@@ -82,6 +82,34 @@ def _class_has_method(cls: type, method_name: str) -> bool:
     return hasattr(cls, method_name)
 
 
+def _method_defining_class(cls: type, method_name: str) -> str | None:
+    """Return the first MRO class that defines ``method_name`` in ``__dict__``."""
+    for base in cls.mro():
+        if method_name in base.__dict__:
+            return base.__name__
+    return None
+
+
+_RESOLVED_AMP_OWN_DEFINERS: frozenset[str] = frozenset(
+    {"BSPL", "FSPL_PhotAstrom", "BFSPL_PhotAstrom"}
+)
+
+
+def _resolved_amplification_applicable(cls: type, class_name: str) -> bool:
+    """True when ``get_resolved_amplification`` is physically meaningful for ``cls``.
+
+    Excludes binary-lens families that only inherit the PSPL two-image ± formula
+    (PSBL, BSBL, FSBL PhotAstrom). Includes BSPL dual-source ±, FSPL/BFSPL
+    finite-source ``get_all_arrays`` paths, and all PSPL variants.
+    """
+    if not _class_has_method(cls, "get_resolved_amplification"):
+        return False
+    definer = _method_defining_class(cls, "get_resolved_amplification")
+    if definer in _RESOLVED_AMP_OWN_DEFINERS:
+        return True
+    return class_name.startswith("PSPL")
+
+
 def applicable_methods(cls: type) -> dict[MethodName, bool]:
     """Return forward methods applicable to ``cls`` (True) or n/a (False)."""
     name = cls.__name__
@@ -116,8 +144,9 @@ def applicable_methods(cls: type) -> dict[MethodName, bool]:
             out["get_source_astrometry_unlensed"] = True
         if ast and _class_has_method(cls, "get_resolved_astrometry"):
             out["get_resolved_astrometry"] = True
-        if phot and _class_has_method(cls, "get_resolved_amplification"):
-            out["get_resolved_amplification"] = True
+
+    if phot and _resolved_amplification_applicable(cls, name):
+        out["get_resolved_amplification"] = True
 
     if is_pspl or is_psbl or is_bsbl or is_fsbl:
         if (phot or ast) and _class_has_method(cls, "get_u"):

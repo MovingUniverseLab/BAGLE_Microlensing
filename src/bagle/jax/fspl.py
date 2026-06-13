@@ -52,6 +52,19 @@ def fspl_resolved_astrometry_from_model(model, t, filt_idx, pvec):
     return finite_source_image_positions(img_arr)
 
 
+def fspl_resolved_amplification_from_model(model, t, filt_idx, pvec):
+    """Finite-source resolved amplifications via host AMG ``get_all_arrays``.
+
+    FSPL_PhotAstrom and BFSPL_PhotAstrom use different ``swapaxes`` conventions
+    in :meth:`bagle.model.FSPL_PhotAstrom.get_resolved_amplification`.
+    """
+    img_arr, amp_arr = model.get_all_arrays(t, filt_idx=filt_idx)
+    amp_arr = np.asarray(amp_arr, dtype=np.float64)
+    if type(model).__name__.startswith("BFSPL"):
+        return np.swapaxes(amp_arr, 1, 2)
+    return np.swapaxes(amp_arr, 0, 1)
+
+
 def fspl_centroid_shift_from_model(model, t, filt_idx, pvec):
     """Finite-source centroid shift (mas) from AMG astrometry minus unlensed."""
     if not getattr(model, "astrometryFlag", False):

@@ -15,6 +15,7 @@ from bagle.jax_physics import (
     flux2mag_jax,
     precompute_parallax_vectors,
     pspl_amplification_from_u,
+    pspl_resolved_amplification_from_u,
     einstein_source_position,
     derive_pspl_static_geometry,
     build_jax_joint_likelihood_context,
@@ -140,6 +141,22 @@ def bspl_amplification_from_model(model, t, filt_idx, pvec):
     f1 = mag2flux_jax(_filt_scalar(model, "mag_src_pri", filt_idx))
     f2 = mag2flux_jax(_filt_scalar(model, "mag_src_sec", filt_idx))
     amp = (f1 * a1 + f2 * a2) / (f1 + f2)
+    return np.asarray(amp, dtype=np.float64)
+
+
+def bspl_resolved_amplification_from_model(model, t, filt_idx, pvec):
+    """Dual-source ± image amplifications, shape ``(N_t, 2 sources, 2 images)``.
+
+    Uses host ``get_u`` so static and orbital BSPL layouts match NumPy reference.
+    """
+    u_vec = np.asarray(model.get_u(t, filt_idx=filt_idx), dtype=np.float64)
+    u1 = jnp.asarray(u_vec[:, 0, :], dtype=jnp.float64)
+    u2 = jnp.asarray(u_vec[:, 1, :], dtype=jnp.float64)
+    a1_plus, a1_minus = pspl_resolved_amplification_from_u(u1)
+    a2_plus, a2_minus = pspl_resolved_amplification_from_u(u2)
+    a_src1 = jnp.stack([a1_plus, a1_minus], axis=1)
+    a_src2 = jnp.stack([a2_plus, a2_minus], axis=1)
+    amp = jnp.stack([a_src1, a_src2], axis=1)
     return np.asarray(amp, dtype=np.float64)
 
 

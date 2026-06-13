@@ -317,6 +317,7 @@ def call_method_via_jax_eval(
         try_get_log_likely_photometry_each,
         try_get_photometry,
         try_get_resolved_astrometry,
+        try_get_resolved_amplification,
         try_get_u,
     )
 
@@ -328,6 +329,7 @@ def call_method_via_jax_eval(
         "get_lens_astrometry": try_get_lens_astrometry,
         "get_centroid_shift": try_get_centroid_shift,
         "get_resolved_astrometry": try_get_resolved_astrometry,
+        "get_resolved_amplification": try_get_resolved_amplification,
         "get_u": try_get_u,
     }
     fn = dispatch.get(method_name)
@@ -829,6 +831,33 @@ FSPL_PHOTASTROM_EXTENDED_METHODS = (
 )
 
 
+def resolved_amplification_extension_pairs() -> list[tuple[str, str]]:
+    """BSPL / FSPL_PhotAstrom / BFSPL own-override ``get_resolved_amplification``."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import (
+        _RESOLVED_AMP_OWN_DEFINERS,
+        _method_defining_class,
+        applicable_task_pairs,
+        discover_concrete_classes,
+    )
+
+    applicable = set(applicable_task_pairs(model_jax))
+    out: list[tuple[str, str]] = []
+    for cname, cls in discover_concrete_classes(model_jax):
+        definer = _method_defining_class(cls, "get_resolved_amplification")
+        if definer not in _RESOLVED_AMP_OWN_DEFINERS:
+            continue
+        key = (cname, "get_resolved_amplification")
+        if key in applicable:
+            out.append(key)
+    return sorted(out)
+
+
+def resolved_amplification_extension_grad_pairs() -> list[tuple[str, str]]:
+    """Grad smoke for :func:`resolved_amplification_extension_pairs`."""
+    return list(resolved_amplification_extension_pairs())
+
+
 def fspl_photastrom_param1_extended_pairs() -> list[tuple[str, str]]:
     """FSPL PhotAstrom Param1 extended likelihoods (host AMG phot/ast forward)."""
     import bagle.model_jax as model_jax
@@ -1270,7 +1299,10 @@ def bspl_photastrom_extended_pairs() -> list[tuple[str, str]]:
         if any(c.startswith(p) for p in _BSPL_PHOTASTROM_EXTENDED_PREFIXES)
         and hasattr(model_jax, c)
     }
-    methods = FSPL_PHOTASTROM_EXTENDED_METHODS + ("get_resolved_astrometry",)
+    methods = FSPL_PHOTASTROM_EXTENDED_METHODS + (
+        "get_resolved_astrometry",
+        "get_resolved_amplification",
+    )
     return sorted(
         (c, m) for c in class_names for m in methods if (c, m) in applicable
     )
@@ -1288,7 +1320,10 @@ def bspl_phot_extended_pairs() -> list[tuple[str, str]]:
         "BSPL_Phot_noPar_GP_Param1",
         "BSPL_Phot_Par_GP_Param1",
     )
-    methods = FSPL_PHOTASTROM_EXTENDED_METHODS + ("get_resolved_astrometry",)
+    methods = FSPL_PHOTASTROM_EXTENDED_METHODS + (
+        "get_resolved_astrometry",
+        "get_resolved_amplification",
+    )
     return sorted(
         (c, m) for c in classes for m in methods if (c, m) in applicable
     )
@@ -1309,7 +1344,10 @@ def bspl_gp_extended_pairs() -> list[tuple[str, str]]:
         )
         and hasattr(model_jax, c)
     }
-    methods = FSPL_PHOTASTROM_EXTENDED_METHODS + ("get_resolved_astrometry",)
+    methods = FSPL_PHOTASTROM_EXTENDED_METHODS + (
+        "get_resolved_astrometry",
+        "get_resolved_amplification",
+    )
     return sorted(
         (c, m) for c in class_names for m in methods if (c, m) in applicable
     )
@@ -5511,7 +5549,7 @@ def grad_smoke_jax(
             return g, init_names
         return g
 
-    if ek.startswith(("fsbl_phot", "fsbl_photastrom")):
+    if ek.startswith(("fsbl_phot", "fsbl_photastrom", "bspl_phot")):
         g = _fd_grad_jax_eval(class_name, init_names, vec0, t, method_name)
         if return_names:
             return g, init_names
