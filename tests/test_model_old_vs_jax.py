@@ -185,6 +185,7 @@ from model_old_vs_jax_fixtures import (
     bsbl_param1_phot_grad_recovered_pairs,
     bsbl_param1_phot_ast_likelihood_grad_recovered_pairs,
     fsbl_lens_ast_grad_recovered_pairs,
+    get_u_grad_recovered_pairs,
     psbl_photastrom_circorbs_ellorbs_param38_grad_pairs,
     psbl_photastrom_param7_grad_pairs,
     psbl_photastrom_orbit_param4_grad_pairs,
@@ -1783,5 +1784,11 @@ def test_grad_bsbl_param1_phot_ast_likelihood_recovered(class_name, method_name)
 @pytest.mark.parametrize("class_name,method_name", fsbl_lens_ast_grad_recovered_pairs())
 def test_grad_fsbl_lens_ast_recovered(class_name, method_name):
     """FSBL PhotAstrom ``get_lens_astrometry`` recovered via squared FD objective."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", get_u_grad_recovered_pairs())
+def test_grad_get_u_recovered(class_name, method_name):
+    """Thirty-one ``get_u`` skip-batch rows recovered via geometry refresh + squared FD."""
     _assert_grad_smoke(class_name, method_name)
 

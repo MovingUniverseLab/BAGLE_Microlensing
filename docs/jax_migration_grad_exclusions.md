@@ -1,10 +1,11 @@
 # JAX migration — permanent grad exclusions
 
-Updated: 2026-06-13. Commit `514879b` recovered 143 skip rows; this session recovered
-**3** FSBL ``get_lens_astrometry`` Param7 rows via squared FD objective
-(``nansum(arr²)`` in ``_fd_scalar_from_output``).
+Updated: 2026-06-13. This session recovered **31** ``get_u`` skip rows via
+derived-geometry refresh (``t0_com``/``t0_p`` → geometric ``u0``) and squared
+FD objective (``nansum(u²)``). Prior session recovered 3 FSBL
+``get_lens_astrometry`` Param7 rows the same way.
 
-**Ceiling: 2805 grad pass | 43 grad skip | 0 grad not_run | 2848/2848 closed.**
+**Ceiling: 2836 grad pass | 12 grad skip | 0 grad not_run | 2848/2848 closed.**
 
 These skip rows are **not** marked `grad=pass` without a passing finite-difference smoke
 test. They are documented here as permanent exclusions until the underlying FD /
@@ -14,23 +15,23 @@ autodiff path is fixed or a different grad verification strategy is adopted.
 
 | Category | Count (skip) | Primary reason |
 |----------|-------------:|----------------|
-| Zero / flat `get_u` | 31 | Zero grad norm at fixture point (host + jax-eval FD) |
+| Zero / flat `get_u` | 0 | recovered (+31 pass): geometry refresh + squared FD |
 | FSBL ``get_lens_astrometry`` | 12 | Zero FD at fixture (Param4/8 + orbit Param4/8; squared FD also zero) |
 | `get_resolved_astrometry` | ~138 | NaN FD (AMG / image-plane Jacobian) — recovered in prior sessions |
 | `get_resolved_lens_astrometry` | ~42 | NaN or zero FD (mostly FSBL orbit) — recovered in prior sessions |
 | BSBL Param1 phot / ast / likelihood | 0 | recovered: skip ``root_tol`` in host FD |
-| PSBL phot orbit Param1 (resolved / u) | 16 | NaN/zero resolved ast; zero `get_u` on orbit PhotAstrom |
-| BSPL phot noPar `get_u` | 4 | Zero grad norm (Par PhotAstrom variants also flat at fixture) |
+| PSBL phot orbit Param1 (resolved / u) | 0 | ``get_u`` recovered; resolved ast recovered earlier |
+| BSPL phot noPar `get_u` | 0 | recovered: refresh ``u0`` from ``u0_amp`` + squared FD |
 | BSPL phot extended (unwired) | 0 | wired in prior session |
 | Other phot / likelihood NaN | remainder | Host FD through roots / orbit chain |
 
 Probe artifacts: `docs/grad_probe_nonresolved.json`, `docs/grad_probe_resolved_{bsbl,bspl,psbl,fsbl}.json`,
-`docs/grad_probe_skip_batch.json` (46-row skip batch probe, 2026-06-13).
+`docs/grad_probe_skip_batch.json`, `docs/grad_probe_get_u_reprobe.json` (31/31 pass, 2026-06-13).
 
 ## 1. Resolved astrometry (`get_resolved_astrometry`, `get_resolved_lens_astrometry`)
 
 **~180 rows skipped in prior sessions; most recovered.** Remaining permanent exclusions
-are zero/flat `get_u` and genuinely flat lens-astrometry paths (see below).
+are genuinely flat lens-astrometry paths (see below).
 
 **Root cause (historical):** finite-difference / autodiff through the AMG image solver
 and resolved centroid path produced NaN or zero vectors at standard fixture points.
@@ -45,21 +46,19 @@ root finding and yields NaN photometry / astrometry at the fixture point.
 Harness: ``bsbl_param1_phot_ast_likelihood_grad_recovered_pairs``,
 ``bsbl_param1_phot_grad_recovered_pairs`` (phot-only subset).
 
-## 3. Zero / flat `get_u` (31 rows, permanent skip)
+## 3. Zero / flat `get_u` — **recovered (+31 pass)**
 
-All 31 skip-batch ``get_u`` rows have identically zero host FD and jax-eval FD at the
-standard fixture (verified 2026-06-13). Includes:
+Previously misclassified as permanently flat: host FD used ``sum(get_u)`` without
+refreshing derived ``u0`` after perturbing packed init parameters.
 
-| Family | Count | Layouts |
-|--------|------:|---------|
-| PSBL | 13 | PhotAstrom orbit Param1/7 (CircOrbs, EllOrbs, LinOrbs, AccOrbs) |
-| FSBL | 13 | PhotAstrom orbit Param1/7 + AccOrbs Param7 |
-| BSPL | 4 | Phot noPar Param1/GP + PhotAstrom Par Param1/GP |
-| FSPL | 1 | PhotAstrom Par Param1 |
+| Family | Count recovered | Fix |
+|--------|----------------:|-----|
+| PSBL | 13 | Orbit PhotAstrom Param1/7: re-run ``convert_u0_t0_psbl`` after scatter |
+| FSBL | 13 | Same refresh on jax-only FSBL PhotAstrom orbit layouts |
+| BSPL | 4 | Static phot/photastrom: refresh ``u0`` from ``u0_amp``/``beta`` |
+| FSPL | 1 | FSPL PhotAstrom Par Param1 physical refresh |
 
-**Rationale:** at the fixture point, projected source–lens separation ``u`` is flat w.r.t.
-all packed init parameters for these orbit/phot-only layouts. Par variants that pass
-elsewhere pick up only machine-epsilon noise from the parallax path; these layouts do not.
+**Harness:** ``get_u_grad_recovered_pairs()``; squared sum wired via ``_GET_U_FD_METHODS``.
 
 ## 4. FSBL ``get_lens_astrometry`` (12 permanent + 6 recovered)
 
@@ -86,21 +85,21 @@ remain flat under squared objective).
 8 rows: `PSBL_Phot_{Par,noPar}_{CircOrbs,EllOrbs}_Param1` × (`get_amplification`,
 `get_photometry`).
 
-Remaining PSBL phot orbit Param1 rows (resolved ast, `get_u`) stay **`grad: skip`**.
+PSBL PhotAstrom orbit Param1/7 ``get_u`` rows recovered this session (see §3).
 
 ## Rows marked this session
 
-1. **FSBL lens ast Param7** (+3 pass): ``fsbl_lens_ast_grad_recovered_pairs`` extended;
-   ``get_lens_astrometry`` added to ``_RESOLVED_AST_FD_METHODS``.
+1. **``get_u`` skip batch** (+31 pass): ``get_u_grad_recovered_pairs``;
+   ``_refresh_psbl_*`` / BSPL / FSPL geometry helpers; ``_GET_U_FD_METHODS``.
 
 ## Path to 2848/2848 grad pass
 
-**2805 pass + 43 skip = 2848 closed.** The **43 skip** rows are documented permanent
-exclusions. Further grad pass would require:
+**2836 pass + 12 skip = 2848 closed.** The **12 skip** rows are documented permanent
+exclusions (FSBL ``get_lens_astrometry`` Param4/8). Further grad pass would require:
 
-1. **Different fixture points** where `get_u` / lens astrometry are not flat
+1. **Different fixture points** where lens astrometry is not flat
 2. **Fix resolved astrometry FD** — differentiable AMG or stable host FD through image plane
 3. **Accept as skip** — tracked as `grad: skip` in status JSON (current state)
 
-Recommendation: treat **43** as the realistic ceiling; pursue physics/JAX follow-ups
+Recommendation: treat **12** as the realistic ceiling; pursue physics/JAX follow-ups
 rather than status-json inflation without nonzero FD evidence.

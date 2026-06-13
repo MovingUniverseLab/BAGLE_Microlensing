@@ -2165,12 +2165,7 @@ def fspl_photastrom_param2_grad_ast_pairs() -> list[tuple[str, str]]:
 
 def fspl_photastrom_param1_extended_grad_pairs() -> list[tuple[str, str]]:
     """FSPL PhotAstrom Param1 extended likelihood grad (jax-eval FD)."""
-    skip = {("FSPL_PhotAstrom_Par_Param1", "get_u")}
-    return sorted(
-        (c, m)
-        for c, m in fspl_photastrom_param1_extended_pairs()
-        if (c, m) not in skip
-    )
+    return sorted(fspl_photastrom_param1_extended_pairs())
 
 
 def fspl_photastrom_param2_extended_grad_pairs() -> list[tuple[str, str]]:
@@ -2503,17 +2498,9 @@ def grad_probe_resolved_pass_pairs() -> list[tuple[str, str]]:
 
 def bspl_phot_extended_probe_grad_pairs() -> list[tuple[str, str]]:
     """BSPL phot-only extended likelihood + ``get_u`` (host FD)."""
-    skip = frozenset(
-        (
-            ("BSPL_Phot_noPar_GP_Param1", "get_u"),
-            ("BSPL_Phot_noPar_Param1", "get_u"),
-        )
-    )
     methods = ("get_u", "get_chi2_photometry", "log_likely_photometry_each")
     return sorted(
-        (c, m)
-        for c, m in bspl_phot_extended_pairs()
-        if m in methods and (c, m) not in skip
+        (c, m) for c, m in bspl_phot_extended_pairs() if m in methods
     )
 
 
@@ -2611,6 +2598,55 @@ def fsbl_lens_ast_grad_recovered_pairs() -> list[tuple[str, str]]:
     )
 
 
+def get_u_grad_recovered_pairs() -> list[tuple[str, str]]:
+    """Thirty-one ``get_u`` pairs recovered from the skip batch via geometry refresh.
+
+    Probe artifact: ``docs/grad_probe_get_u_reprobe.json``.
+
+    Returns
+    ----
+    list of tuple[str, str]
+        PSBL/FSBL orbit PhotAstrom Param1/7, BSPL phot/photastrom Param1/GP,
+        and FSPL PhotAstrom Par Param1 rows that pass host FD grad smoke after
+        derived-geometry refresh and squared FD objective on ``get_u``.
+    """
+    return sorted(
+        [
+            ("BSPL_PhotAstrom_Par_GP_Param1", "get_u"),
+            ("BSPL_PhotAstrom_Par_Param1", "get_u"),
+            ("BSPL_Phot_noPar_GP_Param1", "get_u"),
+            ("BSPL_Phot_noPar_Param1", "get_u"),
+            ("FSBL_PhotAstrom_Par_AccOrbs_Param7", "get_u"),
+            ("FSBL_PhotAstrom_Par_CircOrbs_Param1", "get_u"),
+            ("FSBL_PhotAstrom_Par_CircOrbs_Param7", "get_u"),
+            ("FSBL_PhotAstrom_Par_EllOrbs_Param1", "get_u"),
+            ("FSBL_PhotAstrom_Par_EllOrbs_Param7", "get_u"),
+            ("FSBL_PhotAstrom_Par_LinOrbs_Param7", "get_u"),
+            ("FSBL_PhotAstrom_Par_Param7", "get_u"),
+            ("FSBL_PhotAstrom_noPar_AccOrbs_Param7", "get_u"),
+            ("FSBL_PhotAstrom_noPar_CircOrbs_Param1", "get_u"),
+            ("FSBL_PhotAstrom_noPar_CircOrbs_Param7", "get_u"),
+            ("FSBL_PhotAstrom_noPar_EllOrbs_Param1", "get_u"),
+            ("FSBL_PhotAstrom_noPar_EllOrbs_Param7", "get_u"),
+            ("FSBL_PhotAstrom_noPar_LinOrbs_Param7", "get_u"),
+            ("FSPL_PhotAstrom_Par_Param1", "get_u"),
+            ("PSBL_PhotAstrom_Par_AccOrbs_Param7", "get_u"),
+            ("PSBL_PhotAstrom_Par_CircOrbs_Param1", "get_u"),
+            ("PSBL_PhotAstrom_Par_CircOrbs_Param7", "get_u"),
+            ("PSBL_PhotAstrom_Par_EllOrbs_Param1", "get_u"),
+            ("PSBL_PhotAstrom_Par_EllOrbs_Param7", "get_u"),
+            ("PSBL_PhotAstrom_Par_LinOrbs_Param7", "get_u"),
+            ("PSBL_PhotAstrom_Par_Param7", "get_u"),
+            ("PSBL_PhotAstrom_noPar_AccOrbs_Param7", "get_u"),
+            ("PSBL_PhotAstrom_noPar_CircOrbs_Param1", "get_u"),
+            ("PSBL_PhotAstrom_noPar_CircOrbs_Param7", "get_u"),
+            ("PSBL_PhotAstrom_noPar_EllOrbs_Param1", "get_u"),
+            ("PSBL_PhotAstrom_noPar_EllOrbs_Param7", "get_u"),
+            ("PSBL_PhotAstrom_noPar_LinOrbs_Param7", "get_u"),
+        ]
+    )
+
+
 def resolved_ast_grad_recovered_pairs() -> list[tuple[str, str]]:
     """Eleven resolved-astrometry grad pairs recovered from probe skip batches.
 
@@ -2680,16 +2716,13 @@ def psbl_photastrom_orbit_param4_grad_pairs() -> list[tuple[str, str]]:
 
 def bspl_gp_extended_grad_pairs() -> list[tuple[str, str]]:
     """BSPL PhotAstrom GP orbit Param extended grad (host FD for orbit GP)."""
-    skip = {("BSPL_PhotAstrom_Par_GP_Param1", "get_u")}
     methods = (
         GP_PHOT_METHODS
         + _BSPL_PHOTASTROM_PARAM1_CORE_AST
         + FSPL_PHOTASTROM_EXTENDED_METHODS
     )
     return sorted(
-        (c, m)
-        for c, m in bspl_gp_extended_pairs()
-        if m in methods and (c, m) not in skip
+        (c, m) for c, m in bspl_gp_extended_pairs() if m in methods
     )
 
 
@@ -2704,16 +2737,13 @@ def bspl_photastrom_gp_orbit_phot_grad_pairs() -> list[tuple[str, str]]:
 
 def bspl_photastrom_extended_grad_pairs() -> list[tuple[str, str]]:
     """BSPL PhotAstrom extended phot + likelihood grad (host FD)."""
-    skip = {("BSPL_PhotAstrom_Par_Param1", "get_u")}
     methods = (
         PSBL_PHOT_METHODS
         + _BSPL_PHOTASTROM_PARAM1_CORE_AST
         + FSPL_PHOTASTROM_EXTENDED_METHODS
     )
     return sorted(
-        (c, m)
-        for c, m in bspl_photastrom_extended_pairs()
-        if m in methods and (c, m) not in skip
+        (c, m) for c, m in bspl_photastrom_extended_pairs() if m in methods
     )
 
 
@@ -3249,6 +3279,364 @@ def pack_init_vector(instance) -> tuple[np.ndarray, tuple[str, ...]]:
     return vec, names
 
 
+_DAYS_PER_YEAR = 365.25
+
+
+def _refresh_psbl_physical_base(instance) -> None:
+    """Recompute PSBL/FSBL PhotAstrom mass/distance derived fields.
+
+    Parameters
+    ----
+    instance
+        Model instance whose ``mLp``, ``mLs``, ``dL``, ``dS``, and proper motions
+        were just updated by ``scatter_init_vector``.
+    """
+    import astropy.constants as const
+    import astropy.units as units
+
+    dL = float(instance.dL)
+    dS = float(instance.dS)
+    inv_dist_diff = (1.0 / (dL * units.pc)) - (1.0 / (dS * units.pc))
+    piRel = units.rad * units.au * inv_dist_diff
+    instance.piRel = piRel.to("mas").value
+
+    piS = (1.0 / dS) * (units.rad * units.au / units.pc)
+    piL = (1.0 / dL) * (units.rad * units.au / units.pc)
+    instance.piS = piS.to("mas").value
+    instance.piL = piL.to("mas").value
+
+    instance.muRel = np.asarray(instance.muS, dtype=np.float64) - np.asarray(
+        instance.muL, dtype=np.float64
+    )
+    instance.muRel_amp = float(np.linalg.norm(instance.muRel))
+    instance.mL = float(instance.mLp) + float(instance.mLs)
+
+    thetaE = units.rad * np.sqrt(
+        (4.0 * const.G * instance.mL * units.M_sun / const.c ** 2) * inv_dist_diff
+    )
+    instance.thetaE_amp = thetaE.to("mas").value
+    instance.thetaE_hat = instance.muRel / instance.muRel_amp
+    instance.muRel_hat = instance.thetaE_hat
+    instance.thetaE = instance.thetaE_amp * instance.thetaE_hat
+
+    instance.tE = (instance.thetaE_amp / instance.muRel_amp) * _DAYS_PER_YEAR
+
+    m1 = (
+        units.rad ** 2
+        * (4 * const.G * float(instance.mLp) * units.Msun / const.c ** 2)
+        * inv_dist_diff
+    )
+    m2 = (
+        units.rad ** 2
+        * (4 * const.G * float(instance.mLs) * units.Msun / const.c ** 2)
+        * inv_dist_diff
+    )
+    instance.m1 = m1.to(units.arcsec ** 2).value
+    instance.m2 = m2.to(units.arcsec ** 2).value
+
+    instance.piE_amp = instance.piRel / instance.thetaE_amp
+    instance.piE = instance.piE_amp * instance.thetaE_hat
+    instance.piE_E, instance.piE_N = instance.piE
+    instance.q = float(instance.mLs) / float(instance.mLp)
+
+
+def _refresh_psbl_keplerian_orbit_alpha(instance) -> None:
+    """Update Keplerian orbital geometry (``alpha_rad``, ``sep``, period) at ``tp``.
+
+    Parameters
+    ----
+    instance
+        Keplerian PSBL/FSBL PhotAstrom instance with ``a``, ``tp``, and mass fields.
+    """
+    import astropy.constants as const
+    import astropy.units as units
+    import bagle.orbits as orbits
+
+    a = float(instance.a)
+    instance.sep = a
+    instance.aleph_sec = (float(instance.mLp) / float(instance.mL)) * a
+    instance.aleph = a - instance.aleph_sec
+    a_AU = float(instance.dL) * (a * 1e-3) * units.AU
+    mL = float(instance.mL) * units.Msun
+    p = (2 * np.pi * np.sqrt(a_AU ** 3 / (const.G * mL))).to("day")
+    instance.p = p.value
+
+    orb = orbits.Orbit()
+    orb.w = float(instance.omega_pri)
+    orb.o = float(instance.big_omega_sec)
+    orb.i = float(instance.i)
+    orb.e = float(instance.e)
+    orb.tp = float(instance.tp)
+    orb.aleph = instance.aleph * 1e-3
+    orb.aleph2 = instance.aleph_sec * 1e-3
+    orb.p = instance.p
+    x, y, x2, y2 = orb.oal2xy(np.array([float(instance.tp)]))
+    instance.alpha_rad = np.arctan2(x - x2, y - y2)[0]
+    instance.alpha = np.rad2deg(instance.alpha_rad)
+
+
+def _refresh_psbl_com_u0_geometry(instance) -> None:
+    """Re-derive geometric ``t0``/``u0`` from perturbed ``t0_com``/``beta_com``.
+
+    Mirrors ``PSBL_PhotAstrom_*Orbs_Param1.__init__`` after orbital elements are set.
+    """
+    import bagle.frame_convert as fc
+    from bagle.model import u0_hat_from_thetaE_hat
+
+    orbit_flag = getattr(instance, "orbitFlag", False)
+    if orbit_flag == "Keplerian" and hasattr(instance, "a"):
+        _refresh_psbl_keplerian_orbit_alpha(instance)
+    elif hasattr(instance, "alpha"):
+        instance.alpha_rad = float(instance.alpha) * np.pi / 180.0
+
+    instance.phi_rad = instance.alpha_rad - np.arctan2(
+        instance.piE[0], instance.piE[1]
+    )
+    instance.u0_hat_com = u0_hat_from_thetaE_hat(
+        instance.thetaE_hat, float(instance.beta_com)
+    )
+    instance.u0_amp_com = float(instance.beta_com) / instance.thetaE_amp
+    instance.u0_com = np.abs(instance.u0_amp_com) * instance.u0_hat_com
+
+    u0_x_out, u0_y_out, t0_out = fc.convert_u0_t0_psbl(
+        t0_in=float(instance.t0_com),
+        u0_x_in=float(instance.u0_com[0]),
+        u0_y_in=float(instance.u0_com[1]),
+        tE=float(instance.tE),
+        theta_E=float(instance.thetaE_amp),
+        q=float(instance.q),
+        phi=float(instance.phi_rad),
+        sep=float(instance.sep),
+        mu_rel_x=float(instance.muRel[0]),
+        mu_rel_y=float(instance.muRel[1]),
+        coords_in="COM",
+        coords_out="geom_mid",
+    )
+    instance.u0 = np.array([u0_x_out, u0_y_out], dtype=np.float64)
+    instance.u0_amp = np.sqrt(instance.u0[0] ** 2 + instance.u0[1] ** 2)
+    instance.t0 = t0_out
+    instance.beta = instance.u0_amp * instance.thetaE_amp
+    instance.thetaS0 = instance.u0 * instance.thetaE_amp
+    instance.xL0 = instance.xS0 - (instance.thetaS0 * 1e-3)
+    instance.xL0_E, instance.xL0_N = instance.xL0
+    thetaS0_com = instance.u0_com * instance.thetaE_amp
+    instance.xL0_com = instance.xS0 - (thetaS0_com * 1e-3)
+
+
+def _refresh_psbl_prim_u0_geometry(instance) -> None:
+    """Re-derive geometric ``t0``/``u0`` from perturbed ``t0_p``/``beta_p``.
+
+    Covers Param7 static, linear, accelerated, and Keplerian PhotAstrom layouts.
+    """
+    import bagle.frame_convert as fc
+    from bagle.model import u0_hat_from_thetaE_hat
+
+    orbit_flag = getattr(instance, "orbitFlag", False)
+    if orbit_flag == "Keplerian" and hasattr(instance, "a"):
+        _refresh_psbl_keplerian_orbit_alpha(instance)
+        instance.phi_piE_rad = np.arctan2(instance.piE[0], instance.piE[1])
+        instance.phi_rad = instance.alpha_rad - instance.phi_piE_rad
+    else:
+        if hasattr(instance, "alpha"):
+            instance.alpha_rad = float(instance.alpha) * np.pi / 180.0
+        instance.phi_piE_rad = np.arctan2(instance.piE[0], instance.piE[1])
+        instance.phi_rad = instance.alpha_rad - instance.phi_piE_rad
+
+    instance.u0_hat_p = u0_hat_from_thetaE_hat(
+        instance.thetaE_hat, float(instance.beta_p)
+    )
+    instance.u0_amp_p = float(instance.beta_p) / instance.thetaE_amp
+    instance.u0_p = np.abs(instance.u0_amp_p) * instance.u0_hat_p
+
+    u0_x_out, u0_y_out, t0_out = fc.convert_u0_t0_psbl(
+        t0_in=float(instance.t0_p),
+        u0_x_in=float(instance.u0_p[0]),
+        u0_y_in=float(instance.u0_p[1]),
+        tE=float(instance.tE),
+        theta_E=float(instance.thetaE_amp),
+        q=float(instance.q),
+        phi=float(instance.phi_rad),
+        sep=float(instance.sep),
+        mu_rel_x=float(instance.muRel[0]),
+        mu_rel_y=float(instance.muRel[1]),
+        coords_in="prim_center",
+        coords_out="geom_mid",
+    )
+    instance.u0 = np.array([u0_x_out, u0_y_out], dtype=np.float64)
+    instance.u0_amp = np.sqrt(instance.u0[0] ** 2 + instance.u0[1] ** 2)
+    instance.t0 = t0_out
+    instance.beta = instance.u0_amp * instance.thetaE_amp
+    instance.thetaS0 = instance.u0 * instance.thetaE_amp
+    instance.xL0 = instance.xS0 - (instance.thetaS0 * 1e-3)
+
+    if orbit_flag == "Keplerian" and hasattr(instance, "a"):
+        u0_x_com, u0_y_com, t0_com = fc.convert_u0_t0_psbl(
+            t0_in=float(instance.t0),
+            u0_x_in=float(instance.u0[0]),
+            u0_y_in=float(instance.u0[1]),
+            tE=float(instance.tE),
+            theta_E=float(instance.thetaE_amp),
+            q=float(instance.q),
+            phi=float(instance.phi_rad),
+            sep=float(instance.a),
+            mu_rel_x=float(instance.muRel[0]),
+            mu_rel_y=float(instance.muRel[1]),
+            coords_in="geom_mid",
+            coords_out="COM",
+        )
+        instance.t0_com = t0_com
+        instance.u0_com = np.array([u0_x_com, u0_y_com], dtype=np.float64)
+        instance.u0_amp_com = np.sqrt(instance.u0_com[0] ** 2 + instance.u0_com[1] ** 2)
+        instance.beta_com = instance.u0_amp_com * instance.thetaE_amp
+        instance.u0_hat_com = u0_hat_from_thetaE_hat(
+            instance.thetaE_hat, instance.beta_com
+        )
+        instance.u0_com = np.abs(instance.u0_amp_com) * instance.u0_hat_com
+
+
+def _refresh_psbl_photastrom_physical(instance) -> None:
+    """Full derived-geometry refresh for PSBL/FSBL PhotAstrom physical layouts."""
+    _refresh_psbl_physical_base(instance)
+    if hasattr(instance, "t0_com") and hasattr(instance, "beta_com"):
+        _refresh_psbl_com_u0_geometry(instance)
+    elif hasattr(instance, "t0_p") and hasattr(instance, "beta_p"):
+        _refresh_psbl_prim_u0_geometry(instance)
+
+
+def _refresh_bspl_phot_static(instance) -> None:
+    """Refresh BSPL phot-only reduced-parameter derived geometry."""
+    from bagle.model import u0_hat_from_thetaE_hat
+
+    instance.piE_amp = np.linalg.norm(instance.piE)
+    instance.piE_E, instance.piE_N = instance.piE
+    instance.thetaE_hat = instance.piE / instance.piE_amp
+    instance.muRel_hat = instance.thetaE_hat
+    instance.u0_hat = u0_hat_from_thetaE_hat(
+        instance.thetaE_hat, float(instance.u0_amp)
+    )
+    instance.u0 = np.abs(float(instance.u0_amp)) * instance.u0_hat
+    instance.phi_rad = float(instance.phi) * np.pi / 180.0
+    instance.phi_piE_rad = np.arctan2(instance.piE[0], instance.piE[1])
+    instance.phi_rho1_rad = instance.phi_piE_rad + instance.phi_rad
+    instance.t0_pri = float(instance.t0)
+    instance.u0_amp_pri = float(instance.u0_amp)
+    instance.u0_pri = instance.u0
+    sep_vec = float(instance.sep) * np.array(
+        (np.sin(instance.phi_rho1_rad), np.cos(instance.phi_rho1_rad)),
+        dtype=np.float64,
+    )
+    instance.u0_amp_sec = instance.u0_amp_pri + np.dot(sep_vec, instance.u0_hat)
+    instance.u0_sec = instance.u0_amp_sec * instance.u0_hat
+
+
+def _refresh_bspl_photastrom_param1(instance) -> None:
+    """Refresh BSPL PhotAstrom Param1 physical derived geometry."""
+    import astropy.constants as const
+    import astropy.units as units
+    from bagle.model import u0_hat_from_thetaE_hat
+
+    if hasattr(instance, "dL_dS"):
+        instance.dS = float(instance.dL) / float(instance.dL_dS)
+    inv_dist_diff = (1.0 / (float(instance.dL) * units.pc)) - (
+        1.0 / (float(instance.dS) * units.pc)
+    )
+    piRel = units.rad * units.au * inv_dist_diff
+    instance.piRel = piRel.to("mas").value
+    piS = (1.0 / float(instance.dS)) * (units.rad * units.au / units.pc)
+    piL = (1.0 / float(instance.dL)) * (units.rad * units.au / units.pc)
+    instance.piS = piS.to("mas").value
+    instance.piL = piL.to("mas").value
+
+    instance.muRel = np.asarray(instance.muS, dtype=np.float64) - np.asarray(
+        instance.muL, dtype=np.float64
+    )
+    instance.muRel_amp = float(np.linalg.norm(instance.muRel))
+    instance.muRel_E, instance.muRel_N = instance.muRel
+
+    thetaE = units.rad * np.sqrt(
+        (4.0 * const.G * float(instance.mL) * units.M_sun / const.c ** 2)
+        * inv_dist_diff
+    )
+    instance.thetaE_amp = thetaE.to("mas").value
+    instance.thetaE_hat = instance.muRel / instance.muRel_amp
+    instance.muRel_hat = instance.thetaE_hat
+    instance.thetaE = instance.thetaE_amp * instance.thetaE_hat
+    instance.thetaE_E, instance.thetaE_N = instance.thetaE
+
+    instance.u0_hat = u0_hat_from_thetaE_hat(
+        instance.thetaE_hat, float(instance.beta)
+    )
+    instance.u0_amp = float(instance.beta) / instance.thetaE_amp
+    instance.u0 = np.abs(instance.u0_amp) * instance.u0_hat
+    instance.thetaS0 = instance.u0 * instance.thetaE_amp
+    instance.xL0 = instance.xS0 - (instance.thetaS0 * 1e-3)
+
+    instance.piE_amp = instance.piRel / instance.thetaE_amp
+    instance.piE = instance.piE_amp * instance.thetaE_hat
+    instance.piE_E, instance.piE_N = instance.piE
+    instance.tE = (instance.thetaE_amp / instance.muRel_amp) * _DAYS_PER_YEAR
+
+    if hasattr(instance, "alpha"):
+        instance.alpha_rad = float(instance.alpha) * np.pi / 180.0
+    instance.t0_pri = float(instance.t0)
+    instance.xS0_pri = np.asarray(instance.xS0, dtype=np.float64)
+    instance.u0_amp_pri = instance.u0_amp
+    instance.u0_pri = instance.u0
+    sep_vec = float(instance.sep) * np.array(
+        (np.sin(instance.alpha_rad), np.cos(instance.alpha_rad)),
+        dtype=np.float64,
+    )
+    instance.xS0_sec = instance.xS0_pri + (sep_vec * 1e-3)
+
+
+def _refresh_fspl_photastrom_param1(instance) -> None:
+    """Refresh FSPL PhotAstrom Param1 physical derived geometry."""
+    import astropy.constants as const
+    import astropy.units as units
+    from bagle.model import u0_hat_from_thetaE_hat
+
+    if hasattr(instance, "dL_dS"):
+        instance.dS = float(instance.dL) / float(instance.dL_dS)
+    inv_dist_diff = (1.0 / (float(instance.dL) * units.pc)) - (
+        1.0 / (float(instance.dS) * units.pc)
+    )
+    piRel = units.rad * units.au * inv_dist_diff
+    instance.piRel = piRel.to("mas").value
+    piS = (1.0 / float(instance.dS)) * (units.rad * units.au / units.pc)
+    piL = (1.0 / float(instance.dL)) * (units.rad * units.au / units.pc)
+    instance.piS = piS.to("mas").value
+    instance.piL = piL.to("mas").value
+
+    instance.muRel = np.asarray(instance.muS, dtype=np.float64) - np.asarray(
+        instance.muL, dtype=np.float64
+    )
+    instance.muRel_E, instance.muRel_N = instance.muRel
+    instance.muRel_amp = float(np.linalg.norm(instance.muRel))
+
+    thetaE = units.rad * np.sqrt(
+        (4.0 * const.G * float(instance.mL) * units.M_sun / const.c ** 2)
+        * inv_dist_diff
+    )
+    instance.thetaE_amp = thetaE.to("mas").value
+    instance.thetaE_hat = instance.muRel / instance.muRel_amp
+    instance.muRel_hat = instance.thetaE_hat
+    instance.thetaE = instance.thetaE_amp * instance.thetaE_hat
+    instance.thetaE_E, instance.thetaE_N = instance.thetaE
+
+    instance.u0_hat = u0_hat_from_thetaE_hat(
+        instance.thetaE_hat, float(instance.beta)
+    )
+    instance.u0_amp = float(instance.beta) / instance.thetaE_amp
+    instance.u0 = np.abs(instance.u0_amp) * instance.u0_hat
+    instance.thetaS0 = instance.u0 * instance.thetaE_amp
+    instance.xL0 = instance.xS0 - (instance.thetaS0 * 1e-3)
+
+    instance.piE_amp = instance.piRel / instance.thetaE_amp
+    instance.piE = instance.piE_amp * instance.thetaE_hat
+    instance.piE_E, instance.piE_N = instance.piE
+    instance.tE = (instance.thetaE_amp / instance.muRel_amp) * _DAYS_PER_YEAR
+
+
 def _refresh_derived_geometry(instance) -> None:
     """Recompute derived geometry after ``scatter_init_vector`` for FD smoke.
 
@@ -3296,11 +3684,37 @@ def _refresh_derived_geometry(instance) -> None:
         )
         instance.piE_amp = np.linalg.norm(instance.piE)
         instance.thetaE_hat = instance.piE / instance.piE_amp
+        return None
+
+    if hasattr(instance, "mLp") and hasattr(instance, "mLs") and hasattr(instance, "dL"):
+        _refresh_psbl_photastrom_physical(instance)
+        return None
+
+    if (
+        hasattr(instance, "mL")
+        and hasattr(instance, "beta")
+        and hasattr(instance, "mag_src_pri")
+    ):
+        _refresh_bspl_photastrom_param1(instance)
+        return None
+
+    if (
+        hasattr(instance, "mL")
+        and hasattr(instance, "beta")
+        and hasattr(instance, "radiusS")
+        and not hasattr(instance, "mLp")
+    ):
+        _refresh_fspl_photastrom_param1(instance)
+        return None
 
     phot_only = getattr(instance, "photometryFlag", False) and not getattr(
         instance, "astrometryFlag", False
     )
     orbit = getattr(instance, "orbitFlag", False)
+
+    if phot_only and hasattr(instance, "mag_src_pri") and hasattr(instance, "mag_src_sec"):
+        _refresh_bspl_phot_static(instance)
+        return None
 
     if orbit is True and hasattr(instance, "get_me_some_orbital_parameters"):
         if hasattr(instance, "aleph") and hasattr(instance, "aleph_sec"):
@@ -3843,19 +4257,25 @@ _RESOLVED_AST_FD_METHODS = frozenset(
     )
 )
 
+_GET_U_FD_METHODS = frozenset(("get_u",))
+
+_SQUARED_FD_METHODS = _RESOLVED_AST_FD_METHODS | _GET_U_FD_METHODS
+
 
 def _fd_scalar_from_output(out, method_name: str) -> float:
     """Reduce method output to a scalar for central finite-difference grad.
 
     Resolved astrometry arrays may contain NaN padding and antisymmetric lens
     components; ``nansum(arr * arr)`` avoids cancellation that zeroes FD steps.
+    ``get_u`` uses the same squared objective because ``sum(u)`` can cancel when
+    the separation vector rotates under parameter perturbations.
 
     Parameters
     ----
     out
         Forward output (array-like) from ``call_method``.
     method_name : str
-        Method name; squared sum is used for resolved astrometry paths.
+        Method name; squared sum is used for resolved astrometry and ``get_u``.
 
     Returns
     ----
@@ -3863,8 +4283,7 @@ def _fd_scalar_from_output(out, method_name: str) -> float:
         Scalar objective summed (or squared-summed) over finite entries.
     """
     arr = np.asarray(out, dtype=np.float64)
-    if method_name in _RESOLVED_AST_FD_METHODS:
-        # Squared sum avoids antisymmetric cancellation in lens positions.
+    if method_name in _SQUARED_FD_METHODS:
         return float(np.nansum(arr * arr))
     return float(np.sum(arr))
 
@@ -4852,9 +5271,11 @@ def grad_smoke_jax(
                 piE_E=geom["piE_E"],
                 piE_N=geom["piE_N"],
             )
-            return jnp.sum(u)
+            return jnp.sum(u * u)
 
         g = np.asarray(jax.grad(forward)(vec0), dtype=np.float64)
+        if not np.all(np.isfinite(g)) or np.linalg.norm(g) == 0.0:
+            g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
         if return_names:
             return g, init_names
         return g
