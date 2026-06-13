@@ -2583,9 +2583,26 @@ def fsbl_lens_ast_grad_recovered_pairs() -> list[tuple[str, str]]:
     Returns
     ----
     list of tuple[str, str]
-        Six ``(class_name, method_name)`` rows that pass jax-eval FD after
-        derived-geometry refresh and/or squared FD objective at the fixture.
+        Eighteen ``(class_name, method_name)`` rows that pass jax-eval FD after
+        derived-geometry refresh (Param4/8 heliocentric COM) and/or squared FD
+        objective at the fixture.
     """
+    static_param48 = (
+        "FSBL_PhotAstrom_Par_Param4",
+        "FSBL_PhotAstrom_Par_Param8",
+        "FSBL_PhotAstrom_noPar_Param4",
+        "FSBL_PhotAstrom_noPar_Param8",
+    )
+    orbit_param48 = (
+        "FSBL_PhotAstrom_Par_CircOrbs_Param4",
+        "FSBL_PhotAstrom_Par_CircOrbs_Param8",
+        "FSBL_PhotAstrom_Par_EllOrbs_Param4",
+        "FSBL_PhotAstrom_Par_EllOrbs_Param8",
+        "FSBL_PhotAstrom_noPar_CircOrbs_Param4",
+        "FSBL_PhotAstrom_noPar_CircOrbs_Param8",
+        "FSBL_PhotAstrom_noPar_EllOrbs_Param4",
+        "FSBL_PhotAstrom_noPar_EllOrbs_Param8",
+    )
     return sorted(
         [
             ("FSBL_PhotAstrom_Par_AccOrbs_Param6", "get_lens_astrometry"),
@@ -2595,6 +2612,7 @@ def fsbl_lens_ast_grad_recovered_pairs() -> list[tuple[str, str]]:
             ("FSBL_PhotAstrom_Par_Param7", "get_lens_astrometry"),
             ("FSBL_PhotAstrom_noPar_AccOrbs_Param6", "get_lens_astrometry"),
         ]
+        + [(c, "get_lens_astrometry") for c in static_param48 + orbit_param48]
     )
 
 
@@ -3494,6 +3512,73 @@ def _refresh_psbl_prim_u0_geometry(instance) -> None:
         instance.u0_com = np.abs(instance.u0_amp_com) * instance.u0_hat_com
 
 
+def _refresh_psbl_param4_heliocentric_geometry(instance) -> None:
+    """Re-derive Param4/8 heliocentric COM init after ``scatter_init_vector``.
+
+    Mirrors ``PSBL_PhotAstromParam4.__init__`` / ``Param8`` derived fields
+    (``t0``, ``u0``, ``xL0``, ``muL``) when fitter uses ``t0_com``/``u0_amp_com``
+    without ``beta_com`` (static FSBL/PSBL PhotAstrom Param4/8).
+    """
+    import astropy.constants as const
+    import astropy.units as units
+
+    from bagle.model import u0_hat_from_thetaE_hat
+
+    piE_E = float(instance.piE[0])
+    piE_N = float(instance.piE[1])
+    instance.piE = np.array([piE_E, piE_N], dtype=np.float64)
+    instance.alpha_rad = float(instance.alpha) * np.pi / 180.0
+    instance.phi_rad = instance.alpha_rad - np.arctan2(piE_E, piE_N)
+    q = float(instance.q)
+    qeff = (1.0 - q) / (1.0 + q)
+    instance.t0 = (
+        float(instance.t0_com)
+        - 0.5
+        * qeff
+        * float(instance.tE)
+        * float(instance.sep)
+        * np.cos(instance.phi_rad)
+        / float(instance.thetaE_amp)
+    )
+    instance.u0_amp = (
+        float(instance.u0_amp_com)
+        - 0.5
+        * qeff
+        * float(instance.sep)
+        * np.sin(instance.phi_rad)
+        / float(instance.thetaE_amp)
+    )
+    instance.beta = instance.u0_amp * instance.thetaE_amp
+    instance.piE_amp = np.linalg.norm(instance.piE)
+    instance.piRel = instance.piE_amp * instance.thetaE_amp
+    instance.muRel_amp = instance.thetaE_amp / (float(instance.tE) / _DAYS_PER_YEAR)
+    instance.piL = instance.piRel + float(instance.piS)
+    kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
+    kappa = kappa_tmp.to(
+        units.mas / units.Msun, equivalencies=units.dimensionless_angles()
+    ).value
+    instance.mL = instance.thetaE_amp ** 2 / (instance.piRel * kappa)
+    instance.mLp = instance.mL / (1.0 + instance.q)
+    instance.mLs = instance.mLp * instance.q
+    dL = (instance.piL * units.mas).to(
+        units.parsec, equivalencies=units.parallax()
+    )
+    dS = (instance.piS * units.mas).to(
+        units.parsec, equivalencies=units.parallax()
+    )
+    instance.dL = dL.to("pc").value
+    instance.dS = dS.to("pc").value
+    instance.thetaE_hat = instance.piE / instance.piE_amp
+    instance.muRel_hat = instance.thetaE_hat
+    instance.thetaE = instance.thetaE_amp * instance.thetaE_hat
+    instance.muRel = instance.muRel_amp * instance.thetaE_hat
+    instance.muL = np.asarray(instance.muS, dtype=np.float64) - instance.muRel
+    instance.u0_hat = u0_hat_from_thetaE_hat(instance.thetaE_hat, instance.beta)
+    instance.u0 = np.abs(instance.u0_amp) * instance.u0_hat
+    instance.thetaS0 = instance.u0 * instance.thetaE_amp
+    instance.xL0 = instance.xS0 - (instance.thetaS0 * 1e-3)
+
+
 def _refresh_psbl_photastrom_physical(instance) -> None:
     """Full derived-geometry refresh for PSBL/FSBL PhotAstrom physical layouts."""
     _refresh_psbl_physical_base(instance)
@@ -3662,6 +3747,14 @@ def _refresh_derived_geometry(instance) -> None:
 
     if hasattr(instance, "alpha"):
         instance.alpha_rad = float(instance.alpha) * np.pi / 180.0
+
+    if (
+        hasattr(instance, "t0_com")
+        and hasattr(instance, "u0_amp_com")
+        and not hasattr(instance, "beta_com")
+    ):
+        _refresh_psbl_param4_heliocentric_geometry(instance)
+        return None
 
     if hasattr(instance, "t0_prim") and hasattr(instance, "thetaE_amp"):
         instance.phi_rad = instance.alpha_rad - np.arctan2(

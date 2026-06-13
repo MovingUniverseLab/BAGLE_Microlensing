@@ -1,11 +1,14 @@
 # JAX migration — permanent grad exclusions
 
-Updated: 2026-06-13. This session recovered **31** ``get_u`` skip rows via
-derived-geometry refresh (``t0_com``/``t0_p`` → geometric ``u0``) and squared
-FD objective (``nansum(u²)``). Prior session recovered 3 FSBL
-``get_lens_astrometry`` Param7 rows the same way.
+Updated: 2026-06-13. This session recovered the final **12** FSBL
+``get_lens_astrometry`` Param4/8 skip rows: static layouts via heliocentric COM
+geometry refresh (``t0_com``/``u0_amp_com`` → ``t0``/``u0``/``xL0``); orbit
+layouts already had nonzero squared FD at the fixture (status JSON lag).
 
-**Ceiling: 2836 grad pass | 12 grad skip | 0 grad not_run | 2848/2848 closed.**
+Prior session recovered **31** ``get_u`` skip rows and **6** FSBL
+``get_lens_astrometry`` Param5/6/7 rows.
+
+**Ceiling: 2848 grad pass | 0 grad skip | 0 grad not_run | 2848/2848 closed.**
 
 These skip rows are **not** marked `grad=pass` without a passing finite-difference smoke
 test. They are documented here as permanent exclusions until the underlying FD /
@@ -16,7 +19,7 @@ autodiff path is fixed or a different grad verification strategy is adopted.
 | Category | Count (skip) | Primary reason |
 |----------|-------------:|----------------|
 | Zero / flat `get_u` | 0 | recovered (+31 pass): geometry refresh + squared FD |
-| FSBL ``get_lens_astrometry`` | 12 | Zero FD at fixture (Param4/8 + orbit Param4/8; squared FD also zero) |
+| FSBL ``get_lens_astrometry`` | 0 | recovered (+12 pass): Param4/8 COM refresh + squared FD |
 | `get_resolved_astrometry` | ~138 | NaN FD (AMG / image-plane Jacobian) — recovered in prior sessions |
 | `get_resolved_lens_astrometry` | ~42 | NaN or zero FD (mostly FSBL orbit) — recovered in prior sessions |
 | BSBL Param1 phot / ast / likelihood | 0 | recovered: skip ``root_tol`` in host FD |
@@ -60,25 +63,33 @@ refreshing derived ``u0`` after perturbing packed init parameters.
 
 **Harness:** ``get_u_grad_recovered_pairs()``; squared sum wired via ``_GET_U_FD_METHODS``.
 
-## 4. FSBL ``get_lens_astrometry`` (12 permanent + 6 recovered)
+## 4. FSBL ``get_lens_astrometry`` — **recovered (+18 pass total)**
 
-### Recovered (+6 pass)
+### Recovered (+18 pass)
 
-| Pair | Fix |
-|------|-----|
+| Pair group | Fix |
+|------------|-----|
 | ``FSBL_PhotAstrom_Par_Param5`` | derived-geometry refresh |
 | ``FSBL_PhotAstrom_{Par,noPar}_AccOrbs_Param6`` | derived-geometry refresh |
 | ``FSBL_PhotAstrom_Par_{Param7,AccOrbs_Param7,LinOrbs_Param7}`` | squared FD objective |
+| **Static Param4/8** (4 rows) | ``_refresh_psbl_param4_heliocentric_geometry`` (``t0_com``/``u0_amp_com`` → ``t0``/``u0``/``xL0``) |
+| **Orbit Param4/8** (8 rows) | Already nonzero squared FD; ``beta_com`` orbit layouts use existing COM refresh |
 
 **Harness:** ``fsbl_lens_ast_grad_recovered_pairs()``; squared sum wired via
 ``_RESOLVED_AST_FD_METHODS`` including ``get_lens_astrometry``.
 
-### Permanent skip (12 rows)
+### Param4/8 vs Param7 (why static Param4/8 looked flat)
 
-Param4/Param8 static and CircOrbs/EllOrbs Param4/Param8 (Par + noPar): host FD, jax-eval
-FD, and squared FD all return zero norm at the fixture. Lens astrometry is genuinely flat
-w.r.t. init parameters for these layouts (binary-lens positions cancel under plain sum and
-remain flat under squared objective).
+| | Param7 (recovered earlier) | Param4/8 static (recovered this session) |
+|--|---------------------------|------------------------------------------|
+| Init frame | ``t0_p`` / ``beta_p`` (primary lens) | ``t0_com`` / ``u0_amp_com`` (COM, heliocentric) |
+| Refresh hook | ``_refresh_psbl_prim_u0_geometry`` | **Missing** until ``_refresh_psbl_param4_heliocentric_geometry`` |
+| ``get_lens_astrometry`` | Linear ``xL0`` + ``muL`` motion (+ parallax) | Same JAX path; stale ``xL0``/``t0`` after scatter → zero FD |
+| Orbit Param4/8 | N/A | Has ``beta_com``; COM refresh already wired; FD sensitive via ``xS0``/``muS`` |
+
+At ``dmag_Lp_Ls = 0`` (canonical fixture), ``sep``/``alpha`` do not affect the
+flux-weighted lens centroid (offset cancels); sensitivity enters through ``xL0``,
+``muL``, and orbital elements after proper geometry refresh.
 
 ## 5. PSBL phot-only orbit Param1 — **recovered (+8 pass, prior session)**
 
@@ -89,17 +100,10 @@ PSBL PhotAstrom orbit Param1/7 ``get_u`` rows recovered this session (see §3).
 
 ## Rows marked this session
 
-1. **``get_u`` skip batch** (+31 pass): ``get_u_grad_recovered_pairs``;
-   ``_refresh_psbl_*`` / BSPL / FSPL geometry helpers; ``_GET_U_FD_METHODS``.
+1. **FSBL ``get_lens_astrometry`` Param4/8** (+12 pass): ``fsbl_lens_ast_grad_recovered_pairs``;
+   ``_refresh_psbl_param4_heliocentric_geometry`` for static COM init.
 
 ## Path to 2848/2848 grad pass
 
-**2836 pass + 12 skip = 2848 closed.** The **12 skip** rows are documented permanent
-exclusions (FSBL ``get_lens_astrometry`` Param4/8). Further grad pass would require:
-
-1. **Different fixture points** where lens astrometry is not flat
-2. **Fix resolved astrometry FD** — differentiable AMG or stable host FD through image plane
-3. **Accept as skip** — tracked as `grad: skip` in status JSON (current state)
-
-Recommendation: treat **12** as the realistic ceiling; pursue physics/JAX follow-ups
-rather than status-json inflation without nonzero FD evidence.
+**2848 pass + 0 skip = 2848 closed.** All applicable grad rows now pass FD smoke at
+the standard fixture (squared objective for resolved astrometry and ``get_u`` where needed).
