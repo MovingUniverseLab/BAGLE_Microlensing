@@ -65,6 +65,10 @@
       "get_resolved_lens_astrometry"
     ],
     [
+      "PSBL_PhotAstrom_Par_Param5",
+      "get_resolved_lens_astrometry"
+    ],
+    [
       "PSBL_PhotAstrom_Par_Param7",
       "get_resolved_lens_astrometry"
     ],
@@ -134,6 +138,38 @@
     ],
     [
       "PSBL_PhotAstrom_noPar_Param3",
+      "get_resolved_lens_astrometry"
+    ],
+    [
+      "PSBL_Phot_Par_CircOrbs_Param1",
+      "get_resolved_astrometry"
+    ],
+    [
+      "PSBL_Phot_Par_EllOrbs_Param1",
+      "get_resolved_astrometry"
+    ],
+    [
+      "PSBL_Phot_Par_GP_Param1",
+      "get_resolved_lens_astrometry"
+    ],
+    [
+      "PSBL_Phot_Par_Param1",
+      "get_resolved_lens_astrometry"
+    ],
+    [
+      "PSBL_Phot_noPar_CircOrbs_Param1",
+      "get_resolved_astrometry"
+    ],
+    [
+      "PSBL_Phot_noPar_EllOrbs_Param1",
+      "get_resolved_astrometry"
+    ],
+    [
+      "PSBL_Phot_noPar_GP_Param1",
+      "get_resolved_lens_astrometry"
+    ],
+    [
+      "PSBL_Phot_noPar_Param1",
       "get_resolved_lens_astrometry"
     ]
   ],
@@ -274,11 +310,6 @@
       "nan"
     ],
     [
-      "PSBL_PhotAstrom_Par_Param5",
-      "get_resolved_lens_astrometry",
-      "zero"
-    ],
-    [
       "PSBL_PhotAstrom_Par_Param7",
       "get_resolved_astrometry",
       "nan"
@@ -410,18 +441,8 @@
     ],
     [
       "PSBL_Phot_Par_CircOrbs_Param1",
-      "get_resolved_astrometry",
-      "LinAlgError"
-    ],
-    [
-      "PSBL_Phot_Par_CircOrbs_Param1",
       "get_resolved_lens_astrometry",
       "nan"
-    ],
-    [
-      "PSBL_Phot_Par_EllOrbs_Param1",
-      "get_resolved_astrometry",
-      "LinAlgError"
     ],
     [
       "PSBL_Phot_Par_EllOrbs_Param1",
@@ -434,34 +455,14 @@
       "nan"
     ],
     [
-      "PSBL_Phot_Par_GP_Param1",
-      "get_resolved_lens_astrometry",
-      "zero"
-    ],
-    [
       "PSBL_Phot_Par_Param1",
       "get_resolved_astrometry",
       "nan"
     ],
     [
-      "PSBL_Phot_Par_Param1",
-      "get_resolved_lens_astrometry",
-      "zero"
-    ],
-    [
-      "PSBL_Phot_noPar_CircOrbs_Param1",
-      "get_resolved_astrometry",
-      "LinAlgError"
-    ],
-    [
       "PSBL_Phot_noPar_CircOrbs_Param1",
       "get_resolved_lens_astrometry",
       "nan"
-    ],
-    [
-      "PSBL_Phot_noPar_EllOrbs_Param1",
-      "get_resolved_astrometry",
-      "LinAlgError"
     ],
     [
       "PSBL_Phot_noPar_EllOrbs_Param1",
@@ -474,19 +475,9 @@
       "nan"
     ],
     [
-      "PSBL_Phot_noPar_GP_Param1",
-      "get_resolved_lens_astrometry",
-      "zero"
-    ],
-    [
       "PSBL_Phot_noPar_Param1",
       "get_resolved_astrometry",
       "nan"
-    ],
-    [
-      "PSBL_Phot_noPar_Param1",
-      "get_resolved_lens_astrometry",
-      "zero"
     ]
   ]
 }

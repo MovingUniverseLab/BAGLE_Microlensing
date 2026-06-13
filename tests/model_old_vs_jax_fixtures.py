@@ -1395,12 +1395,13 @@ _FSBL_GRAD_ZERO_AST = frozenset(
 
 
 def _fsbl_grad_pair_ok(class_name: str, method_name: str) -> bool:
-    """Filter FSBL grad harness pairs with known FD smoke failures."""
+    """Filter FSBL grad harness pairs with known FD smoke failures.
+
+    Phot-only ``get_resolved_lens_astrometry`` is no longer excluded here;
+    recovered pairs live in ``resolved_ast_grad_recovered_pairs()``.
+    """
     if method_name == "get_u" and "PhotAstrom" in class_name:
         return False
-    if method_name == "get_resolved_lens_astrometry":
-        if class_name.startswith("FSBL_Phot_") and "PhotAstrom" not in class_name:
-            return False
     if method_name in _FSBL_GRAD_ZERO_AST:
         for tag in ("_Param4", "_Param5", "_Param7", "_Param8"):
             if tag in class_name:
@@ -1640,13 +1641,29 @@ def psbl_phot_extended_pairs() -> list[tuple[str, str]]:
     )
 
 
+def _psbl_phot_extended_grad_pair_ok(class_name: str, method_name: str) -> bool:
+    """Return whether a PSBL phot-only extended pair is grad-smoke eligible.
+
+    Excludes core phot paths (separate harness), ``get_resolved_lens_astrometry``,
+    and keplerian ``get_resolved_astrometry`` (covered by recovered-pair tests).
+    """
+    if method_name in PSBL_PHOT_METHODS:
+        return False
+    if method_name == "get_resolved_lens_astrometry":
+        return False
+    if method_name == "get_resolved_astrometry" and any(
+        tag in class_name for tag in ("CircOrbs", "EllOrbs")
+    ):
+        return False
+    return True
+
+
 def psbl_phot_extended_grad_pairs() -> list[tuple[str, str]]:
     """PSBL phot extended + likelihood grad (host FD through roots)."""
-    skip_resolved = ("get_resolved_lens_astrometry",)
     return sorted(
         (c, m)
         for c, m in psbl_phot_extended_pairs()
-        if m not in PSBL_PHOT_METHODS and m not in skip_resolved
+        if _psbl_phot_extended_grad_pair_ok(c, m)
     )
 
 
@@ -2524,6 +2541,33 @@ def psbl_phot_orbit_param1_phot_grad_pairs() -> list[tuple[str, str]]:
     )
 
 
+def resolved_ast_grad_recovered_pairs() -> list[tuple[str, str]]:
+    """Eleven resolved-astrometry grad pairs recovered from probe skip batches.
+
+    Returns
+    ----
+    list of tuple[str, str]
+        ``(class_name, method_name)`` for FSBL/PSBL phot paths that pass
+        host FD grad smoke after derived-geometry refresh and squared FD
+        objective on resolved astrometry outputs.
+    """
+    return sorted(
+        [
+            ("FSBL_Phot_Par_Param1", "get_resolved_lens_astrometry"),
+            ("FSBL_Phot_noPar_Param1", "get_resolved_lens_astrometry"),
+            ("PSBL_PhotAstrom_Par_Param5", "get_resolved_lens_astrometry"),
+            ("PSBL_Phot_Par_CircOrbs_Param1", "get_resolved_astrometry"),
+            ("PSBL_Phot_Par_EllOrbs_Param1", "get_resolved_astrometry"),
+            ("PSBL_Phot_Par_GP_Param1", "get_resolved_lens_astrometry"),
+            ("PSBL_Phot_Par_Param1", "get_resolved_lens_astrometry"),
+            ("PSBL_Phot_noPar_CircOrbs_Param1", "get_resolved_astrometry"),
+            ("PSBL_Phot_noPar_EllOrbs_Param1", "get_resolved_astrometry"),
+            ("PSBL_Phot_noPar_GP_Param1", "get_resolved_lens_astrometry"),
+            ("PSBL_Phot_noPar_Param1", "get_resolved_lens_astrometry"),
+        ]
+    )
+
+
 def psbl_photastrom_circorbs_ellorbs_param38_grad_pairs() -> list[tuple[str, str]]:
     """PSBL PhotAstrom CircOrbs/EllOrbs Param3/8 grad (FD)."""
     methods = (
@@ -3121,8 +3165,150 @@ def pack_init_vector(instance) -> tuple[np.ndarray, tuple[str, ...]]:
     return vec, names
 
 
+def _refresh_derived_geometry(instance) -> None:
+    """Recompute derived geometry after ``scatter_init_vector`` for FD smoke.
+
+    Host models cache ``piE``, ``thetaE_hat``, lens positions, and orbital
+    elements at construction; perturbing the packed init vector without this
+    refresh leaves stale geometry and breaks central-difference grad checks.
+
+    Parameters
+    ----
+    instance
+        NumPy or JAX model instance whose numeric init fields were just updated.
+    """
+    from bagle.model import u0_hat_from_thetaE_hat
+
+    if hasattr(instance, "piE_E"):
+        piE_E = float(instance.piE_E)
+        if hasattr(instance, "piEN_piEE"):
+            piE_N = float(instance.piEN_piEE) * piE_E
+            instance.piE_N = piE_N
+        else:
+            piE_N = float(getattr(instance, "piE_N", instance.piE[1]))
+        instance.piE = np.array([piE_E, piE_N], dtype=np.float64)
+
+    if hasattr(instance, "alpha"):
+        instance.alpha_rad = float(instance.alpha) * np.pi / 180.0
+
+    if hasattr(instance, "t0_prim") and hasattr(instance, "thetaE_amp"):
+        instance.phi_rad = instance.alpha_rad - np.arctan2(
+            instance.piE[0], instance.piE[1]
+        )
+        instance.t0 = (
+            instance.t0_prim
+            - 0.5
+            * instance.tE
+            * instance.sep
+            * np.cos(instance.phi_rad)
+            / instance.thetaE_amp
+        )
+        instance.u0_amp = (
+            instance.u0_amp_prim
+            - 0.5
+            * instance.sep
+            * np.sin(instance.phi_rad)
+            / instance.thetaE_amp
+        )
+        instance.piE_amp = np.linalg.norm(instance.piE)
+        instance.thetaE_hat = instance.piE / instance.piE_amp
+
+    phot_only = getattr(instance, "photometryFlag", False) and not getattr(
+        instance, "astrometryFlag", False
+    )
+    orbit = getattr(instance, "orbitFlag", False)
+
+    if orbit is True and hasattr(instance, "get_me_some_orbital_parameters"):
+        if hasattr(instance, "aleph") and hasattr(instance, "aleph_sec"):
+            instance.sep = float(instance.aleph) + float(instance.aleph_sec)
+        ecc, i, o, w, p, tp = instance.get_me_some_orbital_parameters(
+            instance.t0,
+            instance.sep,
+            instance.r_s,
+            instance.a_s,
+            instance.v_para,
+            instance.v_perp,
+            instance.v_rad,
+        )
+        instance.w = w
+        instance.o = o
+        instance.i = i
+        instance.e = ecc
+        instance.tp = tp
+        instance.p = p
+        instance.piE_amp = np.linalg.norm(instance.piE)
+        instance.thetaE_hat = instance.piE / instance.piE_amp
+        instance.muRel_hat = instance.thetaE_hat
+        instance.u0_hat = u0_hat_from_thetaE_hat(
+            instance.thetaE_hat, instance.u0_amp
+        )
+        instance.u0 = np.abs(instance.u0_amp) * instance.u0_hat
+        instance.m1 = 1.0 / (1.0 + instance.q)
+        instance.m2 = instance.q / (1.0 + instance.q)
+        import bagle.orbits as orbits
+
+        orb = orbits.Orbit()
+        orb.w = w
+        orb.o = o
+        orb.i = i
+        orb.e = ecc
+        orb.tp = tp
+        orb.aleph2 = instance.aleph_sec
+        orb.aleph = instance.aleph
+        orb.p = p
+        x, y, x2, y2 = orb.oal2xy(np.array([tp]))
+        instance.alpha_rad = np.arctan2(x - x2, y - y2)[0]
+        instance.alpha = np.rad2deg(instance.alpha_rad)
+        instance.phi_rho1_rad = instance.alpha
+        instance.phi_piE_rad = np.arctan2(instance.piE[0], instance.piE[1])
+        instance.phi_rad = instance.phi_rho1_rad - instance.phi_piE_rad
+        instance.phi = np.rad2deg(instance.phi_rad)
+        return
+
+    if phot_only and hasattr(instance, "xL1_over_theta") and hasattr(instance, "phi"):
+        instance.piE_amp = np.linalg.norm(instance.piE)
+        instance.phi_rad = float(instance.phi) * np.pi / 180.0
+        instance.phi_piE_rad = np.arctan2(instance.piE[0], instance.piE[1])
+        instance.phi_rho1_rad = instance.phi_piE_rad + instance.phi_rad
+        instance.xL1_over_theta = np.array(
+            [
+                0.5 * instance.sep * np.sin(instance.phi_rho1_rad),
+                0.5 * instance.sep * np.cos(instance.phi_rho1_rad),
+            ],
+            dtype=np.float64,
+        )
+        instance.xL2_over_theta = np.array(
+            [
+                -0.5 * instance.sep * np.sin(instance.phi_rho1_rad),
+                -0.5 * instance.sep * np.cos(instance.phi_rho1_rad),
+            ],
+            dtype=np.float64,
+        )
+        instance.thetaE_hat = instance.piE / instance.piE_amp
+        instance.muRel_hat = instance.thetaE_hat
+        instance.u0_hat = u0_hat_from_thetaE_hat(
+            instance.thetaE_hat, instance.u0_amp
+        )
+        instance.u0 = np.abs(instance.u0_amp) * instance.u0_hat
+        instance.m1 = 1.0 / (1.0 + instance.q)
+        instance.m2 = instance.q / (1.0 + instance.q)
+
+
 def scatter_init_vector(instance, vec, init_names: tuple[str, ...]) -> None:
-    """Write a packed init vector back onto a model instance (filter-0 lists)."""
+    """Write a packed init vector back onto a model instance (filter-0 lists).
+
+    After scattering raw init values, calls ``_refresh_derived_geometry`` so
+    host FD grad smoke sees consistent derived fields (``piE``, ``u0``, orbits).
+
+    Parameters
+    ----
+    instance
+        Model instance to mutate in place.
+    vec : array-like
+        1D init vector aligned with ``init_names``.
+    init_names : tuple[str, ...]
+        Ordered numeric Param-mixin parameter names from ``pack_init_vector``.
+    """
     for i, name in enumerate(init_names):
         val = float(vec[i])
         if name in _ARRAY_COMPONENT:
@@ -3140,6 +3326,7 @@ def scatter_init_vector(instance, vec, init_names: tuple[str, ...]) -> None:
             instance.thetaE_amp = 10.0 ** val
         else:
             setattr(instance, name, val)
+    _refresh_derived_geometry(instance)
 
 
 def _scalar_from_instance(instance, name: str) -> float:
@@ -3570,10 +3757,27 @@ _RESOLVED_AST_FD_METHODS = frozenset(
 
 
 def _fd_scalar_from_output(out, method_name: str) -> float:
-    """Scalar objective for FD; resolved astrometry may contain NaN padding."""
+    """Reduce method output to a scalar for central finite-difference grad.
+
+    Resolved astrometry arrays may contain NaN padding and antisymmetric lens
+    components; ``nansum(arr * arr)`` avoids cancellation that zeroes FD steps.
+
+    Parameters
+    ----
+    out
+        Forward output (array-like) from ``call_method``.
+    method_name : str
+        Method name; squared sum is used for resolved astrometry paths.
+
+    Returns
+    ----
+    float
+        Scalar objective summed (or squared-summed) over finite entries.
+    """
     arr = np.asarray(out, dtype=np.float64)
     if method_name in _RESOLVED_AST_FD_METHODS:
-        return float(np.nansum(arr))
+        # Squared sum avoids antisymmetric cancellation in lens positions.
+        return float(np.nansum(arr * arr))
     return float(np.sum(arr))
 
 
@@ -3807,7 +4011,30 @@ def grad_smoke_jax(
     *,
     return_names: bool = False,
 ):
-    """Pure-JAX grad smoke w.r.t. all numeric Param-mixin ``__init__`` parameters."""
+    """Pure-JAX grad smoke w.r.t. all numeric Param-mixin ``__init__`` parameters.
+
+    PSBL phot-only resolved astrometry and related paths fall back to host FD
+    with ``eps=1e-4`` for orbital layouts and ``1e-5`` otherwise, using the
+    squared FD objective from ``_fd_scalar_from_output``.
+
+    Parameters
+    ----
+    class_name : str
+        JAX model class name.
+    method_name : str
+        Method under test.
+    jax_inst
+        Constructed JAX model instance.
+    t : ndarray
+        Evaluation times in days.
+    return_names : bool, optional
+        If True, return ``(grad, init_names)`` instead of grad alone.
+
+    Returns
+    ----
+    ndarray or tuple[ndarray, tuple[str, ...]]
+        Gradient vector w.r.t. packed init parameters, optionally with names.
+    """
     import jax
 
     from bagle.jax.layout_registry import resolve_layout
@@ -4227,7 +4454,10 @@ def grad_smoke_jax(
         "get_resolved_astrometry",
         "get_resolved_lens_astrometry",
     ):
-        g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
+        fd_eps = 1e-4 if layout.orbit != "none" else 1e-5
+        g = _fd_grad_host(
+            class_name, init_names, vec0, t, method_name, eps=fd_eps
+        )
         if return_names:
             return g, init_names
         return g

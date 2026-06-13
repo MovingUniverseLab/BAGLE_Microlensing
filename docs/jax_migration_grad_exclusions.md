@@ -38,8 +38,8 @@ Probe artifacts: `docs/grad_probe_nonresolved.json`, `docs/grad_probe_resolved_{
 |--------|-----:|-----:|-------------|
 | BSBL | 10 | 20 | all `get_resolved_astrometry` → NaN |
 | BSPL | 48 | 4 | 4 × `NotImplementedError` (phot-only resolved; wired in session) |
-| PSBL | 34 | 70 | 58 NaN, 8 zero, 4 LinAlgError |
-| FSBL | 0 | 8 (static Param1/2) | 6 NaN `get_resolved_astrometry`, 2 zero `get_resolved_lens_astrometry` (phot-only); see `grad_probe_resolved_fsbl.json` |
+| PSBL | 43 | 61 | remaining NaN/zero/LinAlgError; 9 phot/photastrom resolved rows recovered (host FD, `nansum`² objective, orbit `eps=1e-4`) |
+| FSBL | 2 | 6 (static Param1/2) | 6 NaN `get_resolved_astrometry`; phot-only `get_resolved_lens_astrometry` recovered (host FD + derived refresh) |
 
 **Root cause:** finite-difference / autodiff through the AMG image solver and resolved
 centroid path produces NaN or zero vectors at standard fixture points. Parity forward

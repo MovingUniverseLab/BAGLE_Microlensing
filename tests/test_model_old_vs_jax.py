@@ -181,6 +181,7 @@ from model_old_vs_jax_fixtures import (
     grad_probe_resolved_pass_pairs,
     bspl_phot_extended_probe_grad_pairs,
     psbl_phot_orbit_param1_phot_grad_pairs,
+    resolved_ast_grad_recovered_pairs,
     psbl_photastrom_circorbs_ellorbs_param38_grad_pairs,
     psbl_photastrom_param7_grad_pairs,
     psbl_photastrom_orbit_param4_grad_pairs,
@@ -1749,5 +1750,15 @@ def test_grad_bspl_phot_extended_probe(class_name, method_name):
 @pytest.mark.parametrize("class_name,method_name", psbl_phot_orbit_param1_phot_grad_pairs())
 def test_grad_psbl_phot_orbit_param1_phot(class_name, method_name):
     """PSBL phot-only keplerian Param1 phot paths (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", resolved_ast_grad_recovered_pairs())
+def test_grad_resolved_ast_recovered(class_name, method_name):
+    """Eleven resolved-astrometry grad pairs recovered from probe skip batches.
+
+    Covers FSBL/PSBL phot paths that pass host FD after derived-geometry
+    refresh and squared sum on ``get_resolved_*`` outputs.
+    """
     _assert_grad_smoke(class_name, method_name)
 

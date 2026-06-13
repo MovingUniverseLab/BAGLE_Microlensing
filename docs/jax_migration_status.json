@@ -11637,7 +11637,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -16047,7 +16047,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -16217,7 +16217,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -16397,7 +16397,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -16567,7 +16567,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -16727,7 +16727,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -16897,7 +16897,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -17077,7 +17077,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -17247,7 +17247,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -36457,7 +36457,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -36967,7 +36967,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40633,10 +40633,10 @@
   ],
   "summary": {
     "total_applicable": 2848,
-    "total_done": 2648,
+    "total_done": 2659,
     "total_closed": 2848,
-    "grad_pass": 2648,
-    "grad_skip": 200,
+    "grad_pass": 2659,
+    "grad_skip": 189,
     "grad_not_run": 0,
     "grad_fail": 0
   }

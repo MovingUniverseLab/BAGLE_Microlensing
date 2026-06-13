@@ -1,6 +1,6 @@
 # JAX migration dashboard
 
-Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
+Updated: 2026-06-13 | Grad pass: 2659/2848 | Skip: 189 | Pending: 0
 
 | Class | Method | JAX forward | Parity | Grad | Overall |
 |-------|--------|-------------|--------|------|---------|
@@ -480,7 +480,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_AccOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -493,8 +493,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_AccOrbs_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_AccOrbs_Param6 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_PhotAstrom_Par_AccOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_AccOrbs_Param6 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_PhotAstrom_Par_AccOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param6 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param6 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -506,7 +506,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_AccOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_AccOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_AccOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_AccOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_Par_AccOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -519,7 +519,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_CircOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param1 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_Par_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -532,7 +532,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_CircOrbs_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_CircOrbs_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_CircOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -545,7 +545,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_CircOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -558,7 +558,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_CircOrbs_Param4 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param4 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_CircOrbs_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_CircOrbs_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param4 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -571,7 +571,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_CircOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_CircOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_CircOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_Par_CircOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -584,7 +584,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_CircOrbs_Param8 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param8 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param8 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_CircOrbs_Param8 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_CircOrbs_Param8 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param8 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_CircOrbs_Param8 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -597,7 +597,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_EllOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param1 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_Par_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -610,7 +610,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_EllOrbs_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_EllOrbs_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_EllOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -623,7 +623,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_EllOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -636,7 +636,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_EllOrbs_Param4 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param4 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_EllOrbs_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_EllOrbs_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param4 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -649,7 +649,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_EllOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_EllOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_EllOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_Par_EllOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -662,7 +662,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_EllOrbs_Param8 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param8 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param8 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_EllOrbs_Param8 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_EllOrbs_Param8 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param8 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_EllOrbs_Param8 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -675,7 +675,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_GP_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_GP_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_GP_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_GP_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_GP_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_GP_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_GP_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_GP_Param1 | get_u | jax_only | pass | pass | done |
@@ -689,7 +689,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_GP_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_GP_Param2 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_GP_Param2 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_GP_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_GP_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_GP_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_GP_Param2 | get_photometry_with_gp | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_GP_Param2 | get_u | jax_only | pass | pass | done |
@@ -703,7 +703,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_LinOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -716,7 +716,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_LinOrbs_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_LinOrbs_Param6 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_LinOrbs_Param6 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param6 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -729,7 +729,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_LinOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_LinOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_LinOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_LinOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_Par_LinOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -742,7 +742,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -755,7 +755,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param2 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param2 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param2 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -768,7 +768,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param3 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param3 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -781,8 +781,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_Param4 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param4 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_PhotAstrom_Par_Param4 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_PhotAstrom_Par_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param4 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param4 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -794,8 +794,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_Param5 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param5 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param5 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_Param5 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_PhotAstrom_Par_Param5 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_Param5 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_PhotAstrom_Par_Param5 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param5 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param5 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param5 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -807,7 +807,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_Par_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param7 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_Par_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_Par_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_Par_Param7 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_Par_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -820,7 +820,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -833,7 +833,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -846,7 +846,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -859,7 +859,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -872,7 +872,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -885,7 +885,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -898,7 +898,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -911,7 +911,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -924,7 +924,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -937,7 +937,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -950,7 +950,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -963,7 +963,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -976,7 +976,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -989,7 +989,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1002,7 +1002,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1015,7 +1015,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_GP_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_GP_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_GP_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_GP_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_GP_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_GP_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_GP_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_GP_Param1 | get_u | jax_only | pass | pass | done |
@@ -1029,7 +1029,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_GP_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_GP_Param2 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_GP_Param2 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_GP_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_GP_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_GP_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_GP_Param2 | get_photometry_with_gp | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_GP_Param2 | get_u | jax_only | pass | pass | done |
@@ -1043,7 +1043,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1056,7 +1056,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1069,7 +1069,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | PSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1082,7 +1082,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param1 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1095,7 +1095,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param2 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param2 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param2 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1108,7 +1108,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param3 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param3 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1121,8 +1121,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_Param4 | get_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param4 | get_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| PSBL_PhotAstrom_noPar_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_PhotAstrom_noPar_Param4 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_PhotAstrom_noPar_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_PhotAstrom_noPar_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param4 | get_u | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_PhotAstrom_noPar_Param4 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1130,59 +1130,59 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | PSBL_PhotAstrom_noPar_Param4 | log_likely_astrometry_each | jax_only | pass | pass | done |
 | PSBL_Phot_Par_CircOrbs_Param1 | get_amplification | jax_only | pass | pass | done |
 | PSBL_Phot_Par_CircOrbs_Param1 | get_photometry | jax_only | pass | pass | done |
-| PSBL_Phot_Par_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_Phot_Par_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_Phot_Par_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_Phot_Par_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_Phot_Par_CircOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_Phot_Par_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_Phot_Par_CircOrbs_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | PSBL_Phot_Par_EllOrbs_Param1 | get_amplification | jax_only | pass | pass | done |
 | PSBL_Phot_Par_EllOrbs_Param1 | get_photometry | jax_only | pass | pass | done |
-| PSBL_Phot_Par_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_Phot_Par_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_Phot_Par_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_Phot_Par_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_Phot_Par_EllOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_Phot_Par_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_Phot_Par_EllOrbs_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | PSBL_Phot_Par_GP_Param1 | get_amplification | jax_only | pass | pass | done |
 | PSBL_Phot_Par_GP_Param1 | get_photometry | jax_only | pass | pass | done |
-| PSBL_Phot_Par_GP_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_Phot_Par_GP_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_Phot_Par_GP_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_Phot_Par_GP_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_Phot_Par_GP_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
 | PSBL_Phot_Par_GP_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_Phot_Par_GP_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_Phot_Par_GP_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | PSBL_Phot_Par_Param1 | get_amplification | jax_only | pass | pass | done |
 | PSBL_Phot_Par_Param1 | get_photometry | jax_only | pass | pass | done |
-| PSBL_Phot_Par_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_Phot_Par_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_Phot_Par_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_Phot_Par_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_Phot_Par_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_Phot_Par_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_Phot_Par_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_CircOrbs_Param1 | get_amplification | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_CircOrbs_Param1 | get_photometry | jax_only | pass | pass | done |
-| PSBL_Phot_noPar_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_Phot_noPar_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_Phot_noPar_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_Phot_noPar_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_CircOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_CircOrbs_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_EllOrbs_Param1 | get_amplification | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_EllOrbs_Param1 | get_photometry | jax_only | pass | pass | done |
-| PSBL_Phot_noPar_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_Phot_noPar_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_Phot_noPar_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_Phot_noPar_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_EllOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_EllOrbs_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_GP_Param1 | get_amplification | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_GP_Param1 | get_photometry | jax_only | pass | pass | done |
-| PSBL_Phot_noPar_GP_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_Phot_noPar_GP_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_Phot_noPar_GP_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_Phot_noPar_GP_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_GP_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_GP_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_GP_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_GP_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_Param1 | get_amplification | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_Param1 | get_photometry | jax_only | pass | pass | done |
-| PSBL_Phot_noPar_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| PSBL_Phot_noPar_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| PSBL_Phot_noPar_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| PSBL_Phot_noPar_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_Param1 | get_u | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | PSBL_Phot_noPar_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
@@ -1806,27 +1806,27 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSPL_PhotAstrom_noPar_Param3 | log_likely_astrometry_each | jax_only | pass | pass | done |
 | BSPL_Phot_Par_GP_Param1 | get_amplification | jax_only | pass | pass | done |
 | BSPL_Phot_Par_GP_Param1 | get_photometry | jax_only | pass | pass | done |
-| BSPL_Phot_Par_GP_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSPL_Phot_Par_GP_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_Phot_Par_GP_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
 | BSPL_Phot_Par_GP_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_Phot_Par_GP_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_Par_GP_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | BSPL_Phot_Par_Param1 | get_amplification | jax_only | pass | pass | done |
 | BSPL_Phot_Par_Param1 | get_photometry | jax_only | pass | pass | done |
-| BSPL_Phot_Par_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSPL_Phot_Par_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_Phot_Par_Param1 | get_u | jax_only | pass | pass | done |
 | BSPL_Phot_Par_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_Par_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_GP_Param1 | get_amplification | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_GP_Param1 | get_photometry | jax_only | pass | pass | done |
-| BSPL_Phot_noPar_GP_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSPL_Phot_noPar_GP_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_GP_Param1 | get_photometry_with_gp | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_GP_Param1 | get_u | jax_only | pass | skip | skipped |
 | BSPL_Phot_noPar_GP_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_GP_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_Param1 | get_amplification | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_Param1 | get_photometry | jax_only | pass | pass | done |
-| BSPL_Phot_noPar_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSPL_Phot_noPar_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_Param1 | get_u | jax_only | pass | skip | skipped |
 | BSPL_Phot_noPar_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | BSPL_Phot_noPar_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
@@ -1900,7 +1900,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_AccOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1913,7 +1913,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_AccOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_AccOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_AccOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1926,8 +1926,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param6 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1939,8 +1939,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_AccOrbs_Param7 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1952,7 +1952,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_CircOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param1 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1965,7 +1965,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_CircOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -1978,8 +1978,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_CircOrbs_Param4 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_CircOrbs_Param4 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_CircOrbs_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_CircOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_CircOrbs_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_CircOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param4 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param4 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -1991,8 +1991,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_CircOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_CircOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_CircOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_CircOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_CircOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_CircOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param7 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2004,8 +2004,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_CircOrbs_Param8 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_CircOrbs_Param8 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param8 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_CircOrbs_Param8 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_CircOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_CircOrbs_Param8 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_CircOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param8 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param8 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_CircOrbs_Param8 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2017,7 +2017,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_EllOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param1 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2030,7 +2030,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_EllOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2043,8 +2043,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_EllOrbs_Param4 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_EllOrbs_Param4 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_EllOrbs_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_EllOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_EllOrbs_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_EllOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param4 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param4 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2056,8 +2056,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_EllOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_EllOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_EllOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_EllOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_EllOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_EllOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param7 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2069,8 +2069,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_EllOrbs_Param8 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_EllOrbs_Param8 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param8 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_EllOrbs_Param8 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_EllOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_EllOrbs_Param8 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_EllOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param8 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param8 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_EllOrbs_Param8 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2082,7 +2082,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_LinOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2095,7 +2095,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_LinOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_LinOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_LinOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2108,7 +2108,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2121,8 +2121,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_LinOrbs_Param7 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2134,7 +2134,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param1 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2147,7 +2147,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param2 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param2 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param2 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2160,7 +2160,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param3 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param3 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2173,8 +2173,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_Param4 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_Param4 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_Param4 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param4 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param4 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2186,8 +2186,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_Param5 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_Param5 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param5 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_Param5 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_Param5 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_Param5 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param5 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param5 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param5 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param5 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2199,7 +2199,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param6 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param6 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_Param6 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_Param6 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param6 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2212,8 +2212,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_Param7 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_Param7 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param7 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param7 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2225,8 +2225,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_Par_Param8 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_Par_Param8 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param8 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_Par_Param8 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_Par_Param8 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_Par_Param8 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_Par_Param8 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param8 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param8 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_Par_Param8 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2238,7 +2238,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2251,7 +2251,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_AccOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2264,8 +2264,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param6 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2277,8 +2277,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_AccOrbs_Param7 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2290,7 +2290,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2303,7 +2303,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2316,8 +2316,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param4 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2329,8 +2329,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param7 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2342,8 +2342,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_CircOrbs_Param8 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2355,7 +2355,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2368,7 +2368,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2381,8 +2381,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param4 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2394,8 +2394,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param7 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2407,8 +2407,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_EllOrbs_Param8 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2420,7 +2420,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2433,7 +2433,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_LinOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param3 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2446,7 +2446,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2459,8 +2459,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_u | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_LinOrbs_Param7 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2472,7 +2472,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param1 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param1 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2485,7 +2485,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param2 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param2 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param2 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param2 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2498,7 +2498,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param3 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param3 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param3 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param3 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2511,8 +2511,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_Param4 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_Param4 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param4 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_Param4 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_noPar_Param4 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_Param4 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_Param4 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param4 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param4 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param4 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2524,7 +2524,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_Param6 | get_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param6 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param6 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_Param6 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_Param6 | get_resolved_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param6 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param6 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param6 | get_chi2_photometry | jax_only | pass | pass | done |
@@ -2537,8 +2537,8 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_Param8 | get_lens_astrometry | jax_only | pass | skip | skipped |
 | FSBL_PhotAstrom_noPar_Param8 | get_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param8 | get_centroid_shift | jax_only | pass | pass | done |
-| FSBL_PhotAstrom_noPar_Param8 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_PhotAstrom_noPar_Param8 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_PhotAstrom_noPar_Param8 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_PhotAstrom_noPar_Param8 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param8 | get_u | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param8 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_PhotAstrom_noPar_Param8 | get_chi2_astrometry | jax_only | pass | pass | done |
@@ -2546,43 +2546,43 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | FSBL_PhotAstrom_noPar_Param8 | log_likely_astrometry_each | jax_only | pass | pass | done |
 | FSBL_Phot_Par_CircOrbs_Param1 | get_amplification | jax_only | pass | pass | done |
 | FSBL_Phot_Par_CircOrbs_Param1 | get_photometry | jax_only | pass | pass | done |
-| FSBL_Phot_Par_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_Phot_Par_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_Phot_Par_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_Phot_Par_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_Phot_Par_CircOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_Phot_Par_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_Phot_Par_CircOrbs_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | FSBL_Phot_Par_EllOrbs_Param1 | get_amplification | jax_only | pass | pass | done |
 | FSBL_Phot_Par_EllOrbs_Param1 | get_photometry | jax_only | pass | pass | done |
-| FSBL_Phot_Par_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_Phot_Par_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_Phot_Par_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_Phot_Par_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_Phot_Par_EllOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_Phot_Par_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_Phot_Par_EllOrbs_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | FSBL_Phot_Par_Param1 | get_amplification | jax_only | pass | pass | done |
 | FSBL_Phot_Par_Param1 | get_photometry | jax_only | pass | pass | done |
-| FSBL_Phot_Par_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_Phot_Par_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_Phot_Par_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_Phot_Par_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_Phot_Par_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_Phot_Par_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_Phot_Par_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_CircOrbs_Param1 | get_amplification | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_CircOrbs_Param1 | get_photometry | jax_only | pass | pass | done |
-| FSBL_Phot_noPar_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_Phot_noPar_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_Phot_noPar_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_Phot_noPar_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_CircOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_CircOrbs_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_EllOrbs_Param1 | get_amplification | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_EllOrbs_Param1 | get_photometry | jax_only | pass | pass | done |
-| FSBL_Phot_noPar_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_Phot_noPar_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_Phot_noPar_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_Phot_noPar_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_EllOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_EllOrbs_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_Param1 | get_amplification | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_Param1 | get_photometry | jax_only | pass | pass | done |
-| FSBL_Phot_noPar_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
-| FSBL_Phot_noPar_Param1 | get_resolved_lens_astrometry | jax_only | pass | skip | skipped |
+| FSBL_Phot_noPar_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
+| FSBL_Phot_noPar_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_Param1 | get_u | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_Param1 | get_chi2_photometry | jax_only | pass | pass | done |
 | FSBL_Phot_noPar_Param1 | log_likely_photometry_each | jax_only | pass | pass | done |
@@ -2592,7 +2592,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_Par_AccOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_AccOrbs_Param1 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_Par_AccOrbs_Param1 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_Par_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_Par_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_AccOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_AccOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_AccOrbs_Param1 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2605,7 +2605,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_Par_CircOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param1 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_Par_CircOrbs_Param1 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_Par_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_Par_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2618,7 +2618,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_Par_CircOrbs_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param2 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_Par_CircOrbs_Param2 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_Par_CircOrbs_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_Par_CircOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param2 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2631,7 +2631,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_Par_CircOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param3 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_Par_CircOrbs_Param3 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_Par_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_Par_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_CircOrbs_Param3 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2644,7 +2644,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_Par_EllOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param1 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_Par_EllOrbs_Param1 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_Par_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_Par_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2657,7 +2657,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_Par_EllOrbs_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param2 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_Par_EllOrbs_Param2 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_Par_EllOrbs_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_Par_EllOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param2 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2670,7 +2670,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_Par_EllOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param3 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_Par_EllOrbs_Param3 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_Par_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_Par_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_EllOrbs_Param3 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2683,7 +2683,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_Par_LinOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_LinOrbs_Param1 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_Par_LinOrbs_Param1 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_Par_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_Par_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_LinOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_LinOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_LinOrbs_Param1 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2696,7 +2696,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_Par_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_Param1 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_Par_Param1 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_Par_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_Par_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_Param1 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_Param1 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2709,7 +2709,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_Par_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_Param2 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_Par_Param2 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_Par_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_Par_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_Param2 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_Par_Param2 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2722,7 +2722,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_AccOrbs_Param1 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2735,7 +2735,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param1 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2748,7 +2748,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param2 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2761,7 +2761,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_CircOrbs_Param3 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2774,7 +2774,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param1 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2787,7 +2787,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param2 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2800,7 +2800,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_EllOrbs_Param3 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2813,7 +2813,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_LinOrbs_Param1 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2826,7 +2826,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_noPar_Param1 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_Param1 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_noPar_Param1 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_noPar_Param1 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_noPar_Param1 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_Param1 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_Param1 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_Param1 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2839,7 +2839,7 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BSBL_PhotAstrom_noPar_Param2 | get_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_Param2 | get_astrometry | jax_only | pass | skip | skipped |
 | BSBL_PhotAstrom_noPar_Param2 | get_centroid_shift | jax_only | pass | skip | skipped |
-| BSBL_PhotAstrom_noPar_Param2 | get_resolved_astrometry | jax_only | pass | skip | skipped |
+| BSBL_PhotAstrom_noPar_Param2 | get_resolved_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_Param2 | get_resolved_lens_astrometry | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_Param2 | get_u | jax_only | pass | pass | done |
 | BSBL_PhotAstrom_noPar_Param2 | get_chi2_photometry | jax_only | pass | skip | skipped |
@@ -2854,14 +2854,14 @@ Updated: 2026-06-12 | Grad pass: 2479/2848 | Skip: 369 | Pending: 0
 | BFSPL_PhotAstrom_noPar_Param1 | get_centroid_shift | jax_only | pass | pass | done |
 
 **PSPL methods:** 470/470 done
-**PSBL methods:** 629/712 done
-**BSPL methods:** 636/644 done
+**PSBL methods:** 699/712 done
+**BSPL methods:** 640/644 done
 **FSPL methods:** 63/64 done
-**FSBL methods:** 575/692 done
-**BSBL methods:** 100/260 done
+**FSBL methods:** 661/692 done
+**BSBL methods:** 120/260 done
 **BFSPL methods:** 6/6 done
 
-**Grad verified:** 2479/2848 pass | 369 skip | 0 pending
+**Grad verified:** 2659/2848 pass | 189 skip | 0 pending
 
 See also [`jax_migration_tasks.md`](jax_migration_tasks.md).
 
