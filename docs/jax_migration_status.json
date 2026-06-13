@@ -27917,22 +27917,12 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param6",
-      "method_name": "get_astrometry",
-      "family": "FSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
       "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param6",
-      "method_name": "get_centroid_shift",
+      "method_name": "get_astrometry",
       "family": "FSBL",
       "applicable": true,
       "jax_forward": "jax_only",
@@ -27942,6 +27932,16 @@
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param6",
+      "method_name": "get_centroid_shift",
+      "family": "FSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "FSBL_PhotAstrom_Par_AccOrbs_Param6",
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
@@ -31317,22 +31317,12 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "FSBL_PhotAstrom_Par_Param5",
-      "method_name": "get_astrometry",
-      "family": "FSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
       "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_Param5",
-      "method_name": "get_centroid_shift",
+      "method_name": "get_astrometry",
       "family": "FSBL",
       "applicable": true,
       "jax_forward": "jax_only",
@@ -31342,6 +31332,16 @@
     },
     {
       "class_name": "FSBL_PhotAstrom_Par_Param5",
+      "method_name": "get_centroid_shift",
+      "family": "FSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "FSBL_PhotAstrom_Par_Param5",
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
@@ -32337,22 +32337,12 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param6",
-      "method_name": "get_astrometry",
-      "family": "FSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
       "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param6",
-      "method_name": "get_centroid_shift",
+      "method_name": "get_astrometry",
       "family": "FSBL",
       "applicable": true,
       "jax_forward": "jax_only",
@@ -32362,6 +32352,16 @@
     },
     {
       "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param6",
+      "method_name": "get_centroid_shift",
+      "family": "FSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "FSBL_PhotAstrom_noPar_AccOrbs_Param6",
       "method_name": "get_resolved_astrometry",
       "family": "FSBL",
       "applicable": true,
@@ -37077,22 +37077,12 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "BSBL_PhotAstrom_Par_AccOrbs_Param1",
-      "method_name": "get_astrometry_unlensed",
-      "family": "BSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
       "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "BSBL_PhotAstrom_Par_AccOrbs_Param1",
-      "method_name": "get_lens_astrometry",
+      "method_name": "get_astrometry_unlensed",
       "family": "BSBL",
       "applicable": true,
       "jax_forward": "jax_only",
@@ -37102,27 +37092,7 @@
     },
     {
       "class_name": "BSBL_PhotAstrom_Par_AccOrbs_Param1",
-      "method_name": "get_astrometry",
-      "family": "BSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
-      "grad": "skip",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "BSBL_PhotAstrom_Par_AccOrbs_Param1",
-      "method_name": "get_centroid_shift",
-      "family": "BSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
-      "grad": "skip",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "BSBL_PhotAstrom_Par_AccOrbs_Param1",
-      "method_name": "get_resolved_astrometry",
+      "method_name": "get_lens_astrometry",
       "family": "BSBL",
       "applicable": true,
       "jax_forward": "jax_only",
@@ -37132,6 +37102,36 @@
     },
     {
       "class_name": "BSBL_PhotAstrom_Par_AccOrbs_Param1",
+      "method_name": "get_astrometry",
+      "family": "BSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "BSBL_PhotAstrom_Par_AccOrbs_Param1",
+      "method_name": "get_centroid_shift",
+      "family": "BSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "BSBL_PhotAstrom_Par_AccOrbs_Param1",
+      "method_name": "get_resolved_astrometry",
+      "family": "BSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "BSBL_PhotAstrom_Par_AccOrbs_Param1",
       "method_name": "get_resolved_lens_astrometry",
       "family": "BSBL",
       "applicable": true,
@@ -37197,7 +37197,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37207,7 +37207,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37217,7 +37217,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37227,7 +37227,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37247,7 +37247,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37277,7 +37277,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37287,7 +37287,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37367,7 +37367,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37377,7 +37377,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37387,7 +37387,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37397,7 +37397,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37417,22 +37417,12 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "BSBL_PhotAstrom_Par_CircOrbs_Param2",
-      "method_name": "get_astrometry_unlensed",
-      "family": "BSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
       "grad": "pass",
       "parity_enabled": true
     },
     {
       "class_name": "BSBL_PhotAstrom_Par_CircOrbs_Param2",
-      "method_name": "get_lens_astrometry",
+      "method_name": "get_astrometry_unlensed",
       "family": "BSBL",
       "applicable": true,
       "jax_forward": "jax_only",
@@ -37442,27 +37432,7 @@
     },
     {
       "class_name": "BSBL_PhotAstrom_Par_CircOrbs_Param2",
-      "method_name": "get_astrometry",
-      "family": "BSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
-      "grad": "skip",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "BSBL_PhotAstrom_Par_CircOrbs_Param2",
-      "method_name": "get_centroid_shift",
-      "family": "BSBL",
-      "applicable": true,
-      "jax_forward": "jax_only",
-      "parity": "pass",
-      "grad": "skip",
-      "parity_enabled": true
-    },
-    {
-      "class_name": "BSBL_PhotAstrom_Par_CircOrbs_Param2",
-      "method_name": "get_resolved_astrometry",
+      "method_name": "get_lens_astrometry",
       "family": "BSBL",
       "applicable": true,
       "jax_forward": "jax_only",
@@ -37472,6 +37442,36 @@
     },
     {
       "class_name": "BSBL_PhotAstrom_Par_CircOrbs_Param2",
+      "method_name": "get_astrometry",
+      "family": "BSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "BSBL_PhotAstrom_Par_CircOrbs_Param2",
+      "method_name": "get_centroid_shift",
+      "family": "BSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "BSBL_PhotAstrom_Par_CircOrbs_Param2",
+      "method_name": "get_resolved_astrometry",
+      "family": "BSBL",
+      "applicable": true,
+      "jax_forward": "jax_only",
+      "parity": "pass",
+      "grad": "pass",
+      "parity_enabled": true
+    },
+    {
+      "class_name": "BSBL_PhotAstrom_Par_CircOrbs_Param2",
       "method_name": "get_resolved_lens_astrometry",
       "family": "BSBL",
       "applicable": true,
@@ -37537,7 +37537,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37547,7 +37547,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37557,7 +37557,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37567,7 +37567,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37587,7 +37587,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37617,7 +37617,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37627,7 +37627,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37707,7 +37707,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37717,7 +37717,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37727,7 +37727,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37737,7 +37737,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37757,7 +37757,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37787,7 +37787,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37797,7 +37797,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37877,7 +37877,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37887,7 +37887,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37897,7 +37897,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37907,7 +37907,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37927,7 +37927,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37957,7 +37957,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -37967,7 +37967,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38047,7 +38047,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38057,7 +38057,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38067,7 +38067,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38077,7 +38077,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38097,7 +38097,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38127,7 +38127,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38137,7 +38137,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38217,7 +38217,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38227,7 +38227,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38237,7 +38237,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38247,7 +38247,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38267,7 +38267,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38297,7 +38297,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38307,7 +38307,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38387,7 +38387,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38397,7 +38397,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38407,7 +38407,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38417,7 +38417,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38437,7 +38437,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38467,7 +38467,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38477,7 +38477,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38557,7 +38557,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38567,7 +38567,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38577,7 +38577,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38587,7 +38587,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38607,7 +38607,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38637,7 +38637,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38647,7 +38647,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38727,7 +38727,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38737,7 +38737,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38747,7 +38747,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38757,7 +38757,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38777,7 +38777,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38807,7 +38807,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38817,7 +38817,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38897,7 +38897,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38907,7 +38907,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38917,7 +38917,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38927,7 +38927,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38947,7 +38947,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38977,7 +38977,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -38987,7 +38987,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39067,7 +39067,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39077,7 +39077,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39087,7 +39087,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39097,7 +39097,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39117,7 +39117,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39147,7 +39147,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39157,7 +39157,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39237,7 +39237,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39247,7 +39247,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39257,7 +39257,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39267,7 +39267,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39287,7 +39287,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39317,7 +39317,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39327,7 +39327,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39407,7 +39407,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39417,7 +39417,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39427,7 +39427,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39437,7 +39437,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39457,7 +39457,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39487,7 +39487,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39497,7 +39497,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39577,7 +39577,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39587,7 +39587,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39597,7 +39597,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39607,7 +39607,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39627,7 +39627,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39657,7 +39657,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39667,7 +39667,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39747,7 +39747,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39757,7 +39757,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39767,7 +39767,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39777,7 +39777,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39797,7 +39797,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39827,7 +39827,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39837,7 +39837,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39917,7 +39917,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39927,7 +39927,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39937,7 +39937,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39947,7 +39947,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39967,7 +39967,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -39997,7 +39997,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40007,7 +40007,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40087,7 +40087,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40097,7 +40097,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40107,7 +40107,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40117,7 +40117,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40137,7 +40137,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40167,7 +40167,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40177,7 +40177,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40257,7 +40257,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40267,7 +40267,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40277,7 +40277,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40287,7 +40287,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40307,7 +40307,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40337,7 +40337,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40347,7 +40347,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40427,7 +40427,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40437,7 +40437,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40447,7 +40447,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40457,7 +40457,7 @@
       "applicable": true,
       "jax_forward": "jax_only",
       "parity": "pass",
-      "grad": "skip",
+      "grad": "pass",
       "parity_enabled": true
     },
     {
@@ -40633,10 +40633,10 @@
   ],
   "summary": {
     "total_applicable": 2848,
-    "total_done": 2659,
+    "total_done": 2802,
     "total_closed": 2848,
-    "grad_pass": 2659,
-    "grad_skip": 189,
+    "grad_pass": 2802,
+    "grad_skip": 46,
     "grad_not_run": 0,
     "grad_fail": 0
   }

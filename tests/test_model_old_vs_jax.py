@@ -182,6 +182,9 @@ from model_old_vs_jax_fixtures import (
     bspl_phot_extended_probe_grad_pairs,
     psbl_phot_orbit_param1_phot_grad_pairs,
     resolved_ast_grad_recovered_pairs,
+    bsbl_param1_phot_grad_recovered_pairs,
+    bsbl_param1_phot_ast_likelihood_grad_recovered_pairs,
+    fsbl_lens_ast_grad_recovered_pairs,
     psbl_photastrom_circorbs_ellorbs_param38_grad_pairs,
     psbl_photastrom_param7_grad_pairs,
     psbl_photastrom_orbit_param4_grad_pairs,
@@ -1760,5 +1763,25 @@ def test_grad_resolved_ast_recovered(class_name, method_name):
     Covers FSBL/PSBL phot paths that pass host FD after derived-geometry
     refresh and squared sum on ``get_resolved_*`` outputs.
     """
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_param1_phot_grad_recovered_pairs())
+def test_grad_bsbl_param1_phot_recovered(class_name, method_name):
+    """BSBL Param1/2/3 phot paths recovered by skipping ``root_tol`` in host FD."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_param1_phot_ast_likelihood_grad_recovered_pairs()
+)
+def test_grad_bsbl_param1_phot_ast_likelihood_recovered(class_name, method_name):
+    """BSBL Param1/2/3 phot + ast + likelihood grad (``root_tol`` FD skip)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_lens_ast_grad_recovered_pairs())
+def test_grad_fsbl_lens_ast_recovered(class_name, method_name):
+    """FSBL PhotAstrom ``get_lens_astrometry`` recovered via derived-geometry refresh."""
     _assert_grad_smoke(class_name, method_name)
 

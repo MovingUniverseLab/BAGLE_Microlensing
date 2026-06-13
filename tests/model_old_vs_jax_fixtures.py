@@ -1445,12 +1445,6 @@ def _bsbl_param1_core_grad_pair_ok(class_name: str, method_name: str) -> bool:
     return True
 
 
-_BSBL_PARAM1_FD_FAIL_METHODS = frozenset(
-    (
-        "get_photometry",
-        "get_centroid_shift",
-    )
-)
 
 
 def _is_bsbl_param1(class_name: str) -> bool:
@@ -1462,11 +1456,8 @@ def _is_bsbl_param1(class_name: str) -> bool:
 
 def _bsbl_grad_pair_ok(class_name: str, method_name: str) -> bool:
     """Filter BSBL grad harness pairs with known FD smoke failures."""
-    if _is_bsbl_param1(class_name):
-        if method_name in _BSBL_PARAM1_FD_FAIL_METHODS:
-            return False
-        if method_name in _FSBL_GRAD_ZERO_AST:
-            return False
+    if _is_bsbl_param1(class_name) and method_name in _FSBL_GRAD_ZERO_AST:
+        return False
     return True
 
 
@@ -2541,6 +2532,82 @@ def psbl_phot_orbit_param1_phot_grad_pairs() -> list[tuple[str, str]]:
     )
 
 
+def _bsbl_param1_phot_ast_likelihood_grad_pair_sources() -> tuple:
+    """Pair-list builders for BSBL Param1/2/3 phot + ast + likelihood grad rows."""
+    return (
+        bsbl_photastrom_param1_pairs,
+        bsbl_photastrom_param1_phot_likelihood_pairs,
+        bsbl_photastrom_circorbs_param1_pairs,
+        bsbl_photastrom_circorbs_param1_likelihood_pairs,
+        bsbl_photastrom_ellorbs_param1_pairs,
+        bsbl_photastrom_ellorbs_param1_likelihood_pairs,
+        bsbl_photastrom_linorbs_param1_pairs,
+        bsbl_photastrom_linorbs_param1_likelihood_pairs,
+        bsbl_photastrom_accorbs_param1_pairs,
+        bsbl_photastrom_accorbs_param1_likelihood_pairs,
+        bsbl_photastrom_param2_pairs,
+        bsbl_photastrom_param2_phot_likelihood_pairs,
+        bsbl_photastrom_param3_pairs,
+        bsbl_photastrom_circorbs_param2_pairs,
+        bsbl_photastrom_circorbs_param2_phot_likelihood_pairs,
+        bsbl_photastrom_circorbs_param2_ast_likelihood_pairs,
+        bsbl_photastrom_ellorbs_param2_pairs,
+        bsbl_photastrom_ellorbs_param2_phot_likelihood_pairs,
+        bsbl_photastrom_ast_likelihood_gaps_pairs,
+    )
+
+
+def bsbl_param1_phot_ast_likelihood_grad_recovered_pairs() -> list[tuple[str, str]]:
+    """BSBL Param1/2/3 phot + ast + likelihood grad pairs recovered via ``root_tol`` FD skip.
+
+    Returns
+    ----
+    list of tuple[str, str]
+        One hundred forty ``(class_name, method_name)`` rows formerly marked
+        ``grad: skip`` because host FD through ``root_tol`` produced NaN.
+    """
+    methods = _BSBL_PARAM1_PHOT_AST_LIKELIHOOD_GRAD_METHODS
+    out: set[tuple[str, str]] = set()
+    for fn in _bsbl_param1_phot_ast_likelihood_grad_pair_sources():
+        out.update((c, m) for c, m in fn() if m in methods)
+    return sorted(out)
+
+
+def bsbl_param1_phot_grad_recovered_pairs() -> list[tuple[str, str]]:
+    """BSBL Param1/2/3 phot-only subset of ``bsbl_param1_phot_ast_likelihood_grad_recovered_pairs``."""
+    phot_methods = frozenset(
+        (
+            "get_photometry",
+            "get_centroid_shift",
+            "get_chi2_photometry",
+            "log_likely_photometry_each",
+        )
+    )
+    return sorted(
+        (c, m)
+        for c, m in bsbl_param1_phot_ast_likelihood_grad_recovered_pairs()
+        if m in phot_methods
+    )
+
+
+def fsbl_lens_ast_grad_recovered_pairs() -> list[tuple[str, str]]:
+    """FSBL PhotAstrom ``get_lens_astrometry`` pairs recovered from zero-FD skip batch.
+
+    Returns
+    ----
+    list of tuple[str, str]
+        Three ``(class_name, method_name)`` rows that pass host FD after
+        derived-geometry refresh at the standard fixture point.
+    """
+    return sorted(
+        [
+            ("FSBL_PhotAstrom_Par_AccOrbs_Param6", "get_lens_astrometry"),
+            ("FSBL_PhotAstrom_Par_Param5", "get_lens_astrometry"),
+            ("FSBL_PhotAstrom_noPar_AccOrbs_Param6", "get_lens_astrometry"),
+        ]
+    )
+
+
 def resolved_ast_grad_recovered_pairs() -> list[tuple[str, str]]:
     """Eleven resolved-astrometry grad pairs recovered from probe skip batches.
 
@@ -3114,6 +3181,20 @@ def call_method(
 
 
 INIT_PARAM_SKIP = frozenset({"self", "raL", "decL", "obsLocation"})
+# Host/JAX-eval FD skips ``root_tol``: perturbing it breaks binary-lens root
+# finding and yields NaN photometry / astrometry at the fixture point.
+GRAD_FD_SKIP_PARAMS = frozenset({"root_tol"})
+_BSBL_PARAM1_PHOT_AST_LIKELIHOOD_GRAD_METHODS = frozenset(
+    (
+        "get_photometry",
+        "get_centroid_shift",
+        "get_astrometry",
+        "get_chi2_photometry",
+        "get_chi2_astrometry",
+        "log_likely_photometry_each",
+        "log_likely_astrometry_each",
+    )
+)
 INT_INIT_PARAMS = frozenset(
     {
         "n_outline",
@@ -3815,6 +3896,8 @@ def _fd_grad_host(
 
     g = np.zeros(len(vec0_np), dtype=np.float64)
     for i in range(len(vec0_np)):
+        if init_names[i] in GRAD_FD_SKIP_PARAMS:
+            continue
         vp = vec0_np.copy()
         vm = vec0_np.copy()
         vp[i] += eps
@@ -3857,6 +3940,8 @@ def _fd_grad_jax_eval(
 
     g = np.zeros(len(vec0_np), dtype=np.float64)
     for i in range(len(vec0_np)):
+        if init_names[i] in GRAD_FD_SKIP_PARAMS:
+            continue
         vp = vec0_np.copy()
         vm = vec0_np.copy()
         vp[i] += eps
