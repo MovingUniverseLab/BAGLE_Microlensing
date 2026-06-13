@@ -1,6 +1,6 @@
 # JAX migration task queue
 
-Updated: 2026-06-13 | Applicable tasks: 2907
+Updated: 2026-06-13 | Applicable tasks: 2970
 
 
 ## PSPL (470 tasks)
@@ -1416,7 +1416,7 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] PSPL_Phot_noPar_Param3::log_likely_photometry_each::parity
 - [x] PSPL_Phot_noPar_Param3::log_likely_photometry_each::grad
 
-## PSBL (712 tasks)
+## PSBL (720 tasks)
 
 - [x] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::jax_forward
 - [x] PSBL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::parity
@@ -3392,6 +3392,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] PSBL_Phot_Par_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [x] PSBL_Phot_Par_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [x] PSBL_Phot_Par_CircOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] PSBL_Phot_Par_CircOrbs_Param1::get_source_astrometry_unlensed::grad
 - [x] PSBL_Phot_Par_CircOrbs_Param1::get_u::jax_forward
 - [x] PSBL_Phot_Par_CircOrbs_Param1::get_u::parity
 - [x] PSBL_Phot_Par_CircOrbs_Param1::get_u::grad
@@ -3413,6 +3416,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] PSBL_Phot_Par_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [x] PSBL_Phot_Par_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [x] PSBL_Phot_Par_EllOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] PSBL_Phot_Par_EllOrbs_Param1::get_source_astrometry_unlensed::grad
 - [x] PSBL_Phot_Par_EllOrbs_Param1::get_u::jax_forward
 - [x] PSBL_Phot_Par_EllOrbs_Param1::get_u::parity
 - [x] PSBL_Phot_Par_EllOrbs_Param1::get_u::grad
@@ -3437,6 +3443,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] PSBL_Phot_Par_GP_Param1::get_photometry_with_gp::jax_forward
 - [x] PSBL_Phot_Par_GP_Param1::get_photometry_with_gp::parity
 - [x] PSBL_Phot_Par_GP_Param1::get_photometry_with_gp::grad
+- [ ] PSBL_Phot_Par_GP_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] PSBL_Phot_Par_GP_Param1::get_source_astrometry_unlensed::parity
+- [ ] PSBL_Phot_Par_GP_Param1::get_source_astrometry_unlensed::grad
 - [x] PSBL_Phot_Par_GP_Param1::get_u::jax_forward
 - [x] PSBL_Phot_Par_GP_Param1::get_u::parity
 - [x] PSBL_Phot_Par_GP_Param1::get_u::grad
@@ -3458,6 +3467,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] PSBL_Phot_Par_Param1::get_resolved_lens_astrometry::jax_forward
 - [x] PSBL_Phot_Par_Param1::get_resolved_lens_astrometry::parity
 - [x] PSBL_Phot_Par_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_Phot_Par_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] PSBL_Phot_Par_Param1::get_source_astrometry_unlensed::parity
+- [ ] PSBL_Phot_Par_Param1::get_source_astrometry_unlensed::grad
 - [x] PSBL_Phot_Par_Param1::get_u::jax_forward
 - [x] PSBL_Phot_Par_Param1::get_u::parity
 - [x] PSBL_Phot_Par_Param1::get_u::grad
@@ -3479,6 +3491,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] PSBL_Phot_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [x] PSBL_Phot_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::parity
 - [x] PSBL_Phot_noPar_CircOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] PSBL_Phot_noPar_CircOrbs_Param1::get_source_astrometry_unlensed::grad
 - [x] PSBL_Phot_noPar_CircOrbs_Param1::get_u::jax_forward
 - [x] PSBL_Phot_noPar_CircOrbs_Param1::get_u::parity
 - [x] PSBL_Phot_noPar_CircOrbs_Param1::get_u::grad
@@ -3500,6 +3515,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] PSBL_Phot_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::jax_forward
 - [x] PSBL_Phot_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::parity
 - [x] PSBL_Phot_noPar_EllOrbs_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] PSBL_Phot_noPar_EllOrbs_Param1::get_source_astrometry_unlensed::grad
 - [x] PSBL_Phot_noPar_EllOrbs_Param1::get_u::jax_forward
 - [x] PSBL_Phot_noPar_EllOrbs_Param1::get_u::parity
 - [x] PSBL_Phot_noPar_EllOrbs_Param1::get_u::grad
@@ -3524,6 +3542,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] PSBL_Phot_noPar_GP_Param1::get_photometry_with_gp::jax_forward
 - [x] PSBL_Phot_noPar_GP_Param1::get_photometry_with_gp::parity
 - [x] PSBL_Phot_noPar_GP_Param1::get_photometry_with_gp::grad
+- [ ] PSBL_Phot_noPar_GP_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] PSBL_Phot_noPar_GP_Param1::get_source_astrometry_unlensed::parity
+- [ ] PSBL_Phot_noPar_GP_Param1::get_source_astrometry_unlensed::grad
 - [x] PSBL_Phot_noPar_GP_Param1::get_u::jax_forward
 - [x] PSBL_Phot_noPar_GP_Param1::get_u::parity
 - [x] PSBL_Phot_noPar_GP_Param1::get_u::grad
@@ -3545,6 +3566,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] PSBL_Phot_noPar_Param1::get_resolved_lens_astrometry::jax_forward
 - [x] PSBL_Phot_noPar_Param1::get_resolved_lens_astrometry::parity
 - [x] PSBL_Phot_noPar_Param1::get_resolved_lens_astrometry::grad
+- [ ] PSBL_Phot_noPar_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] PSBL_Phot_noPar_Param1::get_source_astrometry_unlensed::parity
+- [ ] PSBL_Phot_noPar_Param1::get_source_astrometry_unlensed::grad
 - [x] PSBL_Phot_noPar_Param1::get_u::jax_forward
 - [x] PSBL_Phot_noPar_Param1::get_u::parity
 - [x] PSBL_Phot_noPar_Param1::get_u::grad
@@ -3555,7 +3579,7 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] PSBL_Phot_noPar_Param1::log_likely_photometry_each::parity
 - [x] PSBL_Phot_noPar_Param1::log_likely_photometry_each::grad
 
-## BSPL (698 tasks)
+## BSPL (752 tasks)
 
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::jax_forward
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_amplification::parity
@@ -3578,9 +3602,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param1::get_u::grad
@@ -3617,9 +3644,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param2::get_u::grad
@@ -3656,9 +3686,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_Par_AccOrbs_Param3::get_u::grad
@@ -3695,9 +3728,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param1::get_u::grad
@@ -3734,9 +3770,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param2::get_u::grad
@@ -3773,9 +3812,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_Par_CircOrbs_Param3::get_u::grad
@@ -3812,9 +3854,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param1::get_u::grad
@@ -3851,9 +3896,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param2::get_u::grad
@@ -3890,9 +3938,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param3::get_u::grad
@@ -3929,9 +3980,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_u::parity
 - [x] BSPL_PhotAstrom_Par_EllOrbs_Param4::get_u::grad
@@ -3971,9 +4025,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param1::get_u::grad
@@ -4013,9 +4070,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param2::get_u::grad
@@ -4055,9 +4115,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_Par_GP_AccOrbs_Param3::get_u::grad
@@ -4097,9 +4160,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param1::get_u::grad
@@ -4139,9 +4205,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param2::get_u::grad
@@ -4181,9 +4250,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_Par_GP_LinOrbs_Param3::get_u::grad
@@ -4223,9 +4295,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_Par_GP_Param1::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_GP_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_GP_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_Par_GP_Param1::get_u::grad
@@ -4265,9 +4340,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_Par_GP_Param2::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_GP_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_GP_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_Par_GP_Param2::get_u::grad
@@ -4307,9 +4385,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_GP_Param3::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_Param3::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_Par_GP_Param3::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_GP_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_GP_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_GP_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_GP_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_Par_GP_Param3::get_u::grad
@@ -4346,9 +4427,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param1::get_u::grad
@@ -4385,9 +4469,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param2::get_u::grad
@@ -4424,9 +4511,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_Par_LinOrbs_Param3::get_u::grad
@@ -4463,9 +4553,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_Param1::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_Par_Param1::get_u::grad
@@ -4502,9 +4595,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_Param2::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_Param2::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_Param2::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_Par_Param2::get_u::grad
@@ -4541,9 +4637,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_Par_Param3::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_Par_Param3::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_Par_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_Par_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_Par_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_Par_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_Par_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_Par_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_Par_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_Par_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_Par_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_Par_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_Par_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_Par_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_Par_Param3::get_u::grad
@@ -4580,9 +4679,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param1::get_u::grad
@@ -4619,9 +4721,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param2::get_u::grad
@@ -4658,9 +4763,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_AccOrbs_Param3::get_u::grad
@@ -4697,9 +4805,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param1::get_u::grad
@@ -4736,9 +4847,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param2::get_u::grad
@@ -4775,9 +4889,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_CircOrbs_Param3::get_u::grad
@@ -4814,9 +4931,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param1::get_u::grad
@@ -4853,9 +4973,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param2::get_u::grad
@@ -4892,9 +5015,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param3::get_u::grad
@@ -4931,9 +5057,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_EllOrbs_Param4::get_u::grad
@@ -4973,9 +5102,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1::get_u::grad
@@ -5015,9 +5147,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2::get_u::grad
@@ -5057,9 +5192,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3::get_u::grad
@@ -5099,9 +5237,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1::get_u::grad
@@ -5141,9 +5282,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2::get_u::grad
@@ -5183,9 +5327,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3::get_u::grad
@@ -5225,9 +5372,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_noPar_GP_Param1::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_GP_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_GP_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_GP_Param1::get_u::grad
@@ -5267,9 +5417,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_noPar_GP_Param2::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_GP_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_GP_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_GP_Param2::get_u::grad
@@ -5309,9 +5462,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_GP_Param3::get_photometry_with_gp::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_Param3::get_photometry_with_gp::parity
 - [x] BSPL_PhotAstrom_noPar_GP_Param3::get_photometry_with_gp::grad
-- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_GP_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_GP_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_GP_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_GP_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_GP_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_GP_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_GP_Param3::get_u::grad
@@ -5348,9 +5504,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param1::get_u::grad
@@ -5387,9 +5546,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param2::get_u::grad
@@ -5426,9 +5588,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_LinOrbs_Param3::get_u::grad
@@ -5465,9 +5630,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_Param1::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_Param1::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_Param1::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_Param1::get_u::grad
@@ -5504,9 +5672,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_Param2::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_Param2::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_Param2::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_Param2::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_Param2::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_Param2::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_Param2::get_u::grad
@@ -5543,9 +5714,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_PhotAstrom_noPar_Param3::get_resolved_astrometry::jax_forward
 - [x] BSPL_PhotAstrom_noPar_Param3::get_resolved_astrometry::parity
 - [x] BSPL_PhotAstrom_noPar_Param3::get_resolved_astrometry::grad
-- [ ] BSPL_PhotAstrom_noPar_Param3::get_resolved_amplification::jax_forward
-- [ ] BSPL_PhotAstrom_noPar_Param3::get_resolved_amplification::parity
-- [ ] BSPL_PhotAstrom_noPar_Param3::get_resolved_amplification::grad
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_source_astrometry_unlensed::parity
+- [ ] BSPL_PhotAstrom_noPar_Param3::get_source_astrometry_unlensed::grad
+- [x] BSPL_PhotAstrom_noPar_Param3::get_resolved_amplification::jax_forward
+- [x] BSPL_PhotAstrom_noPar_Param3::get_resolved_amplification::parity
+- [x] BSPL_PhotAstrom_noPar_Param3::get_resolved_amplification::grad
 - [x] BSPL_PhotAstrom_noPar_Param3::get_u::jax_forward
 - [x] BSPL_PhotAstrom_noPar_Param3::get_u::parity
 - [x] BSPL_PhotAstrom_noPar_Param3::get_u::grad
@@ -5573,9 +5747,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_Phot_Par_GP_Param1::get_photometry_with_gp::jax_forward
 - [x] BSPL_Phot_Par_GP_Param1::get_photometry_with_gp::parity
 - [x] BSPL_Phot_Par_GP_Param1::get_photometry_with_gp::grad
-- [ ] BSPL_Phot_Par_GP_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_Phot_Par_GP_Param1::get_resolved_amplification::parity
-- [ ] BSPL_Phot_Par_GP_Param1::get_resolved_amplification::grad
+- [ ] BSPL_Phot_Par_GP_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_Phot_Par_GP_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_Phot_Par_GP_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_Phot_Par_GP_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_Phot_Par_GP_Param1::get_resolved_amplification::parity
+- [x] BSPL_Phot_Par_GP_Param1::get_resolved_amplification::grad
 - [x] BSPL_Phot_Par_GP_Param1::get_u::jax_forward
 - [x] BSPL_Phot_Par_GP_Param1::get_u::parity
 - [x] BSPL_Phot_Par_GP_Param1::get_u::grad
@@ -5594,9 +5771,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_Phot_Par_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_Phot_Par_Param1::get_resolved_astrometry::parity
 - [x] BSPL_Phot_Par_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_Phot_Par_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_Phot_Par_Param1::get_resolved_amplification::parity
-- [ ] BSPL_Phot_Par_Param1::get_resolved_amplification::grad
+- [ ] BSPL_Phot_Par_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_Phot_Par_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_Phot_Par_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_Phot_Par_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_Phot_Par_Param1::get_resolved_amplification::parity
+- [x] BSPL_Phot_Par_Param1::get_resolved_amplification::grad
 - [x] BSPL_Phot_Par_Param1::get_u::jax_forward
 - [x] BSPL_Phot_Par_Param1::get_u::parity
 - [x] BSPL_Phot_Par_Param1::get_u::grad
@@ -5618,9 +5798,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_Phot_noPar_GP_Param1::get_photometry_with_gp::jax_forward
 - [x] BSPL_Phot_noPar_GP_Param1::get_photometry_with_gp::parity
 - [x] BSPL_Phot_noPar_GP_Param1::get_photometry_with_gp::grad
-- [ ] BSPL_Phot_noPar_GP_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_Phot_noPar_GP_Param1::get_resolved_amplification::parity
-- [ ] BSPL_Phot_noPar_GP_Param1::get_resolved_amplification::grad
+- [ ] BSPL_Phot_noPar_GP_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_Phot_noPar_GP_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_Phot_noPar_GP_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_Phot_noPar_GP_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_Phot_noPar_GP_Param1::get_resolved_amplification::parity
+- [x] BSPL_Phot_noPar_GP_Param1::get_resolved_amplification::grad
 - [x] BSPL_Phot_noPar_GP_Param1::get_u::jax_forward
 - [x] BSPL_Phot_noPar_GP_Param1::get_u::parity
 - [x] BSPL_Phot_noPar_GP_Param1::get_u::grad
@@ -5639,9 +5822,12 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSPL_Phot_noPar_Param1::get_resolved_astrometry::jax_forward
 - [x] BSPL_Phot_noPar_Param1::get_resolved_astrometry::parity
 - [x] BSPL_Phot_noPar_Param1::get_resolved_astrometry::grad
-- [ ] BSPL_Phot_noPar_Param1::get_resolved_amplification::jax_forward
-- [ ] BSPL_Phot_noPar_Param1::get_resolved_amplification::parity
-- [ ] BSPL_Phot_noPar_Param1::get_resolved_amplification::grad
+- [ ] BSPL_Phot_noPar_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BSPL_Phot_noPar_Param1::get_source_astrometry_unlensed::parity
+- [ ] BSPL_Phot_noPar_Param1::get_source_astrometry_unlensed::grad
+- [x] BSPL_Phot_noPar_Param1::get_resolved_amplification::jax_forward
+- [x] BSPL_Phot_noPar_Param1::get_resolved_amplification::parity
+- [x] BSPL_Phot_noPar_Param1::get_resolved_amplification::grad
 - [x] BSPL_Phot_noPar_Param1::get_u::jax_forward
 - [x] BSPL_Phot_noPar_Param1::get_u::parity
 - [x] BSPL_Phot_noPar_Param1::get_u::grad
@@ -5678,9 +5864,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] FSPL_PhotAstrom_Par_Param1::get_astrometry_outline_unlensed::jax_forward
 - [x] FSPL_PhotAstrom_Par_Param1::get_astrometry_outline_unlensed::parity
 - [x] FSPL_PhotAstrom_Par_Param1::get_astrometry_outline_unlensed::grad
-- [ ] FSPL_PhotAstrom_Par_Param1::get_resolved_amplification::jax_forward
-- [ ] FSPL_PhotAstrom_Par_Param1::get_resolved_amplification::parity
-- [ ] FSPL_PhotAstrom_Par_Param1::get_resolved_amplification::grad
+- [x] FSPL_PhotAstrom_Par_Param1::get_resolved_amplification::jax_forward
+- [x] FSPL_PhotAstrom_Par_Param1::get_resolved_amplification::parity
+- [x] FSPL_PhotAstrom_Par_Param1::get_resolved_amplification::grad
 - [x] FSPL_PhotAstrom_Par_Param1::get_u::jax_forward
 - [x] FSPL_PhotAstrom_Par_Param1::get_u::parity
 - [x] FSPL_PhotAstrom_Par_Param1::get_u::grad
@@ -5720,9 +5906,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] FSPL_PhotAstrom_Par_Param2::get_astrometry_outline_unlensed::jax_forward
 - [x] FSPL_PhotAstrom_Par_Param2::get_astrometry_outline_unlensed::parity
 - [x] FSPL_PhotAstrom_Par_Param2::get_astrometry_outline_unlensed::grad
-- [ ] FSPL_PhotAstrom_Par_Param2::get_resolved_amplification::jax_forward
-- [ ] FSPL_PhotAstrom_Par_Param2::get_resolved_amplification::parity
-- [ ] FSPL_PhotAstrom_Par_Param2::get_resolved_amplification::grad
+- [x] FSPL_PhotAstrom_Par_Param2::get_resolved_amplification::jax_forward
+- [x] FSPL_PhotAstrom_Par_Param2::get_resolved_amplification::parity
+- [x] FSPL_PhotAstrom_Par_Param2::get_resolved_amplification::grad
 - [x] FSPL_PhotAstrom_Par_Param2::get_u::jax_forward
 - [x] FSPL_PhotAstrom_Par_Param2::get_u::parity
 - [x] FSPL_PhotAstrom_Par_Param2::get_u::grad
@@ -5762,9 +5948,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] FSPL_PhotAstrom_noPar_Param1::get_astrometry_outline_unlensed::jax_forward
 - [x] FSPL_PhotAstrom_noPar_Param1::get_astrometry_outline_unlensed::parity
 - [x] FSPL_PhotAstrom_noPar_Param1::get_astrometry_outline_unlensed::grad
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::jax_forward
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::parity
-- [ ] FSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::grad
+- [x] FSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::jax_forward
+- [x] FSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::parity
+- [x] FSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::grad
 - [x] FSPL_PhotAstrom_noPar_Param1::get_u::jax_forward
 - [x] FSPL_PhotAstrom_noPar_Param1::get_u::parity
 - [x] FSPL_PhotAstrom_noPar_Param1::get_u::grad
@@ -5804,9 +5990,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] FSPL_PhotAstrom_noPar_Param2::get_astrometry_outline_unlensed::jax_forward
 - [x] FSPL_PhotAstrom_noPar_Param2::get_astrometry_outline_unlensed::parity
 - [x] FSPL_PhotAstrom_noPar_Param2::get_astrometry_outline_unlensed::grad
-- [ ] FSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::jax_forward
-- [ ] FSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::parity
-- [ ] FSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::grad
+- [x] FSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::jax_forward
+- [x] FSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::parity
+- [x] FSPL_PhotAstrom_noPar_Param2::get_resolved_amplification::grad
 - [x] FSPL_PhotAstrom_noPar_Param2::get_u::jax_forward
 - [x] FSPL_PhotAstrom_noPar_Param2::get_u::parity
 - [x] FSPL_PhotAstrom_noPar_Param2::get_u::grad
@@ -8721,7 +8907,7 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BSBL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::parity
 - [x] BSBL_PhotAstrom_noPar_Param2::log_likely_astrometry_each::grad
 
-## BFSPL (7 tasks)
+## BFSPL (8 tasks)
 
 - [x] BFSPL_PhotAstrom_noPar_Param1::get_amplification::jax_forward
 - [x] BFSPL_PhotAstrom_noPar_Param1::get_amplification::parity
@@ -8741,6 +8927,9 @@ Updated: 2026-06-13 | Applicable tasks: 2907
 - [x] BFSPL_PhotAstrom_noPar_Param1::get_centroid_shift::jax_forward
 - [x] BFSPL_PhotAstrom_noPar_Param1::get_centroid_shift::parity
 - [x] BFSPL_PhotAstrom_noPar_Param1::get_centroid_shift::grad
-- [ ] BFSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::jax_forward
-- [ ] BFSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::parity
-- [ ] BFSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::grad
+- [ ] BFSPL_PhotAstrom_noPar_Param1::get_source_astrometry_unlensed::jax_forward
+- [ ] BFSPL_PhotAstrom_noPar_Param1::get_source_astrometry_unlensed::parity
+- [ ] BFSPL_PhotAstrom_noPar_Param1::get_source_astrometry_unlensed::grad
+- [x] BFSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::jax_forward
+- [x] BFSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::parity
+- [x] BFSPL_PhotAstrom_noPar_Param1::get_resolved_amplification::grad

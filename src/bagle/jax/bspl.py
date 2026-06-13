@@ -160,6 +160,39 @@ def bspl_resolved_amplification_from_model(model, t, filt_idx, pvec):
     return np.asarray(amp, dtype=np.float64)
 
 
+def bspl_source_astrometry_unlensed_from_model(model, t, filt_idx, pvec):
+    """Flux-weighted unlensed source centroid in Einstein radii (BSPL phot-only).
+
+    Uses host ``get_u`` so static and orbital layouts match NumPy reference.
+    """
+    u_vec = np.asarray(model.get_u(t, filt_idx=filt_idx), dtype=np.float64)
+    u1 = jnp.asarray(u_vec[:, 0, :], dtype=jnp.float64)
+    u2 = jnp.asarray(u_vec[:, 1, :], dtype=jnp.float64)
+    f1 = mag2flux_jax(_filt_scalar(model, "mag_src_pri", filt_idx))
+    f2 = mag2flux_jax(_filt_scalar(model, "mag_src_sec", filt_idx))
+    u = (u1 * f1 + u2 * f2) / (f1 + f2)
+    return np.asarray(u, dtype=np.float64)
+
+
+def bspl_photastrom_source_astrometry_unlensed_from_model(
+    model, t, filt_idx, pvec
+):
+    """Flux-weighted unlensed source centroid in arcsec (BSPL PhotAstrom).
+
+    Uses host ``get_resolved_source_astrometry_unlensed`` for orbital motion.
+    """
+    xS_both = np.asarray(
+        model.get_resolved_source_astrometry_unlensed(t, filt_idx=filt_idx),
+        dtype=np.float64,
+    )
+    x1 = jnp.asarray(xS_both[:, 0, :], dtype=jnp.float64)
+    x2 = jnp.asarray(xS_both[:, 1, :], dtype=jnp.float64)
+    f1 = mag2flux_jax(_filt_scalar(model, "mag_src_pri", filt_idx))
+    f2 = mag2flux_jax(_filt_scalar(model, "mag_src_sec", filt_idx))
+    xS = (x1 * f1 + x2 * f2) / (f1 + f2)
+    return np.asarray(xS, dtype=np.float64)
+
+
 def bspl_astrometry_from_model(model, t, filt_idx, pvec):
     return None  # use numpy path until full BSPL astrometry port
 

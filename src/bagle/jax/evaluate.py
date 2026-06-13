@@ -684,22 +684,50 @@ def evaluate_source_astrometry_unlensed_jax(
     t,
     filt_idx: int = 0,
 ) -> np.ndarray | None:
-    if layout.eval_kind not in _PSPL_ASTROM_KINDS:
-        return None
-    try:
-        t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
-        pvec = _parallax_table(model, t, filt_idx)
-        pos = pspl_source_astrometry_unlensed(
-            t_j,
-            float(model.t0),
-            jnp.asarray(model.xS0, dtype=jnp.float64),
-            jnp.asarray(model.muS, dtype=jnp.float64),
-            parallax_vectors=pvec,
-            piS=float(model.piS),
-        )
-        return np.asarray(pos, dtype=np.float64)
-    except (AttributeError, NotImplementedError, TypeError):
-        return None
+    ek = layout.eval_kind
+    if ek in _PSPL_ASTROM_KINDS:
+        try:
+            t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+            pvec = _parallax_table(model, t, filt_idx)
+            pos = pspl_source_astrometry_unlensed(
+                t_j,
+                float(model.t0),
+                jnp.asarray(model.xS0, dtype=jnp.float64),
+                jnp.asarray(model.muS, dtype=jnp.float64),
+                parallax_vectors=pvec,
+                piS=float(model.piS),
+            )
+            return np.asarray(pos, dtype=np.float64)
+        except (AttributeError, NotImplementedError, TypeError):
+            return None
+    if ek.startswith("psbl_phot"):
+        try:
+            return np.asarray(model.get_u(t, filt_idx=filt_idx), dtype=np.float64)
+        except (AttributeError, NotImplementedError, TypeError):
+            return None
+    if ek.startswith("bspl_photastrom"):
+        try:
+            from bagle.jax.bspl import (
+                bspl_photastrom_source_astrometry_unlensed_from_model,
+            )
+
+            pvec = _parallax_table(model, t, filt_idx)
+            return bspl_photastrom_source_astrometry_unlensed_from_model(
+                model, t, filt_idx, pvec
+            )
+        except (AttributeError, NotImplementedError, TypeError):
+            return None
+    if ek.startswith("bspl_phot"):
+        try:
+            from bagle.jax.bspl import bspl_source_astrometry_unlensed_from_model
+
+            pvec = _parallax_table(model, t, filt_idx)
+            return bspl_source_astrometry_unlensed_from_model(
+                model, t, filt_idx, pvec
+            )
+        except (AttributeError, NotImplementedError, TypeError):
+            return None
+    return None
 
 
 def evaluate_resolved_astrometry_jax(

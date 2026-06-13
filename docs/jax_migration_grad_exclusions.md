@@ -1,7 +1,11 @@
 # JAX migration — permanent grad exclusions
 
-Updated: 2026-06-13. **Extension batch A** (+59 applicable): BSPL / FSPL_PhotAstrom /
-BFSPL own-override ``get_resolved_amplification`` (see §Extension backlog below).
+Updated: 2026-06-13. **Extension batch B** (+63 applicable): PSBL_Phot /
+BSPL_Phot / BSPL_PhotAstrom own-override ``get_source_astrometry_unlensed``
+(see §Extension backlog below).
+
+Prior session **batch A** (+59 applicable): BSPL / FSPL_PhotAstrom /
+BFSPL own-override ``get_resolved_amplification``.
 
 Prior session recovered the final **12** FSBL
 ``get_lens_astrometry`` Param4/8 skip rows: static layouts via heliocentric COM
@@ -15,12 +19,14 @@ Prior session recovered **31** ``get_u`` skip rows and **6** FSBL
 
 After batch A: **2907 applicable** (+59 ``get_resolved_amplification`` on BSPL / FSPL_PhotAstrom / BFSPL).
 
+After batch B: **2970 applicable** (+63 ``get_source_astrometry_unlensed`` on PSBL_Phot / BSPL_Phot / BSPL_PhotAstrom).
+
 ## Extension backlog (prioritized)
 
 | Priority | Method family | Families / definer | Count | Semantics | JAX forward | Notes |
 |----------|---------------|-------------------|------:|-----------|-------------|-------|
 | **A (done)** | ``get_resolved_amplification`` | ``BSPL``, ``FSPL_PhotAstrom``, ``BFSPL_PhotAstrom`` | **+59** | Dual-source ± (BSPL) or ``get_all_arrays`` amp (FSPL/BFSPL) | ``bspl_resolved_amplification_from_model``, ``fspl_resolved_amplification_from_model`` | Excludes PSBL/BSBL/FSBL inheriting PSPL ± |
-| B | ``get_source_astrometry_unlensed`` | ``PSBL_Phot`` (8), ``BSPL_Phot``/``PhotAstrom`` (55) | ~63 | ``get_u`` in Einstein radii (phot) or arcsec astrom | Partial (PSPL astrom kinds only) | PSPL phot-only rows intentionally N/A (astrometryFlag=False) |
+| **B (done)** | ``get_source_astrometry_unlensed`` | ``PSBL_Phot`` (8), ``BSPL_Phot`` (4), ``BSPL_PhotAstrom`` (51) | **+63** | ``get_u`` in θ_E (phot) or arcsec flux-weighted centroid (photastrom) | ``bspl_source_astrometry_unlensed_from_model``, ``bspl_photastrom_source_astrometry_unlensed_from_model``, PSBL ``get_u`` | Excludes PSBL/BSBL PhotAstrom via PSPL ABC (~46) |
 | C | ``get_photometry_with_gp`` | GP classes | 0 gap | — | Wired | 54/54 already applicable |
 | D | ``get_astrometry_outline_unlensed`` | FSPL PhotAstrom | 0 gap | Outline AMG | Host AMG | 4/4 already applicable |
 | — | ``get_resolved_amplification`` (excluded) | PSBL/BSBL/FSBL PhotAstrom via ``PSPL`` definer | ~82 | Wrong: single-lens 2-image ± on binary lens | PSPL formula only | Do not mark applicable |
@@ -34,6 +40,14 @@ After batch A: **2907 applicable** (+59 ``get_resolved_amplification`` on BSPL /
 - **BFSPL_PhotAstrom (1)**: ``BFSPL_PhotAstrom.get_resolved_amplification`` — ``swapaxes(get_all_arrays amp, 1, 2)``.
 
 Harness: ``resolved_amplification_extension_pairs()``, ``test_parity_resolved_amplification_extension``, ``test_grad_resolved_amplification_extension``.
+
+### Batch B detail (implemented)
+
+- **PSBL_Phot (8)**: ``PSBL_Phot.get_source_astrometry_unlensed`` — alias of ``get_u`` (Einstein radii).
+- **BSPL_Phot (4)**: ``BSPL_Phot.get_source_astrometry_unlensed`` — flux-weighted dual-source ``get_u`` centroid.
+- **BSPL_PhotAstrom (51)**: ``BSPL_PhotAstrom.get_source_astrometry_unlensed`` — flux-weighted arcsec centroid from ``get_resolved_source_astrometry_unlensed``.
+
+Harness: ``source_astrometry_unlensed_extension_pairs()``, ``test_parity_source_astrometry_unlensed_extension``, ``test_grad_source_astrometry_unlensed_extension``.
 
 These skip rows are **not** marked `grad=pass` without a passing finite-difference smoke
 test. They are documented here as permanent exclusions until the underlying FD /

@@ -6593,6 +6593,15 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         .. note::
            Note that this is a photometry-only model, so units are in Einstein radii.
         """
+        try:
+            from bagle.jax_model import try_get_source_astrometry_unlensed
+
+            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         u = self.get_u(t, filt_idx=filt_idx)
 
         return u
@@ -12199,6 +12208,15 @@ class BSPL_Phot(BSPL, PSPL_Phot):
         xS_unlensed : numpy array, dtype=float, shape = len(t) x 2
             The unlensed positions of the source in Einstein radii.
         """
+        try:
+            from bagle.jax_model import try_get_source_astrometry_unlensed
+
+            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         u_unlens_both = self.get_resolved_source_astrometry_unlensed(t, filt_idx=filt_idx)
         u1_unlens = u_unlens_both[:, 0, :]
         u2_unlens = u_unlens_both[:, 1, :]
@@ -12410,6 +12428,15 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             | The unlensed positions of the combined sources in arcseconds.
             | Shape = [len(t), 2 directions]
         """
+        try:
+            from bagle.jax_model import try_get_source_astrometry_unlensed
+
+            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         xS_unlens_both = self.get_resolved_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xS1_unlens = xS_unlens_both[:, 0, :]
         xS2_unlens = xS_unlens_both[:, 1, :]
@@ -23296,6 +23323,15 @@ class FSBL_Phot(FSBL, PSPL_Phot):
         .. note::
            Note that this is a photometry-only model, so units are in Einstein radii.
         """
+        try:
+            from bagle.jax_model import try_get_source_astrometry_unlensed
+
+            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         u = self.get_u(t, filt_idx=filt_idx)
 
         return u

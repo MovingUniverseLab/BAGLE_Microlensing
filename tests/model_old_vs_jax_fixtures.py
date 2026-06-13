@@ -318,6 +318,7 @@ def call_method_via_jax_eval(
         try_get_photometry,
         try_get_resolved_astrometry,
         try_get_resolved_amplification,
+        try_get_source_astrometry_unlensed,
         try_get_u,
     )
 
@@ -330,6 +331,7 @@ def call_method_via_jax_eval(
         "get_centroid_shift": try_get_centroid_shift,
         "get_resolved_astrometry": try_get_resolved_astrometry,
         "get_resolved_amplification": try_get_resolved_amplification,
+        "get_source_astrometry_unlensed": try_get_source_astrometry_unlensed,
         "get_u": try_get_u,
     }
     fn = dispatch.get(method_name)
@@ -856,6 +858,33 @@ def resolved_amplification_extension_pairs() -> list[tuple[str, str]]:
 def resolved_amplification_extension_grad_pairs() -> list[tuple[str, str]]:
     """Grad smoke for :func:`resolved_amplification_extension_pairs`."""
     return list(resolved_amplification_extension_pairs())
+
+
+def source_astrometry_unlensed_extension_pairs() -> list[tuple[str, str]]:
+    """PSBL_Phot / BSPL_Phot / BSPL_PhotAstrom own-override source astrometry."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import (
+        _SOURCE_ASTROMETRY_UNLENSED_OWN_DEFINERS,
+        _method_defining_class,
+        applicable_task_pairs,
+        discover_concrete_classes,
+    )
+
+    applicable = set(applicable_task_pairs(model_jax))
+    out: list[tuple[str, str]] = []
+    for cname, cls in discover_concrete_classes(model_jax):
+        definer = _method_defining_class(cls, "get_source_astrometry_unlensed")
+        if definer not in _SOURCE_ASTROMETRY_UNLENSED_OWN_DEFINERS:
+            continue
+        key = (cname, "get_source_astrometry_unlensed")
+        if key in applicable:
+            out.append(key)
+    return sorted(out)
+
+
+def source_astrometry_unlensed_extension_grad_pairs() -> list[tuple[str, str]]:
+    """Grad smoke for :func:`source_astrometry_unlensed_extension_pairs`."""
+    return list(source_astrometry_unlensed_extension_pairs())
 
 
 def fspl_photastrom_param1_extended_pairs() -> list[tuple[str, str]]:
@@ -4388,7 +4417,7 @@ _RESOLVED_AST_FD_METHODS = frozenset(
     )
 )
 
-_GET_U_FD_METHODS = frozenset(("get_u",))
+_GET_U_FD_METHODS = frozenset(("get_u", "get_source_astrometry_unlensed"))
 
 _SQUARED_FD_METHODS = _RESOLVED_AST_FD_METHODS | _GET_U_FD_METHODS
 
@@ -5091,6 +5120,7 @@ def grad_smoke_jax(
 
     if _psbl_phot_only and method_name in (
         "get_u",
+        "get_source_astrometry_unlensed",
         "get_chi2_photometry",
         "log_likely_photometry_each",
         "get_resolved_astrometry",
@@ -5106,6 +5136,7 @@ def grad_smoke_jax(
 
     if ek == "bspl_phot" and method_name in (
         "get_u",
+        "get_source_astrometry_unlensed",
         "get_chi2_photometry",
         "log_likely_photometry_each",
         "get_resolved_astrometry",
@@ -5119,7 +5150,7 @@ def grad_smoke_jax(
         ("bspl_photastrom", "psbl_photastrom", "bsbl_photastrom")
     )
     _fd_photastrom_methods = (
-        ("get_u",)
+        ("get_u", "get_source_astrometry_unlensed")
         + tuple(
             m
             for m in PSBL_PHOTASTROM_AST_METHODS

@@ -94,6 +94,10 @@ _RESOLVED_AMP_OWN_DEFINERS: frozenset[str] = frozenset(
     {"BSPL", "FSPL_PhotAstrom", "BFSPL_PhotAstrom"}
 )
 
+_SOURCE_ASTROMETRY_UNLENSED_OWN_DEFINERS: frozenset[str] = frozenset(
+    {"PSBL_Phot", "BSPL_Phot", "BSPL_PhotAstrom"}
+)
+
 
 def _resolved_amplification_applicable(cls: type, class_name: str) -> bool:
     """True when ``get_resolved_amplification`` is physically meaningful for ``cls``.
@@ -108,6 +112,22 @@ def _resolved_amplification_applicable(cls: type, class_name: str) -> bool:
     if definer in _RESOLVED_AMP_OWN_DEFINERS:
         return True
     return class_name.startswith("PSPL")
+
+
+def _source_astrometry_unlensed_applicable(cls: type, class_name: str) -> bool:
+    """True when ``get_source_astrometry_unlensed`` uses the correct physics.
+
+    Includes PSPL astrometry ABC (arcsec linear motion) and phot-only
+    Einstein-radius paths on PSBL_Phot / BSPL_Phot / BSPL_PhotAstrom.
+    Excludes PSBL/BSBL PhotAstrom that only inherit the PSPL astrometry ABC.
+    """
+    if not _class_has_method(cls, "get_source_astrometry_unlensed"):
+        return False
+    ast = bool(getattr(cls, "astrometryFlag", False) or getattr(cls, "paramAstromFlag", False))
+    if class_name.startswith("PSPL") and ast:
+        return True
+    definer = _method_defining_class(cls, "get_source_astrometry_unlensed")
+    return definer in _SOURCE_ASTROMETRY_UNLENSED_OWN_DEFINERS
 
 
 def applicable_methods(cls: type) -> dict[MethodName, bool]:
@@ -139,9 +159,10 @@ def applicable_methods(cls: type) -> dict[MethodName, bool]:
         if _class_has_method(cls, "get_centroid_shift"):
             out["get_centroid_shift"] = True
 
+    if _source_astrometry_unlensed_applicable(cls, name):
+        out["get_source_astrometry_unlensed"] = True
+
     if is_pspl:
-        if ast and _class_has_method(cls, "get_source_astrometry_unlensed"):
-            out["get_source_astrometry_unlensed"] = True
         if ast and _class_has_method(cls, "get_resolved_astrometry"):
             out["get_resolved_astrometry"] = True
 
