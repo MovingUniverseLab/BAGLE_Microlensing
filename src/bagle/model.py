@@ -12442,6 +12442,12 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
                                                           obsLocation=self.obsLocation[filt_idx])  # mas
             xS_unlensed += (self.piS * parallax_vec[:, np.newaxis, :]) * 1e-3  # arcsec
+            
+        if self.ref_frame_parallax_flag:
+            # Get the parallax vector for each date.
+            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
+                                                          obsLocation=self.obsLocation[filt_idx])
+            xS_unlensed += (self.pi_ref_frame * parallax_vec[:, np.newaxis, :]) * 1e-3  # arcsec
 
         return xS_unlensed
 
@@ -12938,7 +12944,10 @@ class BSPL_Parallax(PSPL_Parallax):
         A1 = (u1 ** 2 + 2) / (u1 * np.sqrt(u1 ** 2 + 4))
         A2 = (u2 ** 2 + 2) / (u2 * np.sqrt(u2 ** 2 + 4))
         return A1 + A2
-
+        
+class BSPL_Parallax_RefFrame(BSPL_Parallax):
+    parallaxFlag = True
+    ref_frame_parallax_flag = True
 
 class BSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
@@ -13717,6 +13726,123 @@ class BSPL_PhotAstromParam3(PSPL_Param):
                                        np.cos(self.alpha_rad)))  # mas
 
         self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
+
+        return
+
+class BSPL_PhotAstromParam3_RefPar(BSPL_PhotAstromParam3):
+    """BSPL model for astrometry and photometry - physical parameterization.
+
+    A Binary point Source Point Lens model for microlensing. This model uses a
+    parameterization that depends on only physical quantities such as the
+    lens mass and positions and proper motions of both the lens and source.
+
+    Note the attributes, RA (raL) and Dec (decL) are required
+    if you are calculating a model with parallax.
+
+    Attributes
+    ----------
+    t0: float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in Solar System barycentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
+    u0_amp : float
+        Angular distance between the source and the GEOMETRIC center of the lenses
+        on the plane of the sky at closest approach in units of thetaE. Can
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+        Note, since this is a binary source, we are expressing the
+        nominal source position as that of the primary star in the source
+        binary system.
+    tE : float
+        Einstein crossing time (days).
+    log10_thetaE : float
+        The size of the Einstein radius in (mas).
+    piS : float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E : float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N : float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame. This should be the position of the source primary.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA Source proper motion (mas/yr)
+        Identical proper motions are assumed for the source primary and secondary.
+    muS_N : float
+        Dec Source proper motion (mas/yr)
+        Identical proper motions are assumed for the source primary and secondary.
+    sep: float
+        Angular separation of the source scondary from the
+        source primary (mas).
+    alpha: float
+        Angle made between the binary source axis and North;
+        measured in degrees East of North.
+    pi_ref_frame : float
+        parallax offset in the astrometric reference frame (mas).
+        This is useful for fitting astrometry derived from FlyStar w/ Parallax motion model
+        where absolute parallax reference frame could not be established.
+    fratio_bin: float
+        Flux ratio of secondary flux / primary flux.
+    mag_base : array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+        Note that
+            :math:`flux_base = f_{src1{ + f_{src2{ + f_{blend}`
+        such that
+            :math:`b_sff = (f_{src1} + f_{src2}) / ( f_{src1} + f_{src2} + f_{blend} )`
+    b_sff: array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = (f_{S1} + f_{S2}) / (f_{S1} + f_{s2} + f_L + f_N)`.
+        This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
+    """
+
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+                          'piE_E', 'piE_N',
+                          'xS0_E', 'xS0_N',
+                          'muS_E', 'muS_N',
+                          'sep', 'alpha', 'pi_ref_frame']
+    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    orbitFlag = False
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 sep, alpha,
+                 pi_ref_frame, fratio_bin,
+                 mag_base, b_sff,
+                 raL=None, decL=None, obsLocation='earth'):
+
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
+                            piE_E, piE_N,
+                            xS0_E, xS0_N,
+                            muS_E, muS_N,
+                            sep, alpha, fratio_bin,
+                            mag_base, b_sff,
+                            raL=raL, decL=decL, obsLocation=obsLocation)
+
+        self.pi_ref_frame = pi_ref_frame
 
         return
 
@@ -24760,6 +24886,17 @@ class BSPL_PhotAstrom_Par_Param3(ModelClassABC,
                                  BSPL_PhotAstrom,
                                  BSPL_Parallax,
                                  BSPL_PhotAstromParam3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        
+# BSPL ref parallax
+@inheritdocstring
+class BSPL_PhotAstrom_RefPar_Param3(ModelClassABC,
+                                 BSPL_PhotAstrom,
+                                 BSPL_Parallax_RefFrame,
+                                 BSPL_PhotAstromParam3_RefPar):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
