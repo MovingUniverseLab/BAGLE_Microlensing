@@ -790,7 +790,7 @@ class PSPL(ABC):
         -------
         centroid : numpy array, dtype=float, shape = [len(t), 2]
             The flux-weighted centroid of all lensed images from the source and
-            any luminous lenses.
+            any luminous lenses in arcseconds.
 
         """
 
@@ -5967,7 +5967,9 @@ class PSBL(PSPL):
         # Calculate the average spread to get the scale.
         xscale = np.max(pos.real, axis=1) - np.min(pos.real, axis=1)
         yscale = np.max(pos.imag, axis=1) - np.min(pos.imag, axis=1)
-        xyscale = np.concatenate([xscale, yscale]).reshape(len(xscale), 2)
+        #xyscale = np.concatenate([xscale, yscale]).reshape(len(xscale), 2)
+        # The old code was mis-stacking and using the non-optimal scaling.
+        xyscale = np.column_stack([xscale, yscale])
         scale = 1 / np.max(xyscale, axis=1)
         w *= scale
         z1 *= scale
@@ -17620,7 +17622,9 @@ class BSBL(PSBL):
         # Calculate the average spread to get the scale.
         xscale = np.max(pos.real, axis=1) - np.min(pos.real, axis=1)
         yscale = np.max(pos.imag, axis=1) - np.min(pos.imag, axis=1)
-        xyscale = np.concatenate([xscale, yscale]).reshape(len(xscale), 2)
+        #xyscale = np.concatenate([xscale, yscale]).reshape(len(xscale), 2)
+        # The old code was mis-stacking and using the non-optimal scaling.
+        xyscale = np.column_stack([xscale, yscale])
         scale = 1 / np.max(xyscale, axis=1)
         w *= scale[:, np.newaxis]
         z1 *= scale

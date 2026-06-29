@@ -511,9 +511,6 @@ class MicrolensSolver(Solver):
         self.n_phot_sets = n_phot_sets
         self.n_ast_sets = n_ast_sets
         self.map_phot_idx_to_ast_idx = map_phot_idx_to_ast_idx
-        #import pdb
-        #pdb.set_trace()
-#        print("Fitter new", self.model_class.fitter_param_names)
         self.fitter_param_names = self.model_class.fitter_param_names + \
                                   phot_params + ast_params
 
@@ -891,8 +888,6 @@ class MicrolensSolver(Solver):
             print(fmt.format('lnL_phot', lnL_phot)),
             print(fmt.format('lnL_ast', lnL_ast)),
             print(fmt.format('lnL', lnL))
-
-            # pdb.set_trace()
 
         return lnL
 
@@ -1639,9 +1634,9 @@ class MicrolensSolver(Solver):
 
         # Plot out parameters (just record values)
         fig = plot_params(model)
-        fig.savefig(self.outputfiles_basename + 'parameters.png')
+        fig.savefig(f'{self.outputfiles_basename}parameters{suffix}.png')
         plt.close()
-        with open(f'{self.outputfiles_basename}parameters_png.txt', 'w') as f:
+        with open(f'{self.outputfiles_basename}parameters{suffix}.txt', 'w') as f:
             save_params(model, f)
 
         # Plot photometry
@@ -1788,6 +1783,66 @@ class MicrolensSolver(Solver):
 
                 for fig in fig_list:
                     plt.close(fig)
+
+                if (zoomx is not None) or (zoomy is not None) or (zoomy_res is not None):
+                    if zoomx is not None:
+                        zoomxi = zoomx[i]
+                    else:
+                        zoomxi = None
+
+                    if zoomy is not None:
+                        zoomyi = zoomy[i]
+                    else:
+                        zoomyi = None
+
+                    if zoomy_res is not None:
+                        zoomy_resi = zoomy_res[i]
+                    else:
+                        zoomy_resi = None
+
+                    # If no photometry
+                    if len(self.map_phot_idx_to_ast_idx) == 0:
+                        fig_list = plot_astrometry(self.data, model,
+                                                   input_model=input_model,
+                                                   dense_time=True,
+                                                   n_phot_sets=self.n_phot_sets,
+                                                   data_filt_index=i,
+                                                   filt_index=i,
+                                                   mnest_results=mnest_results, fitter=fitter,
+                                                   N_traces=N_traces,
+                                                   zoomx=zoomxi, zoomy=zoomyi, zoomy_res=zoomy_resi)
+                    # If photometry
+                    else:
+                        fig_list = plot_astrometry(self.data, model,
+                                                   input_model=input_model,
+                                                   dense_time=True,
+                                                   n_phot_sets=self.n_phot_sets,
+                                                   data_filt_index=i,
+                                                   filt_index=self.map_phot_idx_to_ast_idx[i],
+                                                   mnest_results=mnest_results, fitter=fitter,
+                                                   N_traces=N_traces,
+                                                   zoomx=zoomxi, zoomy=zoomyi, zoomy_res=zoomy_resi)
+
+                    fig_list[1].savefig(
+                        self.outputfiles_basename + 'astr_time_RA_' + str(i + 1) + suffix + 'zoom.png')
+
+                    fig_list[2].savefig(
+                        self.outputfiles_basename + 'astr_time_Dec_' + str(i + 1) + suffix + 'zoom.png')
+
+                    fig_list[3].savefig(
+                        self.outputfiles_basename + 'astr_time_RA_remove_pm_' + str(i + 1) + suffix + 'zoom.png')
+
+                    fig_list[4].savefig(
+                        self.outputfiles_basename + 'astr_time_Dec_remove_pm_' + str(i + 1) + suffix + 'zoom.png')
+
+                    fig_list[7].savefig(
+                        self.outputfiles_basename + 'astr_longtime_RA_remove_pm' + str(i + 1) + suffix + 'zoom.png')
+
+                    fig_list[8].savefig(
+                        self.outputfiles_basename + 'astr_longtime_Dec_remove_pm' + str(i + 1) + suffix + 'zoom.png')
+
+                    for fig in fig_list:
+                        plt.close(fig)
 
         return
 
@@ -2160,8 +2215,7 @@ class MicrolensSolver(Solver):
 
         best = self.get_best_fit(def_best='maxl')
         chi2 = self.calc_chi2(params=best, verbose=True)
-        lnL = self.log_likely(cube
-                                  =best, verbose=True)
+        lnL = self.log_likely(cube=best, verbose=True)
 
         # Fetch the root name of the file.
         file_dir, name_str = os.path.split(self.outputfiles_basename)
@@ -2845,7 +2899,6 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
         prob_dk = np.zeros(len(prob_dk_giv_ak_1), dtype=float)
         # for ii in range(len(prob_d_each)):
         for ii in range(2):
-            # pdb.set_trace()
             prob_dk[ii] = scipy.integrate.quad(integrand, 0, np.inf,
                                                    args=(prob_dk_giv_ak_1, ln_prob_dk_giv_ak_1, ii))[0]
 
@@ -3489,7 +3542,7 @@ def plot_params(model):
             pname_act = pname
 
         pvalue = getattr(model, pname_act)
-        #pdb.set_trace()
+
         if pname.endswith('_E'):
             pvalue = pvalue[0]
         if pname.endswith('_N'):
@@ -3507,7 +3560,6 @@ def plot_params(model):
         if pname.startswith('x'):
             fmt_str = '{0:s} = {1:.4f}'
 
-        #pdb.set_trace()
         if pname == 'thetaE':
             fmt_str = '{0:s}'
             ax_lab.text(x0, y0 - (ff + 1) * dy,
@@ -3522,7 +3574,7 @@ def plot_params(model):
         pname = model.phot_param_names[ff]
         pvalu = np.array(get_param_value(pname))
         fmt_str = '{0:s} = {1:.2f}'
-        #pdb.set_trace()
+
         for rr in range(len(pvalu)):
             ax_lab.text(x0, y0 - (nrow + 1) * dy,
                         f'{pname + str(rr+1)} = {np.around(pvalu[rr], 2)}',
@@ -3566,7 +3618,7 @@ def save_params(model, file):
             pname_act = pname
 
         pvalue = getattr(model, pname_act)
-        #pdb.set_trace()
+
         if pname.endswith('_E'):
             pvalue = pvalue[0]
         if pname.endswith('_N'):
@@ -3725,8 +3777,7 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
                     color='c',
                     alpha=0.5,
                     linewidth=1)
-#            import pdb
-#            pdb.set_trace()
+
     #####
     # Residuals
     #####
@@ -3854,7 +3905,8 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
 
 def plot_astrometry(data, model, input_model=None, dense_time=True,
                     residuals=True, n_phot_sets=0, data_filt_index=0, filt_index=0,
-                    mnest_results=None, N_traces=50, fitter=None):
+                    mnest_results=None, N_traces=50, fitter=None,
+                    zoomx=None, zoomy=None, zoomy_res=None):
     """Astrometry on the sky
 
     Parameters
@@ -3868,7 +3920,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     filt_index : int
         Filter index into the model object.
     """
-    #### Get the data out.
+    #### Get the data out. Input data should be in arcseconds; convert to milliarcseconds.
     dat_x = data['xpos' + str(data_filt_index + 1)] * 1e3
     dat_y = data['ypos' + str(data_filt_index + 1)] * 1e3
     dat_xe = data['xpos_err' + str(data_filt_index + 1)] * 1e3
@@ -3902,23 +3954,23 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     #### Models
     #
     # Model
-    p_mod_lens_tdat = model.get_astrometry(dat_t, filt_idx=filt_index)
+    p_mod_lens_tdat = model.get_astrometry(dat_t, filt_idx=filt_index) # arcsec
     p_mod_lens_tmod = model.get_astrometry(t_mod, filt_idx=filt_index)
     p_mod_lens_tlon = model.get_astrometry(t_long, filt_idx=filt_index)
 
-    p_mod_unlens_tdat = model.get_astrometry_unlensed(dat_t, filt_idx=filt_index)
+    p_mod_unlens_tdat = model.get_astrometry_unlensed(dat_t, filt_idx=filt_index) # arcsec
     p_mod_unlens_tmod = model.get_astrometry_unlensed(t_mod, filt_idx=filt_index)
     p_mod_unlens_tlon = model.get_astrometry_unlensed(t_long, filt_idx=filt_index)
 
     # Input model
     if input_model != None:
-        p_in_lens_tmod = input_model.get_astrometry(t_mod, filt_idx=filt_index)
+        p_in_lens_tmod = input_model.get_astrometry(t_mod, filt_idx=filt_index) # arcsec
         p_in_lens_tlon = input_model.get_astrometry(t_long, filt_idx=filt_index)
         if str(model.__class__).startswith('BS'):
-            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod, filt_idx=filt_index)
+            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod, filt_idx=filt_index) # arcsec
             p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long, filt_idx=filt_index)
         else:
-            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod)
+            p_in_unlens_tmod = input_model.get_astrometry_unlensed(t_mod) # arcsec
             p_in_unlens_tlon = input_model.get_astrometry_unlensed(t_long)
 
     # Get trace models and positions if we will be plotting traces
@@ -3936,10 +3988,10 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
             trace_model = fitter.get_model(mnest_results[idx])
             trace_models.append(trace_model)
 
-            pos_tr = trace_model.get_astrometry(t_mod, filt_idx=filt_index)
+            pos_tr = trace_model.get_astrometry(t_mod, filt_idx=filt_index) # arcsec
             p_tr_lens_tmod.append(pos_tr)
             
-            pos_tr = trace_model.get_astrometry(t_long, filt_idx=filt_index)
+            pos_tr = trace_model.get_astrometry(t_long, filt_idx=filt_index) # arcsec
             p_tr_lens_tlon.append(pos_tr)
 
 
@@ -3955,7 +4007,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     
     # Data
     plt.errorbar(dat_x, dat_y, xerr=dat_xe, yerr=dat_ye,
-                 fmt='k.', label='Data')
+                 fmt='k.', alpha=0.2, label='Data')
 
     # Model - usually from fitter
     plt.plot(p_mod_lens_tmod[:, 0] * 1e3, p_mod_lens_tmod[:, 1] * 1e3, 'r-', label='Model')
@@ -3996,7 +4048,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
         f1 = plt.gca()
 
     # Data
-    f1.errorbar(dat_t, dat_x, yerr=dat_xe, fmt='k.', label='Data')
+    f1.errorbar(dat_t, dat_x, yerr=dat_xe, fmt='k.', alpha=0.2, label='Data')
     
     # Model
     f1.plot(t_mod, p_mod_lens_tmod[:, 0] * 1e3, 'r-', label='Model')
@@ -4014,15 +4066,29 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     f1.set_xlabel('t - t0 (days)')
     f1.set_ylabel(r'$\Delta \alpha^*$ (mas)')
     f1.legend()
-    
+    if zoomx is not None:
+        f1.set_xlim(zoomx[0], zoomx[1])
+    if zoomy is not None:
+        f1.set_ylim(zoomy[0], zoomy[1])
+
     if residuals:
         f1.get_xaxis().set_visible(False)
         f1.sharex(f2)
         f2.errorbar(dat_t, dat_x - p_mod_lens_tdat[:,0] * 1e3,
                     yerr=dat_xe, fmt='k.', alpha=0.2)
+
+        if input_model is not None:
+            f2.plot(t_mod, (p_in_lens_tmod[:, 0] - p_mod_lens_tmod[:,0]) * 1e3, 'g--')
+
         f2.axhline(0, linestyle='--', color='r')
         f2.set_xlabel('Time (HJD)')
         f2.set_ylabel('Obs - Mod')
+        if zoomx is not None:
+            f2.set_xlim(zoomx[0], zoomx[1])
+        if zoomy is not None:
+            f2.set_ylim(zoomy[0], zoomy[1])
+        if zoomy_res is not None:
+            f2.set_ylim(zoomy_res[0], zoomy_res[1])
 
     ### AST FIG 3: Y vs. time
     plt.close(n_phot_sets + 3)
@@ -4039,7 +4105,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
         f1 = plt.gca()
 
     # Data
-    f1.errorbar(dat_t, dat_y, yerr=dat_ye, fmt='k.', label='Data')
+    f1.errorbar(dat_t, dat_y, yerr=dat_ye, fmt='k.', alpha=0.2, label='Data')
     
     # Model
     f1.plot(t_mod, p_mod_lens_tmod[:, 1] * 1e3, 'r-', label='Model')
@@ -4057,6 +4123,10 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     f1.set_xlabel('t - t0 (days)')
     f1.set_ylabel(r'$\Delta \delta$ (mas)')
     f1.legend()
+    if zoomx is not None:
+        f1.set_xlim(zoomx[0], zoomx[1])
+    if zoomy is not None:
+        f1.set_ylim(zoomy[0], zoomy[1])
 
     if residuals:
         f1.get_xaxis().set_visible(False)
@@ -4064,9 +4134,19 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
         f2.errorbar(dat_t,
                     dat_y - p_mod_lens_tdat[:,1] * 1e3,
                     yerr=dat_ye, fmt='k.', alpha=0.2)
+
+        if input_model is not None:
+            f2.plot(t_mod, (p_in_lens_tmod[:, 1] - p_mod_lens_tmod[:,1]) * 1e3, 'g--')
+
         f2.axhline(0, linestyle='--', color='r')
         f2.set_xlabel('Time (HJD)')
         f2.set_ylabel('Obs - Mod')
+        if zoomx is not None:
+            f2.set_xlim(zoomx[0], zoomx[1])
+        if zoomy is not None:
+            f2.set_ylim(zoomy[0], zoomy[1])
+        if zoomy_res is not None:
+            f2.set_ylim(zoomy_res[0], zoomy_res[1])
 
     #####
     # Remove the unlensed motion (proper motion)
@@ -4077,30 +4157,30 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     # Make the model unlensed points matched to the data.
 
     # Data
-    x_mod_tdat = p_mod_unlens_tdat[:, 0]
+    x_mod_tdat = p_mod_unlens_tdat[:, 0] # arcsec
     y_mod_tdat = p_mod_unlens_tdat[:, 1]
-    x_no_pm = data['xpos' + str(data_filt_index + 1)] - x_mod_tdat
+    x_no_pm = data['xpos' + str(data_filt_index + 1)] - x_mod_tdat # arcsec
     y_no_pm = data['ypos' + str(data_filt_index + 1)] - y_mod_tdat
 
     # Dense sampled model
-    dp_tmod_unlens = p_mod_lens_tmod - p_mod_unlens_tmod
-    x_mod_no_pm = dp_tmod_unlens[:, 0]
-    y_mod_no_pm = dp_tmod_unlens[:, 1]
+    dp_tmod_unlens = p_mod_lens_tmod - p_mod_unlens_tmod # arcsec
+    x_mod_no_pm = dp_tmod_unlens[:, 0] # arcsec
+    y_mod_no_pm = dp_tmod_unlens[:, 1] # arcsec
 
     # Long time sampled model
-    dp_tmod_unlens_longtime = p_mod_lens_tlon - p_mod_unlens_tlon
-    x_mod_no_pm_longtime = dp_tmod_unlens_longtime[:, 0]
-    y_mod_no_pm_longtime = dp_tmod_unlens_longtime[:, 1]
+    dp_tmod_unlens_longtime = p_mod_lens_tlon - p_mod_unlens_tlon # arcsec
+    x_mod_no_pm_longtime = dp_tmod_unlens_longtime[:, 0] # arcsec
+    y_mod_no_pm_longtime = dp_tmod_unlens_longtime[:, 1] # arcsec
 
     # Make the dense sampled model for the same plot for INPUT model
     if input_model != None:
-        dp_tmod_unlens_in = p_in_lens_tmod - p_mod_unlens_tmod
-        x_mod_no_pm_in = dp_tmod_unlens_in[:, 0]
-        y_mod_no_pm_in = dp_tmod_unlens_in[:, 1]
+        dp_tmod_unlens_in = p_in_lens_tmod - p_mod_unlens_tmod # arcsec
+        x_mod_no_pm_in = dp_tmod_unlens_in[:, 0] # arcsec
+        y_mod_no_pm_in = dp_tmod_unlens_in[:, 1] # arcsec
 
     if (x_no_pm.ndim == 2 and x_no_pm.shape[0] == 1):
-        x_no_pm = x_no_pm.reshape(len(x_no_pm[0]))
-        y_no_pm = y_no_pm.reshape(len(y_no_pm[0]))
+        x_no_pm = x_no_pm.reshape(len(x_no_pm[0])) # arcsec
+        y_no_pm = y_no_pm.reshape(len(y_no_pm[0])) # arcsec
 
     # Prep some colorbar stuff
     cmap = plt.cm.viridis
@@ -4116,15 +4196,15 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     plt.clf()
 
     # Plot data
-    plt.errorbar(dat_t, x_no_pm * 1e3,
-                 yerr=dat_xe, fmt='k.', label='Data')
+    plt.errorbar(dat_t, x_no_pm * 1e3, yerr=dat_xe, 
+                 fmt='k.', alpha=0.2, label='Data')
 
     # plot model
     plt.plot(t_mod, x_mod_no_pm * 1e3, 'r-', label='Model')
 
     # Trace models
     for tt in range(N_traces):
-        pos_no_pm_tr = p_tr_lens_tmod[tt] - p_mod_unlens_tmod
+        pos_no_pm_tr = p_tr_lens_tmod[tt] - p_mod_unlens_tmod # arcsec
         plt.plot(t_mod, pos_no_pm_tr[:, 0] * 1e3,
                 color='c', alpha=0.5, linewidth=1, zorder=-1)
 
@@ -4135,6 +4215,10 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     plt.xlabel('t - t0 (days)')
     plt.ylabel(r'$\Delta \alpha^*$ - $\Delta \alpha^*_{unlensed}$ (mas)')
     plt.legend()
+    if zoomx is not None:
+        plt.xlim(zoomx[0], zoomx[1])
+    if zoomy is not None:
+        plt.ylim(zoomy[0], zoomy[1])
 
     ##### AST FIG 5: Setup Y - PM vs. t figure
     plt.close(n_phot_sets + 5)
@@ -4144,13 +4228,13 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
     # Data
     plt.errorbar(dat_t, y_no_pm * 1e3,
-                 yerr=dat_ye, fmt='k.', label='Data')
+                 yerr=dat_ye, fmt='k.', alpha=0.2, label='Data')
     # Model
     plt.plot(t_mod, y_mod_no_pm * 1e3, 'r-', label='Model')
 
     # Trace models
     for tt in range(N_traces):
-        pos_no_pm_tr = p_tr_lens_tmod[tt] - p_mod_unlens_tmod
+        pos_no_pm_tr = p_tr_lens_tmod[tt] - p_mod_unlens_tmod # arcsec
         plt.plot(t_mod, pos_no_pm_tr[:, 1] * 1e3,
                 color='c', alpha=0.5, linewidth=1, zorder=-1)
 
@@ -4161,6 +4245,10 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     plt.xlabel('t - t0 (days)')
     plt.ylabel(r'$\Delta \delta$ - $\Delta \delta_{unlensed}$ (mas)')
     plt.legend()
+    if zoomx is not None:
+        plt.xlim(zoomx[0], zoomx[1])
+    if zoomy is not None:
+        plt.ylim(zoomy[0], zoomy[1])
 
     ##### AST FIG 6: Setup X - PM vs. Y - PM
     plt.close(n_phot_sets + 6)
@@ -4170,13 +4258,13 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
     # Data
     plt.scatter(x_no_pm * 1e3, y_no_pm * 1e3, c=dat_t,
-                cmap=cmap, norm=norm, s=5)
+                cmap=cmap, norm=norm, s=5, alpha=0.2)
     plt.errorbar(x_no_pm * 1e3, y_no_pm * 1e3,
                  xerr=dat_xe, yerr=dat_ye,
-                 fmt='none', ecolor=smap.to_rgba(dat_t))
+                 fmt='none', ecolor=smap.to_rgba(dat_t), alpha=0.2)
     # Model
     plt.scatter(x_mod_no_pm * 1e3, y_mod_no_pm * 1e3, c=t_mod, cmap=cmap,
-                norm=norm)
+                norm=norm, zorder=10)
 
     # Trace models
     for tt in range(N_traces):
@@ -4203,7 +4291,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     # Data
     plt.errorbar(dat_x, dat_y,
                  xerr=dat_xe, yerr=dat_ye,
-                 fmt='k.', label='Data')
+                 fmt='k.', alpha=0.2, label='Data')
 
     # Model
     plt.plot(p_mod_lens_tlon[:, 0] * 1e3, p_mod_lens_tlon[:, 1] * 1e3, 'r-', label='Model')
@@ -4232,7 +4320,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
     # Data
     plt.errorbar(dat_t, x_no_pm * 1e3,
-                 yerr=dat_xe, fmt='k.', label='Data')
+                 yerr=dat_xe, fmt='k.', alpha=0.2, label='Data')
 
     # model
     plt.plot(t_long, x_mod_no_pm_longtime * 1e3, 'r-', label='Model')
@@ -4257,7 +4345,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
     # Data
     plt.errorbar(dat_t, y_no_pm * 1e3,
-                 yerr=dat_ye, fmt='k.', label='Data')
+                 yerr=dat_ye, fmt='k.', alpha=0.2, label='Data')
     
     # Model
     plt.plot(t_long, y_mod_no_pm_longtime * 1e3, 'r-', label='Model')
@@ -4271,6 +4359,10 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     plt.xlabel('t - t0 (days)')
     plt.ylabel(r'$\Delta \delta$ (mas) - $\Delta \delta_{unlensed}$')
     plt.legend()
+    if zoomx is not None:
+        plt.xlim(zoomx[0], zoomx[1])
+    if zoomy is not None:
+        plt.ylim(zoomy[0], zoomy[1])
 
     # Astrometry on sky, proper motion removed, in Color-time
     # Prep some colorbar stuff
@@ -4287,10 +4379,10 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
     # Data
     plt.scatter(x_no_pm * 1e3, y_no_pm * 1e3, c=dat_t,
-                cmap=cmap, norm=norm, s=5)
+                cmap=cmap, norm=norm, s=5, alpha=0.2)
     plt.errorbar(x_no_pm * 1e3, y_no_pm * 1e3,
                  xerr=dat_xe, yerr=dat_ye,
-                 fmt='none', ecolor=smap.to_rgba(dat_t))
+                 fmt='none', ecolor=smap.to_rgba(dat_t), alpha=0.2)
     plt.colorbar()
 
     # model
@@ -4369,13 +4461,13 @@ def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
         dd = str(ff_dat)
 
         # Data
-        t_dat.append( np.array(data['t_ast' + dd]) )
-        p_dat.append(  np.array([data['xpos' + dd],     data['ypos' + dd]]).T * 1e3 )
-        pe_dat.append( np.array([data['xpos_err' + dd], data['ypos_err' + dd]]).T * 1e3 )
+        t_dat.append( np.array(data['t_ast' + dd]) )    
+        p_dat.append(  np.array([data['xpos' + dd],     data['ypos' + dd]]).T * 1e3 )    # mas
+        pe_dat.append( np.array([data['xpos_err' + dd], data['ypos_err' + dd]]).T * 1e3 )    # mas
 
         # Model lensed astrometry
-        p_mod_lens_tdat.append( model.get_astrometry(t_dat[ff], filt_idx=ff_mod) * 1e3 )
-        p_mod_lens_tmod.append( model.get_astrometry(t_mod, filt_idx=ff_mod) * 1e3 )
+        p_mod_lens_tdat.append( model.get_astrometry(t_dat[ff], filt_idx=ff_mod) * 1e3 )    # mas
+        p_mod_lens_tmod.append( model.get_astrometry(t_mod, filt_idx=ff_mod) * 1e3 )    # mas
 
         # Model unlensed astrometry
         if str(model.__class__).startswith('BS'):
