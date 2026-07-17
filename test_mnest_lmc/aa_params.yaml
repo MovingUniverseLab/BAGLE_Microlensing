@@ -1,0 +1,15 @@
+add_error_on_photometry: false
+astrom_data: sim
+astrom_files:
+- fake_data_parallax_ast1
+custom_additional_param_names: null
+model: PSPL_PhotAstrom_Par_Param1
+multiply_error_on_photometry: false
+phot_data: sim
+phot_files:
+- fake_data_parallax_phot1
+run_date: '2026-06-17'
+target: LMC
+use_ast_optional_params: true
+use_phot_optional_params: true
+wrapped_params: null

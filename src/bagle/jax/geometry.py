@@ -359,4 +359,50 @@ def derive_geometry_from_layout(layout_id: str, eval_kind: str, base_vec, names:
             p["sep"],
             p["alpha"],
         )
+    if eval_kind == "fsbl_photastrom":
+        if "mL" in p:
+            return derive_pspl_photastrom_param1_geometry(
+                p["mL"],
+                p["t0"],
+                p["beta"],
+                p["dL"],
+                p["dL_dS"],
+                p["xS0_E"],
+                p["xS0_N"],
+                p["muL_E"],
+                p["muL_N"],
+                p["muS_E"],
+                p["muS_N"],
+            )
+        te_key = "log10_thetaE" if "log10_thetaE" in p else "thetaE"
+        theta = 10.0 ** p[te_key] if te_key == "log10_thetaE" else p[te_key]
+        if "log_piE" in p and "phi_muRel" in p:
+            piE_amp = 10.0 ** p["log_piE"]
+            phi = p["phi_muRel"] * jnp.pi / 180.0
+            piE_E = piE_amp * jnp.sin(phi)
+            piE_N = piE_amp * jnp.cos(phi)
+        elif "piEN_piEE" in p:
+            piE_E = p["piE_E"]
+            piE_N = p["piE_E"] * p["piEN_piEE"]
+        else:
+            piE_E = p["piE_E"]
+            piE_N = p["piE_N"]
+        return derive_pspl_photastrom_reduced(
+            p["t0"],
+            p["u0_amp"],
+            p["tE"],
+            theta,
+            p["piS"],
+            piE_E,
+            piE_N,
+            p["xS0_E"],
+            p["xS0_N"],
+            p["muS_E"],
+            p["muS_N"],
+        )
+    if eval_kind == "fsbl_phot":
+        u0, thetaE_hat, _ = derive_pspl_static_geometry(
+            p["u0_amp"], p["piE_E"], p["piE_N"]
+        )
+        return ("pspl_phot", u0, thetaE_hat, p["tE"], p["piE_E"], p["piE_N"])
     raise NotImplementedError(f"derive_geometry for eval_kind={eval_kind!r}")

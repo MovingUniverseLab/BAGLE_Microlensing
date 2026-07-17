@@ -4,7 +4,6 @@ from __future__ import annotations
 import jax.numpy as jnp
 
 from bagle.jax.geometry import derive_psbl_photastrom_param1, unpack_base_params
-from bagle.jax.layout_registry import LayoutSpec
 from bagle.jax_physics import (
     gaussian_astrometry_log_likelihood_sum,
     gaussian_log_likelihood_sum,
@@ -13,10 +12,10 @@ from bagle.jax_physics import (
 )
 
 
-def joint_loglik_psbl_param1(param_vec, ctx, layout: LayoutSpec):
+def joint_loglik_psbl_param1(param_vec, ctx, param_cls):
     param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
     base = param_vec[jnp.array(ctx.base_indices, dtype=jnp.int32)]
-    p = unpack_base_params(layout.base_fitter_names, base)
+    p = unpack_base_params(param_cls.fitter_param_names, base)
     geom = derive_psbl_photastrom_param1(
         p["mLp"],
         p["mLs"],

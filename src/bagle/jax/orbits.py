@@ -5,8 +5,6 @@ import math
 
 import jax.numpy as jnp
 
-from bagle.jax.layout_registry import LayoutSpec
-
 
 def eccen_anomaly(M, e):
     """Solve Kepler equation M = E - e sin(E) (Newton)."""
@@ -59,7 +57,7 @@ def oal2xy(t, w, o, i, e, p, tp, aleph, aleph2, accel=False, ax=0.0, ay=0.0):
     return x, y, x2, y2
 
 
-_ORBIT_LAYOUTS = frozenset(
+_ORBIT_KINDS = frozenset(
     {
         "linear",
         "accelerated",
@@ -68,5 +66,13 @@ _ORBIT_LAYOUTS = frozenset(
 )
 
 
-def supports_orbit_layout(layout: LayoutSpec) -> bool:
-    return layout.orbit in _ORBIT_LAYOUTS
+def supports_orbit_kind(orbit: str) -> bool:
+    return orbit in _ORBIT_KINDS
+
+
+def supports_orbit_layout(layout_or_orbit) -> bool:
+    """Back-compat: accept an orbit string or an object with ``.orbit``."""
+    if isinstance(layout_or_orbit, str):
+        return supports_orbit_kind(layout_or_orbit)
+    orbit = getattr(layout_or_orbit, "orbit", None)
+    return orbit in _ORBIT_KINDS if orbit is not None else False

@@ -1,0 +1,65 @@
+......F..........F..........F.F........F..........F..........F.F..       [100%]
+=================================== FAILURES ===================================
+E   AssertionError: zero grad norm for FSBL_PhotAstrom_Par_CircOrbs_Param8.get_lens_astrometry
+    assert np.float64(0.0) > 0.0
+     +  where np.float64(0.0) = <function norm at 0x106aa8bb0>(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0., 0., 0., 0.]))
+     +    where <function norm at 0x106aa8bb0> = <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'>.norm
+     +      where <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'> = np.linalg
+/Users/jlu/code/python/bagle/tests/test_model_old_vs_jax.py:1255: AssertionError: zero grad norm for FSBL_PhotAstrom_Par_CircOrbs_Param8.get_lens_astrometry
+E   AssertionError: zero grad norm for FSBL_PhotAstrom_Par_EllOrbs_Param8.get_lens_astrometry
+    assert np.float64(0.0) > 0.0
+     +  where np.float64(0.0) = <function norm at 0x106aa8bb0>(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0., 0., 0., 0., 0.]))
+     +    where <function norm at 0x106aa8bb0> = <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'>.norm
+     +      where <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'> = np.linalg
+/Users/jlu/code/python/bagle/tests/test_model_old_vs_jax.py:1255: AssertionError: zero grad norm for FSBL_PhotAstrom_Par_EllOrbs_Param8.get_lens_astrometry
+E   AssertionError: zero grad norm for FSBL_PhotAstrom_Par_Param8.get_lens_astrometry
+    assert np.float64(0.0) > 0.0
+     +  where np.float64(0.0) = <function norm at 0x106aa8bb0>(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0.]))
+     +    where <function norm at 0x106aa8bb0> = <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'>.norm
+     +      where <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'> = np.linalg
+/Users/jlu/code/python/bagle/tests/test_model_old_vs_jax.py:1255: AssertionError: zero grad norm for FSBL_PhotAstrom_Par_Param8.get_lens_astrometry
+E   AssertionError: zero grad norm for FSBL_PhotAstrom_Par_Param8.get_resolved_lens_astrometry
+    assert np.float64(0.0) > 0.0
+     +  where np.float64(0.0) = <function norm at 0x106aa8bb0>(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0.]))
+     +    where <function norm at 0x106aa8bb0> = <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'>.norm
+     +      where <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'> = np.linalg
+/Users/jlu/code/python/bagle/tests/test_model_old_vs_jax.py:1255: AssertionError: zero grad norm for FSBL_PhotAstrom_Par_Param8.get_resolved_lens_astrometry
+E   AssertionError: zero grad norm for FSBL_PhotAstrom_noPar_CircOrbs_Param8.get_lens_astrometry
+    assert np.float64(0.0) > 0.0
+     +  where np.float64(0.0) = <function norm at 0x106aa8bb0>(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0., 0., 0., 0.]))
+     +    where <function norm at 0x106aa8bb0> = <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'>.norm
+     +      where <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'> = np.linalg
+/Users/jlu/code/python/bagle/tests/test_model_old_vs_jax.py:1255: AssertionError: zero grad norm for FSBL_PhotAstrom_noPar_CircOrbs_Param8.get_lens_astrometry
+E   AssertionError: zero grad norm for FSBL_PhotAstrom_noPar_EllOrbs_Param8.get_lens_astrometry
+    assert np.float64(0.0) > 0.0
+     +  where np.float64(0.0) = <function norm at 0x106aa8bb0>(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0., 0., 0., 0., 0.]))
+     +    where <function norm at 0x106aa8bb0> = <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'>.norm
+     +      where <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'> = np.linalg
+/Users/jlu/code/python/bagle/tests/test_model_old_vs_jax.py:1255: AssertionError: zero grad norm for FSBL_PhotAstrom_noPar_EllOrbs_Param8.get_lens_astrometry
+E   AssertionError: zero grad norm for FSBL_PhotAstrom_noPar_Param8.get_lens_astrometry
+    assert np.float64(0.0) > 0.0
+     +  where np.float64(0.0) = <function norm at 0x106aa8bb0>(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0.]))
+     +    where <function norm at 0x106aa8bb0> = <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'>.norm
+     +      where <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'> = np.linalg
+/Users/jlu/code/python/bagle/tests/test_model_old_vs_jax.py:1255: AssertionError: zero grad norm for FSBL_PhotAstrom_noPar_Param8.get_lens_astrometry
+E   AssertionError: zero grad norm for FSBL_PhotAstrom_noPar_Param8.get_resolved_lens_astrometry
+    assert np.float64(0.0) > 0.0
+     +  where np.float64(0.0) = <function norm at 0x106aa8bb0>(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0.]))
+     +    where <function norm at 0x106aa8bb0> = <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'>.norm
+     +      where <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'> = np.linalg
+/Users/jlu/code/python/bagle/tests/test_model_old_vs_jax.py:1255: AssertionError: zero grad norm for FSBL_PhotAstrom_noPar_Param8.get_resolved_lens_astrometry
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:491
+  <frozen importlib._bootstrap>:491: FutureWarning: pybind11-bound class 'celerite.solver.CholeskySolver' is using an old-style placement-new '__setstate__' which has been deprecated. See the upgrade guide in pybind11's docs. This message is only visible when compiled in debug mode.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_model_old_vs_jax.py::test_grad_fsbl_photastrom_param8[FSBL_PhotAstrom_Par_CircOrbs_Param8-get_lens_astrometry]
+FAILED tests/test_model_old_vs_jax.py::test_grad_fsbl_photastrom_param8[FSBL_PhotAstrom_Par_EllOrbs_Param8-get_lens_astrometry]
+FAILED tests/test_model_old_vs_jax.py::test_grad_fsbl_photastrom_param8[FSBL_PhotAstrom_Par_Param8-get_lens_astrometry]
+FAILED tests/test_model_old_vs_jax.py::test_grad_fsbl_photastrom_param8[FSBL_PhotAstrom_Par_Param8-get_resolved_lens_astrometry]
+FAILED tests/test_model_old_vs_jax.py::test_grad_fsbl_photastrom_param8[FSBL_PhotAstrom_noPar_CircOrbs_Param8-get_lens_astrometry]
+FAILED tests/test_model_old_vs_jax.py::test_grad_fsbl_photastrom_param8[FSBL_PhotAstrom_noPar_EllOrbs_Param8-get_lens_astrometry]
+FAILED tests/test_model_old_vs_jax.py::test_grad_fsbl_photastrom_param8[FSBL_PhotAstrom_noPar_Param8-get_lens_astrometry]
+FAILED tests/test_model_old_vs_jax.py::test_grad_fsbl_photastrom_param8[FSBL_PhotAstrom_noPar_Param8-get_resolved_lens_astrometry]
+8 failed, 58 passed, 1 warning in 4373.01s (1:12:53)

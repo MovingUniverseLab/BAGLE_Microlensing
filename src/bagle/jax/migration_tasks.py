@@ -6,8 +6,6 @@ import re
 from dataclasses import dataclass
 from typing import Iterable, Literal
 
-from bagle.jax.layout_registry import resolve_layout
-
 Step = Literal["jax_forward", "parity", "grad"]
 MethodName = str
 
@@ -236,6 +234,3 @@ def family_summary(tasks: Iterable[MigrationTask], done: set[str] | None = None)
     return {k: (v[0], v[1]) for k, v in totals.items()}
 
 
-def layout_for_class_name(model_module, class_name: str):
-    cls = getattr(model_module, class_name)
-    return resolve_layout(cls)

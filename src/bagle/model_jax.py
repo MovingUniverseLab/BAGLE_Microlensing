@@ -518,6 +518,99 @@ from abc import ABC
 #
 # --------------------------------------------------
 class PSPL(ABC):
+    def _parallax_vectors_for_jax(self, t, filt_idx=0):
+        """
+        Precompute host-side parallax direction table for JAX kernels.
+
+        Parameters
+        ----------
+        t : array_like
+            Observation times in MJD.
+        filt_idx : int, optional
+            Index into ``obsLocation`` when it is per-filter.
+
+        Returns
+        -------
+        parallax_vectors : ndarray or None
+            Shape ``(N_times, 2)`` East/North AU table, or ``None`` when
+            parallax is disabled.
+        """
+        if not getattr(self, "parallaxFlag", False):
+            return None
+
+        # Observer location may be a single string or per-filter list.
+        obs = self.obsLocation
+        if isinstance(obs, (list, tuple, np.ndarray)):
+            obs_loc = obs[filt_idx]
+        else:
+            obs_loc = obs
+
+        # Host ephemeris table; not differentiated inside JAX.
+        parallax_vectors = jax_physics.precompute_parallax_vectors(
+            float(self.raL), float(self.decL), t, obs_location=str(obs_loc)
+        )
+
+        return parallax_vectors
+
+    def _phot_scalar(self, phot_param_name, filt_idx=0, default=None):
+        """
+        Return a scalar photometry parameter for filter ``filt_idx``.
+
+        Parameters
+        ----------
+        phot_param_name : str
+            Attribute name on ``self`` (e.g. ``'b_sff'``, ``'mag_src'``).
+        filt_idx : int, optional
+            Photometric filter index.
+        default : float or None, optional
+            Value returned when the attribute is missing or empty.
+
+        Returns
+        -------
+        param_val : float or None
+            Scalar parameter for the requested filter.
+        """
+        val = getattr(self, phot_param_name, None)
+        if val is None:
+            return default
+
+        arr = np.asarray(val).reshape(-1)
+        if arr.size == 0:
+            return default
+
+        # Prefer the requested filter; fall back to the first entry.
+        param_val = float(arr[filt_idx]) if arr.size > filt_idx else float(arr[0])
+
+        return param_val
+
+    def _mag_src_for_jax(self, filt_idx=0):
+        """
+        Source magnitude for JAX photometry (handles ``mag_base`` layouts).
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Photometric filter index.
+
+        Returns
+        -------
+        mag_src : float or None
+            Unlensed source magnitude, or ``None`` if unavailable.
+        """
+        mag_src = self._phot_scalar("mag_src", filt_idx)
+        if mag_src is not None:
+            return mag_src
+
+        # Param2-style layouts store mag_base; convert with b_sff.
+        mag_base = self._phot_scalar("mag_base", filt_idx)
+        b_sff = self._phot_scalar("b_sff", filt_idx)
+        if mag_base is None or b_sff is None:
+            return None
+
+        mag_src = float(mag_base - 2.5 * np.log10(b_sff))
+
+        return mag_src
+
     def get_lens_astrometry(self, t, filt_idx=0):
         """
         Get the astrometry for the foreground lens at the input times.
@@ -536,28 +629,26 @@ class PSPL(ABC):
         xL : array_like, dtype=float, shape = [len(t), 2]
             Position of the lens on the sky (arcsec).
         """
-        try:
-            from bagle.jax_model import try_get_lens_astrometry
+        t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
 
-            pos_jax = try_get_lens_astrometry(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
+        # Phot-only models have no absolute lens sky track.
+        if not hasattr(self, "xL0") or self.xL0 is None:
+            return np.zeros((int(t_j.shape[0]), 2), dtype=np.float64)
 
-        # Equation of motion for just the background source.
-        dt_in_years = (t - self.t0) / days_per_year
-        xL = self.xL0 + np.outer(dt_in_years, self.muL) * 1e-3
+        # Host parallax table and optional lens parallax amplitude.
+        pvec = self._parallax_vectors_for_jax(t, filt_idx)
+        pi_l = getattr(self, "piL", None)
 
-        if self.parallaxFlag:
-            # Get the parallax vector for each date.
-            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
-                                                          obsLocation=self.obsLocation[filt_idx])
+        xL = jax_physics.pspl_linear_astrometry(
+            t_j,
+            jnp.asarray(self.t0, dtype=jnp.float64),
+            jnp.asarray(self.xL0, dtype=jnp.float64),
+            jnp.asarray(self.muL, dtype=jnp.float64),
+            parallax_vectors=pvec,
+            pi=None if pi_l is None else jnp.asarray(pi_l, dtype=jnp.float64),
+        )
 
-            xL += (self.piL * parallax_vec) * 1e-3  # arcsec
-
-        return xL
-
+        return np.asarray(xL, dtype=np.float64)
 
     def get_source_astrometry_unlensed(self, t, filt_idx=0):
         """
@@ -577,28 +668,19 @@ class PSPL(ABC):
         xS_unlensed : numpy array, dtype=float, shape = [len(t), 2]
             The unlensed positions of the source in arcseconds.
         """
-        try:
-            from bagle.jax_model import try_get_source_astrometry_unlensed
+        pvec = self._parallax_vectors_for_jax(t, filt_idx)
+        pi_s = getattr(self, "piS", None)
 
-            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
+        xS_unlensed = jax_physics.pspl_source_astrometry_unlensed(
+            jnp.asarray(t, dtype=jnp.float64).reshape(-1),
+            jnp.asarray(self.t0, dtype=jnp.float64),
+            jnp.asarray(self.xS0, dtype=jnp.float64),
+            jnp.asarray(self.muS, dtype=jnp.float64),
+            parallax_vectors=pvec,
+            piS=None if pi_s is None else jnp.asarray(pi_s, dtype=jnp.float64),
+        )
 
-        # Equation of motion for just the background source.
-        dt_in_years = (t - self.t0) / days_per_year
-        xS_unlensed = self.xS0 + np.outer(dt_in_years, self.muS) * 1e-3
-
-        if self.parallaxFlag:
-            # Get the parallax vector for each date.
-            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
-                                                          obsLocation=self.obsLocation[filt_idx])
-
-            xS_unlensed += (self.piS * parallax_vec) * 1e-3  # arcsec
-
-        return xS_unlensed
-
+        return np.asarray(xS_unlensed, dtype=np.float64)
 
     def get_astrometry_unlensed(self, t, filt_idx=0):
         """
@@ -619,23 +701,30 @@ class PSPL(ABC):
         xS_unlensed : numpy array, dtype=float, shape = [len(t), 2]
             The unlensed, flux-weighted centroid position of the source+lens in arcseconds.
         """
-        try:
-            from bagle.jax_model import try_get_astrometry_unlensed
+        # Phot-only path: Einstein-radius centroid with blend on the lens.
+        if not hasattr(self, "xS0") or self.xS0 is None:
+            pvec = self._parallax_vectors_for_jax(t, filt_idx)
+            b_sff = self._phot_scalar("b_sff", filt_idx, default=1.0)
+            u_cent = jax_physics.pspl_phot_astrometry_unlensed(
+                jnp.asarray(t, dtype=jnp.float64).reshape(-1),
+                jnp.asarray(self.t0, dtype=jnp.float64),
+                jnp.asarray(self.tE, dtype=jnp.float64),
+                jnp.asarray(self.u0, dtype=jnp.float64),
+                jnp.asarray(self.thetaE_hat, dtype=jnp.float64),
+                b_sff,
+                parallax_vectors=pvec,
+                piE_E=jnp.asarray(self.piE[0], dtype=jnp.float64),
+                piE_N=jnp.asarray(self.piE[1], dtype=jnp.float64),
+            )
+            return np.asarray(u_cent, dtype=np.float64)
 
-            pos_jax = try_get_astrometry_unlensed(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
-
+        # PhotAstrom path: blend absolute source and lens sky tracks.
         xS_unlensed = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
-
-        # Flux-weighted centroid of source and lens, unlensed
-        pos_unlensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
+        b_sff = self._phot_scalar("b_sff", filt_idx, default=1.0)
+        pos_unlensed = b_sff * xS_unlensed + (1.0 - b_sff) * xL_unlensed
 
         return pos_unlensed
-    
 
     def get_resolved_amplification(self, t, filt_idx=0):
         """
@@ -655,35 +744,20 @@ class PSPL(ABC):
         A : numpy array, dtype=float, shape = [len(t), [+/-]
             The amplification for the + and - lensed images.
         """
-        try:
-            from bagle.jax_model import try_get_resolved_amplification
+        pvec = self._parallax_vectors_for_jax(t, filt_idx)
 
-            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
-            if amp_jax is not None:
-                return amp_jax
-        except ImportError:
-            pass
+        amp_pm = jax_physics.pspl_resolved_amplification(
+            jnp.asarray(t, dtype=jnp.float64).reshape(-1),
+            jnp.asarray(self.t0, dtype=jnp.float64),
+            jnp.asarray(self.tE, dtype=jnp.float64),
+            jnp.asarray(self.u0, dtype=jnp.float64),
+            jnp.asarray(self.thetaE_hat, dtype=jnp.float64),
+            parallax_vectors=pvec,
+            piE_E=jnp.asarray(self.piE[0], dtype=jnp.float64),
+            piE_N=jnp.asarray(self.piE[1], dtype=jnp.float64),
+        )
 
-        # Equation of relative motion (angular on sky) Eq. 16 from Hog+ 1995
-        dt_in_years = (t - self.t0) / days_per_year
-        thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)
-
-        if self.parallaxFlag:
-            # Get the parallax vector for each date.
-            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
-                                                          obsLocation=self.obsLocation[filt_idx])
-
-            thetaS -= (self.piRel * parallax_vec)  # mas
-
-        # Some useful variables.
-        u = thetaS / self.thetaE_amp
-        u_amp = np.linalg.norm(u, axis=1)
-
-        A_plus  = 0.5 * ((u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4)) + 1)
-        A_minus = 0.5 * ((u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4)) - 1)
-
-        return np.stack((A_plus, A_minus))
-    
+        return np.asarray(amp_pm, dtype=np.float64)
 
     def get_amplification(self, t, filt_idx=0):
         """
@@ -701,44 +775,20 @@ class PSPL(ABC):
         A : numpy array, dtype=float, shape = [len(t)]
             The total amplification (sum of +/- images)
         """
+        pvec = self._parallax_vectors_for_jax(t, filt_idx)
 
-        try:
-            from bagle.jax_model import try_get_amplification
+        amp = jax_physics.pspl_amplification(
+            jnp.asarray(t, dtype=jnp.float64).reshape(-1),
+            jnp.asarray(self.t0, dtype=jnp.float64),
+            jnp.asarray(self.tE, dtype=jnp.float64),
+            jnp.asarray(self.u0, dtype=jnp.float64),
+            jnp.asarray(self.thetaE_hat, dtype=jnp.float64),
+            parallax_vectors=pvec,
+            piE_E=jnp.asarray(self.piE[0], dtype=jnp.float64),
+            piE_N=jnp.asarray(self.piE[1], dtype=jnp.float64),
+        )
 
-            amp_jax = try_get_amplification(self, t, filt_idx=filt_idx)
-            if amp_jax is not None:
-                return amp_jax
-        except ImportError:
-            pass
-
-        tau = (t - self.t0) / self.tE
-
-        # Convert to matrices for more efficient operations.
-        # Matrix shapes below are:
-        #  u0, thetaE_hat: [1, 2]
-        #  tau:      [N_times, 1]
-        u0 = self.u0.reshape(1, len(self.u0))
-        thetaE_hat = self.thetaE_hat.reshape(1, len(self.thetaE_hat))
-        tau = tau.reshape(len(tau), 1)
-
-        # Shape of u: [N_times, 2]
-        u = u0 + tau * thetaE_hat
-
-        if self.parallaxFlag:
-            # Get the parallax vector for each date.
-            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
-                                                          obsLocation=self.obsLocation[filt_idx])
-
-            u -= self.piE_amp * parallax_vec
-
-        # Shape of u_amp: [N_times]
-        u_amp = np.linalg.norm(u, axis=1)
-
-        A = (u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4))
-        ##pdb.set_trace()
-
-        return A
-
+        return np.asarray(amp, dtype=np.float64)
 
     def get_resolved_astrometry(self, t, filt_idx=0):
         """
@@ -763,46 +813,24 @@ class PSPL(ABC):
               with shape = [len(t), 2]
 
         """
-        try:
-            from bagle.jax_model import try_get_resolved_astrometry
+        pvec = self._parallax_vectors_for_jax(t, filt_idx)
 
-            pos_jax = try_get_resolved_astrometry(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
+        pos_images = jax_physics.pspl_resolved_astrometry(
+            jnp.asarray(t, dtype=jnp.float64).reshape(-1),
+            jnp.asarray(self.t0, dtype=jnp.float64),
+            jnp.asarray(self.tE, dtype=jnp.float64),
+            jnp.asarray(self.u0, dtype=jnp.float64),
+            jnp.asarray(self.thetaE_hat, dtype=jnp.float64),
+            jnp.asarray(self.xL0, dtype=jnp.float64),
+            jnp.asarray(self.muL, dtype=jnp.float64),
+            jnp.asarray(self.thetaE_amp, dtype=jnp.float64),
+            parallax_vectors=pvec,
+            piE_E=jnp.asarray(self.piE[0], dtype=jnp.float64),
+            piE_N=jnp.asarray(self.piE[1], dtype=jnp.float64),
+            piL=jnp.asarray(self.piL, dtype=jnp.float64),
+        )
 
-        dt_in_years = (t - self.t0) / days_per_year
-
-        # Equation of motion for the relative angular separation between the
-        # background source and lens.
-        thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)  # mas
-
-        if self.parallaxFlag:
-            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
-                                                          obsLocation=self.obsLocation[filt_idx])
-            thetaS -= (self.piRel * parallax_vec)  # mas
-
-        u_vec = thetaS / self.thetaE_amp
-        u_amp = np.linalg.norm(u_vec, axis=1)
-        u_hat = (u_vec.T / u_amp).T
-
-        u_plus = ((u_amp + np.sqrt(u_amp ** 2 + 4)) / 2.0) * u_hat.T
-        u_minus = ((u_amp - np.sqrt(u_amp ** 2 + 4)) / 2.0) * u_hat.T
-        u_plus = u_plus.T
-        u_minus = u_minus.T
-
-        # Lensed Source Images - Lens Image
-        xSL_plus = u_plus * self.thetaE_amp  # in mas
-        xSL_minus = u_minus * self.thetaE_amp  # in mas
-
-        xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
-
-        xS_plus = xL + (xSL_plus * 1e-3)  # arcsec
-        xS_minus = xL + (xSL_minus * 1e-3)  # arcsec
-
-        return np.stack((xS_plus, xS_minus))
-
+        return np.asarray(pos_images, dtype=np.float64)
 
     def get_astrometry(self, t, filt_idx=0):
         """
@@ -825,61 +853,43 @@ class PSPL(ABC):
             any luminous lenses.
 
         """
-        try:
-            from bagle.jax_model import try_get_astrometry
+        t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+        pvec = self._parallax_vectors_for_jax(t, filt_idx)
+        b_sff = self._phot_scalar("b_sff", filt_idx, default=1.0)
 
-            pos_jax = try_get_astrometry(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
+        # Phot-only: Einstein-radius flux-weighted centroid.
+        if not hasattr(self, "xS0") or self.xS0 is None:
+            mag_src = self._mag_src_for_jax(filt_idx)
+            u_cent = jax_physics.pspl_phot_astrometry(
+                t_j,
+                jnp.asarray(self.t0, dtype=jnp.float64),
+                jnp.asarray(self.tE, dtype=jnp.float64),
+                jnp.asarray(self.u0, dtype=jnp.float64),
+                jnp.asarray(self.thetaE_hat, dtype=jnp.float64),
+                mag_src,
+                b_sff,
+                parallax_vectors=pvec,
+                piE_E=jnp.asarray(self.piE[0], dtype=jnp.float64),
+                piE_N=jnp.asarray(self.piE[1], dtype=jnp.float64),
+            )
+            return np.asarray(u_cent, dtype=np.float64)
 
-        # Things we will need.
-        dt_in_years = (t - self.t0) / days_per_year
+        # PhotAstrom: absolute sky centroid with luminous lens blend.
+        centroid = jax_physics.pspl_astrometry_param1(
+            t_j,
+            jnp.asarray(self.t0, dtype=jnp.float64),
+            jnp.asarray(self.xS0, dtype=jnp.float64),
+            jnp.asarray(self.xL0, dtype=jnp.float64),
+            jnp.asarray(self.muS, dtype=jnp.float64),
+            jnp.asarray(self.muL, dtype=jnp.float64),
+            jnp.asarray(self.thetaE_amp, dtype=jnp.float64),
+            b_sff,
+            parallax_vectors=pvec,
+            piS=jnp.asarray(self.piS, dtype=jnp.float64),
+            piL=jnp.asarray(self.piL, dtype=jnp.float64),
+        )
 
-        # Equation of motion for just the background source.
-        xS_unlensed = self.xS0 + np.outer(dt_in_years, self.muS) * 1e-3
-
-        # Equation of motion for just the foreground lens.
-        xL_unlensed = self.xL0 + np.outer(dt_in_years, self.muL) * 1e-3
-
-        # Add parallax to both.
-        if self.parallaxFlag:
-            # Get the parallax vector for each date.
-            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
-                                                          obsLocation=self.obsLocation[filt_idx])
-            xS_unlensed += np.squeeze(self.piS * parallax_vec) * 1e-3  # arcsec
-            xL_unlensed += np.squeeze(self.piL * parallax_vec) * 1e-3  # arcsec
-
-        # Equation of motion for the relative angular separation between the background source and lens.
-        # Note, we don't just call get_centroid_shift() because parallax_vec calculation is repeated.
-        # and it is slow.
-        thetaS = xS_unlensed - xL_unlensed
-
-        u_vec = thetaS / (self.thetaE_amp * 1e-3)
-        u_amp = np.linalg.norm(u_vec, axis=1)
-
-        # Assume all neighbor flux is in the lens.
-        g = (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-
-        # u^2 - u\sqrt{u^2 + 4} + 3
-        numer_u = u_amp ** 2 - u_amp * np.sqrt(u_amp ** 2 + 4) + 3
-
-        # u^2 + 2 + gu\sqrt{u^2+4}
-        denom_u = u_amp ** 2 + 2 + g * u_amp * np.sqrt(u_amp ** 2 + 4)
-
-        # Lens-induced astrometric shift of the sum of all source images
-        numer = thetaS * (1 + g * numer_u).reshape(len(numer_u), 1) # arcsec
-        denom = (1 + g) * denom_u
-
-        shift = numer / denom.reshape((len(u_amp), 1))  # arcsec
-
-        # Flux-weighted centroid, lensed
-        pos_lensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
-        pos_lensed += shift
-
-        return pos_lensed
-
+        return np.asarray(centroid, dtype=np.float64)
 
     def get_photometry(self, t, filt_idx=0):
         """
@@ -899,33 +909,27 @@ class PSPL(ABC):
             Magnitude of the unresolved microlensing event at t.
 
         """
-        try:
-            from bagle.jax_model import try_get_photometry
+        mag_src = self._mag_src_for_jax(filt_idx)
+        if mag_src is None:
+            raise AttributeError("Model needs mag_src or mag_base for photometry")
 
-            mag_jax = try_get_photometry(self, t, filt_idx=filt_idx)
-            if mag_jax is not None:
-                return mag_jax
-        except ImportError:
-            pass
+        b_sff = self._phot_scalar("b_sff", filt_idx)
+        pvec = self._parallax_vectors_for_jax(t, filt_idx)
 
-        # Intrinsic flux
-        flux_src = mag2flux(self.mag_src[filt_idx])
+        mag_model = jax_physics.pspl_photometry(
+            jnp.asarray(t, dtype=jnp.float64).reshape(-1),
+            jnp.asarray(self.t0, dtype=jnp.float64),
+            jnp.asarray(self.tE, dtype=jnp.float64),
+            jnp.asarray(self.u0, dtype=jnp.float64),
+            jnp.asarray(self.thetaE_hat, dtype=jnp.float64),
+            mag_src,
+            b_sff=b_sff,
+            parallax_vectors=pvec,
+            piE_E=jnp.asarray(self.piE[0], dtype=jnp.float64),
+            piE_N=jnp.asarray(self.piE[1], dtype=jnp.float64),
+        )
 
-        # Amplified flux
-        flux_model = flux_src * self.get_amplification(t, filt_idx=filt_idx)
-
-        # Account for blending, if necessary.
-        try:
-            # Adding flux of neighbors and lens
-            # b_sff = fS / (fS + fN + fL)
-            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-        except AttributeError:
-            pass
-
-        mag_model = flux2mag(flux_model)
-
-        return mag_model
-
+        return np.asarray(mag_model, dtype=np.float64)
 
     def get_centroid_shift(self, t, filt_idx=0):
         """
@@ -943,52 +947,23 @@ class PSPL(ABC):
         filt_idx : int, optional
             Index of the photometric filter or data set.
 
+        Returns
+        -------
+        shift : numpy array, dtype=float, shape = [len(t), 2]
+            Centroid shift in milliarcseconds.
         """
-        try:
-            from bagle.jax_model import try_get_centroid_shift
+        # Lensed and unlensed unresolved centroids (arcsec).
+        ast = self.get_astrometry(t, filt_idx=filt_idx)
+        unl = self.get_astrometry_unlensed(t, filt_idx=filt_idx)
 
-            shift_jax = try_get_centroid_shift(self, t, filt_idx=filt_idx)
-            if shift_jax is not None:
-                return shift_jax
-        except ImportError:
-            pass
-
-        # Things we will need.
-        dt_in_years = (t - self.t0) / days_per_year
-
-        # Equation of motion for the relative angular separation between the background source and lens.
-        thetaS = self.thetaS0 + np.outer(dt_in_years, self.muRel)  # mas
-
-        if self.parallaxFlag:
-            # Get the parallax vector for each date.
-            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
-                                                          obsLocation=self.obsLocation[filt_idx])
-            thetaS -= (self.piRel * parallax_vec)  # mas
-
-        # Some useful variables
-        u_vec = thetaS / self.thetaE_amp
-        u_amp = np.linalg.norm(u_vec, axis=1)
-
-        # Assume all neighbor flux is in the lens.
-        g = (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-
-        # u^2 - u\sqrt{u^2 + 4} + 3
-        numer_u = u_amp ** 2 - u_amp * np.sqrt(u_amp ** 2 + 4) + 3
-
-        # u^2 + 2 + gu\sqrt{u^2+4}
-        denom_u = u_amp ** 2 + 2 + g * u_amp * np.sqrt(u_amp ** 2 + 4)
-
-        # Lens-induced astrometric shift of the sum of all source images (in mas)
-        numer = thetaS * (1 + g * numer_u).reshape(len(numer_u), 1)
-        denom = (1 + g) * denom_u
-
-        shift = numer / denom.reshape((len(u_amp), 1))  # mas
+        # Convert arcsec difference to mas.
+        shift = (np.asarray(ast) - np.asarray(unl)) * 1e3
 
         return shift
 
-
     def get_u(self, t, filt_idx=0):
-        """Get the unlensed, relative astrometry of the source and lens in units
+        """
+        Get the unlensed, relative astrometry of the source and lens in units
         of the Einstein radius.
 
         Parameters
@@ -1003,35 +978,20 @@ class PSPL(ABC):
         u_unlensed : numpy array, dtype=float, ``shape = len(t) x 2``
             The unlensed positions of the source in Einstein radii.
         """
-        try:
-            from bagle.jax_model import try_get_u
+        pvec = self._parallax_vectors_for_jax(t, filt_idx)
 
-            u_jax = try_get_u(self, t, filt_idx=filt_idx)
-            if u_jax is not None:
-                return u_jax
-        except ImportError:
-            pass
+        u = jax_physics.pspl_u(
+            jnp.asarray(t, dtype=jnp.float64).reshape(-1),
+            jnp.asarray(self.t0, dtype=jnp.float64),
+            jnp.asarray(self.tE, dtype=jnp.float64),
+            jnp.asarray(self.u0, dtype=jnp.float64),
+            jnp.asarray(self.thetaE_hat, dtype=jnp.float64),
+            parallax_vectors=pvec,
+            piE_E=jnp.asarray(self.piE[0], dtype=jnp.float64),
+            piE_N=jnp.asarray(self.piE[1], dtype=jnp.float64),
+        )
 
-        # Calculate the position of the source w.r.t. lens (in Einstein radii)
-        # Distance along muRel direction
-        tau = (t - self.t0) / self.tE
-        tau = tau.reshape(len(tau), 1)
-
-        # Distance along u0 direction -- always constant with time.
-        u0 = self.u0.reshape(1, len(self.u0))
-        muRel_hat = self.muRel_hat.reshape(1, len(self.muRel_hat))
-
-        # Total distance
-        u = u0 + tau * muRel_hat
-
-        # Incorporate parallax
-        if self.parallaxFlag:
-            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
-                                                          obsLocation=self.obsLocation[filt_idx])
-            u -= self.piE_amp * parallax_vec
-
-        return u
-
+        return np.asarray(u, dtype=np.float64)
 
     def get_chi2_photometry(self, t, mag_obs, mag_err_obs, filt_idx=0):
         """
@@ -1057,23 +1017,15 @@ class PSPL(ABC):
             List of chi^2 values from the model and photometric data.
 
         """
-        try:
-            from bagle.jax_model import try_get_chi2_photometry
-
-            chi2_jax = try_get_chi2_photometry(
-                self, t, mag_obs, mag_err_obs, filt_idx=filt_idx
-            )
-            if chi2_jax is not None:
-                return chi2_jax
-        except ImportError:
-            pass
-
         mag_model = self.get_photometry(t, filt_idx=filt_idx)
 
-        chi2 = ((mag_obs - mag_model) / mag_err_obs) ** 2
+        chi2 = jax_physics.gaussian_chi2_photometry(
+            jnp.asarray(mag_model, dtype=jnp.float64),
+            jnp.asarray(mag_obs, dtype=jnp.float64),
+            jnp.asarray(mag_err_obs, dtype=jnp.float64),
+        )
 
-        return chi2
-
+        return np.asarray(chi2, dtype=np.float64)
 
     def get_chi2_astrometry(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
         """
@@ -1105,25 +1057,17 @@ class PSPL(ABC):
             List of chi^2 values from the model and astrometric data.
 
         """
-        try:
-            from bagle.jax_model import try_get_chi2_astrometry
-
-            chi2_jax = try_get_chi2_astrometry(
-                self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx
-            )
-            if chi2_jax is not None:
-                return chi2_jax
-        except ImportError:
-            pass
-
         pos_model = self.get_astrometry(t, filt_idx=filt_idx)
-        chi2_x = ((x_obs - pos_model[:, 0]) / x_err_obs) ** 2
-        chi2_y = ((y_obs - pos_model[:, 1]) / y_err_obs) ** 2
 
-        chi2 = chi2_x + chi2_y
+        chi2 = jax_physics.gaussian_chi2_astrometry(
+            jnp.asarray(pos_model, dtype=jnp.float64),
+            jnp.asarray(x_obs, dtype=jnp.float64),
+            jnp.asarray(y_obs, dtype=jnp.float64),
+            jnp.asarray(x_err_obs, dtype=jnp.float64),
+            jnp.asarray(y_err_obs, dtype=jnp.float64),
+        )
 
-        return chi2
-
+        return np.asarray(chi2, dtype=np.float64)
 
     def get_lnL_constant(self, err_obs):
         """
@@ -1138,13 +1082,13 @@ class PSPL(ABC):
 
         Returns
         -------
-        List of ln(likelihood constants).
+        lnL_const : array_like
+            List of ln(likelihood constants).
 
         """
         lnL_const = -0.5 * np.log(2.0 * math.pi * err_obs ** 2)
 
         return lnL_const
-
 
     def log_likely_photometry_each(self, t, mag_obs, mag_err_obs, filt_idx=0):
         """
@@ -1171,26 +1115,15 @@ class PSPL(ABC):
             List of ln(likelihood) for each photometric measurement.
 
         """
+        mag_model = self.get_photometry(t, filt_idx=filt_idx)
 
-        try:
-            from bagle.jax_model import try_get_log_likely_photometry_each
+        lnL = jax_physics.gaussian_log_likelihood_photometry_each(
+            jnp.asarray(mag_model, dtype=jnp.float64),
+            jnp.asarray(mag_obs, dtype=jnp.float64),
+            jnp.asarray(mag_err_obs, dtype=jnp.float64),
+        )
 
-            lnL_jax = try_get_log_likely_photometry_each(
-                self, t, mag_obs, mag_err_obs, filt_idx=filt_idx
-            )
-            if lnL_jax is not None:
-                return lnL_jax
-        except ImportError:
-            pass
-
-        chi2_m = self.get_chi2_photometry(t, mag_obs, mag_err_obs, filt_idx=filt_idx)
-
-        lnL_const_m = self.get_lnL_constant(mag_err_obs)
-
-        lnL = (-0.5 * chi2_m) + lnL_const_m
-
-        return lnL
-
+        return np.asarray(lnL, dtype=np.float64)
 
     def log_likely_photometry(self, t, mag_obs, mag_err_obs, filt_idx=0):
         """
@@ -1217,10 +1150,11 @@ class PSPL(ABC):
             ln(likelihood) summed over the photometric measurement
 
         """
-        lnL = self.log_likely_photometry_each(t, mag_obs, mag_err_obs, filt_idx=filt_idx)
+        lnL = self.log_likely_photometry_each(
+            t, mag_obs, mag_err_obs, filt_idx=filt_idx
+        )
 
         return lnL.sum()
-
 
     def log_likely_astrometry_each(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
         """
@@ -1253,26 +1187,17 @@ class PSPL(ABC):
             List of ln(likelihood) for each astrometric measurement.
 
         """
-        try:
-            from bagle.jax_model import try_get_log_likely_astrometry_each
+        pos_model = self.get_astrometry(t, filt_idx=filt_idx)
 
-            lnL_jax = try_get_log_likely_astrometry_each(
-                self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx
-            )
-            if lnL_jax is not None:
-                return lnL_jax
-        except ImportError:
-            pass
+        lnL = jax_physics.gaussian_log_likelihood_astrometry_each(
+            jnp.asarray(pos_model, dtype=jnp.float64),
+            jnp.asarray(x_obs, dtype=jnp.float64),
+            jnp.asarray(y_obs, dtype=jnp.float64),
+            jnp.asarray(x_err_obs, dtype=jnp.float64),
+            jnp.asarray(y_err_obs, dtype=jnp.float64),
+        )
 
-        chi2_xy = self.get_chi2_astrometry(t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx)
-
-        lnL_const_x = self.get_lnL_constant(x_err_obs)
-        lnL_const_y = self.get_lnL_constant(y_err_obs)
-
-        lnL = (-0.5 * chi2_xy) + lnL_const_x + lnL_const_y
-
-        return lnL
-
+        return np.asarray(lnL, dtype=np.float64)
 
     def log_likely_astrometry(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
         """
@@ -1305,11 +1230,11 @@ class PSPL(ABC):
             List of ln(likelihood) for each astrometric measurement.
 
         """
-        lnL = self.log_likely_astrometry_each(t, x_obs, y_obs, x_err_obs, y_err_obs,
-                                              filt_idx=filt_idx)
+        lnL = self.log_likely_astrometry_each(
+            t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx
+        )
 
         return lnL.sum()
-
 
     def animate(self, tE, time_steps, frame_time, name, size, zoom,
                 astrometry, filt_idx=0):
@@ -1569,18 +1494,34 @@ class PSPL_Phot(PSPL):
         return pos_unlensed
 
     def get_resolved_amplification(self, t, filt_idx=0):
-        u_vec = self.get_u(t, filt_idx=filt_idx)
-        u_amp = np.linalg.norm(u_vec, axis=1)
-        sqrt_term = np.sqrt(u_amp ** 2 + 4)
-        A_plus = 0.5 * ((u_amp ** 2 + 2) / (u_amp * sqrt_term) + 1)
-        A_minus = 0.5 * ((u_amp ** 2 + 2) / (u_amp * sqrt_term) - 1)
-        A = np.zeros((len(t), 1, 2), dtype=float)
-        A[:, 0, 0] = A_plus
-        A[:, 0, 1] = A_minus
+        """
+        Plus/minus amplifications for photometry-only models.
+
+        Parameters
+        ----------
+        t : array_like
+            Observation times in MJD.
+        filt_idx : int, optional
+            Photometric filter index.
+
+        Returns
+        -------
+        A : ndarray, shape = [N_times, N_sources=1, N_images=2]
+            Plus and minus image amplifications.
+        """
+        # Separation vector in Einstein radii.
+        u_vec = jnp.asarray(self.get_u(t, filt_idx=filt_idx), dtype=jnp.float64)
+        a_plus, a_minus = jax_physics.pspl_resolved_amplification_from_u(u_vec)
+
+        # Phot API packs images as [N_times, N_sources, N_images].
+        A = np.zeros((len(np.asarray(t).reshape(-1)), 1, 2), dtype=float)
+        A[:, 0, 0] = np.asarray(a_plus)
+        A[:, 0, 1] = np.asarray(a_minus)
+
         return A
 
     def get_resolved_astrometry(self, t, filt_idx=0):
-        '''
+        """
         Position of the observed source position in Einstein radii.
 
         Parameters
@@ -1590,18 +1531,18 @@ class PSPL_Phot(PSPL):
         filt_idx : int, optional
             Index of the astrometric filter or data set.
 
-
         Returns
         -------
         model_pos : array_like. shape = [N_times, N_sources, N_images, 2]
             Array of vector positions of the centroid at each t.
-        '''
+        """
         u_vec = self.get_u(t, filt_idx=filt_idx)
 
+        # Separation amplitude and unit vector.
         u = np.linalg.norm(u_vec, axis=1)
-
         u_hat = (u_vec.T / u).T
 
+        # Plus / minus image positions in Einstein radii.
         u_plus = ((u + np.sqrt(u ** 2 + 4)) / 2.0).reshape(u.size, 1) * u_hat
         u_minu = ((u - np.sqrt(u ** 2 + 4)) / 2.0).reshape(u.size, 1) * u_hat
 
@@ -1612,7 +1553,7 @@ class PSPL_Phot(PSPL):
         return u_lensed
 
     def get_astrometry(self, t, filt_idx=0):
-        '''
+        """
         Position of the observed (unresolved) source position in Einstein radii.
 
         Parameters
@@ -1622,48 +1563,37 @@ class PSPL_Phot(PSPL):
         filt_idx : int, optional
             Index of the astrometric filter or data set.
 
-
         Returns
         -------
         model_pos : array_like
             Array of vector positions of the centroid at each t.
-        '''
-        try:
-            from bagle.jax_model import try_get_astrometry
+        """
+        # Source magnitude (supports mag_src_pri / mag_src layouts).
+        mag_src = self._mag_src_for_jax(filt_idx)
+        if mag_src is None:
+            if hasattr(self, 'mag_src_pri'):
+                mag_src = float(np.asarray(self.mag_src_pri).reshape(-1)[filt_idx])
+            else:
+                mag_src = float(np.asarray(self.mag_src).reshape(-1)[filt_idx])
 
-            pos_jax = try_get_astrometry(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
+        b_sff = self._phot_scalar("b_sff", filt_idx, default=1.0)
+        pvec = self._parallax_vectors_for_jax(t, filt_idx)
 
-        # Get the lensed positions ang ampflications
-        # for all 4 images (2 per source)
-        u_lensed2 = self.get_resolved_astrometry(t, filt_idx=filt_idx)
-        A_lensed2 = self.get_resolved_amplification(t, filt_idx=filt_idx)
+        # Flux-weighted Einstein-radius centroid including blend.
+        u_cent = jax_physics.pspl_phot_astrometry(
+            jnp.asarray(t, dtype=jnp.float64).reshape(-1),
+            jnp.asarray(self.t0, dtype=jnp.float64),
+            jnp.asarray(self.tE, dtype=jnp.float64),
+            jnp.asarray(self.u0, dtype=jnp.float64),
+            jnp.asarray(self.thetaE_hat, dtype=jnp.float64),
+            mag_src,
+            b_sff,
+            parallax_vectors=pvec,
+            piE_E=jnp.asarray(self.piE[0], dtype=jnp.float64),
+            piE_N=jnp.asarray(self.piE[1], dtype=jnp.float64),
+        )
 
-        # Sum over the two (+/-) images for each source.
-        u_lensed = np.sum(u_lensed2[:, 0, :, :] * A_lensed2[:, 0, :, np.newaxis], axis=1)
-        u_lensed /= np.sum(A_lensed2[:, 0, :, np.newaxis], axis=1)
-
-        # Summed ampliciations
-        A = np.sum(A_lensed2[:, 0, :, np.newaxis], axis=1)
-
-        # Calculate un-magnified fluxes. Note, we ignore blended flux entirely.
-        if hasattr(self, 'mag_src_pri'):
-            mag = self.mag_src_pri[filt_idx]
-        else:
-            mag = self.mag_src[filt_idx]
-        fS = mag2flux(mag)
-
-        # Assume all blended light comes from the lens.
-        fL = fS * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-
-        # Calculate the flux-weighted centroid of all the source images and lens.
-        # Remember lens is at origin (pos=0) in this coordinate system.
-        u_lensed = (u_lensed * fS * A) / (fS * A + fL)
-
-        return u_lensed
+        return np.asarray(u_cent, dtype=np.float64)
 
     def get_centroid_shift(self, t, filt_idx=0):
         raise RuntimeError(
@@ -2108,16 +2038,16 @@ class PSPL_GP(ABC):
             if t_pred is None:
                 t_pred = t
             try:
-                from bagle.jax_model import try_get_photometry_with_gp
+                from bagle.jax.gp import photometry_with_gp_jax
 
-                gp_jax = try_get_photometry_with_gp(
-                    self, t, mag_obs, mag_err_obs, filt_idx=filt_idx, t_pred=t_pred
+                gp_jax = photometry_with_gp_jax(
+                    self, t, mag_obs, mag_err_obs,
+                    filt_idx=filt_idx, t_pred=t_pred,
                 )
                 if gp_jax is not None:
                     return gp_jax
             except ImportError:
                 pass
-
             gp = self.get_celerite_gp_object(mag_err_obs, filt_idx=filt_idx)
             try:
                 gp.compute(t, mag_err_obs)
@@ -2280,16 +2210,16 @@ class PSPL_GPnoJitter(ABC):
             if t_pred is None:
                 t_pred = t
             try:
-                from bagle.jax_model import try_get_photometry_with_gp
+                from bagle.jax.gp import photometry_with_gp_jax
 
-                gp_jax = try_get_photometry_with_gp(
-                    self, t, mag_obs, mag_err_obs, filt_idx=filt_idx, t_pred=t_pred
+                gp_jax = photometry_with_gp_jax(
+                    self, t, mag_obs, mag_err_obs, filt_idx=filt_idx,
+                    t_pred=t_pred,
                 )
                 if gp_jax is not None:
                     return gp_jax
             except ImportError:
                 pass
-
             gp = self.get_celerite_gp_object(filt_idx = filt_idx)
             try:
                 gp.compute(t, mag_err_obs)
@@ -2387,6 +2317,41 @@ class PSPL_GPnoJitter(ABC):
 class PSPL_Param(ABC):
     # Fit parameters: Shared fit parameters
     fitter_param_names = []
+
+    # Analytic JAX likelihood packing (all Param mixins).
+    jax_loglik_backend = "analytic"
+
+    @classmethod
+    def get_params_for_jax(cls, vec):
+        """Pack a fitter parameter vector into JAX kernel inputs.
+
+        Parameters
+        ----------
+        vec : array_like
+            Full fitter parameter vector in ``fitter_param_names`` order.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for family JAX kernels.
+        """
+        from bagle.jax.param_pack import pack_params_for_class
+
+        return pack_params_for_class(cls, vec)
+
+    def get_params_for_jax_from_self(self):
+        """Pack this model's attributes into JAX kernel inputs."""
+        from bagle.jax.param_pack import params_from_self_phot, params_from_self_photastrom
+
+        if getattr(self, "paramAstromFlag", False):
+            try:
+                return params_from_self_photastrom(self)
+            except Exception:
+                pass
+        try:
+            return params_from_self_phot(self)
+        except Exception:
+            return {}
 
     # Fit parameters: Filter specific fit parameters -- handled as arrays.
     # Every photometric data-set has them.
@@ -2592,9 +2557,48 @@ class PSPL_AstromParam3(PSPL_Param):
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
+    jax_loglik_mode = 'ast'
 
     paramAstromFlag = True
     paramPhotFlag = False
+
+    @classmethod
+    def get_params_for_jax(cls, vec):
+        """
+        Pack a fitter parameter vector into JAX kernel inputs.
+
+        Parameters
+        ----------
+        vec : array_like
+            Full fitter parameter vector in ``fitter_param_names`` order.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for PSPL PhotAstrom Param3 JAX kernels.
+        """
+        from bagle.jax.param_pack import pack_pspl_photastrom_param3
+
+        # Map the ordered fitter cube onto kernel keyword arguments.
+        params = pack_pspl_photastrom_param3(vec, cls.fitter_param_names)
+
+        return params
+
+    def get_params_for_jax_from_self(self):
+        """
+        Pack this model's attributes into JAX kernel inputs.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for PhotAstrom JAX kernels.
+        """
+        from bagle.jax.param_pack import params_from_self_photastrom
+
+        # Read geometric / photometric attributes off the live model.
+        params = params_from_self_photastrom(self)
+
+        return params
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
@@ -2881,9 +2885,48 @@ class PSPL_PhotParam1(PSPL_Param):
     fitter_param_names = ['t0', 'u0_amp', 'tE',
                           'piE_E', 'piE_N']
     phot_param_names = ['b_sff', 'mag_src']
+    jax_loglik_mode = 'phot'
 
     paramAstromFlag = False
     paramPhotFlag = True
+
+    @classmethod
+    def get_params_for_jax(cls, vec):
+        """
+        Pack a fitter parameter vector into JAX kernel inputs.
+
+        Parameters
+        ----------
+        vec : array_like
+            Full fitter parameter vector in ``fitter_param_names`` order.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for PSPL Phot Param1 JAX kernels.
+        """
+        from bagle.jax.param_pack import pack_pspl_phot_param1
+
+        # Map the ordered fitter cube onto kernel keyword arguments.
+        params = pack_pspl_phot_param1(vec, cls.fitter_param_names)
+
+        return params
+
+    def get_params_for_jax_from_self(self):
+        """
+        Pack this model's attributes into JAX kernel inputs.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for Phot JAX kernels.
+        """
+        from bagle.jax.param_pack import params_from_self_phot
+
+        # Read geometric / photometric attributes off the live model.
+        params = params_from_self_phot(self)
+
+        return params
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth'):
@@ -2988,9 +3031,49 @@ class PSPL_PhotParam2(PSPL_Param):
                           'piE_E', 'piE_N']
     phot_param_names = ['b_sff', 'mag_base']
     additional_param_names = ['mag_src']
+    jax_loglik_mode = 'phot'
+    mag_fitter = 'mag_base'
 
     paramAstromFlag = False
     paramPhotFlag = True
+
+    @classmethod
+    def get_params_for_jax(cls, vec):
+        """
+        Pack a fitter parameter vector into JAX kernel inputs.
+
+        Parameters
+        ----------
+        vec : array_like
+            Full fitter parameter vector in ``fitter_param_names`` order.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for PSPL Phot Param2 JAX kernels.
+        """
+        from bagle.jax.param_pack import pack_pspl_phot_param2
+
+        # Map the ordered fitter cube onto kernel keyword arguments.
+        params = pack_pspl_phot_param2(vec, cls.fitter_param_names)
+
+        return params
+
+    def get_params_for_jax_from_self(self):
+        """
+        Pack this model's attributes into JAX kernel inputs.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for Phot JAX kernels.
+        """
+        from bagle.jax.param_pack import params_from_self_phot
+
+        # Read geometric / photometric attributes off the live model.
+        params = params_from_self_phot(self)
+
+        return params
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
                  raL=None, decL=None, obsLocation='earth'):
@@ -3091,9 +3174,49 @@ class PSPL_PhotParam3(PSPL_Param):
                           'log_piE', 'phi_muRel']
     phot_param_names = ['b_sff', 'mag_base']
     additional_param_names = ['mag_src']
+    jax_loglik_mode = 'phot'
+    mag_fitter = 'mag_base'
 
     paramAstromFlag = False
     paramPhotFlag = True
+
+    @classmethod
+    def get_params_for_jax(cls, vec):
+        """
+        Pack a fitter parameter vector into JAX kernel inputs.
+
+        Parameters
+        ----------
+        vec : array_like
+            Full fitter parameter vector in ``fitter_param_names`` order.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for PSPL Phot Param3 JAX kernels.
+        """
+        from bagle.jax.param_pack import pack_pspl_phot_param3
+
+        # Map the ordered fitter cube onto kernel keyword arguments.
+        params = pack_pspl_phot_param3(vec, cls.fitter_param_names)
+
+        return params
+
+    def get_params_for_jax_from_self(self):
+        """
+        Pack this model's attributes into JAX kernel inputs.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for Phot JAX kernels.
+        """
+        from bagle.jax.param_pack import params_from_self_phot
+
+        # Read geometric / photometric attributes off the live model.
+        params = params_from_self_phot(self)
+
+        return params
 
     def __init__(self, t0, u0_amp, log_tE, log_piE, phi_muRel, b_sff, mag_base,
                  raL=None, decL=None, obsLocation='earth'):
@@ -3309,9 +3432,48 @@ class PSPL_PhotAstromParam1(PSPL_Param):
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
                               'muRel_E', 'muRel_N']
+    jax_loglik_mode = 'joint'
 
     paramAstromFlag = True
     paramPhotFlag = True
+
+    @classmethod
+    def get_params_for_jax(cls, vec):
+        """
+        Pack a fitter parameter vector into JAX kernel inputs.
+
+        Parameters
+        ----------
+        vec : array_like
+            Full fitter parameter vector in ``fitter_param_names`` order.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for PSPL PhotAstrom Param1 JAX kernels.
+        """
+        from bagle.jax.param_pack import pack_pspl_photastrom_param1
+
+        # Map the ordered fitter cube onto kernel keyword arguments.
+        params = pack_pspl_photastrom_param1(vec, cls.fitter_param_names)
+
+        return params
+
+    def get_params_for_jax_from_self(self):
+        """
+        Pack this model's attributes into JAX kernel inputs.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for PhotAstrom JAX kernels.
+        """
+        from bagle.jax.param_pack import params_from_self_photastrom
+
+        # Read geometric / photometric attributes off the live model.
+        params = params_from_self_photastrom(self)
+
+        return params
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
@@ -3472,9 +3634,48 @@ class PSPL_PhotAstromParam2(PSPL_Param):
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
+    jax_loglik_mode = 'joint'
 
     paramAstromFlag = True
     paramPhotFlag = True
+
+    @classmethod
+    def get_params_for_jax(cls, vec):
+        """
+        Pack a fitter parameter vector into JAX kernel inputs.
+
+        Parameters
+        ----------
+        vec : array_like
+            Full fitter parameter vector in ``fitter_param_names`` order.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for PSPL PhotAstrom Param2 JAX kernels.
+        """
+        from bagle.jax.param_pack import pack_pspl_photastrom_param2
+
+        # Map the ordered fitter cube onto kernel keyword arguments.
+        params = pack_pspl_photastrom_param2(vec, cls.fitter_param_names)
+
+        return params
+
+    def get_params_for_jax_from_self(self):
+        """
+        Pack this model's attributes into JAX kernel inputs.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for PhotAstrom JAX kernels.
+        """
+        from bagle.jax.param_pack import params_from_self_photastrom
+
+        # Read geometric / photometric attributes off the live model.
+        params = params_from_self_photastrom(self)
+
+        return params
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
@@ -3636,9 +3837,49 @@ class PSPL_PhotAstromParam3(PSPL_Param):
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
                               'mag_src']
+    jax_loglik_mode = 'joint'
+    mag_fitter = 'mag_base'
 
     paramAstromFlag = True
     paramPhotFlag = True
+
+    @classmethod
+    def get_params_for_jax(cls, vec):
+        """
+        Pack a fitter parameter vector into JAX kernel inputs.
+
+        Parameters
+        ----------
+        vec : array_like
+            Full fitter parameter vector in ``fitter_param_names`` order.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for PSPL PhotAstrom Param3 JAX kernels.
+        """
+        from bagle.jax.param_pack import pack_pspl_photastrom_param3
+
+        # Map the ordered fitter cube onto kernel keyword arguments.
+        params = pack_pspl_photastrom_param3(vec, cls.fitter_param_names)
+
+        return params
+
+    def get_params_for_jax_from_self(self):
+        """
+        Pack this model's attributes into JAX kernel inputs.
+
+        Returns
+        -------
+        params : dict
+            Named parameter dictionary for PhotAstrom JAX kernels.
+        """
+        from bagle.jax.param_pack import params_from_self_photastrom
+
+        # Read geometric / photometric attributes off the live model.
+        params = params_from_self_photastrom(self)
+
+        return params
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
@@ -5441,9 +5682,12 @@ class PSBL(PSPL):
         Returns
         -------
         amp_arr : array_like
-            BLEH
+            Per-image amplifications from the binary-lens Jacobian.
         """
-        return jax_physics.psbl_amp_arr(z_arr, z1, z2, self.m1, self.m2)
+        # Delegate Jacobian magnification to the shared JAX kernel.
+        amp_arr = jax_physics.psbl_amp_arr(z_arr, z1, z2, self.m1, self.m2)
+
+        return amp_arr
 
     def rescale_complex_pos(self, w, z1, z2):
         """
@@ -5455,16 +5699,21 @@ class PSBL(PSPL):
         """
         import copy
 
+        # Physical masses before the coordinate rescaling.
         m1 = copy.deepcopy(self.m1)
         m2 = copy.deepcopy(self.m2)
         w = np.asarray(w, dtype=np.complex128)
         z1 = np.asarray(z1, dtype=np.complex128)
         z2 = np.asarray(z2, dtype=np.complex128)
+
+        # Shift each epoch to the centroid of source + lenses.
         pos = np.vstack([w, z1, z2]).T
         shift = np.average(pos, axis=1)
         w = w - shift
         z1 = z1 - shift
         z2 = z2 - shift
+
+        # Scale so the bounding box is roughly unit size.
         xscale = np.max(pos.real, axis=1) - np.min(pos.real, axis=1)
         yscale = np.max(pos.imag, axis=1) - np.min(pos.imag, axis=1)
         xyscale = np.concatenate([xscale, yscale]).reshape(len(xscale), 2)
@@ -5472,8 +5721,11 @@ class PSBL(PSPL):
         w = w * scale
         z1 = z1 * scale
         z2 = z2 * scale
+
+        # Masses scale as length^2 under this transform.
         m1 = m1 * (scale**2)
         m2 = m2 * (scale**2)
+
         return w, z1, z2, m1, m2, scale, shift
 
     def get_image_pos_arr_old(self, w, z1, z2, check_sols=True):
@@ -5826,11 +6078,21 @@ class PSBL(PSPL):
 
     def _quintic_roots(a5, a4, a3, a2, a1, a0):
         """
-        Solve via companion matrix.
-        All inputs are scalars (complex).
-        Returns (5,) complex roots.
+        Solve a single Witt quintic via companion-matrix eigenvalues.
+
+        Parameters
+        ----------
+        a5, a4, a3, a2, a1, a0 : complex
+            Quintic coefficients, high degree to constant.
+
+        Returns
+        -------
+        roots : complex ndarray, shape ``(5,)``
+            Complex image-position roots.
         """
-        return jax_physics.quintic_roots_companion(a5, a4, a3, a2, a1, a0)
+        roots = jax_physics.quintic_roots_companion(a5, a4, a3, a2, a1, a0)
+
+        return roots
 
     def get_image_pos_arr_mpsolve(self, w, z1, z2, m1, m2, check_sols=False):
         """
@@ -6052,6 +6314,20 @@ class PSBL(PSPL):
     def get_image_pos_arr_jax(self, w, z1, z2, m1, m2, check_sols=False):
         """
         JAX version of get_image_pos_arr (delegates to ``bagle.jax_physics``).
+
+        Parameters
+        ----------
+        w, z1, z2 : array_like
+            Complex source and lens positions.
+        m1, m2 : float
+            Lens mass fractions.
+        check_sols : bool, optional
+            If True, mask roots that fail the lens equation.
+
+        Returns
+        -------
+        images : complex ndarray
+            Image positions, shape ``(N_times, N_images)``.
         """
         warnings.warn(
             "get_image_pos_arr_jax is deprecated; use get_image_pos_arr_fast.",
@@ -6059,19 +6335,41 @@ class PSBL(PSPL):
             stacklevel=2,
         )
         assert (len(w) == len(z1)) & (len(w) == len(z2))
+
+        # Shared Witt quintic solver (non-jitted entry for debugging).
         rt = getattr(self, "root_tol", 1e-8)
-        return jax_physics.psbl_image_positions(w, z1, z2, m1, m2, rt, check_sols=check_sols)
+        images = jax_physics.psbl_image_positions(
+            w, z1, z2, m1, m2, rt, check_sols=check_sols
+        )
+
+        return images
 
     def get_image_pos_arr_fast(self, w, z1, z2, m1, m2, check_sols=False):
         """
-        Fast PSBL image positions.
+        Fast PSBL image positions via the jitted Witt quintic solver.
 
-        Delegates to the module-level jitted solver in ``bagle.jax_physics``.
+        Parameters
+        ----------
+        w, z1, z2 : array_like
+            Complex source and lens positions.
+        m1, m2 : float
+            Lens mass fractions.
+        check_sols : bool, optional
+            If True, mask roots that fail the lens equation.
+
+        Returns
+        -------
+        images : complex ndarray
+            Image positions, shape ``(N_times, N_images)``.
         """
         rt = getattr(self, "root_tol", 1e-8)
-        return jax_physics.psbl_image_positions_jit(
+
+        # Module-level jit keeps check_sols static for XLA.
+        images = jax_physics.psbl_image_positions_jit(
             w, z1, z2, m1, m2, rt, check_sols
         )
+
+        return images
 
     def get_all_arrays(self, t, filt_idx=0, check_sols=True, rescale=True):
         '''
@@ -6221,14 +6519,6 @@ class PSBL(PSPL):
             Magnitude of the unresolved microlensing event at t.
         '''
         if amp_arr is None:
-            try:
-                from bagle.jax_model import try_get_photometry
-
-                mag_jax = try_get_photometry(self, t, filt_idx=filt_idx)
-                if mag_jax is not None:
-                    return mag_jax
-            except ImportError:
-                pass
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
         amp_arr = jnp.asarray(amp_arr)
@@ -6593,15 +6883,6 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         .. note::
            Note that this is a photometry-only model, so units are in Einstein radii.
         """
-        try:
-            from bagle.jax_model import try_get_source_astrometry_unlensed
-
-            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
-
         u = self.get_u(t, filt_idx=filt_idx)
 
         return u
@@ -12016,15 +12297,6 @@ class BSPL(PSPL):
             xS[0, 0, 1] returns the amplification of the
             first source's "minus" image at the first time.
         """
-        try:
-            from bagle.jax_model import try_get_resolved_amplification
-
-            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
-            if amp_jax is not None:
-                return amp_jax
-        except ImportError:
-            pass
-
         # Get u for the primary and secondary at all times.
         u_vec = self.get_u(t, filt_idx=filt_idx)
 
@@ -12208,15 +12480,6 @@ class BSPL_Phot(BSPL, PSPL_Phot):
         xS_unlensed : numpy array, dtype=float, shape = len(t) x 2
             The unlensed positions of the source in Einstein radii.
         """
-        try:
-            from bagle.jax_model import try_get_source_astrometry_unlensed
-
-            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
-
         u_unlens_both = self.get_resolved_source_astrometry_unlensed(t, filt_idx=filt_idx)
         u1_unlens = u_unlens_both[:, 0, :]
         u2_unlens = u_unlens_both[:, 1, :]
@@ -12428,15 +12691,6 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             | The unlensed positions of the combined sources in arcseconds.
             | Shape = [len(t), 2 directions]
         """
-        try:
-            from bagle.jax_model import try_get_source_astrometry_unlensed
-
-            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
-
         xS_unlens_both = self.get_resolved_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xS1_unlens = xS_unlens_both[:, 0, :]
         xS2_unlens = xS_unlens_both[:, 1, :]
@@ -21393,15 +21647,6 @@ decL - if parallax model
             Array of vector positions of the centroid at each t.
             Last axis contains East/North positions.
         """
-        if (image_arr is None) and (amp_arr is None):
-            try:
-                from bagle.jax_model import try_get_resolved_astrometry
-
-                pos_jax = try_get_resolved_astrometry(self, t, filt_idx=filt_idx)
-                if pos_jax is not None:
-                    return pos_jax
-            except ImportError:
-                pass
         if (image_arr is None) or (amp_arr is None):
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
         xS_lensed_pos = img_arr
@@ -21424,15 +21669,6 @@ decL - if parallax model
             Array/tuple of amplification of each lensed image at each t.
             Shape = [n_images=2, len(t)]
         """
-        try:
-            from bagle.jax_model import try_get_resolved_amplification
-
-            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
-            if amp_jax is not None:
-                return amp_jax
-        except ImportError:
-            pass
-
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
@@ -21627,15 +21863,6 @@ decL - if parallax model
         centroid_shift : numpy array
             [shape = len(t), 2] in milliarcseoncds
         """
-        if (image_arr is None) and (amp_arr is None):
-            try:
-                from bagle.jax_model import try_get_centroid_shift
-
-                shift_jax = try_get_centroid_shift(self, t, filt_idx=filt_idx)
-                if shift_jax is not None:
-                    return shift_jax
-            except ImportError:
-                pass
         # Note that xS is actually the observed centroid position
         # including all light from the source and lens.
         xS = self.get_astrometry(t, filt_idx=filt_idx, image_arr=image_arr, amp_arr=amp_arr)
@@ -23323,15 +23550,6 @@ class FSBL_Phot(FSBL, PSPL_Phot):
         .. note::
            Note that this is a photometry-only model, so units are in Einstein radii.
         """
-        try:
-            from bagle.jax_model import try_get_source_astrometry_unlensed
-
-            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
-
         u = self.get_u(t, filt_idx=filt_idx)
 
         return u
@@ -28144,15 +28362,6 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
             Array/tuple of amplification of each lensed image at each t.
             Shape = [n_images=2, len(t)]
         """
-        try:
-            from bagle.jax_model import try_get_resolved_amplification
-
-            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
-            if amp_jax is not None:
-                return amp_jax
-        except ImportError:
-            pass
-
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 

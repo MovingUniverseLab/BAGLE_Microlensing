@@ -1,0 +1,6 @@
+{
+  "include": ["src", "tests"],
+  "pythonVersion": "3.11",
+  "stubPath": "typings",
+  "reportMissingModuleSource": false
+}

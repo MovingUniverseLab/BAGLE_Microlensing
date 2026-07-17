@@ -1,25 +1,21 @@
-"""Unified JAX log-likelihood construction via layout registry."""
+"""Analytic JAX likelihood construction from model Param mixins."""
 from __future__ import annotations
+
+from typing import cast
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 
-from bagle.jax import geometry as geom
-from bagle.jax.layout_registry import LayoutSpec, legacy_layout_id, resolve_layout
+from bagle.jax.bspl import bspl_photometry_jax
 from bagle.jax_physics import (
     AstFilterLikelihoodData,
     JaxJointLikelihoodContext,
     PhotAstromFilterLikelihoodData,
     PhotFilterLikelihoodData,
-    PSPL_PHOT_PARAM1_FITTER_NAMES,
     _fitter_has_blocked_params,
     _fitter_weight,
     _param_index,
-    build_jax_joint_likelihood_context,
-    build_jax_phot_likelihood_context,
-    build_jax_phot_loglik_fn,
-    build_jax_joint_loglik_fn,
     gaussian_astrometry_log_likelihood_sum,
     gaussian_log_likelihood_sum,
     precompute_parallax_vectors,
@@ -27,547 +23,360 @@ from bagle.jax_physics import (
     pspl_astrometry_param1,
     pspl_photometry,
 )
-from bagle.jax.geometry import derive_geometry_from_layout, mag_src_from_fitter, unpack_base_params
-from bagle.jax.bspl import bspl_photometry_jax
+
+
+def _param_mixin_class(model_class):
+    """Return the Param mixin that owns ``fitter_param_names`` in the MRO."""
+    # Prefer the class that defines fitter_param_names (true Param mixin).
+    for cls in model_class.__mro__:
+        if cls.__name__ == "PSPL_Param":
+            continue
+        if "fitter_param_names" not in cls.__dict__:
+            continue
+        names = cls.fitter_param_names
+        if not names:
+            continue
+        if hasattr(cls, "get_params_for_jax"):
+            return cls
+    # Fallback: first MRO entry with non-empty names + packing.
+    for cls in model_class.__mro__:
+        names = getattr(cls, "fitter_param_names", None)
+        if hasattr(cls, "get_params_for_jax") and names:
+            if cls.__name__ == "PSPL_Param":
+                continue
+            return cls
+    return None
+
+
+def _infer_loglik_mode(model_class) -> str | None:
+    """Infer JAX likelihood mode from parameterization flags."""
+    phot = getattr(model_class, "paramPhotFlag", False)
+    ast = getattr(model_class, "paramAstromFlag", False)
+    if phot and ast:
+        return "joint"
+    if phot:
+        return "phot"
+    if ast:
+        return "ast"
+    return None
+
+
+def _mag_fitter_from_phot_params(model_class) -> str:
+    """Return declared fitter magnitude convention."""
+    phot_names = tuple(getattr(model_class, "phot_param_names", ()))
+    if "mag_base" in phot_names:
+        return "mag_base"
+    if "mag_src" in phot_names:
+        return "mag_src"
+    if "mag_src_pri" in phot_names:
+        return "mag_src_pri"
+    return "none"
+
+
+def _supports_jax_loglik(fitter, param_cls) -> bool:
+    """Check whether fitter data and parameters support analytic JAX."""
+    if param_cls is None or _fitter_has_blocked_params(fitter):
+        return False
+    base_names = tuple(param_cls.fitter_param_names)
+    if tuple(fitter.fitter_param_names)[:len(base_names)] != base_names:
+        return False
+    model_class = fitter.model_class
+    mode = _infer_loglik_mode(model_class)
+    if mode == "phot":
+        return (getattr(model_class, "photometryFlag", False)
+                and fitter.n_phot_sets > 0
+                and not (getattr(model_class, "astrometryFlag", False)
+                         and fitter.n_ast_sets > 0))
+    if mode == "ast":
+        return getattr(model_class, "astrometryFlag", False) and fitter.n_ast_sets > 0
+    if mode == "joint":
+        return (getattr(model_class, "photometryFlag", False)
+                and getattr(model_class, "astrometryFlag", False)
+                and fitter.n_phot_sets > 0 and fitter.n_ast_sets > 0)
+    return False
 
 
 def supports_jax_loglik_for_fitter(fitter) -> str | None:
-    """Return ``layout_id`` when this fitter can use JAX autodiff."""
-    layout = resolve_layout(fitter.model_class)
-    if layout is None:
+    """Return the supported Param mixin class name, if any."""
+    param_cls = _param_mixin_class(fitter.model_class)
+    if param_cls is None:
         return None
-    if layout.has_gp:
-        return None
-    if _fitter_has_blocked_params(fitter):
-        return None
-    names = tuple(fitter.fitter_param_names)
-    if names[: len(layout.base_fitter_names)] != layout.base_fitter_names:
-        return None
-    mc = fitter.model_class
-    if layout.likelihood_mode == "phot":
-        if not getattr(mc, "photometryFlag", False) or fitter.n_phot_sets == 0:
-            return None
-        if getattr(mc, "astrometryFlag", False) and fitter.n_ast_sets > 0:
-            return None
-    elif layout.likelihood_mode == "ast":
-        if not getattr(mc, "astrometryFlag", False) or fitter.n_ast_sets == 0:
-            return None
-    elif layout.likelihood_mode in ("joint", "joint_gp"):
-        if not getattr(mc, "photometryFlag", False) or fitter.n_phot_sets == 0:
-            return None
-        if not getattr(mc, "astrometryFlag", False) or fitter.n_ast_sets == 0:
-            return None
-    elif layout.likelihood_mode == "phot_gp":
-        if not getattr(mc, "photometryFlag", False) or fitter.n_phot_sets == 0:
-            return None
-    else:
-        return None
-    return legacy_layout_id(layout)
+    if _supports_jax_loglik(fitter, param_cls):
+        return param_cls.__name__
+    return None
 
 
-def build_joint_context_for_layout(fitter, layout: LayoutSpec):
-    """Build joint likelihood context for any registered PhotAstrom / Astrom layout."""
+def _mag_index(names, mag_fitter, filt_1):
+    """Find per-filter magnitude parameter index."""
+    return _param_index(names, mag_fitter,
+                        filt_1 if f"{mag_fitter}{filt_1}" in names else None)
+
+
+def build_joint_context_for_param(fitter, param_cls):
+    """Build immutable joint data context for a Param mixin."""
     names = tuple(fitter.fitter_param_names)
-    if names[: len(layout.base_fitter_names)] != layout.base_fitter_names:
+    base_names = tuple(param_cls.fitter_param_names)
+    if names[:len(base_names)] != base_names:
         return None
-    base_indices = tuple(range(len(layout.base_fitter_names)))
+    mode = _infer_loglik_mode(fitter.model_class)
+    mag_fitter = _mag_fitter_from_phot_params(fitter.model_class)
     use_parallax = "raL" in fitter.data and "decL" in fitter.data
-    ra_l = float(fitter.data["raL"]) if use_parallax else None
-    dec_l = float(fitter.data["decL"]) if use_parallax else None
-    map_phot = getattr(fitter, "map_phot_idx_to_ast_idx", [])
-    joint_filters: list[PhotAstromFilterLikelihoodData] = []
-    ast_only = layout.likelihood_mode == "ast"
+    ra_l = float(fitter.data["raL"]) if use_parallax else 0.0
+    dec_l = float(fitter.data["decL"]) if use_parallax else 0.0
+    mapping = getattr(fitter, "map_phot_idx_to_ast_idx", [])
+    filters = []
 
-    if not ast_only:
-        for i in range(fitter.n_ast_sets):
-            ast_filt = i + 1
-            phot_idx = map_phot[i] if len(map_phot) > i else i
-            phot_filt = phot_idx + 1
-            t_ast = np.asarray(fitter.data[f"t_ast{ast_filt}"], dtype=np.float64)
-            x_obs = np.asarray(fitter.data[f"xpos{ast_filt}"], dtype=np.float64)
-            y_obs = np.asarray(fitter.data[f"ypos{ast_filt}"], dtype=np.float64)
-            x_err = np.asarray(fitter.data[f"xpos_err{ast_filt}"], dtype=np.float64)
-            y_err = np.asarray(fitter.data[f"ypos_err{ast_filt}"], dtype=np.float64)
-            ast_weight = _fitter_weight(fitter, fitter.n_phot_sets + i)
-            pvec_ast = (
-                precompute_parallax_vectors(ra_l, dec_l, t_ast) if use_parallax else None
-            )
-            idx_b_ast = _param_index(
-                names, "b_sff", phot_filt if f"b_sff{phot_filt}" in names else None
-            )
-            phot_block = None
-            if phot_idx < fitter.n_phot_sets:
-                t_phot = np.asarray(fitter.data[f"t_phot{phot_filt}"], dtype=np.float64)
-                mag_obs = np.asarray(fitter.data[f"mag{phot_filt}"], dtype=np.float64)
-                mag_err = np.asarray(fitter.data[f"mag_err{phot_filt}"], dtype=np.float64)
-                phot_weight = _fitter_weight(fitter, phot_idx)
-                pvec_phot = (
-                    precompute_parallax_vectors(ra_l, dec_l, t_phot)
-                    if use_parallax
-                    else None
-                )
-                mag_key = "mag_src" if layout.mag_fitter == "mag_src" else "mag_base"
-                idx_m = _param_index(
-                    names,
-                    mag_key,
-                    phot_filt if f"{mag_key}{phot_filt}" in names else None,
-                )
-                phot_block = PhotFilterLikelihoodData(
-                    t=t_phot,
-                    mag_obs=mag_obs,
-                    mag_err=mag_err,
-                    weight=phot_weight,
-                    parallax_vectors=pvec_phot,
-                    idx_b_sff=idx_b_ast,
-                    idx_mag_src=idx_m,
-                )
-            ast_block = AstFilterLikelihoodData(
-                t=t_ast,
-                x_obs=x_obs,
-                y_obs=y_obs,
-                x_err=x_err,
-                y_err=y_err,
-                weight=ast_weight,
-                parallax_vectors=pvec_ast,
-                idx_b_sff=idx_b_ast,
-                phot_filt_idx=phot_idx,
-            )
-            joint_filters.append(
-                PhotAstromFilterLikelihoodData(phot=phot_block, ast=ast_block)
-            )
-        mapped_phot = set(map_phot) if map_phot else set(range(fitter.n_ast_sets))
-        for phot_idx in range(fitter.n_phot_sets):
-            if phot_idx in mapped_phot:
-                continue
-            phot_filt = phot_idx + 1
-            t_phot = np.asarray(fitter.data[f"t_phot{phot_filt}"], dtype=np.float64)
-            mag_obs = np.asarray(fitter.data[f"mag{phot_filt}"], dtype=np.float64)
-            mag_err = np.asarray(fitter.data[f"mag_err{phot_filt}"], dtype=np.float64)
-            phot_weight = _fitter_weight(fitter, phot_idx)
-            pvec_phot = (
-                precompute_parallax_vectors(ra_l, dec_l, t_phot) if use_parallax else None
-            )
-            idx_b = _param_index(
-                names, "b_sff", phot_filt if f"b_sff{phot_filt}" in names else None
-            )
-            mag_key = "mag_src" if layout.mag_fitter == "mag_src" else "mag_base"
-            idx_m = _param_index(
-                names,
-                mag_key,
-                phot_filt if f"{mag_key}{phot_filt}" in names else None,
-            )
-            phot_block = PhotFilterLikelihoodData(
+    for ast_idx in range(fitter.n_ast_sets):
+        ast_filt = ast_idx + 1
+        phot_idx = mapping[ast_idx] if len(mapping) > ast_idx else ast_idx
+        t_ast = np.asarray(fitter.data[f"t_ast{ast_filt}"], dtype=np.float64)
+        pvec_ast = (precompute_parallax_vectors(ra_l, dec_l, t_ast)
+                    if use_parallax else None)
+        idx_b = 0 if mode == "ast" else _param_index(
+            names, "b_sff",
+            phot_idx + 1 if f"b_sff{phot_idx + 1}" in names else None,
+        )
+        ast = AstFilterLikelihoodData(
+            t=t_ast,
+            x_obs=np.asarray(fitter.data[f"xpos{ast_filt}"], dtype=np.float64),
+            y_obs=np.asarray(fitter.data[f"ypos{ast_filt}"], dtype=np.float64),
+            x_err=np.asarray(fitter.data[f"xpos_err{ast_filt}"], dtype=np.float64),
+            y_err=np.asarray(fitter.data[f"ypos_err{ast_filt}"], dtype=np.float64),
+            weight=_fitter_weight(fitter, fitter.n_phot_sets + ast_idx),
+            parallax_vectors=pvec_ast,
+            idx_b_sff=idx_b,
+            phot_filt_idx=phot_idx,
+        )
+        phot = None
+        if mode != "ast" and phot_idx < fitter.n_phot_sets:
+            filt_1 = phot_idx + 1
+            t_phot = np.asarray(fitter.data[f"t_phot{filt_1}"], dtype=np.float64)
+            phot = PhotFilterLikelihoodData(
                 t=t_phot,
-                mag_obs=mag_obs,
-                mag_err=mag_err,
-                weight=phot_weight,
-                parallax_vectors=pvec_phot,
+                mag_obs=np.asarray(fitter.data[f"mag{filt_1}"], dtype=np.float64),
+                mag_err=np.asarray(fitter.data[f"mag_err{filt_1}"], dtype=np.float64),
+                weight=_fitter_weight(fitter, phot_idx),
+                parallax_vectors=(precompute_parallax_vectors(ra_l, dec_l, t_phot)
+                                  if use_parallax else None),
                 idx_b_sff=idx_b,
-                idx_mag_src=idx_m,
+                idx_mag_src=_mag_index(names, mag_fitter, filt_1),
             )
-            joint_filters.append(PhotAstromFilterLikelihoodData(phot=phot_block, ast=None))
-    else:
-        for i in range(fitter.n_ast_sets):
-            ast_filt = i + 1
-            t_ast = np.asarray(fitter.data[f"t_ast{ast_filt}"], dtype=np.float64)
-            x_obs = np.asarray(fitter.data[f"xpos{ast_filt}"], dtype=np.float64)
-            y_obs = np.asarray(fitter.data[f"ypos{ast_filt}"], dtype=np.float64)
-            x_err = np.asarray(fitter.data[f"xpos_err{ast_filt}"], dtype=np.float64)
-            y_err = np.asarray(fitter.data[f"ypos_err{ast_filt}"], dtype=np.float64)
-            ast_weight = _fitter_weight(fitter, fitter.n_phot_sets + i)
-            pvec_ast = (
-                precompute_parallax_vectors(ra_l, dec_l, t_ast) if use_parallax else None
+        filters.append(PhotAstromFilterLikelihoodData(phot=phot, ast=ast))
+
+    if mode != "ast":
+        mapped = set(mapping) if mapping else set(range(fitter.n_ast_sets))
+        for phot_idx in range(fitter.n_phot_sets):
+            if phot_idx in mapped:
+                continue
+            filt_1 = phot_idx + 1
+            t_phot = np.asarray(fitter.data[f"t_phot{filt_1}"], dtype=np.float64)
+            phot = PhotFilterLikelihoodData(
+                t=t_phot,
+                mag_obs=np.asarray(fitter.data[f"mag{filt_1}"], dtype=np.float64),
+                mag_err=np.asarray(fitter.data[f"mag_err{filt_1}"], dtype=np.float64),
+                weight=_fitter_weight(fitter, phot_idx),
+                parallax_vectors=(precompute_parallax_vectors(ra_l, dec_l, t_phot)
+                                  if use_parallax else None),
+                idx_b_sff=_param_index(
+                    names, "b_sff", filt_1 if f"b_sff{filt_1}" in names else None),
+                idx_mag_src=_mag_index(names, mag_fitter, filt_1),
             )
-            idx_b = 0
-            ast_block = AstFilterLikelihoodData(
-                t=t_ast,
-                x_obs=x_obs,
-                y_obs=y_obs,
-                x_err=x_err,
-                y_err=y_err,
-                weight=ast_weight,
-                parallax_vectors=pvec_ast,
-                idx_b_sff=idx_b,
-                phot_filt_idx=0,
-            )
-            joint_filters.append(PhotAstromFilterLikelihoodData(phot=None, ast=ast_block))
+            filters.append(PhotAstromFilterLikelihoodData(
+                phot=phot, ast=cast(AstFilterLikelihoodData, None)))
 
     return JaxJointLikelihoodContext(
-        layout=layout.layout_id,
+        layout=param_cls.__name__,
         use_parallax=use_parallax,
         fitter_param_names=names,
-        base_indices=base_indices,
-        filters=tuple(joint_filters),
+        base_indices=tuple(range(len(base_names))),
+        filters=tuple(filters),
     )
 
 
-def _joint_loglik_reduced(param_vec, ctx, layout: LayoutSpec):
-    """Joint likelihood for PSPL/PSBL reduced PhotAstrom / Astrom layouts."""
+def _phot_mean(param_vec, phot, packed, mag_fitter):
+    """Compute analytic model magnitudes for one photometric block."""
+    b_sff = param_vec[phot.idx_b_sff]
+    mag_primary = param_vec[phot.idx_mag_src]
+    if mag_fitter == "mag_base":
+        mag_primary = mag_primary - 2.5 * jnp.log10(b_sff)
+    pvec = (None if phot.parallax_vectors is None
+            else jnp.asarray(phot.parallax_vectors, dtype=jnp.float64))
+    t = jnp.asarray(phot.t, dtype=jnp.float64)
+    if {"t0", "tE", "u0", "thetaE_hat", "m1", "m2", "xL1", "xL2"} <= packed.keys():
+        return psbl_photometry(
+            t, packed["t0"], packed["tE"], packed["u0"], packed["thetaE_hat"],
+            packed["xL1"], packed["xL2"], packed["m1"], packed["m2"], mag_primary,
+            b_sff=b_sff, parallax_vectors=pvec, piE_E=packed.get("piE_E", 0.0),
+            piE_N=packed.get("piE_N", 0.0),
+        )
+    if {"t0_pri", "t0_sec", "tE", "u0_pri", "u0_sec", "thetaE_hat"} <= packed.keys():
+        return bspl_photometry_jax(
+            t, packed["t0_pri"], packed["t0_sec"], packed["tE"],
+            packed["u0_pri"], packed["u0_sec"], packed["thetaE_hat"], mag_primary,
+            param_vec[phot.idx_mag_src + 1], b_sff, pvec=pvec,
+            piE_E=packed.get("piE_E", 0.0), piE_N=packed.get("piE_N", 0.0),
+        )
+    if {"t0", "tE", "u0", "thetaE_hat"} <= packed.keys():
+        return pspl_photometry(
+            t, packed["t0"], packed["tE"], packed["u0"], packed["thetaE_hat"],
+            mag_primary, b_sff=b_sff, parallax_vectors=pvec,
+            piE_E=packed.get("piE_E", 0.0), piE_N=packed.get("piE_N", 0.0),
+        )
+    raise NotImplementedError("Param mixin has no supported analytic photometry")
+
+
+def _ast_loglik(param_vec, block, packed, mode):
+    """Evaluate one analytic astrometry block."""
+    if block is None:
+        return 0.0
+    b_sff = 1.0 if mode == "ast" else param_vec[block.idx_b_sff]
+    pvec = (None if block.parallax_vectors is None
+            else jnp.asarray(block.parallax_vectors, dtype=jnp.float64))
+    pos = pspl_astrometry_param1(
+        jnp.asarray(block.t, dtype=jnp.float64), packed["t0"], packed["xS0"],
+        packed["xL0"], packed["muS"], packed["muL"], packed["thetaE_amp"], b_sff,
+        parallax_vectors=pvec, piS=packed.get("piS", 0.0),
+        piL=packed.get("piL", 0.0),
+    )
+    return block.weight * gaussian_astrometry_log_likelihood_sum(
+        pos, block.x_obs, block.y_obs, block.x_err, block.y_err)
+
+
+def _joint_loglik_reduced(param_vec, ctx, param_cls, mag_fitter, mode):
+    """Evaluate analytic JAX likelihood from Param-mixin packed geometry."""
     param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
     base = param_vec[jnp.array(ctx.base_indices, dtype=jnp.int32)]
-    geom_out = derive_geometry_from_layout(
-        layout.layout_id, layout.eval_kind, base, layout.base_fitter_names
-    )
-    if isinstance(geom_out, tuple) and geom_out[0] == "pspl_phot":
-        raise ValueError("phot-only geometry in joint likelihood")
-    (
-        u0,
-        thetaE_hat,
-        tE,
-        piE_E,
-        piE_N,
-        xS0,
-        xL0,
-        muS,
-        muL,
-        thetaE_amp,
-        piS,
-        piL,
-    ) = geom_out
-    t0 = unpack_base_params(layout.base_fitter_names, base)["t0"]
-
-    lnL = 0.0
+    packed = param_cls.get_params_for_jax(base)
+    ln_likelihood = 0.0
     for block in ctx.filters:
-        b_sff_ast = (
-            1.0
-            if layout.likelihood_mode == "ast"
-            else param_vec[block.ast.idx_b_sff]
-        )
-        if block.ast is not None:
-            pvec_ast = None
-            if block.ast.parallax_vectors is not None:
-                pvec_ast = jnp.asarray(block.ast.parallax_vectors, dtype=jnp.float64)
-            pos = pspl_astrometry_param1(
-                jnp.asarray(block.ast.t, dtype=jnp.float64),
-                t0,
-                xS0,
-                xL0,
-                muS,
-                muL,
-                thetaE_amp,
-                b_sff_ast,
-                parallax_vectors=pvec_ast,
-                piS=piS,
-                piL=piL,
-            )
-            lnL = lnL + block.ast.weight * gaussian_astrometry_log_likelihood_sum(
-                pos,
-                block.ast.x_obs,
-                block.ast.y_obs,
-                block.ast.x_err,
-                block.ast.y_err,
-            )
+        ln_likelihood = ln_likelihood + _ast_loglik(
+            param_vec, block.ast, packed, mode)
         if block.phot is not None:
-            b_sff = param_vec[block.phot.idx_b_sff]
-            mag_src = param_vec[block.phot.idx_mag_src]
-            if layout.mag_fitter == "mag_base":
-                mag_src = geom.mag_src_from_base(mag_src, b_sff)
-            pvec_phot = None
-            if block.phot.parallax_vectors is not None:
-                pvec_phot = jnp.asarray(block.phot.parallax_vectors, dtype=jnp.float64)
-            mag_model = pspl_photometry(
-                jnp.asarray(block.phot.t, dtype=jnp.float64),
-                t0,
-                tE,
-                u0,
-                thetaE_hat,
-                mag_src,
-                b_sff=b_sff,
-                parallax_vectors=pvec_phot,
-                piE_E=piE_E,
-                piE_N=piE_N,
-            )
-            lnL = lnL + block.phot.weight * gaussian_log_likelihood_sum(
-                mag_model, block.phot.mag_obs, block.phot.mag_err
-            )
-    return lnL
+            mean = _phot_mean(param_vec, block.phot, packed, mag_fitter)
+            ln_likelihood = ln_likelihood + block.phot.weight * gaussian_log_likelihood_sum(
+                mean, block.phot.mag_obs, block.phot.mag_err)
+    return ln_likelihood
+
+
+def _build_phot_loglik(fitter, param_cls):
+    """Build analytic photometry-only JAX likelihood."""
+    names = tuple(fitter.fitter_param_names)
+    mag_fitter = _mag_fitter_from_phot_params(fitter.model_class)
+    use_parallax = "raL" in fitter.data and "decL" in fitter.data
+    ra_l = float(fitter.data["raL"]) if use_parallax else 0.0
+    dec_l = float(fitter.data["decL"]) if use_parallax else 0.0
+    filters = []
+    for phot_idx in range(fitter.n_phot_sets):
+        filt_1 = phot_idx + 1
+        t = np.asarray(fitter.data[f"t_phot{filt_1}"], dtype=np.float64)
+        filters.append(PhotFilterLikelihoodData(
+            t=t, mag_obs=np.asarray(fitter.data[f"mag{filt_1}"], dtype=np.float64),
+            mag_err=np.asarray(fitter.data[f"mag_err{filt_1}"], dtype=np.float64),
+            weight=_fitter_weight(fitter, phot_idx),
+            parallax_vectors=(precompute_parallax_vectors(ra_l, dec_l, t)
+                              if use_parallax else None),
+            idx_b_sff=_param_index(
+                names, "b_sff", filt_1 if f"b_sff{filt_1}" in names else None),
+            idx_mag_src=_mag_index(names, mag_fitter, filt_1),
+        ))
+    ctx = (param_cls, tuple(filters), tuple(range(len(param_cls.fitter_param_names))),
+           mag_fitter)
+    return jax.jit(lambda vec: _phot_loglik_vec(vec, ctx)), ctx
+
+
+def _phot_loglik_vec(param_vec, ctx):
+    """Evaluate photometric Gaussian likelihood using packed Param geometry."""
+    param_cls, filters, base_indices, mag_fitter = ctx
+    param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
+    packed = param_cls.get_params_for_jax(
+        param_vec[jnp.array(base_indices, dtype=jnp.int32)])
+    ln_likelihood = 0.0
+    for phot in filters:
+        mean = _phot_mean(param_vec, phot, packed, mag_fitter)
+        ln_likelihood = ln_likelihood + phot.weight * gaussian_log_likelihood_sum(
+            mean, phot.mag_obs, phot.mag_err)
+    return ln_likelihood
+
+
+def _build_joint_loglik(fitter, param_cls):
+    """Build analytic joint or astrometry-only JAX likelihood."""
+    ctx = build_joint_context_for_param(fitter, param_cls)
+    if ctx is None:
+        return None, None
+    mag_fitter = _mag_fitter_from_phot_params(fitter.model_class)
+    mode = _infer_loglik_mode(fitter.model_class)
+    fn = lambda vec: _joint_loglik_reduced(vec, ctx, param_cls, mag_fitter, mode)
+    return jax.jit(fn), (ctx, param_cls)
+
+
+def _gp_param_index(names, key, filt_1):
+    """Look up optional per-filter GP parameter without raising."""
+    candidate = f"{key}{filt_1}" if f"{key}{filt_1}" in names else key
+    return names.index(candidate) if candidate in names else None
+
+
+def build_analytic_gp_loglik_fn(fitter, param_cls=None):
+    """Build analytic GP photometry likelihood plus optional astrometry."""
+    try:
+        from bagle.jax.gp import build_gp_kernel_from_params, gp_log_probability
+    except ImportError:
+        return None, None
+    param_cls = param_cls or _param_mixin_class(fitter.model_class)
+    if param_cls is None:
+        return None, None
+    if not _supports_jax_loglik(fitter, param_cls):
+        return None, None
+    mode = _infer_loglik_mode(fitter.model_class)
+    if mode == "phot":
+        _fn, phot_ctx = _build_phot_loglik(fitter, param_cls)
+        filters = phot_ctx[1]
+        base_indices = phot_ctx[2]
+        mag_fitter = phot_ctx[3]
+        joint_ctx = None
+    else:
+        joint_ctx = build_joint_context_for_param(fitter, param_cls)
+        if joint_ctx is None:
+            return None, None
+        filters = tuple(block.phot for block in joint_ctx.filters if block.phot)
+        base_indices = joint_ctx.base_indices
+        mag_fitter = _mag_fitter_from_phot_params(fitter.model_class)
+    names = tuple(fitter.fitter_param_names)
+    fixed_jitter = "GPnoJitter" not in fitter.model_class.__name__
+
+    def _loglik(param_vec):
+        param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
+        packed = param_cls.get_params_for_jax(
+            param_vec[jnp.array(base_indices, dtype=jnp.int32)])
+        ln_likelihood = 0.0
+        for filt_1, phot in enumerate(filters, start=1):
+            gp_params = {}
+            for key in ("gp_log_sigma", "gp_log_rho", "gp_rho", "gp_log_S0",
+                        "gp_log_omega0", "gp_log_jit_sigma"):
+                idx = _gp_param_index(names, key, filt_1)
+                if idx is not None:
+                    gp_params[key] = param_vec[idx]
+            kernel, jitter = build_gp_kernel_from_params(
+                gp_params, phot.mag_err, fixed_jitter=fixed_jitter)
+            mean = _phot_mean(param_vec, phot, packed, mag_fitter)
+            ln_likelihood = ln_likelihood + phot.weight * gp_log_probability(
+                kernel, phot.t, phot.mag_obs, phot.mag_err, mean, jitter)
+        if joint_ctx is not None:
+            for block in joint_ctx.filters:
+                ln_likelihood = ln_likelihood + _ast_loglik(
+                    param_vec, block.ast, packed, "ast")
+        return ln_likelihood
+
+    return jax.jit(_loglik), (joint_ctx, param_cls)
 
 
 def build_jax_loglik_fn(fitter):
-    """Return ``(jit_loglik, ctx)`` using the layout registry."""
-    layout = resolve_layout(fitter.model_class)
-    if layout is None:
+    """Return all-analytic JAX likelihood and context, when supported."""
+    param_cls = _param_mixin_class(fitter.model_class)
+    if not _supports_jax_loglik(fitter, param_cls):
         return None, None
-    if supports_jax_loglik_for_fitter(fitter) is None:
-        return None, None
-
-    if layout.has_gp:
-        from bagle.jax.gp import build_gp_loglik_fn
-
-        return build_gp_loglik_fn(fitter, layout)
-
-    if layout.likelihood_mode == "phot":
-        if (
-            layout.eval_kind == "pspl_phot_static"
-            and layout.param_mixin == "PSPL_PhotParam1"
-            and layout.base_fitter_names == PSPL_PHOT_PARAM1_FITTER_NAMES
-        ):
-            return build_jax_phot_loglik_fn(fitter)
-        return _build_registry_phot_loglik(fitter, layout)
-
-    if layout.likelihood_mode == "joint":
-        if layout.eval_kind == "pspl_photastrom_physical":
-            return build_jax_joint_loglik_fn(fitter)
-        if layout.eval_kind.startswith("psbl_photastrom") and layout.orbit == "none":
-            # Analytic PSBL joint path is not yet validated; use host lnL + numeric VJP.
-            return _build_host_loglik_vjp(fitter, layout)
-        if layout.eval_kind in ("pspl_photastrom_reduced",):
-            return _build_reduced_joint_loglik(fitter, layout)
-        if layout.eval_kind.startswith("bspl_photastrom"):
-            from bagle.jax.bspl import build_bspl_joint_loglik
-
-            return build_bspl_joint_loglik(fitter, layout)
-        if layout.eval_kind.startswith("fsbl"):
-            from bagle.jax.fspl import build_fsbl_joint_loglik
-
-            return build_fsbl_joint_loglik(fitter, layout)
-        if layout.eval_kind.startswith("bsbl"):
-            from bagle.jax.bsbl import build_bsbl_joint_loglik
-
-            return build_bsbl_joint_loglik(fitter, layout)
-        return _build_reduced_joint_loglik(fitter, layout)
-
-    if layout.likelihood_mode == "ast":
-        fn, ctx = _build_ast_loglik(fitter, layout)
-        if fn is not None:
-            return fn, ctx
-
-    return _build_host_loglik_vjp(fitter, layout)
-
-
-def _build_host_loglik_vjp(fitter, layout: LayoutSpec):
-    """Fallback: host ``log_likely`` with numeric gradient for registered layouts."""
-
-    names = tuple(fitter.fitter_param_names)
-
-    def _lnL_host(vec_np):
-        cube = {names[i]: float(vec_np[i]) for i in range(len(names))}
-        return float(fitter.log_likely(cube))
-
-    @jax.custom_vjp
-    def _loglik(param_vec):
-        param_vec = jnp.asarray(param_vec, dtype=jnp.float64)
-        return jax.pure_callback(
-            _lnL_host,
-            jax.ShapeDtypeStruct((), jnp.float64),
-            param_vec,
-        )
-
-    def _fwd(param_vec):
-        return _loglik(param_vec), (param_vec,)
-
-    def _bwd(res, g):
-        param_vec, = res
-        p0 = np.asarray(param_vec, dtype=np.float64)
-        eps = 1e-5
-        grad = np.zeros_like(p0)
-        f0 = _lnL_host(p0)
-        for i in range(len(grad)):
-            p = p0.copy()
-            p[i] += eps
-            grad[i] = float(g) * (_lnL_host(p) - f0) / eps
-        return (jnp.asarray(grad, dtype=jnp.float64),)
-
-    _loglik.defvjp(_fwd, _bwd)
-    return jax.jit(_loglik), (fitter, layout)
-
-
-def _build_registry_phot_loglik(fitter, layout: LayoutSpec):
-    if (
-        layout.eval_kind == "pspl_phot_static"
-        and layout.param_mixin == "PSPL_PhotParam1"
-        and layout.base_fitter_names == PSPL_PHOT_PARAM1_FITTER_NAMES
-    ):
-        return build_jax_phot_loglik_fn(fitter)
-
-    names = tuple(fitter.fitter_param_names)
-    base_n = len(layout.base_fitter_names)
-    base_idx = tuple(range(base_n))
-    use_parallax = "raL" in fitter.data
-    ra_l = float(fitter.data["raL"]) if use_parallax else None
-    dec_l = float(fitter.data["decL"]) if use_parallax else None
-    filters = []
-    for i in range(fitter.n_phot_sets):
-        filt_1 = i + 1
-        t = np.asarray(fitter.data[f"t_phot{filt_1}"], dtype=np.float64)
-        mag_obs = np.asarray(fitter.data[f"mag{filt_1}"], dtype=np.float64)
-        mag_err = np.asarray(fitter.data[f"mag_err{filt_1}"], dtype=np.float64)
-        weight = _fitter_weight(fitter, i)
-        pvec = precompute_parallax_vectors(ra_l, dec_l, t) if use_parallax else None
-        idx_b = _param_index(names, "b_sff", filt_1 if f"b_sff{filt_1}" in names else None)
-        if layout.eval_kind == "bspl_phot":
-            idx_m = _param_index(
-                names,
-                "mag_src_pri",
-                filt_1 if f"mag_src_pri{filt_1}" in names else None,
-            )
-        else:
-            mag_key = "mag_src" if layout.mag_fitter == "mag_src" else "mag_base"
-            idx_m = _param_index(
-                names, mag_key, filt_1 if f"{mag_key}{filt_1}" in names else None
-            )
-        from bagle.jax_physics import PhotFilterLikelihoodData
-
-        filters.append(
-            PhotFilterLikelihoodData(
-                t=t,
-                mag_obs=mag_obs,
-                mag_err=mag_err,
-                weight=weight,
-                parallax_vectors=pvec,
-                idx_b_sff=idx_b,
-                idx_mag_src=idx_m,
-            )
-        )
-
-    host_ctx = (layout, tuple(filters), base_idx, use_parallax)
-
-    def _loglik(param_vec):
-        return _phot_loglik_vec(param_vec, host_ctx)
-
-    return jax.jit(_loglik), host_ctx
-
-
-def _phot_loglik_vec(param_vec, host_ctx):
-    layout, filters, base_idx, _ = host_ctx
-    param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
-    base = param_vec[jnp.array(base_idx, dtype=jnp.int32)]
-    geom_out = derive_geometry_from_layout(
-        layout.layout_id, layout.eval_kind, base, layout.base_fitter_names
-    )
-    lnL = 0.0
-    if geom_out[0] == "pspl_phot":
-        _, u0, thetaE_hat, tE, piE_E, piE_N = geom_out
-        p = unpack_base_params(layout.base_fitter_names, base)
-        t0 = p["t0"]
-        for phot in filters:
-            b_sff = param_vec[phot.idx_b_sff]
-            mag_v = param_vec[phot.idx_mag_src]
-            mag_src = mag_src_from_fitter(mag_v, layout.mag_fitter, b_sff)
-            pvec = (
-                None
-                if phot.parallax_vectors is None
-                else jnp.asarray(phot.parallax_vectors, dtype=jnp.float64)
-            )
-            mag_model = pspl_photometry(
-                jnp.asarray(phot.t, dtype=jnp.float64),
-                t0,
-                tE,
-                u0,
-                thetaE_hat,
-                mag_src,
-                b_sff=b_sff,
-                parallax_vectors=pvec,
-                piE_E=piE_E,
-                piE_N=piE_N,
-            )
-            lnL = lnL + phot.weight * gaussian_log_likelihood_sum(
-                mag_model, phot.mag_obs, phot.mag_err
-            )
-        return lnL
-    if geom_out[0] == "psbl_phot":
-        _, u0, thetaE_hat, t0, tE, m1, m2, xL1, xL2, piE_E, piE_N = geom_out
-        for phot in filters:
-            b_sff = param_vec[phot.idx_b_sff]
-            mag_src = param_vec[phot.idx_mag_src]
-            pvec = (
-                None
-                if phot.parallax_vectors is None
-                else jnp.asarray(phot.parallax_vectors, dtype=jnp.float64)
-            )
-            mag_model = psbl_photometry(
-                jnp.asarray(phot.t, dtype=jnp.float64),
-                t0,
-                tE,
-                u0,
-                thetaE_hat,
-                xL1,
-                xL2,
-                m1,
-                m2,
-                mag_src,
-                b_sff=b_sff,
-                parallax_vectors=pvec,
-                piE_E=piE_E,
-                piE_N=piE_N,
-            )
-            lnL = lnL + phot.weight * gaussian_log_likelihood_sum(
-                mag_model, phot.mag_obs, phot.mag_err
-            )
-        return lnL
-    if geom_out[0] == "bspl_phot":
-        _, u0_pri, u0_sec, thetaE_hat, t0_pri, t0_sec, tE, piE_E, piE_N = geom_out
-        names_full = layout.base_fitter_names + ("mag_src_pri", "mag_src_sec", "b_sff")
-        for phot in filters:
-            b_sff = param_vec[phot.idx_b_sff]
-            # phot filter stores idx_mag_src as primary index
-            idx_pri = phot.idx_mag_src
-            idx_sec = idx_pri + 1
-            mag_pri = param_vec[idx_pri]
-            mag_sec = param_vec[idx_sec]
-            pvec = (
-                None
-                if phot.parallax_vectors is None
-                else jnp.asarray(phot.parallax_vectors, dtype=jnp.float64)
-            )
-            mag_model = bspl_photometry_jax(
-                jnp.asarray(phot.t, dtype=jnp.float64),
-                t0_pri,
-                t0_sec,
-                tE,
-                u0_pri,
-                u0_sec,
-                thetaE_hat,
-                mag_pri,
-                mag_sec,
-                b_sff,
-                pvec=pvec,
-                piE_E=piE_E,
-                piE_N=piE_N,
-            )
-            lnL = lnL + phot.weight * gaussian_log_likelihood_sum(
-                mag_model, phot.mag_obs, phot.mag_err
-            )
-        return lnL
-    raise NotImplementedError(layout.eval_kind)
-
-
-def _build_reduced_joint_loglik(fitter, layout: LayoutSpec):
-    ctx = build_joint_context_for_layout(fitter, layout)
-    if ctx is None:
-        ctx = build_jax_joint_likelihood_context(fitter)
-    if ctx is None:
-        return None, None
-
-    def _loglik(param_vec):
-        if layout.eval_kind == "pspl_photastrom_physical":
-            from bagle.jax_physics import _joint_loglik_pspl_param1
-
-            return _joint_loglik_pspl_param1(param_vec, ctx)
-        return _joint_loglik_reduced(param_vec, ctx, layout)
-
-    return jax.jit(_loglik), (ctx, layout)
-
-
-def _build_psbl_joint_param1_loglik(fitter, layout: LayoutSpec):
-    ctx = build_joint_context_for_layout(fitter, layout)
-    if ctx is None:
-        return None, None
-
-    def _loglik(param_vec):
-        from bagle.jax.psbl_ast import joint_loglik_psbl_param1
-
-        return joint_loglik_psbl_param1(param_vec, ctx, layout)
-
-    return jax.jit(_loglik), (ctx, layout)
-
-
-def _build_ast_loglik(fitter, layout: LayoutSpec):
-    ctx = build_joint_context_for_layout(fitter, layout)
-    if ctx is None:
-        return None, None
-
-    def _loglik(param_vec):
-        return _joint_loglik_reduced(param_vec, ctx, layout)
-
-    return jax.jit(_loglik), (ctx, layout)
+    from bagle.jax.gp import supports_gp_class
+    if supports_gp_class(fitter.model_class):
+        return build_analytic_gp_loglik_fn(fitter, param_cls)
+    if _infer_loglik_mode(fitter.model_class) == "phot":
+        return _build_phot_loglik(fitter, param_cls)
+    return _build_joint_loglik(fitter, param_cls)

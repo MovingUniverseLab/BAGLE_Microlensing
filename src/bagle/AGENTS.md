@@ -43,5 +43,5 @@ Use NumPy docstring style.
 ## Architecture
 
 - **`bagle.model`**: NumPy reference physics (`origin/main`); used by fitter, fake_data, plots.
-- **`bagle.model_jax`**: JAX-first implementation; forward outputs via `jax/evaluate.py`.
+- **`bagle.model_jax`**: JAX-first implementation; forward methods call `jax_physics` kernels (and family helpers). Fitter likelihoods use `Param.get_params_for_jax` + `bagle.jax.likelihood`.
 - Follow the repository pattern

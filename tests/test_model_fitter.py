@@ -132,8 +132,8 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
     fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N'] - 0.05, p_in['muS_N'] + 0.05)
     fitter.priors['dL'] = model_fitter.make_gen(p_in['dL'] - 10, p_in['dL'] + 10)
     fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL'] / p_in['dS']) - 0.01, (p_in['dL'] / p_in['dS']) + 0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff'] - 0.01, p_in['b_sff'] + 0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src'] - 0.01, p_in['mag_src'] + 0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1'] - 0.01, p_in['mag_src1'] + 0.01)
 
     fitter.solve()
 
@@ -179,8 +179,8 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
     p_in['u0_amp'] = pspl_in.u0_amp
     p_in['muRel_E'] = pspl_in.muRel[0]
     p_in['muRel_N'] = pspl_in.muRel[1]
-    p_in['b_sff1'] = p_in['b_sff']
-    p_in['mag_src1'] = p_in['mag_src']
+    p_in['b_sff1'] = p_in['b_sff'][0]
+    p_in['mag_src1'] = p_in['mag_src'][0]
 
     fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
     fitter.plot_model_and_data(pspl_out, input_model=pspl_in)

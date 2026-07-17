@@ -11,6 +11,7 @@ from model_old_vs_jax_fixtures import (
     AST_LIKELIHOOD_METHODS,
     PHOT_LIKELIHOOD_METHODS,
     build_paired_instances,
+    build_psbl_photastrom_param2_caustic_instances,
     call_method,
     grad_smoke_jax,
     bsbl_photastrom_param1_pairs,
@@ -205,6 +206,7 @@ from model_old_vs_jax_fixtures import (
     psbl_photastrom_first_pairs,
     psbl_photastrom_gp_param1_pairs,
     psbl_photastrom_param2_pairs,
+    psbl_photastrom_param2_caustic_time_grid,
     psbl_photastrom_param3_pairs,
     psbl_photastrom_param3_likelihood_pairs,
     psbl_photastrom_par_param1_pairs,
@@ -359,6 +361,17 @@ def test_parity_psbl_photastrom_param2(class_name, method_name):
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+def test_parity_psbl_photastrom_param2_caustic_crossing():
+    """Caustic-crossing PSBL PhotAstrom Param2 phot parity (test_model params)."""
+    old_inst, jax_inst = build_psbl_photastrom_param2_caustic_instances()
+    t = psbl_photastrom_param2_caustic_time_grid(old_inst)
+    _assert_parity(old_inst, jax_inst, "get_photometry", t)
+    phot_old = np.asarray(call_method(old_inst, "get_photometry", t), dtype=np.float64)
+    phot_jax = np.asarray(call_method(jax_inst, "get_photometry", t), dtype=np.float64)
+    assert phot_old.min() < 16
+    assert phot_jax.min() < 16
 
 
 @pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param2_likelihood_pairs())

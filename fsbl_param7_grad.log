@@ -1,0 +1,31 @@
+......F................................F..........F..................... [ 72%]
+...........................                                              [100%]
+=================================== FAILURES ===================================
+E   AssertionError: zero grad norm for FSBL_PhotAstrom_Par_AccOrbs_Param7.get_lens_astrometry
+    assert np.float64(0.0) > 0.0
+     +  where np.float64(0.0) = <function norm at 0x1051a9070>(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0., 0., 0., 0., 0.]))
+     +    where <function norm at 0x1051a9070> = <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'>.norm
+     +      where <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'> = np.linalg
+/Users/jlu/code/python/bagle/tests/test_model_old_vs_jax.py:1255: AssertionError: zero grad norm for FSBL_PhotAstrom_Par_AccOrbs_Param7.get_lens_astrometry
+E   AssertionError: zero grad norm for FSBL_PhotAstrom_Par_LinOrbs_Param7.get_lens_astrometry
+    assert np.float64(0.0) > 0.0
+     +  where np.float64(0.0) = <function norm at 0x1051a9070>(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0., 0., 0.]))
+     +    where <function norm at 0x1051a9070> = <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'>.norm
+     +      where <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'> = np.linalg
+/Users/jlu/code/python/bagle/tests/test_model_old_vs_jax.py:1255: AssertionError: zero grad norm for FSBL_PhotAstrom_Par_LinOrbs_Param7.get_lens_astrometry
+E   AssertionError: zero grad norm for FSBL_PhotAstrom_Par_Param7.get_lens_astrometry
+    assert np.float64(0.0) > 0.0
+     +  where np.float64(0.0) = <function norm at 0x1051a9070>(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0.]))
+     +    where <function norm at 0x1051a9070> = <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'>.norm
+     +      where <module 'numpy.linalg' from '/opt/miniforge3/envs/astro/lib/python3.14/site-packages/numpy/linalg/__init__.py'> = np.linalg
+/Users/jlu/code/python/bagle/tests/test_model_old_vs_jax.py:1255: AssertionError: zero grad norm for FSBL_PhotAstrom_Par_Param7.get_lens_astrometry
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:491
+  <frozen importlib._bootstrap>:491: FutureWarning: pybind11-bound class 'celerite.solver.CholeskySolver' is using an old-style placement-new '__setstate__' which has been deprecated. See the upgrade guide in pybind11's docs. This message is only visible when compiled in debug mode.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_model_old_vs_jax.py::test_grad_fsbl_photastrom_param7[FSBL_PhotAstrom_Par_AccOrbs_Param7-get_lens_astrometry]
+FAILED tests/test_model_old_vs_jax.py::test_grad_fsbl_photastrom_param7[FSBL_PhotAstrom_Par_LinOrbs_Param7-get_lens_astrometry]
+FAILED tests/test_model_old_vs_jax.py::test_grad_fsbl_photastrom_param7[FSBL_PhotAstrom_Par_Param7-get_lens_astrometry]
+3 failed, 96 passed, 1 warning in 6874.97s (1:54:34)

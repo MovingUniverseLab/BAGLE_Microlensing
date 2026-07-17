@@ -8,7 +8,7 @@ from typing import Any
 import jax.numpy as jnp
 import numpy as np
 
-from bagle.jax.layout_registry import resolve_layout
+from _layout_shim import resolve_layout
 
 CANONICAL: dict[str, Any] = {
     "t0": 57100.0,
@@ -283,6 +283,54 @@ def build_paired_instances(class_name: str):
     return ref_inst, jax_inst
 
 
+def build_psbl_photastrom_param2_caustic_instances():
+    """PSBL PhotAstrom Param2 at caustic-crossing params from test_model tests."""
+    import bagle.model as ref_model
+    import bagle.model_jax as jax_model
+
+    raL, decL = 259.5, -29.0
+    t0, u0, tE = 57000, 0.3, 200.0
+    piE_E, piE_N = 0.01, -0.01
+    b_sff = np.array([1.0])
+    mag_src = np.array([18])
+    thetaE = 3.0
+    xS0_E, xS0_N = 0.0, 0.01
+    muS_E, muS_N = 3.0, 0.0
+    piS = (1.0 / 8000.0) * 1e3
+    q, sep, alpha = 0.8, 3.0, 135.0
+    dmag = np.array([0.0])
+    kw = dict(raL=raL, decL=decL, root_tol=1e-4)
+    args = (
+        t0,
+        u0,
+        tE,
+        thetaE,
+        piS,
+        piE_E,
+        piE_N,
+        xS0_E,
+        xS0_N,
+        muS_E,
+        muS_N,
+        q,
+        sep,
+        alpha,
+        b_sff,
+        mag_src,
+        dmag,
+    )
+    ref_inst = ref_model.PSBL_PhotAstrom_noPar_Param2(*args, **kw)
+    jax_inst = jax_model.PSBL_PhotAstrom_noPar_Param2(*args, **kw)
+    _post_init(ref_inst)
+    _post_init(jax_inst)
+    return ref_inst, jax_inst
+
+
+def psbl_photastrom_param2_caustic_time_grid(_instance) -> np.ndarray:
+    """Time grid for PSBL Param2 caustic-crossing integration test."""
+    return np.arange(56000.0, 58000.0, 3)
+
+
 def build_jax_eval_paired_instances(class_name: str):
     """Pair native host forward with ``jax/evaluate`` dispatch (jax-only classes)."""
     import bagle.model_jax as jax_model
@@ -304,69 +352,7 @@ def call_method_via_jax_eval(
     fixed_phot: tuple[np.ndarray, np.ndarray] | None = None,
     fixed_ast: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray] | None = None,
 ):
-    """Forward through ``jax/evaluate`` dispatch; fall back to native method."""
-    from bagle.jax_model import (
-        try_get_amplification,
-        try_get_astrometry,
-        try_get_astrometry_unlensed,
-        try_get_centroid_shift,
-        try_get_chi2_astrometry,
-        try_get_chi2_photometry,
-        try_get_lens_astrometry,
-        try_get_log_likely_astrometry_each,
-        try_get_log_likely_photometry_each,
-        try_get_photometry,
-        try_get_resolved_astrometry,
-        try_get_resolved_amplification,
-        try_get_source_astrometry_unlensed,
-        try_get_u,
-    )
-
-    dispatch = {
-        "get_photometry": try_get_photometry,
-        "get_amplification": try_get_amplification,
-        "get_astrometry": try_get_astrometry,
-        "get_astrometry_unlensed": try_get_astrometry_unlensed,
-        "get_lens_astrometry": try_get_lens_astrometry,
-        "get_centroid_shift": try_get_centroid_shift,
-        "get_resolved_astrometry": try_get_resolved_astrometry,
-        "get_resolved_amplification": try_get_resolved_amplification,
-        "get_source_astrometry_unlensed": try_get_source_astrometry_unlensed,
-        "get_u": try_get_u,
-    }
-    fn = dispatch.get(method_name)
-    if fn is not None:
-        out = fn(instance, t, filt_idx=0)
-        if out is not None:
-            return out
-    if method_name in PHOT_LIKELIHOOD_METHODS:
-        if fixed_phot is not None:
-            mag, err = fixed_phot
-        else:
-            mag, err = synthetic_phot_obs(instance, t)
-        phot_fn = {
-            "get_chi2_photometry": try_get_chi2_photometry,
-            "log_likely_photometry_each": try_get_log_likely_photometry_each,
-        }.get(method_name)
-        if phot_fn is not None:
-            out = phot_fn(instance, t, mag, err, filt_idx=0)
-            if out is not None:
-                return out
-    if method_name in AST_LIKELIHOOD_METHODS:
-        if fixed_ast is not None:
-            x_obs, y_obs, x_err, y_err = fixed_ast
-        else:
-            x_obs, y_obs, x_err, y_err = synthetic_ast_obs(instance, t)
-        ast_fn = {
-            "get_chi2_astrometry": try_get_chi2_astrometry,
-            "log_likely_astrometry_each": try_get_log_likely_astrometry_each,
-        }.get(method_name)
-        if ast_fn is not None:
-            out = ast_fn(
-                instance, t, x_obs, y_obs, x_err, y_err, filt_idx=0
-            )
-            if out is not None:
-                return out
+    """Call instance methods (now JAX-kernel-backed where migrated)."""
     return call_method(
         instance,
         method_name,
@@ -2246,7 +2232,7 @@ def fspl_phot_param2_grad_pairs() -> list[tuple[str, str]]:
 
 
 def fspl_phot_param2_extended_grad_pairs() -> list[tuple[str, str]]:
-    """FSPL phot-only Param2 ``get_u`` + phot likelihood grad (jax-eval FD)."""
+    """FSPL phot-only Param2 ``get_u`` + phot likelihood grad (jax.grad)."""
     return list(fspl_phot_param2_extended_pairs())
 
 
@@ -3579,6 +3565,89 @@ def _refresh_psbl_prim_u0_geometry(instance) -> None:
         instance.u0_com = np.abs(instance.u0_amp_com) * instance.u0_hat_com
 
 
+def _refresh_psbl_photastrom_param3_geometry(instance) -> None:
+    """Re-derive PSBL/FSBL PhotAstrom Param3 reduced init after scatter.
+
+    Mirrors ``PSBL_PhotAstromParam3.__init__`` when fitter uses ``log10_thetaE``
+    (not physical ``mLp``/``mLs``/``dL``).
+    """
+    import astropy.constants as const
+    import astropy.units as units
+
+    from bagle.model import u0_hat_from_thetaE_hat
+
+    if hasattr(instance, "log10_thetaE"):
+        instance.thetaE_amp = 10.0 ** float(instance.log10_thetaE)
+        instance.thetaE = instance.thetaE_amp
+
+    instance.mag_src = np.asarray(instance.mag_base, dtype=np.float64) - 2.5 * np.log10(
+        np.asarray(instance.b_sff, dtype=np.float64)
+    )
+
+    instance.beta = float(instance.u0_amp) * float(instance.thetaE_amp)
+    instance.piE_amp = np.linalg.norm(instance.piE)
+    instance.piRel = instance.piE_amp * instance.thetaE_amp
+    instance.muRel_amp = instance.thetaE_amp / (float(instance.tE) / _DAYS_PER_YEAR)
+    instance.piL = instance.piRel + float(instance.piS)
+
+    kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
+    kappa = kappa_tmp.to(
+        units.mas / units.Msun, equivalencies=units.dimensionless_angles()
+    ).value
+    instance.mL = instance.thetaE_amp ** 2 / (instance.piRel * kappa)
+    instance.mLp = instance.mL / (1.0 + float(instance.q))
+    instance.mLs = instance.mLp * float(instance.q)
+
+    dL = (instance.piL * units.mas).to(
+        units.parsec, equivalencies=units.parallax()
+    )
+    dS = (instance.piS * units.mas).to(
+        units.parsec, equivalencies=units.parallax()
+    )
+    instance.dL = dL.to("pc").value
+    instance.dS = dS.to("pc").value
+
+    instance.thetaE_hat = instance.piE / instance.piE_amp
+    instance.muRel_hat = instance.thetaE_hat
+    instance.thetaE = instance.thetaE_amp * instance.thetaE_hat
+    instance.muRel = instance.muRel_amp * instance.thetaE_hat
+    instance.muRel_E, instance.muRel_N = instance.muRel
+    instance.muL = np.asarray(instance.muS, dtype=np.float64) - instance.muRel
+    instance.muL_E, instance.muL_N = instance.muL
+
+    inv_dist_diff = (1.0 / dL) - (1.0 / dS)
+    m1 = (
+        units.rad ** 2
+        * (4 * const.G * instance.mLp * units.Msun / const.c ** 2)
+        * inv_dist_diff
+    )
+    m2 = (
+        units.rad ** 2
+        * (4 * const.G * instance.mLs * units.Msun / const.c ** 2)
+        * inv_dist_diff
+    )
+    instance.m1 = m1.to(units.arcsec ** 2).value
+    instance.m2 = m2.to(units.arcsec ** 2).value
+
+    instance.u0_hat = u0_hat_from_thetaE_hat(instance.thetaE_hat, instance.beta)
+    instance.u0 = np.abs(float(instance.u0_amp)) * instance.u0_hat
+    instance.thetaS0 = instance.u0 * instance.thetaE_amp
+    instance.xL0 = np.asarray(instance.xS0, dtype=np.float64) - (instance.thetaS0 * 1e-3)
+
+    if hasattr(instance, "delta_muL_sec_E") and hasattr(instance, "delta_muL_sec_N"):
+        instance.delta_muL_sec = np.array(
+            [float(instance.delta_muL_sec_E), float(instance.delta_muL_sec_N)],
+            dtype=np.float64,
+        )
+        instance.muL_sec = np.array(
+            [
+                instance.muL_E + float(instance.delta_muL_sec_E),
+                instance.muL_N + float(instance.delta_muL_sec_N),
+            ],
+            dtype=np.float64,
+        )
+
+
 def _refresh_psbl_param4_heliocentric_geometry(instance) -> None:
     """Re-derive Param4/8 heliocentric COM init after ``scatter_init_vector``.
 
@@ -3844,6 +3913,15 @@ def _refresh_derived_geometry(instance) -> None:
         )
         instance.piE_amp = np.linalg.norm(instance.piE)
         instance.thetaE_hat = instance.piE / instance.piE_amp
+        return None
+
+    fitter = getattr(instance, "fitter_param_names", ())
+    if (
+        "log10_thetaE" in fitter
+        and getattr(instance, "paramAstromFlag", False)
+        and "mLp" not in fitter
+    ):
+        _refresh_psbl_photastrom_param3_geometry(instance)
         return None
 
     if hasattr(instance, "mLp") and hasattr(instance, "mLs") and hasattr(instance, "dL"):
@@ -4708,7 +4786,7 @@ def grad_smoke_jax(
     """
     import jax
 
-    from bagle.jax.layout_registry import resolve_layout
+    from _layout_shim import resolve_layout
     from bagle.jax.geometry import derive_geometry_from_layout
     from bagle.jax.bspl import bspl_photometry_jax
     from bagle.jax_physics import (
@@ -5419,7 +5497,13 @@ def grad_smoke_jax(
             return g, init_names
         return g
 
-    if method_name == "get_u" and ek in set(pspl_phot_kinds) | set(pspl_astrom_kinds):
+    if method_name == "get_u" and (
+        ek in set(pspl_phot_kinds) | set(pspl_astrom_kinds)
+        or (
+            ek.startswith(("fsbl_phot", "fsbl_photastrom"))
+            and class_name.startswith("FSPL")
+        )
+    ):
 
         def forward(v):
             geom = _pspl_geom(v)

@@ -706,6 +706,7 @@ class MicrolensSolver(Solver):
     def Prior(self, cube, ndim=None, nparams=None):
         for i, param_name in enumerate(self.fitter_param_names):
             cube[i] = self.priors[param_name].ppf(cube[i])
+
         return cube
 
 
@@ -2708,8 +2709,11 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
 #########################
 import pymc as pm
 import pytensor.tensor as pt
+from pytensor.gradient import DisconnectedType
 from pytensor.graph.op import Op
 from pytensor.graph.basic import Apply
+from pytensor.link.jax.ops import JAXOp
+from pytensor.tensor.type import TensorType
 
 def _prior_period(prior):
     """Infer period for wrapped angle parameters from prior support."""
@@ -2820,7 +2824,7 @@ class LogLikelihoodOp(Op):
 
         return
 
-    def grad(self, inputs, output_grads):
+    def pullback(self, inputs, outputs, output_gradients):
         if self._jax_loglik is None:
             raise NotImplementedError(
                 'No JAX gradient for this likelihood configuration '
@@ -2828,9 +2832,32 @@ class LogLikelihoodOp(Op):
                 'Use use_jax_grad=False or a Phot/PhotAstrom/Astrom layout '
                 'supported by bagle.jax.'
             )
-        param_vec = jnp.asarray(inputs[0], dtype=jnp.float64)
-        g = jax.grad(self._jax_loglik)(param_vec)
-        return [np.asarray(output_grads[0] * g, dtype=np.float64)]
+        if isinstance(output_gradients[0].type, DisconnectedType):
+            return [DisconnectedType()()]
+
+        n = len(self.param_names)
+        input_type = TensorType('float64', shape=(n,))
+        output_type = TensorType('float64', shape=())
+        jax_loglik = self._jax_loglik
+
+        def vjp_fn(param_vec, cotangent):
+            def restricted(param_vec):
+                return (jax_loglik(param_vec).astype('float64'),)
+
+            _, vjp = jax.vjp(restricted, param_vec)
+            return vjp((cotangent.astype('float64'),))
+
+        vjp_op = JAXOp(
+            [input_type, output_type],
+            [input_type],
+            vjp_fn,
+            name='vjp_microlens_loglik',
+        )
+        return vjp_op(
+            inputs[0],
+            output_gradients[0],
+            return_list=True,
+        )
 
 
 class MicrolensPyMCModel:

@@ -1,13 +1,14 @@
 """
-Stateless JAX physics for PSBL models.
+Stateless JAX numerical kernels for microlensing models.
 
-Pure functions suitable for ``jax.jit`` and ``jax.grad``.  Model classes in
-``bagle.model`` remain thin adapters that pack instance state into arrays and
-call these kernels.
+Pure functions suitable for ``jax.jit`` and ``jax.grad``.  Host methods in
+``bagle.model_jax`` pack instance attributes and call these kernels directly.
+Fitter log-likelihoods use the same kernels after Param-mixin packing
+(``get_params_for_jax``).
 
-Gaussian photometry likelihoods are implemented here for PSPL/PSBL models
-without Gaussian-process residuals.  GP-enabled models keep using celerite on
-the host (see :func:`supports_jax_phot_loglik`).
+This module is the kernel library only — layout registries and string
+``eval_kind`` dispatch do not belong here.  GP-enabled photometry may still
+use celerite on the host.
 
 Set ``JAX_PLATFORMS=cpu`` for reproducible CPU runs in CI.
 """
@@ -92,63 +93,199 @@ _RAD_TO_MAS = float(_u.rad.to(_u.mas))
 _PI_MAS_PER_PC = float((_u.rad * _u.au / _u.pc).to(_u.mas))
 
 
-def pack_fitter_params(
-    names: Sequence[str], params: Mapping[str, float]
-) -> jnp.ndarray:
-    """Pack named fitter parameters into a 1-D float64 vector."""
-    return jnp.array([float(params[name]) for name in names], dtype=jnp.float64)
+def pack_fitter_params(names: Sequence[str],
+    params: Mapping[str, float]) -> jnp.ndarray:
+    """
+    Pack named fitter parameters into a 1-D float64 vector.
+
+    Parameters
+    ----------
+    names : sequence of str
+        Ordered fitter parameter names.
+    params : mapping
+        Name -> value dictionary of fitter parameters.
+
+    Returns
+    -------
+    param_vec
+        See summary above.
+    """
+    # One float64 entry per fitter name, in the declared order.
+    param_vec = jnp.array([float(params[name]) for name in names], dtype=jnp.float64)
+    return param_vec
 
 
-def unpack_fitter_params(
-    names: Sequence[str], vec
-) -> dict[str, jnp.ndarray]:
-    """Unpack a fitter parameter vector into a name -> scalar mapping."""
+def unpack_fitter_params(names: Sequence[str], vec) -> dict[str, jnp.ndarray]:
+    """
+    Unpack a fitter parameter vector into a name -> scalar mapping.
+
+    Parameters
+    ----------
+    names : sequence of str
+        Ordered fitter parameter names.
+    vec : array_like
+        Packed parameter vector.
+
+    Returns
+    -------
+    params
+        See summary above.
+    """
     vec = jnp.asarray(vec, dtype=jnp.float64).reshape(-1)
+
+    # Guard against packing / unpacking mismatches.
     if vec.shape[0] != len(names):
         raise ValueError(
             f"Expected vector of length {len(names)}, got {vec.shape[0]}"
         )
-    return {name: vec[i] for i, name in enumerate(names)}
+
+    # Map each name to its corresponding scalar entry.
+    params = {name: vec[i] for i, name in enumerate(names)}
+    return params
 
 
 def pack_psbl_phot_param1(params: Mapping[str, float]) -> jnp.ndarray:
-    """Pack PSBL_PhotParam1 fitter parameters."""
-    return pack_fitter_params(PSBL_PHOT_PARAM1_FITTER_NAMES, params)
+    """
+    Pack PSBL_PhotParam1 fitter parameters.
+
+    Parameters
+    ----------
+    params : mapping
+        Name -> value dictionary of fitter parameters.
+
+    Returns
+    -------
+    param_vec
+        See summary above.
+    """
+    param_vec = pack_fitter_params(PSBL_PHOT_PARAM1_FITTER_NAMES, params)
+    return param_vec
 
 
 def unpack_psbl_phot_param1(vec) -> dict[str, jnp.ndarray]:
-    """Unpack PSBL_PhotParam1 fitter parameters."""
-    return unpack_fitter_params(PSBL_PHOT_PARAM1_FITTER_NAMES, vec)
+    """
+    Unpack PSBL_PhotParam1 fitter parameters.
+
+    Parameters
+    ----------
+    vec : array_like
+        Packed parameter vector.
+
+    Returns
+    -------
+    params
+        See summary above.
+    """
+    params = unpack_fitter_params(PSBL_PHOT_PARAM1_FITTER_NAMES, vec)
+    return params
 
 
 def pack_psbl_phot_param1_phot(params: Mapping[str, float]) -> jnp.ndarray:
-    """Pack per-filter photometry parameters ``(b_sff, mag_src)``."""
-    return pack_fitter_params(PSBL_PHOT_PARAM1_PHOT_NAMES, params)
+    """
+    Pack per-filter photometry parameters ``(b_sff, mag_src)``.
+
+    Parameters
+    ----------
+    params : mapping
+        Name -> value dictionary of fitter parameters.
+
+    Returns
+    -------
+    param_vec
+        See summary above.
+    """
+    param_vec = pack_fitter_params(PSBL_PHOT_PARAM1_PHOT_NAMES, params)
+    return param_vec
 
 
 def unpack_psbl_phot_param1_phot(vec) -> dict[str, jnp.ndarray]:
-    """Unpack per-filter photometry parameters."""
-    return unpack_fitter_params(PSBL_PHOT_PARAM1_PHOT_NAMES, vec)
+    """
+    Unpack per-filter photometry parameters.
+
+    Parameters
+    ----------
+    vec : array_like
+        Packed parameter vector.
+
+    Returns
+    -------
+    params
+        See summary above.
+    """
+    params = unpack_fitter_params(PSBL_PHOT_PARAM1_PHOT_NAMES, vec)
+    return params
 
 
 def pack_pspl_phot_param1(params: Mapping[str, float]) -> jnp.ndarray:
-    """Pack PSPL_PhotParam1 fitter parameters."""
-    return pack_fitter_params(PSPL_PHOT_PARAM1_FITTER_NAMES, params)
+    """
+    Pack PSPL_PhotParam1 fitter parameters.
+
+    Parameters
+    ----------
+    params : mapping
+        Name -> value dictionary of fitter parameters.
+
+    Returns
+    -------
+    param_vec
+        See summary above.
+    """
+    param_vec = pack_fitter_params(PSPL_PHOT_PARAM1_FITTER_NAMES, params)
+    return param_vec
 
 
 def unpack_pspl_phot_param1(vec) -> dict[str, jnp.ndarray]:
-    """Unpack PSPL_PhotParam1 fitter parameters."""
-    return unpack_fitter_params(PSPL_PHOT_PARAM1_FITTER_NAMES, vec)
+    """
+    Unpack PSPL_PhotParam1 fitter parameters.
+
+    Parameters
+    ----------
+    vec : array_like
+        Packed parameter vector.
+
+    Returns
+    -------
+    params
+        See summary above.
+    """
+    params = unpack_fitter_params(PSPL_PHOT_PARAM1_FITTER_NAMES, vec)
+    return params
 
 
 def pack_pspl_phot_param1_phot(params: Mapping[str, float]) -> jnp.ndarray:
-    """Pack per-filter photometry parameters ``(b_sff, mag_src)``."""
-    return pack_fitter_params(PSPL_PHOT_PARAM1_PHOT_NAMES, params)
+    """
+    Pack per-filter photometry parameters ``(b_sff, mag_src)``.
+
+    Parameters
+    ----------
+    params : mapping
+        Name -> value dictionary of fitter parameters.
+
+    Returns
+    -------
+    param_vec
+        See summary above.
+    """
+    param_vec = pack_fitter_params(PSPL_PHOT_PARAM1_PHOT_NAMES, params)
+    return param_vec
 
 
 def unpack_pspl_phot_param1_phot(vec) -> dict[str, jnp.ndarray]:
-    """Unpack per-filter photometry parameters."""
-    return unpack_fitter_params(PSPL_PHOT_PARAM1_PHOT_NAMES, vec)
+    """
+    Unpack per-filter photometry parameters.
+
+    Parameters
+    ----------
+    vec : array_like
+        Packed parameter vector.
+
+    Returns
+    -------
+    params
+        See summary above.
+    """
+    params = unpack_fitter_params(PSPL_PHOT_PARAM1_PHOT_NAMES, vec)
+    return params
 
 
 # ---------------------------------------------------------------------------
@@ -156,12 +293,8 @@ def unpack_pspl_phot_param1_phot(vec) -> dict[str, jnp.ndarray]:
 # ---------------------------------------------------------------------------
 
 
-def precompute_parallax_vectors(
-    ra_l: float,
-    dec_l: float,
-    t,
-    obs_location: str = "earth",
-) -> np.ndarray:
+def precompute_parallax_vectors(raL: float, decL: float, t,
+                                obs_location: str = "earth") -> jnp.ndarray:
     """
     Precompute parallax direction vectors on the host.
 
@@ -172,7 +305,7 @@ def precompute_parallax_vectors(
 
     Parameters
     ----------
-    ra_l, dec_l : float
+    raL, decL : float
         Lens right ascension and declination in degrees (J2000).
     t : array_like
         Observation times in MJD.
@@ -182,25 +315,40 @@ def precompute_parallax_vectors(
     """
     from bagle import parallax
 
-    return np.asarray(
-        parallax.parallax_in_direction(ra_l, dec_l, t, obsLocation=obs_location),
+    # Calculate parallax vectors for each epoch: shape (N_times, 2) = [East, North] in AU.
+    parallax_vectors = np.asarray(
+        parallax.parallax_in_direction(raL, decL, t, obsLocation=obs_location),
         dtype=np.float64,
     )
+    return parallax_vectors
 
 
-def compute_parallax_offset(
-    parallax_vectors,
-    piE_E,
-    piE_N,
-):
+def compute_parallax_offset(parallax_vectors, piE_E, piE_N):
     """
     Microlensing parallax offset in Einstein-radius units.
 
-    Returns ``piE_amp * parallax_vectors`` with shape ``(N_times, 2)``.
+    Parameters
+    ----------
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+
+    Returns
+    -------
+    parallax_offset
+        See summary above.
     """
     parallax_vectors = jnp.asarray(parallax_vectors, dtype=jnp.float64)
+
+    # Amplitude of the microlensing parallax vector.
     piE_amp = jnp.sqrt(piE_E**2 + piE_N**2)
-    return piE_amp * parallax_vectors
+
+    # Offset of the source trajectory in Einstein-radius units.
+    parallax_offset = piE_amp * parallax_vectors
+    return parallax_offset
 
 
 # ---------------------------------------------------------------------------
@@ -209,13 +357,44 @@ def compute_parallax_offset(
 
 
 def mag2flux_jax(mag):
+    """
+    mag2flux_jax.
+
+    Parameters
+    ----------
+    mag : array_like
+        Magnitudes.
+
+    Returns
+    -------
+    flux
+        See summary above.
+    """
     flux = _FLUX_ZP * 10.0 ** ((mag - _MAG_ZP) / -2.5)
     flux = jnp.nan_to_num(flux, nan=0.0)
-    return jnp.where(flux < 0, jnp.nan, flux)
+
+    # Negative fluxes are unphysical; mark as NaN for downstream masking.
+    flux = jnp.where(flux < 0, jnp.nan, flux)
+    return flux
 
 
 def flux2mag_jax(flux):
+    """
+    flux2mag_jax.
+
+    Parameters
+    ----------
+    flux : array_like
+        Fluxes.
+
+    Returns
+    -------
+    mag
+        See summary above.
+    """
     flux = jnp.asarray(flux, dtype=jnp.float64)
+
+    # Inverse of mag2flux_jax with the same zero-point convention.
     mag = -2.5 * jnp.log10(flux / _FLUX_ZP) + _MAG_ZP
     return mag
 
@@ -226,11 +405,28 @@ def flux2mag_jax(flux):
 
 
 def u0_hat_from_thetaE_hat_jax(thetaE_hat, beta):
-    """JAX version of :func:`bagle.model.u0_hat_from_thetaE_hat`."""
+    """
+    JAX version of :func:`bagle.model.u0_hat_from_thetaE_hat`.
+
+    Parameters
+    ----------
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    beta : float
+        Signed source-lens impact parameter (mas or Einstein radii).
+
+    Returns
+    -------
+    u0_hat
+        See summary above.
+    """
     thetaE_hat = jnp.asarray(thetaE_hat, dtype=jnp.float64).reshape(2)
     beta = jnp.asarray(beta, dtype=jnp.float64)
+
+    # Same-sign East/North components of thetaE_hat change the u0 orientation.
     sign_prod_pos = jnp.sign(thetaE_hat[0]) * jnp.sign(thetaE_hat[1]) > 0
 
+    # Candidate u0_hat for beta > 0 (and the opposite for beta < 0).
     u0_pos = jnp.stack(
         [
             jnp.abs(thetaE_hat[1]),
@@ -243,20 +439,41 @@ def u0_hat_from_thetaE_hat_jax(thetaE_hat, beta):
             jnp.where(sign_prod_pos, jnp.abs(thetaE_hat[0]), -jnp.abs(thetaE_hat[0])),
         ]
     )
-    return jnp.where(beta > 0, u0_pos, u0_neg)
+
+    # Sign of beta selects which hemisphere for the closest-approach vector.
+    u0_hat = jnp.where(beta > 0, u0_pos, u0_neg)
+    return u0_hat
 
 
 def derive_pspl_static_geometry(u0_amp, piE_E, piE_N):
     """
     Derive static PSPL geometry from fitter parameters.
 
-    Returns ``(u0, thetaE_hat, piE_amp)``.
+    Parameters
+    ----------
+    u0_amp : float
+        Signed impact parameter amplitude in Einstein radii.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+
+    Returns
+    -------
+    geometry
+        See summary above.
     """
+    # Microlensing parallax vector and its amplitude.
     piE = jnp.stack([piE_E, piE_N])
     piE_amp = jnp.linalg.norm(piE)
+
+    # Relative proper-motion direction (same as piE direction for PSPL).
     thetaE_hat = piE / piE_amp
+
+    # Closest-approach vector in the Einstein ring.
     u0_hat = u0_hat_from_thetaE_hat_jax(thetaE_hat, u0_amp)
     u0 = jnp.abs(u0_amp) * u0_hat
+
     return u0, thetaE_hat, piE_amp
 
 
@@ -264,18 +481,39 @@ def derive_psbl_static_geometry(u0_amp, piE_E, piE_N, q, sep, phi):
     """
     Derive static PSBL geometry from fitter parameters.
 
-    Returns ``(m1, m2, u0, thetaE_hat, xL1_over_theta, xL2_over_theta, piE_amp)``.
+    Parameters
+    ----------
+    u0_amp : float
+        Signed impact parameter amplitude in Einstein radii.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    q : float
+        Binary mass ratio ``m2/m1``.
+    sep : float
+        Binary projected separation in Einstein radii.
+    phi : float
+        Binary orientation angle (degrees).
+
+    Returns
+    -------
+    geometry
+        See summary above.
     """
+    # Same PSPL-style trajectory geometry for the source.
     piE = jnp.stack([piE_E, piE_N])
     piE_amp = jnp.linalg.norm(piE)
     thetaE_hat = piE / piE_amp
     u0_hat = u0_hat_from_thetaE_hat_jax(thetaE_hat, u0_amp)
     u0 = jnp.abs(u0_amp) * u0_hat
 
+    # Binary axis orientation relative to the piE direction.
     phi_rad = phi * _DEG2RAD
     phi_piE_rad = jnp.arctan2(piE_E, piE_N)
     phi_rho1_rad = phi_piE_rad + phi_rad
 
+    # Primary / secondary lens positions about the binary midpoint.
     xL1_over_theta = jnp.stack(
         [
             0.5 * sep * jnp.sin(phi_rho1_rad),
@@ -284,36 +522,38 @@ def derive_psbl_static_geometry(u0_amp, piE_E, piE_N, q, sep, phi):
     )
     xL2_over_theta = -xL1_over_theta
 
+    # Mass fractions for the binary lens equation.
     m1 = 1.0 / (1.0 + q)
     m2 = q / (1.0 + q)
 
     return m1, m2, u0, thetaE_hat, xL1_over_theta, xL2_over_theta, piE_amp
 
 
-def einstein_source_position(
-    t,
-    t0,
-    tE,
-    u0,
-    thetaE_hat,
-    parallax_vectors=None,
-    piE_E=None,
-    piE_N=None,
-    parallax_correction=None,
-):
+def einstein_source_position(t, t0, tE, u0, thetaE_hat, parallax_vectors=None,
+                             piE_E=None, piE_N=None, parallax_correction=None):
     """
     Unlensed source–lens separation in Einstein-radius units.
 
     Parameters
     ----------
-    parallax_vectors : array_like, optional
-        Host-precomputed parallax table from :func:`precompute_parallax_vectors`,
+    t : jnp.array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : jnp.array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : jnp.array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    parallax_vectors : jnp.array_like, optional
+        Precomputed parallax table from :func:`precompute_parallax_vectors`,
         shape ``(N_times, 2)``.  Combined with ``piE_E`` and ``piE_N`` inside
         the jitted kernel so gradients w.r.t. parallax parameters are available.
     piE_E, piE_N : float, optional
         Microlensing parallax components in Einstein-radius units.  Required
         when ``parallax_vectors`` is provided.
-    parallax_correction : array_like, optional
+    parallax_correction : jnp.array_like, optional
         Legacy alias for a pre-multiplied table ``piE_amp * parallax_vectors``.
         When provided, ``parallax_vectors`` / ``piE_*`` are ignored.
     """
@@ -321,9 +561,13 @@ def einstein_source_position(
     u0 = jnp.asarray(u0, dtype=jnp.float64).reshape(2)
     thetaE_hat = jnp.asarray(thetaE_hat, dtype=jnp.float64).reshape(2)
 
+    # tau: time in Einstein-crossing units; shape [N_times, 1].
     tau = ((t - t0) / tE).reshape(-1, 1)
+
+    # Rectilinear source-lens separation; shape [N_times, 2].
     u = u0.reshape(1, 2) + tau * thetaE_hat.reshape(1, 2)
 
+    # Optional parallax deflection of the trajectory.
     if parallax_correction is not None:
         u = u - jnp.asarray(parallax_correction, dtype=jnp.float64)
     elif parallax_vectors is not None:
@@ -332,43 +576,40 @@ def einstein_source_position(
     return u
 
 
-def pspl_u(
-    t,
-    t0,
-    tE,
-    u0,
-    thetaE_hat,
-    parallax_vectors=None,
-    piE_E=None,
-    piE_N=None,
-    parallax_correction=None,
-):
-    """PSPL separation vector ``u(t)`` with shape ``(N_times, 2)``."""
-    return einstein_source_position(
-        t,
-        t0,
-        tE,
-        u0,
-        thetaE_hat,
-        parallax_vectors=parallax_vectors,
-        piE_E=piE_E,
-        piE_N=piE_N,
-        parallax_correction=parallax_correction,
-    )
+def pspl_u(t, t0, tE, u0, thetaE_hat, 
+           parallax_vectors=None, 
+           piE_E=None, piE_N=None, 
+           parallax_correction=None):
+    """
+    PSPL separation vector ``u(t)`` with shape ``(N_times, 2)``.
 
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    parallax_correction : array_like or None
+        Legacy pre-multiplied ``piE_amp * parallax_vectors``.
 
-def psbl_source_position(
-    t,
-    t0,
-    tE,
-    u0,
-    thetaE_hat,
-    parallax_vectors=None,
-    piE_E=None,
-    piE_N=None,
-    parallax_correction=None,
-):
-    """Unlensed source position as a complex array (East + i North)."""
+    Returns
+    -------
+    u
+        See summary above.
+    """
+    # Thin wrapper: PSPL uses the same Einstein-frame source trajectory.
     u = einstein_source_position(
         t,
         t0,
@@ -380,33 +621,125 @@ def psbl_source_position(
         piE_N=piE_N,
         parallax_correction=parallax_correction,
     )
-    return u[:, 0] + 1j * u[:, 1]
+    return u
+
+
+def psbl_source_position(t, t0, tE, u0, thetaE_hat, parallax_vectors=None,
+    piE_E=None, piE_N=None, parallax_correction=None):
+    """
+    Unlensed source position as a complex array (East + i North).
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    parallax_correction : array_like or None
+        Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+
+    Returns
+    -------
+    w
+        See summary above.
+    """
+    # Real-valued source track in Einstein radii (East, North).
+    u = einstein_source_position(
+        t,
+        t0,
+        tE,
+        u0,
+        thetaE_hat,
+        parallax_vectors=parallax_vectors,
+        piE_E=piE_E,
+        piE_N=piE_N,
+        parallax_correction=parallax_correction,
+    )
+
+    # Pack into complex w = East + i North for the Witt quintic.
+    w = u[:, 0] + 1j * u[:, 1]
+    return w
 
 
 def psbl_static_lens_positions(xL1_over_theta, xL2_over_theta, n_times):
-    """Broadcast static lens positions to ``n_times`` complex arrays."""
+    """
+    Broadcast static lens positions to ``n_times`` complex arrays.
+
+    Parameters
+    ----------
+    xL1_over_theta : array_like
+        Primary lens position in Einstein radii, shape ``(2,)``.
+    xL2_over_theta : array_like
+        Secondary lens position in Einstein radii, shape ``(2,)``.
+    n_times : int
+        Number of epochs to broadcast to.
+
+    Returns
+    -------
+    lens_pos
+        See summary above.
+    """
     xL1 = jnp.asarray(xL1_over_theta, dtype=jnp.float64).reshape(2)
     xL2 = jnp.asarray(xL2_over_theta, dtype=jnp.float64).reshape(2)
+
+    # Complex lens positions (East + i North), constant in time for static PSBL.
     z1 = jnp.full(n_times, xL1[0] + 1j * xL1[1], dtype=jnp.complex128)
     z2 = jnp.full(n_times, xL2[0] + 1j * xL2[1], dtype=jnp.complex128)
+
     return z1, z2
 
 
-def psbl_complex_pos_static(
-    t,
-    t0,
-    tE,
-    u0,
-    thetaE_hat,
-    xL1_over_theta,
-    xL2_over_theta,
-    parallax_vectors=None,
-    piE_E=None,
-    piE_N=None,
-    parallax_correction=None,
-):
-    """Source and static binary-lens positions as complex arrays."""
+def psbl_complex_pos_static(t, t0, tE, u0, thetaE_hat, xL1_over_theta,
+    xL2_over_theta, parallax_vectors=None, piE_E=None, piE_N=None,
+    parallax_correction=None):
+    """
+    Source and static binary-lens positions as complex arrays.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    xL1_over_theta : array_like
+        Primary lens position in Einstein radii, shape ``(2,)``.
+    xL2_over_theta : array_like
+        Secondary lens position in Einstein radii, shape ``(2,)``.
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    parallax_correction : array_like or None
+        Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+
+    Returns
+    -------
+    complex_pos
+        See summary above.
+    """
     t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+
+    # Complex source trajectory (with optional microlensing parallax).
     w = psbl_source_position(
         t,
         t0,
@@ -418,41 +751,105 @@ def psbl_complex_pos_static(
         piE_N=piE_N,
         parallax_correction=parallax_correction,
     )
+
+    # Static binary lenses, broadcast to the same number of epochs.
     z1, z2 = psbl_static_lens_positions(xL1_over_theta, xL2_over_theta, w.shape[0])
     return w, z1, z2
 
 
 def psbl_keplerian_lens_positions(t, w, o, i, e, p, tp, aleph, aleph_sec):
-    """Time-varying PSBL phot orbit lens positions (Einstein-radius units)."""
+    """
+    Time-varying PSBL phot orbit lens positions (Einstein-radius units).
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    w : array_like
+        Complex source position(s) or orbit argument of periapsis.
+    o : float
+        Orbit ascending-node angle.
+    i : float
+        Orbit inclination.
+    e : float
+        Orbit eccentricity.
+    p : float
+        Orbit period.
+    tp : float
+        Time of periapsis.
+    aleph : float
+        Primary semi-major axis (Einstein radii).
+    aleph_sec : float
+        Secondary semi-major axis (Einstein radii).
+
+    Returns
+    -------
+    lens_pos
+        See summary above.
+    """
     from bagle.jax.orbits import oal2xy
 
+    # Cartesian orbit positions for primary and secondary.
     x, y, x2, y2 = oal2xy(t, w, o, i, e, p, tp, aleph, aleph_sec)
+
+    # Complex lens positions for the Witt quintic.
     z1 = x + 1j * y
     z2 = x2 + 1j * y2
+
     return z1, z2
 
 
-def psbl_complex_pos_keplerian(
-    t,
-    t0,
-    tE,
-    u0,
-    thetaE_hat,
-    w,
-    o,
-    i,
-    e,
-    p,
-    tp,
-    aleph,
-    aleph_sec,
-    parallax_vectors=None,
-    piE_E=None,
-    piE_N=None,
-    parallax_correction=None,
-):
-    """Source and Keplerian binary-lens positions as complex arrays."""
+def psbl_complex_pos_keplerian(t, t0, tE, u0, thetaE_hat, w, o, i, e, p, tp,
+    aleph, aleph_sec, parallax_vectors=None, piE_E=None, piE_N=None,
+    parallax_correction=None):
+    """
+    Source and Keplerian binary-lens positions as complex arrays.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    w : array_like
+        Complex source position(s) or orbit argument of periapsis.
+    o : float
+        Orbit ascending-node angle.
+    i : float
+        Orbit inclination.
+    e : float
+        Orbit eccentricity.
+    p : float
+        Orbit period.
+    tp : float
+        Time of periapsis.
+    aleph : float
+        Primary semi-major axis (Einstein radii).
+    aleph_sec : float
+        Secondary semi-major axis (Einstein radii).
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    parallax_correction : array_like or None
+        Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+
+    Returns
+    -------
+    complex_pos
+        See summary above.
+    """
     t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+
+    # Complex source trajectory (with optional microlensing parallax).
     src_w = psbl_source_position(
         t,
         t0,
@@ -464,6 +861,8 @@ def psbl_complex_pos_keplerian(
         piE_N=piE_N,
         parallax_correction=parallax_correction,
     )
+
+    # Time-varying lens positions from the Keplerian phot orbit.
     z1, z2 = psbl_keplerian_lens_positions(t, w, o, i, e, p, tp, aleph, aleph_sec)
     return src_w, z1, z2
 
@@ -474,24 +873,61 @@ def psbl_complex_pos_keplerian(
 
 
 def pspl_amplification_from_u(u):
-    """Total PSPL amplification from separation vectors."""
+    """
+    Total PSPL amplification from separation vectors.
+
+    Parameters
+    ----------
+    u : array_like
+        Source-lens separation vectors, shape ``(N_times, 2)``.
+
+    Returns
+    -------
+    amp
+        See summary above.
+    """
     u = jnp.asarray(u, dtype=jnp.float64)
+
+    # Separation amplitude; shape [N_times].
     u_amp = jnp.linalg.norm(u, axis=1)
-    return (u_amp**2 + 2) / (u_amp * jnp.sqrt(u_amp**2 + 4))
+
+    # Point-source point-lens magnification formula.
+    amp = (u_amp**2 + 2) / (u_amp * jnp.sqrt(u_amp**2 + 4))
+    return amp
 
 
-def pspl_amplification(
-    t,
-    t0,
-    tE,
-    u0,
-    thetaE_hat,
-    parallax_vectors=None,
-    piE_E=None,
-    piE_N=None,
-    parallax_correction=None,
-):
-    """Total PSPL amplification at times ``t``."""
+def pspl_amplification(t, t0, tE, u0, thetaE_hat, parallax_vectors=None,
+    piE_E=None, piE_N=None, parallax_correction=None):
+    """
+    Total PSPL amplification at times ``t``.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    parallax_correction : array_like or None
+        Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+
+    Returns
+    -------
+    amp
+        See summary above.
+    """
+    # Source-lens separation, then PSPL magnification formula.
     u = pspl_u(
         t,
         t0,
@@ -503,32 +939,77 @@ def pspl_amplification(
         piE_N=piE_N,
         parallax_correction=parallax_correction,
     )
-    return pspl_amplification_from_u(u)
+    amp = pspl_amplification_from_u(u)
+    return amp
 
 
 def pspl_photometry_from_amp(amp, mag_src, b_sff=None):
-    """Unresolved PSPL magnitude from total amplification."""
+    """
+    Unresolved PSPL magnitude from total amplification.
+
+    Parameters
+    ----------
+    amp : array_like
+        Total magnification.
+    mag_src : float
+        Unlensed source magnitude.
+    b_sff : float or None
+        Source flux fraction (blend parameter).
+
+    Returns
+    -------
+    mag
+        See summary above.
+    """
     flux_src = mag2flux_jax(mag_src)
+
+    # Magnified source flux.
     flux_model = flux_src * amp
+
+    # Optional blend / neighbor contribution via source flux fraction.
     if b_sff is not None:
         flux_model = flux_model + flux_src * (1.0 - b_sff) / b_sff
-    return flux2mag_jax(flux_model)
+
+    mag = flux2mag_jax(flux_model)
+    return mag
 
 
-def pspl_photometry(
-    t,
-    t0,
-    tE,
-    u0,
-    thetaE_hat,
-    mag_src,
-    b_sff=None,
-    parallax_vectors=None,
-    piE_E=None,
-    piE_N=None,
-    parallax_correction=None,
-):
-    """PSPL unresolved photometry at times ``t``."""
+def pspl_photometry(t, t0, tE, u0, thetaE_hat, mag_src, b_sff=None,
+    parallax_vectors=None, piE_E=None, piE_N=None, parallax_correction=None):
+    """
+    PSPL unresolved photometry at times ``t``.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    mag_src : float
+        Unlensed source magnitude.
+    b_sff : float or None
+        Source flux fraction (blend parameter).
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    parallax_correction : array_like or None
+        Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+
+    Returns
+    -------
+    mag
+        See summary above.
+    """
+    # Amplification first, then convert to unresolved magnitudes.
     amp = pspl_amplification(
         t,
         t0,
@@ -540,47 +1021,99 @@ def pspl_photometry(
         piE_N=piE_N,
         parallax_correction=parallax_correction,
     )
-    return pspl_photometry_from_amp(amp, mag_src, b_sff=b_sff)
+    mag = pspl_photometry_from_amp(amp, mag_src, b_sff=b_sff)
+    return mag
 
 
 def pspl_resolved_amplification_from_u(u):
-    """Plus/minus PSPL image amplifications from separation ``u`` (N, 2)."""
+    """
+    Plus/minus PSPL image amplifications from separation ``u`` (N, 2).
+
+    Parameters
+    ----------
+    u : array_like
+        Source-lens separation vectors, shape ``(N_times, 2)``.
+
+    Returns
+    -------
+    amp_pm
+        See summary above.
+    """
     u = jnp.asarray(u, dtype=jnp.float64)
+
+    # Separation amplitude and common sqrt term for image magnifications.
     u_amp = jnp.linalg.norm(u, axis=1)
     sqrt_term = jnp.sqrt(u_amp**2 + 4.0)
+
+    # Plus / minus image amplifications.
     a_plus = 0.5 * ((u_amp**2 + 2.0) / (u_amp * sqrt_term) + 1.0)
     a_minus = 0.5 * ((u_amp**2 + 2.0) / (u_amp * sqrt_term) - 1.0)
+
     return a_plus, a_minus
 
 
 def pspl_resolved_astrometry_from_u(u):
-    """Plus/minus PSPL image positions in Einstein radii."""
+    """
+    Plus/minus PSPL image positions in Einstein radii.
+
+    Parameters
+    ----------
+    u : array_like
+        Source-lens separation vectors, shape ``(N_times, 2)``.
+
+    Returns
+    -------
+    u_pm
+        See summary above.
+    """
     u = jnp.asarray(u, dtype=jnp.float64)
+
+    # Unit vector along the source-lens separation.
     u_amp = jnp.linalg.norm(u, axis=1, keepdims=True)
     u_hat = u / u_amp
     sqrt_term = jnp.sqrt(u_amp**2 + 4.0)
+
+    # Image positions in Einstein radii (relative to the lens).
     u_plus = ((u_amp + sqrt_term) / 2.0) * u_hat
     u_minus = ((u_amp - sqrt_term) / 2.0) * u_hat
+
     return u_plus, u_minus
 
 
-def pspl_phot_astrometry(
-    t,
-    t0,
-    tE,
-    u0,
-    thetaE_hat,
-    mag_src,
-    b_sff,
-    parallax_vectors=None,
-    piE_E=None,
-    piE_N=None,
-    parallax_correction=None,
-):
+def pspl_phot_astrometry(t, t0, tE, u0, thetaE_hat, mag_src, b_sff,
+    parallax_vectors=None, piE_E=None, piE_N=None, parallax_correction=None):
     """
     PSPL_Phot flux-weighted unresolved centroid in Einstein radii.
 
-    Matches :meth:`bagle.model.PSPL_Phot.get_astrometry`.
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    mag_src : float
+        Unlensed source magnitude.
+    b_sff : float or None
+        Source flux fraction (blend parameter).
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    parallax_correction : array_like or None
+        Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+
+    Returns
+    -------
+    u_cent
+        See summary above.
     """
     u = pspl_u(
         t,
@@ -593,36 +1126,62 @@ def pspl_phot_astrometry(
         piE_N=piE_N,
         parallax_correction=parallax_correction,
     )
+
+    # Resolved image positions and amplifications in Einstein radii.
     u_plus, u_minus = pspl_resolved_astrometry_from_u(u)
     a_plus, a_minus = pspl_resolved_amplification_from_u(u)
     a_total = a_plus + a_minus
+
+    # Amplification-weighted image centroid (still relative to the lens).
     u_cent = (
         u_plus * a_plus[:, jnp.newaxis] + u_minus * a_minus[:, jnp.newaxis]
     ) / a_total[:, jnp.newaxis]
+
+    # Source and blend fluxes; blend light is centered on the lens (u=0).
     f_src = mag2flux_jax(mag_src)
     f_l = f_src * (1.0 - b_sff) / b_sff
-    return (u_cent * f_src * a_total[:, jnp.newaxis]) / (
+
+    # Flux-weighted unresolved centroid including blend.
+    u_cent = (u_cent * f_src * a_total[:, jnp.newaxis]) / (
         f_src * a_total[:, jnp.newaxis] + f_l
     )
+    return u_cent
 
 
-def pspl_phot_astrometry_unlensed(
-    t,
-    t0,
-    tE,
-    u0,
-    thetaE_hat,
-    b_sff,
-    parallax_vectors=None,
-    piE_E=None,
-    piE_N=None,
-    parallax_correction=None,
-):
+def pspl_phot_astrometry_unlensed(t, t0, tE, u0, thetaE_hat, b_sff,
+    parallax_vectors=None, piE_E=None, piE_N=None, parallax_correction=None):
     """
     Unlensed PSPL_Phot flux-weighted centroid in Einstein radii.
 
-    Matches :meth:`bagle.model.PSPL_Phot.get_astrometry_unlensed`.
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    b_sff : float or None
+        Source flux fraction (blend parameter).
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    parallax_correction : array_like or None
+        Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+
+    Returns
+    -------
+    u_cent
+        See summary above.
     """
+    # Source-lens separation, then flux-weighted centroid with blend on lens.
     u = pspl_u(
         t,
         t0,
@@ -634,45 +1193,116 @@ def pspl_phot_astrometry_unlensed(
         piE_N=piE_N,
         parallax_correction=parallax_correction,
     )
-    return jnp.asarray(b_sff, dtype=jnp.float64) * u
+
+    # Without lensing, the centroid is just the blend-weighted source track.
+    u_cent = jnp.asarray(b_sff, dtype=jnp.float64) * u
+    return u_cent
 
 
 def pspl_linear_astrometry(t, t0, x0, mu, parallax_vectors=None, pi=None):
-    """Linear sky motion in arcsec (PSPL source or lens)."""
+    """
+    Linear sky motion in arcsec (PSPL source or lens).
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    x0 : array_like
+        Sky position at ``t0`` (arcsec), shape ``(2,)``.
+    mu : array_like
+        Proper motion (mas/yr), shape ``(2,)``.
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    pi : float or None
+        Parallax amplitude applied to ``parallax_vectors`` (mas).
+
+    Returns
+    -------
+    pos
+        See summary above.
+    """
     t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+
+    # Time since t0 in years; shape [N_times, 1].
     dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
+
+    # Linear proper motion; convert mas/yr -> arcsec/yr with 1e-3.
     pos = x0.reshape(1, 2) + dt * mu.reshape(1, 2) * 1e-3
+
+    # Optional annual parallax shift (mas -> arcsec).
     if parallax_vectors is not None and pi is not None:
         pos = pos + jnp.asarray(pi, dtype=jnp.float64) * jnp.asarray(
             parallax_vectors, dtype=jnp.float64
         ) * 1e-3
+
     return pos
 
 
-def pspl_source_astrometry_unlensed(
-    t,
-    t0,
-    xS0,
-    muS,
-    parallax_vectors=None,
-    piS=None,
-):
-    """Unlensed source astrometry in arcsec."""
-    return pspl_linear_astrometry(t, t0, xS0, muS, parallax_vectors, piS)
+def pspl_source_astrometry_unlensed(t, t0, xS0, muS, 
+                                    parallax_vectors=None, piS=None):
+    """
+    Unlensed source astrometry in arcsec.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    xS0 : array_like
+        Source sky position at ``t0`` (arcsec), shape ``(2,)``.
+    muS : array_like
+        Source proper motion (mas/yr), shape ``(2,)``.
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piS : float or None
+        Source parallax (mas).
+
+    Returns
+    -------
+    pos
+        See summary above.
+    """
+    # Thin wrapper around the shared linear sky-motion kernel.
+    pos = pspl_linear_astrometry(t, t0, xS0, muS, parallax_vectors, piS)
+    return pos
 
 
-def pspl_resolved_amplification(
-    t,
-    t0,
-    tE,
-    u0,
-    thetaE_hat,
-    parallax_vectors=None,
-    piE_E=None,
-    piE_N=None,
-    parallax_correction=None,
-):
-    """Plus/minus PSPL amplifications; shape ``(2, N_times)``."""
+def pspl_resolved_amplification(t, t0, tE, u0, thetaE_hat, 
+                                parallax_vectors=None, piE_E=None, piE_N=None, 
+                                parallax_correction=None):
+    """
+    Plus/minus PSPL amplifications; shape ``(2, N_times)``.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    parallax_correction : array_like or None
+        Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+
+    Returns
+    -------
+    amp_pm
+        See summary above.
+    """
+    # Separation vector, then plus/minus image magnifications.
     u = pspl_u(
         t,
         t0,
@@ -685,25 +1315,52 @@ def pspl_resolved_amplification(
         parallax_correction=parallax_correction,
     )
     a_plus, a_minus = pspl_resolved_amplification_from_u(u)
-    return jnp.stack((a_plus, a_minus))
+
+    # Stack as (2, N_times) to match the NumPy API.
+    amp_pm = jnp.stack((a_plus, a_minus))
+    return amp_pm
 
 
-def pspl_resolved_astrometry(
-    t,
-    t0,
-    tE,
-    u0,
-    thetaE_hat,
-    xL0,
-    muL,
-    thetaE_amp,
-    parallax_vectors=None,
-    piE_E=None,
-    piE_N=None,
-    piL=None,
-    parallax_correction=None,
-):
-    """Plus/minus PSPL image astrometry in arcsec; shape ``(2, N_times, 2)``."""
+def pspl_resolved_astrometry(t, t0, tE, u0, thetaE_hat, xL0, muL, thetaE_amp,
+    parallax_vectors=None, piE_E=None, piE_N=None, piL=None,
+    parallax_correction=None):
+    """
+    Plus/minus PSPL image astrometry in arcsec; shape ``(2, N_times, 2)``.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    xL0 : array_like
+        Lens sky position at ``t0`` (arcsec), shape ``(2,)``.
+    muL : array_like
+        Lens proper motion (mas/yr), shape ``(2,)``.
+    thetaE_amp : float
+        Einstein radius amplitude (mas).
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    piL : float or None
+        Lens parallax (mas).
+    parallax_correction : array_like or None
+        Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+
+    Returns
+    -------
+    pos_images
+        See summary above.
+    """
     u = pspl_u(
         t,
         t0,
@@ -715,62 +1372,171 @@ def pspl_resolved_astrometry(
         piE_N=piE_N,
         parallax_correction=parallax_correction,
     )
+
+    # Image positions relative to the lens (Einstein radii).
     u_plus, u_minus = pspl_resolved_astrometry_from_u(u)
+
+    # Lens sky track and Einstein radius in arcsec.
     xL = pspl_linear_astrometry(t, t0, xL0, muL, parallax_vectors, piL)
     scale = jnp.asarray(thetaE_amp, dtype=jnp.float64) * 1e-3
-    return jnp.stack((xL + u_plus * scale, xL + u_minus * scale))
+
+    # Absolute image positions on the sky; shape (2, N_times, 2).
+    pos_images = jnp.stack((xL + u_plus * scale, xL + u_minus * scale))
+    return pos_images
 
 
 def gaussian_chi2_photometry(mag_model, mag_obs, mag_err):
-    """Per-point photometric chi^2."""
+    """
+    Per-point photometric chi^2.
+
+    Parameters
+    ----------
+    mag_model : array_like
+        Model magnitudes.
+    mag_obs : array_like
+        Observed magnitudes.
+    mag_err : array_like
+        Magnitude uncertainties.
+
+    Returns
+    -------
+    chi2
+        See summary above.
+    """
     mag_model = jnp.asarray(mag_model, dtype=jnp.float64)
     mag_obs = jnp.asarray(mag_obs, dtype=jnp.float64)
     mag_err = jnp.asarray(mag_err, dtype=jnp.float64)
-    return ((mag_obs - mag_model) / mag_err) ** 2
+
+    # Per-point photometric chi^2 (no sum).
+    chi2 = ((mag_obs - mag_model) / mag_err) ** 2
+    return chi2
 
 
 def gaussian_log_likelihood_photometry_each(mag_model, mag_obs, mag_err):
-    """Per-point photometric ln(likelihood) including normalization."""
+    """
+    Per-point photometric ln(likelihood) including normalization.
+
+    Parameters
+    ----------
+    mag_model : array_like
+        Model magnitudes.
+    mag_obs : array_like
+        Observed magnitudes.
+    mag_err : array_like
+        Magnitude uncertainties.
+
+    Returns
+    -------
+    lnL
+        See summary above.
+    """
     chi2 = gaussian_chi2_photometry(mag_model, mag_obs, mag_err)
+
+    # Gaussian normalization term for each datum.
     lnL_const = -0.5 * jnp.log(2.0 * jnp.pi * mag_err**2)
-    return (-0.5 * chi2) + lnL_const
+    lnL = (-0.5 * chi2) + lnL_const
+    return lnL
 
 
 def gaussian_chi2_astrometry(pos_model, x_obs, y_obs, x_err, y_err):
-    """Per-point joint x/y astrometric chi^2."""
+    """
+    Per-point joint x/y astrometric chi^2.
+
+    Parameters
+    ----------
+    pos_model : array_like
+        Model sky positions, shape ``(N_times, 2)``.
+    x_obs : array_like
+        Observed RA positions (arcsec).
+    y_obs : array_like
+        Observed Dec positions (arcsec).
+    x_err : array_like
+        RA uncertainties (arcsec).
+    y_err : array_like
+        Dec uncertainties (arcsec).
+
+    Returns
+    -------
+    chi2
+        See summary above.
+    """
     pos_model = jnp.asarray(pos_model, dtype=jnp.float64)
     x_obs = jnp.asarray(x_obs, dtype=jnp.float64)
     y_obs = jnp.asarray(y_obs, dtype=jnp.float64)
     x_err = jnp.asarray(x_err, dtype=jnp.float64)
     y_err = jnp.asarray(y_err, dtype=jnp.float64)
+
+    # Separate East / North chi^2 contributions.
     chi2_x = ((x_obs - pos_model[:, 0]) / x_err) ** 2
     chi2_y = ((y_obs - pos_model[:, 1]) / y_err) ** 2
-    return chi2_x + chi2_y
+    chi2 = chi2_x + chi2_y
+    return chi2
 
 
 def gaussian_log_likelihood_astrometry_each(pos_model, x_obs, y_obs, x_err, y_err):
-    """Per-point astrometric ln(likelihood) including normalization."""
+    """
+    Per-point astrometric ln(likelihood) including normalization.
+
+    Parameters
+    ----------
+    pos_model : array_like
+        Model sky positions, shape ``(N_times, 2)``.
+    x_obs : array_like
+        Observed RA positions (arcsec).
+    y_obs : array_like
+        Observed Dec positions (arcsec).
+    x_err : array_like
+        RA uncertainties (arcsec).
+    y_err : array_like
+        Dec uncertainties (arcsec).
+
+    Returns
+    -------
+    lnL
+        See summary above.
+    """
     chi2 = gaussian_chi2_astrometry(pos_model, x_obs, y_obs, x_err, y_err)
+
+    # Separate East / North Gaussian normalization terms.
     lnL_const_x = -0.5 * jnp.log(2.0 * jnp.pi * x_err**2)
     lnL_const_y = -0.5 * jnp.log(2.0 * jnp.pi * y_err**2)
-    return (-0.5 * chi2) + lnL_const_x + lnL_const_y
+    lnL = (-0.5 * chi2) + lnL_const_x + lnL_const_y
+    return lnL
 
 
-def pspl_photometry_from_fitter_vec(
-    t,
-    fitter_vec,
-    mag_src,
-    b_sff=None,
-    parallax_vectors=None,
-):
-    """PSPL photometry from a packed PSPL_PhotParam1 fitter vector."""
+def pspl_photometry_from_fitter_vec(t, fitter_vec, mag_src, b_sff=None,
+    parallax_vectors=None):
+    """
+    PSPL photometry from a packed PSPL_PhotParam1 fitter vector.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    fitter_vec : array_like
+        Packed fitter parameter vector.
+    mag_src : float
+        Unlensed source magnitude.
+    b_sff : float or None
+        Source flux fraction (blend parameter).
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+
+    Returns
+    -------
+    mag
+        See summary above.
+    """
+    # Unpack PSPL_PhotParam1 and derive Einstein-frame geometry.
     params = unpack_pspl_phot_param1(fitter_vec)
     u0, thetaE_hat, _ = derive_pspl_static_geometry(
         params["u0_amp"],
         params["piE_E"],
         params["piE_N"],
     )
-    return pspl_photometry(
+
+    # Forward unresolved photometry with optional parallax.
+    mag = pspl_photometry(
         t,
         params["t0"],
         params["tE"],
@@ -782,6 +1548,7 @@ def pspl_photometry_from_fitter_vec(
         piE_E=params["piE_E"],
         piE_N=params["piE_N"],
     )
+    return mag
 
 
 # ---------------------------------------------------------------------------
@@ -790,17 +1557,39 @@ def pspl_photometry_from_fitter_vec(
 
 
 def quintic_coefficients(w, z1, z2, m1, m2):
-    """Return quintic coefficients ``(a5, a4, a3, a2, a1, a0)`` high-to-low."""
+    """
+    Return quintic coefficients ``(a5, a4, a3, a2, a1, a0)`` high-to-low.
+
+    Parameters
+    ----------
+    w : array_like
+        Complex source position(s) or orbit argument of periapsis.
+    z1 : array_like
+        Complex primary lens position(s).
+    z2 : array_like
+        Complex secondary lens position(s).
+    m1 : float
+        Primary mass fraction (or physical mass where noted).
+    m2 : float
+        Secondary mass fraction (or physical mass where noted).
+
+    Returns
+    -------
+    coeffs
+        See summary above.
+    """
     w = jnp.asarray(w, dtype=jnp.complex128).reshape(-1)
     z1 = jnp.asarray(z1, dtype=jnp.complex128).reshape(-1)
     z2 = jnp.asarray(z2, dtype=jnp.complex128).reshape(-1)
     m1 = jnp.asarray(m1, dtype=jnp.float64)
     m2 = jnp.asarray(m2, dtype=jnp.float64)
 
+    # Conjugates enter the Witt binary-lens quintic.
     wbar = jnp.conj(w)
     z1bar = jnp.conj(z1)
     z2bar = jnp.conj(z2)
 
+    # Coefficients a5..a0 of the complex quintic (high degree to constant).
     a5 = (wbar - z1bar) * (wbar - z2bar)
     a4 = (
         -((w + 2 * (z1 + z2)) * wbar**2)
@@ -907,7 +1696,30 @@ def quintic_coefficients(w, z1, z2, m1, m2):
 
 
 def quintic_roots_companion(a5, a4, a3, a2, a1, a0):
-    """Solve a single quintic via the companion matrix (scalar coefficients)."""
+    """
+    Solve a single quintic via the companion matrix (scalar coefficients).
+
+    Parameters
+    ----------
+    a5 : complex
+        Quintic coefficient of ``z^5``.
+    a4 : complex
+        Quintic coefficient of ``z^4``.
+    a3 : complex
+        Quintic coefficient of ``z^3``.
+    a2 : complex
+        Quintic coefficient of ``z^2``.
+    a1 : complex
+        Quintic coefficient of ``z^1``.
+    a0 : complex
+        Quintic coefficient of ``z^0``.
+
+    Returns
+    -------
+    roots
+        See summary above.
+    """
+    # Companion matrix of the monic quintic; eigenvalues are the roots.
     C = jnp.complex128(
         [
             [-a4 / a5, -a3 / a5, -a2 / a5, -a1 / a5, -a0 / a5],
@@ -917,7 +1729,8 @@ def quintic_roots_companion(a5, a4, a3, a2, a1, a0):
             [0, 0, 0, 1.0 + 0j, 0],
         ]
     )
-    return jnp.linalg.eigvals(C)
+    roots = jnp.linalg.eigvals(C)
+    return roots
 
 
 _vmap_quintic_roots = jax.vmap(
@@ -926,17 +1739,49 @@ _vmap_quintic_roots = jax.vmap(
 
 
 def _mask_psbl_roots(z_arr, w, z1, z2, m1, m2, root_tol):
+    """
+    _mask_psbl_roots.
+
+    Parameters
+    ----------
+    z_arr : array_like
+        Complex image positions, shape ``(N_times, N_images)``.
+    w : array_like
+        Complex source position(s) or orbit argument of periapsis.
+    z1 : array_like
+        Complex primary lens position(s).
+    z2 : array_like
+        Complex secondary lens position(s).
+    m1 : float
+        Primary mass fraction (or physical mass where noted).
+    m2 : float
+        Secondary mass fraction (or physical mass where noted).
+    root_tol : float
+        Lens-equation root tolerance.
+
+    Returns
+    -------
+    z_masked
+        See summary above.
+    """
     n = w.shape[0]
+
+    # Broadcast scalar masses / tolerance to per-epoch arrays when needed.
     m1_arr = m1 if jnp.ndim(m1) else jnp.full((n,), m1)
     m2_arr = m2 if jnp.ndim(m2) else jnp.full((n,), m2)
     tol = root_tol if jnp.ndim(root_tol) else jnp.full((n,), root_tol)
+
+    # Residual of the complex binary lens equation at each candidate root.
     diff = w[:, jnp.newaxis] - (
         z_arr
         - m1_arr[:, jnp.newaxis] / jnp.conj(z_arr - z1[:, jnp.newaxis])
         - m2_arr[:, jnp.newaxis] / jnp.conj(z_arr - z2[:, jnp.newaxis])
     )
+
+    # Mask roots that fail the lens equation beyond root_tol.
     bad = jnp.abs(diff) > tol[:, jnp.newaxis]
-    return jnp.where(bad, jnp.nan + 0j, z_arr)
+    z_masked = jnp.where(bad, jnp.nan + 0j, z_arr)
+    return z_masked
 
 
 def psbl_image_positions(w, z1, z2, m1, m2, root_tol, check_sols: bool):
@@ -951,12 +1796,17 @@ def psbl_image_positions(w, z1, z2, m1, m2, root_tol, check_sols: bool):
         When ``True``, mask roots that fail the lens equation.
     """
     a5, a4, a3, a2, a1, a0 = quintic_coefficients(w, z1, z2, m1, m2)
+
+    # Solve one quintic per epoch (vmap over companion-matrix eigvals).
     z_arr = jnp.asarray(_vmap_quintic_roots(a5, a4, a3, a2, a1, a0))
 
     def _mask(z_arr):
-        return _mask_psbl_roots(z_arr, w, z1, z2, m1, m2, root_tol)
+        images = _mask_psbl_roots(z_arr, w, z1, z2, m1, m2, root_tol)
+        return images
 
-    return jax.lax.cond(check_sols, _mask, lambda x: x, z_arr)
+    # Optionally discard roots that fail the lens equation.
+    images = jax.lax.cond(check_sols, _mask, lambda x: x, z_arr)
+    return images
 
 
 psbl_image_positions_jit = jax.jit(psbl_image_positions, static_argnames=("check_sols",))
@@ -970,7 +1820,23 @@ def rescale_complex_pos(w, z1, z2, m1, m2):
     """
     Center and scale complex positions into roughly a 1 x 1 box.
 
-    Returns ``(w, z1, z2, m1, m2, scale, shift)``.
+    Parameters
+    ----------
+    w : array_like
+        Complex source position(s) or orbit argument of periapsis.
+    z1 : array_like
+        Complex primary lens position(s).
+    z2 : array_like
+        Complex secondary lens position(s).
+    m1 : float
+        Primary mass fraction (or physical mass where noted).
+    m2 : float
+        Secondary mass fraction (or physical mass where noted).
+
+    Returns
+    -------
+    scaled
+        See summary above.
     """
     w = jnp.asarray(w, dtype=jnp.complex128)
     z1 = jnp.asarray(z1, dtype=jnp.complex128)
@@ -978,6 +1844,7 @@ def rescale_complex_pos(w, z1, z2, m1, m2):
     m1 = jnp.asarray(m1, dtype=jnp.float64)
     m2 = jnp.asarray(m2, dtype=jnp.float64)
 
+    # Stack source and lens positions; shift to the centroid of each epoch.
     pos = jnp.vstack([w, z1, z2]).T
     shift = jnp.average(pos, axis=1)
     s = shift[:, jnp.newaxis] if w.ndim > 1 else shift
@@ -985,6 +1852,7 @@ def rescale_complex_pos(w, z1, z2, m1, m2):
     z1 = z1 - s
     z2 = z2 - s
 
+    # Scale so the bounding box is roughly unit size (improves root finding).
     pr, pi = jnp.real(pos), jnp.imag(pos)
     xscale = jnp.max(pr, axis=1) - jnp.min(pr, axis=1)
     yscale = jnp.max(pi, axis=1) - jnp.min(pi, axis=1)
@@ -994,6 +1862,8 @@ def rescale_complex_pos(w, z1, z2, m1, m2):
     w = w * sc
     z1 = z1 * sc
     z2 = z2 * sc
+
+    # Masses scale as length^2 under this coordinate transform.
     m1 = m1 * (scale**2)
     m2 = m2 * (scale**2)
 
@@ -1001,22 +1871,68 @@ def rescale_complex_pos(w, z1, z2, m1, m2):
 
 
 def psbl_amp_arr(z_arr, z1, z2, m1, m2):
-    """Magnification of each image from the binary-lens Jacobian."""
+    """
+    Magnification of each image from the binary-lens Jacobian.
+
+    Parameters
+    ----------
+    z_arr : array_like
+        Complex image positions, shape ``(N_times, N_images)``.
+    z1 : array_like
+        Complex primary lens position(s).
+    z2 : array_like
+        Complex secondary lens position(s).
+    m1 : float
+        Primary mass fraction (or physical mass where noted).
+    m2 : float
+        Secondary mass fraction (or physical mass where noted).
+
+    Returns
+    -------
+    amp_arr
+        See summary above.
+    """
     n_times = z1.shape[0]
     m1 = jnp.asarray(m1, dtype=jnp.float64)
     m2 = jnp.asarray(m2, dtype=jnp.float64)
+
+    # Complex derivative of the lens mapping (Jacobian determinant pieces).
     dwbardz = m1 / (z_arr - z1.reshape((n_times, 1))) ** 2
     dwbardz += m2 / (z_arr - z2.reshape((n_times, 1))) ** 2
     jacobian = 1.0 - jnp.abs(dwbardz) ** 2
-    return 1.0 / jnp.abs(jacobian)
+
+    # Image magnification is 1 / |det J|.
+    amp_arr = 1.0 / jnp.abs(jacobian)
+    return amp_arr
 
 
 def psbl_all_arrays(w, z1, z2, m1, m2, root_tol, check_sols: bool = True, rescale: bool = True):
     """
     Image positions and per-image amplifications.
 
-    When ``rescale=True``, uses the same rescale-then-unscale strategy as
-    :meth:`bagle.model.PSBL.get_all_arrays`.
+    Parameters
+    ----------
+    w : array_like
+        Complex source position(s) or orbit argument of periapsis.
+    z1 : array_like
+        Complex primary lens position(s).
+    z2 : array_like
+        Complex secondary lens position(s).
+    m1 : float
+        Primary mass fraction (or physical mass where noted).
+    m2 : float
+        Secondary mass fraction (or physical mass where noted).
+    root_tol : float
+        Lens-equation root tolerance.
+    check_sols : bool
+        If True, mask roots that fail the lens equation.
+    rescale : bool
+        If True, rescale complex positions before root finding.
+
+    Returns
+    -------
+    images_and_amps
+        See summary above.
     """
     w = jnp.asarray(w, dtype=jnp.complex128)
     z1 = jnp.asarray(z1, dtype=jnp.complex128)
@@ -1025,6 +1941,7 @@ def psbl_all_arrays(w, z1, z2, m1, m2, root_tol, check_sols: bool = True, rescal
     m2_phys = jnp.asarray(m2, dtype=jnp.float64)
 
     if rescale:
+        # Solve in a scaled frame, then map images back to physical units.
         rw, rz1, rz2, rm1, rm2, scale, shift = rescale_complex_pos(
             w, z1, z2, m1_phys, m2_phys
         )
@@ -1040,9 +1957,24 @@ def psbl_all_arrays(w, z1, z2, m1, m2, root_tol, check_sols: bool = True, rescal
 
 
 def psbl_total_amplification(amp_arr):
-    """Sum finite per-image amplifications."""
+    """
+    Sum finite per-image amplifications.
+
+    Parameters
+    ----------
+    amp_arr : array_like
+        Per-image magnifications.
+
+    Returns
+    -------
+    amp
+        See summary above.
+    """
     amp_arr = jnp.asarray(amp_arr)
-    return jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=1)
+
+    # Masked / failed roots are NaN; treat them as zero magnification.
+    amp = jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=1)
+    return amp
 
 
 def psbl_photometry_from_amp(amp, mag_src, b_sff=None):
@@ -1057,10 +1989,16 @@ def psbl_photometry_from_amp(amp, mag_src, b_sff=None):
         Source flux fraction; when provided, neighbor/lens flux is added.
     """
     flux_src = mag2flux_jax(mag_src)
+
+    # Magnified source flux.
     flux_model = flux_src * amp
+
+    # Optional blend / neighbor contribution via source flux fraction.
     if b_sff is not None:
         flux_model = flux_model + flux_src * (1.0 - b_sff) / b_sff
-    return flux2mag_jax(flux_model)
+
+    mag = flux2mag_jax(flux_model)
+    return mag
 
 
 def psbl_photometry(t, t0, tE, u0, thetaE_hat, xL1_over_theta, xL2_over_theta, m1, m2, 
@@ -1072,10 +2010,51 @@ def psbl_photometry(t, t0, tE, u0, thetaE_hat, xL1_over_theta, xL2_over_theta, m
     """
     PSBL unresolved photometry at times ``t``.
 
-    Fitter parameters may be passed via :func:`unpack_psbl_phot_param1` and
-    :func:`derive_psbl_static_geometry`; held-fixed quantities (parallax
-    tables, blend parameters) are explicit arguments.
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Source-lens separation at ``t0`` (Einstein radii), shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion, shape ``(2,)``.
+    xL1_over_theta : array_like
+        Primary lens position in Einstein radii, shape ``(2,)``.
+    xL2_over_theta : array_like
+        Secondary lens position in Einstein radii, shape ``(2,)``.
+    m1 : float
+        Primary mass fraction (or physical mass where noted).
+    m2 : float
+        Secondary mass fraction (or physical mass where noted).
+    mag_src : float
+        Unlensed source magnitude.
+    b_sff : float or None
+        Source flux fraction (blend parameter).
+    piE_E : float or None
+        Microlensing parallax East component (Einstein radii).
+    piE_N : float or None
+        Microlensing parallax North component (Einstein radii).
+    root_tol : float
+        Lens-equation root tolerance.
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    parallax_correction : array_like or None
+        Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+    check_sols : bool
+        If True, mask roots that fail the lens equation.
+    rescale : bool
+        If True, rescale complex positions before root finding.
+
+    Returns
+    -------
+    mag
+        See summary above.
     """
+    # Complex source and static binary-lens positions.
     w, z1, z2 = psbl_complex_pos_static(
         t,
         t0,
@@ -1089,31 +2068,52 @@ def psbl_photometry(t, t0, tE, u0, thetaE_hat, xL1_over_theta, xL2_over_theta, m
         piE_N=piE_N,
         parallax_correction=parallax_correction,
     )
+
+    # Witt quintic images -> per-image amps -> total magnification.
     _, amp_arr = psbl_all_arrays(
         w, z1, z2, m1, m2, root_tol, check_sols=check_sols, rescale=rescale
     )
     amp = psbl_total_amplification(amp_arr)
 
-    return psbl_photometry_from_amp(amp, mag_src, b_sff=b_sff)
+    # Convert total amp to unresolved magnitudes (with optional blend).
+    mag = psbl_photometry_from_amp(amp, mag_src, b_sff=b_sff)
+    return mag
 
 
-def psbl_photometry_from_fitter_vec(
-    t,
-    fitter_vec,
-    mag_src,
-    b_sff=None,
-    root_tol=1e-8,
-    parallax_vectors=None,
-    check_sols: bool = True,
-    rescale: bool = True,
-):
+def psbl_photometry_from_fitter_vec(t, fitter_vec, mag_src, b_sff=None,
+    root_tol=1e-8, parallax_vectors=None, check_sols: bool = True,
+    rescale: bool = True):
     """
     PSBL photometry from a packed PSBL_PhotParam1 fitter vector.
 
-    ``mag_src`` and ``b_sff`` are per-filter photometry parameters and are
-    kept separate from the fitter vector (matching ``phot_param_names``).
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    fitter_vec : array_like
+        Packed fitter parameter vector.
+    mag_src : float
+        Unlensed source magnitude.
+    b_sff : float or None
+        Source flux fraction (blend parameter).
+    root_tol : float
+        Lens-equation root tolerance.
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    check_sols : bool
+        If True, mask roots that fail the lens equation.
+    rescale : bool
+        If True, rescale complex positions before root finding.
+
+    Returns
+    -------
+    mag
+        See summary above.
     """
+    # Unpack the packed fitter cube into named scalars.
     params = unpack_psbl_phot_param1(fitter_vec)
+
+    # Derive masses and Einstein-frame geometry from (u0, piE, q, sep, phi).
     m1, m2, u0, thetaE_hat, xL1, xL2, _ = derive_psbl_static_geometry(
         params["u0_amp"],
         params["piE_E"],
@@ -1123,7 +2123,8 @@ def psbl_photometry_from_fitter_vec(
         params["phi"],
     )
 
-    return psbl_photometry(
+    # Forward photometry with the derived static PSBL geometry.
+    mag = psbl_photometry(
         t,
         params["t0"],
         params["tE"],
@@ -1142,6 +2143,7 @@ def psbl_photometry_from_fitter_vec(
         check_sols=check_sols,
         rescale=rescale,
     )
+    return mag
 
 
 # ---------------------------------------------------------------------------
@@ -1161,6 +2163,20 @@ _GP_PARAM_PREFIXES = (
 
 
 def _fitter_has_blocked_params(fitter) -> bool:
+    """
+    _fitter_has_blocked_params.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Fitter instance providing data and model class.
+
+    Returns
+    -------
+    blocked
+        See summary above.
+    """
+    # GP kernels and extra error/weight params are not supported here yet.
     for name in fitter.additional_param_names:
         if any(name.startswith(prefix) for prefix in _GP_PARAM_PREFIXES):
             return True
@@ -1170,46 +2186,77 @@ def _fitter_has_blocked_params(fitter) -> bool:
     return False
 
 
-def derive_pspl_photastrom_param1_geometry(
-    mL,
-    t0,
-    beta,
-    dL,
-    dL_dS,
-    xS0_E,
-    xS0_N,
-    muL_E,
-    muL_N,
-    muS_E,
-    muS_N,
-):
+def derive_pspl_photastrom_param1_geometry(mL, t0, beta, dL, dL_dS, xS0_E, xS0_N,
+    muL_E, muL_N, muS_E, muS_N):
     """
     Physical-parameter geometry for :class:`~bagle.model.PSPL_PhotAstromParam1`.
 
-    Returns quantities needed for JAX photometry and astrometry (mas, arcsec).
+    Parameters
+    ----------
+    mL : float
+        Lens mass (Solar masses).
+    t0 : float
+        Time of closest approach (MJD).
+    beta : float
+        Signed source-lens impact parameter (mas or Einstein radii).
+    dL : float
+        Lens distance (pc).
+    dL_dS : float
+        Distance ratio ``dL/dS``.
+    xS0_E : float
+        Source RA position at ``t0`` (arcsec).
+    xS0_N : float
+        Source Dec position at ``t0`` (arcsec).
+    muL_E : float
+        Lens proper motion East (mas/yr).
+    muL_N : float
+        Lens proper motion North (mas/yr).
+    muS_E : float
+        Source proper motion East (mas/yr).
+    muS_N : float
+        Source proper motion North (mas/yr).
+
+    Returns
+    -------
+    geometry
+        See summary above.
     """
+    # Source distance and sky / proper-motion vectors.
     dS = dL / dL_dS
     xS0 = jnp.stack([xS0_E, xS0_N])
     muL = jnp.stack([muL_E, muL_N])
     muS = jnp.stack([muS_E, muS_N])
+
+    # Relative and absolute parallaxes (mas).
     inv_dist_diff = 1.0 / dL - 1.0 / dS
     piRel = _PI_MAS_PER_PC * inv_dist_diff
     piS = _PI_MAS_PER_PC / dS
     piL = _PI_MAS_PER_PC / dL
+
+    # Relative proper motion sets the Einstein-ring direction.
     muRel = muS - muL
     muRel_amp = jnp.linalg.norm(muRel)
+
+    # Einstein radius from lens mass and distance geometry (mas).
     thetaE_amp = jnp.sqrt(
         _EINSTEIN_M_PER_MSUN * mL * inv_dist_diff / _PC_M
     ) * _RAD_TO_MAS
     thetaE_hat = muRel / muRel_amp
+
+    # Impact parameter in Einstein radii from physical beta (mas).
     u0_hat = u0_hat_from_thetaE_hat_jax(thetaE_hat, beta)
     u0_amp = beta / thetaE_amp
     u0 = jnp.abs(u0_amp) * u0_hat
+
+    # Microlensing parallax and Einstein crossing time.
     piE_amp = piRel / thetaE_amp
     piE = piE_amp * thetaE_hat
     tE = (thetaE_amp / muRel_amp) * _DAYS_PER_YEAR
+
+    # Lens position at t0 from source position and angular separation.
     thetaS0 = u0 * thetaE_amp
     xL0 = xS0 - thetaS0 * 1e-3
+
     return (
         u0,
         thetaE_hat,
@@ -1226,34 +2273,60 @@ def derive_pspl_photastrom_param1_geometry(
     )
 
 
-def pspl_astrometry_param1(
-    t,
-    t0,
-    xS0,
-    xL0,
-    muS,
-    muL,
-    thetaE_amp,
-    b_sff,
-    parallax_vectors=None,
-    piS=None,
-    piL=None,
-):
+def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
+    parallax_vectors=None, piS=None, piL=None):
     """
     PSPL flux-weighted centroid astrometry (arcsec), matching
-    :meth:`bagle.model.PSPL.get_astrometry`.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    xS0 : array_like
+        Source sky position at ``t0`` (arcsec), shape ``(2,)``.
+    xL0 : array_like
+        Lens sky position at ``t0`` (arcsec), shape ``(2,)``.
+    muS : array_like
+        Source proper motion (mas/yr), shape ``(2,)``.
+    muL : array_like
+        Lens proper motion (mas/yr), shape ``(2,)``.
+    thetaE_amp : float
+        Einstein radius amplitude (mas).
+    b_sff : float or None
+        Source flux fraction (blend parameter).
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+    piS : float or None
+        Source parallax (mas).
+    piL : float or None
+        Lens parallax (mas).
+
+    Returns
+    -------
+    pos
+        See summary above.
     """
     t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
     dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
+
+    # Unlensed source and lens tracks (arcsec); mu in mas/yr.
     xS = xS0.reshape(1, 2) + dt * muS.reshape(1, 2) * 1e-3
     xL = xL0.reshape(1, 2) + dt * muL.reshape(1, 2) * 1e-3
+
+    # Optional parallax for source and lens separately.
     if parallax_vectors is not None:
         pvec = jnp.asarray(parallax_vectors, dtype=jnp.float64)
         xS = xS + piS * pvec * 1e-3
         xL = xL + piL * pvec * 1e-3
+
+    # Angular separation and Einstein-normalized u vector.
     thetaS = xS - xL
     u_vec = thetaS / (thetaE_amp * 1e-3)
     u_amp = jnp.linalg.norm(u_vec, axis=1)
+
+    # Blend ratio and flux-weighted centroid shift (matches PSPL.get_astrometry).
     g = (1.0 - b_sff) / b_sff
     sqrt_term = jnp.sqrt(u_amp**2 + 4.0)
     numer_u = u_amp**2 - u_amp * sqrt_term + 3.0
@@ -1261,27 +2334,56 @@ def pspl_astrometry_param1(
     numer = thetaS * (1.0 + g * numer_u)[:, jnp.newaxis]
     denom = (1.0 + g) * denom_u
     shift = numer / denom[:, jnp.newaxis]
-    return b_sff * xS + (1.0 - b_sff) * xL + shift
+
+    # Blend of source / lens positions plus the microlensing centroid shift.
+    pos = b_sff * xS + (1.0 - b_sff) * xL + shift
+    return pos
 
 
-def pspl_photometry_param1(
-    t,
-    mL,
-    t0,
-    beta,
-    dL,
-    dL_dS,
-    xS0_E,
-    xS0_N,
-    muL_E,
-    muL_N,
-    muS_E,
-    muS_N,
-    mag_src,
-    b_sff,
-    parallax_vectors=None,
-):
-    """PSPL photometry from PSPL_PhotAstromParam1 physical fitter parameters."""
+def pspl_photometry_param1(t, mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E,
+    muL_N, muS_E, muS_N, mag_src, b_sff, parallax_vectors=None):
+    """
+    PSPL photometry from PSPL_PhotAstromParam1 physical fitter parameters.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    mL : float
+        Lens mass (Solar masses).
+    t0 : float
+        Time of closest approach (MJD).
+    beta : float
+        Signed source-lens impact parameter (mas or Einstein radii).
+    dL : float
+        Lens distance (pc).
+    dL_dS : float
+        Distance ratio ``dL/dS``.
+    xS0_E : float
+        Source RA position at ``t0`` (arcsec).
+    xS0_N : float
+        Source Dec position at ``t0`` (arcsec).
+    muL_E : float
+        Lens proper motion East (mas/yr).
+    muL_N : float
+        Lens proper motion North (mas/yr).
+    muS_E : float
+        Source proper motion East (mas/yr).
+    muS_N : float
+        Source proper motion North (mas/yr).
+    mag_src : float
+        Unlensed source magnitude.
+    b_sff : float or None
+        Source flux fraction (blend parameter).
+    parallax_vectors : array_like or None
+        Precomputed parallax table, shape ``(N_times, 2)``.
+
+    Returns
+    -------
+    mag
+        See summary above.
+    """
+    # Physical -> geometric parameters (u0, tE, piE, ...).
     (
         u0,
         thetaE_hat,
@@ -1298,7 +2400,9 @@ def pspl_photometry_param1(
     ) = derive_pspl_photastrom_param1_geometry(
         mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N, muS_E, muS_N
     )
-    return pspl_photometry(
+
+    # Standard PSPL photometry in the Einstein frame.
+    mag = pspl_photometry(
         t,
         t0,
         tE,
@@ -1310,20 +2414,36 @@ def pspl_photometry_param1(
         piE_E=piE_E,
         piE_N=piE_N,
     )
+    return mag
 
 
 def gaussian_log_likelihood_sum(mag_model, mag_obs, mag_err):
     """
     Sum of per-point Gaussian log-likelihoods (includes normalization).
 
-    Matches :meth:`bagle.model.PSPL.log_likely_photometry`.
+    Parameters
+    ----------
+    mag_model : array_like
+        Model magnitudes.
+    mag_obs : array_like
+        Observed magnitudes.
+    mag_err : array_like
+        Magnitude uncertainties.
+
+    Returns
+    -------
+    lnL
+        See summary above.
     """
     mag_model = jnp.asarray(mag_model, dtype=jnp.float64)
     mag_obs = jnp.asarray(mag_obs, dtype=jnp.float64)
     mag_err = jnp.asarray(mag_err, dtype=jnp.float64)
+
+    # Per-point chi^2 plus Gaussian normalization, then sum over times.
     chi2 = ((mag_obs - mag_model) / mag_err) ** 2
     lnL_const = -0.5 * jnp.log(2.0 * jnp.pi * mag_err**2)
-    return jnp.sum((-0.5 * chi2) + lnL_const)
+    lnL = jnp.sum((-0.5 * chi2) + lnL_const)
+    return lnL
 
 
 @dataclass(frozen=True)
@@ -1353,37 +2473,45 @@ class JaxPhotLikelihoodContext:
 
 def supports_jax_phot_loglik(fitter) -> str | None:
     """
-    Return layout id when ``fitter`` can use the JAX photometry likelihood.
+    Return a family id when ``fitter`` can use the JAX photometry likelihood.
 
-    Delegates to :mod:`bagle.jax.layout_registry` when the model resolves to a
-    registered layout; falls back to legacy class-name allowlist.
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Fitter instance providing data and model class.
+
+    Returns
+    -------
+    kind
+        See summary above.
     """
-    if "GP_" in fitter.model_class.__name__:
-        return None
     try:
-        from bagle.jax.likelihood import supports_jax_loglik_for_fitter
+        from bagle.jax.likelihood import (
+            _infer_loglik_mode,
+            supports_jax_loglik_for_fitter,
+        )
 
         layout_id = supports_jax_loglik_for_fitter(fitter)
-        if layout_id is not None:
-            from bagle.jax.layout_registry import resolve_layout
-
-            layout = resolve_layout(fitter.model_class)
-            if layout and layout.has_gp:
-                return None
-            if layout and layout.likelihood_mode in ("phot", "phot_gp"):
-                return layout.family
-            if layout and layout.likelihood_mode == "joint":
-                return None
-            if layout_id:
-                return layout.family if layout else layout_id
+        if layout_id is None:
+            return None
+        mode = _infer_loglik_mode(fitter.model_class)
+        if mode != "phot":
+            return None
+        name = fitter.model_class.__name__
+        for fam in ("pspl", "psbl", "bspl", "fsbl", "bsbl", "fspl"):
+            if name.upper().startswith(fam.upper()):
+                return fam
+        return layout_id
     except ImportError:
         pass
 
+    # Fallback: hardcoded phot-only model kinds.
     model_class = fitter.model_class
     kind = _JAX_PHOT_MODEL_KIND.get(model_class.__name__)
     if kind is None:
         return None
 
+    # Require photometry data and reject astrometry-only / blocked params.
     if getattr(model_class, "astrometryFlag", False) and fitter.n_ast_sets > 0:
         return None
 
@@ -1397,49 +2525,91 @@ def supports_jax_phot_loglik(fitter) -> str | None:
 
 
 def gaussian_astrometry_log_likelihood_sum(pos_model, x_obs, y_obs, x_err, y_err):
-    """Joint x/y Gaussian astrometry log-likelihood (matches PSPL astrometry term)."""
+    """
+    Joint x/y Gaussian astrometry log-likelihood (matches PSPL astrometry term).
+
+    Parameters
+    ----------
+    pos_model : array_like
+        Model sky positions, shape ``(N_times, 2)``.
+    x_obs : array_like
+        Observed RA positions (arcsec).
+    y_obs : array_like
+        Observed Dec positions (arcsec).
+    x_err : array_like
+        RA uncertainties (arcsec).
+    y_err : array_like
+        Dec uncertainties (arcsec).
+
+    Returns
+    -------
+    lnL
+        See summary above.
+    """
     pos_model = jnp.asarray(pos_model, dtype=jnp.float64)
     x_obs = jnp.asarray(x_obs, dtype=jnp.float64)
     y_obs = jnp.asarray(y_obs, dtype=jnp.float64)
     x_err = jnp.asarray(x_err, dtype=jnp.float64)
     y_err = jnp.asarray(y_err, dtype=jnp.float64)
+
+    # Separate East / North chi^2 contributions.
     chi2_x = ((x_obs - pos_model[:, 0]) / x_err) ** 2
     chi2_y = ((y_obs - pos_model[:, 1]) / y_err) ** 2
+
+    # Gaussian normalization for each coordinate, then sum over epochs.
     lnL_const_x = -0.5 * jnp.log(2.0 * jnp.pi * x_err**2)
     lnL_const_y = -0.5 * jnp.log(2.0 * jnp.pi * y_err**2)
-    return jnp.sum((-0.5 * (chi2_x + chi2_y)) + lnL_const_x + lnL_const_y)
+    lnL = jnp.sum((-0.5 * (chi2_x + chi2_y)) + lnL_const_x + lnL_const_y)
+    return lnL
 
 
 def supports_jax_joint_loglik(fitter) -> str | None:
     """
-    Return layout id when joint phot+astrometry JAX likelihood is supported.
+    Return a Param mixin name when joint phot+astrometry JAX likelihood is supported.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Fitter instance providing data and model class.
+
+    Returns
+    -------
+    layout_id
+        See summary above.
     """
     try:
-        from bagle.jax.likelihood import supports_jax_loglik_for_fitter
-        from bagle.jax.layout_registry import resolve_layout
-
-        from bagle.jax.layout_registry import legacy_layout_id
+        from bagle.jax.likelihood import (
+            _infer_loglik_mode,
+            supports_jax_loglik_for_fitter,
+        )
 
         layout_id = supports_jax_loglik_for_fitter(fitter)
-        layout = resolve_layout(fitter.model_class)
-        if layout_id and layout and layout.likelihood_mode in ("joint", "joint_gp", "ast"):
-            return legacy_layout_id(layout)
+        mode = _infer_loglik_mode(fitter.model_class)
+        if layout_id and mode in ("joint", "ast"):
+            return layout_id
     except ImportError:
         pass
 
+    # Fallback: hardcoded joint PhotAstrom Param1 layouts.
     model_class = fitter.model_class
     kind = _JAX_JOINT_MODEL_KIND.get(model_class.__name__)
     if kind is None:
         return None
+
+    # Require both photometry and astrometry data sets.
     if not getattr(model_class, "photometryFlag", False) or fitter.n_phot_sets == 0:
         return None
     if not getattr(model_class, "astrometryFlag", False) or fitter.n_ast_sets == 0:
         return None
     if _fitter_has_blocked_params(fitter):
         return None
+
+    # Base fitter cube must match PhotAstrom Param1 ordering.
     names = tuple(fitter.fitter_param_names)
     if names[: len(PSPL_PHOTASTROM_PARAM1_FITTER_NAMES)] != PSPL_PHOTASTROM_PARAM1_FITTER_NAMES:
         return None
+
+    # Parallax models need sky coordinates in the data dict.
     if kind == "pspl_photastrom_param1" and model_class.__name__.endswith("_Par_Param1"):
         if "raL" not in fitter.data or "decL" not in fitter.data:
             return None
@@ -1447,19 +2617,55 @@ def supports_jax_joint_loglik(fitter) -> str | None:
 
 
 def _fitter_weight(fitter, idx: int, default: float = 1.0) -> float:
+    """
+    _fitter_weight.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Fitter instance providing data and model class.
+    idx : int
+        Filter or data-set index.
+    default : float
+        Default weight when unset.
+
+    Returns
+    -------
+    weight
+        See summary above.
+    """
     w = getattr(fitter, "weights", None)
     if w is None or idx >= len(w):
         return default
-    return float(w[idx])
+    weight = float(w[idx])
+    return weight
 
 
 def _param_index(names: Sequence[str], param_base: str, filt_idx: int | None) -> int:
+    """
+    _param_index.
+
+    Parameters
+    ----------
+    names : sequence of str
+        Ordered fitter parameter names.
+    param_base : str
+        Base parameter name without filter suffix.
+    filt_idx : int or None
+        1-based filter index, or None for unindexed names.
+
+    Returns
+    -------
+    index
+        See summary above.
+    """
     if filt_idx is None:
         key = param_base
     else:
         key = f"{param_base}{filt_idx}"
     try:
-        return names.index(key)
+        index = names.index(key)
+        return index
     except ValueError as exc:
         raise KeyError(f"Parameter {key!r} not in fitter_param_names") from exc
 
@@ -1468,22 +2674,34 @@ def build_jax_phot_likelihood_context(fitter) -> JaxPhotLikelihoodContext | None
     """
     Build a host-side context for :func:`log_likelihood_phot_from_vec`.
 
-    Returns ``None`` when the solver configuration is not supported.
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Fitter instance providing data and model class.
+
+    Returns
+    -------
+    ctx
+        See summary above.
     """
     kind = supports_jax_phot_loglik(fitter)
     if kind is None:
         return None
 
+    # Select the base geometric cube for this phot family.
     names = tuple(fitter.fitter_param_names)
     if kind == "pspl":
         base_names = PSPL_PHOT_PARAM1_FITTER_NAMES
     else:
         base_names = PSBL_PHOT_PARAM1_FITTER_NAMES
 
+    # Reject fitters whose leading parameter order does not match.
     if names[: len(base_names)] != base_names:
         return None
 
     base_param_indices = tuple(range(len(base_names)))
+
+    # Parallax tables need lens sky coordinates on the host.
     use_parallax = "raL" in fitter.data and "decL" in fitter.data
     ra_l = float(fitter.data["raL"]) if use_parallax else None
     dec_l = float(fitter.data["decL"]) if use_parallax else None
@@ -1491,15 +2709,19 @@ def build_jax_phot_likelihood_context(fitter) -> JaxPhotLikelihoodContext | None
     filters: list[PhotFilterLikelihoodData] = []
     for i in range(fitter.n_phot_sets):
         filt_1 = i + 1
+
+        # Pull photometry arrays for this filter.
         t = np.asarray(fitter.data[f"t_phot{filt_1}"], dtype=np.float64)
         mag_obs = np.asarray(fitter.data[f"mag{filt_1}"], dtype=np.float64)
         mag_err = np.asarray(fitter.data[f"mag_err{filt_1}"], dtype=np.float64)
         weight = float(getattr(fitter, "weights", [1.0] * fitter.n_phot_sets)[i])
 
+        # Optional host-side parallax direction table.
         pvec = None
         if use_parallax:
             pvec = precompute_parallax_vectors(ra_l, dec_l, t)
 
+        # Indices into the full fitter vector for blend and mag_src.
         idx_b = _param_index(names, "b_sff", filt_1 if f"b_sff{filt_1}" in names else None)
         if f"mag_src{filt_1}" in names:
             idx_m = _param_index(names, "mag_src", filt_1)
@@ -1521,7 +2743,7 @@ def build_jax_phot_likelihood_context(fitter) -> JaxPhotLikelihoodContext | None
         )
 
     root_tol = 1e-8
-    return JaxPhotLikelihoodContext(
+    ctx = JaxPhotLikelihoodContext(
         model_kind=kind,
         fitter_param_names=names,
         base_fitter_names=base_names,
@@ -1529,14 +2751,30 @@ def build_jax_phot_likelihood_context(fitter) -> JaxPhotLikelihoodContext | None
         filters=tuple(filters),
         root_tol=root_tol,
     )
+    return ctx
 
 
 def log_likelihood_phot_from_vec(param_vec, ctx: JaxPhotLikelihoodContext):
-    """Differentiable photometry log-likelihood for supported model layouts."""
+    """
+    Differentiable photometry log-likelihood for supported model layouts.
+
+    Parameters
+    ----------
+    param_vec : array_like
+        Full fitter parameter vector.
+    ctx : object
+        Frozen likelihood context.
+
+    Returns
+    -------
+    lnL
+        See summary above.
+    """
     param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
     lnL = 0.0
 
     for phot in ctx.filters:
+        # Shared geometric cube plus per-filter blend / source magnitude.
         fitter_vec = param_vec[jnp.array(ctx.base_param_indices)]
         b_sff = param_vec[phot.idx_b_sff]
         mag_src = param_vec[phot.idx_mag_src]
@@ -1549,6 +2787,7 @@ def log_likelihood_phot_from_vec(param_vec, ctx: JaxPhotLikelihoodContext):
             else jnp.asarray(phot.parallax_vectors, dtype=jnp.float64)
         )
 
+        # Forward model: PSPL or PSBL photometry from the packed cube.
         if ctx.model_kind == "pspl":
             mag_model = pspl_photometry_from_fitter_vec(
                 t,
@@ -1567,6 +2806,7 @@ def log_likelihood_phot_from_vec(param_vec, ctx: JaxPhotLikelihoodContext):
                 parallax_vectors=pvec,
             )
 
+        # Weighted Gaussian photometry term for this filter.
         lnL = lnL + phot.weight * gaussian_log_likelihood_sum(
             mag_model, mag_obs, mag_err
         )
@@ -1577,18 +2817,31 @@ def log_likelihood_phot_from_vec(param_vec, ctx: JaxPhotLikelihoodContext):
 def build_jax_phot_loglik_fn(fitter):
     """
     Return a ``jax.jit``-compiled ``log_likelihood(param_vec)`` or ``None``.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Fitter instance providing data and model class.
+
+    Returns
+    -------
+    loglik_and_ctx
+        See summary above.
     """
     ctx = build_jax_phot_likelihood_context(fitter)
     if ctx is None:
         return None, None
 
+    # Capture base indices once so the jitted closure stays pure.
     base_idx = jnp.array(ctx.base_param_indices, dtype=jnp.int32)
 
     def _loglik(param_vec):
         param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
         lnL = 0.0
         fitter_vec = param_vec[base_idx]
+
         for phot in ctx.filters:
+            # Per-filter blend and source magnitude from the full vector.
             b_sff = param_vec[phot.idx_b_sff]
             mag_src = param_vec[phot.idx_mag_src]
             t = jnp.asarray(phot.t, dtype=jnp.float64)
@@ -1599,6 +2852,8 @@ def build_jax_phot_loglik_fn(fitter):
                 if phot.parallax_vectors is None
                 else jnp.asarray(phot.parallax_vectors, dtype=jnp.float64)
             )
+
+            # Forward photometry for this filter's model kind.
             if ctx.model_kind == "pspl":
                 mag_model = pspl_photometry_from_fitter_vec(
                     t,
@@ -1616,12 +2871,14 @@ def build_jax_phot_loglik_fn(fitter):
                     root_tol=ctx.root_tol,
                     parallax_vectors=pvec,
                 )
+
             lnL = lnL + phot.weight * gaussian_log_likelihood_sum(
                 mag_model, mag_obs, mag_err
             )
         return lnL
 
-    return jax.jit(_loglik), ctx
+    loglik_and_ctx = jax.jit(_loglik), ctx
+    return loglik_and_ctx
 
 
 @dataclass(frozen=True)
@@ -1659,23 +2916,50 @@ class JaxJointLikelihoodContext:
 
 
 def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | None:
-    """Build host context for joint photometry + astrometry JAX likelihood."""
+    """
+    Build host context for joint photometry + astrometry JAX likelihood.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Fitter instance providing data and model class.
+
+    Returns
+    -------
+    ctx
+        See summary above.
+    """
     layout = supports_jax_joint_loglik(fitter)
     if layout is None:
         return None
 
     names = tuple(fitter.fitter_param_names)
     base_indices = tuple(range(len(PSPL_PHOTASTROM_PARAM1_FITTER_NAMES)))
-    use_parallax = layout == "pspl_photastrom_param1" and "raL" in fitter.data
+
+    # Parallax tables need lens sky coordinates when raL/decL are present.
+    use_parallax = "raL" in fitter.data and "decL" in fitter.data
     ra_l = float(fitter.data["raL"]) if use_parallax else None
     dec_l = float(fitter.data["decL"]) if use_parallax else None
     map_phot = getattr(fitter, "map_phot_idx_to_ast_idx", [])
     joint_filters: list[PhotAstromFilterLikelihoodData] = []
+
+    # Base geometry length from Param mixin when available.
+    try:
+        from bagle.jax.likelihood import _param_mixin_class
+
+        param_cls = _param_mixin_class(fitter.model_class)
+        if param_cls is not None:
+            base_indices = tuple(range(len(param_cls.fitter_param_names)))
+    except ImportError:
+        pass
+
     for i in range(fitter.n_ast_sets):
+        # Map each astrometry set to its paired photometry filter.
         ast_filt = i + 1
         phot_idx = map_phot[i] if len(map_phot) > i else i
         phot_filt = phot_idx + 1
 
+        # Astrometry observations and optional parallax table.
         t_ast = np.asarray(fitter.data[f"t_ast{ast_filt}"], dtype=np.float64)
         x_obs = np.asarray(fitter.data[f"xpos{ast_filt}"], dtype=np.float64)
         y_obs = np.asarray(fitter.data[f"ypos{ast_filt}"], dtype=np.float64)
@@ -1686,12 +2970,14 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
         if use_parallax:
             pvec_ast = precompute_parallax_vectors(ra_l, dec_l, t_ast)
 
+        # Blend index comes from the paired photometry filter.
         idx_b_ast = _param_index(
             names, "b_sff", phot_filt if f"b_sff{phot_filt}" in names else None
         )
 
         phot_block = None
         if phot_idx < fitter.n_phot_sets:
+            # Photometry observations for the matched filter.
             t_phot = np.asarray(fitter.data[f"t_phot{phot_filt}"], dtype=np.float64)
             mag_obs = np.asarray(fitter.data[f"mag{phot_filt}"], dtype=np.float64)
             mag_err = np.asarray(fitter.data[f"mag_err{phot_filt}"], dtype=np.float64)
@@ -1725,7 +3011,7 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
         )
         joint_filters.append(PhotAstromFilterLikelihoodData(phot=phot_block, ast=ast_block))
 
-    # Photometry-only sets (no astrometry counterpart)
+    # Photometry-only sets (no astrometry counterpart).
     mapped_phot = set(map_phot) if map_phot else set(range(fitter.n_ast_sets))
     for phot_idx in range(fitter.n_phot_sets):
         if phot_idx in mapped_phot:
@@ -1755,61 +3041,63 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
         )
         joint_filters.append(PhotAstromFilterLikelihoodData(phot=phot_block, ast=None))
 
-    return JaxJointLikelihoodContext(
+    ctx = JaxJointLikelihoodContext(
         layout=layout,
         use_parallax=use_parallax,
         fitter_param_names=names,
         base_indices=base_indices,
         filters=tuple(joint_filters),
     )
+    return ctx
 
 
 def _joint_loglik_pspl_param1(param_vec, ctx: JaxJointLikelihoodContext):
-    """Joint log-likelihood for PSPL_PhotAstrom Param1 layouts."""
-    param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
-    base = param_vec[jnp.array(ctx.base_indices, dtype=jnp.int32)]
-    mL, t0, beta, dL, dL_dS = base[0], base[1], base[2], base[3], base[4]
-    xS0_E, xS0_N = base[5], base[6]
-    muL_E, muL_N, muS_E, muS_N = base[7], base[8], base[9], base[10]
+    """
+    Joint log-likelihood for PSPL_PhotAstrom Param1 via ``get_params_for_jax``.
 
-    (
-        u0,
-        thetaE_hat,
-        tE,
-        piE_E,
-        piE_N,
-        xS0,
-        xL0,
-        muS,
-        muL,
-        thetaE_amp,
-        piS,
-        piL,
-    ) = derive_pspl_photastrom_param1_geometry(
-        mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N, muS_E, muS_N
-    )
+    Parameters
+    ----------
+    param_vec : array_like
+        Full fitter parameter vector.
+    ctx : object
+        Frozen likelihood context.
+
+    Returns
+    -------
+    lnL
+        See summary above.
+    """
+    from bagle.model_jax import PSPL_PhotAstromParam1
+
+    param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
+
+    # Pack physical / geometric parameters from the base fitter cube.
+    base = param_vec[jnp.array(ctx.base_indices, dtype=jnp.int32)]
+    p = PSPL_PhotAstromParam1.get_params_for_jax(base)
 
     lnL = 0.0
     for block in ctx.filters:
+        # Blend parameter is shared between matched phot/ast filters.
         b_sff = param_vec[block.ast.idx_b_sff if block.ast else block.phot.idx_b_sff]
         pvec_ast = None
         if block.ast and block.ast.parallax_vectors is not None:
             pvec_ast = jnp.asarray(block.ast.parallax_vectors, dtype=jnp.float64)
 
         if block.ast is not None:
+            # Astrometry term: flux-weighted centroid vs observed positions.
             t_ast = jnp.asarray(block.ast.t, dtype=jnp.float64)
             pos = pspl_astrometry_param1(
                 t_ast,
-                t0,
-                xS0,
-                xL0,
-                muS,
-                muL,
-                thetaE_amp,
+                p["t0"],
+                p["xS0"],
+                p["xL0"],
+                p["muS"],
+                p["muL"],
+                p["thetaE_amp"],
                 b_sff,
                 parallax_vectors=pvec_ast,
-                piS=piS,
-                piL=piL,
+                piS=p["piS"],
+                piL=p["piL"],
             )
             lnL = lnL + block.ast.weight * gaussian_astrometry_log_likelihood_sum(
                 pos,
@@ -1820,21 +3108,22 @@ def _joint_loglik_pspl_param1(param_vec, ctx: JaxJointLikelihoodContext):
             )
 
         if block.phot is not None:
+            # Photometry term: unresolved magnitudes vs observations.
             mag_src = param_vec[block.phot.idx_mag_src]
             pvec_phot = None
             if block.phot.parallax_vectors is not None:
                 pvec_phot = jnp.asarray(block.phot.parallax_vectors, dtype=jnp.float64)
             mag_model = pspl_photometry(
                 jnp.asarray(block.phot.t, dtype=jnp.float64),
-                t0,
-                tE,
-                u0,
-                thetaE_hat,
+                p["t0"],
+                p["tE"],
+                p["u0"],
+                p["thetaE_hat"],
                 mag_src,
                 b_sff=b_sff,
                 parallax_vectors=pvec_phot,
-                piE_E=piE_E,
-                piE_N=piE_N,
+                piE_E=p["piE_E"],
+                piE_N=p["piE_N"],
             )
             lnL = lnL + block.phot.weight * gaussian_log_likelihood_sum(
                 mag_model, block.phot.mag_obs, block.phot.mag_err
@@ -1844,25 +3133,52 @@ def _joint_loglik_pspl_param1(param_vec, ctx: JaxJointLikelihoodContext):
 
 
 def build_jax_joint_loglik_fn(fitter):
-    """Return ``(jit_loglik_fn, context)`` for joint fits, or ``(None, None)``."""
+    """
+    Return ``(jit_loglik_fn, context)`` for joint fits, or ``(None, None)``.
+
+    Prefers Param-mixin analytic builders in ``bagle.jax.likelihood``.
+    """
+    try:
+        from bagle.jax.likelihood import build_jax_loglik_fn
+
+        fn, ctx = build_jax_loglik_fn(fitter)
+        if fn is not None:
+            return fn, ctx
+    except ImportError:
+        pass
+
     ctx = build_jax_joint_likelihood_context(fitter)
     if ctx is None:
         return None, None
 
     def _loglik(param_vec):
-        if ctx.layout == "pspl_photastrom_param1":
-            return _joint_loglik_pspl_param1(param_vec, ctx)
+        if ctx.layout in ("pspl_photastrom_param1", "PSPL_PhotAstromParam1"):
+            lnL = _joint_loglik_pspl_param1(param_vec, ctx)
+            return lnL
         raise NotImplementedError(f"JAX joint layout {ctx.layout!r} not implemented")
 
-    return jax.jit(_loglik), ctx
-
+    loglik_and_ctx = jax.jit(_loglik), ctx
+    return loglik_and_ctx
 
 def supports_jax_loglik(fitter) -> str | None:
-    """Return layout id when JAX autodiff is available (registry-backed)."""
+    """
+    Return Param mixin name when JAX autodiff is available.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Fitter instance providing data and model class.
+
+    Returns
+    -------
+    layout_id
+        See summary above.
+    """
     try:
         from bagle.jax.likelihood import supports_jax_loglik_for_fitter
 
-        return supports_jax_loglik_for_fitter(fitter)
+        layout_id = supports_jax_loglik_for_fitter(fitter)
+        return layout_id
     except ImportError:
         return None
 
@@ -1871,8 +3187,17 @@ def build_jax_loglik_fn(fitter):
     """
     Return the best available ``jax.jit`` log-likelihood and context.
 
-    Prefers joint phot+astrometry when supported, else photometry-only.
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Fitter instance providing data and model class.
+
+    Returns
+    -------
+    loglik_and_ctx
+        See summary above.
     """
+    # Prefer the registry-backed builder when the jax package is available.
     try:
         from bagle.jax.likelihood import build_jax_loglik_fn as registry_build
 
@@ -1881,10 +3206,13 @@ def build_jax_loglik_fn(fitter):
             return fn, ctx
     except ImportError:
         pass
+
+    # Fall back to local joint, then phot-only builders.
     joint_fn, joint_ctx = build_jax_joint_loglik_fn(fitter)
     if joint_fn is not None:
         return joint_fn, joint_ctx
-    return build_jax_phot_loglik_fn(fitter)
+    loglik_and_ctx = build_jax_phot_loglik_fn(fitter)
+    return loglik_and_ctx
 
 
 # ---------------------------------------------------------------------------

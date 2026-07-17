@@ -1681,8 +1681,8 @@ def fake_correlated_data_multiphot(t0=57000, u0_amp=0.1, tE=150,
 def fake_correlated_data(t0=57000, u0_amp=0.1, tE=150,
                          piE_E=0.05, piE_N=0.05,
                          b_sff=0.9, mag_src=19.0,
-                         gp_log_sigma=1, gp_log_rho=0.1,
-                         gp_log_So=1, gp_log_omegao=1,
+                         gp_log_sigma=1.0, gp_log_rho=0.1,
+                         gp_log_So=1.0, gp_log_omegao=1.0,
                          raL=17.30 * 15., decL=-29.0):
     # Does it make sense to "set" the GP params here?
     our_model = model.PSPL_Phot_Par_GP_Param1(t0, u0_amp, tE,

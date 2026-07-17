@@ -1,0 +1,19 @@
+............                                                             [100%]
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:491
+  <frozen importlib._bootstrap>:491: FutureWarning: pybind11-bound class 'celerite.solver.CholeskySolver' is using an old-style placement-new '__setstate__' which has been deprecated. See the upgrade guide in pybind11's docs. This message is only visible when compiled in debug mode.
+
+tests/test_model_old_vs_jax.py::test_grad_fsbl_phot[FSBL_Phot_Par_CircOrbs_Param1-get_amplification]
+tests/test_model_old_vs_jax.py::test_grad_fsbl_phot[FSBL_Phot_Par_CircOrbs_Param1-get_photometry]
+tests/test_model_old_vs_jax.py::test_grad_fsbl_phot[FSBL_Phot_Par_EllOrbs_Param1-get_amplification]
+tests/test_model_old_vs_jax.py::test_grad_fsbl_phot[FSBL_Phot_Par_EllOrbs_Param1-get_photometry]
+tests/test_model_old_vs_jax.py::test_grad_fsbl_phot[FSBL_Phot_noPar_CircOrbs_Param1-get_amplification]
+tests/test_model_old_vs_jax.py::test_grad_fsbl_phot[FSBL_Phot_noPar_CircOrbs_Param1-get_photometry]
+tests/test_model_old_vs_jax.py::test_grad_fsbl_phot[FSBL_Phot_noPar_EllOrbs_Param1-get_amplification]
+tests/test_model_old_vs_jax.py::test_grad_fsbl_phot[FSBL_Phot_noPar_EllOrbs_Param1-get_photometry]
+  /Users/jlu/code/python/bagle/src/bagle/model_jax.py:6477: RuntimeWarning: invalid value encountered in divide
+    x_basis = e/np.linalg.norm(e)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+12 passed, 9 warnings in 4068.33s (1:07:48)
+EXIT:0

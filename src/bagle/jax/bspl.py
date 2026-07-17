@@ -5,7 +5,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from bagle.jax.layout_registry import LayoutSpec
 from bagle.jax_physics import (
     _fitter_weight,
     _param_index,
@@ -197,7 +196,10 @@ def bspl_astrometry_from_model(model, t, filt_idx, pvec):
     return None  # use numpy path until full BSPL astrometry port
 
 
-def build_bspl_joint_loglik(fitter, layout: LayoutSpec):
+def build_bspl_joint_loglik(fitter, param_cls=None):
+    """Build a BSPL joint likelihood from Param-mixin fitter names."""
+    if param_cls is None:
+        return None, None
     ctx = build_jax_joint_likelihood_context(fitter)
     if ctx is None:
         return None, None
@@ -206,7 +208,7 @@ def build_bspl_joint_loglik(fitter, layout: LayoutSpec):
         param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
         base = param_vec[jnp.array(ctx.base_indices, dtype=jnp.int32)]
         # BSPL PhotAstromParam1: t0_pri, u0_amp_pri, t0_sec, u0_amp_sec, tE, piE_E, piE_N, ...
-        names = layout.base_fitter_names
+        names = param_cls.fitter_param_names
         p = {names[i]: base[i] for i in range(len(names))}
         u0_pri, thetaE_hat, _ = derive_pspl_static_geometry(p["u0_amp_pri"], p["piE_E"], p["piE_N"])
         u0_sec, _, _ = derive_pspl_static_geometry(p["u0_amp_sec"], p["piE_E"], p["piE_N"])
@@ -243,4 +245,4 @@ def build_bspl_joint_loglik(fitter, layout: LayoutSpec):
                 )
         return lnL
 
-    return jax.jit(_loglik), (ctx, layout)
+    return jax.jit(_loglik), (ctx, param_cls)

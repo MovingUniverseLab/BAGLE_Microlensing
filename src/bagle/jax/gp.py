@@ -7,14 +7,40 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from bagle.jax.layout_registry import LayoutSpec
-
 _GP_QUALITY = 2.0 ** -0.5
 
 
-def supports_gp_layout(layout: LayoutSpec) -> bool:
-    """Return True when the layout participates in GP photometry."""
-    return layout.has_gp
+def supports_gp_model(model) -> bool:
+    """Return True when the model participates in GP photometry."""
+    name = type(model).__name__
+    if "GP" in name or "GPnoJitter" in name:
+        return True
+    use = getattr(model, "use_gp_phot", None)
+    if use is None:
+        return False
+    arr = np.asarray(use).reshape(-1)
+    return bool(np.any(arr))
+
+
+def supports_gp_class(model_class) -> bool:
+    """Return True when a model class is GP-enabled."""
+    name = model_class.__name__
+    if "GP" in name or "GPnoJitter" in name:
+        return True
+    for cls in model_class.__mro__:
+        if "GP" in cls.__name__ or "GPnoJitter" in cls.__name__:
+            return True
+        opt = getattr(cls, "phot_optional_param_names", None)
+        if opt and any(str(n).startswith("gp_") for n in opt):
+            return True
+    return False
+
+
+# Back-compat alias used during migration.
+def supports_gp_layout(layout_or_model) -> bool:
+    if hasattr(layout_or_model, "has_gp"):
+        return bool(layout_or_model.has_gp)
+    return supports_gp_model(layout_or_model)
 
 
 def _gp_dict_param(model, name: str, filt_idx: int) -> float:
@@ -68,8 +94,33 @@ def build_gp_kernel(model, filt_idx: int, mag_err_obs):
     return kernel, jitter
 
 
+def build_gp_kernel_from_params(gp_params: dict, mag_err_obs, fixed_jitter: bool = True):
+    """Build tinygp kernel from a packed parameter dict (fitter path)."""
+    from tinygp.kernels import quasisep as qk
+
+    sigma = jnp.exp(jnp.asarray(gp_params["gp_log_sigma"], dtype=jnp.float64))
+    if "gp_log_rho" in gp_params:
+        rho = jnp.exp(jnp.asarray(gp_params["gp_log_rho"], dtype=jnp.float64))
+    else:
+        rho = jnp.asarray(gp_params["gp_rho"], dtype=jnp.float64)
+    S0 = jnp.exp(jnp.asarray(gp_params["gp_log_S0"], dtype=jnp.float64))
+    omega0 = jnp.exp(jnp.asarray(gp_params["gp_log_omega0"], dtype=jnp.float64))
+    if "gp_log_jit_sigma" in gp_params:
+        jitter = jnp.exp(jnp.asarray(gp_params["gp_log_jit_sigma"], dtype=jnp.float64))
+    elif fixed_jitter:
+        jitter = jnp.exp(
+            jnp.log(jnp.mean(jnp.asarray(mag_err_obs, dtype=jnp.float64)))
+        )
+    else:
+        jitter = jnp.asarray(0.0, dtype=jnp.float64)
+
+    kernel = qk.Matern32(scale=rho, sigma=sigma) + qk.SHO(
+        omega=omega0, quality=_GP_QUALITY, sigma=jnp.sqrt(S0)
+    )
+    return kernel, jitter
+
+
 def photometry_with_gp_jax(
-    layout: LayoutSpec,
     model,
     t,
     mag_obs,
@@ -82,7 +133,7 @@ def photometry_with_gp_jax(
     """GP predictive photometry mean and std (tinygp, matches celerite PSPL_GP).
 
     Returns ``(mag_model, mag_model_std)`` as NumPy arrays, or ``None`` when
-    tinygp is unavailable or the layout is unsupported.
+    tinygp is unavailable or GP is disabled for this filter.
     """
     try:
         import tinygp
@@ -103,12 +154,10 @@ def photometry_with_gp_jax(
     t_j = jnp.asarray(t_arr, dtype=jnp.float64)
 
     if mean_fn is None:
-        from bagle.jax.evaluate import evaluate_photometry_jax
-
-        train_mean = evaluate_photometry_jax(layout, model, t_arr, filt_idx)
-        if train_mean is None:
-            return None
-        mean_train_j = jnp.asarray(train_mean, dtype=jnp.float64).reshape(-1)
+        train_mean = np.asarray(
+            model.get_photometry(t_arr, filt_idx=filt_idx), dtype=np.float64
+        ).reshape(-1)
+        mean_train_j = jnp.asarray(train_mean, dtype=jnp.float64)
 
         def mean_fn(x):
             return jnp.interp(x, t_j, mean_train_j)
@@ -126,48 +175,34 @@ def photometry_with_gp_jax(
     return mean, std
 
 
-def build_gp_loglik_fn(fitter, layout: LayoutSpec):
-    """Return ``(jit_loglik, ctx)`` with tinygp GP marginal on photometric residuals."""
+def gp_log_probability(kernel, t, mag_obs, mag_err, mean, jitter):
+    """tinygp marginal log-probability for one photometric filter."""
+    import tinygp
+
+    t_j = jnp.asarray(t, dtype=jnp.float64)
+    mag_j = jnp.asarray(mag_obs, dtype=jnp.float64)
+    err_j = jnp.asarray(mag_err, dtype=jnp.float64)
+    diag = err_j**2 + jitter**2
+    mean_j = jnp.asarray(mean, dtype=jnp.float64)
+
+    def mean_fn(x):
+        return jnp.interp(x, t_j, mean_j)
+
+    gp = tinygp.GaussianProcess(kernel, t_j, diag=diag, mean=mean_fn)
+    return gp.log_probability(mag_j)
+
+
+def build_gp_loglik_fn(fitter, param_cls=None):
+    """Return ``(jit_loglik, ctx)`` with tinygp GP marginal on photometric residuals.
+
+    Implemented fully in :mod:`bagle.jax.likelihood` once Param packing is
+    available; this entry point delegates there.
+    """
     try:
-        import tinygp
+        import tinygp  # noqa: F401
     except ImportError:
         return None, None
 
-    from bagle.jax.likelihood import _build_registry_phot_loglik, build_jax_loglik_fn as bl
+    from bagle.jax.likelihood import build_analytic_gp_loglik_fn
 
-    phot_fn, phot_ctx = _build_registry_phot_loglik(fitter, layout)
-    if phot_fn is None:
-        from bagle.jax_physics import build_jax_joint_loglik_fn
-
-        joint_fn, joint_ctx = build_jax_joint_loglik_fn(fitter)
-        if joint_fn is None:
-            phot_fn, phot_ctx = bl(fitter)
-        else:
-            phot_fn, phot_ctx = joint_fn, joint_ctx
-
-    resid_blocks = []
-    for i in range(fitter.n_phot_sets):
-        filt_1 = i + 1
-        t = np.asarray(fitter.data[f"t_phot{filt_1}"], dtype=np.float64)
-        mag_obs = np.asarray(fitter.data[f"mag{filt_1}"], dtype=np.float64)
-        mag_err = np.asarray(fitter.data[f"mag_err{filt_1}"], dtype=np.float64)
-        from bagle.jax_physics import _fitter_weight
-
-        resid_blocks.append(
-            {
-                "t": t,
-                "mag_obs": mag_obs,
-                "mag_err": mag_err,
-                "weight": _fitter_weight(fitter, i),
-            }
-        )
-
-    host = (layout, phot_ctx, resid_blocks, phot_fn)
-
-    def _loglik(param_vec):
-        param_vec = jnp.asarray(param_vec, dtype=jnp.float64)
-        lnL = phot_fn(param_vec) if phot_fn is not None else 0.0
-        # GP marginal lnL on residuals is wired in a follow-up slice.
-        return lnL
-
-    return jax.jit(_loglik), host
+    return build_analytic_gp_loglik_fn(fitter, param_cls=param_cls)

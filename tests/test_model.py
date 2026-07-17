@@ -1232,7 +1232,7 @@ def compare_lumlens_parallax_bulge():
                                             muS_N=muS_in[1],
                                             raL=raL_in,
                                             decL=decL_in,
-                                            b_sff=[b_sff_in],
+                                            b_sff=[1.0],
                                             mag_src=[mag_src_in])
 
     t = np.linspace(t0_in - 1500, t0_in + 1500, 1000)
@@ -1256,8 +1256,8 @@ def compare_lumlens_parallax_bulge():
     plt.plot((pos_ll[:, 0] - pos_src_ll[:, 0]) * 1E3, (pos_ll[:, 1] - pos_src_ll[:, 1]) * 1E3, label='Lum Lens')
     plt.legend()
     plt.axis('equal')
-    plt.xlabel('$\delta_{c,x}$ (mas)')
-    plt.ylabel('$\delta_{c,y}$ (mas)')
+    plt.xlabel(r'$\delta_{c,x}$ (mas)')
+    plt.ylabel(r'$\delta_{c,y}$ (mas)')
     plt.show()
     #
     plt.figure(2)
@@ -2024,6 +2024,7 @@ def plot_BSPL(bspl, t_obs, fignum_init=1):
 
     return
 
+
 def test_PSBL_PhotAstrom_noPar_Param2(plot=False):
     """
     General testing of PSBL... caustic crossings.
@@ -2069,6 +2070,49 @@ def test_PSBL_PhotAstrom_noPar_Param2(plot=False):
     phot = psbl.get_photometry(t_obs)
 
     assert phot.min() < 16
+
+    # Reference astrometry (arcsec) from bagle.model at caustic-crossing test params.
+    t_check = np.array([56000.0, 56999.0, 57038.0, 57998.0])
+    ref_xL1 = np.array(
+        [
+            [2.81731342511383964e-03, -2.30365799264592962e-03],
+            [4.26657118068330603e-04, 8.29233712343448691e-03],
+            [3.33328193168656015e-04, 8.70599459042861734e-03],
+            [-1.96399918897717865e-03, 1.88883322395149052e-02],
+        ]
+    )
+    ref_xL2 = np.array(
+        [
+            [6.95993081554196775e-04, -1.82337649086287404e-04],
+            [-1.69466322549131215e-03, 1.04136574669941289e-02],
+            [-1.78799215039098696e-03, 1.08273149339882593e-02],
+            [-4.08531953253682151e-03, 2.10096525830745472e-02],
+        ]
+    )
+    ref_xS_unlensed = np.array(
+        [
+            [-8.21355236139630247e-03, 1.00000000000000002e-02],
+            [-8.21355236139630459e-06, 1.00000000000000002e-02],
+            [3.12114989733059561e-04, 1.00000000000000002e-02],
+            [8.19712525667351012e-03, 1.00000000000000002e-02],
+        ]
+    )
+    ref_xS_lensed = np.array(
+        [
+            [-8.58820507365765790e-03, 1.04229234330981725e-02],
+            [-9.11111377791287442e-04, 9.50802959338672461e-03],
+            [-7.51789226797274315e-04, 8.28956252307679400e-03],
+            [8.63000294925506117e-03, 9.61763832782568974e-03],
+        ]
+    )
+    xL1, xL2 = psbl.get_resolved_lens_astrometry(t_check)
+    xS_unlensed = psbl.get_astrometry_unlensed(t_check)
+    images, amps = psbl.get_all_arrays(t_check)
+    xS_lensed = psbl.get_astrometry(t_check, image_arr=images, amp_arr=amps)
+    np.testing.assert_allclose(xL1, ref_xL1, rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(xL2, ref_xL2, rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(xS_unlensed, ref_xS_unlensed, rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(xS_lensed, ref_xS_lensed, rtol=1e-10, atol=1e-12)
 
     return
 
@@ -2501,9 +2545,9 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
     if plot:
         plt.figure(1, figsize=(11, 6))
         plt.clf()
-        f1 = plt.gcf().add_axes([0.4, 0.35, 0.57, 0.6])
-        f2 = plt.gcf().add_axes([0.4, 0.15, 0.57, 0.2])
-        f1.get_shared_x_axes().join(f1, f2)
+        fig = plt.gcf()
+        f1 = fig.add_axes([0.4, 0.35, 0.57, 0.6])
+        f2 = fig.add_axes([0.4, 0.15, 0.57, 0.2], sharex=f1)
         f1.set_xticklabels([])
 
         f1.plot(time_mjd, pylima_lcurve_mag, 'ko', label='pyLIMA')
@@ -2713,9 +2757,9 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
     if plot:
         plt.figure(1, figsize=(11, 6))
         plt.clf()
-        f1 = plt.gcf().add_axes([0.4, 0.35, 0.57, 0.6])
-        f2 = plt.gcf().add_axes([0.4, 0.15, 0.57, 0.2])
-        f1.get_shared_x_axes().join(f1, f2)
+        fig = plt.gcf()
+        f1 = fig.add_axes([0.4, 0.35, 0.57, 0.6])
+        f2 = fig.add_axes([0.4, 0.15, 0.57, 0.2], sharex=f1)
         f1.set_xticklabels([])
 
         f1.plot(time_mjd, pylima_lcurve_mag, 'ko', label='pyLIMA')
@@ -2756,7 +2800,7 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
         # plt.clf()
         # f3 = plt.gcf().add_axes([0.4, 0.60, 0.57, 0.3])
         # f4 = plt.gcf().add_axes([0.4, 0.15, 0.57, 0.3])
-        # f3.get_shared_x_axes().join(f3, f4)
+        # f4 = fig.add_axes([0.4, 0.15, 0.57, 0.3], sharex=f3)
 
         # f3.plot(time_mjd, pylima_x, 'ko', label='pyLIMA')
         # f3.plot(time_mjd, our_u[:, 0], 'r.', label='Ours')
@@ -6337,21 +6381,21 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
         axs['AA'].errorbar(tab_w149['x_w149'], tab_w149['y_w149'],
                      xerr=tab_w149['xe_w149'], yerr=tab_w149['ye_w149'],
                      ls='none', marker='.')
-        axs['AA'].set_xlabel(f'$\Delta\\alpha \cos \delta$ (mas)')
-        axs['AA'].set_ylabel(f'$\Delta\delta$ (mas)')
+        axs['AA'].set_xlabel(rf'$\Delta\alpha \cos \delta$ (mas)')
+        axs['AA'].set_ylabel(rf'$\Delta\delta$ (mas)')
 
         axs['A1'].errorbar(tab_w149['t_w149'], tab_w149['x_w149'],
                      yerr=tab_w149['xe_w149'],
                      ls='none', marker='.')
         axs['A1'].set_xlabel(f'Time (MJD)')
-        axs['A1'].set_ylabel(f'$\Delta\\alpha \cos \delta$ (mas)')
+        axs['A1'].set_ylabel(rf'$\Delta\alpha \cos \delta$ (mas)')
         axs['A1'].sharex(axs['F1'])
 
         axs['A2'].errorbar(tab_w149['t_w149'], tab_w149['y_w149'],
                      yerr=tab_w149['ye_w149'],
                      ls='none', marker='.')
         axs['A2'].set_xlabel(f'Time (MJD)')
-        axs['A2'].set_ylabel(f'$\Delta\delta$ (mas)')
+        axs['A2'].set_ylabel(rf'$\Delta\delta$ (mas)')
         axs['A2'].sharex(axs['F1'])
 
         # Print out all the parameters to the screen and in a YAML file.
@@ -6838,15 +6882,13 @@ PSPL_PHOT_ASTROM_CLASSES = (
 
 @pytest.mark.parametrize("class_name", PSPL_PHOT_ASTROM_CLASSES)
 def test_pspl_phot_get_astrometry_matches_evaluate_jax(class_name):
-    """PSPL_Phot NumPy get_astrometry vs evaluate_astrometry_jax (Einstein radii)."""
+    """PSPL_Phot NumPy get_astrometry vs model_jax kernel-backed path."""
     pytest.importorskip("jax")
-    from bagle.jax.evaluate import try_get_astrometry
     from model_old_vs_jax_fixtures import build_paired_instances, time_grid_ast
 
-    ref_inst, _ = build_paired_instances(class_name)
+    ref_inst, jax_inst = build_paired_instances(class_name)
     t = time_grid_ast(ref_inst)
     ref = np.asarray(ref_inst.get_astrometry(t), dtype=np.float64)
-    jax_out = try_get_astrometry(ref_inst, t)
-    assert jax_out is not None, f"evaluate_astrometry_jax returned None for {class_name}"
+    jax_out = np.asarray(jax_inst.get_astrometry(t), dtype=np.float64)
     np.testing.assert_allclose(jax_out, ref, rtol=1e-10, atol=1e-12)
 
