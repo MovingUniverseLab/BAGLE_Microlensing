@@ -4009,14 +4009,11 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         # Validate sampler and gradient requirements.
         sampler = str(sampler).lower()
         if sampler not in ('nuts', 'jaxns'):
-            raise ValueError(
-                f"sampler must be 'nuts' or 'jaxns', got {sampler!r}"
-            )
+            raise ValueError(f"sampler must be 'nuts' or 'jaxns', got {sampler!r}")
+
         if not use_jax_grad:
-            raise ValueError(
-                'MicrolensSolverNumPyro requires use_jax_grad=True '
-                '(NUTS and JAXNS both use JAX autodiff).'
-            )
+            raise ValueError('MicrolensSolverNumPyro requires use_jax_grad=True ' +
+                             '(NUTS and JAXNS both use JAX autodiff).')
 
         # NUTS / shared sampling knobs.
         self.sampler = sampler
@@ -4031,12 +4028,17 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         # JAXNS nested-sampling knobs.
         self.n_live_points = int(n_live_points)
         self.max_samples = int(max_samples)
-        self.dlogz = (
-            float(np.log1p(1.0e-3)) if dlogz is None else float(dlogz)
-        )
-        self.posterior_samples = (
-            int(draws) if posterior_samples is None else int(posterior_samples)
-        )
+
+        if dlogz is None:
+            self.dlogz = float(np.log1p(1.0e-3))
+        else:
+            self.dlogz = float(dlogz)
+
+        if posterior_samples is None:
+            self.posterior_samples = int(draws)
+        else:
+            self.posterior_samples = int(posterior_samples)
+
         self.use_jax_grad = True
         self.gradient_guided = bool(gradient_guided)
 
@@ -4059,7 +4061,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         """
         import numpyro
 
-        # Match binary_orbits / jaxns preference for float64.
+        # jaxns preference for float64.
         numpyro.enable_x64()
 
         self.write_params_yaml()
