@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
-from research_notebook import drive_ops
+from dateutil import parser as date_parser
+
 from research_notebook.github_commits import (
     GithubCommit,
     fetch_commits_for_day,
@@ -13,6 +17,7 @@ from research_notebook.github_commits import (
 )
 from research_notebook.notebook import (
     append_entry,
+    append_index_row,
     index_coverage_for_date,
     today_doc_text,
 )
@@ -158,7 +163,7 @@ def apply_reconcile(
     append_transcripts: bool = True,
     append_github: bool = True,
 ) -> dict[str, Any]:
-    """Backfill missing transcripts and GitHub rollup from a report.
+    """Backfill missing transcripts and GitHub rollup in time order.
 
     Parameters
     ----------
@@ -179,30 +184,70 @@ def apply_reconcile(
         Counts and final doc URL.
     """
 
+    from research_notebook.reformat import short_project_name, short_title_from_query
+
     appended_t = 0
+    appended_c = 0
     doc_url = ""
 
+    tz = ZoneInfo(cfg.get("timezone", "America/Los_Angeles"))
+    day_start = datetime.strptime(report.date, "%Y-%m-%d").replace(tzinfo=tz)
+
+    # Timed queue keeps appends chronological across transcripts + GitHub.
+    queue: list[tuple[datetime, str, Any]] = []
     if append_transcripts:
         for t in report.missing_transcripts:
+            when = t.start_time or day_start
+            queue.append((when, "transcript", t))
+    if append_github and report.new_commits:
+        times = []
+        for c in report.new_commits:
+            if c.author_date:
+                try:
+                    dt = date_parser.isoparse(c.author_date)
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=tz)
+                    times.append(dt.astimezone(tz))
+                except Exception:
+                    pass
+        when = min(times) if times else day_start
+        queue.append((when, "github", report.new_commits))
+
+    queue.sort(key=lambda item: item[0])
+
+    for _when, kind, payload in queue:
+        if kind == "transcript":
+            t = payload
+            proj = short_project_name(t.project)
+            query = re.sub(r"\s+", " ", (t.first_query or "").strip())
+            if len(query) > 500:
+                query = query[:499] + "…"
             body = (
-                f"### What I did\n"
-                f"Cursor session in project `{t.project}`.\n\n"
-                f"**First query:** {t.first_query}\n\n"
+                f"### Summary\n"
+                f"Cursor session in `{proj}`.\n\n"
+                f"### First query\n"
+                f"{query}\n\n"
             )
             if t.sample_assistant:
-                body += f"### Notes from assistant\n{t.sample_assistant}\n\n"
+                note = re.sub(r"\s+", " ", t.sample_assistant.strip())
+                if len(note) > 400:
+                    note = note[:399] + "…"
+                body += f"### Notes\n{note}\n\n"
             body += (
+                f"### Results\n"
+                f"- (Reconcile backfill — add tests/timings/plots if known.)\n\n"
                 f"### Reproduce\n"
-                f"See transcript: `{t.path}`\n"
+                f"- transcript-id: `{t.transcript_id}`\n"
+                f"- path: `{t.path}`\n"
             )
             result = append_entry(
                 docs,
                 drive,
                 sheets,
                 cfg,
-                title=f"{t.project}: {t.first_query[:60]}",
+                title=f"{proj}: {short_title_from_query(t.first_query)}",
                 body_md=body,
-                project=t.project,
+                project=proj,
                 workspace=t.path,
                 transcript_id=t.transcript_id,
                 source="reconcile",
@@ -210,60 +255,52 @@ def apply_reconcile(
             )
             doc_url = result["doc_url"]
             appended_t += 1
-
-    appended_c = 0
-    if append_github and report.new_commits:
-        body = format_github_rollup(report.date, report.new_commits)
-        result = append_entry(
-            docs,
-            drive,
-            sheets,
-            cfg,
-            title=f"GitHub commits — {report.date}",
-            body_md=body,
-            project="github",
-            source="github",
-            date_str=report.date,
-            commit=report.new_commits[0].sha,
-            extra_meta=[
-                f"commits: {len(report.new_commits)} new",
-            ],
-        )
-        doc_url = result["doc_url"]
-        # Index one row per commit for SHA idempotency.
-        from research_notebook.notebook import append_index_row
-
-        machine = cfg.get("machine_label", "")
-        for c in report.new_commits[1:]:
-            append_index_row(
+        elif kind == "github":
+            commits = payload
+            body = format_github_rollup(report.date, commits)
+            result = append_entry(
+                docs,
+                drive,
                 sheets,
                 cfg,
-                {
-                    "date": report.date,
-                    "time": "",
-                    "title": f"{c.full_name}@{c.short_sha}",
-                    "project": c.repo,
-                    "doc_url": doc_url,
-                    "machine": machine,
-                    "workspace": "",
-                    "repo": c.full_name,
-                    "commit": c.sha,
-                    "transcript_id": "",
-                    "asset_folder_url": "",
-                    "status": "logged",
-                    "source": "github",
-                },
+                title=f"GitHub commits — {report.date}",
+                body_md=body,
+                project="github",
+                source="github",
+                date_str=report.date,
+                commit=commits[0].sha,
+                extra_meta=[f"commits: {len(commits)} new"],
             )
-            appended_c += 1
-        appended_c += 1  # first commit counted via append_entry
+            doc_url = result["doc_url"]
+            machine = cfg.get("machine_label", "")
+            for c in commits[1:]:
+                append_index_row(
+                    sheets,
+                    cfg,
+                    {
+                        "date": report.date,
+                        "time": "",
+                        "title": f"{c.full_name}@{c.short_sha}",
+                        "project": c.repo,
+                        "doc_url": doc_url,
+                        "machine": machine,
+                        "workspace": "",
+                        "repo": c.full_name,
+                        "commit": c.sha,
+                        "transcript_id": "",
+                        "asset_folder_url": "",
+                        "status": "logged",
+                        "source": "github",
+                    },
+                )
+            appended_c = len(commits)
 
-    # End-of-day summary block.
     summary_body = (
         f"### End-of-day reconcile\n"
         f"- Transcripts missing→appended: {appended_t} "
         f"(covered {len(report.covered_transcripts)}, "
         f"skipped {len(report.skipped_transcripts)})\n"
-        f"- GitHub new commits logged: {len(report.new_commits)}\n"
+        f"- GitHub new commits logged: {appended_c}\n"
     )
     result = append_entry(
         docs,
@@ -281,6 +318,6 @@ def apply_reconcile(
 
     return {
         "appended_transcripts": appended_t,
-        "appended_commits": len(report.new_commits) if append_github else 0,
+        "appended_commits": appended_c,
         "doc_url": doc_url,
     }

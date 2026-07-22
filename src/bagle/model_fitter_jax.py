@@ -163,16 +163,16 @@ def build_explicit_jax_loglik_fn(fitter):
     phot_blocks = []
     for filt_idx in range(fitter.n_phot_sets if need_phot else 0):
         # Observation times (MJD)
-        t = np.asarray(
-            fitter.data[f't_phot{filt_idx + 1}'], dtype=np.float64
-        )
+        t = np.asarray(fitter.data[f't_phot{filt_idx + 1}'], dtype=np.float64)
+
         # Precompute parallax vectors if needed
-        pvec = (
-            jax_physics.precompute_parallax_vectors(raL, decL, t)
-            if use_parallax else None
-        )
+        pvec = None
+        if use_parallax:
+            pvec = jax_physics.precompute_parallax_vectors(raL, decL, t)
+
         # Index for "b_sff" parameter for this filter
         idx_b = _jax_param_index(names, 'b_sff', filt_idx)
+
         # Determine which magnitude param is being used
         phot_names = tuple(getattr(model_class, 'phot_param_names', ()))
         if 'mag_src_pri' in phot_names:
@@ -197,11 +197,11 @@ def build_explicit_jax_loglik_fn(fitter):
                     )
                 except ValueError:
                     continue
+
         # Compute data weight for this filter (default 1.0)
-        weight = (
-            float(weights[filt_idx])
-            if weights is not None and filt_idx < len(weights) else 1.0
-        )
+        weight = 1.0
+        if weights is not None and filt_idx < len(weights):
+            weight = float(weights[filt_idx])
 
         # Collect all relevant info for this photometric dataset/filter
         phot_blocks.append((
@@ -215,14 +215,13 @@ def build_explicit_jax_loglik_fn(fitter):
     mapping = getattr(fitter, 'map_phot_idx_to_ast_idx', [])
     for ast_idx in range(fitter.n_ast_sets if need_ast else 0):
         # Observation times (MJD)
-        t = np.asarray(
-            fitter.data[f't_ast{ast_idx + 1}'], dtype=np.float64
-        )
+        t = np.asarray(fitter.data[f't_ast{ast_idx + 1}'], dtype=np.float64)
+
         # Parallax vectors if needed
-        pvec = (
-            jax_physics.precompute_parallax_vectors(raL, decL, t)
-            if use_parallax else None
-        )
+        pvec = None
+        if use_parallax:
+            pvec = jax_physics.precompute_parallax_vectors(raL, decL, t)
+
         # Map this astrometric dataset to its photometric dataset (if any)
         phot_idx = (
             mapping[ast_idx] if ast_idx < len(mapping) else ast_idx
@@ -232,12 +231,12 @@ def build_explicit_jax_loglik_fn(fitter):
             _jax_param_index(names, 'b_sff', phot_idx)
             if need_phot else None
         )
+
         # Compute data weight for this astrometric dataset (default 1.0)
         weight_idx = fitter.n_phot_sets + ast_idx
-        weight = (
-            float(weights[weight_idx])
-            if weights is not None and weight_idx < len(weights) else 1.0
-        )
+        weight = 1.0
+        if weights is not None and weight_idx < len(weights):
+            weight = float(weights[weight_idx])
 
         # Store everything needed for this astrometric dataset
         ast_blocks.append((
@@ -266,6 +265,7 @@ def build_explicit_jax_loglik_fn(fitter):
             The total log-likelihood for the observations given param_vec.
         """
         param_vec = jnp.asarray(param_vec, dtype=jnp.float64)
+
         # Select "base" parameters for the core model
         base_vec = param_vec[base_idx]
         lnL = jnp.asarray(0.0, dtype=jnp.float64)
@@ -275,37 +275,40 @@ def build_explicit_jax_loglik_fn(fitter):
              weight) in phot_blocks:
             assert phot_method is not None
             b_sff = param_vec[idx_b]
+
             # Handle scalar or pair of magnitude parameters (e.g. mag_src_pri/sec)
             if isinstance(idx_mag, tuple):
                 mag_param = tuple(param_vec[idx] for idx in idx_mag)
             else:
                 mag_param = param_vec[idx_mag]
+
             # Collect GP params if present
             gp_params = (
                 {key: param_vec[idx] for key, idx in gp_indices.items()}
                 if gp_indices else None
             )
+
             # Add weighted likelihood for this photometric dataset
-            lnL += weight * phot_method(
-                base_vec, t, mag_obs, mag_err, b_sff, mag_param,
-                parallax_vectors=pvec, gp_params=gp_params,
-                fixed_jitter='GPnoJitter' not in model_class.__name__
-            )
+            lnL += weight * phot_method(base_vec, t, mag_obs, mag_err, b_sff, mag_param,
+                                        parallax_vectors=pvec, gp_params=gp_params,
+                                        fixed_jitter='GPnoJitter' not in model_class.__name__)
+
         # Compute sum of log-likelihood contributions from each astrometric dataset
-        for (t, x_obs, y_obs, x_err, y_err, pvec, idx_b,
-             weight) in ast_blocks:
+        for (t, x_obs, y_obs, x_err, y_err, pvec, idx_b, weight) in ast_blocks:
             assert ast_method is not None
             b_sff = param_vec[idx_b] if idx_b is not None else 1.0
-            lnL += weight * ast_method(
-                base_vec, t, x_obs, y_obs, x_err, y_err, b_sff=b_sff,
-                parallax_vectors=pvec
-            )
+            lnL += weight * ast_method(base_vec, t, x_obs, y_obs, x_err, y_err, 
+                                       b_sff=b_sff, parallax_vectors=pvec)
+
         return lnL
 
     # Compile the likelihood using JAX JIT
     result = jax.jit(log_likely), None
+
     fitter._explicit_jax_loglik_cache = result  # Cache for future calls
+
     return result
+
 class MicrolensSolver(Solver):
     """
     A PyMultiNest solver to find the optimal parameters, given data and
@@ -1488,6 +1491,13 @@ class MicrolensSolver(Solver):
 
         If def_best is median, then also return +/- 1 sigma
         uncertainties.
+
+        Parameters
+        ----------
+        def_best : str
+            One of 'maxL', 'map', 'mean', 'median'.
+            If mean, then standard deviation uncertainties are also returned.
+            If median, then 1, 2, 3 sigma uncertaintes are also returned.
 
         Returns
         -------
@@ -3691,66 +3701,6 @@ def scipy_to_numpyro_dist(prior):
     )
 
 
-def scipy_to_tfp(prior):
-    """Convert a scipy frozen distribution to a TFP-on-JAX distribution.
-
-    Used by the direct JAXNS path (jaxns ``Prior`` expects TFP dists).
-
-    Parameters
-    ----------
-    prior : scipy.stats frozen distribution
-        Prior to convert.
-
-    Returns
-    -------
-    dist : tfp.distributions.Distribution
-        Matching TensorFlow Probability distribution on JAX.
-    """
-    try:
-        import tensorflow_probability.substrates.jax as tfp
-    except ImportError as error:
-        raise ImportError(
-            'JAXNS priors require tensorflow_probability. '
-            'Install with: pip install tensorflow-probability'
-        ) from error
-
-    tfd = tfp.distributions
-    dist_name = prior.dist.name
-
-    # Mirror scipy_to_numpyro_dist family by family for jaxns Priors.
-    if dist_name == 'uniform':
-        loc = float(prior.kwds.get('loc', 0.0))
-        scale = float(prior.kwds.get('scale', 1.0))
-        return tfd.Uniform(loc, loc + scale)
-
-    if dist_name == 'norm':
-        return tfd.Normal(
-            float(prior.kwds['loc']), float(prior.kwds['scale'])
-        )
-
-    if dist_name == 'lognorm':
-        sigma = float(prior.kwds['s'])
-        mu = float(np.log(prior.kwds['scale']))
-        return tfd.LogNormal(mu, sigma)
-
-    if dist_name == 'truncnorm':
-        a, b = prior.args
-        loc = float(prior.kwds['loc'])
-        scale = float(prior.kwds['scale'])
-        return tfd.TruncatedNormal(
-            loc, scale, low=loc + a * scale, high=loc + b * scale
-        )
-
-    if dist_name == 'invgamma':
-        alpha = float(prior.args[0])
-        beta = float(prior.kwds['scale'])
-        return tfd.InverseGamma(alpha, beta)
-
-    raise TypeError(
-        f"Unsupported prior type '{dist_name}' for TFP conversion"
-    )
-
-
 def _numpyro_prior_init_value(prior):
     """Return a scalar init value near the prior center.
 
@@ -3896,7 +3846,7 @@ class MicrolensNumPyroModel:
 
 
 class MicrolensSolverNumPyro(MicrolensSolver):
-    """MicrolensSolver that uses NumPyro NUTS or direct JAXNS."""
+    """MicrolensSolver that uses NumPyro NUTS or jaxns nested sampling."""
 
     def __init__(
         self,
@@ -3952,7 +3902,9 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         verbose : bool, optional
             Verbose output / progress bars.
         sampler : {'nuts', 'jaxns'}, optional
-            Inference backend.
+            Inference backend. ``'jaxns'`` uses
+            :class:`numpyro.contrib.nested_sampling.NestedSampler`
+            (jaxns under the hood).
         draws : int, optional
             NUTS posterior draws (also default jaxns resample count).
         tune : int, optional
@@ -3978,7 +3930,8 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         use_jax_grad : bool, optional
             Must be True; both backends require JAX autodiff.
         gradient_guided : bool, optional
-            Enable jaxns gradient-guided nested sampling.
+            Enable jaxns gradient-guided nested sampling (passed through
+            NumPyro nested-sampling constructor kwargs).
         **kwargs : dict, optional
             Additional keyword arguments passed to MicrolensSolver.
 
@@ -4080,7 +4033,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         print(f'*** Using NumPyro ({self.sampler}) for sampling. ***')
         print('*************************************************')
 
-        # Dispatch to NUTS MCMC or gradient-guided nested sampling.
+        # Dispatch to NUTS MCMC or NumPyro nested sampling (jaxns).
         if self.sampler == 'nuts':
             self._run_nuts()
         else:
@@ -4154,157 +4107,74 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         self._loglikes = None
         return None
 
-    def _scipy_prior_for_jaxns(self, name):
-        """Return a scipy frozen prior for JAXNS/TFP conversion.
-
-        Parameters
-        ----------
-        name : str
-            Parameter name.
-
-        Returns
-        -------
-        prior : scipy.stats frozen distribution
-            SciPy prior matching the configured NumPyro/scipy prior.
-        """
-        prior = self.priors[name]
-
-        # Already scipy (e.g. user overrode .priors after init).
-        if _is_scipy_frozen_prior(prior):
-            return prior
-
-        # Rebuild a scipy twin from NumPyro distribution parameters.
-        import numpyro.distributions as dist
-
-        if isinstance(prior, dist.Uniform):
-            return scipy.stats.uniform(
-                loc=float(prior.low),
-                scale=float(prior.high) - float(prior.low),
-            )
-        if isinstance(prior, dist.Normal):
-            return scipy.stats.norm(
-                loc=float(prior.loc), scale=float(prior.scale)
-            )
-        if isinstance(prior, dist.LogNormal):
-            return scipy.stats.lognorm(
-                s=float(prior.scale), scale=float(np.exp(prior.loc))
-            )
-        if isinstance(prior, dist.InverseGamma):
-            return scipy.stats.invgamma(
-                float(prior.concentration), scale=float(prior.rate)
-            )
-
-        # TruncatedNormal is a TwoSidedTruncatedDistribution wrapper.
-        if hasattr(prior, 'base_dist') and hasattr(prior, 'low'):
-            base = prior.base_dist
-            loc = float(base.loc)
-            scale = float(base.scale)
-            low = float(prior.low)
-            high = float(prior.high)
-            # Convert absolute bounds back to scipy a,b in sigma units.
-            a = (low - loc) / scale
-            b = (high - loc) / scale
-            return scipy.stats.truncnorm(a, b, loc=loc, scale=scale)
-
-        raise TypeError(
-            f'Unsupported prior for JAXNS conversion: {type(prior)!r}'
-        )
-
     def _run_jaxns(self):
-        """Run direct JAXNS nested sampling with gradient guidance.
+        """Run nested sampling via ``numpyro.contrib.nested_sampling``.
+
+        Reuses :class:`MicrolensNumPyroModel` (same priors + χ² factor as
+        NUTS). NumPyro reparametrizes sites to the unit cube and calls jaxns;
+        tensorflow-probability remains a transitive dependency of that stack.
 
         Returns
         -------
         None
         """
-        # Lazy import: jaxns is an optional dependency.
+        # Lazy import: jaxns (+ TFP) are optional bagle[jaxns] deps.
         try:
-            from jaxns import (Model, NestedSampler, Prior,
-                               TerminationCondition, resample)
+            from numpyro.contrib.nested_sampling import NestedSampler
         except (ImportError, AttributeError) as error:
             raise ImportError(
-                'JAXNS is required for sampler=\"jaxns\". '
-                'Install with: pip install \"bagle[jaxns]\" '
+                'JAXNS nested sampling requires jaxns and '
+                'tensorflow-probability. Install with: '
+                'pip install \"bagle[jaxns]\" '
                 '(or pip install jaxns tensorflow-probability). '
                 'On Python 3.14, jaxns<=2.6.9 may fail to import due to a '
                 'typing.Union __doc__ assignment bug.'
             ) from error
 
-        # Same differentiable χ² lnL used by the NumPyro NUTS path.
-        lnL, _ctx = build_explicit_jax_loglik_fn(self)
-        if lnL is None:
-            raise RuntimeError(
-                'MicrolensSolverNumPyro requires a differentiable JAX '
-                'likelihood (explicit Param-mixin jax_log_likely_* methods). '
-                'Unsupported configurations include add_err/mult_err or '
-                'models missing JAX likelihood methods.'
-            )
+        # Same NumPyro model / factors as the NUTS path.
+        model_builder = MicrolensNumPyroModel(self)
 
-        # jaxns Prior expects TFP dists; convert via scipy twins.
-        names = tuple(self.fitter_param_names)
-        tfp_priors = {}
-        for name in names:
-            tfp_priors[name] = scipy_to_tfp(self._scipy_prior_for_jaxns(name))
-
-        def prior_model():
-            # Yield one jaxns Prior per fit parameter.
-            values = []
-            for name in names:
-                values.append((yield Prior(tfp_priors[name], name=name)))
-            return tuple(values)
-
-        def log_likelihood(*params):
-            # Differentiable χ² lnL of JAX predictions vs data.
-            return lnL(jnp.stack(params))
-
-        model = Model(prior_model=prior_model, log_likelihood=log_likelihood)
-
-        # Run on a single CPU device (matches binary_orbits default).
-        devices = jax.devices('cpu')[:1]
-        sampler = NestedSampler(
-            model=model,
-            max_samples=self.max_samples,
+        # Forward BAGLE knobs into jaxns DefaultNestedSampler.
+        constructor_kwargs = dict(
             num_live_points=self.n_live_points,
-            devices=devices,
+            max_samples=self.max_samples,
+            devices=jax.devices('cpu')[:1],
             difficult_model=True,
             parameter_estimation=True,
             gradient_guided=self.gradient_guided,
             verbose=self.verbose,
+        )
+        termination_kwargs = dict(dlogZ=self.dlogz)
+
+        ns = NestedSampler(
+            model_builder.model,
+            constructor_kwargs=constructor_kwargs,
+            termination_kwargs=termination_kwargs,
         )
 
         # Separate keys for nested sampling vs equal-weight resampling.
         run_key, resample_key = jax.random.split(
             jax.random.PRNGKey(self.random_seed)
         )
+        ns.run(run_key)
 
-        termination_condition = TerminationCondition(
-            dlogZ=jnp.asarray(self.dlogz),
-            max_samples=jnp.asarray(self.max_samples),
-        )
+        # Retain jaxns NestedSamplerResults for logZ / diagnostics.
+        self.nested_results = ns._results
+        if ns._results is not None:
+            self._logZ = float(np.asarray(ns._results.log_Z_mean))
+        else:
+            self._logZ = np.nan
 
-        # Run nested sampling and collect weighted results.
-        termination_reason, state = sampler(
-            run_key, term_cond=termination_condition
-        )
-        nested_results = sampler.to_results(termination_reason, state)
-        self.nested_results = nested_results
-        self._logZ = float(np.asarray(nested_results.log_Z_mean))
-
-        # Resample to equal-weight draws for MultiNest-like tables.
-        equal_raw = resample(
-            key=resample_key,
-            samples=nested_results.samples,
-            log_weights=nested_results.log_dp_mean,
-            S=self.posterior_samples,
-            replace=True,
+        # Equal-weight draws for MultiNest-like tables.
+        samples = ns.get_samples(
+            resample_key, num_samples=self.posterior_samples
         )
         stacked = []
-        for name in names:
-            stacked.append(np.asarray(equal_raw[name]).reshape(-1))
+        for name in self.fitter_param_names:
+            stacked.append(np.asarray(samples[name]).reshape(-1))
 
         self._samples_array = np.column_stack(stacked)
         self._loglikes = None
-
         return None
 
     def _evaluate_loglikes(self, samples):

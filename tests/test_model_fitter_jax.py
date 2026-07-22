@@ -3053,35 +3053,29 @@ def test_microlens_solver_numpyro_nuts_vs_multinest(plot=True, resume_mnest=Fals
 
     if plot:
         figdir = os.path.join(_test_figures_dir(), 'numpyro_vs_multinest')
+        
         model_mn = fitter_mn.get_model(best_mn)
         model_np = fitter_np.get_model(best_np)
         model_in = fitter_mn.get_model(p_in)
-        map_mn = {
-            name: tab_mn[name][np.argmax(tab_mn['logLike'])]
-            for name in fitter_mn.fitter_param_names
-        }
-        map_np = {
-            name: tab_np[name][np.argmax(tab_np['logLike'])]
-            for name in fitter_np.fitter_param_names
-        }
-        _plot_data_and_both_models(
-            data, model_mn, model_np, model_in, figdir,
-            other_label='NumPyro'
-        )
-        _plot_posterior_comparison(
-            tab_mn, tab_np, fitter_mn.fitter_param_names, figdir,
-            priors=fitter_mn.priors, map_mn=map_mn, map_other=map_np,
-            other_label='NumPyro'
-        )
+
+        map_mn = fitter_mn.get_best_fit(def_best='map')
+        map_np = fitter_np.get_best_fit(def_best='map')
+
+        _plot_data_and_both_models(data, model_mn, model_np, model_in, figdir,
+                                   other_label='NumPyro')
+        _plot_posterior_comparison(tab_mn, tab_np, fitter_mn.fitter_param_names, figdir,
+                                   priors=fitter_mn.priors, map_mn=map_mn, map_other=map_np,
+                                   other_label='NumPyro')
 
     for key in fitter_mn.fitter_param_names:
         assert _relative_param_diff(best_mn[key], best_np[key]) < 0.3
 
     for key in fitter_mn.fitter_param_names:
-        q_mn = model_fitter.weighted_quantile(
-            tab_mn[key], [0.16, 0.5, 0.84], sample_weight=tab_mn['weights']
-        )
+        q_mn = model_fitter.weighted_quantile(tab_mn[key], [0.16, 0.5, 0.84], 
+                                              sample_weight=tab_mn['weights'])
+
         q_np = np.quantile(tab_np[key], [0.16, 0.5, 0.84])
+
         for qmn, qnp in zip(q_mn, q_np):
             # Near-zero parameters need a floor on absolute tolerance.
             atol = max(1e-2, 0.15 * np.abs(qmn))
@@ -3090,6 +3084,123 @@ def test_microlens_solver_numpyro_nuts_vs_multinest(plot=True, resume_mnest=Fals
     lnL_mn = fitter_mn.log_likely(best_mn)
     lnL_np = fitter_np.log_likely(best_np)
     assert np.abs(lnL_mn - lnL_np) < 10
+
+    return None
+
+
+def test_microlens_solver_numpyro_jaxns_vs_multinest(plot=True,
+                                                     resume_mnest=False):
+    """JAXNS nested-sampling posteriors should be close to MultiNest.
+
+    Parameters
+    ----------
+    plot : bool, optional
+        If True, write photometry/astrometry and posterior comparison
+        figures under ``tests/figures/jaxns_vs_multinest/``.
+    resume_mnest : bool, optional
+        Pass through to MultiNest ``resume``.
+
+    Notes
+    -----
+    Uses ``MicrolensSolverNumPyro(sampler='jaxns')``, which calls
+    ``numpyro.contrib.nested_sampling.NestedSampler``. Skips when jaxns /
+    tensorflow-probability are missing, or when jaxns fails to import
+    (e.g. Python 3.14 typing bug).
+    """
+    try:
+        import jaxns  # noqa: F401
+        import tensorflow_probability  # noqa: F401
+    except (ImportError, AttributeError) as error:
+        pytest.skip(f'jaxns unavailable: {error}')
+
+    outdir = './test_jaxns_solver/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = fake_data.fake_data1()
+    model_class = model.PSPL_PhotAstrom_noPar_Param1
+
+    # MultiNest baseline on the same narrow priors.
+    fitter_mn = MicrolensSolver(
+        data,
+        model_class,
+        n_live_points=100,
+        outputfiles_basename=outdir + 'mnest_jax_',
+        sampling_efficiency=0.9,
+        evidence_tolerance=0.8,
+        max_iter=5000,
+        dump_callback=None,
+        verbose=False,
+        resume=resume_mnest,
+    )
+    _apply_pspl_fake_data1_priors(fitter_mn, p_in)
+
+    t0 = time.time()
+    fitter_mn.solve()
+    t_mn = time.time() - t0
+
+    best_mn = fitter_mn.get_best_fit(def_best='median')[0]
+    tab_mn = fitter_mn.load_mnest_results()
+
+    # Direct JAXNS with gradient-guided nested sampling.
+    fitter_jn = MicrolensSolverNumPyro(
+        data,
+        model_class,
+        outputfiles_basename=outdir + 'numpyro_jaxns_',
+        sampler='jaxns',
+        n_live_points=100,
+        max_samples=10000,
+        posterior_samples=1000,
+        dlogz=0.5,
+        gradient_guided=True,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_pspl_fake_data1_priors(fitter_jn, p_in)
+
+    t0 = time.time()
+    fitter_jn.solve()
+    t_jn = time.time() - t0
+
+    print(f'MultiNest runtime: {t_mn:.1f}s, JAXNS runtime: {t_jn:.1f}s')
+
+    best_jn = fitter_jn.get_best_fit(def_best='median')[0]
+    tab_jn = fitter_jn.load_mnest_results()
+
+    # Plots before asserts so figures survive a failed comparison.
+    if plot:
+        figdir = os.path.join(_test_figures_dir(), 'jaxns_vs_multinest')
+
+        model_mn = fitter_mn.get_model(best_mn)
+        model_jn = fitter_jn.get_model(best_jn)
+        model_in = fitter_mn.get_model(p_in)
+
+        map_mn = fitter_mn.get_best_fit(def_best='map')
+        map_jn = fitter_jn.get_best_fit(def_best='map')
+
+        _plot_data_and_both_models(data, model_mn, model_jn, model_in, figdir,
+                                   other_label='JAXNS')
+        _plot_posterior_comparison(
+            tab_mn, tab_jn, fitter_mn.fitter_param_names, figdir,
+            priors=fitter_mn.priors, map_mn=map_mn, map_other=map_jn,
+            other_label='JAXNS')
+
+    for key in fitter_mn.fitter_param_names:
+        assert _relative_param_diff(best_mn[key], best_jn[key]) < 0.3
+
+    for key in fitter_mn.fitter_param_names:
+        q_mn = model_fitter.weighted_quantile(
+            tab_mn[key], [0.16, 0.5, 0.84],
+            sample_weight=tab_mn['weights'])
+        q_jn = np.quantile(tab_jn[key], [0.16, 0.5, 0.84])
+
+        for qmn, qjn in zip(q_mn, q_jn):
+            # Near-zero parameters need a floor on absolute tolerance.
+            atol = max(1e-2, 0.15 * np.abs(qmn))
+            assert np.isclose(qmn, qjn, rtol=0.3, atol=atol)
+
+    lnL_mn = fitter_mn.log_likely(best_mn)
+    lnL_jn = fitter_jn.log_likely(best_jn)
+    assert np.abs(lnL_mn - lnL_jn) < 10
 
     return None
 

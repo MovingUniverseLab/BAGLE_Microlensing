@@ -23,6 +23,9 @@ Rules:
 
 - Do **not** require switching projects or opening the CLI repo.
 - Use the `research-notebook` CLI (prefer `zsh -lic 'research-notebook …'`).
-- Always append to **today's** shared Google Doc via the CLI.
-- Prefer anytime append while session context is fresh; use reconcile for end-of-day completeness (Cursor transcripts + GitHub commits).
+- Always target today’s shared Google Doc via the CLI.
+- Keep the day **time-ordered** (append at end; reconcile backfills by timestamp).
+- In Results, document tests (pass/fail + when), compute/runtime, and plot paths; embed key figures.
+- Prefer anytime append while context is fresh; use reconcile for end-of-day completeness.
 - After append/reconcile, return the Doc URL.
+- Do **not** run `reformat-day` unless the user explicitly asks to rewrite a day.

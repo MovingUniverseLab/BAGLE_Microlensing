@@ -69,7 +69,13 @@ def fetch_commits_for_day(
 
     gh_cfg = cfg.get("github") or {}
     owners = gh_cfg.get("owners") or ["jluastro", "MovingUniverseLab"]
-    authors = gh_cfg.get("authors") or ["jluastro"]
+    authors = list(gh_cfg.get("authors") or [])
+    # Auto-detect the logged-in gh user and always include them.
+    gh_login = _gh_login()
+    if gh_login and gh_login not in authors:
+        authors.append(gh_login)
+    if not authors:
+        authors = ["jluastro"]
     block = set(gh_cfg.get("repo_blocklist") or [])
     active = gh_cfg.get("active_repos") or []
     tz = ZoneInfo(cfg.get("timezone", "America/Los_Angeles"))
@@ -113,6 +119,16 @@ def fetch_commits_for_day(
     out = list(commits.values())
     out.sort(key=lambda c: c.author_date)
     return out
+
+
+def _gh_login() -> str:
+    """Return the authenticated GitHub login, or empty string."""
+
+    proc = _run_gh(["api", "user", "-q", ".login"])
+    if proc.returncode != 0:
+        return ""
+    return (proc.stdout or "").strip()
+
 
 
 def format_github_rollup(date_str: str, commits: list[GithubCommit]) -> str:
@@ -161,13 +177,16 @@ def _search_commits(
 ) -> list[GithubCommit]:
     """Use ``gh search commits`` for author-date on an owner."""
 
-    query = f"author:{author} author-date:{date_str} org:{owner}"
     # Also try user: for personal accounts named like jluastro.
+    # org: fails for user namespaces; user: fails for orgs — try both.
     queries = [
         f"author:{author} author-date:{date_str} org:{owner}",
         f"author:{author} author-date:{date_str} user:{owner}",
+        f"author-date:{date_str} org:{owner}",
+        f"author-date:{date_str} user:{owner}",
     ]
     found: list[GithubCommit] = []
+    seen: set[str] = set()
     for q in queries:
         proc = _run_gh(
             [
@@ -197,16 +216,22 @@ def _search_commits(
             author_info = commit.get("author") or {}
             msg = (commit.get("message") or "").strip()
             sha = item.get("sha") or ""
-            url = item.get("url") or ""
-            # Prefer html_url style.
-            if sha and o and r and not url.startswith("http"):
-                url = f"https://github.com/{o}/{r}/commit/{sha}"
-            elif sha and o and r:
-                url = f"https://github.com/{o}/{r}/commit/{sha}"
+            if not sha or sha in seen:
+                continue
+            # Prefer canonical commit HTML URL.
+            url = f"https://github.com/{o}/{r}/commit/{sha}" if o and r else (
+                item.get("url") or ""
+            )
             login = ""
             a = item.get("author")
             if isinstance(a, dict):
                 login = a.get("login") or ""
+            # When query omitted author:, keep only configured authors if login known.
+            if author and login and login.lower() != author.lower():
+                # Still allow if this query was author-scoped.
+                if q.startswith("author-date:"):
+                    continue
+            seen.add(sha)
             found.append(
                 GithubCommit(
                     owner=o,

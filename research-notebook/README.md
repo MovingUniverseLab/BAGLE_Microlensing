@@ -64,7 +64,10 @@ cat > /tmp/rn_body.md <<'EOF'
 Tested GP residual weighting.
 
 ### Results
-Residuals look consistent with white noise.
+- Tests: `pytest tests/test_jax_likelihood.py -q` → PASS (12 passed) at 2026-07-21 15:02 PT on tempo-6
+- Runtime: ~45s wall time (`astro` env)
+- Plots: yes — `/Users/jlu/.../gp_residuals.png` (embedded)
+- Key numbers: …
 
 ### Reproduce
 ```bash

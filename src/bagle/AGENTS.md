@@ -2,14 +2,18 @@
 
 ## Shell and Python environment
 
-- Use the **`astro`** conda environment — not system Python.
-- Prefer **`zsh -lic '...'`** so your full `~/.zshenv` runs (including `mamba activate astro`, `PARALLAX_CACHE_DIR`, and your `PYTHONPATH` entries). Non-interactive shells skip most of `~/.zshenv` when `PS1` is empty.
+- Use the **`py314`** conda environment
+  (`/Users/jlu/.conda/envs/py314`) — not system Python and not `astro`.
+- Prefer **`zsh -lic '...'`** so your full `~/.zshenv` runs, then
+  **`conda activate /Users/jlu/.conda/envs/py314`** (login shells may still
+  start in `astro`). Set `PARALLAX_CACHE_DIR` and **`PYTHONPATH=src`** as
+  needed. Non-interactive shells skip most of `~/.zshenv` when `PS1` is empty.
 - Set **`PYTHONPATH=src`** for this repo when running BAGLE/tests.
 
 Example:
 
 ```bash
-zsh -lic 'cd /path/to/bagle && PYTHONPATH=src python -m pytest tests/test_jax_physics.py -q'
+zsh -lic 'source /opt/miniforge3/etc/profile.d/conda.sh && conda activate /Users/jlu/.conda/envs/py314 && cd /path/to/bagle && PYTHONPATH=src python -m pytest tests/test_jax_physics.py -q'
 ```
 
 ## Project Structure
@@ -50,7 +54,8 @@ Use NumPy docstring style.
   (also exposed as `jax_physics.build_jax_loglik_fn`).
 - **`bagle.model_fitter_jax`**: MultiNest, PyMC, and NumPyro solvers.
   `MicrolensSolverNumPyro` supports `sampler='nuts'` (NumPyro NUTS) or
-  `sampler='jaxns'` (direct JAXNS). JAXNS extras: `pip install 'bagle[jaxns]'`
-  (needs `jaxns` + `tensorflow-probability`). On Python 3.14, jaxns 2.6.x may
-  fail to import due to a typing bug.
+  `sampler='jaxns'` (`numpyro.contrib.nested_sampling`, jaxns under the hood).
+  JAXNS extras: `pip install 'bagle[jaxns]'` (needs `jaxns` +
+  `tensorflow-probability` as a transitive runtime dep). On Python 3.14,
+  jaxns 2.6.x may fail to import due to a typing bug.
 - Follow the repository pattern

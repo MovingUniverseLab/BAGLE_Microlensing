@@ -2384,6 +2384,8 @@ def test_PSBL_Phot_Par_Param1(plot=False, verbose=False):
 
 
 def test_PSBL_phot_vs_pyLIMA(plot=False):
+    pytest.importorskip('pyLIMA')
+
     # Parameters -- common to ours and pyLIMA
     t0 = 55775.0
     u0_amp = 0.5
@@ -2616,6 +2618,8 @@ def test_PSPL_phot_vs_pyLIMA_parallax(plot=False):
     return
 
 def test_PSPL_phot_vs_pyLIMA_noparallax(plot=False):
+    pytest.importorskip('pyLIMA')
+
     # Parameters: BAGLE style (conversion down later)
     ra = 267.4640833333333
     dec = -34.62555555555556

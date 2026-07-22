@@ -27,6 +27,7 @@ from research_notebook import drive_ops
 from research_notebook.github_commits import fetch_commits_for_day, format_github_rollup
 from research_notebook.notebook import append_entry, now_in_tz
 from research_notebook.reconcile import apply_reconcile, build_reconcile_report
+from research_notebook.reformat import reformat_day_doc
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -102,6 +103,12 @@ def main(argv: list[str] | None = None) -> int:
     p_gh = sub.add_parser("github-day", help="List today's GitHub commits")
     p_gh.add_argument("--date", default=None)
 
+    p_reformat = sub.add_parser(
+        "reformat-day",
+        help="Rewrite a daily Doc with clean headings, bullets, and sections",
+    )
+    p_reformat.add_argument("--date", default=None)
+
     sub.add_parser("status", help="Show config / auth status")
 
     args = parser.parse_args(argv)
@@ -150,6 +157,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_append(docs, drive, sheets, args)
     if args.cmd == "reconcile-day":
         return _cmd_reconcile(docs, drive, sheets, args)
+    if args.cmd == "reformat-day":
+        return _cmd_reformat(docs, drive, sheets, args)
 
     print(f"Unknown command: {args.cmd}", file=sys.stderr)
     return 2
@@ -275,6 +284,19 @@ def _cmd_github_day(args) -> int:
     commits = fetch_commits_for_day(cfg, date_str)
     print(format_github_rollup(date_str, commits))
     print(f"Total: {len(commits)} commit(s)")
+    return 0
+
+
+def _cmd_reformat(docs, drive, sheets, args) -> int:
+    cfg = load_config()
+    date_str = _date_or_today(cfg, args.date)
+    print(f"Reformatting daily Doc for {date_str}…")
+    result = reformat_day_doc(docs, drive, sheets, cfg, date_str)
+    print(result["doc_url"])
+    print(
+        f"Rewrote {result['n_blocks']} blocks "
+        f"({result['n_requests']} Docs API requests)"
+    )
     return 0
 
 

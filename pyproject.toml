@@ -34,9 +34,6 @@ dependencies = ["numpy>=1.24",
                 "tinygp>=0.3",
                 "numpyro>=0.15"]
 
-[project.optional-dependencies]
-jaxns = ["jaxns>=2.5", "tensorflow-probability>=0.24"]
-
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3.11",
@@ -44,6 +41,8 @@ classifiers = [
     "Intended Audience :: Developers"
 ]
 
+[project.optional-dependencies]
+jaxns = ["jaxns>=2.5", "tensorflow-probability>=0.24"]
 
 [project.urls]
 Homepage = "https://github.com/MovingUniverseLab/BAGLE_Microlensing"

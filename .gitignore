@@ -1,3 +1,6 @@
+# Local research-notebook CLI checkout (canonical repo is ~/code/python/research-notebook)
+research-notebook/
+
 ._*
 __pycache__/
 test_pspl_*/
