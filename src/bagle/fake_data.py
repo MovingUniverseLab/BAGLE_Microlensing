@@ -808,7 +808,7 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
 
 def fake_data_FSBL(outdir='', outroot='fsbl_',
                    raL=259.5, decL=-29.0,
-                   mLp=10, mLs=10, t0=57755,
+                   mLp=10, mLs=10, t0=57755, 
                    xS0_E=0, xS0_N=0.001, beta=0.5,
                    muL_E=0, muL_N=0, muS_E=4, muS_N=0,
                    radiusS = 2e-6, n_outline = 20,
@@ -875,15 +875,15 @@ def fake_data_FSBL(outdir='', outroot='fsbl_',
 
     start = time.time()
     if parallax:
-        fsbl = model.FSBL_caustics_PhotAstrom_Par_Param1(mLp, mLs, t0, radiusS, xS0_E, xS0_N,
+        fsbl = model.FSBL_PhotAstrom_Par_Param1(mLp, mLs, t0, radiusS, xS0_E, xS0_N,
                                                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                                                 sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
                                                 raL=raL, decL=decL, n_outline = n_outline, root_tol=1e-8)
     else:
-        fsbl = model.FSBL_caustics_PhotAstrom_noPar_Param1(mLp, mLs, t0, radiusS, xS0_E, xS0_N,
+        fsbl = model.FSBL_PhotAstrom_noPar_Param1(mLp, mLs, t0, radiusS, xS0_E, xS0_N,
                                                   beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                                                  sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls], n_outline =n_outline, dmag_Lp_Ls = 20,
-                                                  root_tol=1e-8)
+                                                  sep, alpha, [b_sff], [mag_src], [dmag_Lp_Ls],
+                                                  n_outline=n_outline, root_tol=1e-8)
 
     # Simulate
     # photometric observations every 1 day and
@@ -908,11 +908,9 @@ def fake_data_FSBL(outdir='', outroot='fsbl_',
 
     t_mod = np.arange(t_pho.min(), t_pho.max(), 1)
     print(len(t_pho))
-    i_pho, z_parity, A_pho = fsbl.get_all_arrays(t_pho)
-    print("Here")
-    i_ast, z_parity, A_ast = fsbl.get_all_arrays(t_ast)
-    i_mod, z_parity, A_mod = fsbl.get_all_arrays(t_mod)
-    print("Here")
+    i_pho, z_parity, A_pho, _ = fsbl.get_all_arrays(t_pho)
+    i_ast, z_parity, A_ast, _ = fsbl.get_all_arrays(t_ast)
+    i_mod, z_parity, A_mod, _ = fsbl.get_all_arrays(t_mod)
     imag_pho = fsbl.get_photometry(t_pho, amp_arr=A_pho)
     imag_mod = fsbl.get_photometry(t_mod, amp_arr=A_mod)
 
@@ -4161,8 +4159,8 @@ def fake_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
     start = time.time()
     psbl = model.PSBL_PhotAstrom_noPar_EllOrbs_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
-        beta, muL_E, muL_N, omega, big_omega, i, e, p, tp, aleph, aleph_sec, muS_E, muS_N, dL, dS,
-        alpha, [b_sff], [mag_src1], [dmag_Lp_Ls1],
+        beta, muL_E, muL_N, omega, big_omega, i, e,  tp, aleph + aleph_sec, muS_E, muS_N, dL, dS,
+        [b_sff], [mag_src1], [dmag_Lp_Ls1],
         raL=raL, decL=decL, root_tol=root_tol)
 
     # Simulate
@@ -4323,13 +4321,15 @@ def fake_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
 
     params['b_sff'] = np.array([b_sff])
     params['mag_src1'] = np.array([mag_src1])
-    params['dmag_Lp_Ls'] = np.array([dmag_Lp_Ls])
-    params['dmag_Lp_Ls1'] = dmag_Lp_Ls
+    params['dmag_Lp_Ls'] = np.array([dmag_Lp_Ls1])
+    params['dmag_Lp_Ls1'] = dmag_Lp_Ls1
 
     params['raL'] = raL
     params['decL'] = decL
 
     return data, params, psbl
+
+
 
 
 def fake_data_noPar_PSBL_4(outdir='', outroot='psbl',

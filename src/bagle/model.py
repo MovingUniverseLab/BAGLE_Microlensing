@@ -5263,6 +5263,43 @@ class PSBL(PSPL):
 
         return amp_arr
 
+    def rescale_complex_pos_old(self, w, z1, z2):
+        """
+        Make sure everything is roughly centered on the origin
+        in a 1 x 1 box.
+        """
+        m1 = copy.deepcopy(self.m1)
+        m2 = copy.deepcopy(self.m2)
+
+        w = np.asarray(w)
+        z1 = np.asarray(z1)
+        z2 = np.asarray(z2)
+        single_source = w.ndim == 1
+        if single_source:
+            w = w[:, np.newaxis]
+
+        pos = np.concatenate([w, z1[:, np.newaxis], z2[:, np.newaxis]], axis=1)
+
+        shift = np.average(pos, axis=1)
+        w -= shift[:, np.newaxis]
+        z1 -= shift
+        z2 -= shift
+
+        xscale = np.max(pos.real, axis=1) - np.min(pos.real, axis=1)
+        yscale = np.max(pos.imag, axis=1) - np.min(pos.imag, axis=1)
+        xyscale = np.column_stack([xscale, yscale])
+        scale = 1 / np.max(xyscale, axis=1)
+        w *= scale[:, np.newaxis]
+        z1 *= scale
+        z2 *= scale
+        m1 *= scale ** 2
+        m2 *= scale ** 2
+
+        if single_source:
+            w = w[:, 0]
+
+        return w, z1, z2, m1, m2, scale, shift
+
     def rescale_complex_pos(self, w, z1, z2):
         """
         Make sure everything is roughly centered on the origin
@@ -5291,7 +5328,7 @@ class PSBL(PSPL):
         pr, pi = jnp.real(pos), jnp.imag(pos)
         xscale = jnp.max(pr, axis=1) - jnp.min(pr, axis=1)
         yscale = jnp.max(pi, axis=1) - jnp.min(pi, axis=1)
-        xyscale = jnp.stack([xscale, yscale], axis=1)
+        xyscale = jnp.column_stack([xscale, yscale])
         scale = 1.0 / jnp.max(xyscale, axis=1)
         sc = scale[:, jnp.newaxis] if w.ndim > 1 else scale
         w = w * sc
@@ -17620,7 +17657,9 @@ class BSBL(PSBL):
         # Calculate the average spread to get the scale.
         xscale = np.max(pos.real, axis=1) - np.min(pos.real, axis=1)
         yscale = np.max(pos.imag, axis=1) - np.min(pos.imag, axis=1)
-        xyscale = np.concatenate([xscale, yscale]).reshape(len(xscale), 2)
+        #xyscale = np.concatenate([xscale, yscale]).reshape(len(xscale), 2)
+        # The old code was mis-stacking and using the non-optimal scaling.
+        xyscale = np.column_stack([xscale, yscale])
         scale = 1 / np.max(xyscale, axis=1)
         w *= scale[:, np.newaxis]
         z1 *= scale
@@ -17629,6 +17668,7 @@ class BSBL(PSBL):
         m2 *= scale ** 2
 
         return w, z1, z2, m1, m2, scale, shift
+
 
     def get_complex_pos(self, t, filt_idx=0):
         """
@@ -22469,6 +22509,10 @@ class FSBL(PSBL):
         """
         Solve binary lens equation. Returns (n_limb, 5) complex. 
         """
+        w = jnp.atleast_1d(jnp.asarray(w, dtype=jnp.complex128))
+        z1 = jnp.asarray(z1, dtype=jnp.complex128).reshape(())
+        z2 = jnp.asarray(z2, dtype=jnp.complex128).reshape(())
+
         def solve_one(w_i, z1_i, z2_i, m1_i, m2_i):
             a5, a4, a3, a2, a1, a0 = self.binary_lens_poly_coeffs(w_i, z1_i, z2_i, m1_i, m2_i)
             return self.quintic_roots(a5, a4, a3, a2, a1, a0)
@@ -22491,44 +22535,21 @@ class FSBL(PSBL):
         J = 1 - jnp.abs(dwdz)**2
         return J, jnp.sign(jnp.real(J))
 
-    def rescale_complex_pos(self, w, z1, z2):
-        """
-        Make sure everything is roughly centered on the origin
-        in a 1 x 1 box.
-        """
-        w = jnp.asarray(w, dtype=jnp.complex128)
-        z1 = jnp.asarray(z1, dtype=jnp.complex128)
-        z2 = jnp.asarray(z2, dtype=jnp.complex128)
-        m1 = jnp.array(jnp.asarray(self.m1, dtype=jnp.float64), copy=True)
-        m2 = jnp.array(jnp.asarray(self.m2, dtype=jnp.float64), copy=True)
-
-        # Put the positions of the source and lenses into
-        # an array, so we can calculate the average position
-        # and "width" of points at each time, in order to center
-        # and scale them.
-        pos = jnp.vstack([w, z1, z2]).T
-
-        # Calculate the average position to get the shift.
-        shift = jnp.average(pos, axis=1)
-        s = shift[:, jnp.newaxis] if w.ndim > 1 else shift
-        w = w - s
-        z1 = z1 - s
-        z2 = z2 - s
-
-        # Calculate the average spread to get the scale.
-        pr, pi = jnp.real(pos), jnp.imag(pos)
-        xscale = jnp.max(pr, axis=1) - jnp.min(pr, axis=1)
-        yscale = jnp.max(pi, axis=1) - jnp.min(pi, axis=1)
-        xyscale = jnp.stack([xscale, yscale], axis=1)
-        scale = 1.0 / jnp.max(xyscale, axis=1)
-        sc = scale[:, jnp.newaxis] if w.ndim > 1 else scale
-        w = w * sc
-        z1 = z1 * sc
-        z2 = z2 * sc
-        m1 = m1 * (scale ** 2)
-        m2 = m2 * (scale ** 2)
-
-        return w, z1, z2, m1, m2, scale, shift
+    def get_complex_pos_einstein(self, t, filt_idx=0):
+        """Source/lens complex positions in Einstein radii for contour integration."""
+        if not isinstance(t, np.ndarray):
+            raise RuntimeError("time must be a 1D numpy array")
+        if getattr(self, 'astrometryFlag', False):
+            u_vec = self.get_u(t, filt_idx=filt_idx)
+            w = jnp.asarray(u_vec[:, 0] + 1j * u_vec[:, 1], dtype=jnp.complex128)
+            lens_asts = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+            la1 = lens_asts[0, :, :] / self.thetaE_amp * 1e3
+            la2 = lens_asts[1, :, :] / self.thetaE_amp * 1e3
+            z1_abs = jnp.asarray(la1[:, 0] + 1j * la1[:, 1], dtype=jnp.complex128)
+            z2_abs = jnp.asarray(la2[:, 0] + 1j * la2[:, 1], dtype=jnp.complex128)
+            z_cm = 0.5 * (z1_abs + z2_abs)
+            return w, z1_abs - z_cm, z2_abs - z_cm
+        return PSBL_Phot.get_complex_pos(self, t, filt_idx=filt_idx)
 
     #def polygonal_area(self, pts, valid, theta):
     #    """
@@ -22601,7 +22622,7 @@ class FSBL(PSBL):
         return u_vec
 
 
-    def get_amplification(self, t, filt_idx=0, amp_arr=None):
+    def get_amplification(self, t, amp_arr=None, filt_idx=0):
         """
         Get an array of the photometric amplifications at the input times.
 
@@ -22609,16 +22630,19 @@ class FSBL(PSBL):
         ----------
         t : array_like
             Array of times in MJD.DDD
+        amp_arr : array_like, optional
+            Precomputed amplification array from :meth:`get_all_arrays`.
         filt_idx : int, optional
             Index of the astrometric filter or data set.
 
         """
         if amp_arr is None:
             img_arr, z_parity, amp_arr, _ = self.get_all_arrays(t, filt_idx=filt_idx)
-            amp = amp_arr
+        amp_arr = jnp.asarray(amp_arr)
+        if amp_arr.ndim > 1:
+            amp = jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=-1)
         else:
             amp = amp_arr
-        # Magnification is always >= 1 for finite source; keep as-is (no sign flip).
         return amp
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
@@ -22979,6 +23003,9 @@ class FSBL(PSBL):
     def images_on_source_limb(self, w0, z1, z2, m1, m2, rho, npts_limb, niter):
         """
         """
+        w0 = jnp.asarray(w0, dtype=jnp.complex128).reshape(())
+        z1 = jnp.asarray(z1, dtype=jnp.complex128).reshape(())
+        z2 = jnp.asarray(z2, dtype=jnp.complex128).reshape(())
         npts_limb = int(npts_limb)
         npts_init = max(2, int(0.5 * npts_limb))
         theta = jnp.linspace(-jnp.pi, jnp.pi, npts_init - 1, endpoint=False)
@@ -23024,8 +23051,7 @@ class FSBL(PSBL):
 
     def magnification_one(self, w0, z1, z2, m1, m2, rho):
         """
-        Extended-source magnification for one time step.
-
+        Extended-source magnification for one time step. Follows Brolic's caustics code.
         Returns
         -------
         z_out, z_p_out, mag, individual_area
@@ -23034,6 +23060,9 @@ class FSBL(PSBL):
             the total magnification, broadcast to that grid; ``individual_area`` is
             the per image-track signed area / (πρ²), broadcast along axis 0.
         """
+        w0 = jnp.asarray(w0, dtype=jnp.complex128).reshape(())
+        z1 = jnp.asarray(z1, dtype=jnp.complex128).reshape(())
+        z2 = jnp.asarray(z2, dtype=jnp.complex128).reshape(())
         npts_limb = int(self.n_outline)
         niter = int(self.fsbl_niter)
 
@@ -23086,57 +23115,224 @@ class FSBL(PSBL):
         mag = jnp.broadcast_to(mag_total, (ntheta, 5))
         return z_out, z_p_out, mag, individual_area
 
+    def jacobian_cq(self, z, a, m1, m2, yc, mode='quad'):
+        """VBM ``_Jacobians3`` / ``_Jacobians4`` (for BinaryMag2 tests)."""
+        dza = z - a
+        za2 = dza * dza
+        zb2 = z * z
+        j1 = m1 / za2 + m2 / zb2
+        j1c = jnp.conj(j1)
+        dj = 1.0 - j1 * j1c
+        j2 = -2.0 * (m1 / (za2 * dza) + m2 / (zb2 * z))
+        if mode == 'quad':
+            j3 = 6.0 * (m1 / (za2 * za2) + m2 / (zb2 * zb2))
+            dj2 = dj.real ** 2
+            j1c2 = j1c * j1c
+            j3 = j3 * j1c2
+            ob2 = (j2.real ** 2 + j2.imag ** 2) * (6.0 - 6.0 * dj.real + dj2)
+            j2term = j2 * j2 * j1c2 * j1c
+            num = jnp.abs(ob2 - 6.0 * j2term.real - 2.0 * j3.real * dj.real)
+            num = num + 3.0 * jnp.abs(j2term.imag)
+            den = jnp.abs(dj.real * dj2 * dj2)
+            return 0.5 * num / jnp.maximum(den, 1e-300)
+        zaltc = yc + m1 / dza + m2 / z
+        za2alt = zaltc - a
+        jaltc = m1 / (za2alt * za2alt) + m2 / (zaltc * zaltc)
+        jalt = jnp.conj(jaltc)
+        jjalt2 = 1.0 - j1c * jalt
+        j3 = j2 * j1c * jjalt2
+        j3 = (j3 - jnp.conj(j3) * jalt) / (jjalt2 * jjalt2 * dj.real)
+        return jnp.where(dj.real < -10.0, -1.0, j3.real ** 2 + j3.imag ** 2)
+
+    def corrquad_from_roots(self, zr, good, a, m1, m2, y):
+        """VBM ``NewImages`` corrquad / corrquad2 at the source center."""
+        dlmin = 1.0e-4
+        yc = jnp.conj(y)
+        worst = jnp.argsort(good)[::-1]
+        w1, w2, w3 = worst[0], worst[1], worst[2]
+        cq_all = vmap(
+            lambda z: self.jacobian_cq(z, a, m1, m2, yc, mode='quad')
+        )(zr)
+        cq_all = jnp.where(jnp.isfinite(zr.real) & (good >= 0.0), cq_all, 0.0)
+        idx = jnp.arange(5)
+        mask3 = (idx != w1) & (idx != w2)
+        corr3 = jnp.sum(jnp.where(mask3, cq_all, 0.0))
+        cq2a = self.jacobian_cq(zr[w1], a, m1, m2, yc, mode='alt')
+        cq2b = self.jacobian_cq(zr[w2], a, m1, m2, yc, mode='alt')
+        corr2_3 = jnp.where(
+            (cq2a < 0.0) | (cq2b < 0.0), 0.0, jnp.maximum(cq2a, cq2b)
+        )
+        corr5 = jnp.sum(cq_all)
+        three_good = good[w2] * dlmin > good[w3] + 1.0e-12
+        return lax.cond(
+            three_good,
+            lambda: (corr3, corr2_3),
+            lambda: (corr5, jnp.array(0.0, dtype=jnp.float64)),
+        )
+
+    def binary_mag2_gate(self, y1v, y2v, s, q):
+        """
+        VBM ``BinaryMag0`` / ``NewImages`` corrquad, corrquad2, safedist.
+
+        Uses the same ``(s, q, y1, |y2|)`` frame as VBM ``BinaryMag2``.
+        """
+        sf = jnp.asarray(s, dtype=jnp.float64)
+        qf = jnp.asarray(q, dtype=jnp.float64)
+        a = jnp.where(qf < 1.0, -sf, sf) + jnp.array(0j, dtype=jnp.complex128)
+        qv = jnp.where(qf < 1.0, qf, 1.0 / qf)
+        m1 = 1.0 / (1.0 + qv)
+        m2 = qv * m1
+        y1f = jnp.asarray(y1v, dtype=jnp.float64)
+        y2f = jnp.asarray(y2v, dtype=jnp.float64)
+        y2a = jnp.abs(y2f)
+        yi = y1f + 1j * y2a
+        y = yi + a * m1
+        a5, a4, a3, a2, a1, a0 = self.binary_lens_poly_coeffs(y, a, jnp.array(0j, dtype=jnp.complex128), m1, m2)
+        zr = self.quintic_roots(a5, a4, a3, a2, a1, a0)
+        good = jnp.abs((y - zr) + m1 / (jnp.conj(zr) - a) + m2 / jnp.conj(zr))
+        corrquad, corrquad2 = self.corrquad_from_roots(zr, good, a, m1, m2, y)
+        safedist = jnp.where(qf < 0.01, 
+        (y1f + (jnp.real(a) - 1.0 / jnp.real(a)) * m1) ** 2 + y2f ** 2 - 4.0 * jnp.sqrt(jnp.maximum(qf, 0.0)) / (jnp.real(a) ** 2),
+            10.0) 
+
+        return corrquad, corrquad2, safedist
+
+    def binary_mag2_use_contour(self, y1v, y2v, rho, q, s, Tol):
+        """
+        VBM ``BinaryMag2`` branch: False → ``BinaryMag0`` (PSBL), True → contour.
+        """
+        corrquad, corrquad2, safedist = self.binary_mag2_gate(y1v, y2v, s, q)
+        corrquad = jnp.where(jnp.isfinite(corrquad), corrquad, 0.0)
+        corrquad2 = jnp.where(jnp.isfinite(corrquad2), corrquad2, 0.0)
+        rho2 = rho * rho
+        corrquad = corrquad * 6.0 * (rho2 + 1.0e-4 * Tol)
+        corrquad2 = corrquad2 * 256.0 * (rho2 + 1.0e-8)
+        use_ps = (corrquad < Tol) & (corrquad2 < 1.0) & (safedist > 4.0 * rho2)
+        return ~use_ps
+
+    def _magnification_point(self, w0, z1, z2, m1, m2):
+        """Point-source magnification at one source position."""
+        w_arr = jnp.atleast_1d(jnp.asarray(w0, dtype=jnp.complex128))
+        z1_a = jnp.broadcast_to(jnp.asarray(z1, dtype=jnp.complex128), w_arr.shape)
+        z2_a = jnp.broadcast_to(jnp.asarray(z2, dtype=jnp.complex128), w_arr.shape)
+        z_all = self.get_image_pos_arr_fast(
+            w_arr, z1_a, z2_a, m1, m2, check_sols=True
+        )
+        valid = jnp.isfinite(z_all.real)
+        jac, _parity = self.det_and_jac(z_all, z1_a, z2_a, m1, m2)
+        return jnp.sum(jnp.where(valid, 1.0 / jnp.abs(jac), 0.0), axis=-1)
+
+    def fsbl_ci_geometry(self, t, filt_idx=0):
+        """Einstein-frame geometry for FSBL contour / multipole paths."""
+        w, z1, z2 = self.get_complex_pos_einstein(t, filt_idx=filt_idx)
+        w = jnp.asarray(w, dtype=jnp.complex128)
+        z1 = jnp.asarray(z1, dtype=jnp.complex128)
+        z2 = jnp.asarray(z2, dtype=jnp.complex128)
+        n = len(t)
+        if self.astrometryFlag:
+            m1f = self.mLp / (self.mLp + self.mLs)
+            m2f = self.mLs / (self.mLp + self.mLs)
+        else:
+            m1f = self.m1
+            m2f = self.m2
+        m1 = jnp.broadcast_to(jnp.asarray(m1f, dtype=jnp.float64), n)
+        m2 = jnp.broadcast_to(jnp.asarray(m2f, dtype=jnp.float64), n)
+        return w, z1, z2, m1, m2
+
     def get_all_arrays_CI(self, t, filt_idx=0):
         """
-        Same layout as :meth:`FSBL.get_all_arrays_CI`, but magnification uses
-        the caustics contour pipeline.
+        Finite-source magnification with VBM ``BinaryMag2`` routing.
+
+        r-tests pass → :meth:`PSBL.get_all_arrays` (``BinaryMag0``);
+        r-tests fail → caustics contour (:meth:`magnification_one`, ``BinaryMagDark``).
         """
-        u_vec = self.get_u(t)
+        Tol = 1e-3
         if self.astrometryFlag:
             rho = self.radiusS * 1e3 / self.thetaE_amp
-            lens_asts_1 = self.get_resolved_lens_astrometry(t)[0, :, :] / self.thetaE_amp * 1e3
-            lens_asts_2 = self.get_resolved_lens_astrometry(t)[1, :, :] / self.thetaE_amp * 1e3
-
-        else: 
-            rho = self.radiusS
-            lens_asts_1 = self.get_resolved_lens_astrometry(t)[0, :, :] 
-            lens_asts_2 = self.get_resolved_lens_astrometry(t)[1, :, :] 
-        w = jnp.atleast_1d(jnp.asarray(u_vec[:, 0] + 1j * u_vec[:, 1], dtype=jnp.complex128))
-
-        z1_abs = jnp.asarray(lens_asts_1[:, 0] + 1j * lens_asts_1[:, 1], dtype=jnp.complex128)
-        z2_abs = jnp.asarray(lens_asts_2[:, 0] + 1j * lens_asts_2[:, 1], dtype=jnp.complex128)
-
-        z_cm = 0.5 * (z1_abs + z2_abs)
-        z1 = z1_abs - z_cm
-        z2 = z2_abs - z_cm
-        if self.astrometryFlag:
-            m1 = jnp.asarray(self.mLp / self.mL, dtype=jnp.float64)
-            m2 = jnp.asarray(self.mLs / self.mL, dtype=jnp.float64)
         else:
-            m1 = self.m1
-            m2 = self.m2
+            rho = self.radiusS
 
-        w = jnp.atleast_1d(jnp.asarray(w, dtype=jnp.complex128))
-        z1 = jnp.atleast_1d(jnp.asarray(z1, dtype=jnp.complex128))
-        z2 = jnp.atleast_1d(jnp.asarray(z2, dtype=jnp.complex128))
-        n = w.shape[0]
-        z1 = jnp.broadcast_to(z1.ravel()[0] if z1.size == 1 else z1, n)
-        z2 = jnp.broadcast_to(z2.ravel()[0] if z2.size == 1 else z2, n)
-        m1 = jnp.broadcast_to(jnp.atleast_1d(jnp.asarray(m1, dtype=jnp.float64)), n)
-        m2 = jnp.broadcast_to(jnp.atleast_1d(jnp.asarray(m2, dtype=jnp.float64)), n)
+        rho_f = float(np.asarray(rho).reshape(()))
+        q = float(self.q)
+        s = float(self.sep)
+        n = len(t)
+            
+        if self.astrometryFlag:
+            images_ps, amp_arr_ps = PSBL_PhotAstrom.get_all_arrays(self, t, filt_idx=filt_idx, check_sols=True, rescale=True)
+        else:
+            images_ps, amp_arr_ps = PSBL.get_all_arrays(self, t, filt_idx=filt_idx, check_sols=True, rescale=True)
 
+        # PSBL returns (n, 5); reshape to FSBL layout (n, n_outline, 5).
+        n_outline = int(getattr(self, 'n_outline', 1))
+        images_ps = np.asarray(images_ps, dtype=np.complex128)
+        amp_arr_ps = np.asarray(amp_arr_ps, dtype=np.float64)
+        if images_ps.ndim == 2:
+            images_ps_fs = np.zeros((n, n_outline, 5), dtype=np.complex128)
+            images_ps_fs[:, 0, :] = images_ps
+            images_ps = images_ps_fs
+        if amp_arr_ps.ndim == 2:
+            amp_arr_ps_fs = np.zeros((n, n_outline, 5), dtype=np.float64)
+            amp_arr_ps_fs[:, 0, :] = amp_arr_ps
+            amp_arr_ps = amp_arr_ps_fs
+
+        amps = np.array(
+            jnp.sum(jnp.where(jnp.isfinite(amp_arr_ps), amp_arr_ps, 0.0), axis=(-2, -1)),
+            dtype=np.float64,
+            copy=True,
+        )
+
+        if rho_f == 0.0:
+            z_parity = jnp.zeros((n, n_outline, 5), dtype=jnp.complex128)
+            return images_ps, z_parity, jnp.asarray(amps), jnp.asarray(amp_arr_ps)
+
+        u_vec = self.get_u(t)
+        # Source-lens separation in theta_E units
+        w_gate = jnp.asarray(u_vec[:, 0] + 1j * u_vec[:, 1], dtype=jnp.complex128)
+
+        # For each epoch, binary_mag2_use_contour runs VBM's test. 
+        need = vmap(lambda w_i: self.binary_mag2_use_contour(jnp.real(w_i), jnp.imag(w_i), rho_f, q, s, Tol), in_axes=(0,))(w_gate)
+        need_np = np.asarray(need, dtype=bool)
+        ps_mask = ~need_np
+
+        # If all epochs pass the VBM test, use the PSBL code. 
+        if not need_np.any():
+            z_parity = jnp.zeros((n, n_outline, 5), dtype=jnp.complex128)
+            return images_ps, z_parity, jnp.asarray(amps), jnp.asarray(amp_arr_ps)
+
+        # Computed when at least one epoch fails the gate. 
+        w, z1, z2, m1, m2 = self.fsbl_ci_geometry(t, filt_idx=filt_idx)
+
+        # If all epochs fail, then compute the magnification for all epochs. 
+        if need_np.all():
+            z_rel, z_parity, mag, individual_area = vmap(
+                lambda w_i, z1_i, z2_i, m1_i, m2_i: self.magnification_one(w_i, z1_i, z2_i, m1_i, m2_i, rho),
+                in_axes=(0, 0, 0, 0, 0),
+            )(w, z1, z2, m1, m2)
+            amps = np.asarray(mag[:, 0, 0], dtype=np.float64)
+            return z_rel, z_parity, jnp.asarray(amps), individual_area
+
+        # Run CI on failed epochs only. PSBL values in amps[~idx] are ignored. 
+        idx = np.where(need_np)[0]
         z_rel, z_parity, mag, individual_area = vmap(
             lambda w_i, z1_i, z2_i, m1_i, m2_i: self.magnification_one(
                 w_i, z1_i, z2_i, m1_i, m2_i, rho
             ),
             in_axes=(0, 0, 0, 0, 0),
-        )(w, z1, z2, m1, m2)
+        )(w[idx], z1[idx], z2[idx], m1[idx], m2[idx])
+        amps[idx] = np.asarray(mag[:, 0, 0], dtype=np.float64)
 
-        # One total amplification per time (``mag`` is constant on the (ntheta, 5) grid).
-        amps = mag[:, 0, 0]
-        images = z_rel + z_cm[:, None, None]
-
-        return images, z_parity, amps, individual_area
+        # Build everything again. 
+        n_pad = z_rel.shape[1]
+        z_out = np.zeros((n, n_pad, 5), dtype=np.complex128)
+        z_p_out = np.zeros((n, n_pad, 5), dtype=np.complex128)
+        ind_out = np.zeros((n, n_pad, 5), dtype=np.float64)
+        z_out[idx] = np.asarray(z_rel)
+        z_p_out[idx] = np.asarray(z_parity)
+        ind_out[idx] = np.asarray(individual_area)
+        # images_ps / amp_arr_ps already (n, n_outline, 5); copy PS epochs.
+        z_out[ps_mask] = images_ps[ps_mask]
+        ind_out[ps_mask] = amp_arr_ps[ps_mask]
+        return (jnp.asarray(z_out), jnp.asarray(z_p_out), jnp.asarray(amps), jnp.asarray(ind_out))
 
  
 class FSBL_Phot(FSBL, PSPL_Phot):
@@ -23373,18 +23569,17 @@ class FSBL_Phot(FSBL, PSPL_Phot):
                 t, filt_idx=filt_idx
             )
 
-        # In units of Einstein radii.
-        xS_lensed_pos = image_arr.view('(2,)float')
-
-
-        #xS_lensed_pos = jnp.stack(
-         #   [jnp.real(image_arr), jnp.imag(image_arr)],
-          #  axis=-1
-        #)
+        image_arr = np.asarray(image_arr)
+        xS_lensed_pos = np.stack(
+            [np.real(image_arr), np.imag(image_arr)],
+            axis=-1,
+        )
+        if xS_lensed_pos.ndim == 4:
+            xS_lensed_pos = xS_lensed_pos[:, 0, :, :]
 
         return xS_lensed_pos
 
-class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
+class FSBL_PhotAstrom(FSBL, PSBL_PhotAstrom):
     """
     Contains methods for model FSPL photometry + astrometry.
     This is a Data-type class in our hierarchy. It is abstract and should not
@@ -23767,7 +23962,18 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
             img_arr, parity_arr, amp_arr, _ = self.get_all_arrays(
                 t, filt_idx=filt_idx
             )
-        xS_lensed_pos = img_arr
+            image_arr = img_arr
+
+        image_arr = np.asarray(image_arr)
+        # Complex (...,) → float (..., 2) with last axis [E, N], matching PSBL.
+        xS_lensed_pos = np.stack(
+            [np.real(image_arr), np.imag(image_arr)],
+            axis=-1,
+        )
+        # FSBL stores (n, n_outline, 5[, 2]); plotters expect (n, 5, 2).
+        # Use outline index 0 (PSBL images live there on the BinaryMag2 fast path).
+        if xS_lensed_pos.ndim == 4:
+            xS_lensed_pos = xS_lensed_pos[:, 0, :, :]
 
         return xS_lensed_pos
 
@@ -23938,9 +24144,21 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
         """
         if (image_arr is None) or (amp_arr is None):
             image_arr, _parity, amp_arr, indv_amp = self.get_all_arrays(t, filt_idx=filt_idx)
+        else:
+            image_arr = np.asarray(image_arr, dtype=np.complex128)
+            amp_arr = np.asarray(amp_arr, dtype=np.float64)
+            # 1D amp is total magnification; need per-image weights from get_all_arrays.
+            if amp_arr.ndim == 1:
+                _, _, _, indv_amp = self.get_all_arrays(t, filt_idx=filt_idx)
+            else:
+                indv_amp = amp_arr
     
         image_arr = np.asarray(image_arr, dtype=np.complex128)
         indv_amp = np.asarray(indv_amp, dtype=np.float64)
+        if image_arr.ndim == 2:
+            image_arr = image_arr[:, np.newaxis, :]
+        if indv_amp.ndim == 2:
+            indv_amp = indv_amp[:, np.newaxis, :]
         fS = mag2flux(self.mag_src[filt_idx])
 
         # Drop cells with non-finite image position so nothing NaN enters np.sum
@@ -24361,6 +24579,7 @@ class FSBL_PhotAstromParam1(PSPL_Param):
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
+        self.q = self.mLs / self.mLp
         self.radiusS = radiusS  # arcsec
         self.t0 = t0
         self.n_outline = n_outline
@@ -35228,4 +35447,3 @@ def cluster(image, R):
             loops += 1
             total += 1
     return (np.array(clusters), np.array(centres))
-
