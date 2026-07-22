@@ -226,11 +226,24 @@ def build_explicit_jax_loglik_fn(fitter):
         phot_idx = (
             mapping[ast_idx] if ast_idx < len(mapping) else ast_idx
         )
-        # Get b_sff index if photometry is available, else None
-        idx_b = (
-            _jax_param_index(names, 'b_sff', phot_idx)
-            if need_phot else None
-        )
+        # Get b_sff / mag_src / dmag indices when photometry is available.
+        idx_b = None
+        idx_mag_src = None
+        idx_dmag = None
+        if need_phot:
+            idx_b = _jax_param_index(names, 'b_sff', phot_idx)
+            phot_names = tuple(getattr(model_class, 'phot_param_names', ()))
+            if 'mag_src' in phot_names:
+                idx_mag_src = _jax_param_index(names, 'mag_src', phot_idx)
+            elif 'mag_base' in phot_names:
+                idx_mag_src = _jax_param_index(names, 'mag_base', phot_idx)
+            if 'dmag_Lp_Ls' in phot_names:
+                try:
+                    idx_dmag = _jax_param_index(
+                        names, 'dmag_Lp_Ls', phot_idx
+                    )
+                except ValueError:
+                    idx_dmag = None
 
         # Compute data weight for this astrometric dataset (default 1.0)
         weight_idx = fitter.n_phot_sets + ast_idx
@@ -244,7 +257,7 @@ def build_explicit_jax_loglik_fn(fitter):
             np.asarray(fitter.data[f'ypos{ast_idx + 1}']),
             np.asarray(fitter.data[f'xpos_err{ast_idx + 1}']),
             np.asarray(fitter.data[f'ypos_err{ast_idx + 1}']),
-            pvec, idx_b, weight
+            pvec, idx_b, idx_mag_src, idx_dmag, weight
         ))
 
     # Indices that select "base" parameters out of the full input parameter vector
@@ -294,11 +307,28 @@ def build_explicit_jax_loglik_fn(fitter):
                                         fixed_jitter='GPnoJitter' not in model_class.__name__)
 
         # Compute sum of log-likelihood contributions from each astrometric dataset
-        for (t, x_obs, y_obs, x_err, y_err, pvec, idx_b, weight) in ast_blocks:
+        for (t, x_obs, y_obs, x_err, y_err, pvec, idx_b, idx_mag_src,
+             idx_dmag, weight) in ast_blocks:
             assert ast_method is not None
             b_sff = param_vec[idx_b] if idx_b is not None else 1.0
-            lnL += weight * ast_method(base_vec, t, x_obs, y_obs, x_err, y_err, 
-                                       b_sff=b_sff, parallax_vectors=pvec)
+            # Optional luminous-lens / mag args for PSBL-style methods.
+            kwargs = dict(b_sff=b_sff, parallax_vectors=pvec)
+            if idx_mag_src is not None:
+                mag_value = param_vec[idx_mag_src]
+                # Convert mag_base → mag_src when needed.
+                phot_names = tuple(
+                    getattr(model_class, 'phot_param_names', ())
+                )
+                if 'mag_base' in phot_names:
+                    mag_value = mag_value - 2.5 * jnp.log10(
+                        jnp.maximum(b_sff, 1e-12)
+                    )
+                kwargs['mag_src'] = mag_value
+            if idx_dmag is not None:
+                kwargs['dmag_Lp_Ls'] = param_vec[idx_dmag]
+            lnL += weight * ast_method(
+                base_vec, t, x_obs, y_obs, x_err, y_err, **kwargs
+            )
 
         return lnL
 
@@ -1161,12 +1191,18 @@ class MicrolensSolver(Solver):
         fn, _ = build_explicit_jax_loglik_fn(self)
         if fn is None:
             return float(self.log_likely(cube))
-        if isinstance(cube, dict):
+        if isinstance(cube, dict) or isinstance(cube, Row):
             vec = np.array(
-                [cube[n] for n in self.fitter_param_names], dtype=np.float64
+                [float(cube[n]) for n in self.fitter_param_names],
+                dtype=np.float64
             )
         else:
-            vec = np.asarray(cube, dtype=np.float64)
+            # PyMultiNest passes a ctypes buffer that np.asarray cannot wrap
+            # on some Python/numpy builds; index element-wise instead.
+            vec = np.array(
+                [float(cube[i]) for i in range(len(self.fitter_param_names))],
+                dtype=np.float64
+            )
         return float(fn(vec))
 
     def grad_loglik_jax(self, cube):
@@ -1176,12 +1212,16 @@ class MicrolensSolver(Solver):
             raise NotImplementedError(
                 "No JAX log-likelihood for this fitter configuration."
             )
-        if isinstance(cube, dict):
+        if isinstance(cube, dict) or isinstance(cube, Row):
             vec = np.array(
-                [cube[n] for n in self.fitter_param_names], dtype=np.float64
+                [float(cube[n]) for n in self.fitter_param_names],
+                dtype=np.float64
             )
         else:
-            vec = np.asarray(cube, dtype=np.float64)
+            vec = np.array(
+                [float(cube[i]) for i in range(len(self.fitter_param_names))],
+                dtype=np.float64
+            )
         return np.asarray(jax.grad(fn)(vec), dtype=np.float64)
 
     def callback_plotter(self, nSamples, nlive, nPar,
@@ -3961,14 +4001,20 @@ class MicrolensSolverNumPyro(MicrolensSolver):
 
         # Validate sampler and gradient requirements.
         sampler = str(sampler).lower()
-        if sampler not in ('nuts', 'jaxns'):
-            raise ValueError(f"sampler must be 'nuts' or 'jaxns', got {sampler!r}")
+        if sampler not in ('nuts', 'sa', 'jaxns'):
+            raise ValueError(
+                f"sampler must be 'nuts', 'sa', or 'jaxns', got {sampler!r}"
+            )
 
-        if not use_jax_grad:
-            raise ValueError('MicrolensSolverNumPyro requires use_jax_grad=True ' +
-                             '(NUTS and JAXNS both use JAX autodiff).')
+        # NUTS requires autodiff; SA / jaxns evaluate lnL without needing
+        # user-facing gradient_guided for the MCMC kernel itself.
+        if sampler == 'nuts' and not use_jax_grad:
+            raise ValueError(
+                'sampler=\"nuts\" requires use_jax_grad=True. '
+                'Use sampler=\"sa\" for gradient-free MCMC.'
+            )
 
-        # NUTS / shared sampling knobs.
+        # NUTS / SA / shared sampling knobs.
         self.sampler = sampler
         self.draws = int(draws)
         self.tune = int(tune)
@@ -3992,7 +4038,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         else:
             self.posterior_samples = int(posterior_samples)
 
-        self.use_jax_grad = True
+        self.use_jax_grad = bool(use_jax_grad)
         self.gradient_guided = bool(gradient_guided)
 
         # Runtime products filled by solve().
@@ -4033,8 +4079,8 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         print(f'*** Using NumPyro ({self.sampler}) for sampling. ***')
         print('*************************************************')
 
-        # Dispatch to NUTS MCMC or NumPyro nested sampling (jaxns).
-        if self.sampler == 'nuts':
+        # Dispatch to NUTS / SA MCMC or NumPyro nested sampling (jaxns).
+        if self.sampler in ('nuts', 'sa'):
             self._run_nuts()
         else:
             self._run_jaxns()
@@ -4048,13 +4094,13 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         return None
 
     def _run_nuts(self):
-        """Run NumPyro NUTS MCMC with autodiff gradients.
+        """Run NumPyro NUTS or SA MCMC.
 
         Returns
         -------
         None
         """
-        from numpyro.infer import MCMC, NUTS, init_to_value
+        from numpyro.infer import MCMC, NUTS, SA, init_to_value
 
         # Build the NumPyro model (priors + JAX χ² factor).
         model_builder = MicrolensNumPyroModel(self)
@@ -4070,13 +4116,16 @@ class MicrolensSolverNumPyro(MicrolensSolver):
                 if self.wrapped_params[i]:
                     init_values[f'{name}__raw'] = init_values.pop(name)
 
-        # NUTS kernel uses JAX autodiff of the joint log density.
-        kernel = NUTS(
-            model_builder.model,
-            target_accept_prob=self.target_accept,
-            max_tree_depth=self.max_tree_depth,
-            init_strategy=init_to_value(values=init_values),
-        )
+        # NUTS uses autodiff; SA is gradient-free.
+        if self.sampler == 'sa':
+            kernel = SA(model_builder.model)
+        else:
+            kernel = NUTS(
+                model_builder.model,
+                target_accept_prob=self.target_accept,
+                max_tree_depth=self.max_tree_depth,
+                init_strategy=init_to_value(values=init_values),
+            )
 
         mcmc = MCMC(
             kernel,
@@ -4088,11 +4137,14 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         )
 
         # Retain diagnostics used for sampler health checks.
-        mcmc.run(
-            jax.random.PRNGKey(self.random_seed),
-            extra_fields=('potential_energy', 'diverging', 'num_steps',
-                          'accept_prob'),
-        )
+        if self.sampler == 'sa':
+            mcmc.run(jax.random.PRNGKey(self.random_seed))
+        else:
+            mcmc.run(
+                jax.random.PRNGKey(self.random_seed),
+                extra_fields=('potential_energy', 'diverging', 'num_steps',
+                              'accept_prob'),
+            )
         self.mcmc = mcmc
 
         # Flatten chain/draw axes into (n_samples, n_params).
@@ -4102,7 +4154,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
             stacked.append(np.asarray(samples[name]).reshape(-1))
 
         self._samples_array = np.column_stack(stacked)
-        # NUTS does not estimate evidence.
+        # MCMC does not estimate evidence.
         self._logZ = np.nan
         self._loglikes = None
         return None

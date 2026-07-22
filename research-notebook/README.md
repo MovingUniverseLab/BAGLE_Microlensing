@@ -58,23 +58,18 @@ Personal skill + always-on user rule (installed by `scripts/install_cursor_hooks
 
 ### Append example
 
+Write `/tmp/rn_body.md` with sections like:
+
+- **What I did** — brief narrative
+- **Results** — tests (command, PASS/FAIL, count, timestamp), runtime/compute,
+  plot paths, key numbers
+- **Code changes** — `file:line` bullets
+- **Reproduce** — host + absolute `cd` + commands
+- **Data / outputs** / **Next**
+
+Then:
+
 ```bash
-cat > /tmp/rn_body.md <<'EOF'
-### What I did
-Tested GP residual weighting.
-
-### Results
-- Tests: `pytest tests/test_jax_likelihood.py -q` → PASS (12 passed) at 2026-07-21 15:02 PT on tempo-6
-- Runtime: ~45s wall time (`astro` env)
-- Plots: yes — `/Users/jlu/.../gp_residuals.png` (embedded)
-- Key numbers: …
-
-### Reproduce
-```bash
-cd /path/to/bagle && PYTHONPATH=src python …
-```
-EOF
-
 research-notebook append \
   --title "bagle GP residuals" \
   --project bagle \
@@ -84,6 +79,10 @@ research-notebook append \
   --body-file /tmp/rn_body.md \
   --figure ./plot.png
 ```
+
+Daily content is kept in **time order** (ad-hoc appends at the end; reconcile
+backfills by timestamp). Use `reformat-day` only when you explicitly want a
+full-day rewrite.
 
 ## Config
 

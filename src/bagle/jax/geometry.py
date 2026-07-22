@@ -162,7 +162,18 @@ def derive_psbl_photastrom_param1(
     sep,
     alpha_deg,
 ):
-    """Static PSBL PhotAstrom Param1 geometry (mas, arcsec)."""
+    """
+    Static PSBL PhotAstrom Param1 geometry (mas, arcsec).
+
+    Notes
+    -----
+    ``sep`` is the projected binary separation in mas. Companion offsets
+    ``xL*_over_theta`` are in Einstein radii using the absolute on-sky
+    binary angle ``alpha`` (degrees East of North), matching host
+    ``get_resolved_lens_astrometry``. Masses ``m1``/``m2`` are fractions;
+    convert to arcsec^2 via ``m_i * (thetaE_amp * 1e-3)**2`` for absolute
+    Witt solutions.
+    """
     mL = mLp + mLs
     xS0 = jnp.stack([xS0_E, xS0_N])
     muL = jnp.stack([muL_E, muL_N])
@@ -184,13 +195,19 @@ def derive_psbl_photastrom_param1(
     tE = (thetaE_amp / muRel_amp) * _DAYS_PER_YEAR
     thetaS0 = u0 * thetaE_amp
     xL0 = xS0 - thetaS0 * 1e-3
+
+    # PhotAstrom Param1: sep is in mas; alpha is East of North (absolute).
+    # Companion offsets in Einstein radii match host get_resolved_lens_astrometry.
     alpha_rad = alpha_deg * jnp.pi / 180.0
-    phi_piE = jnp.arctan2(piE_E, piE_N)
-    phi_rho1 = phi_piE + alpha_rad
+    half_sep_ein = 0.5 * sep / thetaE_amp
     xL1_over_theta = jnp.stack(
-        [0.5 * sep * jnp.sin(phi_rho1), 0.5 * sep * jnp.cos(phi_rho1)]
+        [half_sep_ein * jnp.sin(alpha_rad),
+         half_sep_ein * jnp.cos(alpha_rad)]
     )
     xL2_over_theta = -xL1_over_theta
+
+    # Mass fractions for Einstein-unit photometry; convert to arcsec^2 for
+    # absolute-sky Witt solutions via m_i * (thetaE_amp * 1e-3)**2.
     q = mLs / mLp
     m1 = 1.0 / (1.0 + q)
     m2 = q / (1.0 + q)

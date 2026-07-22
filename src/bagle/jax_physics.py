@@ -1737,16 +1737,16 @@ _vmap_quintic_roots = jax.vmap(
 )
 
 
-def _mask_psbl_roots(z_arr, w, z1, z2, m1, m2, root_tol):
+def _psbl_invalid_root_mask(z_arr, w, z1, z2, m1, m2, root_tol):
     """
-    _mask_psbl_roots.
+    Boolean mask of Witt roots that fail the complex lens equation.
 
     Parameters
     ----------
     z_arr : array_like
         Complex image positions, shape ``(N_times, N_images)``.
     w : array_like
-        Complex source position(s) or orbit argument of periapsis.
+        Complex source position(s).
     z1 : array_like
         Complex primary lens position(s).
     z2 : array_like
@@ -1760,8 +1760,8 @@ def _mask_psbl_roots(z_arr, w, z1, z2, m1, m2, root_tol):
 
     Returns
     -------
-    z_masked
-        See summary above.
+    bad : jnp.ndarray, dtype=bool, shape (N_times, N_images)
+        True where the lens-equation residual exceeds ``root_tol``.
     """
     n = w.shape[0]
 
@@ -1777,10 +1777,38 @@ def _mask_psbl_roots(z_arr, w, z1, z2, m1, m2, root_tol):
         - m2_arr[:, jnp.newaxis] / jnp.conj(z_arr - z2[:, jnp.newaxis])
     )
 
-    # Mask roots that fail the lens equation beyond root_tol.
-    bad = jnp.abs(diff) > tol[:, jnp.newaxis]
-    z_masked = jnp.where(bad, jnp.nan + 0j, z_arr)
-    return z_masked
+    return jnp.abs(diff) > tol[:, jnp.newaxis]
+
+
+def _mask_psbl_roots(z_arr, w, z1, z2, m1, m2, root_tol):
+    """
+    Replace invalid Witt roots with NaN (NumPy-host parity helper).
+
+    Notes
+    -----
+    Prefer :func:`_psbl_invalid_root_mask` + zeroing amplifications inside
+    :func:`psbl_all_arrays` for autodiff-safe likelihood evaluations.
+    """
+    bad = _psbl_invalid_root_mask(z_arr, w, z1, z2, m1, m2, root_tol)
+    return jnp.where(bad, jnp.nan + 0j, z_arr)
+
+
+@jax.custom_jvp
+def _zero_nonfinite(x):
+    """Replace non-finite values with zero without poisoning gradients."""
+    return jnp.where(jnp.isfinite(x), x, jnp.zeros_like(x))
+
+
+@_zero_nonfinite.defjvp
+def _zero_nonfinite_jvp(primals, tangents):
+    """JVP for :func:`_zero_nonfinite`."""
+    (x,) = primals
+    (t,) = tangents
+
+    # Forward: drop NaN/Inf; backward: treat those entries as locally constant.
+    y = jnp.where(jnp.isfinite(x), x, jnp.zeros_like(x))
+    dy = jnp.where(jnp.isfinite(x), t, jnp.zeros_like(t))
+    return y, dy
 
 
 def psbl_image_positions(w, z1, z2, m1, m2, root_tol, check_sols: bool):
@@ -1792,7 +1820,9 @@ def psbl_image_positions(w, z1, z2, m1, m2, root_tol, check_sols: bool):
     root_tol : float or array
         Lens-equation tolerance; may be per-epoch when rescaling is used.
     check_sols : bool
-        When ``True``, mask roots that fail the lens equation.
+        When ``True``, mask roots that fail the lens equation with NaN.
+        Autodiff-safe callers should prefer ``check_sols=False`` here and
+        zero invalid amplifications in :func:`psbl_all_arrays`.
     """
     a5, a4, a3, a2, a1, a0 = quintic_coefficients(w, z1, z2, m1, m2)
 
@@ -1939,19 +1969,37 @@ def psbl_all_arrays(w, z1, z2, m1, m2, root_tol, check_sols: bool = True, rescal
     m1_phys = jnp.asarray(m1, dtype=jnp.float64)
     m2_phys = jnp.asarray(m2, dtype=jnp.float64)
 
+    # Keep raw companion-matrix roots (no NaN masking) so amplifications stay
+    # autodiff-safe. Invalid roots are zeroed via the lens-equation residual.
     if rescale:
         # Solve in a scaled frame, then map images back to physical units.
         rw, rz1, rz2, rm1, rm2, scale, shift = rescale_complex_pos(
             w, z1, z2, m1_phys, m2_phys
         )
         rt = root_tol * scale if jnp.ndim(root_tol) else root_tol * scale
-        rimages = psbl_image_positions_jit(rw, rz1, rz2, rm1, rm2, rt, check_sols)
+        rimages = psbl_image_positions_jit(
+            rw, rz1, rz2, rm1, rm2, rt, False
+        )
         images = (rimages / scale.reshape(-1, 1)) + shift.reshape(-1, 1)
         amps = psbl_amp_arr(images, z1, z2, m1_phys, m2_phys)
+        if check_sols:
+            bad = _psbl_invalid_root_mask(
+                rimages, rw, rz1, rz2, rm1, rm2, rt
+            )
+            amps = jnp.where(bad, 0.0, amps)
     else:
-        images = psbl_image_positions_jit(w, z1, z2, m1_phys, m2_phys, root_tol, check_sols)
+        images = psbl_image_positions_jit(
+            w, z1, z2, m1_phys, m2_phys, root_tol, False
+        )
         amps = psbl_amp_arr(images, z1, z2, m1_phys, m2_phys)
+        if check_sols:
+            bad = _psbl_invalid_root_mask(
+                images, w, z1, z2, m1_phys, m2_phys, root_tol
+            )
+            amps = jnp.where(bad, 0.0, amps)
 
+    # Drop non-finite Jacobian amps without introducing NaN cotangents.
+    amps = _zero_nonfinite(amps)
     return images, amps
 
 
@@ -2631,6 +2679,127 @@ def pspl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
     pos_model = pspl_astrometry_param1(
         t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
         parallax_vectors=parallax_vectors, piS=piS, piL=piL
+    )
+    lnL = gaussian_astrometry_log_likelihood_sum(
+        pos_model, x_obs, y_obs, x_err, y_err
+    )
+    return lnL
+
+
+def psbl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp,
+                           xL1_over_theta, xL2_over_theta, m1, m2,
+                           mag_src, b_sff, dmag_Lp_Ls=20.0,
+                           parallax_vectors=None, piS=None, piL=None,
+                           root_tol=1e-8, check_sols: bool = True,
+                           rescale: bool = True):
+    """
+    PSBL flux-weighted unresolved centroid astrometry (arcsec).
+
+    Matches :meth:`bagle.model_jax.PSBL.get_astrometry` for static lenses.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Reference time (MJD).
+    xS0, xL0 : array_like
+        Source / geometric-center lens sky position at ``t0`` (arcsec).
+    muS, muL : array_like
+        Proper motions (mas/yr).
+    thetaE_amp : float
+        Einstein radius (mas).
+    xL1_over_theta, xL2_over_theta : array_like
+        Companion offsets from geometric center in Einstein radii.
+    m1, m2 : float
+        Normalized lens masses.
+    mag_src : float
+        Unlensed source magnitude.
+    b_sff : float
+        Source flux fraction.
+    dmag_Lp_Ls : float, optional
+        Primary-minus-secondary lens magnitude difference.
+    parallax_vectors : array_like or None
+        Shape ``(N_times, 2)`` parallax table.
+    piS, piL : float or None
+        Source / lens parallax (mas).
+    root_tol : float
+        Witt quintic root tolerance.
+    check_sols, rescale : bool
+        Lens-equation solver options.
+
+    Returns
+    -------
+    pos : jnp.ndarray, shape (N_times, 2)
+        East / North centroid positions in arcsec.
+    """
+    t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+    dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
+
+    # Unlensed source and geometric-center lens tracks (arcsec).
+    xS = xS0.reshape(1, 2) + dt * muS.reshape(1, 2) * 1e-3
+    xL = xL0.reshape(1, 2) + dt * muL.reshape(1, 2) * 1e-3
+    if parallax_vectors is not None:
+        pvec = jnp.asarray(parallax_vectors, dtype=jnp.float64)
+        xS = xS + piS * pvec * 1e-3
+        xL = xL + piL * pvec * 1e-3
+
+    # Companion positions relative to geometric center (arcsec).
+    thetaE_as = thetaE_amp * 1e-3
+    xL1 = xL + xL1_over_theta.reshape(1, 2) * thetaE_as
+    xL2 = xL + xL2_over_theta.reshape(1, 2) * thetaE_as
+
+    # Host PhotAstrom uses m1, m2 in arcsec^2 (= mass fraction * thetaE^2).
+    m1 = jnp.asarray(m1, dtype=jnp.float64) * thetaE_as ** 2
+    m2 = jnp.asarray(m2, dtype=jnp.float64) * thetaE_as ** 2
+
+    # Complex arcsec positions for the Witt quintic.
+    w = xS[:, 0] + 1j * xS[:, 1]
+    z1 = xL1[:, 0] + 1j * xL1[:, 1]
+    z2 = xL2[:, 0] + 1j * xL2[:, 1]
+
+    image_arr, amp_arr = psbl_all_arrays(
+        w, z1, z2, m1, m2, root_tol,
+        check_sols=check_sols, rescale=rescale
+    )
+
+    # Image positions as (N_times, N_images, 2).
+    xS_img = jnp.stack(
+        [jnp.real(image_arr), jnp.imag(image_arr)], axis=-1
+    )
+    amp_f = jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0)
+    amp_3 = amp_f.reshape((amp_f.shape[0], amp_f.shape[1], 1))
+    xS_f = jnp.where(jnp.isfinite(xS_img), xS_img, 0.0)
+
+    # Source and luminous-lens fluxes (neighbor light assumed zero).
+    fS = mag2flux_jax(mag_src)
+    flux_non = fS * (1.0 - b_sff) / jnp.maximum(b_sff, 1e-12)
+    fr = jnp.nan_to_num(10.0 ** (dmag_Lp_Ls / -2.5), nan=0.0)
+    fL1 = flux_non * fr / (1.0 + fr)
+    fL2 = flux_non / (1.0 + fr)
+
+    # Flux-weighted unresolved centroid.
+    numer = (
+        jnp.sum(xS_f * amp_3 * fS, axis=1)
+        + xL1 * fL1
+        + xL2 * fL2
+    )
+    denom = jnp.sum(amp_3 * fS, axis=1) + fL1 + fL2
+    return numer / denom
+
+
+def psbl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
+                               xL1_over_theta, xL2_over_theta, m1, m2,
+                               mag_src, b_sff, x_obs, y_obs, x_err, y_err,
+                               dmag_Lp_Ls=20.0, parallax_vectors=None,
+                               piS=None, piL=None, root_tol=1e-8):
+    """Evaluate a static PSBL absolute-astrometry Gaussian log-likelihood."""
+    pos_model = psbl_astrometry_param1(
+        t, t0, xS0, xL0, muS, muL, thetaE_amp,
+        xL1_over_theta, xL2_over_theta, m1, m2,
+        mag_src, b_sff, dmag_Lp_Ls=dmag_Lp_Ls,
+        parallax_vectors=parallax_vectors, piS=piS, piL=piL,
+        root_tol=root_tol
     )
     lnL = gaussian_astrometry_log_likelihood_sum(
         pos_model, x_obs, y_obs, x_err, y_err

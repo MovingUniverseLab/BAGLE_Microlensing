@@ -7460,6 +7460,31 @@ root_tol : float
         )
         return lnL
 
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0, mag_src=18.0,
+                                  dmag_Lp_Ls=20.0,
+                                  parallax_vectors=None):
+        """Evaluate static PSBL astrometry for this parameterization."""
+        from bagle.jax.geometry import derive_psbl_photastrom_param1
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_psbl_photastrom_param1(
+            p['mLp'], p['mLs'], p['t0'], p['xS0_E'], p['xS0_N'],
+            p['beta'], p['muL_E'], p['muL_N'], p['muS_E'],
+            p['muS_N'], p['dL'], p['dS'], p['sep'], p['alpha']
+        )
+        (u0, thetaE_hat, tE, piE_E, piE_N, xS0, xL0, muS, muL,
+         thetaE_amp, piS, piL, m1, m2, xL1, xL2, _, _) = geom
+        lnL = jax_physics.psbl_log_likely_astrometry(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE_amp,
+            xL1, xL2, m1, m2, mag_src, b_sff,
+            x_obs, y_obs, x_err, y_err,
+            dmag_Lp_Ls=dmag_Lp_Ls,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL
+        )
+        return lnL
+
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
