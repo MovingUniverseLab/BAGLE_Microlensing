@@ -89,12 +89,6 @@ def _likelihood_mode(cls) -> str:
 
 def _param_mixin_for_fixtures(model_class):
     """Find the Param mixin that owns ``fitter_param_names`` (NumPy or JAX)."""
-    from bagle.jax.likelihood import _param_mixin_class
-
-    mixin = _param_mixin_class(model_class)
-    if mixin is not None:
-        return mixin
-    # NumPy reference models lack get_params_for_jax; prefer __dict__ owner.
     for cls in model_class.__mro__:
         if "fitter_param_names" not in cls.__dict__:
             continue

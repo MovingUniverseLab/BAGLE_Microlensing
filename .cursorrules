@@ -47,7 +47,7 @@ Do **not** use the system `/usr/bin/python3` or a bare `pip3` outside `astro`.
 When verifying changes, prefer:
 
 ```bash
-zsh -lic 'cd /Users/jlu/code/python/bagle && PYTHONPATH=src python -m pytest tests/test_jax_layout_coverage.py tests/test_jax_physics.py tests/test_jax_likelihood.py -q'
+zsh -lic 'cd /Users/jlu/code/python/bagle && PYTHONPATH=src python -m pytest tests/test_jax_physics.py tests/test_jax_likelihood.py -q'
 ```
 
 Run `tests/test_model.py` (NumPy reference) and `tests/test_model_jax.py` (JAX model) after model or physics changes (slower; needs `astro` + full deps).

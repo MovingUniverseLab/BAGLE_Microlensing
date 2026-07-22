@@ -1,0 +1,44 @@
+# Default config template
+# Copy values are filled by `research-notebook init`.
+# This file is written on first load if missing; prefer `research-notebook status`.
+
+timezone: America/Los_Angeles
+machine_label: laptop
+notebook_root_name: Research Notebook
+
+folder_ids:
+  root: null
+  templates: null
+  index: null
+  daily: null
+  weekly: null
+  monthly: null
+  yearly: null
+  projects: null
+  shared: null
+  assets: null
+
+template_ids:
+  daily: null
+  weekly: null
+  monthly: null
+
+index_sheet_id: null
+
+transcripts_root: ~/.cursor/projects
+project_allowlist: []
+project_blocklist:
+  - Graduate-Admissions
+  - empty-window
+reconcile_skip_subagents: true
+
+github:
+  owners:
+    - jluastro
+    - MovingUniverseLab
+  authors:
+    - jluastro
+  repo_blocklist: []
+  require_gh: true
+  # Optional faster fallback if search misses:
+  active_repos: []

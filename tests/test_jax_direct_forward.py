@@ -194,31 +194,33 @@ def test_pspl_chi2_photometry():
     assert np.all(chi2 > 0)
 
 
-def test_get_params_for_jax_matches_self_phot():
+def test_explicit_param_likelihood_matches_model_instance():
     mj = _make_pspl_phot_no_par()
-    names = model.PSPL_PhotParam1.fitter_param_names
+    t = _times(mj)
     vec = jnp.array(
         [mj.t0, mj.u0_amp, mj.tE, mj.piE[0], mj.piE[1]], dtype=jnp.float64
     )
-    from_vec = model.PSPL_PhotParam1.get_params_for_jax(vec)
-    from_self = mj.get_params_for_jax_from_self()
-    for key in ("t0", "tE", "piE_E", "piE_N"):
-        np.testing.assert_allclose(float(from_vec[key]), float(from_self[key]))
-    np.testing.assert_allclose(from_vec["u0"], from_self["u0"], rtol=1e-10)
-    np.testing.assert_allclose(
-        from_vec["thetaE_hat"], from_self["thetaE_hat"], rtol=1e-10
+    mag_obs = mj.get_photometry(t) + 0.01
+    mag_err = np.full_like(mag_obs, 0.02)
+    actual = model.PSPL_PhotParam1.jax_log_likely_photometry(
+        vec, t, mag_obs, mag_err, mj.b_sff[0], mj.mag_src[0]
     )
-    assert list(names) == ["t0", "u0_amp", "tE", "piE_E", "piE_N"]
+    expected = mj.log_likely_photometry(t, mag_obs, mag_err)
+    np.testing.assert_allclose(actual, expected)
 
 
-def test_get_params_for_jax_grad():
+def test_explicit_param_likelihood_grad():
     mj = _make_pspl_phot_no_par()
+    t = _times(mj)
+    mag_obs = mj.get_photometry(t) + 0.01
+    mag_err = np.full_like(mag_obs, 0.02)
     vec0 = jnp.array(
         [mj.t0, mj.u0_amp, mj.tE, mj.piE[0], mj.piE[1]], dtype=jnp.float64
     )
 
     def f(v):
-        p = model.PSPL_PhotParam1.get_params_for_jax(v)
-        return jnp.sum(p["u0"])
+        return model.PSPL_PhotParam1.jax_log_likely_photometry(
+            v, t, mag_obs, mag_err, mj.b_sff[0], mj.mag_src[0]
+        )
 
     assert_jnp_grad_finite(f, vec0)

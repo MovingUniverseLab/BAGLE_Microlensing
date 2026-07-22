@@ -1,0 +1,19 @@
+add_error_on_photometry: false
+astrom_data:
+- sim1
+astrom_files:
+- afile1
+custom_additional_param_names: null
+model: PSPL_PhotAstrom_Par_Param1
+multiply_error_on_photometry: false
+phot_data:
+- sim1
+- sim2
+phot_files:
+- pfile1
+- pfile2
+run_date: '2026-07-21'
+target: Bulge
+use_ast_optional_params: true
+use_phot_optional_params: true
+wrapped_params: null

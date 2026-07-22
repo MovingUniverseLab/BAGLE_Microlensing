@@ -1,0 +1,25 @@
+add_error_on_photometry: false
+astrom_data:
+- sim1
+- sim3
+astrom_files:
+- afile1
+- afile3
+custom_additional_param_names: null
+model: PSPL_PhotAstrom_Par_Param1
+multiply_error_on_photometry: false
+phot_data:
+- sim1
+- sim2
+- sim3
+- sim4
+phot_files:
+- pfile1
+- pfile2
+- pfile3
+- pfile4
+run_date: '2026-07-21'
+target: sim1
+use_ast_optional_params: true
+use_phot_optional_params: true
+wrapped_params: null

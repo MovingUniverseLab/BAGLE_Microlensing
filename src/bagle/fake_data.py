@@ -767,7 +767,7 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
     params['dS'] = dS
     params['b_sff'] = [b_sff]
     params['mag_src'] = [mag_src]
-    params['mag_base'] = [params['mag_src'] + 2.5 * np.log10(params['b_sff'])]
+    params['mag_base'] = params['mag_src'] + 2.5 * np.log10(params['b_sff'])
     params['dmag_Lp_Ls'] = [dmag_Lp_Ls]
     params['b_sff1'] = b_sff
     params['mag_src1'] = mag_src

@@ -192,17 +192,13 @@ def gp_log_probability(kernel, t, mag_obs, mag_err, mean, jitter):
     return gp.log_probability(mag_j)
 
 
-def build_gp_loglik_fn(fitter, param_cls=None):
-    """Return ``(jit_loglik, ctx)`` with tinygp GP marginal on photometric residuals.
-
-    Implemented fully in :mod:`bagle.jax.likelihood` once Param packing is
-    available; this entry point delegates there.
-    """
-    try:
-        import tinygp  # noqa: F401
-    except ImportError:
-        return None, None
-
-    from bagle.jax.likelihood import build_analytic_gp_loglik_fn
-
-    return build_analytic_gp_loglik_fn(fitter, param_cls=param_cls)
+def gp_log_likely_photometry(t, mag_obs, mag_err, mean, gp_params,
+                             fixed_jitter=True):
+    """Evaluate a tinygp photometric marginal log-likelihood."""
+    kernel, jitter = build_gp_kernel_from_params(
+        gp_params, mag_err, fixed_jitter=fixed_jitter
+    )
+    lnL = gp_log_probability(
+        kernel, t, mag_obs, mag_err, mean, jitter
+    )
+    return lnL

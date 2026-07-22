@@ -3,7 +3,10 @@ from bagle import model_fitter_jax as model_fitter
 from bagle import multinest_utils
 from bagle import fake_data
 from bagle import data as data_mod
-from bagle.model_fitter_jax import MicrolensSolver, MicrolensSolverHobsonWeighted, MicrolensSolverPyMC
+from bagle.model_fitter_jax import (
+    MicrolensSolver, MicrolensSolverHobsonWeighted, MicrolensSolverPyMC,
+    MicrolensSolverNumPyro,
+)
 import numpy as np
 import pylab as plt
 import os
@@ -75,12 +78,12 @@ def test_pspl_parallax_fit_geoproj(verbose=False, resume=False):
                              resume=resume)
 
     # Lets adjust some priors for faster solving.
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
-    fitter.priors['u0_amp'] = model_fitter.make_gen(p_in['u0_amp']-0.1, p_in['u0_amp']+0.1)
-    fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.1, p_in['piE_E']+0.1)
-    fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.1, p_in['piE_N']+0.1)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.01, p_in['b_sff']+0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.01, p_in['mag_src']+0.01)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-5, p_in['t0']+5)
+    fitter.priors['u0_amp'] = model_fitter.make_gen('u0_amp', p_in['u0_amp']-0.1, p_in['u0_amp']+0.1)
+    fitter.priors['piE_E'] = model_fitter.make_gen('piE_E', p_in['piE_E']-0.1, p_in['piE_E']+0.1)
+    fitter.priors['piE_N'] = model_fitter.make_gen('piE_N', p_in['piE_N']-0.1, p_in['piE_N']+0.1)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff']-0.01, p_in['b_sff']+0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src']-0.01, p_in['mag_src']+0.01)
 
     fitter.solve()
 
@@ -122,18 +125,18 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
                              resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0'] - 1, p_in['t0'] + 1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E'] - 1e-4, p_in['xS0_E'] + 1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N'] - 1e-4, p_in['xS0_N'] + 1e-4)
-    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta'] - 0.01, p_in['beta'] + 0.01)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E'] - 0.05, p_in['muL_E'] + 0.05)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N'] - 0.05, p_in['muL_N'] + 0.05)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E'] - 0.05, p_in['muS_E'] + 0.05)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N'] - 0.05, p_in['muS_N'] + 0.05)
-    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL'] - 10, p_in['dL'] + 10)
-    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL'] / p_in['dS']) - 0.01, (p_in['dL'] / p_in['dS']) + 0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1'] - 0.01, p_in['mag_src1'] + 0.01)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0'] - 1, p_in['t0'] + 1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E'] - 1e-4, p_in['xS0_E'] + 1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N'] - 1e-4, p_in['xS0_N'] + 1e-4)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', p_in['beta'] - 0.01, p_in['beta'] + 0.01)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', p_in['muL_E'] - 0.05, p_in['muL_E'] + 0.05)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', p_in['muL_N'] - 0.05, p_in['muL_N'] + 0.05)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E'] - 0.05, p_in['muS_E'] + 0.05)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N'] - 0.05, p_in['muS_N'] + 0.05)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', p_in['dL'] - 10, p_in['dL'] + 10)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', (p_in['dL'] / p_in['dS']) - 0.01, (p_in['dL'] / p_in['dS']) + 0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src1'] - 0.01, p_in['mag_src1'] + 0.01)
 
 
     fitter.solve()
@@ -257,7 +260,7 @@ def plot_mnest_test(data, imag_in, imag_out, pos_in, pos_out, outroot):
 def test_make_t0_gen():
     data, p_in = fake_data.fake_data1()
 
-    t0_gen = model_fitter.make_t0_gen(data['t_phot1'], data['mag1'])
+    t0_gen = model_fitter.make_t0_gen('t0', data['t_phot1'], data['mag1'])
 
     t0_rand = t0_gen.rvs(size=100)
 
@@ -294,19 +297,19 @@ def test_PSPL_Solver(plot=False, verbose=False, resume=False):
                              resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
-    fitter.priors['mL'] = model_fitter.make_gen(8.0, 12.0)
-    fitter.priors['t0'] = model_fitter.make_gen(56990, 57010)
-    fitter.priors['beta'] = model_fitter.make_gen(-0.5, -0.3)
-    fitter.priors['muL_E'] = model_fitter.make_gen(-0.5, 0.5)
-    fitter.priors['muL_N'] = model_fitter.make_gen(-7.5, -6.5)
-    fitter.priors['muS_E'] = model_fitter.make_gen(0.5, 2.5)
-    fitter.priors['muS_N'] = model_fitter.make_gen(-2, 1)
-    fitter.priors['dL'] = model_fitter.make_gen(3900, 4100)
-    fitter.priors['dL_dS'] = model_fitter.make_gen(0.49, 0.51)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(0.95, 1.05)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(18.9, 19.1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(-10 ** -4, 10 ** -4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(-10 ** -4, 10 ** -4)
+    fitter.priors['mL'] = model_fitter.make_gen('mL', 8.0, 12.0)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', 56990, 57010)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', -0.5, -0.3)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', -0.5, 0.5)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', -7.5, -6.5)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', 0.5, 2.5)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', -2, 1)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', 3900, 4100)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', 0.49, 0.51)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', 0.95, 1.05)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', 18.9, 19.1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', -10 ** -4, 10 ** -4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', -10 ** -4, 10 ** -4)
 
     fitter.solve()
 
@@ -383,19 +386,19 @@ def test_pspl_dy_fit():
     fitter = model_fitter.MicrolensSolver(data, model.PSPL_PhotAstrom_noPar_Param1,
                                           custom_additional_param_names = [])
     # Lets adjust some priors for faster solving.
-    fitter.priors['mL'] = model_fitter.make_gen(9.9, 10.1)
-    fitter.priors['t0'] = model_fitter.make_gen(56990, 57010)
-    fitter.priors['beta'] = model_fitter.make_gen(-0.45, -0.35)
-    fitter.priors['muL_E'] = model_fitter.make_gen(-0.1, 0.1)
-    fitter.priors['muL_N'] = model_fitter.make_gen(-7.1, -6.9)
-    fitter.priors['muS_E'] = model_fitter.make_gen(1.4, 1.6)
-    fitter.priors['muS_N'] = model_fitter.make_gen(-0.6, -0.4)
-    fitter.priors['dL'] = model_fitter.make_gen(3900, 4100)
-    fitter.priors['dL_dS'] = model_fitter.make_gen(0.45, 0.55)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(0.95, 1.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(18.9, 19.1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(-1e-4, 1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(-1e-4, 1e-4)
+    fitter.priors['mL'] = model_fitter.make_gen('mL', 9.9, 10.1)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', 56990, 57010)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', -0.45, -0.35)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', -0.1, 0.1)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', -7.1, -6.9)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', 1.4, 1.6)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', -0.6, -0.4)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', 3900, 4100)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', 0.45, 0.55)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', 0.95, 1.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', 18.9, 19.1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', -1e-4, 1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', -1e-4, 1e-4)
 
     # n_cpu = 4
     # pool = Pool(n_cpu)
@@ -495,19 +498,19 @@ def test_pspl_ultranest_fit():
                                           outputfiles_basename='./test_fit_ultranest_pspl/jax_')
 
     # Lets adjust some priors for faster solving.
-    fitter.priors['mL'] = model_fitter.make_gen(9.9, 10.1)
-    fitter.priors['t0'] = model_fitter.make_gen(56990, 57010)
-    fitter.priors['beta'] = model_fitter.make_gen(-0.45, -0.35)
-    fitter.priors['muL_E'] = model_fitter.make_gen(-0.1, 0.1)
-    fitter.priors['muL_N'] = model_fitter.make_gen(-7.1, -6.9)
-    fitter.priors['muS_E'] = model_fitter.make_gen(1.3, 1.7)
-    fitter.priors['muS_N'] = model_fitter.make_gen(-0.7, -0.3)
-    fitter.priors['dL'] = model_fitter.make_gen(3900, 4100)
-    fitter.priors['dL_dS'] = model_fitter.make_gen(0.45, 0.55)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(0.95, 1.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(18.9, 19.1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(-1e-4, 1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(-1e-4, 1e-4)
+    fitter.priors['mL'] = model_fitter.make_gen('mL', 9.9, 10.1)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', 56990, 57010)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', -0.45, -0.35)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', -0.1, 0.1)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', -7.1, -6.9)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', 1.3, 1.7)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', -0.7, -0.3)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', 3900, 4100)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', 0.45, 0.55)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', 0.95, 1.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', 18.9, 19.1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', -1e-4, 1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', -1e-4, 1e-4)
 
     # n_cpu = 4
     # pool = Pool(n_cpu)
@@ -631,18 +634,18 @@ def test_lumlens_parallax_fit(verbose=False):
                              dump_callback=None,
                              outputfiles_basename=outdir + 'jax_')
 
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-2, p_in['t0']+2)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
-    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.01, p_in['muS_E']+0.01)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.01, p_in['muS_N']+0.01)
-    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-10, p_in['dL']+10)
-    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-2, p_in['t0']+2)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', p_in['beta']-0.01, p_in['beta']+0.01)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', p_in['muL_E']-0.01, p_in['muL_E']+0.01)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', p_in['muL_N']-0.01, p_in['muL_N']+0.01)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E']-0.01, p_in['muS_E']+0.01)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N']-0.01, p_in['muS_N']+0.01)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', p_in['dL']-10, p_in['dL']+10)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', (p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
 
     fitter.solve()
 
@@ -744,20 +747,20 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
                              dump_callback=None,
                              sampling_efficiency=3.0)
 
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-1, p_in['t0']+1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
-    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.01, p_in['muS_E']+0.01)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.01, p_in['muS_N']+0.01)
-    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-10, p_in['dL']+10)
-    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
-    fitter.priors['b_sff2'] = model_fitter.make_gen(p_in['b_sff2']-0.01, p_in['b_sff2']+0.01)
-    fitter.priors['mag_src2'] = model_fitter.make_gen(p_in['mag_src2']-0.01, p_in['mag_src2']+0.01)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-1, p_in['t0']+1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', p_in['beta']-0.01, p_in['beta']+0.01)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', p_in['muL_E']-0.01, p_in['muL_E']+0.01)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', p_in['muL_N']-0.01, p_in['muL_N']+0.01)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E']-0.01, p_in['muS_E']+0.01)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N']-0.01, p_in['muS_N']+0.01)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', p_in['dL']-10, p_in['dL']+10)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', (p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
+    fitter.priors['b_sff2'] = model_fitter.make_gen('b_sff2', p_in['b_sff2']-0.01, p_in['b_sff2']+0.01)
+    fitter.priors['mag_src2'] = model_fitter.make_gen('mag_src2', p_in['mag_src2']-0.01, p_in['mag_src2']+0.01)
 
     fitter.solve()
 
@@ -880,24 +883,24 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
                              resume=resume,
                              verbose=False)
 
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-1, p_in['t0']+1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
-    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.01, p_in['muS_E']+0.01)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.01, p_in['muS_N']+0.01)
-    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-10, p_in['dL']+10)
-    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.001, (p_in['dL']/p_in['dS'])+0.001)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
-    fitter.priors['b_sff2'] = model_fitter.make_gen(p_in['b_sff2']-0.01, p_in['b_sff2']+0.01)
-    fitter.priors['mag_src2'] = model_fitter.make_gen(p_in['mag_src2']-0.01, p_in['mag_src2']+0.01)
-    fitter.priors['b_sff3'] = model_fitter.make_gen(p_in['b_sff3']-0.01, p_in['b_sff3']+0.01)
-    fitter.priors['mag_src3'] = model_fitter.make_gen(p_in['mag_src3']-0.01, p_in['mag_src3']+0.01)
-    fitter.priors['b_sff4'] = model_fitter.make_gen(p_in['b_sff4']-0.01, p_in['b_sff4']+0.01)
-    fitter.priors['mag_src4'] = model_fitter.make_gen(p_in['mag_src4']-0.01, p_in['mag_src4']+0.01)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-1, p_in['t0']+1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', p_in['beta']-0.01, p_in['beta']+0.01)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', p_in['muL_E']-0.01, p_in['muL_E']+0.01)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', p_in['muL_N']-0.01, p_in['muL_N']+0.01)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E']-0.01, p_in['muS_E']+0.01)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N']-0.01, p_in['muS_N']+0.01)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', p_in['dL']-10, p_in['dL']+10)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', (p_in['dL']/p_in['dS'])-0.001, (p_in['dL']/p_in['dS'])+0.001)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
+    fitter.priors['b_sff2'] = model_fitter.make_gen('b_sff2', p_in['b_sff2']-0.01, p_in['b_sff2']+0.01)
+    fitter.priors['mag_src2'] = model_fitter.make_gen('mag_src2', p_in['mag_src2']-0.01, p_in['mag_src2']+0.01)
+    fitter.priors['b_sff3'] = model_fitter.make_gen('b_sff3', p_in['b_sff3']-0.01, p_in['b_sff3']+0.01)
+    fitter.priors['mag_src3'] = model_fitter.make_gen('mag_src3', p_in['mag_src3']-0.01, p_in['mag_src3']+0.01)
+    fitter.priors['b_sff4'] = model_fitter.make_gen('b_sff4', p_in['b_sff4']-0.01, p_in['b_sff4']+0.01)
+    fitter.priors['mag_src4'] = model_fitter.make_gen('mag_src4', p_in['mag_src4']-0.01, p_in['mag_src4']+0.01)
 
     if plot:
         plt.figure(1)
@@ -999,17 +1002,17 @@ def test_correlated_data2(resume=False):
                                   resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
-    fitter_corr.priors['t0'] = model_fitter.make_gen(57000 - 1, 57000 + 1)
-    fitter_corr.priors['u0_amp'] = model_fitter.make_gen(0.1 - 0.05, 0.1 + 0.05)
-    fitter_corr.priors['tE'] = model_fitter.make_gen(150 - 5, 150 + 5)
-    fitter_corr.priors['piE_E'] = model_fitter.make_gen(0.05 - 0.01, 0.05 + 0.01)
-    fitter_corr.priors['piE_N'] = model_fitter.make_gen(0.05 - 0.01, 0.05 + 0.01)
-    fitter_corr.priors['b_sff1'] = model_fitter.make_gen(0.9 - 0.01, 0.9 + 0.01)
-    fitter_corr.priors['mag_src1'] = model_fitter.make_gen(19.0 - 0.01, 19.0 + 0.01)
-    fitter_corr.priors['gp_log_sigma'] = model_fitter.make_norm_gen(0.5, 1.5)
-    fitter_corr.priors['gp_rho'] = model_fitter.make_invgamma_gen(data_corr['t_phot1'])
-    fitter_corr.priors['gp_log_So'] = model_fitter.make_norm_gen(0.5, 1.5)
-    fitter_corr.priors['gp_log_omegao'] = model_fitter.make_norm_gen(0.5, 1.5)
+    fitter_corr.priors['t0'] = model_fitter.make_gen('t0', 57000 - 1, 57000 + 1)
+    fitter_corr.priors['u0_amp'] = model_fitter.make_gen('u0_amp', 0.1 - 0.05, 0.1 + 0.05)
+    fitter_corr.priors['tE'] = model_fitter.make_gen('tE', 150 - 5, 150 + 5)
+    fitter_corr.priors['piE_E'] = model_fitter.make_gen('piE_E', 0.05 - 0.01, 0.05 + 0.01)
+    fitter_corr.priors['piE_N'] = model_fitter.make_gen('piE_N', 0.05 - 0.01, 0.05 + 0.01)
+    fitter_corr.priors['b_sff1'] = model_fitter.make_gen('b_sff1', 0.9 - 0.01, 0.9 + 0.01)
+    fitter_corr.priors['mag_src1'] = model_fitter.make_gen('mag_src1', 19.0 - 0.01, 19.0 + 0.01)
+    fitter_corr.priors['gp_log_sigma'] = model_fitter.make_norm_gen('gp_log_sigma', 0.5, 1.5)
+    fitter_corr.priors['gp_rho'] = model_fitter.make_invgamma_gen('gp_rho', data_corr['t_phot1'])
+    fitter_corr.priors['gp_log_So'] = model_fitter.make_norm_gen('gp_log_So', 0.5, 1.5)
+    fitter_corr.priors['gp_log_omegao'] = model_fitter.make_norm_gen('gp_log_omegao', 0.5, 1.5)
 
     fitter_corr.solve()
     fitter_corr.plot_dynesty_style(sim_vals=params, kde=False)
@@ -1043,24 +1046,24 @@ def test_correlated_data_astrom(verbose=False, resume=False):
                                   outputfiles_basename=base,
                                   resume=resume, verbose=False)
 
-    fitter_corr.priors['t0'] = model_fitter.make_gen(params['t0']-2, params['t0']+2)
-    fitter_corr.priors['u0_amp'] = model_fitter.make_gen(params['u0_amp']-0.01, params['u0_amp']+0.01)
-    fitter_corr.priors['tE'] = model_fitter.make_gen(params['tE']-5, params['tE']+5)
-    fitter_corr.priors['thetaE'] = model_fitter.make_gen(params['thetaE']-0.1, params['thetaE']+0.1)
-    fitter_corr.priors['piS'] = model_fitter.make_gen(params['piS']-0.05, params['piS']+0.05)
-    fitter_corr.priors['piE_E'] = model_fitter.make_gen(params['piE_E']-0.01, params['piE_E']+0.01)
-    fitter_corr.priors['piE_N'] = model_fitter.make_gen(params['piE_N']-0.01, params['piE_N']+0.01)
-    fitter_corr.priors['xS0_E'] = model_fitter.make_gen(params['xS0_E']-1E-4, params['xS0_E']+1E-4)
-    fitter_corr.priors['xS0_N'] = model_fitter.make_gen(params['xS0_N']-1E-4, params['xS0_N']+1E-4)
-    fitter_corr.priors['muS_E'] = model_fitter.make_gen(params['muS_E']-0.01, params['muS_E']+0.01)
-    fitter_corr.priors['muS_N'] = model_fitter.make_gen(params['muS_N']-0.01, params['muS_N']+0.01)
-    fitter_corr.priors['b_sff1'] = model_fitter.make_gen(params['b_sff1']-0.01, params['b_sff1']+0.01)
-    fitter_corr.priors['mag_src1'] = model_fitter.make_gen(params['mag_src1']-0.01, params['mag_src1']+0.01)
+    fitter_corr.priors['t0'] = model_fitter.make_gen('t0', params['t0']-2, params['t0']+2)
+    fitter_corr.priors['u0_amp'] = model_fitter.make_gen('u0_amp', params['u0_amp']-0.01, params['u0_amp']+0.01)
+    fitter_corr.priors['tE'] = model_fitter.make_gen('tE', params['tE']-5, params['tE']+5)
+    fitter_corr.priors['thetaE'] = model_fitter.make_gen('thetaE', params['thetaE']-0.1, params['thetaE']+0.1)
+    fitter_corr.priors['piS'] = model_fitter.make_gen('piS', params['piS']-0.05, params['piS']+0.05)
+    fitter_corr.priors['piE_E'] = model_fitter.make_gen('piE_E', params['piE_E']-0.01, params['piE_E']+0.01)
+    fitter_corr.priors['piE_N'] = model_fitter.make_gen('piE_N', params['piE_N']-0.01, params['piE_N']+0.01)
+    fitter_corr.priors['xS0_E'] = model_fitter.make_gen('xS0_E', params['xS0_E']-1E-4, params['xS0_E']+1E-4)
+    fitter_corr.priors['xS0_N'] = model_fitter.make_gen('xS0_N', params['xS0_N']-1E-4, params['xS0_N']+1E-4)
+    fitter_corr.priors['muS_E'] = model_fitter.make_gen('muS_E', params['muS_E']-0.01, params['muS_E']+0.01)
+    fitter_corr.priors['muS_N'] = model_fitter.make_gen('muS_N', params['muS_N']-0.01, params['muS_N']+0.01)
+    fitter_corr.priors['b_sff1'] = model_fitter.make_gen('b_sff1', params['b_sff1']-0.01, params['b_sff1']+0.01)
+    fitter_corr.priors['mag_src1'] = model_fitter.make_gen('mag_src1', params['mag_src1']-0.01, params['mag_src1']+0.01)
 
-    fitter_corr.priors['gp_log_sigma'] = model_fitter.make_norm_gen(0.5,1.5)
-    fitter_corr.priors['gp_rho'] = model_fitter.make_invgamma_gen(data_corr['t_phot1'])
-    fitter_corr.priors['gp_log_omegaofour_So'] = model_fitter.make_norm_gen(np.median(data['mag_err1'])**2, 5)
-    fitter_corr.priors['gp_log_omegao'] = model_fitter.make_norm_gen(0.5,1.5)
+    fitter_corr.priors['gp_log_sigma'] = model_fitter.make_norm_gen('gp_log_sigma', 0.5,1.5)
+    fitter_corr.priors['gp_rho'] = model_fitter.make_invgamma_gen('gp_rho', data_corr['t_phot1'])
+    fitter_corr.priors['gp_log_omegaofour_So'] = model_fitter.make_norm_gen('gp_log_omegaofour_So', np.median(data['mag_err1'])**2, 5)
+    fitter_corr.priors['gp_log_omegao'] = model_fitter.make_norm_gen('gp_log_omegao', 0.5,1.5)
 
     fitter_corr.solve()
 
@@ -1096,22 +1099,22 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
 
     if prior == 'narrow':
         # Lets adjust some priors for faster solving.
-        fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-0.1, p_in['t0']+0.1)
-        fitter.priors['u0_amp'] = model_fitter.make_gen(p_in['u0_amp']-0.01, p_in['u0_amp']+0.01)
-        fitter.priors['tE'] = model_fitter.make_gen(p_in['tE']-0.1, p_in['tE']+0.1)
-        fitter.priors['log10_thetaE'] = model_fitter.make_gen(np.log10(p_in['thetaE_amp'])-0.1, np.log10(p_in['thetaE_amp'])+0.1)
-        fitter.priors['piS'] = model_fitter.make_gen(p_in['piS']-0.01, p_in['piS']+0.01)
-        fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.01, p_in['piE_E']+0.01)
-        fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.01, p_in['piE_N']+0.01)
-        fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-0.0001, p_in['xS0_E']+0.0001)
-        fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-0.0001, p_in['xS0_N']+0.0001)
-        fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.01, p_in['muS_E']+0.01)
-        fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.01, p_in['muS_N']+0.01)
-        fitter.priors['q'] = model_fitter.make_gen(p_in['q']-0.01, p_in['q']+0.01)
-        fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.01, p_in['sep']+0.01)
-        fitter.priors['alpha'] = model_fitter.make_gen(p_in['alpha']-0.01, p_in['alpha']+0.01)
-        fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff'][0]-0.01, p_in['b_sff'][0]+0.01)
-        fitter.priors['mag_base1'] = model_fitter.make_gen(p_in['mag_base'][0]-0.01,
+        fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-0.1, p_in['t0']+0.1)
+        fitter.priors['u0_amp'] = model_fitter.make_gen('u0_amp', p_in['u0_amp']-0.01, p_in['u0_amp']+0.01)
+        fitter.priors['tE'] = model_fitter.make_gen('tE', p_in['tE']-0.1, p_in['tE']+0.1)
+        fitter.priors['log10_thetaE'] = model_fitter.make_gen('log10_thetaE', np.log10(p_in['thetaE_amp'])-0.1, np.log10(p_in['thetaE_amp'])+0.1)
+        fitter.priors['piS'] = model_fitter.make_gen('piS', p_in['piS']-0.01, p_in['piS']+0.01)
+        fitter.priors['piE_E'] = model_fitter.make_gen('piE_E', p_in['piE_E']-0.01, p_in['piE_E']+0.01)
+        fitter.priors['piE_N'] = model_fitter.make_gen('piE_N', p_in['piE_N']-0.01, p_in['piE_N']+0.01)
+        fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-0.0001, p_in['xS0_E']+0.0001)
+        fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N']-0.0001, p_in['xS0_N']+0.0001)
+        fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E']-0.01, p_in['muS_E']+0.01)
+        fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N']-0.01, p_in['muS_N']+0.01)
+        fitter.priors['q'] = model_fitter.make_gen('q', p_in['q']-0.01, p_in['q']+0.01)
+        fitter.priors['sep'] = model_fitter.make_gen('sep', p_in['sep']-0.01, p_in['sep']+0.01)
+        fitter.priors['alpha'] = model_fitter.make_gen('alpha', p_in['alpha']-0.01, p_in['alpha']+0.01)
+        fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff'][0]-0.01, p_in['b_sff'][0]+0.01)
+        fitter.priors['mag_base1'] = model_fitter.make_gen('mag_base1', p_in['mag_base'][0]-0.01,
                                                            p_in['mag_base'][0]+0.01)
 
     fitter.solve()
@@ -1178,40 +1181,40 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
 
     if prior == 'narrow':
         # Lets adjust some priors for faster solving.
-        fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-0.1, p_in['t0']+0.1)
-        fitter.priors['u0_amp'] = model_fitter.make_gen(p_in['u0_amp']-0.1, p_in['u0_amp']+0.1)
-        fitter.priors['tE'] = model_fitter.make_gen(p_in['tE']-0.1, p_in['tE']+0.1)
-        fitter.priors['thetaE'] = model_fitter.make_gen(p_in['thetaE_amp']-0.1, p_in['thetaE_amp']+0.1)
-        fitter.priors['piS'] = model_fitter.make_gen(p_in['piS']-0.01, p_in['piS']+0.01)
-        fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.01, p_in['piE_E']+0.01)
-        fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.01, p_in['piE_N']+0.01)
-        fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-0.0001, p_in['xS0_E']+0.0001)
-        fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-0.0001, p_in['xS0_N']+0.0001)
-        fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.01, p_in['muS_E']+0.01)
-        fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.01, p_in['muS_N']+0.01)
-        fitter.priors['q'] = model_fitter.make_gen(p_in['q']-0.01, p_in['q']+0.01)
-        fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.01, p_in['sep']+0.01)
-        fitter.priors['alpha'] = model_fitter.make_gen(p_in['alpha']-0.01, p_in['alpha']+0.01)
-        fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
-        fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
+        fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-0.1, p_in['t0']+0.1)
+        fitter.priors['u0_amp'] = model_fitter.make_gen('u0_amp', p_in['u0_amp']-0.1, p_in['u0_amp']+0.1)
+        fitter.priors['tE'] = model_fitter.make_gen('tE', p_in['tE']-0.1, p_in['tE']+0.1)
+        fitter.priors['thetaE'] = model_fitter.make_gen('thetaE', p_in['thetaE_amp']-0.1, p_in['thetaE_amp']+0.1)
+        fitter.priors['piS'] = model_fitter.make_gen('piS', p_in['piS']-0.01, p_in['piS']+0.01)
+        fitter.priors['piE_E'] = model_fitter.make_gen('piE_E', p_in['piE_E']-0.01, p_in['piE_E']+0.01)
+        fitter.priors['piE_N'] = model_fitter.make_gen('piE_N', p_in['piE_N']-0.01, p_in['piE_N']+0.01)
+        fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-0.0001, p_in['xS0_E']+0.0001)
+        fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N']-0.0001, p_in['xS0_N']+0.0001)
+        fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E']-0.01, p_in['muS_E']+0.01)
+        fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N']-0.01, p_in['muS_N']+0.01)
+        fitter.priors['q'] = model_fitter.make_gen('q', p_in['q']-0.01, p_in['q']+0.01)
+        fitter.priors['sep'] = model_fitter.make_gen('sep', p_in['sep']-0.01, p_in['sep']+0.01)
+        fitter.priors['alpha'] = model_fitter.make_gen('alpha', p_in['alpha']-0.01, p_in['alpha']+0.01)
+        fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
+        fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
     if prior == 'wide':
         # Lets adjust some priors for faster solving.
-        fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
-        fitter.priors['u0_amp'] = model_fitter.make_gen(p_in['u0_amp']-0.5, p_in['u0_amp']+0.5)
-        fitter.priors['tE'] = model_fitter.make_gen(p_in['tE']-10, p_in['tE']+10)
-        fitter.priors['thetaE'] = model_fitter.make_gen(p_in['thetaE_amp']-3, p_in['thetaE_amp']+3)
-        fitter.priors['piS'] = model_fitter.make_gen(p_in['piS']-0.1, p_in['piS']+0.5)
-        fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.5, p_in['piE_E']+0.5)
-        fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.5, p_in['piE_N']+0.5)
-        fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1, p_in['xS0_E']+1)
-        fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1, p_in['xS0_N']+1)
-        fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-3, p_in['muS_E']+3)
-        fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-3, p_in['muS_N']+3)
-        fitter.priors['q'] = model_fitter.make_gen(p_in['q']-0.1, p_in['q']+0.1) 
-        fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.1, p_in['sep']+0.1) 
-        fitter.priors['alpha'] = model_fitter.make_gen(0, 360)
-        fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-0.1, p_in['b_sff1']+0.1)
-        fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.5, p_in['mag_src1']+0.5)
+        fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-5, p_in['t0']+5)
+        fitter.priors['u0_amp'] = model_fitter.make_gen('u0_amp', p_in['u0_amp']-0.5, p_in['u0_amp']+0.5)
+        fitter.priors['tE'] = model_fitter.make_gen('tE', p_in['tE']-10, p_in['tE']+10)
+        fitter.priors['thetaE'] = model_fitter.make_gen('thetaE', p_in['thetaE_amp']-3, p_in['thetaE_amp']+3)
+        fitter.priors['piS'] = model_fitter.make_gen('piS', p_in['piS']-0.1, p_in['piS']+0.5)
+        fitter.priors['piE_E'] = model_fitter.make_gen('piE_E', p_in['piE_E']-0.5, p_in['piE_E']+0.5)
+        fitter.priors['piE_N'] = model_fitter.make_gen('piE_N', p_in['piE_N']-0.5, p_in['piE_N']+0.5)
+        fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-1, p_in['xS0_E']+1)
+        fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N']-1, p_in['xS0_N']+1)
+        fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E']-3, p_in['muS_E']+3)
+        fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N']-3, p_in['muS_N']+3)
+        fitter.priors['q'] = model_fitter.make_gen('q', p_in['q']-0.1, p_in['q']+0.1) 
+        fitter.priors['sep'] = model_fitter.make_gen('sep', p_in['sep']-0.1, p_in['sep']+0.1) 
+        fitter.priors['alpha'] = model_fitter.make_gen('alpha', 0, 360)
+        fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff1']-0.1, p_in['b_sff1']+0.1)
+        fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src1']-0.5, p_in['mag_src1']+0.5)
 
     fitter.solve()
 
@@ -1237,7 +1240,7 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
 
     pnames = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
               'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-              'q', 'sep', 'alpha', 'b_sff1', 'mag_src1']
+              'q', 'sep', 'alpha', 'b_sff1', 'mag_src1', 'dmag_Lp_Ls1']
 
     # There should be a better way to do this.
     p_in_params = {k: p_in[k] for k in pnames}
@@ -1272,22 +1275,22 @@ def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
                              resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
-    fitter.priors['mLp'] = model_fitter.make_gen(p_in['mLp']-0.01, p_in['mLp']+0.01)
-    fitter.priors['mLs'] = model_fitter.make_gen(p_in['mLs']-0.01, p_in['mLs']+0.01)
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-0.01, p_in['t0']+0.01)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-0.01, p_in['xS0_E']+0.01)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-0.01, p_in['xS0_N']+0.01)
-    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.01, p_in['muS_E']+0.01)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.01, p_in['muS_N']+0.01)
-    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-0.01, p_in['dL']+0.01)
-    fitter.priors['dS'] = model_fitter.make_gen(p_in['dS']-0.01, p_in['dS']+0.01)
-    fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.01, p_in['sep']+0.01)
-    fitter.priors['alpha'] = model_fitter.make_gen(p_in['alpha']-0.01, p_in['alpha']+0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
+    fitter.priors['mLp'] = model_fitter.make_gen('mLp', p_in['mLp']-0.01, p_in['mLp']+0.01)
+    fitter.priors['mLs'] = model_fitter.make_gen('mLs', p_in['mLs']-0.01, p_in['mLs']+0.01)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-0.01, p_in['t0']+0.01)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-0.01, p_in['xS0_E']+0.01)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N']-0.01, p_in['xS0_N']+0.01)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', p_in['beta']-0.01, p_in['beta']+0.01)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', p_in['muL_E']-0.01, p_in['muL_E']+0.01)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', p_in['muL_N']-0.01, p_in['muL_N']+0.01)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E']-0.01, p_in['muS_E']+0.01)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N']-0.01, p_in['muS_N']+0.01)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', p_in['dL']-0.01, p_in['dL']+0.01)
+    fitter.priors['dS'] = model_fitter.make_gen('dS', p_in['dS']-0.01, p_in['dS']+0.01)
+    fitter.priors['sep'] = model_fitter.make_gen('sep', p_in['sep']-0.01, p_in['sep']+0.01)
+    fitter.priors['alpha'] = model_fitter.make_gen('alpha', p_in['alpha']-0.01, p_in['alpha']+0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff1']-0.01, p_in['b_sff1']+0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
         
     fitter.solve()
 
@@ -1416,16 +1419,16 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', 
                              resume=resume, verbose=False)
     
     # Lets adjust some priors for faster solving.
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0'] - 0.1, p_in['t0'] + 0.1)
-    fitter.priors['u0_amp'] = model_fitter.make_gen(p_in['u0_amp'] - 0.01, p_in['u0_amp'] + 0.01)
-    fitter.priors['tE'] = model_fitter.make_gen(p_in['tE'] - 0.1, p_in['tE'] + 0.1)
-    fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E'] - 0.001, p_in['piE_E'] + 0.001)
-    fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N'] - 0.001, p_in['piE_N'] + 0.001)
-    fitter.priors['q'] = model_fitter.make_gen(p_in['q'] - 0.01, p_in['q'] + 0.01)
-    fitter.priors['sep'] = model_fitter.make_gen(p_in['sep'] - 0.01, p_in['sep'] + 0.01)
-    fitter.priors['phi'] = model_fitter.make_gen(p_in['phi'] - 0.01, p_in['phi'] + 0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1'] - 0.01, p_in['mag_src1'] + 0.01)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0'] - 0.1, p_in['t0'] + 0.1)
+    fitter.priors['u0_amp'] = model_fitter.make_gen('u0_amp', p_in['u0_amp'] - 0.01, p_in['u0_amp'] + 0.01)
+    fitter.priors['tE'] = model_fitter.make_gen('tE', p_in['tE'] - 0.1, p_in['tE'] + 0.1)
+    fitter.priors['piE_E'] = model_fitter.make_gen('piE_E', p_in['piE_E'] - 0.001, p_in['piE_E'] + 0.001)
+    fitter.priors['piE_N'] = model_fitter.make_gen('piE_N', p_in['piE_N'] - 0.001, p_in['piE_N'] + 0.001)
+    fitter.priors['q'] = model_fitter.make_gen('q', p_in['q'] - 0.01, p_in['q'] + 0.01)
+    fitter.priors['sep'] = model_fitter.make_gen('sep', p_in['sep'] - 0.01, p_in['sep'] + 0.01)
+    fitter.priors['phi'] = model_fitter.make_gen('phi', p_in['phi'] - 0.01, p_in['phi'] + 0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src1'] - 0.01, p_in['mag_src1'] + 0.01)
 
     # Sampler = dynesty.DynamicNestedSampler(fitter.LogLikelihood, fitter.Prior,
     #                                        ndim=fitter.n_dims, bound='multi',
@@ -1524,16 +1527,16 @@ def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', re
                              resume=resume)
 
     # Lets adjust some priors for faster solving.
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0'] - 0.1, p_in['t0'] + 0.1)
-    fitter.priors['u0_amp'] = model_fitter.make_gen(p_in['u0_amp'] - 0.1, p_in['u0_amp'] + 0.1)
-    fitter.priors['tE'] = model_fitter.make_gen(p_in['tE'] - 0.1, p_in['tE'] + 0.1)
-    fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E'] - 0.01, p_in['piE_E'] + 0.01)
-    fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N'] - 0.01, p_in['piE_N'] + 0.01)
-    fitter.priors['q'] = model_fitter.make_gen(p_in['q'] - 0.01, p_in['q'] + 0.01)
-    fitter.priors['sep'] = model_fitter.make_gen(p_in['sep'] - 0.01, p_in['sep'] + 0.01)
-    fitter.priors['phi'] = model_fitter.make_gen(p_in['phi'] - 0.01, p_in['phi'] + 0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1'] - 0.01, p_in['mag_src1'] + 0.01)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0'] - 0.1, p_in['t0'] + 0.1)
+    fitter.priors['u0_amp'] = model_fitter.make_gen('u0_amp', p_in['u0_amp'] - 0.1, p_in['u0_amp'] + 0.1)
+    fitter.priors['tE'] = model_fitter.make_gen('tE', p_in['tE'] - 0.1, p_in['tE'] + 0.1)
+    fitter.priors['piE_E'] = model_fitter.make_gen('piE_E', p_in['piE_E'] - 0.01, p_in['piE_E'] + 0.01)
+    fitter.priors['piE_N'] = model_fitter.make_gen('piE_N', p_in['piE_N'] - 0.01, p_in['piE_N'] + 0.01)
+    fitter.priors['q'] = model_fitter.make_gen('q', p_in['q'] - 0.01, p_in['q'] + 0.01)
+    fitter.priors['sep'] = model_fitter.make_gen('sep', p_in['sep'] - 0.01, p_in['sep'] + 0.01)
+    fitter.priors['phi'] = model_fitter.make_gen('phi', p_in['phi'] - 0.01, p_in['phi'] + 0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src1'] - 0.01, p_in['mag_src1'] + 0.01)
     
     # sampler = dynesty.DynamicNestedSampler(fitter.LogLikelihood, fitter.Prior, 
     #                                        ndim=fitter.n_dims, bound='multi',
@@ -1972,18 +1975,18 @@ def test_cache_parallax_vector(verbose=False, resume=False):
                              resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-2, p_in['t0']+2)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
-    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.01, p_in['muS_E']+0.01)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.01, p_in['muS_N']+0.01)
-    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-10, p_in['dL']+10)
-    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.01, p_in['b_sff']+0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.1, p_in['mag_src']+0.1)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-2, p_in['t0']+2)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', p_in['beta']-0.01, p_in['beta']+0.01)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', p_in['muL_E']-0.01, p_in['muL_E']+0.01)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', p_in['muL_N']-0.01, p_in['muL_N']+0.01)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E']-0.01, p_in['muS_E']+0.01)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N']-0.01, p_in['muS_N']+0.01)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', p_in['dL']-10, p_in['dL']+10)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', (p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff'][0]-0.01, p_in['b_sff'][0]+0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src'][0]-0.1, p_in['mag_src'][0]+0.1)
     
     fitter.solve()
 
@@ -2087,18 +2090,18 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
                                  resume=resume, verbose=False)
     
     # Lets adjust some priors for faster solving.
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-2, p_in['t0']+2)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
-    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.01, p_in['muS_E']+0.01)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.01, p_in['muS_N']+0.01)
-    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-10, p_in['dL']+10)
-    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.01, p_in['b_sff']+0.01)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.01, p_in['mag_src']+0.01)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-2, p_in['t0']+2)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', p_in['beta']-0.01, p_in['beta']+0.01)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', p_in['muL_E']-0.01, p_in['muL_E']+0.01)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', p_in['muL_N']-0.01, p_in['muL_N']+0.01)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E']-0.01, p_in['muS_E']+0.01)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N']-0.01, p_in['muS_N']+0.01)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', p_in['dL']-10, p_in['dL']+10)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', (p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff'][0]-0.01, p_in['b_sff'][0]+0.01)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src'][0]-0.01, p_in['mag_src'][0]+0.01)
 
     t0 = time.time()
 
@@ -2251,21 +2254,21 @@ def test_bspl_parallax_fit(verbose=False, resume=False):
                              resume=resume)
 
     # Lets adjust some priors for faster solving.
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0'] - 2, p_in['t0'] + 2)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E'] - 1e-4, p_in['xS0_E'] + 1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N'] - 1e-4, p_in['xS0_N'] + 1e-4)
-    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta'] - 0.01, p_in['beta'] + 0.01)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E'] - 0.01, p_in['muL_E'] + 0.01)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N'] - 0.01, p_in['muL_N'] + 0.01)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E'] - 0.01, p_in['muS_E'] + 0.01)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N'] - 0.01, p_in['muS_N'] + 0.01)
-    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL'] - 10, p_in['dL'] + 10)
-    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL'] / p_in['dS']) - 0.01, (p_in['dL'] / p_in['dS']) + 0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
-    fitter.priors['mag_src_pri1'] = model_fitter.make_gen(p_in['mag_src_pri1']-0.1, p_in['mag_src_pri1']+0.1)
-    fitter.priors['mag_src_sec1'] = model_fitter.make_gen(p_in['mag_src_sec1']-0.1, p_in['mag_src_sec1']+0.1)
-    fitter.priors['sep'] = model_fitter.make_gen(p_in['sep']-0.01, p_in['sep']+0.01)
-    fitter.priors['alpha'] = model_fitter.make_gen(p_in['alpha'] - 1, p_in['alpha'] + 1)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0'] - 2, p_in['t0'] + 2)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E'] - 1e-4, p_in['xS0_E'] + 1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N'] - 1e-4, p_in['xS0_N'] + 1e-4)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', p_in['beta'] - 0.01, p_in['beta'] + 0.01)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', p_in['muL_E'] - 0.01, p_in['muL_E'] + 0.01)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', p_in['muL_N'] - 0.01, p_in['muL_N'] + 0.01)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E'] - 0.01, p_in['muS_E'] + 0.01)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N'] - 0.01, p_in['muS_N'] + 0.01)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', p_in['dL'] - 10, p_in['dL'] + 10)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', (p_in['dL'] / p_in['dS']) - 0.01, (p_in['dL'] / p_in['dS']) + 0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
+    fitter.priors['mag_src_pri1'] = model_fitter.make_gen('mag_src_pri1', p_in['mag_src_pri1']-0.1, p_in['mag_src_pri1']+0.1)
+    fitter.priors['mag_src_sec1'] = model_fitter.make_gen('mag_src_sec1', p_in['mag_src_sec1']-0.1, p_in['mag_src_sec1']+0.1)
+    fitter.priors['sep'] = model_fitter.make_gen('sep', p_in['sep']-0.01, p_in['sep']+0.01)
+    fitter.priors['alpha'] = model_fitter.make_gen('alpha', p_in['alpha'] - 1, p_in['alpha'] + 1)
 
     # fitter.additional_param_names = []
     # fitter.custom_additional_param_names = []
@@ -2337,23 +2340,23 @@ def test_multi_obsLocation(resume=False, verbose=False):
                              resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
-    fitter.priors['mL'] = model_fitter.make_gen(p_in['mL']-1, p_in['mL']+1)
-    fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-1, p_in['t0']+1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
-    fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
-    fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-1e-3, p_in['muL_E']+1e-3)
-    fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-1e-3, p_in['muL_N']+1e-3)
-    fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-1e-3, p_in['muS_E']+1e-3)
-    fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-1e-3, p_in['muS_N']+1e-3)
-    fitter.priors['dL'] = model_fitter.make_gen(p_in['dL']-10, p_in['dL']+10)
-    fitter.priors['dL_dS'] = model_fitter.make_gen((p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1']-1e-3, p_in['b_sff1']+1e-3)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
-    fitter.priors['b_sff2'] = model_fitter.make_gen(p_in['b_sff2']-1e-3, p_in['b_sff2']+1e-3)
-    fitter.priors['mag_src2'] = model_fitter.make_gen(p_in['mag_src2']-0.01, p_in['mag_src2']+0.01)
-    fitter.priors['b_sff3'] = model_fitter.make_gen(p_in['b_sff3']-1e-3, p_in['b_sff3']+1e-3)
-    fitter.priors['mag_src3'] = model_fitter.make_gen(p_in['mag_src3']-0.01, p_in['mag_src3']+0.01)
+    fitter.priors['mL'] = model_fitter.make_gen('mL', p_in['mL']-1, p_in['mL']+1)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-1, p_in['t0']+1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', p_in['beta']-0.01, p_in['beta']+0.01)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', p_in['muL_E']-1e-3, p_in['muL_E']+1e-3)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', p_in['muL_N']-1e-3, p_in['muL_N']+1e-3)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', p_in['muS_E']-1e-3, p_in['muS_E']+1e-3)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', p_in['muS_N']-1e-3, p_in['muS_N']+1e-3)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', p_in['dL']-10, p_in['dL']+10)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', (p_in['dL']/p_in['dS'])-0.01, (p_in['dL']/p_in['dS'])+0.01)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', p_in['b_sff1']-1e-3, p_in['b_sff1']+1e-3)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', p_in['mag_src1']-0.01, p_in['mag_src1']+0.01)
+    fitter.priors['b_sff2'] = model_fitter.make_gen('b_sff2', p_in['b_sff2']-1e-3, p_in['b_sff2']+1e-3)
+    fitter.priors['mag_src2'] = model_fitter.make_gen('mag_src2', p_in['mag_src2']-0.01, p_in['mag_src2']+0.01)
+    fitter.priors['b_sff3'] = model_fitter.make_gen('b_sff3', p_in['b_sff3']-1e-3, p_in['b_sff3']+1e-3)
+    fitter.priors['mag_src3'] = model_fitter.make_gen('mag_src3', p_in['mag_src3']-0.01, p_in['mag_src3']+0.01)
 
 
     fitter.solve()
@@ -2487,8 +2490,22 @@ def _dense_ast_times(t_ast, cadence=5.0):
     return np.arange(t_ast.min(), t_ast.max() + 0.5 * cadence, cadence)
 
 
-def _plot_data_and_both_models(data, model_mn, model_pm, model_in, figdir):
-    """Plot fake data with MultiNest, PyMC, and input models overlaid."""
+def _plot_data_and_both_models(data, model_mn, model_other, model_in, figdir,
+                               other_label='PyMC'):
+    """Plot fake data with MultiNest, a second fitter, and input models.
+
+    Parameters
+    ----------
+    data : dict
+        Fake data dictionary.
+    model_mn, model_other, model_in : ModelClassABC
+        Best-fit MultiNest, comparison, and input truth models.
+    figdir : str
+        Output directory for PNG files.
+    other_label : str, optional
+        Legend label for the comparison fitter (e.g. ``'PyMC'`` or
+        ``'NumPyro'``).
+    """
     os.makedirs(figdir, exist_ok=True)
 
     t_phot = data['t_phot1']
@@ -2498,8 +2515,8 @@ def _plot_data_and_both_models(data, model_mn, model_pm, model_in, figdir):
                 fmt='k.', ms=3, label='data')
     ax.plot(t_phot_mod, model_mn.get_photometry(t_phot_mod), 'r-',
             lw=1.5, label='MultiNest best fit')
-    ax.plot(t_phot_mod, model_pm.get_photometry(t_phot_mod), 'b--',
-            lw=1.5, label='PyMC best fit')
+    ax.plot(t_phot_mod, model_other.get_photometry(t_phot_mod), 'b--',
+            lw=1.5, label=f'{other_label} best fit')
     ax.plot(t_phot_mod, model_in.get_photometry(t_phot_mod), 'g:',
             lw=1.5, label='input model')
     ax.set_xlabel('t (MJD)')
@@ -2518,7 +2535,7 @@ def _plot_data_and_both_models(data, model_mn, model_pm, model_in, figdir):
         ('N', 'ypos1', 'ypos_err1', 1, 'astrometry_N.png'),
     ]:
         pos_mn = model_mn.get_astrometry(t_ast_mod)
-        pos_pm = model_pm.get_astrometry(t_ast_mod)
+        pos_other = model_other.get_astrometry(t_ast_mod)
         pos_in = model_in.get_astrometry(t_ast_mod)
 
         fig, ax = plt.subplots(figsize=(8, 5))
@@ -2526,8 +2543,8 @@ def _plot_data_and_both_models(data, model_mn, model_pm, model_in, figdir):
                     fmt='k.', ms=3, label='data')
         ax.plot(t_ast_mod, pos_mn[:, mod_idx], 'r-',
                 lw=1.5, label='MultiNest best fit')
-        ax.plot(t_ast_mod, pos_pm[:, mod_idx], 'b--',
-                lw=1.5, label='PyMC best fit')
+        ax.plot(t_ast_mod, pos_other[:, mod_idx], 'b--',
+                lw=1.5, label=f'{other_label} best fit')
         ax.plot(t_ast_mod, pos_in[:, mod_idx], 'g:',
                 lw=1.5, label='input model')
         ax.set_xlabel('t (MJD)')
@@ -2538,12 +2555,30 @@ def _plot_data_and_both_models(data, model_mn, model_pm, model_in, figdir):
         fig.savefig(os.path.join(figdir, fname))
         plt.close(fig)
 
+    return None
 
-def _overlay_prior_and_map(ax, prior, map_mn, map_pm, vals_mn, vals_pm,
-                           show_legend=False):
-    """Overplot scipy prior (scaled) and MAP vertical lines on a posterior axis."""
-    x_lo = min(np.min(vals_mn), np.min(vals_pm))
-    x_hi = max(np.max(vals_mn), np.max(vals_pm))
+
+def _overlay_prior_and_map(ax, prior, map_mn, map_other, vals_mn, vals_other,
+                           other_label='PyMC', show_legend=False):
+    """Overplot scipy prior (scaled) and MAP vertical lines on a posterior axis.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Target axis.
+    prior : scipy frozen distribution
+        Prior PDF to overlay.
+    map_mn, map_other : float or None
+        MAP values for MultiNest and the comparison fitter.
+    vals_mn, vals_other : array_like
+        Posterior samples used for axis range.
+    other_label : str, optional
+        Legend label for the comparison MAP line.
+    show_legend : bool, optional
+        Whether to draw the legend.
+    """
+    x_lo = min(np.min(vals_mn), np.min(vals_other))
+    x_hi = max(np.max(vals_mn), np.max(vals_other))
     pad = 0.05 * (x_hi - x_lo) if x_hi > x_lo else 1.0
     x = np.linspace(x_lo - pad, x_hi + pad, 400)
     pdf = prior.pdf(x)
@@ -2556,16 +2591,38 @@ def _overlay_prior_and_map(ax, prior, map_mn, map_pm, vals_mn, vals_pm,
 
     if map_mn is not None:
         ax.axvline(map_mn, color='C3', ls='-', lw=1.5, label='MultiNest MAP')
-    if map_pm is not None:
-        ax.axvline(map_pm, color='C0', ls='-.', lw=1.5, label='PyMC MAP')
+    if map_other is not None:
+        ax.axvline(
+            map_other, color='C0', ls='-.', lw=1.5,
+            label=f'{other_label} MAP'
+        )
 
     if show_legend:
         ax.legend(fontsize=7)
 
+    return None
 
-def _plot_posterior_comparison(tab_mn, tab_pm, param_names, figdir, priors,
-                               map_mn=None, map_pm=None):
-    """1D posterior comparison: MultiNest (weighted) vs PyMC."""
+
+def _plot_posterior_comparison(tab_mn, tab_other, param_names, figdir, priors,
+                               map_mn=None, map_other=None,
+                               other_label='PyMC'):
+    """1D posterior comparison: MultiNest (weighted) vs a second fitter.
+
+    Parameters
+    ----------
+    tab_mn, tab_other : astropy.table.Table
+        Posterior sample tables.
+    param_names : list of str
+        Parameters to plot.
+    figdir : str
+        Output directory.
+    priors : dict
+        SciPy frozen priors keyed by parameter name.
+    map_mn, map_other : dict or None
+        MAP values keyed by parameter name.
+    other_label : str, optional
+        Legend / title label for the comparison fitter.
+    """
     os.makedirs(figdir, exist_ok=True)
     weights = tab_mn['weights']
     n_params = len(param_names)
@@ -2580,13 +2637,14 @@ def _plot_posterior_comparison(tab_mn, tab_pm, param_names, figdir, priors,
         ax = axes[ii]
         ax.hist(tab_mn[name], bins=30, weights=weights, density=True,
                 alpha=0.45, color='C3', label='MultiNest')
-        ax.hist(tab_pm[name], bins=30, density=True,
-                alpha=0.45, color='C0', label='PyMC')
+        ax.hist(tab_other[name], bins=30, density=True,
+                alpha=0.45, color='C0', label=other_label)
         _overlay_prior_and_map(
             ax, priors[name],
             map_mn[name] if map_mn is not None else None,
-            map_pm[name] if map_pm is not None else None,
-            tab_mn[name], tab_pm[name],
+            map_other[name] if map_other is not None else None,
+            tab_mn[name], tab_other[name],
+            other_label=other_label,
             show_legend=(ii == 0),
         )
         ax.set_title(name, fontsize=9)
@@ -2594,7 +2652,9 @@ def _plot_posterior_comparison(tab_mn, tab_pm, param_names, figdir, priors,
     for jj in range(n_params, len(axes)):
         axes[jj].set_visible(False)
 
-    fig.suptitle('Posterior comparison: MultiNest vs PyMC', fontsize=11)
+    fig.suptitle(
+        f'Posterior comparison: MultiNest vs {other_label}', fontsize=11
+    )
     fig.tight_layout()
     fig.savefig(os.path.join(figdir, 'posteriors_1d_all.png'))
     plt.close(fig)
@@ -2603,13 +2663,14 @@ def _plot_posterior_comparison(tab_mn, tab_pm, param_names, figdir, priors,
         fig, ax = plt.subplots(figsize=(5, 3.5))
         ax.hist(tab_mn[name], bins=30, weights=weights, density=True,
                 alpha=0.45, color='C3', label='MultiNest')
-        ax.hist(tab_pm[name], bins=30, density=True,
-                alpha=0.45, color='C0', label='PyMC')
+        ax.hist(tab_other[name], bins=30, density=True,
+                alpha=0.45, color='C0', label=other_label)
         _overlay_prior_and_map(
             ax, priors[name],
             map_mn[name] if map_mn is not None else None,
-            map_pm[name] if map_pm is not None else None,
-            tab_mn[name], tab_pm[name],
+            map_other[name] if map_other is not None else None,
+            tab_mn[name], tab_other[name],
+            other_label=other_label,
             show_legend=True,
         )
         ax.set_xlabel(name)
@@ -2618,45 +2679,47 @@ def _plot_posterior_comparison(tab_mn, tab_pm, param_names, figdir, priors,
         fig.savefig(os.path.join(figdir, f'posterior_{name}.png'))
         plt.close(fig)
 
+    return None
+
 
 def _apply_pspl_fake_data1_priors(fitter, p_in):
     """Narrow priors around fake_data1() truth for fast fitting tests."""
-    fitter.priors['mL'] = model_fitter.make_gen(9.9, 10.1)
-    fitter.priors['t0'] = model_fitter.make_gen(56990, 57010)
-    fitter.priors['beta'] = model_fitter.make_gen(-0.45, -0.35)
-    fitter.priors['muL_E'] = model_fitter.make_gen(-0.1, 0.1)
-    fitter.priors['muL_N'] = model_fitter.make_gen(-7.1, -6.9)
-    fitter.priors['muS_E'] = model_fitter.make_gen(1.4, 1.6)
-    fitter.priors['muS_N'] = model_fitter.make_gen(-0.6, -0.4)
-    fitter.priors['dL'] = model_fitter.make_gen(3900, 4100)
-    fitter.priors['dL_dS'] = model_fitter.make_gen(0.45, 0.55)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(0.95, 1.05)
-    fitter.priors['mag_src1'] = model_fitter.make_gen(18.9, 19.1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(-1e-4, 1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(-1e-4, 1e-4)
+    fitter.priors['mL'] = model_fitter.make_gen('mL', 9.9, 10.1)
+    fitter.priors['t0'] = model_fitter.make_gen('t0', 56990, 57010)
+    fitter.priors['beta'] = model_fitter.make_gen('beta', -0.45, -0.35)
+    fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', -0.1, 0.1)
+    fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', -7.1, -6.9)
+    fitter.priors['muS_E'] = model_fitter.make_gen('muS_E', 1.4, 1.6)
+    fitter.priors['muS_N'] = model_fitter.make_gen('muS_N', -0.6, -0.4)
+    fitter.priors['dL'] = model_fitter.make_gen('dL', 3900, 4100)
+    fitter.priors['dL_dS'] = model_fitter.make_gen('dL_dS', 0.45, 0.55)
+    fitter.priors['b_sff1'] = model_fitter.make_gen('b_sff1', 0.95, 1.05)
+    fitter.priors['mag_src1'] = model_fitter.make_gen('mag_src1', 18.9, 19.1)
+    fitter.priors['xS0_E'] = model_fitter.make_gen('xS0_E', -1e-4, 1e-4)
+    fitter.priors['xS0_N'] = model_fitter.make_gen('xS0_N', -1e-4, 1e-4)
 
 
 def _relative_param_diff(a, b):
-    if np.abs(b) < 1e-3:
-        return np.abs(a - b)
-    return np.abs((a - b) / b)
+    """Relative difference; use absolute scale when ``b`` is near zero."""
+    scale = max(np.abs(b), 1e-2)
+    return np.abs(a - b) / scale
 
 
 def _build_data_driven_prior(prior_name, data):
     """Build a scipy prior from fake data using the old make_* generators."""
     if prior_name == 'make_piS':
-        prior = model_fitter.make_piS()
+        prior = model_fitter.make_piS('piS')
     elif prior_name == 'make_t0_gen':
-        prior = model_fitter.make_t0_gen(data['t_phot1'], data['mag1'])
+        prior = model_fitter.make_t0_gen('t0', data['t_phot1'], data['mag1'])
     elif prior_name == 'make_xS0_gen':
-        prior = model_fitter.make_xS0_gen(data['xpos1'])
+        prior = model_fitter.make_xS0_gen('xS0', data['xpos1'])
     elif prior_name == 'make_muS_EN_gen':
         prior = model_fitter.make_muS_EN_gen(
-            data['t_ast1'], data['xpos1'])
+            'muS', data['t_ast1'], data['xpos1'])
     elif prior_name == 'make_mag_src_gen':
-        prior = model_fitter.make_mag_src_gen(data['mag1'])
+        prior = model_fitter.make_mag_src_gen('mag_src', data['mag1'])
     elif prior_name == 'make_mag_base_gen':
-        prior = model_fitter.make_mag_base_gen(data['mag1'])
+        prior = model_fitter.make_mag_base_gen('mag_base', data['mag1'])
     else:
         raise ValueError(f'Unknown prior generator: {prior_name}')
 
@@ -2715,7 +2778,6 @@ def test_old_data_priors_supported_in_pymc(prior_name, plot=False):
     (model_fitter.make_truncnorm_gen_with_bounds, (0.0, 1.0, -5.0, 5.0)),
     (model_fitter.make_invgamma_gen, (np.linspace(57000.0, 57100.0, 50),)),
     (model_fitter.make_piS, ()),
-    (model_fitter.make_fdfdt, ()),
 ])
 def test_scipy_to_pymc_priors(prior_fn, args, plot=False):
     pymc = pytest.importorskip('pymc')
@@ -2824,7 +2886,250 @@ def test_microlens_solver_pymc_vs_multinest(plot=False, resume_mnest=False):
         _plot_data_and_both_models(data, model_mn, model_pm, model_in, figdir)
         _plot_posterior_comparison(
             tab_mn, tab_pm, fitter_mn.fitter_param_names, figdir,
-            priors=fitter_mn.priors, map_mn=map_mn, map_pm=map_pm)
+            priors=fitter_mn.priors, map_mn=map_mn, map_other=map_pm,
+            other_label='PyMC')
 
     return
-    
+
+
+@pytest.mark.parametrize('prior_fn,args', [
+    (model_fitter.make_gen, (-1.0, 1.0)),
+    (model_fitter.make_norm_gen, (0.0, 1.0)),
+    (model_fitter.make_lognorm_gen, (0.0, 0.5)),
+    (model_fitter.make_log10norm_gen, (-1.0, 0.3)),
+    (model_fitter.make_truncnorm_gen, (0.0, 1.0, -2.0, 2.0)),
+    (model_fitter.make_truncnorm_gen_with_bounds, (0.0, 1.0, -5.0, 5.0)),
+    (model_fitter.make_invgamma_gen, (np.linspace(57000.0, 57100.0, 50),)),
+    (model_fitter.make_piS, ()),
+])
+def test_make_gen_numpyro_priors(prior_fn, args):
+    """NumPyro make_*_gen priors should match scipy quantiles."""
+    numpyro = pytest.importorskip('numpyro')
+    import jax
+    import numpyro.distributions as dist
+    from numpyro.infer import Predictive
+
+    scipy_prior = prior_fn('theta', *args, stats_pkg='scipy')
+    numpyro_prior = prior_fn('theta', *args, stats_pkg='numpyro')
+    assert isinstance(numpyro_prior, dist.Distribution)
+
+    def model():
+        numpyro.sample('theta', numpyro_prior)
+        return None
+
+    predictive = Predictive(model, num_samples=3000)
+    samples = predictive(jax.random.PRNGKey(0))['theta']
+    samples = np.asarray(samples).reshape(-1)
+
+    for q in [0.16, 0.5, 0.84]:
+        target = scipy_prior.ppf(q)
+        sample_q = np.quantile(samples, q)
+        atol = max(0.05, 0.15 * np.abs(target))
+        assert np.isclose(sample_q, target, rtol=0.15, atol=atol)
+
+    return None
+
+
+@pytest.mark.parametrize('prior_fn,args', [
+    (model_fitter.make_gen, (-1.0, 1.0)),
+    (model_fitter.make_norm_gen, (0.0, 1.0)),
+    (model_fitter.make_lognorm_gen, (0.0, 0.5)),
+    (model_fitter.make_truncnorm_gen, (0.0, 1.0, -2.0, 2.0)),
+    (model_fitter.make_invgamma_gen, (np.linspace(57000.0, 57100.0, 50),)),
+])
+def test_scipy_to_numpyro_priors(prior_fn, args):
+    """scipy_to_numpyro_dist should match scipy quantiles."""
+    numpyro = pytest.importorskip('numpyro')
+    import jax
+    import numpyro.distributions as dist
+    from numpyro.infer import Predictive
+    from bagle.model_fitter_jax import scipy_to_numpyro_dist
+
+    scipy_prior = prior_fn('theta', *args, stats_pkg='scipy')
+    numpyro_prior = scipy_to_numpyro_dist(scipy_prior)
+    assert isinstance(numpyro_prior, dist.Distribution)
+
+    def model():
+        numpyro.sample('theta', numpyro_prior)
+        return None
+
+    predictive = Predictive(model, num_samples=3000)
+    samples = predictive(jax.random.PRNGKey(1))['theta']
+    samples = np.asarray(samples).reshape(-1)
+
+    for q in [0.16, 0.5, 0.84]:
+        target = scipy_prior.ppf(q)
+        sample_q = np.quantile(samples, q)
+        atol = max(0.05, 0.15 * np.abs(target))
+        assert np.isclose(sample_q, target, rtol=0.15, atol=atol)
+
+    return None
+
+
+def test_microlens_solver_numpyro_grad_finite():
+    """Shared JAX χ² lnL must have finite gradients at the prior median."""
+    pytest.importorskip('numpyro')
+    import jax
+    from bagle.model_fitter_jax import build_explicit_jax_loglik_fn
+
+    data, p_in = fake_data.fake_data1()
+    model_class = model.PSPL_PhotAstrom_noPar_Param1
+    fitter = MicrolensSolverNumPyro(
+        data,
+        model_class,
+        outputfiles_basename='./test_numpyro_solver/grad_',
+        draws=10,
+        tune=10,
+        chains=1,
+        verbose=False,
+    )
+    _apply_pspl_fake_data1_priors(fitter, p_in)
+
+    lnL, _ctx = build_explicit_jax_loglik_fn(fitter)
+    assert lnL is not None
+    param0 = np.array(
+        [float(fitter.priors[name].ppf(0.5))
+         for name in fitter.fitter_param_names],
+        dtype=np.float64,
+    )
+    grads = jax.grad(lnL)(param0)
+    assert np.all(np.isfinite(np.asarray(grads)))
+    assert np.isfinite(float(lnL(param0)))
+    return None
+
+
+def test_microlens_solver_numpyro_nuts_vs_multinest(plot=True, resume_mnest=False):
+    """NumPyro NUTS posteriors should be close to MultiNest on fake_data1."""
+    pytest.importorskip('numpyro')
+
+    outdir = './test_numpyro_solver/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = fake_data.fake_data1()
+    model_class = model.PSPL_PhotAstrom_noPar_Param1
+
+    fitter_mn = MicrolensSolver(
+        data,
+        model_class,
+        n_live_points=100,
+        outputfiles_basename=outdir + 'mnest_jax_',
+        sampling_efficiency=0.9,
+        evidence_tolerance=0.8,
+        max_iter=5000,
+        dump_callback=None,
+        verbose=False,
+        resume=resume_mnest,
+    )
+    _apply_pspl_fake_data1_priors(fitter_mn, p_in)
+
+    t0 = time.time()
+    fitter_mn.solve()
+    t_mn = time.time() - t0
+
+    best_mn = fitter_mn.get_best_fit(def_best='median')[0]
+    tab_mn = fitter_mn.load_mnest_results()
+
+    fitter_np = MicrolensSolverNumPyro(
+        data,
+        model_class,
+        outputfiles_basename=outdir + 'numpyro_nuts_',
+        sampler='nuts',
+        draws=1000,
+        tune=400,
+        chains=2,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_pspl_fake_data1_priors(fitter_np, p_in)
+
+    t0 = time.time()
+    fitter_np.solve()
+    t_np = time.time() - t0
+
+    print(f'MultiNest runtime: {t_mn:.1f}s, NumPyro NUTS runtime: {t_np:.1f}s')
+
+    best_np = fitter_np.get_best_fit(def_best='median')[0]
+    tab_np = fitter_np.load_mnest_results()
+
+    if plot:
+        figdir = os.path.join(_test_figures_dir(), 'numpyro_vs_multinest')
+        model_mn = fitter_mn.get_model(best_mn)
+        model_np = fitter_np.get_model(best_np)
+        model_in = fitter_mn.get_model(p_in)
+        map_mn = {
+            name: tab_mn[name][np.argmax(tab_mn['logLike'])]
+            for name in fitter_mn.fitter_param_names
+        }
+        map_np = {
+            name: tab_np[name][np.argmax(tab_np['logLike'])]
+            for name in fitter_np.fitter_param_names
+        }
+        _plot_data_and_both_models(
+            data, model_mn, model_np, model_in, figdir,
+            other_label='NumPyro'
+        )
+        _plot_posterior_comparison(
+            tab_mn, tab_np, fitter_mn.fitter_param_names, figdir,
+            priors=fitter_mn.priors, map_mn=map_mn, map_other=map_np,
+            other_label='NumPyro'
+        )
+
+    for key in fitter_mn.fitter_param_names:
+        assert _relative_param_diff(best_mn[key], best_np[key]) < 0.3
+
+    for key in fitter_mn.fitter_param_names:
+        q_mn = model_fitter.weighted_quantile(
+            tab_mn[key], [0.16, 0.5, 0.84], sample_weight=tab_mn['weights']
+        )
+        q_np = np.quantile(tab_np[key], [0.16, 0.5, 0.84])
+        for qmn, qnp in zip(q_mn, q_np):
+            # Near-zero parameters need a floor on absolute tolerance.
+            atol = max(1e-2, 0.15 * np.abs(qmn))
+            assert np.isclose(qmn, qnp, rtol=0.3, atol=atol)
+
+    lnL_mn = fitter_mn.log_likely(best_mn)
+    lnL_np = fitter_np.log_likely(best_np)
+    assert np.abs(lnL_mn - lnL_np) < 10
+
+    return None
+
+
+def test_microlens_solver_numpyro_jaxns_smoke():
+    """JAXNS smoke test: finite logZ and MultiNest-compatible table."""
+    try:
+        import jaxns  # noqa: F401
+        import tensorflow_probability  # noqa: F401
+    except (ImportError, AttributeError) as error:
+        pytest.skip(f'jaxns unavailable: {error}')
+
+    outdir = './test_numpyro_solver/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = fake_data.fake_data1()
+    model_class = model.PSPL_PhotAstrom_noPar_Param1
+
+    fitter = MicrolensSolverNumPyro(
+        data,
+        model_class,
+        outputfiles_basename=outdir + 'numpyro_jaxns_',
+        sampler='jaxns',
+        n_live_points=40,
+        max_samples=2000,
+        posterior_samples=200,
+        dlogz=0.5,
+        gradient_guided=True,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_pspl_fake_data1_priors(fitter, p_in)
+    fitter.solve()
+
+    tab = fitter.load_mnest_results()
+    summary = fitter.load_mnest_summary()
+    assert len(tab) == 200
+    assert 'logLike' in tab.colnames
+    for name in fitter.fitter_param_names:
+        assert name in tab.colnames
+    assert np.isfinite(float(summary['logZ'][0]))
+    assert np.isfinite(float(summary['maxlogL'][0]))
+    return None

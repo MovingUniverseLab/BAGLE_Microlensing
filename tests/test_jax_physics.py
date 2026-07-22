@@ -298,3 +298,48 @@ def test_pspl_trajectory_grad_wrt_piE():
 
     grad = jax.grad(lambda x: amp_piE_E(x).sum())(0.01)
     assert np.isfinite(float(grad))
+
+
+def test_pspl_photometric_likelihood_composes_forward_and_gaussian():
+    t = np.linspace(56950.0, 57050.0, 11)
+    u0, thetaE_hat, _ = jax_physics.derive_pspl_static_geometry(
+        0.05, 0.01, 0.02
+    )
+    mag_obs = np.full_like(t, 18.0)
+    mag_err = np.full_like(t, 0.02)
+    mag_model = jax_physics.pspl_photometry(
+        t, 57000.0, 45.0, u0, thetaE_hat, 18.0, b_sff=0.8,
+        piE_E=0.01, piE_N=0.02
+    )
+    expected = jax_physics.gaussian_log_likelihood_sum(
+        mag_model, mag_obs, mag_err
+    )
+    actual = jax_physics.pspl_log_likely_photometry(
+        t, 57000.0, 45.0, u0, thetaE_hat, 18.0, 0.8,
+        mag_obs, mag_err, piE_E=0.01, piE_N=0.02
+    )
+    np.testing.assert_allclose(actual, expected)
+
+
+def test_pspl_astrometric_likelihood_composes_forward_and_gaussian():
+    t = np.linspace(56950.0, 57050.0, 11)
+    xS0 = np.array([0.0, 0.0])
+    xL0 = np.array([-0.001, 0.0])
+    muS = np.array([1.0, -0.5])
+    muL = np.array([0.0, 0.0])
+    x_obs = np.zeros_like(t)
+    y_obs = np.zeros_like(t)
+    x_err = np.full_like(t, 1e-4)
+    y_err = np.full_like(t, 1e-4)
+    pos = jax_physics.pspl_astrometry_param1(
+        t, 57000.0, xS0, xL0, muS, muL, 1.0, 0.8,
+        piS=0.1, piL=0.2
+    )
+    expected = jax_physics.gaussian_astrometry_log_likelihood_sum(
+        pos, x_obs, y_obs, x_err, y_err
+    )
+    actual = jax_physics.pspl_log_likely_astrometry(
+        t, 57000.0, xS0, xL0, muS, muL, 1.0, 0.8,
+        x_obs, y_obs, x_err, y_err, piS=0.1, piL=0.2
+    )
+    np.testing.assert_allclose(actual, expected)

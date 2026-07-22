@@ -38,10 +38,19 @@ Use NumPy docstring style.
 ### Adding a New Function
 
 1. Add comprehensive tests in `tests/`
-2. Add docstring with examples
+2. Add docstring with examples.
+3. Comment small chunks of code.
 
 ## Architecture
 
 - **`bagle.model`**: NumPy reference physics (`origin/main`); used by fitter, fake_data, plots.
-- **`bagle.model_jax`**: JAX-first implementation; forward methods call `jax_physics` kernels (and family helpers). Fitter likelihoods use `Param.get_params_for_jax` + `bagle.jax.likelihood`.
+- **`bagle.model_jax`**: JAX-first implementation; forward methods call
+  `jax_physics` kernels. JAX fitter likelihoods call explicit Param-mixin
+  methods via `bagle.model_fitter_jax.build_explicit_jax_loglik_fn`
+  (also exposed as `jax_physics.build_jax_loglik_fn`).
+- **`bagle.model_fitter_jax`**: MultiNest, PyMC, and NumPyro solvers.
+  `MicrolensSolverNumPyro` supports `sampler='nuts'` (NumPyro NUTS) or
+  `sampler='jaxns'` (direct JAXNS). JAXNS extras: `pip install 'bagle[jaxns]'`
+  (needs `jaxns` + `tensorflow-probability`). On Python 3.14, jaxns 2.6.x may
+  fail to import due to a typing bug.
 - Follow the repository pattern

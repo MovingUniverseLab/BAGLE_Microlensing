@@ -73,6 +73,239 @@ multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
                      'add_err', 'mult_err']
 
 
+def _jax_param_index(names, base, filt_idx=None):
+    """Return a scalar or one-based per-filter parameter index."""
+    key = base if filt_idx is None else f'{base}{filt_idx + 1}'
+    if key not in names and base in names:
+        key = base
+    return names.index(key)
+
+
+def build_explicit_jax_loglik_fn(fitter):
+    """
+    Build a JIT-compiled log-likelihood function directly from 
+    model Param-mixin methods using JAX.
+
+    Parameters
+    ----------
+    fitter : object
+        The MicrolensSolver or similar fitter class, with attributes 
+        such as model_class, fitter_param_names, n_phot_sets, data, etc.
+
+    Returns
+    -------
+    log_likely_fn : callable or None
+        A jitted callable accepting a parameter vector and returning the 
+        total log-likelihood, or None if not supported.
+    ctx : None
+        Context object (currently None, possible extension point).
+
+    Notes
+    -----
+    Returns (None, None) in cases where the configuration is unsupported
+    (e.g., model requires add_err/mult_err, missing likelihood methods).
+    This function also uses caching to avoid redundant compilation.
+    """
+
+    # Check for cached likelihood function
+    cached = getattr(fitter, '_explicit_jax_loglik_cache', None)
+    if cached is not None:
+        return cached  # Return cached result
+
+    names = tuple(fitter.fitter_param_names)
+
+    # Models with additive/multiplicative error parameters are not supported
+    if any(('add_err' in name or 'mult_err' in name) for name in names):
+        return None, None
+
+    model_class = fitter.model_class
+    phot_method = getattr(model_class, 'jax_log_likely_photometry', None)
+    ast_method = getattr(model_class, 'jax_log_likely_astrometry', None)
+    need_phot = bool(
+        getattr(model_class, 'photometryFlag', False)
+        and fitter.n_phot_sets
+    )
+    need_ast = bool(
+        getattr(model_class, 'astrometryFlag', False)
+        and fitter.n_ast_sets
+    )
+
+    # Ensure required methods exist for photometry/astrometry
+    if (need_phot and phot_method is None) or (need_ast and ast_method is None):
+        return None, None
+
+    base_names = tuple(model_class.fitter_param_names)
+    try:
+        # Find indices mapping from full param vector to model's "base" params
+        base_indices = tuple(names.index(name) for name in base_names)
+    except ValueError:
+        return None, None
+
+    # Check if parallax info is needed and available
+    use_parallax = bool(getattr(model_class, 'parallaxFlag', False))
+    use_parallax &= 'raL' in fitter.data and 'decL' in fitter.data
+    raL = float(fitter.data['raL']) if use_parallax else None
+    decL = float(fitter.data['decL']) if use_parallax else None
+    if use_parallax:
+        assert raL is not None and decL is not None  # Safety check
+
+    weights = getattr(fitter, 'weights', None)
+    is_gp = 'GP' in model_class.__name__
+
+    # If GP model, verify tinygp is importable
+    if is_gp:
+        try:
+            import tinygp  # noqa: F401
+        except ImportError:
+            return None, None
+
+    # --- Build photometry blocks for each filter ---
+    phot_blocks = []
+    for filt_idx in range(fitter.n_phot_sets if need_phot else 0):
+        # Observation times (MJD)
+        t = np.asarray(
+            fitter.data[f't_phot{filt_idx + 1}'], dtype=np.float64
+        )
+        # Precompute parallax vectors if needed
+        pvec = (
+            jax_physics.precompute_parallax_vectors(raL, decL, t)
+            if use_parallax else None
+        )
+        # Index for "b_sff" parameter for this filter
+        idx_b = _jax_param_index(names, 'b_sff', filt_idx)
+        # Determine which magnitude param is being used
+        phot_names = tuple(getattr(model_class, 'phot_param_names', ()))
+        if 'mag_src_pri' in phot_names:
+            idx_mag = (
+                _jax_param_index(names, 'mag_src_pri', filt_idx),
+                _jax_param_index(names, 'mag_src_sec', filt_idx),
+            )
+        elif 'mag_base' in phot_names:
+            idx_mag = _jax_param_index(names, 'mag_base', filt_idx)
+        else:
+            idx_mag = _jax_param_index(names, 'mag_src', filt_idx)
+
+        # Build GP parameter indices if using GP
+        gp_indices = {}
+        if is_gp:
+            for key in ('gp_log_sigma', 'gp_log_rho', 'gp_rho',
+                        'gp_log_S0', 'gp_log_omega0',
+                        'gp_log_jit_sigma'):
+                try:
+                    gp_indices[key] = _jax_param_index(
+                        names, key, filt_idx
+                    )
+                except ValueError:
+                    continue
+        # Compute data weight for this filter (default 1.0)
+        weight = (
+            float(weights[filt_idx])
+            if weights is not None and filt_idx < len(weights) else 1.0
+        )
+
+        # Collect all relevant info for this photometric dataset/filter
+        phot_blocks.append((
+            t, np.asarray(fitter.data[f'mag{filt_idx + 1}']),
+            np.asarray(fitter.data[f'mag_err{filt_idx + 1}']),
+            pvec, idx_b, idx_mag, gp_indices, weight
+        ))
+
+    # --- Build astrometry blocks for each astrometric dataset ---
+    ast_blocks = []
+    mapping = getattr(fitter, 'map_phot_idx_to_ast_idx', [])
+    for ast_idx in range(fitter.n_ast_sets if need_ast else 0):
+        # Observation times (MJD)
+        t = np.asarray(
+            fitter.data[f't_ast{ast_idx + 1}'], dtype=np.float64
+        )
+        # Parallax vectors if needed
+        pvec = (
+            jax_physics.precompute_parallax_vectors(raL, decL, t)
+            if use_parallax else None
+        )
+        # Map this astrometric dataset to its photometric dataset (if any)
+        phot_idx = (
+            mapping[ast_idx] if ast_idx < len(mapping) else ast_idx
+        )
+        # Get b_sff index if photometry is available, else None
+        idx_b = (
+            _jax_param_index(names, 'b_sff', phot_idx)
+            if need_phot else None
+        )
+        # Compute data weight for this astrometric dataset (default 1.0)
+        weight_idx = fitter.n_phot_sets + ast_idx
+        weight = (
+            float(weights[weight_idx])
+            if weights is not None and weight_idx < len(weights) else 1.0
+        )
+
+        # Store everything needed for this astrometric dataset
+        ast_blocks.append((
+            t, np.asarray(fitter.data[f'xpos{ast_idx + 1}']),
+            np.asarray(fitter.data[f'ypos{ast_idx + 1}']),
+            np.asarray(fitter.data[f'xpos_err{ast_idx + 1}']),
+            np.asarray(fitter.data[f'ypos_err{ast_idx + 1}']),
+            pvec, idx_b, weight
+        ))
+
+    # Indices that select "base" parameters out of the full input parameter vector
+    base_idx = jnp.asarray(base_indices, dtype=jnp.int32)
+
+    def log_likely(param_vec):
+        """
+        Compute the (unnormalized) log-likelihood for a given parameter vector.
+
+        Parameters
+        ----------
+        param_vec : array-like, shape (n_params,)
+            Input model parameter vector.
+
+        Returns
+        -------
+        lnL : float
+            The total log-likelihood for the observations given param_vec.
+        """
+        param_vec = jnp.asarray(param_vec, dtype=jnp.float64)
+        # Select "base" parameters for the core model
+        base_vec = param_vec[base_idx]
+        lnL = jnp.asarray(0.0, dtype=jnp.float64)
+
+        # Compute sum of log-likelihood contributions from each photometric dataset
+        for (t, mag_obs, mag_err, pvec, idx_b, idx_mag, gp_indices,
+             weight) in phot_blocks:
+            assert phot_method is not None
+            b_sff = param_vec[idx_b]
+            # Handle scalar or pair of magnitude parameters (e.g. mag_src_pri/sec)
+            if isinstance(idx_mag, tuple):
+                mag_param = tuple(param_vec[idx] for idx in idx_mag)
+            else:
+                mag_param = param_vec[idx_mag]
+            # Collect GP params if present
+            gp_params = (
+                {key: param_vec[idx] for key, idx in gp_indices.items()}
+                if gp_indices else None
+            )
+            # Add weighted likelihood for this photometric dataset
+            lnL += weight * phot_method(
+                base_vec, t, mag_obs, mag_err, b_sff, mag_param,
+                parallax_vectors=pvec, gp_params=gp_params,
+                fixed_jitter='GPnoJitter' not in model_class.__name__
+            )
+        # Compute sum of log-likelihood contributions from each astrometric dataset
+        for (t, x_obs, y_obs, x_err, y_err, pvec, idx_b,
+             weight) in ast_blocks:
+            assert ast_method is not None
+            b_sff = param_vec[idx_b] if idx_b is not None else 1.0
+            lnL += weight * ast_method(
+                base_vec, t, x_obs, y_obs, x_err, y_err, b_sff=b_sff,
+                parallax_vectors=pvec
+            )
+        return lnL
+
+    # Compile the likelihood using JAX JIT
+    result = jax.jit(log_likely), None
+    fitter._explicit_jax_loglik_cache = result  # Cache for future calls
+    return result
 class MicrolensSolver(Solver):
     """
     A PyMultiNest solver to find the optimal parameters, given data and
@@ -318,6 +551,8 @@ class MicrolensSolver(Solver):
 
         
         """
+        # This Solver uses MultiNest and scipy for statistcal distributions.
+        self.stats_pkg = 'scipy'
 
         # Set the data, model, and error modes
         self.data = data
@@ -577,7 +812,7 @@ class MicrolensSolver(Solver):
         self.n_params = len(self.all_param_names)  # cube dimensions
         self.n_clustering_params = self.n_dims
 
-    def make_default_priors(self):
+    def make_default_priors(self, stats_pkg=None):
         """
         Setup our prior distributions (i.e. random samplers). We will
         draw from these in the Prior() function. We set them up in advance
@@ -586,8 +821,17 @@ class MicrolensSolver(Solver):
 
         To make your own custom priors, use the make_gen() functions
         with different limits.
+
+        Parameters
+        ----------
+        stats_pkg : {'scipy', 'pymc', 'numpyro'}, optional
+            Statistics backend for ``make_*_gen``. Defaults to
+            ``self.stats_pkg``. When given, also updates ``self.stats_pkg``.
         """
-        
+        if stats_pkg is not None:
+            self.stats_pkg = stats_pkg
+        stats_pkg = self.stats_pkg
+
         self.priors = {}
         for param_name in self.fitter_param_names:
             if any(x in param_name for x in self.multi_filt_params):
@@ -602,35 +846,49 @@ class MicrolensSolver(Solver):
             if prior_type == 'make_gen':
                 prior_min = foo[1]
                 prior_max = foo[2]
-                self.priors[param_name] = make_gen(prior_min, prior_max)
+                self.priors[param_name] = make_gen(
+                    param_name, prior_min, prior_max, stats_pkg=stats_pkg
+                )
 
             if prior_type == 'make_norm_gen':
                 prior_mean = foo[1]
                 prior_std = foo[2]
-                self.priors[param_name] = make_norm_gen(prior_mean, prior_std)
+                self.priors[param_name] = make_norm_gen(
+                    param_name, prior_mean, prior_std, stats_pkg=stats_pkg
+                )
 
             if prior_type == 'make_lognorm_gen':
                 prior_mean = foo[1]
                 prior_std = foo[2]
-                self.priors[param_name] = make_lognorm_gen(prior_mean, prior_std)
+                self.priors[param_name] = make_lognorm_gen(
+                    param_name, prior_mean, prior_std, stats_pkg=stats_pkg
+                )
 
             if prior_type == 'make_truncnorm_gen':
                 prior_mean = foo[1] 
                 prior_std = foo[2]
                 prior_lo_cut = foo[3]
                 prior_hi_cut = foo[4]
-                self.priors[param_name] = make_truncnorm_gen(prior_mean, prior_std, prior_lo_cut, prior_hi_cut)
+                self.priors[param_name] = make_truncnorm_gen(
+                    param_name, prior_mean, prior_std, prior_lo_cut,
+                    prior_hi_cut, stats_pkg=stats_pkg
+                )
 
             if prior_type == 'make_invgamma_gen':
                 n_digits = len(param_name) - len(priors_name)
                 # Get the right indices. 
                 num = int(param_name[-n_digits:])
-                self.priors[param_name] = make_invgamma_gen(self.data['t_phot' + str(num)])
+                self.priors[param_name] = make_invgamma_gen(
+                    param_name, self.data['t_phot' + str(num)],
+                    stats_pkg=stats_pkg
+                )
 
             elif prior_type == 'make_t0_gen':
                 # Hard-coded to use the first data set to set the t0 prior.
-                self.priors[param_name] = make_t0_gen(self.data['t_phot1'],
-                                                      self.data['mag1'])
+                self.priors[param_name] = make_t0_gen(
+                    param_name, self.data['t_phot1'], self.data['mag1'],
+                    stats_pkg=stats_pkg
+                )
 
             elif prior_type == 'make_xS0_gen':
 
@@ -640,7 +898,9 @@ class MicrolensSolver(Solver):
                 elif param_name == 'xS0_N':
                     pos = self.data['ypos1']
 
-                self.priors[param_name] = make_xS0_gen(pos)
+                self.priors[param_name] = make_xS0_gen(
+                    param_name, pos, stats_pkg=stats_pkg
+                )
 
             elif prior_type == 'make_muS_EN_gen':
 
@@ -650,19 +910,21 @@ class MicrolensSolver(Solver):
                 elif param_name == 'muS_N':
                     pos = self.data['ypos1']
 
-                self.priors[param_name] = make_muS_EN_gen(self.data['t_ast1'],
-                                                          pos,
-                                                          scale_factor=muS_scale_factor)
+                self.priors[param_name] = make_muS_EN_gen(
+                    param_name, self.data['t_ast1'], pos,
+                    scale_factor=muS_scale_factor, stats_pkg=stats_pkg
+                )
             elif prior_type == 'make_piS':
-                self.priors[param_name] = make_piS()
-
-            elif prior_type == 'make_fdfdt':
-                self.priors[param_name] = make_fdfdt()
+                self.priors[param_name] = make_piS(
+                    param_name, stats_pkg=stats_pkg
+                )
 
             elif prior_type == 'make_mag_base_gen':
-                self.priors[param_name] = make_mag_base_gen(self.data['mag' + str(filt_index)])
+                self.priors[param_name] = make_mag_base_gen(
+                    param_name, self.data['mag' + str(filt_index)],
+                    stats_pkg=stats_pkg
+                )
                 
-
         return
 
     def get_model(self, params):
@@ -892,8 +1154,8 @@ class MicrolensSolver(Solver):
         return lnL
 
     def evaluate_loglik_jax(self, cube):
-        """Evaluate log-likelihood via JAX registry (vector from ``cube``)."""
-        fn, _ = jax_physics.build_jax_loglik_fn(self)
+        """Evaluate the explicit Param-mixin JAX likelihood."""
+        fn, _ = build_explicit_jax_loglik_fn(self)
         if fn is None:
             return float(self.log_likely(cube))
         if isinstance(cube, dict):
@@ -906,7 +1168,7 @@ class MicrolensSolver(Solver):
 
     def grad_loglik_jax(self, cube):
         """Gradient of log-likelihood w.r.t. fitter parameters (JAX autodiff)."""
-        fn, _ = jax_physics.build_jax_loglik_fn(self)
+        fn, _ = build_explicit_jax_loglik_fn(self)
         if fn is None:
             raise NotImplementedError(
                 "No JAX log-likelihood for this fitter configuration."
@@ -2778,10 +3040,9 @@ def scipy_to_pymc(prior, name, wrapped=False):
 class LogLikelihoodOp(Op):
     """PyTensor Op wrapping MicrolensSolver.log_likely().
 
-    When ``use_jax_grad=True`` and the fitter layout is supported by
-    :mod:`bagle.jax_physics`, evaluates (and differentiates) a jitted Gaussian
-    photometry likelihood.  GP and astrometry configurations fall back to the
-    black-box ``log_likely`` without gradients.
+    When ``use_jax_grad=True`` and the model Param mixin provides explicit JAX
+    likelihood methods, evaluation and differentiation use a jitted closure.
+    Unsupported configurations fall back to black-box ``log_likely``.
     """
 
     __props__ = ('fitter', 'param_names', 'use_jax_grad')
@@ -2793,7 +3054,9 @@ class LogLikelihoodOp(Op):
         self._jax_loglik = None
         self._jax_ctx = None
         if self.use_jax_grad:
-            self._jax_loglik, self._jax_ctx = jax_physics.build_jax_loglik_fn(fitter)
+            self._jax_loglik, self._jax_ctx = build_explicit_jax_loglik_fn(
+                fitter
+            )
 
         return
 
@@ -2820,9 +3083,8 @@ class LogLikelihoodOp(Op):
         if self._jax_loglik is None:
             raise NotImplementedError(
                 'No JAX gradient for this likelihood configuration '
-                '(layout not registered or blocked parameters). '
-                'Use use_jax_grad=False or a Phot/PhotAstrom/Astrom layout '
-                'supported by bagle.jax.'
+                '(no explicit Param-mixin method or blocked parameters). '
+                'Use use_jax_grad=False for unsupported models.'
             )
         if isinstance(output_gradients[0].type, DisconnectedType):
             return [DisconnectedType()()]
@@ -2850,6 +3112,195 @@ class LogLikelihoodOp(Op):
             output_gradients[0],
             return_list=True,
         )
+
+
+class MicrolensSolverPyMC2(MicrolensSolver):
+    def __init__(
+        self,
+        data,
+        model_class,
+        custom_additional_param_names=None,
+        add_error_on_photometry=False,
+        multiply_error_on_photometry=False,
+        use_phot_optional_params=True,
+        use_ast_optional_params=True,
+        wrapped_params=None,
+        outputfiles_basename='chains/pymc-',
+        verbose=False,
+        draws=1000,
+        tune=500,
+        chains=2,
+        cores=1,
+        pymc_random_seed=0,
+        sampler='metropolis',
+        use_jax_grad=True,
+        **kwargs,
+    ):
+        """
+        Initialize the MicrolensSolverPyMC object.
+
+        Parameters 
+        ----------
+        data : dict
+            Data dictionary containing the data for the fit.
+        model_class : ModelClassABC
+            Model class name to use for the fit.
+        custom_additional_param_names : list, optional
+            Custom additional parameter names to add to the fit.
+        add_error_on_photometry : bool, optional
+            Add error on photometry.
+        multiply_error_on_photometry : bool, optional
+            Multiply error on photometry.
+        use_phot_optional_params : bool, optional
+            Use photometric optional parameters.
+        use_ast_optional_params : bool, optional
+            Use astrometric optional parameters.
+        wrapped_params : list, optional
+            Wrapped parameter names.
+        outputfiles_basename : str, optional
+            Output files basename.
+        verbose : bool, optional
+            Verbose output.
+        draws : int, optional
+            Number of draws.
+        tune : int, optional
+        chains : int, optional
+            Number of chains.
+        cores : int, optional
+            Number of cores.
+        pymc_random_seed : int, optional
+            PyMC random seed.
+        sampler : str, optional
+            Sampler to use.
+        use_jax_grad : bool, optional
+            Use JAX gradients.
+        **kwargs : dict, optional
+            Additional keyword arguments.
+
+        Returns
+        -------
+        MicrolensSolverPyMC
+            MicrolensSolverPyMC object.
+        """
+        # This solver uses pyMC for all of the statistical distributions.
+        self.stats_pkg = 'pymc'
+        
+        # Set the data, model, and error modes
+        self.data = data
+        self.model_class = model_class
+        self.add_error_on_photometry = add_error_on_photometry
+        self.multiply_error_on_photometry = multiply_error_on_photometry
+        self.use_phot_optional_params = use_phot_optional_params
+        self.use_ast_optional_params = use_ast_optional_params
+
+        # Check the data
+        self.check_data()
+
+        # list of all possible multi-filt, multi-phot, multi-ast parameters that anyone
+        # could ever possibly use.
+        self.multi_filt_params = multi_filt_params
+
+        self.gp_params = ['gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
+                          'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
+
+        # Set up parameterization of the model
+        self.remove_digits = str.maketrans('', '', digits)  # removes nums from strings
+        self.custom_additional_param_names = custom_additional_param_names
+        self.n_phot_sets = None
+        self.n_ast_sets = None
+        self.single_gp = single_gp
+        self.fitter_param_names = None
+        self.fixed_param_names = None
+        self.additional_param_names = None
+        self.all_param_names = None
+        self.n_dims = None
+        self.n_params = None
+        self.n_clustering_params = None
+
+        # Sets up fitter_param_names, number of phot and astrom datasets, 
+        # fixed_param_names, additional_param_names, and all_param_names.
+        self.setup_params()
+
+        # Set pyMC stuff
+        self.wrapped_params = wrapped_params
+        self.outputfiles_basename = outputfiles_basename
+
+        # Setup the default priors
+        self.priors = None
+        self.make_default_priors()
+
+        # Make the output directory if doesn't exist
+        if os.path.dirname(outputfiles_basename) != '':
+            os.makedirs(os.path.dirname(outputfiles_basename), exist_ok=True)
+
+        self.draws = draws
+        self.tune = tune
+        self.chains = chains
+        self.cores = cores
+        self.pymc_random_seed = pymc_random_seed
+        self.sampler = sampler
+        self.use_jax_grad = use_jax_grad
+        self.idata = None
+        self.pymc_model = None
+        self._results_table = None
+        self._summary_table = None
+
+        with pm.Model() as model:
+
+            # Setup the priors 
+            param_vec = pt.stack([self.priors[param_name] for param_name in self.fitter_param_names])
+
+            logp = LogLikelihoodOp(self, self.fitter_param_names, use_jax_grad=self.use_jax_grad)(param_vec)
+
+            pm.Potential('likelihood', logp)
+
+        self.pymc_model = model
+
+        return
+
+    def solve(self):
+        """Run PyMC sampling to find optimal parameters and posteriors."""
+        self.write_params_yaml()
+
+        print('*************************************************')
+        print(f'*** Using PyMC ({sampler}) for sampling.     ***')
+        print('*************************************************')
+
+        self.pymc_model = MicrolensPyMCModel(
+            self, use_jax_grad=self.use_jax_grad
+        ).build()
+
+        # Set up initialization by sampling from prior.
+        initvals = {}
+        for name in self.fitter_param_names:
+            initvals[name] = float(self.priors[name].ppf(0.5))
+
+        # Generate samples.
+        with self.pymc_model:
+            #step = pm.Metropolis()
+            step = pm.NUTS()
+
+            self.idata = pm.sample(
+                draws=self.draws,
+                tune=self.tune,
+                chains=self.chains,
+                cores=self.cores,
+                step=step,
+                initvals=initvals,
+                random_seed=self.pymc_random_seed,
+                progressbar=self.verbose,
+                return_inferencedata=True,
+            )
+
+        self._results_table = None
+        self._summary_table = None
+        self._write_pymc_results()
+        self.load_pymc_results(remake_fits=True)
+        self.load_pymc_summary(remake_fits=True)
+
+        return
+
+
 
 
 class MicrolensPyMCModel:
@@ -2928,6 +3379,53 @@ class MicrolensSolverPyMC(MicrolensSolver):
         use_jax_grad=True,
         **kwargs,
     ):
+        """
+        Initialize the MicrolensSolverPyMC object.
+
+        Parameters 
+        ----------
+        data : dict
+            Data dictionary containing the data for the fit.
+        model_class : ModelClassABC
+            Model class name to use for the fit.
+        custom_additional_param_names : list, optional
+            Custom additional parameter names to add to the fit.
+        add_error_on_photometry : bool, optional
+            Add error on photometry.
+        multiply_error_on_photometry : bool, optional
+            Multiply error on photometry.
+        use_phot_optional_params : bool, optional
+            Use photometric optional parameters.
+        use_ast_optional_params : bool, optional
+            Use astrometric optional parameters.
+        wrapped_params : list, optional
+            Wrapped parameter names.
+        outputfiles_basename : str, optional
+            Output files basename.
+        verbose : bool, optional
+            Verbose output.
+        draws : int, optional
+            Number of draws.
+        tune : int, optional
+        chains : int, optional
+            Number of chains.
+        cores : int, optional
+            Number of cores.
+        pymc_random_seed : int, optional
+            PyMC random seed.
+        sampler : str, optional
+            Sampler to use.
+        use_jax_grad : bool, optional
+            Use JAX gradients.
+        **kwargs : dict, optional
+            Additional keyword arguments.
+
+        Returns
+        -------
+        MicrolensSolverPyMC
+            MicrolensSolverPyMC object.
+        """
+        
         super().__init__(
             data,
             model_class,
@@ -2959,7 +3457,7 @@ class MicrolensSolverPyMC(MicrolensSolver):
         self.write_params_yaml()
 
         print('*************************************************')
-        print('*** Using PyMC (Metropolis) for sampling.     ***')
+        print(f'*** Using PyMC ({self.sampler}) for sampling.     ***')
         print('*************************************************')
 
         self.pymc_model = MicrolensPyMCModel(
@@ -3090,6 +3588,892 @@ class MicrolensSolverPyMC(MicrolensSolver):
     def load_mnest_summary(self, remake_fits=False):
         return self.load_pymc_summary(remake_fits=remake_fits)
 
+
+#########################
+### NumPyro Solver    ###
+#########################
+
+def _is_scipy_frozen_prior(prior):
+    """Return True if ``prior`` is a scipy frozen distribution."""
+    # Frozen dists expose both the underlying family and ppf().
+    return hasattr(prior, 'dist') and hasattr(prior, 'ppf')
+
+
+def _is_numpyro_dist(prior):
+    """Return True if ``prior`` is a NumPyro distribution object."""
+    try:
+        import numpyro.distributions as dist
+    except ImportError:
+        return False
+
+    return isinstance(prior, dist.Distribution)
+
+
+def _prior_period_any(prior):
+    """Infer period and origin for wrapped angle parameters.
+
+    Parameters
+    ----------
+    prior : scipy frozen dist or numpyro Distribution
+        Prior used to infer the wrap interval.
+
+    Returns
+    -------
+    period, origin : float
+        Wrap period and origin.
+    """
+    # SciPy path reuses the PyMC helper.
+    if _is_scipy_frozen_prior(prior):
+        return _prior_period(prior)
+
+    # NumPyro Uniform: wrap over [low, high).
+    if _is_numpyro_dist(prior):
+        import numpyro.distributions as dist
+        if isinstance(prior, dist.Uniform):
+            low = float(prior.low)
+            high = float(prior.high)
+            return high - low, low
+
+    # Default: degrees on [0, 360).
+    return 360.0, 0.0
+
+
+def scipy_to_numpyro_dist(prior):
+    """Convert a scipy frozen distribution to a NumPyro distribution.
+
+    Parameters
+    ----------
+    prior : scipy.stats frozen distribution
+        Prior to convert.
+
+    Returns
+    -------
+    dist : numpyro.distributions.Distribution
+        Matching NumPyro distribution (unnamed).
+    """
+    import numpyro.distributions as dist
+
+    # Family name from the scipy frozen dist.
+    dist_name = prior.dist.name
+
+    if dist_name == 'uniform':
+        # scipy: loc=lower, scale=width.
+        loc = prior.kwds.get('loc', 0.0)
+        scale = prior.kwds.get('scale', 1.0)
+        return dist.Uniform(float(loc), float(loc + scale))
+
+    if dist_name == 'norm':
+        return dist.Normal(float(prior.kwds['loc']), float(prior.kwds['scale']))
+
+    if dist_name == 'lognorm':
+        # scipy lognorm(s, scale=exp(mu)) <-> NumPyro LogNormal(mu, s).
+        sigma = float(prior.kwds['s'])
+        mu = float(np.log(prior.kwds['scale']))
+        return dist.LogNormal(mu, sigma)
+
+    if dist_name == 'truncnorm':
+        # scipy a,b are in units of sigma; NumPyro wants absolute bounds.
+        a, b = prior.args
+        loc = float(prior.kwds['loc'])
+        scale = float(prior.kwds['scale'])
+        return dist.TruncatedNormal(
+            loc, scale, low=loc + a * scale, high=loc + b * scale
+        )
+
+    if dist_name == 'invgamma':
+        # scipy scale <-> NumPyro rate for InverseGamma.
+        alpha = float(prior.args[0])
+        beta = float(prior.kwds['scale'])
+        return dist.InverseGamma(alpha, rate=beta)
+
+    raise TypeError(
+        f"Unsupported prior type '{dist_name}' for NumPyro conversion"
+    )
+
+
+def scipy_to_tfp(prior):
+    """Convert a scipy frozen distribution to a TFP-on-JAX distribution.
+
+    Used by the direct JAXNS path (jaxns ``Prior`` expects TFP dists).
+
+    Parameters
+    ----------
+    prior : scipy.stats frozen distribution
+        Prior to convert.
+
+    Returns
+    -------
+    dist : tfp.distributions.Distribution
+        Matching TensorFlow Probability distribution on JAX.
+    """
+    try:
+        import tensorflow_probability.substrates.jax as tfp
+    except ImportError as error:
+        raise ImportError(
+            'JAXNS priors require tensorflow_probability. '
+            'Install with: pip install tensorflow-probability'
+        ) from error
+
+    tfd = tfp.distributions
+    dist_name = prior.dist.name
+
+    # Mirror scipy_to_numpyro_dist family by family for jaxns Priors.
+    if dist_name == 'uniform':
+        loc = float(prior.kwds.get('loc', 0.0))
+        scale = float(prior.kwds.get('scale', 1.0))
+        return tfd.Uniform(loc, loc + scale)
+
+    if dist_name == 'norm':
+        return tfd.Normal(
+            float(prior.kwds['loc']), float(prior.kwds['scale'])
+        )
+
+    if dist_name == 'lognorm':
+        sigma = float(prior.kwds['s'])
+        mu = float(np.log(prior.kwds['scale']))
+        return tfd.LogNormal(mu, sigma)
+
+    if dist_name == 'truncnorm':
+        a, b = prior.args
+        loc = float(prior.kwds['loc'])
+        scale = float(prior.kwds['scale'])
+        return tfd.TruncatedNormal(
+            loc, scale, low=loc + a * scale, high=loc + b * scale
+        )
+
+    if dist_name == 'invgamma':
+        alpha = float(prior.args[0])
+        beta = float(prior.kwds['scale'])
+        return tfd.InverseGamma(alpha, beta)
+
+    raise TypeError(
+        f"Unsupported prior type '{dist_name}' for TFP conversion"
+    )
+
+
+def _numpyro_prior_init_value(prior):
+    """Return a scalar init value near the prior center.
+
+    Parameters
+    ----------
+    prior : scipy frozen dist or numpyro Distribution
+        Prior object.
+
+    Returns
+    -------
+    value : float
+        Initialization value.
+    """
+    # SciPy: median via inverse CDF.
+    if _is_scipy_frozen_prior(prior):
+        return float(prior.ppf(0.5))
+
+    if _is_numpyro_dist(prior):
+        # Prefer analytic mean; fall back to median via icdf.
+        try:
+            mean = prior.mean
+            mean_np = np.asarray(mean)
+            if np.all(np.isfinite(mean_np)):
+                return float(mean_np)
+        except Exception:
+            pass
+        return float(np.asarray(prior.icdf(0.5)))
+
+    raise TypeError(f'Unsupported prior type for init: {type(prior)!r}')
+
+
+def _sample_numpyro_prior(prior, name, wrapped=False):
+    """Sample one parameter site from a SciPy or NumPyro prior.
+
+    Parameters
+    ----------
+    prior : scipy frozen dist or numpyro Distribution
+        Prior for this parameter.
+    name : str
+        Sample / deterministic site name.
+    wrapped : bool, optional
+        If True, wrap onto the prior period via a deterministic.
+
+    Returns
+    -------
+    value : jax.Array
+        Sampled (optionally wrapped) parameter value.
+    """
+    import numpyro
+
+    # Accept native NumPyro dists or convert scipy frozen priors.
+    if _is_numpyro_dist(prior):
+        base_dist = prior
+    elif _is_scipy_frozen_prior(prior):
+        base_dist = scipy_to_numpyro_dist(prior)
+    else:
+        raise TypeError(
+            f'Prior for {name!r} must be scipy frozen or NumPyro dist, '
+            f'got {type(prior)!r}'
+        )
+
+    # Non-periodic: sample under the physical parameter name.
+    if not wrapped:
+        return numpyro.sample(name, base_dist)
+
+    # Periodic: sample an unconstrained site, then fold onto [origin, origin+P).
+    period, origin = _prior_period_any(prior)
+    raw = numpyro.sample(f'{name}__raw', base_dist)
+    if period <= 0:
+        return numpyro.deterministic(name, raw)
+
+    return numpyro.deterministic(
+        name, jnp.mod(raw - origin, period) + origin
+    )
+
+
+class MicrolensNumPyroModel:
+    """Build a NumPyro model from a MicrolensSolver configuration.
+
+    Priors are sampled from SciPy or NumPyro distributions. The likelihood
+    is the differentiable JAX χ² log-likelihood (equivalent to iid
+    ``Normal(pred, err)`` observations for non-GP models).
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Configured solver with priors and parameter names.
+    """
+
+    def __init__(self, fitter):
+        """Store the solver used to build the NumPyro model.
+
+        Parameters
+        ----------
+        fitter : MicrolensSolver
+            Solver instance with ``priors`` and ``fitter_param_names``.
+        """
+        self.fitter = fitter
+
+        # Build the jitted Param-mixin χ² lnL once for NUTS / factor use.
+        lnL, _ctx = build_explicit_jax_loglik_fn(fitter)
+        if lnL is None:
+            raise RuntimeError(
+                'MicrolensSolverNumPyro requires a differentiable JAX '
+                'likelihood (explicit Param-mixin jax_log_likely_* methods). '
+                'Unsupported configurations include add_err/mult_err or '
+                'models missing JAX likelihood methods.'
+            )
+        self._lnL = lnL
+        return None
+
+    def model(self):
+        """NumPyro model: priors + factor likelihood.
+
+        Returns
+        -------
+        None
+            Side-effecting NumPyro primitive calls.
+        """
+        import numpyro
+
+        fitter = self.fitter
+        names = fitter.fitter_param_names
+        values = []
+
+        # Sample each fit parameter (optionally wrapped) from its prior.
+        for i, name in enumerate(names):
+            wrapped = False
+            if fitter.wrapped_params is not None:
+                wrapped = bool(fitter.wrapped_params[i])
+            values.append(
+                _sample_numpyro_prior(
+                    fitter.priors[name], name, wrapped=wrapped
+                )
+            )
+
+        # Stack into the vector expected by build_explicit_jax_loglik_fn.
+        param_vec = jnp.stack(values)
+
+        # Add χ² lnL as a potential (same metric as Normal(obs=pred)).
+        numpyro.factor('likelihood', self._lnL(param_vec))
+        return None
+
+
+class MicrolensSolverNumPyro(MicrolensSolver):
+    """MicrolensSolver that uses NumPyro NUTS or direct JAXNS."""
+
+    def __init__(
+        self,
+        data,
+        model_class,
+        custom_additional_param_names=None,
+        add_error_on_photometry=False,
+        multiply_error_on_photometry=False,
+        use_phot_optional_params=True,
+        use_ast_optional_params=True,
+        wrapped_params=None,
+        outputfiles_basename='chains/numpyro-',
+        verbose=False,
+        sampler='nuts',
+        draws=1000,
+        tune=500,
+        chains=2,
+        target_accept=0.9,
+        max_tree_depth=10,
+        chain_method='sequential',
+        random_seed=0,
+        n_live_points=500,
+        max_samples=200_000,
+        dlogz=None,
+        posterior_samples=None,
+        use_jax_grad=True,
+        gradient_guided=True,
+        **kwargs,
+    ):
+        """
+        Initialize the MicrolensSolverNumPyro object.
+
+        Parameters
+        ----------
+        data : dict
+            Data dictionary containing the data for the fit.
+        model_class : type
+            Model class to use for the fit.
+        custom_additional_param_names : list, optional
+            Custom additional parameter names to add to the fit.
+        add_error_on_photometry : bool, optional
+            Add error on photometry.
+        multiply_error_on_photometry : bool, optional
+            Multiply error on photometry.
+        use_phot_optional_params : bool, optional
+            Use photometric optional parameters.
+        use_ast_optional_params : bool, optional
+            Use astrometric optional parameters.
+        wrapped_params : list, optional
+            Wrapped parameter flags.
+        outputfiles_basename : str, optional
+            Output files basename.
+        verbose : bool, optional
+            Verbose output / progress bars.
+        sampler : {'nuts', 'jaxns'}, optional
+            Inference backend.
+        draws : int, optional
+            NUTS posterior draws (also default jaxns resample count).
+        tune : int, optional
+            NUTS warmup steps.
+        chains : int, optional
+            Number of NUTS chains.
+        target_accept : float, optional
+            NUTS target acceptance probability.
+        max_tree_depth : int, optional
+            NUTS maximum tree depth.
+        chain_method : str, optional
+            NumPyro MCMC chain method.
+        random_seed : int, optional
+            PRNG seed.
+        n_live_points : int, optional
+            JAXNS live points.
+        max_samples : int, optional
+            JAXNS maximum nested samples.
+        dlogz : float, optional
+            JAXNS evidence termination threshold.
+        posterior_samples : int, optional
+            Equal-weight resample count after JAXNS.
+        use_jax_grad : bool, optional
+            Must be True; both backends require JAX autodiff.
+        gradient_guided : bool, optional
+            Enable jaxns gradient-guided nested sampling.
+        **kwargs : dict, optional
+            Additional keyword arguments passed to MicrolensSolver.
+
+        Returns
+        -------
+        MicrolensSolverNumPyro
+            Configured solver instance.
+        """
+        # Parent sets up data, params, and scipy default priors.
+        super().__init__(
+            data,
+            model_class,
+            custom_additional_param_names=custom_additional_param_names,
+            add_error_on_photometry=add_error_on_photometry,
+            multiply_error_on_photometry=multiply_error_on_photometry,
+            use_phot_optional_params=use_phot_optional_params,
+            use_ast_optional_params=use_ast_optional_params,
+            wrapped_params=wrapped_params,
+            outputfiles_basename=outputfiles_basename,
+            verbose=verbose,
+            dump_callback=None,
+            **kwargs,
+        )
+
+        # Rebuild default priors as NumPyro distributions.
+        self.make_default_priors(stats_pkg='numpyro')
+
+        # Validate sampler and gradient requirements.
+        sampler = str(sampler).lower()
+        if sampler not in ('nuts', 'jaxns'):
+            raise ValueError(
+                f"sampler must be 'nuts' or 'jaxns', got {sampler!r}"
+            )
+        if not use_jax_grad:
+            raise ValueError(
+                'MicrolensSolverNumPyro requires use_jax_grad=True '
+                '(NUTS and JAXNS both use JAX autodiff).'
+            )
+
+        # NUTS / shared sampling knobs.
+        self.sampler = sampler
+        self.draws = int(draws)
+        self.tune = int(tune)
+        self.chains = int(chains)
+        self.target_accept = float(target_accept)
+        self.max_tree_depth = int(max_tree_depth)
+        self.chain_method = chain_method
+        self.random_seed = int(random_seed)
+
+        # JAXNS nested-sampling knobs.
+        self.n_live_points = int(n_live_points)
+        self.max_samples = int(max_samples)
+        self.dlogz = (
+            float(np.log1p(1.0e-3)) if dlogz is None else float(dlogz)
+        )
+        self.posterior_samples = (
+            int(draws) if posterior_samples is None else int(posterior_samples)
+        )
+        self.use_jax_grad = True
+        self.gradient_guided = bool(gradient_guided)
+
+        # Runtime products filled by solve().
+        self.mcmc = None
+        self.nested_results = None
+        self._samples_array = None
+        self._loglikes = None
+        self._logZ = np.nan
+        self._results_table = None
+        self._summary_table = None
+        return None
+
+    def solve(self):
+        """Run NumPyro NUTS or JAXNS and write MultiNest-compatible outputs.
+
+        Returns
+        -------
+        None
+        """
+        import numpyro
+
+        # Match binary_orbits / jaxns preference for float64.
+        numpyro.enable_x64()
+
+        self.write_params_yaml()
+
+        # Fail fast if autodiff likelihood is unavailable.
+        lnL, _ctx = build_explicit_jax_loglik_fn(self)
+        if lnL is None:
+            raise RuntimeError(
+                'MicrolensSolverNumPyro requires a differentiable JAX '
+                'likelihood (explicit Param-mixin jax_log_likely_* methods). '
+                'Unsupported configurations include add_err/mult_err or '
+                'models missing JAX likelihood methods.'
+            )
+
+        print('*************************************************')
+        print(f'*** Using NumPyro ({self.sampler}) for sampling. ***')
+        print('*************************************************')
+
+        # Dispatch to NUTS MCMC or gradient-guided nested sampling.
+        if self.sampler == 'nuts':
+            self._run_nuts()
+        else:
+            self._run_jaxns()
+
+        # Write MultiNest-like products used by inherited analysis/plot APIs.
+        self._results_table = None
+        self._summary_table = None
+        self._write_numpyro_results()
+        self.load_numpyro_results(remake_fits=True)
+        self.load_numpyro_summary(remake_fits=True)
+        return None
+
+    def _run_nuts(self):
+        """Run NumPyro NUTS MCMC with autodiff gradients.
+
+        Returns
+        -------
+        None
+        """
+        from numpyro.infer import MCMC, NUTS, init_to_value
+
+        # Build the NumPyro model (priors + JAX χ² factor).
+        model_builder = MicrolensNumPyroModel(self)
+
+        # Initialize near the prior center for each parameter.
+        init_values = {}
+        for name in self.fitter_param_names:
+            init_values[name] = _numpyro_prior_init_value(self.priors[name])
+
+        # Wrapped sites sample ``name__raw``; point init at that site.
+        if self.wrapped_params is not None:
+            for i, name in enumerate(self.fitter_param_names):
+                if self.wrapped_params[i]:
+                    init_values[f'{name}__raw'] = init_values.pop(name)
+
+        # NUTS kernel uses JAX autodiff of the joint log density.
+        kernel = NUTS(
+            model_builder.model,
+            target_accept_prob=self.target_accept,
+            max_tree_depth=self.max_tree_depth,
+            init_strategy=init_to_value(values=init_values),
+        )
+
+        mcmc = MCMC(
+            kernel,
+            num_warmup=self.tune,
+            num_samples=self.draws,
+            num_chains=self.chains,
+            chain_method=self.chain_method,
+            progress_bar=self.verbose,
+        )
+
+        # Retain diagnostics used for sampler health checks.
+        mcmc.run(
+            jax.random.PRNGKey(self.random_seed),
+            extra_fields=('potential_energy', 'diverging', 'num_steps',
+                          'accept_prob'),
+        )
+        self.mcmc = mcmc
+
+        # Flatten chain/draw axes into (n_samples, n_params).
+        samples = mcmc.get_samples()
+        stacked = []
+        for name in self.fitter_param_names:
+            stacked.append(np.asarray(samples[name]).reshape(-1))
+
+        self._samples_array = np.column_stack(stacked)
+        # NUTS does not estimate evidence.
+        self._logZ = np.nan
+        self._loglikes = None
+        return None
+
+    def _scipy_prior_for_jaxns(self, name):
+        """Return a scipy frozen prior for JAXNS/TFP conversion.
+
+        Parameters
+        ----------
+        name : str
+            Parameter name.
+
+        Returns
+        -------
+        prior : scipy.stats frozen distribution
+            SciPy prior matching the configured NumPyro/scipy prior.
+        """
+        prior = self.priors[name]
+
+        # Already scipy (e.g. user overrode .priors after init).
+        if _is_scipy_frozen_prior(prior):
+            return prior
+
+        # Rebuild a scipy twin from NumPyro distribution parameters.
+        import numpyro.distributions as dist
+
+        if isinstance(prior, dist.Uniform):
+            return scipy.stats.uniform(
+                loc=float(prior.low),
+                scale=float(prior.high) - float(prior.low),
+            )
+        if isinstance(prior, dist.Normal):
+            return scipy.stats.norm(
+                loc=float(prior.loc), scale=float(prior.scale)
+            )
+        if isinstance(prior, dist.LogNormal):
+            return scipy.stats.lognorm(
+                s=float(prior.scale), scale=float(np.exp(prior.loc))
+            )
+        if isinstance(prior, dist.InverseGamma):
+            return scipy.stats.invgamma(
+                float(prior.concentration), scale=float(prior.rate)
+            )
+
+        # TruncatedNormal is a TwoSidedTruncatedDistribution wrapper.
+        if hasattr(prior, 'base_dist') and hasattr(prior, 'low'):
+            base = prior.base_dist
+            loc = float(base.loc)
+            scale = float(base.scale)
+            low = float(prior.low)
+            high = float(prior.high)
+            # Convert absolute bounds back to scipy a,b in sigma units.
+            a = (low - loc) / scale
+            b = (high - loc) / scale
+            return scipy.stats.truncnorm(a, b, loc=loc, scale=scale)
+
+        raise TypeError(
+            f'Unsupported prior for JAXNS conversion: {type(prior)!r}'
+        )
+
+    def _run_jaxns(self):
+        """Run direct JAXNS nested sampling with gradient guidance.
+
+        Returns
+        -------
+        None
+        """
+        # Lazy import: jaxns is an optional dependency.
+        try:
+            from jaxns import (Model, NestedSampler, Prior,
+                               TerminationCondition, resample)
+        except (ImportError, AttributeError) as error:
+            raise ImportError(
+                'JAXNS is required for sampler=\"jaxns\". '
+                'Install with: pip install \"bagle[jaxns]\" '
+                '(or pip install jaxns tensorflow-probability). '
+                'On Python 3.14, jaxns<=2.6.9 may fail to import due to a '
+                'typing.Union __doc__ assignment bug.'
+            ) from error
+
+        # Same differentiable χ² lnL used by the NumPyro NUTS path.
+        lnL, _ctx = build_explicit_jax_loglik_fn(self)
+        if lnL is None:
+            raise RuntimeError(
+                'MicrolensSolverNumPyro requires a differentiable JAX '
+                'likelihood (explicit Param-mixin jax_log_likely_* methods). '
+                'Unsupported configurations include add_err/mult_err or '
+                'models missing JAX likelihood methods.'
+            )
+
+        # jaxns Prior expects TFP dists; convert via scipy twins.
+        names = tuple(self.fitter_param_names)
+        tfp_priors = {}
+        for name in names:
+            tfp_priors[name] = scipy_to_tfp(self._scipy_prior_for_jaxns(name))
+
+        def prior_model():
+            # Yield one jaxns Prior per fit parameter.
+            values = []
+            for name in names:
+                values.append((yield Prior(tfp_priors[name], name=name)))
+            return tuple(values)
+
+        def log_likelihood(*params):
+            # Differentiable χ² lnL of JAX predictions vs data.
+            return lnL(jnp.stack(params))
+
+        model = Model(prior_model=prior_model, log_likelihood=log_likelihood)
+
+        # Run on a single CPU device (matches binary_orbits default).
+        devices = jax.devices('cpu')[:1]
+        sampler = NestedSampler(
+            model=model,
+            max_samples=self.max_samples,
+            num_live_points=self.n_live_points,
+            devices=devices,
+            difficult_model=True,
+            parameter_estimation=True,
+            gradient_guided=self.gradient_guided,
+            verbose=self.verbose,
+        )
+
+        # Separate keys for nested sampling vs equal-weight resampling.
+        run_key, resample_key = jax.random.split(
+            jax.random.PRNGKey(self.random_seed)
+        )
+
+        termination_condition = TerminationCondition(
+            dlogZ=jnp.asarray(self.dlogz),
+            max_samples=jnp.asarray(self.max_samples),
+        )
+
+        # Run nested sampling and collect weighted results.
+        termination_reason, state = sampler(
+            run_key, term_cond=termination_condition
+        )
+        nested_results = sampler.to_results(termination_reason, state)
+        self.nested_results = nested_results
+        self._logZ = float(np.asarray(nested_results.log_Z_mean))
+
+        # Resample to equal-weight draws for MultiNest-like tables.
+        equal_raw = resample(
+            key=resample_key,
+            samples=nested_results.samples,
+            log_weights=nested_results.log_dp_mean,
+            S=self.posterior_samples,
+            replace=True,
+        )
+        stacked = []
+        for name in names:
+            stacked.append(np.asarray(equal_raw[name]).reshape(-1))
+
+        self._samples_array = np.column_stack(stacked)
+        self._loglikes = None
+
+        return None
+
+    def _evaluate_loglikes(self, samples):
+        """Evaluate lnL at each posterior sample.
+
+        Parameters
+        ----------
+        samples : ndarray, shape (n_samples, n_params)
+            Parameter samples.
+
+        Returns
+        -------
+        loglikes : ndarray, shape (n_samples,)
+            Log-likelihood values.
+        """
+        lnL, _ctx = build_explicit_jax_loglik_fn(self)
+        if lnL is None:
+            raise RuntimeError(
+                'MicrolensSolverNumPyro requires a differentiable JAX '
+                'likelihood (explicit Param-mixin jax_log_likely_* methods). '
+                'Unsupported configurations include add_err/mult_err or '
+                'models missing JAX likelihood methods.'
+            )
+
+        # Evaluate row-by-row (same order as fitter_param_names).
+        n_samples = samples.shape[0]
+        loglikes = np.zeros(n_samples, dtype=float)
+        for ii in range(n_samples):
+            loglikes[ii] = float(lnL(samples[ii]))
+
+        return loglikes
+
+    def _build_results_table(self):
+        """Build an Astropy table of posterior samples and derived params.
+
+        Returns
+        -------
+        tab : astropy.table.Table
+            Columns: weights, logLike, fit params, derived params.
+        """
+        if self._samples_array is None:
+            raise RuntimeError('No NumPyro results. Run solve() first.')
+
+        samples = self._samples_array
+        n_samples = samples.shape[0]
+
+        # Equal weights for MCMC / resampled nested samples.
+        weights = np.ones(n_samples, dtype=float) / n_samples
+
+        # Cache lnL evaluations for summary / MaxLike selection.
+        if self._loglikes is None:
+            self._loglikes = self._evaluate_loglikes(samples)
+        loglikes = self._loglikes
+
+        tab = Table()
+        tab['weights'] = weights
+        tab['logLike'] = loglikes
+
+        # Fit parameters in fitter_param_names order.
+        for jj, name in enumerate(self.fitter_param_names):
+            tab[name] = samples[:, jj]
+
+        # Derived / additional params via get_model side effects on cube.
+        for add_idx, name in enumerate(self.additional_param_names):
+            col = np.zeros(n_samples, dtype=float)
+            for ii in range(n_samples):
+                cube = np.zeros(self.n_params, dtype=float)
+                for jj, pname in enumerate(self.fitter_param_names):
+                    cube[jj] = samples[ii, jj]
+                self.get_model(cube)
+                col[ii] = cube[self.n_dims + add_idx]
+            tab[name] = col
+
+        return tab
+
+    def _write_numpyro_results(self):
+        """Write MultiNest-like ``.txt`` and ``.fits`` result files.
+
+        Returns
+        -------
+        None
+        """
+        tab = self._build_results_table()
+        outroot = self.outputfiles_basename
+
+        # MultiNest .txt layout: weight, -2*lnL, then all_param_names.
+        with open(outroot + '.txt', 'w') as f:
+            for row in tab:
+                line = [row['weights'], -2.0 * row['logLike']]
+                for name in self.all_param_names:
+                    line.append(row[name])
+                f.write(' '.join(f'{val:.12e}' for val in line) + '\n')
+
+        # Astropy table for load_mnest_results / plotting helpers.
+        tab.write(outroot + '.fits', overwrite=True)
+        self._results_table = tab
+        return None
+
+    def load_numpyro_results(self, remake_fits=False):
+        """Load NumPyro posterior results table.
+
+        Parameters
+        ----------
+        remake_fits : bool, optional
+            Rebuild the table from in-memory samples when True.
+
+        Returns
+        -------
+        tab : astropy.table.Table
+            Posterior results.
+        """
+        # Prefer cached table unless a rebuild was requested.
+        if not remake_fits and self._results_table is not None:
+            return self._results_table
+
+        # Rebuild from in-memory posterior draws when available.
+        if self._samples_array is not None:
+            self._results_table = self._build_results_table()
+            return self._results_table
+
+        # Fall back to a previously written FITS file.
+        outroot = self.outputfiles_basename
+        if os.path.exists(outroot + '.fits'):
+            self._results_table = Table.read(outroot + '.fits')
+            return self._results_table
+
+        raise RuntimeError('No NumPyro results found.')
+
+    def load_numpyro_summary(self, remake_fits=False):
+        """Build a MultiNest-like summary table from NumPyro samples.
+
+        Parameters
+        ----------
+        remake_fits : bool, optional
+            Rebuild when True.
+
+        Returns
+        -------
+        tab : astropy.table.Table
+            One-row summary with mean/std/MAP and logZ when available.
+        """
+        if not remake_fits and self._summary_table is not None:
+            return self._summary_table
+
+        tab = self.load_numpyro_results(remake_fits=remake_fits)
+
+        # logZ is finite for jaxns; NaN for NUTS.
+        row = {
+            'logZ': float(self._logZ),
+            'maxlogL': float(np.max(tab['logLike'])),
+        }
+
+        # MAP / MaxLike taken as the highest-lnL sample.
+        best_idx = int(np.argmax(tab['logLike']))
+        for name in self.all_param_names:
+            vals = tab[name]
+            row['Mean_' + name] = float(np.mean(vals))
+            row['StDev_' + name] = float(np.std(vals))
+            row['MaxLike_' + name] = float(vals[best_idx])
+            row['MAP_' + name] = float(vals[best_idx])
+
+        self._summary_table = Table([row])
+        return self._summary_table
+
+    def load_mnest_results(self, remake_fits=False):
+        return self.load_numpyro_results(remake_fits=remake_fits)
+
+    def load_mnest_summary(self, remake_fits=False):
+        return self.load_numpyro_summary(remake_fits=remake_fits)
+
+
 #########################
 ### For backwards compatibility
 #########################
@@ -3106,44 +4490,199 @@ class PSPL_Solver_Hobson_weighted(MicrolensSolverHobsonWeighted):
 ### PRIOR GENERATORS  ###
 #########################
 
-def make_gen(min, max):
-    return scipy.stats.uniform(loc=min, scale=max - min)
+def _unsupported_stats_pkg(stats_pkg):
+    """Raise for an unrecognized prior statistics backend.
 
+    Parameters
+    ----------
+    stats_pkg : str
+        Requested statistics package name.
 
-def make_norm_gen(mean, std):
-    return scipy.stats.norm(loc=mean, scale=std)
-
-
-def make_lognorm_gen(mean, std):
-    """ Make a natural-log normal distribution for a variable.
-    The specified mean and std should be in the ln() space.
+    Raises
+    ------
+    ValueError
+        Always raised with the unsupported name.
     """
-    return scipy.stats.lognorm(s=std, scale=np.exp(mean))
+    raise ValueError(
+        f"Unsupported stats_pkg={stats_pkg!r}; "
+        "expected 'scipy', 'pymc', or 'numpyro'"
+    )
 
-def make_log10norm_gen(mean_in_log10, std_in_log10):
-    """Scale scipy lognorm from natural log to base 10.
+
+def make_gen(param_name, min, max, stats_pkg='scipy'):
+    """Build a uniform prior for one parameter.
+
+    Parameters
+    ----------
+    param_name : str
+        Parameter name (used by PyMC RVs; unused for scipy/numpyro).
+    min, max : float
+        Inclusive lower and upper bounds.
+    stats_pkg : {'scipy', 'pymc', 'numpyro'}, optional
+        Statistics backend.
+
+    Returns
+    -------
+    prior
+        Frozen scipy dist, PyMC RV, or NumPyro distribution.
+    """
+    if stats_pkg == 'scipy':
+        return scipy.stats.uniform(loc=min, scale=max - min)
+    elif stats_pkg == 'pymc':
+        return pm.Uniform(param_name, lower=min, upper=max)
+    elif stats_pkg == 'numpyro':
+        import numpyro.distributions as dist
+        return dist.Uniform(float(min), float(max))
+    _unsupported_stats_pkg(stats_pkg)
+
+
+def make_norm_gen(param_name, mean, std, stats_pkg='scipy'):
+    """Build a normal prior for one parameter.
+
+    Parameters
+    ----------
+    param_name : str
+        Parameter name (used by PyMC RVs; unused for scipy/numpyro).
+    mean, std : float
+        Mean and standard deviation.
+    stats_pkg : {'scipy', 'pymc', 'numpyro'}, optional
+        Statistics backend.
+
+    Returns
+    -------
+    prior
+        Frozen scipy dist, PyMC RV, or NumPyro distribution.
+    """
+    if stats_pkg == 'scipy':
+        return scipy.stats.norm(loc=mean, scale=std)
+    elif stats_pkg == 'pymc':
+        return pm.Normal(param_name, mu=mean, sigma=std)
+    elif stats_pkg == 'numpyro':
+        import numpyro.distributions as dist
+        return dist.Normal(float(mean), float(std))
+    _unsupported_stats_pkg(stats_pkg)
+
+
+def make_lognorm_gen(param_name, mean, std, stats_pkg='scipy'):
+    """Make a natural-log normal distribution for a variable.
+
+    The specified mean and std should be in the ln() space.
+
+    Parameters
+    ----------
+    param_name : str
+        Parameter name (used by PyMC RVs; unused for scipy/numpyro).
+    mean, std : float
+        Mean and std of the underlying normal in ln space.
+    stats_pkg : {'scipy', 'pymc', 'numpyro'}, optional
+        Statistics backend.
+
+    Returns
+    -------
+    prior
+        Frozen scipy dist, PyMC RV, or NumPyro distribution.
+    """
+    if stats_pkg == 'scipy':
+        return scipy.stats.lognorm(s=std, scale=np.exp(mean))
+    elif stats_pkg == 'pymc':
+        return pm.LogNormal(param_name, mu=mean, sigma=std)
+    elif stats_pkg == 'numpyro':
+        import numpyro.distributions as dist
+        return dist.LogNormal(float(mean), float(std))
+    _unsupported_stats_pkg(stats_pkg)
+
+
+def make_log10norm_gen(param_name, mean_in_log10, std_in_log10,
+                       stats_pkg='scipy'):
+    """Scale lognorm from natural log to base 10.
+
     Note the mean and std should be in the log10() space already.
 
     Parameters
     ----------
-    mean:
-        mean of the underlying log10 gaussian (i.e. a log10 quantity)
-    std: 
-        variance of underlying log10 gaussian
+    param_name : str
+        Parameter name (used by PyMC RVs; unused for scipy/numpyro).
+    mean_in_log10 : float
+        Mean of the underlying log10 gaussian.
+    std_in_log10 : float
+        Std of the underlying log10 gaussian.
+    stats_pkg : {'scipy', 'pymc', 'numpyro'}, optional
+        Statistics backend.
+
+    Returns
+    -------
+    prior
+        Frozen scipy dist, PyMC RV, or NumPyro distribution.
     """
     # Convert mean and std from log10 to ln.
-    return scipy.stats.lognorm(s=std_in_log10 * np.log(10), scale=np.exp(mean_in_log10 * np.log(10)))
+    mu_ln = mean_in_log10 * np.log(10)
+    sigma_ln = std_in_log10 * np.log(10)
+    if stats_pkg == 'scipy':
+        return scipy.stats.lognorm(s=sigma_ln, scale=np.exp(mu_ln))
+    elif stats_pkg == 'pymc':
+        return pm.LogNormal(param_name, mu=mu_ln, sigma=sigma_ln)
+    elif stats_pkg == 'numpyro':
+        import numpyro.distributions as dist
+        return dist.LogNormal(float(mu_ln), float(sigma_ln))
+    _unsupported_stats_pkg(stats_pkg)
 
-def make_truncnorm_gen(mean, std, lo_cut, hi_cut):
-    """lo_cut and hi_cut are in the units of sigma
+
+def make_truncnorm_gen(param_name, mean, std, lo_cut, hi_cut,
+                       stats_pkg='scipy'):
+    """Build a truncated-normal prior (cuts in units of sigma).
+
+    Parameters
+    ----------
+    param_name : str
+        Parameter name (used by PyMC RVs; unused for scipy/numpyro).
+    mean, std : float
+        Untruncated mean and standard deviation.
+    lo_cut, hi_cut : float
+        Truncation bounds in units of ``std`` relative to ``mean``.
+    stats_pkg : {'scipy', 'pymc', 'numpyro'}, optional
+        Statistics backend.
+
+    Returns
+    -------
+    prior
+        Frozen scipy dist, PyMC RV, or NumPyro distribution.
     """
-    return scipy.stats.truncnorm(lo_cut, hi_cut,
-                                 loc=mean, scale=std)
+    if stats_pkg == 'scipy':
+        return scipy.stats.truncnorm(lo_cut, hi_cut, loc=mean, scale=std)
+    elif stats_pkg == 'pymc':
+        return pm.TruncatedNormal(
+            param_name, mu=mean, sigma=std, lower=lo_cut, upper=hi_cut
+        )
+    elif stats_pkg == 'numpyro':
+        import numpyro.distributions as dist
+        # NumPyro uses absolute truncation bounds.
+        return dist.TruncatedNormal(
+            float(mean), float(std),
+            low=float(mean + lo_cut * std),
+            high=float(mean + hi_cut * std),
+        )
+    _unsupported_stats_pkg(stats_pkg)
 
 
-def make_truncnorm_gen_with_bounds(mean, std, low_bound, hi_bound):
-    """
-    low_bound and hi_bound are in the same units as mean and std
+def make_truncnorm_gen_with_bounds(param_name, mean, std, low_bound,
+                                   hi_bound, stats_pkg='scipy'):
+    """Build a truncated-normal prior with absolute bounds.
+
+    Parameters
+    ----------
+    param_name : str
+        Parameter name (used by PyMC RVs; unused for scipy/numpyro).
+    mean, std : float
+        Untruncated mean and standard deviation.
+    low_bound, hi_bound : float
+        Absolute truncation bounds (same units as mean).
+    stats_pkg : {'scipy', 'pymc', 'numpyro'}, optional
+        Statistics backend.
+
+    Returns
+    -------
+    prior
+        Frozen scipy dist, PyMC RV, or NumPyro distribution.
     """
     assert hi_bound > low_bound
     clipped_mean = min(max(mean, low_bound), hi_bound)
@@ -3157,13 +4696,29 @@ def make_truncnorm_gen_with_bounds(mean, std, low_bound, hi_bound):
     else:
         low_sigma = (low_bound - clipped_mean) / std
         hi_sigma = (hi_bound - clipped_mean) / std
-    return scipy.stats.truncnorm(low_sigma, hi_sigma,
-                                 loc=clipped_mean, scale=std)
+
+    if stats_pkg == 'scipy':
+        return scipy.stats.truncnorm(
+            low_sigma, hi_sigma, loc=clipped_mean, scale=std
+        )
+    elif stats_pkg == 'pymc':
+        return pm.TruncatedNormal(
+            param_name, mu=clipped_mean, sigma=std,
+            lower=low_sigma, upper=hi_sigma
+        )
+    elif stats_pkg == 'numpyro':
+        import numpyro.distributions as dist
+        return dist.TruncatedNormal(
+            float(clipped_mean), float(std),
+            low=float(low_bound), high=float(hi_bound),
+        )
+    _unsupported_stats_pkg(stats_pkg)
 
 
-def make_t0_gen(t, mag):
-    """Get an approximate t0 search range by finding the brightest point
+def make_t0_gen(param_name, t, mag, stats_pkg='scipy'):
+    """Get a t0 prior byfinding the brightest point
     and then searching days where flux is higher than 80% of this peak.
+    Then return a uniform prior. 
     """
     mag_min = np.min(mag)  # min mag = brightest
     delta_mag = np.max(mag) - mag_min
@@ -3175,31 +4730,31 @@ def make_t0_gen(t, mag):
     t0_min -= 0.4 * (t0_max - t0_min)
     t0_max += 0.4 * (t0_max - t0_min)
 
-    return make_gen(t0_min, t0_max)
+    return make_gen(param_name, t0_min, t0_max, stats_pkg=stats_pkg)
 
-def make_mag_base_gen(mag):
+def make_mag_base_gen(param_name, mag, stats_pkg='scipy'):
     """
     Make a prior for baseline magnitude using the data.
     """
     mean, med, std = sigma_clipped_stats(mag, sigma_lower=2, sigma_upper=4)
-
-    gen = make_truncnorm_gen(mean, 3 * std, -5, 5)
+    
+    gen = make_truncnorm_gen(param_name, mean, 3 * std, -5, 5, stats_pkg=stats_pkg)
 
     return gen
 
-def make_mag_src_gen(mag):
+def make_mag_src_gen(param_name, mag, stats_pkg='scipy'):
     """
     Make a prior for source magnitude using the data.
     Allow negative blending.
     """
     mean, med, std = sigma_clipped_stats(mag, sigma_lower=2, sigma_upper=4)
 
-    gen = make_gen(mean - 1, mean + 5) 
+    gen = make_gen(param_name, mean - 1, mean + 5, stats_pkg=stats_pkg) 
 
     return gen
 
 
-def make_xS0_gen(pos, verbose = False):
+def make_xS0_gen(param_name, pos, verbose = False, stats_pkg='scipy'):
     posmin = pos.min() - 5 * pos.std()
     posmax = pos.max() + 5 * pos.std()
 
@@ -3208,9 +4763,9 @@ def make_xS0_gen(pos, verbose = False):
         print('posmin : ', posmin)
         print('posmax : ', posmax)
         print('         ')
-    return make_gen(posmin, posmax)
+    return make_gen(param_name, posmin, posmax, stats_pkg=stats_pkg)
 
-def make_xS0_norm_gen(pos, verbose = False):
+def make_xS0_norm_gen(param_name, pos, verbose = False, stats_pkg='scipy'):
     posmid = 0.5 * (pos.min() + pos.max())
     poswidth = np.abs(pos.max() - pos.min())
 
@@ -3219,10 +4774,10 @@ def make_xS0_norm_gen(pos, verbose = False):
         print('posmid : ', posmid)
         print('poswidth : ', poswidth)
         print('         ')
-    return make_norm_gen(posmid, poswidth)
+    return make_norm_gen(param_name, posmid, poswidth, stats_pkg=stats_pkg)
 
 
-def make_muS_EN_gen(t, pos, scale_factor=100.0, verbose = False):
+def make_muS_EN_gen(param_name, t, pos, scale_factor=100.0, verbose = False, stats_pkg='scipy'):
     """Get an approximate muS search range by looking at the best fit
     straight line to the astrometry. Then allows lots of free space.
 
@@ -3258,9 +4813,9 @@ def make_muS_EN_gen(t, pos, scale_factor=100.0, verbose = False):
         print('vel_lo : ', vel_lo)
         print('vel_hi : ', vel_hi)
         print('         ')
-    return make_gen(vel_lo, vel_hi)
+    return make_gen(param_name, vel_lo, vel_hi, stats_pkg=stats_pkg)
 
-def make_muS_EN_norm_gen(t, pos, n_use=None, scale_factor=10.0):
+def make_muS_EN_norm_gen(param_name, t, pos, n_use=None, scale_factor=10.0, stats_pkg='scipy'):
     """Get an approximate muS search range by looking at the best fit
     straight line to the astrometry. Then allows lots of free space.
 
@@ -3291,7 +4846,7 @@ def make_muS_EN_norm_gen(t, pos, n_use=None, scale_factor=10.0):
     print('vel : ', vel)
     print('vel_1sigma : ', scale_factor * vel_err)
     print('         ')
-    return make_norm_gen(vel, scale_factor * vel_err)
+    return make_norm_gen(param_name, vel, scale_factor * vel_err, stats_pkg=stats_pkg)
 
 
 def calc_muS_EN_norm_gen(t, pos, n_use=None):
@@ -3321,22 +4876,31 @@ def calc_muS_EN_norm_gen(t, pos, n_use=None):
     return vel
 
 
-def make_invgamma_gen(t_arr):
-    """ADD DESCRIPTION
+def make_invgamma_gen(param_name, t_arr, stats_pkg='scipy'):
+    """Build an inverse-gamma prior from a time array.
 
     Parameters
     ----------
-    t_arr: 
-        time array
+    param_name : str
+        Parameter name (used by PyMC RVs; unused for scipy/numpyro).
+    t_arr : array_like
+        Time array used to set inv-gamma shape/scale.
 
+    Returns
+    -------
+    prior
+        Frozen scipy dist, PyMC RV, or NumPyro distribution.
     """
-    a,b = compute_invgamma_params(t_arr)
+    a, b = compute_invgamma_params(t_arr)
 
-#    print('inv gamma')
-#    print('a : ', a)
-#    print('b : ', b)
-
-    return scipy.stats.invgamma(a, scale=b)
+    if stats_pkg == 'scipy':
+        return scipy.stats.invgamma(a, scale=b)
+    elif stats_pkg == 'pymc':
+        return pm.InverseGamma(param_name, alpha=a, beta=b)
+    elif stats_pkg == 'numpyro':
+        import numpyro.distributions as dist
+        return dist.InverseGamma(float(a), rate=float(b))
+    _unsupported_stats_pkg(stats_pkg)
 
 
 def compute_invgamma_params(t_arr):
@@ -3385,29 +4949,19 @@ def compute_invgamma_params(t_arr):
 
     return invgamma_a, invgamma_b
 
-def make_piS():
+def make_piS(param_name, stats_pkg='scipy'):
     # piS prior comes from PopSyCLE:
     # We will assume a truncated normal distribution with only a small-side truncation at ~20 kpc.
     piS_mean = 0.1126  # mas
     piS_std = 0.0213  # mas
     piS_lo_cut = (0.05 - piS_mean) / piS_std  # sigma
     piS_hi_cut = 90.  # sigma
-    return scipy.stats.truncnorm(piS_lo_cut, piS_hi_cut,
-                                 loc=piS_mean, scale=piS_std)
 
-
-def make_fdfdt():
-    return scipy.stats.norm(loc=0, scale=1 / 365.25)
-
-
-def random_prob(generator, x):
-    value = generator.ppf(x)
-    ln_prob = generator.logpdf(value)
-    return value, ln_prob
+    return make_truncnorm_gen(param_name, piS_mean, piS_std, piS_lo_cut, piS_hi_cut, stats_pkg=stats_pkg)
 
 
 def weighted_quantile(values, quantiles, sample_weight=None,
-                      values_sorted=False, old_style=False):
+                      values_sorted=False, old_style=False, stats_pkg='scipy'):
     """ Very close to numplt.percentile, but supports weights.
     
     Parameters
@@ -3416,7 +4970,7 @@ def weighted_quantile(values, quantiles, sample_weight=None,
         numplt.array with data
     quantiles: 
         array-like with many quantiles needed
-    sample_weight: 
+    sample_weight:  
         array-like of the same length as `array`
     values_sorted: bool, 
         if True, then will avoid sorting of initial array

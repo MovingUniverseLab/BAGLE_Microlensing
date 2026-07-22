@@ -535,7 +535,7 @@ class PSPL(ABC):
             Shape ``(N_times, 2)`` East/North AU table, or ``None`` when
             parallax is disabled.
         """
-        if not getattr(self, "parallaxFlag", False):
+        if self.parallaxFlag is False:
             return None
 
         # Observer location may be a single string or per-filter list.
@@ -632,12 +632,13 @@ class PSPL(ABC):
         t_j = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
 
         # Phot-only models have no absolute lens sky track.
+        # Return 0 for their positions at all times.
         if not hasattr(self, "xL0") or self.xL0 is None:
             return np.zeros((int(t_j.shape[0]), 2), dtype=np.float64)
 
-        # Host parallax table and optional lens parallax amplitude.
+        # Parallax table and optional lens parallax amplitude.
         pvec = self._parallax_vectors_for_jax(t, filt_idx)
-        pi_l = getattr(self, "piL", None)
+        piL = getattr(self, "piL", None)
 
         xL = jax_physics.pspl_linear_astrometry(
             t_j,
@@ -645,7 +646,7 @@ class PSPL(ABC):
             jnp.asarray(self.xL0, dtype=jnp.float64),
             jnp.asarray(self.muL, dtype=jnp.float64),
             parallax_vectors=pvec,
-            pi=None if pi_l is None else jnp.asarray(pi_l, dtype=jnp.float64),
+            pi=None if piL is None else jnp.asarray(piL, dtype=jnp.float64),
         )
 
         return np.asarray(xL, dtype=np.float64)
@@ -2037,17 +2038,18 @@ class PSPL_GP(ABC):
         if self.use_gp_phot[filt_idx]:
             if t_pred is None:
                 t_pred = t
+            # GP photometry still uses layout try_get_* (no analytic jnp AD yet).
             try:
-                from bagle.jax.gp import photometry_with_gp_jax
+                from bagle.jax_model import try_get_photometry_with_gp
 
-                gp_jax = photometry_with_gp_jax(
-                    self, t, mag_obs, mag_err_obs,
-                    filt_idx=filt_idx, t_pred=t_pred,
+                gp_jax = try_get_photometry_with_gp(
+                    self, t, mag_obs, mag_err_obs, filt_idx=filt_idx, t_pred=t_pred
                 )
                 if gp_jax is not None:
                     return gp_jax
             except ImportError:
                 pass
+
             gp = self.get_celerite_gp_object(mag_err_obs, filt_idx=filt_idx)
             try:
                 gp.compute(t, mag_err_obs)
@@ -2210,16 +2212,16 @@ class PSPL_GPnoJitter(ABC):
             if t_pred is None:
                 t_pred = t
             try:
-                from bagle.jax.gp import photometry_with_gp_jax
+                from bagle.jax_model import try_get_photometry_with_gp
 
-                gp_jax = photometry_with_gp_jax(
-                    self, t, mag_obs, mag_err_obs, filt_idx=filt_idx,
-                    t_pred=t_pred,
+                gp_jax = try_get_photometry_with_gp(
+                    self, t, mag_obs, mag_err_obs, filt_idx=filt_idx, t_pred=t_pred
                 )
                 if gp_jax is not None:
                     return gp_jax
             except ImportError:
                 pass
+
             gp = self.get_celerite_gp_object(filt_idx = filt_idx)
             try:
                 gp.compute(t, mag_err_obs)
@@ -2317,41 +2319,6 @@ class PSPL_GPnoJitter(ABC):
 class PSPL_Param(ABC):
     # Fit parameters: Shared fit parameters
     fitter_param_names = []
-
-    # Analytic JAX likelihood packing (all Param mixins).
-    jax_loglik_backend = "analytic"
-
-    @classmethod
-    def get_params_for_jax(cls, vec):
-        """Pack a fitter parameter vector into JAX kernel inputs.
-
-        Parameters
-        ----------
-        vec : array_like
-            Full fitter parameter vector in ``fitter_param_names`` order.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for family JAX kernels.
-        """
-        from bagle.jax.param_pack import pack_params_for_class
-
-        return pack_params_for_class(cls, vec)
-
-    def get_params_for_jax_from_self(self):
-        """Pack this model's attributes into JAX kernel inputs."""
-        from bagle.jax.param_pack import params_from_self_phot, params_from_self_photastrom
-
-        if getattr(self, "paramAstromFlag", False):
-            try:
-                return params_from_self_photastrom(self)
-            except Exception:
-                pass
-        try:
-            return params_from_self_phot(self)
-        except Exception:
-            return {}
 
     # Fit parameters: Filter specific fit parameters -- handled as arrays.
     # Every photometric data-set has them.
@@ -2563,42 +2530,26 @@ class PSPL_AstromParam3(PSPL_Param):
     paramPhotFlag = False
 
     @classmethod
-    def get_params_for_jax(cls, vec):
-        """
-        Pack a fitter parameter vector into JAX kernel inputs.
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0,
+                                  parallax_vectors=None):
+        """Evaluate this parameterization's astrometric likelihood."""
+        from bagle.jax.geometry import derive_pspl_photastrom_log10_thetaE
 
-        Parameters
-        ----------
-        vec : array_like
-            Full fitter parameter vector in ``fitter_param_names`` order.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for PSPL PhotAstrom Param3 JAX kernels.
-        """
-        from bagle.jax.param_pack import pack_pspl_photastrom_param3
-
-        # Map the ordered fitter cube onto kernel keyword arguments.
-        params = pack_pspl_photastrom_param3(vec, cls.fitter_param_names)
-
-        return params
-
-    def get_params_for_jax_from_self(self):
-        """
-        Pack this model's attributes into JAX kernel inputs.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for PhotAstrom JAX kernels.
-        """
-        from bagle.jax.param_pack import params_from_self_photastrom
-
-        # Read geometric / photometric attributes off the live model.
-        params = params_from_self_photastrom(self)
-
-        return params
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_pspl_photastrom_log10_thetaE(
+            p['t0'], p['u0_amp'], p['tE'], p['log10_thetaE'],
+            p['piS'], p['piE_E'], p['piE_N'], p['xS0_E'],
+            p['xS0_N'], p['muS_E'], p['muS_N']
+        )
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE, piS,
+         piL) = geom
+        lnL = jax_physics.pspl_log_likely_astrometry(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE, b_sff,
+            x_obs, y_obs, x_err, y_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL
+        )
+        return lnL
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
@@ -2891,42 +2842,23 @@ class PSPL_PhotParam1(PSPL_Param):
     paramPhotFlag = True
 
     @classmethod
-    def get_params_for_jax(cls, vec):
-        """
-        Pack a fitter parameter vector into JAX kernel inputs.
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Evaluate this parameterization's photometric likelihood."""
+        from bagle.jax.geometry import derive_pspl_static_geometry
 
-        Parameters
-        ----------
-        vec : array_like
-            Full fitter parameter vector in ``fitter_param_names`` order.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for PSPL Phot Param1 JAX kernels.
-        """
-        from bagle.jax.param_pack import pack_pspl_phot_param1
-
-        # Map the ordered fitter cube onto kernel keyword arguments.
-        params = pack_pspl_phot_param1(vec, cls.fitter_param_names)
-
-        return params
-
-    def get_params_for_jax_from_self(self):
-        """
-        Pack this model's attributes into JAX kernel inputs.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for Phot JAX kernels.
-        """
-        from bagle.jax.param_pack import params_from_self_phot
-
-        # Read geometric / photometric attributes off the live model.
-        params = params_from_self_phot(self)
-
-        return params
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        u0, thetaE_hat, _ = derive_pspl_static_geometry(
+            p['u0_amp'], p['piE_E'], p['piE_N']
+        )
+        lnL = jax_physics.pspl_log_likely_photometry(
+            t, p['t0'], p['tE'], u0, thetaE_hat, mag_src, b_sff,
+            mag_obs, mag_err, parallax_vectors=parallax_vectors,
+            piE_E=p['piE_E'], piE_N=p['piE_N'],
+            gp_params=gp_params, fixed_jitter=fixed_jitter
+        )
+        return lnL
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_src,
                  raL=None, decL=None, obsLocation='earth'):
@@ -3038,42 +2970,24 @@ class PSPL_PhotParam2(PSPL_Param):
     paramPhotFlag = True
 
     @classmethod
-    def get_params_for_jax(cls, vec):
-        """
-        Pack a fitter parameter vector into JAX kernel inputs.
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_base, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Evaluate this parameterization's photometric likelihood."""
+        from bagle.jax.geometry import derive_pspl_static_geometry
 
-        Parameters
-        ----------
-        vec : array_like
-            Full fitter parameter vector in ``fitter_param_names`` order.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for PSPL Phot Param2 JAX kernels.
-        """
-        from bagle.jax.param_pack import pack_pspl_phot_param2
-
-        # Map the ordered fitter cube onto kernel keyword arguments.
-        params = pack_pspl_phot_param2(vec, cls.fitter_param_names)
-
-        return params
-
-    def get_params_for_jax_from_self(self):
-        """
-        Pack this model's attributes into JAX kernel inputs.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for Phot JAX kernels.
-        """
-        from bagle.jax.param_pack import params_from_self_phot
-
-        # Read geometric / photometric attributes off the live model.
-        params = params_from_self_phot(self)
-
-        return params
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        u0, thetaE_hat, _ = derive_pspl_static_geometry(
+            p['u0_amp'], p['piE_E'], p['piE_N']
+        )
+        mag_src = mag_base - 2.5 * jnp.log10(b_sff)
+        lnL = jax_physics.pspl_log_likely_photometry(
+            t, p['t0'], p['tE'], u0, thetaE_hat, mag_src, b_sff,
+            mag_obs, mag_err, parallax_vectors=parallax_vectors,
+            piE_E=p['piE_E'], piE_N=p['piE_N'],
+            gp_params=gp_params, fixed_jitter=fixed_jitter
+        )
+        return lnL
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, b_sff, mag_base,
                  raL=None, decL=None, obsLocation='earth'):
@@ -3181,42 +3095,25 @@ class PSPL_PhotParam3(PSPL_Param):
     paramPhotFlag = True
 
     @classmethod
-    def get_params_for_jax(cls, vec):
-        """
-        Pack a fitter parameter vector into JAX kernel inputs.
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_base, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Evaluate this parameterization's photometric likelihood."""
+        from bagle.jax.geometry import derive_pspl_phot_log
 
-        Parameters
-        ----------
-        vec : array_like
-            Full fitter parameter vector in ``fitter_param_names`` order.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for PSPL Phot Param3 JAX kernels.
-        """
-        from bagle.jax.param_pack import pack_pspl_phot_param3
-
-        # Map the ordered fitter cube onto kernel keyword arguments.
-        params = pack_pspl_phot_param3(vec, cls.fitter_param_names)
-
-        return params
-
-    def get_params_for_jax_from_self(self):
-        """
-        Pack this model's attributes into JAX kernel inputs.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for Phot JAX kernels.
-        """
-        from bagle.jax.param_pack import params_from_self_phot
-
-        # Read geometric / photometric attributes off the live model.
-        params = params_from_self_phot(self)
-
-        return params
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        u0, thetaE_hat, tE, piE_E, piE_N = derive_pspl_phot_log(
+            p['t0'], p['u0_amp'], p['log_tE'], p['log_piE'],
+            p['phi_muRel']
+        )
+        mag_src = mag_base - 2.5 * jnp.log10(b_sff)
+        lnL = jax_physics.pspl_log_likely_photometry(
+            t, p['t0'], tE, u0, thetaE_hat, mag_src, b_sff,
+            mag_obs, mag_err, parallax_vectors=parallax_vectors,
+            piE_E=piE_E, piE_N=piE_N, gp_params=gp_params,
+            fixed_jitter=fixed_jitter
+        )
+        return lnL
 
     def __init__(self, t0, u0_amp, log_tE, log_piE, phi_muRel, b_sff, mag_base,
                  raL=None, decL=None, obsLocation='earth'):
@@ -3438,42 +3335,45 @@ class PSPL_PhotAstromParam1(PSPL_Param):
     paramPhotFlag = True
 
     @classmethod
-    def get_params_for_jax(cls, vec):
-        """
-        Pack a fitter parameter vector into JAX kernel inputs.
+    def _jax_geometry(cls, vec):
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = jax_physics.derive_pspl_photastrom_param1_geometry(
+            p['mL'], p['t0'], p['beta'], p['dL'], p['dL_dS'],
+            p['xS0_E'], p['xS0_N'], p['muL_E'], p['muL_N'],
+            p['muS_E'], p['muS_N']
+        )
+        return p, geom
 
-        Parameters
-        ----------
-        vec : array_like
-            Full fitter parameter vector in ``fitter_param_names`` order.
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Evaluate this parameterization's photometric likelihood."""
+        p, geom = cls._jax_geometry(vec)
+        (u0, thetaE_hat, tE, piE_E, piE_N, _, _, _, _, _, _,
+         _) = geom
+        lnL = jax_physics.pspl_log_likely_photometry(
+            t, p['t0'], tE, u0, thetaE_hat, mag_src, b_sff,
+            mag_obs, mag_err, parallax_vectors=parallax_vectors,
+            piE_E=piE_E, piE_N=piE_N, gp_params=gp_params,
+            fixed_jitter=fixed_jitter
+        )
+        return lnL
 
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for PSPL PhotAstrom Param1 JAX kernels.
-        """
-        from bagle.jax.param_pack import pack_pspl_photastrom_param1
-
-        # Map the ordered fitter cube onto kernel keyword arguments.
-        params = pack_pspl_photastrom_param1(vec, cls.fitter_param_names)
-
-        return params
-
-    def get_params_for_jax_from_self(self):
-        """
-        Pack this model's attributes into JAX kernel inputs.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for PhotAstrom JAX kernels.
-        """
-        from bagle.jax.param_pack import params_from_self_photastrom
-
-        # Read geometric / photometric attributes off the live model.
-        params = params_from_self_photastrom(self)
-
-        return params
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0,
+                                  parallax_vectors=None):
+        """Evaluate this parameterization's astrometric likelihood."""
+        p, geom = cls._jax_geometry(vec)
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE, piS,
+         piL) = geom
+        lnL = jax_physics.pspl_log_likely_astrometry(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE, b_sff,
+            x_obs, y_obs, x_err, y_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL
+        )
+        return lnL
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
@@ -3640,42 +3540,47 @@ class PSPL_PhotAstromParam2(PSPL_Param):
     paramPhotFlag = True
 
     @classmethod
-    def get_params_for_jax(cls, vec):
-        """
-        Pack a fitter parameter vector into JAX kernel inputs.
+    def _jax_geometry(cls, vec):
+        from bagle.jax.geometry import derive_pspl_photastrom_reduced
 
-        Parameters
-        ----------
-        vec : array_like
-            Full fitter parameter vector in ``fitter_param_names`` order.
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_pspl_photastrom_reduced(
+            p['t0'], p['u0_amp'], p['tE'], p['thetaE'], p['piS'],
+            p['piE_E'], p['piE_N'], p['xS0_E'], p['xS0_N'],
+            p['muS_E'], p['muS_N']
+        )
+        return p, geom
 
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for PSPL PhotAstrom Param2 JAX kernels.
-        """
-        from bagle.jax.param_pack import pack_pspl_photastrom_param2
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Evaluate this parameterization's photometric likelihood."""
+        p, geom = cls._jax_geometry(vec)
+        (u0, thetaE_hat, tE, piE_E, piE_N, _, _, _, _, _, _,
+         _) = geom
+        lnL = jax_physics.pspl_log_likely_photometry(
+            t, p['t0'], tE, u0, thetaE_hat, mag_src, b_sff,
+            mag_obs, mag_err, parallax_vectors=parallax_vectors,
+            piE_E=piE_E, piE_N=piE_N, gp_params=gp_params,
+            fixed_jitter=fixed_jitter
+        )
+        return lnL
 
-        # Map the ordered fitter cube onto kernel keyword arguments.
-        params = pack_pspl_photastrom_param2(vec, cls.fitter_param_names)
-
-        return params
-
-    def get_params_for_jax_from_self(self):
-        """
-        Pack this model's attributes into JAX kernel inputs.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for PhotAstrom JAX kernels.
-        """
-        from bagle.jax.param_pack import params_from_self_photastrom
-
-        # Read geometric / photometric attributes off the live model.
-        params = params_from_self_photastrom(self)
-
-        return params
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0,
+                                  parallax_vectors=None):
+        """Evaluate this parameterization's astrometric likelihood."""
+        p, geom = cls._jax_geometry(vec)
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE, piS,
+         piL) = geom
+        lnL = jax_physics.pspl_log_likely_astrometry(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE, b_sff,
+            x_obs, y_obs, x_err, y_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL
+        )
+        return lnL
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
@@ -3844,42 +3749,48 @@ class PSPL_PhotAstromParam3(PSPL_Param):
     paramPhotFlag = True
 
     @classmethod
-    def get_params_for_jax(cls, vec):
-        """
-        Pack a fitter parameter vector into JAX kernel inputs.
+    def _jax_geometry(cls, vec):
+        from bagle.jax.geometry import derive_pspl_photastrom_log10_thetaE
 
-        Parameters
-        ----------
-        vec : array_like
-            Full fitter parameter vector in ``fitter_param_names`` order.
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_pspl_photastrom_log10_thetaE(
+            p['t0'], p['u0_amp'], p['tE'], p['log10_thetaE'],
+            p['piS'], p['piE_E'], p['piE_N'], p['xS0_E'],
+            p['xS0_N'], p['muS_E'], p['muS_N']
+        )
+        return p, geom
 
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for PSPL PhotAstrom Param3 JAX kernels.
-        """
-        from bagle.jax.param_pack import pack_pspl_photastrom_param3
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_base, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Evaluate this parameterization's photometric likelihood."""
+        p, geom = cls._jax_geometry(vec)
+        (u0, thetaE_hat, tE, piE_E, piE_N, _, _, _, _, _, _,
+         _) = geom
+        mag_src = mag_base - 2.5 * jnp.log10(b_sff)
+        lnL = jax_physics.pspl_log_likely_photometry(
+            t, p['t0'], tE, u0, thetaE_hat, mag_src, b_sff,
+            mag_obs, mag_err, parallax_vectors=parallax_vectors,
+            piE_E=piE_E, piE_N=piE_N, gp_params=gp_params,
+            fixed_jitter=fixed_jitter
+        )
+        return lnL
 
-        # Map the ordered fitter cube onto kernel keyword arguments.
-        params = pack_pspl_photastrom_param3(vec, cls.fitter_param_names)
-
-        return params
-
-    def get_params_for_jax_from_self(self):
-        """
-        Pack this model's attributes into JAX kernel inputs.
-
-        Returns
-        -------
-        params : dict
-            Named parameter dictionary for PhotAstrom JAX kernels.
-        """
-        from bagle.jax.param_pack import params_from_self_photastrom
-
-        # Read geometric / photometric attributes off the live model.
-        params = params_from_self_photastrom(self)
-
-        return params
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0,
+                                  parallax_vectors=None):
+        """Evaluate this parameterization's astrometric likelihood."""
+        p, geom = cls._jax_geometry(vec)
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE, piS,
+         piL) = geom
+        lnL = jax_physics.pspl_log_likely_astrometry(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE, b_sff,
+            x_obs, y_obs, x_err, y_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL
+        )
+        return lnL
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N,
@@ -6883,6 +6794,15 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         .. note::
            Note that this is a photometry-only model, so units are in Einstein radii.
         """
+        try:
+            from bagle.jax_model import try_get_source_astrometry_unlensed
+
+            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         u = self.get_u(t, filt_idx=filt_idx)
 
         return u
@@ -7515,6 +7435,30 @@ root_tol : float
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = False
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Evaluate static PSBL photometry for this parameterization."""
+        from bagle.jax.geometry import derive_psbl_photastrom_param1
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_psbl_photastrom_param1(
+            p['mLp'], p['mLs'], p['t0'], p['xS0_E'], p['xS0_N'],
+            p['beta'], p['muL_E'], p['muL_N'], p['muS_E'],
+            p['muS_N'], p['dL'], p['dS'], p['sep'], p['alpha']
+        )
+        (u0, thetaE_hat, tE, piE_E, piE_N, _, _, _, _, _, _, _,
+         m1, m2, xL1, xL2, _, _) = geom
+        lnL = jax_physics.psbl_log_likely_photometry(
+            t, p['t0'], tE, u0, thetaE_hat, xL1, xL2, m1, m2,
+            mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors, piE_E=piE_E,
+            piE_N=piE_N, gp_params=gp_params,
+            fixed_jitter=fixed_jitter
+        )
+        return lnL
 
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
@@ -11794,6 +11738,26 @@ class PSBL_PhotParam1(PSPL_Param):
     paramPhotFlag = True
     orbitFlag=False
 
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Evaluate static PSBL photometry for this parameterization."""
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = jax_physics.derive_psbl_static_geometry(
+            p['u0_amp'], p['piE_E'], p['piE_N'], p['q'], p['sep'],
+            p['phi']
+        )
+        m1, m2, u0, thetaE_hat, xL1, xL2, _ = geom
+        lnL = jax_physics.psbl_log_likely_photometry(
+            t, p['t0'], p['tE'], u0, thetaE_hat, xL1, xL2, m1,
+            m2, mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors, piE_E=p['piE_E'],
+            piE_N=p['piE_N'], gp_params=gp_params,
+            fixed_jitter=fixed_jitter
+        )
+        return lnL
+
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep, phi,
                  b_sff, mag_src,
@@ -12243,7 +12207,7 @@ class BSPL(PSPL):
 
         tau_pri = (t - self.t0_pri) / self.tE
 
-        if self.astrometryFlag==True:
+        if self.astrometryFlag == True:
             xS_unlensed = self.get_resolved_source_astrometry_unlensed(t)
             xS1_unlens = xS_unlensed[:, 0, :]
             xS2_unlens = xS_unlensed[:, 1, :]
@@ -12297,6 +12261,15 @@ class BSPL(PSPL):
             xS[0, 0, 1] returns the amplification of the
             first source's "minus" image at the first time.
         """
+        try:
+            from bagle.jax_model import try_get_resolved_amplification
+
+            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
+            if amp_jax is not None:
+                return amp_jax
+        except ImportError:
+            pass
+
         # Get u for the primary and secondary at all times.
         u_vec = self.get_u(t, filt_idx=filt_idx)
 
@@ -12399,12 +12372,6 @@ class BSPL(PSPL):
         f1 = mag2flux(self.mag_src_pri[filt_idx])
         f2 = mag2flux(self.mag_src_sec[filt_idx])
 
-        # Add linear source flux change.
-        if hasattr(self, 'fdfdt_pri'):
-            f1 += f1 * (self.fdfdt_pri / 100) * (t - self.t0_pri)
-        if hasattr(self, 'fdfdt_sec'):
-            f2 += f2 * (self.fdfdt_sec / 100) * (t - self.t0_pri)
-
         # Amplify and combine together.
         flux_lensed1 = f1 * A1
         flux_lensed2 = f2 * A2
@@ -12480,6 +12447,15 @@ class BSPL_Phot(BSPL, PSPL_Phot):
         xS_unlensed : numpy array, dtype=float, shape = len(t) x 2
             The unlensed positions of the source in Einstein radii.
         """
+        try:
+            from bagle.jax_model import try_get_source_astrometry_unlensed
+
+            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         u_unlens_both = self.get_resolved_source_astrometry_unlensed(t, filt_idx=filt_idx)
         u1_unlens = u_unlens_both[:, 0, :]
         u2_unlens = u_unlens_both[:, 1, :]
@@ -12691,6 +12667,15 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             | The unlensed positions of the combined sources in arcseconds.
             | Shape = [len(t), 2 directions]
         """
+        try:
+            from bagle.jax_model import try_get_source_astrometry_unlensed
+
+            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         xS_unlens_both = self.get_resolved_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xS1_unlens = xS_unlens_both[:, 0, :]
         xS2_unlens = xS_unlens_both[:, 1, :]
@@ -13257,6 +13242,38 @@ class BSPL_PhotParam1(PSPL_Param):
     paramAstromFlag = False
     paramPhotFlag = True
     orbitFlag = False
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Evaluate static BSPL photometry for this parameterization."""
+        from bagle.jax.geometry import derive_pspl_static_geometry
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        u0_pri, thetaE_hat, _ = derive_pspl_static_geometry(
+            p['u0_amp'], p['piE_E'], p['piE_N']
+        )
+        phi = p['phi'] * jnp.pi / 180.0
+        phi_piE = jnp.arctan2(p['piE_E'], p['piE_N'])
+        sep_vec = p['sep'] * jnp.stack([
+            jnp.sin(phi_piE + phi), jnp.cos(phi_piE + phi)
+        ])
+        u0_hat = u0_pri / jnp.linalg.norm(u0_pri)
+        u0_amp_sec = p['u0_amp'] + jnp.dot(sep_vec, u0_hat)
+        u0_sec, _, _ = derive_pspl_static_geometry(
+            u0_amp_sec, p['piE_E'], p['piE_N']
+        )
+        t0_sec = p['t0'] - jnp.dot(sep_vec, thetaE_hat) * p['tE']
+        mag_pri, mag_sec = mag_src
+        lnL = jax_physics.bspl_log_likely_photometry(
+            t, p['t0'], t0_sec, p['tE'], u0_pri, u0_sec,
+            thetaE_hat, mag_pri, mag_sec, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors, piE_E=p['piE_E'],
+            piE_N=p['piE_N'], gp_params=gp_params,
+            fixed_jitter=fixed_jitter
+        )
+        return lnL
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N,
                  sep, phi, mag_src_pri, mag_src_sec,
@@ -21647,6 +21664,15 @@ decL - if parallax model
             Array of vector positions of the centroid at each t.
             Last axis contains East/North positions.
         """
+        if (image_arr is None) and (amp_arr is None):
+            try:
+                from bagle.jax_model import try_get_resolved_astrometry
+
+                pos_jax = try_get_resolved_astrometry(self, t, filt_idx=filt_idx)
+                if pos_jax is not None:
+                    return pos_jax
+            except ImportError:
+                pass
         if (image_arr is None) or (amp_arr is None):
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
         xS_lensed_pos = img_arr
@@ -21669,6 +21695,15 @@ decL - if parallax model
             Array/tuple of amplification of each lensed image at each t.
             Shape = [n_images=2, len(t)]
         """
+        try:
+            from bagle.jax_model import try_get_resolved_amplification
+
+            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
+            if amp_jax is not None:
+                return amp_jax
+        except ImportError:
+            pass
+
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
@@ -21863,6 +21898,15 @@ decL - if parallax model
         centroid_shift : numpy array
             [shape = len(t), 2] in milliarcseoncds
         """
+        if (image_arr is None) and (amp_arr is None):
+            try:
+                from bagle.jax_model import try_get_centroid_shift
+
+                shift_jax = try_get_centroid_shift(self, t, filt_idx=filt_idx)
+                if shift_jax is not None:
+                    return shift_jax
+            except ImportError:
+                pass
         # Note that xS is actually the observed centroid position
         # including all light from the source and lens.
         xS = self.get_astrometry(t, filt_idx=filt_idx, image_arr=image_arr, amp_arr=amp_arr)
@@ -23550,6 +23594,15 @@ class FSBL_Phot(FSBL, PSPL_Phot):
         .. note::
            Note that this is a photometry-only model, so units are in Einstein radii.
         """
+        try:
+            from bagle.jax_model import try_get_source_astrometry_unlensed
+
+            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
+            if pos_jax is not None:
+                return pos_jax
+        except ImportError:
+            pass
+
         u = self.get_u(t, filt_idx=filt_idx)
 
         return u
@@ -28362,6 +28415,15 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
             Array/tuple of amplification of each lensed image at each t.
             Shape = [n_images=2, len(t)]
         """
+        try:
+            from bagle.jax_model import try_get_resolved_amplification
+
+            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
+            if amp_jax is not None:
+                return amp_jax
+        except ImportError:
+            pass
+
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 

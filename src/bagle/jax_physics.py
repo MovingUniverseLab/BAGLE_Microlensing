@@ -3,8 +3,7 @@ Stateless JAX numerical kernels for microlensing models.
 
 Pure functions suitable for ``jax.jit`` and ``jax.grad``.  Host methods in
 ``bagle.model_jax`` pack instance attributes and call these kernels directly.
-Fitter log-likelihoods use the same kernels after Param-mixin packing
-(``get_params_for_jax``).
+Fitter log-likelihoods call explicit methods on the model Param mixins.
 
 This module is the kernel library only — layout registries and string
 ``eval_kind`` dispatch do not belong here.  GP-enabled photometry may still
@@ -2446,6 +2445,91 @@ def gaussian_log_likelihood_sum(mag_model, mag_obs, mag_err):
     return lnL
 
 
+def pspl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, mag_src,
+                               b_sff, mag_obs, mag_err,
+                               parallax_vectors=None, piE_E=None,
+                               piE_N=None, gp_params=None,
+                               fixed_jitter=True):
+    """Evaluate a PSPL photometric Gaussian log-likelihood.
+
+    This is intentionally a small composition of the PSPL forward model and
+    the normalized Gaussian likelihood. Dataset weights and parameter-vector
+    indexing belong to the caller.
+    """
+    mag_model = pspl_photometry(
+        t, t0, tE, u0, thetaE_hat, mag_src, b_sff=b_sff,
+        parallax_vectors=parallax_vectors, piE_E=piE_E, piE_N=piE_N
+    )
+    if gp_params is None:
+        lnL = gaussian_log_likelihood_sum(mag_model, mag_obs, mag_err)
+    else:
+        from bagle.jax.gp import gp_log_likely_photometry
+
+        lnL = gp_log_likely_photometry(
+            t, mag_obs, mag_err, mag_model, gp_params,
+            fixed_jitter=fixed_jitter
+        )
+    return lnL
+
+
+def psbl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, xL1, xL2,
+                               m1, m2, mag_src, b_sff, mag_obs, mag_err,
+                               parallax_vectors=None, piE_E=None,
+                               piE_N=None, root_tol=1e-8, gp_params=None,
+                               fixed_jitter=True):
+    """Evaluate a static PSBL photometric Gaussian log-likelihood."""
+    mag_model = psbl_photometry(
+        t, t0, tE, u0, thetaE_hat, xL1, xL2, m1, m2, mag_src,
+        b_sff=b_sff, root_tol=root_tol,
+        parallax_vectors=parallax_vectors, piE_E=piE_E, piE_N=piE_N
+    )
+    if gp_params is None:
+        lnL = gaussian_log_likelihood_sum(mag_model, mag_obs, mag_err)
+    else:
+        from bagle.jax.gp import gp_log_likely_photometry
+
+        lnL = gp_log_likely_photometry(
+            t, mag_obs, mag_err, mag_model, gp_params,
+            fixed_jitter=fixed_jitter
+        )
+    return lnL
+
+
+def bspl_log_likely_photometry(t, t0_pri, t0_sec, tE, u0_pri,
+                               u0_sec, thetaE_hat, mag_src_pri,
+                               mag_src_sec, b_sff, mag_obs, mag_err,
+                               parallax_vectors=None, piE_E=None,
+                               piE_N=None, gp_params=None,
+                               fixed_jitter=True):
+    """Evaluate a static BSPL photometric Gaussian log-likelihood."""
+    u_pri = einstein_source_position(
+        t, t0_pri, tE, u0_pri, thetaE_hat,
+        parallax_vectors=parallax_vectors, piE_E=piE_E, piE_N=piE_N
+    )
+    u_sec = einstein_source_position(
+        t, t0_sec, tE, u0_sec, thetaE_hat,
+        parallax_vectors=parallax_vectors, piE_E=piE_E, piE_N=piE_N
+    )
+    amp_pri = pspl_amplification_from_u(u_pri)
+    amp_sec = pspl_amplification_from_u(u_sec)
+    flux_pri = mag2flux_jax(mag_src_pri)
+    flux_sec = mag2flux_jax(mag_src_sec)
+    flux_base = (flux_pri + flux_sec) * (1.0 - b_sff) / b_sff
+    mag_model = flux2mag_jax(
+        flux_pri * amp_pri + flux_sec * amp_sec + flux_base
+    )
+    if gp_params is None:
+        lnL = gaussian_log_likelihood_sum(mag_model, mag_obs, mag_err)
+    else:
+        from bagle.jax.gp import gp_log_likely_photometry
+
+        lnL = gp_log_likely_photometry(
+            t, mag_obs, mag_err, mag_model, gp_params,
+            fixed_jitter=fixed_jitter
+        )
+    return lnL
+
+
 @dataclass(frozen=True)
 class PhotFilterLikelihoodData:
     """Precomputed photometry arrays for one filter."""
@@ -2485,43 +2569,20 @@ def supports_jax_phot_loglik(fitter) -> str | None:
     kind
         See summary above.
     """
-    try:
-        from bagle.jax.likelihood import (
-            _infer_loglik_mode,
-            supports_jax_loglik_for_fitter,
-        )
-
-        layout_id = supports_jax_loglik_for_fitter(fitter)
-        if layout_id is None:
-            return None
-        mode = _infer_loglik_mode(fitter.model_class)
-        if mode != "phot":
-            return None
-        name = fitter.model_class.__name__
-        for fam in ("pspl", "psbl", "bspl", "fsbl", "bsbl", "fspl"):
-            if name.upper().startswith(fam.upper()):
-                return fam
-        return layout_id
-    except ImportError:
-        pass
-
-    # Fallback: hardcoded phot-only model kinds.
     model_class = fitter.model_class
-    kind = _JAX_PHOT_MODEL_KIND.get(model_class.__name__)
-    if kind is None:
+    if not hasattr(model_class, "jax_log_likely_photometry"):
         return None
-
-    # Require photometry data and reject astrometry-only / blocked params.
     if getattr(model_class, "astrometryFlag", False) and fitter.n_ast_sets > 0:
         return None
-
     if not getattr(model_class, "photometryFlag", False) or fitter.n_phot_sets == 0:
         return None
-
-    if _fitter_has_blocked_params(fitter):
+    if any(
+        "add_err" in name or "mult_err" in name
+        for name in fitter.fitter_param_names
+    ):
         return None
-
-    return kind
+    family = model_class.__name__.split("_", maxsplit=1)[0].lower()
+    return family
 
 
 def gaussian_astrometry_log_likelihood_sum(pos_model, x_obs, y_obs, x_err, y_err):
@@ -2563,6 +2624,20 @@ def gaussian_astrometry_log_likelihood_sum(pos_model, x_obs, y_obs, x_err, y_err
     return lnL
 
 
+def pspl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
+                               b_sff, x_obs, y_obs, x_err, y_err,
+                               parallax_vectors=None, piS=None, piL=None):
+    """Evaluate a PSPL absolute-astrometry Gaussian log-likelihood."""
+    pos_model = pspl_astrometry_param1(
+        t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
+        parallax_vectors=parallax_vectors, piS=piS, piL=piL
+    )
+    lnL = gaussian_astrometry_log_likelihood_sum(
+        pos_model, x_obs, y_obs, x_err, y_err
+    )
+    return lnL
+
+
 def supports_jax_joint_loglik(fitter) -> str | None:
     """
     Return a Param mixin name when joint phot+astrometry JAX likelihood is supported.
@@ -2577,43 +2652,30 @@ def supports_jax_joint_loglik(fitter) -> str | None:
     layout_id
         See summary above.
     """
-    try:
-        from bagle.jax.likelihood import (
-            _infer_loglik_mode,
-            supports_jax_loglik_for_fitter,
-        )
-
-        layout_id = supports_jax_loglik_for_fitter(fitter)
-        mode = _infer_loglik_mode(fitter.model_class)
-        if layout_id and mode in ("joint", "ast"):
-            return layout_id
-    except ImportError:
-        pass
-
-    # Fallback: hardcoded joint PhotAstrom Param1 layouts.
     model_class = fitter.model_class
-    kind = _JAX_JOINT_MODEL_KIND.get(model_class.__name__)
-    if kind is None:
+    need_phot = bool(
+        getattr(model_class, "photometryFlag", False)
+        and fitter.n_phot_sets
+    )
+    need_ast = bool(
+        getattr(model_class, "astrometryFlag", False)
+        and fitter.n_ast_sets
+    )
+    if not need_ast:
         return None
-
-    # Require both photometry and astrometry data sets.
-    if not getattr(model_class, "photometryFlag", False) or fitter.n_phot_sets == 0:
+    if need_phot and not hasattr(
+        model_class, "jax_log_likely_photometry"
+    ):
         return None
-    if not getattr(model_class, "astrometryFlag", False) or fitter.n_ast_sets == 0:
+    if not hasattr(model_class, "jax_log_likely_astrometry"):
         return None
-    if _fitter_has_blocked_params(fitter):
+    if any(
+        "add_err" in name or "mult_err" in name
+        for name in fitter.fitter_param_names
+    ):
         return None
-
-    # Base fitter cube must match PhotAstrom Param1 ordering.
-    names = tuple(fitter.fitter_param_names)
-    if names[: len(PSPL_PHOTASTROM_PARAM1_FITTER_NAMES)] != PSPL_PHOTASTROM_PARAM1_FITTER_NAMES:
-        return None
-
-    # Parallax models need sky coordinates in the data dict.
-    if kind == "pspl_photastrom_param1" and model_class.__name__.endswith("_Par_Param1"):
-        if "raL" not in fitter.data or "decL" not in fitter.data:
-            return None
-    return kind
+    support = model_class.__name__
+    return support
 
 
 def _fitter_weight(fitter, idx: int, default: float = 1.0) -> float:
@@ -2934,7 +2996,11 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
         return None
 
     names = tuple(fitter.fitter_param_names)
-    base_indices = tuple(range(len(PSPL_PHOTASTROM_PARAM1_FITTER_NAMES)))
+    base_names = tuple(fitter.model_class.fitter_param_names)
+    try:
+        base_indices = tuple(names.index(name) for name in base_names)
+    except ValueError:
+        return None
 
     # Parallax tables need lens sky coordinates when raL/decL are present.
     use_parallax = "raL" in fitter.data and "decL" in fitter.data
@@ -2942,16 +3008,6 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
     dec_l = float(fitter.data["decL"]) if use_parallax else None
     map_phot = getattr(fitter, "map_phot_idx_to_ast_idx", [])
     joint_filters: list[PhotAstromFilterLikelihoodData] = []
-
-    # Base geometry length from Param mixin when available.
-    try:
-        from bagle.jax.likelihood import _param_mixin_class
-
-        param_cls = _param_mixin_class(fitter.model_class)
-        if param_cls is not None:
-            base_indices = tuple(range(len(param_cls.fitter_param_names)))
-    except ImportError:
-        pass
 
     for i in range(fitter.n_ast_sets):
         # Map each astrometry set to its paired photometry filter.
@@ -3051,118 +3107,9 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
     return ctx
 
 
-def _joint_loglik_pspl_param1(param_vec, ctx: JaxJointLikelihoodContext):
-    """
-    Joint log-likelihood for PSPL_PhotAstrom Param1 via ``get_params_for_jax``.
-
-    Parameters
-    ----------
-    param_vec : array_like
-        Full fitter parameter vector.
-    ctx : object
-        Frozen likelihood context.
-
-    Returns
-    -------
-    lnL
-        See summary above.
-    """
-    from bagle.model_jax import PSPL_PhotAstromParam1
-
-    param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
-
-    # Pack physical / geometric parameters from the base fitter cube.
-    base = param_vec[jnp.array(ctx.base_indices, dtype=jnp.int32)]
-    p = PSPL_PhotAstromParam1.get_params_for_jax(base)
-
-    lnL = 0.0
-    for block in ctx.filters:
-        # Blend parameter is shared between matched phot/ast filters.
-        b_sff = param_vec[block.ast.idx_b_sff if block.ast else block.phot.idx_b_sff]
-        pvec_ast = None
-        if block.ast and block.ast.parallax_vectors is not None:
-            pvec_ast = jnp.asarray(block.ast.parallax_vectors, dtype=jnp.float64)
-
-        if block.ast is not None:
-            # Astrometry term: flux-weighted centroid vs observed positions.
-            t_ast = jnp.asarray(block.ast.t, dtype=jnp.float64)
-            pos = pspl_astrometry_param1(
-                t_ast,
-                p["t0"],
-                p["xS0"],
-                p["xL0"],
-                p["muS"],
-                p["muL"],
-                p["thetaE_amp"],
-                b_sff,
-                parallax_vectors=pvec_ast,
-                piS=p["piS"],
-                piL=p["piL"],
-            )
-            lnL = lnL + block.ast.weight * gaussian_astrometry_log_likelihood_sum(
-                pos,
-                block.ast.x_obs,
-                block.ast.y_obs,
-                block.ast.x_err,
-                block.ast.y_err,
-            )
-
-        if block.phot is not None:
-            # Photometry term: unresolved magnitudes vs observations.
-            mag_src = param_vec[block.phot.idx_mag_src]
-            pvec_phot = None
-            if block.phot.parallax_vectors is not None:
-                pvec_phot = jnp.asarray(block.phot.parallax_vectors, dtype=jnp.float64)
-            mag_model = pspl_photometry(
-                jnp.asarray(block.phot.t, dtype=jnp.float64),
-                p["t0"],
-                p["tE"],
-                p["u0"],
-                p["thetaE_hat"],
-                mag_src,
-                b_sff=b_sff,
-                parallax_vectors=pvec_phot,
-                piE_E=p["piE_E"],
-                piE_N=p["piE_N"],
-            )
-            lnL = lnL + block.phot.weight * gaussian_log_likelihood_sum(
-                mag_model, block.phot.mag_obs, block.phot.mag_err
-            )
-
-    return lnL
-
-
 def build_jax_joint_loglik_fn(fitter):
     """
-    Return ``(jit_loglik_fn, context)`` for joint fits, or ``(None, None)``.
-
-    Prefers Param-mixin analytic builders in ``bagle.jax.likelihood``.
-    """
-    try:
-        from bagle.jax.likelihood import build_jax_loglik_fn
-
-        fn, ctx = build_jax_loglik_fn(fitter)
-        if fn is not None:
-            return fn, ctx
-    except ImportError:
-        pass
-
-    ctx = build_jax_joint_likelihood_context(fitter)
-    if ctx is None:
-        return None, None
-
-    def _loglik(param_vec):
-        if ctx.layout in ("pspl_photastrom_param1", "PSPL_PhotAstromParam1"):
-            lnL = _joint_loglik_pspl_param1(param_vec, ctx)
-            return lnL
-        raise NotImplementedError(f"JAX joint layout {ctx.layout!r} not implemented")
-
-    loglik_and_ctx = jax.jit(_loglik), ctx
-    return loglik_and_ctx
-
-def supports_jax_loglik(fitter) -> str | None:
-    """
-    Return Param mixin name when JAX autodiff is available.
+    Compatibility wrapper for the explicit Param-mixin likelihood.
 
     Parameters
     ----------
@@ -3171,16 +3118,39 @@ def supports_jax_loglik(fitter) -> str | None:
 
     Returns
     -------
-    layout_id
-        See summary above.
+    loglik_and_ctx : tuple
+        ``(jit_loglik, ctx)`` from
+        :func:`bagle.model_fitter_jax.build_explicit_jax_loglik_fn`,
+        or ``(None, None)`` when unsupported.
     """
-    try:
-        from bagle.jax.likelihood import supports_jax_loglik_for_fitter
+    from bagle.model_fitter_jax import build_explicit_jax_loglik_fn
 
-        layout_id = supports_jax_loglik_for_fitter(fitter)
-        return layout_id
-    except ImportError:
+    result = build_explicit_jax_loglik_fn(fitter)
+    
+    return result
+
+
+def supports_jax_loglik(fitter) -> str | None:
+    """
+    Return model class name when JAX autodiff likelihood is available.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Fitter instance providing data and model class.
+
+    Returns
+    -------
+    support : str or None
+        ``fitter.model_class.__name__`` when an explicit JAX log-likelihood
+        can be built, otherwise ``None``.
+    """
+    # Probe the same builder used by MultiNest / PyMC / NumPyro paths.
+    fn, _ = build_jax_loglik_fn(fitter)
+    if fn is None:
         return None
+
+    return fitter.model_class.__name__
 
 
 def build_jax_loglik_fn(fitter):
@@ -3194,25 +3164,16 @@ def build_jax_loglik_fn(fitter):
 
     Returns
     -------
-    loglik_and_ctx
-        See summary above.
+    loglik_and_ctx : tuple
+        ``(jit_loglik, ctx)`` from
+        :func:`bagle.model_fitter_jax.build_explicit_jax_loglik_fn`,
+        or ``(None, None)`` when unsupported.
     """
-    # Prefer the registry-backed builder when the jax package is available.
-    try:
-        from bagle.jax.likelihood import build_jax_loglik_fn as registry_build
+    # Lazy import avoids a circular import with model_fitter_jax.
+    from bagle.model_fitter_jax import build_explicit_jax_loglik_fn
 
-        fn, ctx = registry_build(fitter)
-        if fn is not None:
-            return fn, ctx
-    except ImportError:
-        pass
-
-    # Fall back to local joint, then phot-only builders.
-    joint_fn, joint_ctx = build_jax_joint_loglik_fn(fitter)
-    if joint_fn is not None:
-        return joint_fn, joint_ctx
-    loglik_and_ctx = build_jax_phot_loglik_fn(fitter)
-    return loglik_and_ctx
+    result = build_explicit_jax_loglik_fn(fitter)
+    return result
 
 
 # ---------------------------------------------------------------------------

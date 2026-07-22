@@ -1,0 +1,28 @@
+---
+description: When the user asks to add results/summary to the research notebook or reconcile today's notebook, follow the research-notebook skill and CLI. Works in every project.
+alwaysApply: true
+---
+
+# Research notebook (global)
+
+When the user says any of:
+
+- add these results to my research notebook
+- add a summary of this task to my research notebook
+- notebook this / log this to my research notebook
+- append this to today's research note
+- reconcile my research notebook for today
+- search all cursor actions today and update my research notebook
+- end-of-day research notebook
+- make sure today's Cursor work is in my research notebook
+
+**Immediately** read and follow the personal skill `research-notebook`
+(`~/.cursor/skills/research-notebook/SKILL.md`).
+
+Rules:
+
+- Do **not** require switching projects or opening the CLI repo.
+- Use the `research-notebook` CLI (prefer `zsh -lic 'research-notebook …'`).
+- Always append to **today's** shared Google Doc via the CLI.
+- Prefer anytime append while session context is fresh; use reconcile for end-of-day completeness (Cursor transcripts + GitHub commits).
+- After append/reconcile, return the Doc URL.

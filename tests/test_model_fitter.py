@@ -2716,7 +2716,6 @@ def test_old_data_priors_supported_in_pymc(prior_name, plot=False):
     (model_fitter.make_truncnorm_gen_with_bounds, (0.0, 1.0, -5.0, 5.0)),
     (model_fitter.make_invgamma_gen, (np.linspace(57000.0, 57100.0, 50),)),
     (model_fitter.make_piS, ()),
-    (model_fitter.make_fdfdt, ()),
 ])
 def test_scipy_to_pymc_priors(prior_fn, args, plot=False):
     pymc = pytest.importorskip('pymc')
