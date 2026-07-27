@@ -1,3 +1,4 @@
+import os
 import math
 from bagle import parallax
 from bagle import model
@@ -17,6 +18,11 @@ from astropy.coordinates import get_body_barycentric_posvel
 
 # Always generate the same fake data.
 np.random.seed(0)
+
+# All figures / fit outputs from this module go under tests/test_output/.
+_TESTS_DIR = os.path.dirname(os.path.realpath(__file__))
+TEST_OUTPUT_DIR = os.path.join(_TESTS_DIR, 'test_output')
+os.makedirs(TEST_OUTPUT_DIR, exist_ok=True)
 
 def test_default_priors():
     all_classes_pspl = [model.PSPL_PhotAstromParam1, model.PSPL_PhotAstromParam2, 
@@ -104,7 +110,7 @@ def test_PSPL_other(plot=False):
     mag_src = 19.0
 
     run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
-                  outdir='tests/test_pspl_other/', plot=plot)
+                  outdir=f'{TEST_OUTPUT_DIR}/test_pspl_other/', plot=plot)
 
     return
 
@@ -124,7 +130,7 @@ def test_PSPL_belokurov(plot=False):
     mag_src = 19.0
 
     run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
-                  outdir='tests/test_pspl_belokurov/', plot=plot)
+                  outdir=f'{TEST_OUTPUT_DIR}/test_pspl_belokurov/', plot=plot)
 
     return
 
@@ -246,7 +252,7 @@ def run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
 
 
 def compare_pspl_parallax_belokurov():
-    outdir = 'tests/test_pspl_parallax_belokurov/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_pspl_parallax_belokurov/'
     dim_ang = u.dimensionless_angles()
 
     # Scenario from Belokurov and Evans 2002 (Figure 1)
@@ -323,7 +329,7 @@ def compare_pspl_parallax_belokurov():
     b_sff = 1.0
 
     run_test_pspl_parallax(raL, decL, mL, t0, xS0, beta, muS, muL, dL, dS,
-                           b_sff, imag, outdir='tests/test_pspl_parallax_belokurov/')
+                           b_sff, imag, outdir=f'{TEST_OUTPUT_DIR}/test_pspl_parallax_belokurov/')
 
     # Modify some axis limits to match the published figure.
     plt.figure(2)
@@ -377,7 +383,7 @@ def compare_pspl_parallax_han2000():
     imag = 19.0
 
     run_test_pspl_parallax(raL, decL, mL, t0, xS0, beta, muS, muL, dL, dS,
-                           b_sff, imag, outdir='tests/test_pspl_parallax_han2000/')
+                           b_sff, imag, outdir=f'{TEST_OUTPUT_DIR}/test_pspl_parallax_han2000/')
 
     return
 
@@ -398,7 +404,7 @@ def compare_pspl_parallax_bulge1():
     imag = 19.0
 
     run_test_pspl_parallax(raL, decL, mL, t0, xS0, beta, muS, muL, dL, dS,
-                           b_sff, imag, outdir='tests/test_pspl_par_bulge1/')
+                           b_sff, imag, outdir=f'{TEST_OUTPUT_DIR}/test_pspl_par_bulge1/')
 
     return
 
@@ -551,7 +557,7 @@ def compare_pspl_parallax_paczynski1998(t0=57000):
     i.e. just removed proper motions. 
     """
 
-    outdir = 'tests/test_pspl_parallax_paczynski1998/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_pspl_parallax_paczynski1998/'
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
 
@@ -1028,7 +1034,7 @@ def compare_PSPL_phot_Lu2016():
 
 
 def test_pspl_parallax2_bulge():
-    outdir = 'tests/test_pspl_par2_bulge1/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_pspl_par2_bulge1/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
@@ -2584,7 +2590,7 @@ def plot_compare_vs_pylima(t0, u0_amp, tE, mag_src, b_sff, q, sep, phi, piEE=0.1
         if max_delta > tol:
             fig.text(tleft, 0.05, '!!BAD!!', fontsize=16, color='red')
 
-            plt.savefig('PSBL_phot_vs_pyLIMA.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'PSBL_phot_vs_pyLIMA.png'))
 
     return (time_mjd, pylima_lcurve_mag, our_mag, max_delta)
 
@@ -2794,7 +2800,7 @@ def plot_compare_vs_pylima_pspl(ra, dec, t0, u0_amp, tE, piEE, piEN, mag_src, b_
         if max_delta > 1e-6:
             fig.text(tleft, 0.05, '!!BAD!!', fontsize=16, color='red')
 
-        plt.savefig('PSPL_phot_vs_pyLIMA.png')
+        plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'PSPL_phot_vs_pyLIMA.png'))
 
         # plt.figure(2, figsize=(11, 6))
         # plt.clf()
@@ -3362,7 +3368,7 @@ def test_FSPL_PhotAstrom_source_astrometry(plot=False):
     decL = -29.0
 
     tests_dir = os.path.dirname(os.path.realpath(__file__))
-    outdir = tests_dir + '/test_FSPL_source_astrometry/'
+    outdir = os.path.join(TEST_OUTPUT_DIR, 'test_FSPL_source_astrometry') + '/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
@@ -3572,7 +3578,7 @@ def test_FSPL_PhotAstrom_source_centroid_shift(plot=False):
     mag_src = np.array([18])
 
     tests_dir = os.path.dirname(os.path.realpath(__file__))
-    outdir = tests_dir + '/test_FSPL_source_astrometry/'
+    outdir = os.path.join(TEST_OUTPUT_DIR, 'test_FSPL_source_astrometry') + '/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
@@ -4602,7 +4608,7 @@ def test_psbl_noparallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Period_test_nopar.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Period_test_nopar.png'))
     
         
     def e_test(plot=False): 
@@ -4637,7 +4643,7 @@ def test_psbl_noparallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Eccentricity_test_nopar.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Eccentricity_test_nopar.png'))
 
     def i_test(plot=False):
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
@@ -4664,7 +4670,7 @@ def test_psbl_noparallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('inclination_test_nopar.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'inclination_test_nopar.png'))
     sep_test(plot)
     e_test(plot)
     i_test(plot)
@@ -4769,7 +4775,7 @@ def test_psbl_parallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Period_test_par.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Period_test_par.png'))
 
         
     def e_test(plot=False): 
@@ -4804,7 +4810,7 @@ def test_psbl_parallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Eccentricity_test_par.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Eccentricity_test_par.png'))
     
     def i_test(plot=False):
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
@@ -4831,7 +4837,7 @@ def test_psbl_parallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('inclination_test_par.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'inclination_test_par.png'))
     a_test(plot)
     e_test(plot)
     i_test(plot)
@@ -4937,7 +4943,7 @@ def test_psbl_nopropermotion(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-                plt.savefig('Period_test_nopropmo.png')
+                plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Period_test_nopropmo.png'))
 
         
     def e_test(plot=False): 
@@ -4972,7 +4978,7 @@ def test_psbl_nopropermotion(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Eccentricity_test_nopropmo.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Eccentricity_test_nopropmo.png'))
     
     def i_test(plot=False):
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
@@ -4999,7 +5005,7 @@ def test_psbl_nopropermotion(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('inclination_test_nopropmo.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'inclination_test_nopropmo.png'))
     a_test(plot)
     e_test(plot)
     i_test(plot)
@@ -5102,7 +5108,7 @@ def magnification_maps():
             ax[i][j].legend(markerscale = 1)
             fig.colorbar(val[3])
             time = time + 500
-    plt.savefig('mag_maps.png')
+    plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'mag_maps.png'))
 
     return
 
@@ -5222,7 +5228,7 @@ def test_bsbl_noparallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Period_test_lens_nopar.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Period_test_lens_nopar.png'))
     
 
     
@@ -5263,7 +5269,7 @@ def test_bsbl_noparallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Period_test_source_nopar.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Period_test_source_nopar.png'))
 
 
 
@@ -5293,7 +5299,7 @@ def test_bsbl_noparallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Eccentricity_test_lens_nopar.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Eccentricity_test_lens_nopar.png'))
 
     def e_test_source(plot=False): 
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
@@ -5325,7 +5331,7 @@ def test_bsbl_noparallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Eccentricity_test_source_nopar.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Eccentricity_test_source_nopar.png'))
         
     
     def i_test_vis(plot=False): 
@@ -5354,7 +5360,7 @@ def test_bsbl_noparallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Inc_test_vis_nopar.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Inc_test_vis_nopar.png'))
         
     P_test_lens(plot)
     P_test_source(plot)
@@ -5481,7 +5487,7 @@ def test_bsbl_parallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Period_test_lens_par.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Period_test_lens_par.png'))
     
 
     
@@ -5522,7 +5528,7 @@ def test_bsbl_parallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Period_test_source_par.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Period_test_source_par.png'))
 
 
 
@@ -5552,7 +5558,7 @@ def test_bsbl_parallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Eccentricity_test_lens_par.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Eccentricity_test_lens_par.png'))
 
     def e_test_source(plot=False): 
         fig, ax = plt.subplots(2, 2, figsize=(25,18))
@@ -5584,7 +5590,7 @@ def test_bsbl_parallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Eccentricity_test_source_par.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Eccentricity_test_source_par.png'))
         
     
     def i_test_vis(plot=False): 
@@ -5613,7 +5619,7 @@ def test_bsbl_parallax(plot=False):
                 ax[k][j].legend(loc="best")
                 count +=1
         if plot:
-            plt.savefig('Inc_test_vis_par.png')
+            plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'Inc_test_vis_par.png'))
         
     P_test_lens(plot)
     P_test_source(plot)
@@ -5698,7 +5704,7 @@ def magnification_maps():
                 ax[i][j].legend(markerscale = 1)
                 fig.colorbar(val[3])
                 time = time + 500
-        plt.savefig('mag_maps.png')
+        plt.savefig(os.path.join(TEST_OUTPUT_DIR, 'mag_maps.png'))
     
     t0_com = 57000.00
     u0_amp_com = .4
@@ -5766,7 +5772,7 @@ def test_jwst_parallax_bulge1(plot=False, verbose=False):
 
     run_test_pspl_satellite_parallax(raL, decL, obsLocation,
                                      mL, t0, xS0, beta, muS, muL, dL, dS,
-                                     b_sff, imag, outdir='tests/test_pspl_par_jwst_bulge1/',
+                                     b_sff, imag, outdir=f'{TEST_OUTPUT_DIR}/test_pspl_par_jwst_bulge1/',
                                      plot=plot, verbose=verbose)
 
     return
@@ -5789,7 +5795,7 @@ def test_spitzer_parallax_bulge1(plot=False, verbose=False):
 
     run_test_pspl_satellite_parallax(raL, decL, obsLocation,
                                      mL, t0, xS0, beta, muS, muL, dL, dS,
-                                     b_sff, imag, outdir='tests/test_pspl_par_spitzer_bulge1/',
+                                     b_sff, imag, outdir=f'{TEST_OUTPUT_DIR}/test_pspl_par_spitzer_bulge1/',
                                      plot=plot, verbose=verbose)
 
     return
@@ -5991,7 +5997,7 @@ def test_spitzer_zang2020(plot=False):
     piEE_helio = out[3]
     piEN_helio = out[4]
 
-    outdir = 'tests/test_pspl_par_spitzer_zang2020/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_pspl_par_spitzer_zang2020/'
 
     # Make Earth and Spitzer observations and make plots.
     if (outdir != '') and (outdir != None):
@@ -6122,7 +6128,7 @@ def test_spitzer_shvartzvald2019(plot=False):
     piEE_helio = out[3]
     piEN_helio = out[4]
 
-    outdir = 'tests/test_pspl_par_spitzer_shvartzvald2019/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_pspl_par_spitzer_shvartzvald2019/'
 
     # Make Earth and Spitzer observations and make plots.
     if (outdir != '') and (outdir != None):
@@ -6222,7 +6228,9 @@ def test_spitzer_shvartzvald2019(plot=False):
     return
 
 @pytest.mark.skip(reason="broken: plot_PSBL not working. Fixing rn")
-def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
+def test_roman_lightcurve(nstart=0, nevents=10, outdir=None):
+    if outdir is None:
+        outdir = TEST_OUTPUT_DIR
     from bagle import fake_data
 
     # Get times for the two different roman filters.
@@ -6453,7 +6461,7 @@ def test_roman_lightcurve(nstart=0, nevents=10, outdir = './'):
 
 
 def test_pspl_luminous_lens(plot=False):
-    outdir = 'tests/test_pspl_lumlens/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_pspl_lumlens/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
@@ -6649,7 +6657,7 @@ def test_pspl_luminous_lens(plot=False):
 
 
 def test_psbl_luminous_lens(plot=False):
-    outdir = 'tests/test_pspl_lumlens/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_pspl_lumlens/'
 
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)

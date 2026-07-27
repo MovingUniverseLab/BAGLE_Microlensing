@@ -2,7 +2,8 @@
 """
 PSBL Phot+Astrom sampler comparison: MultiNest, NumPyro NUTS/SA, jaxns ± grads.
 
-Produces JSON result records and an HTML report under this directory.
+Supports narrow or open priors and multiple injected binary-lens scenarios.
+Produces JSON result records and an HTML report under the output directory.
 """
 from __future__ import annotations
 
@@ -21,37 +22,56 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Package imports expect PYTHONPATH=src.
 from bagle import fake_data
 from bagle import model_fitter_jax as model_fitter
 from bagle import model_jax as model
+from bagle.model_fitter_jax import MicrolensSolverJaxLike
 
-from report import write_html_report
+try:
+    from report import write_html_report
+except ImportError:  # pragma: no cover - package-style import
+    from tests.psbl_sampler_compare.report import write_html_report
 
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_OUTDIR = HERE / "runs"
 
-
-class MicrolensSolverJaxLike(model_fitter.MicrolensSolver):
-    """MultiNest solver that evaluates the explicit JAX likelihood."""
-
-    def LogLikelihood(self, cube, ndim=None, n_params=None):
-        """Evaluate JAX lnL for PyMultiNest.
-
-        Parameters
-        ----------
-        cube : array_like
-            Current parameter vector (unit-cube transformed).
-        ndim, n_params : int or None
-            Unused PyMultiNest signature arguments.
-
-        Returns
-        -------
-        lnL : float
-            Joint photometry + astrometry log-likelihood.
-        """
-        return self.evaluate_loglik_jax(cube)
+# Three distinct injected PhotAstrom Param1 binaries for open-prior robustness.
+SCENARIOS = {
+    "bulge_q0p5": dict(
+        description="Bulge-like q=0.5, sep≈θ_E, α=90°",
+        seed=0,
+        kwargs=dict(
+            mLp=10.0, mLs=5.0, t0=57000.0, xS0_E=0.0, xS0_N=0.0, beta=2.0,
+            muL_E=0.0, muL_N=0.0, muS_E=3.0, muS_N=0.0,
+            dL=3000.0, dS=8000.0, sep=10.0, alpha=90.0,
+            mag_src=14.0, b_sff=1.0, dmag_Lp_Ls=20.0,
+            raL=259.5, decL=-29.0,
+        ),
+    ),
+    "close_unequal": dict(
+        description="Close unequal binary (q=0.1), α=35°, modest |β|",
+        seed=1,
+        kwargs=dict(
+            mLp=8.0, mLs=0.8, t0=57120.0, xS0_E=0.0, xS0_N=0.0, beta=-1.2,
+            muL_E=-1.5, muL_N=2.0, muS_E=2.5, muS_N=-0.5,
+            dL=4000.0, dS=8000.0, sep=3.5, alpha=35.0,
+            mag_src=15.5, b_sff=0.85, dmag_Lp_Ls=5.0,
+            raL=268.0, decL=-29.5,
+        ),
+    ),
+    "wide_near_equal": dict(
+        description="Wider near-equal binary (q≈0.9), α=160°",
+        seed=2,
+        kwargs=dict(
+            mLp=6.0, mLs=5.5, t0=56880.0, xS0_E=0.0, xS0_N=0.0, beta=3.5,
+            muL_E=1.0, muL_N=-3.0, muS_E=4.0, muS_N=-1.0,
+            dL=2500.0, dS=7500.0, sep=22.0, alpha=160.0,
+            mag_src=16.0, b_sff=0.7, dmag_Lp_Ls=-2.0,
+            raL=271.2, decL=-27.8,
+        ),
+    ),
+}
 
 
 def _scalar(val, idx=0):
@@ -130,6 +150,121 @@ def apply_narrow_priors(fitter, p_in, half_width=0.05, stats_pkg="scipy"):
     return None
 
 
+def apply_open_priors(fitter, p_in, stats_pkg="scipy"):
+    """Apply open (much wider than narrow) priors for PhotAstrom Param1.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Solver whose ``priors`` are replaced.
+    p_in : dict
+        Injected fake-data parameters (used only to center wide windows).
+    stats_pkg : {'scipy', 'numpyro'}, optional
+        Prior backend matching the solver.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    Priors are intentionally far wider than the narrow-around-truth
+    comparison (~40× those half-widths for most lens params, with ``alpha``
+    fully open on [0, 360)). Windows are still centered on the injected
+    truth so a 17-D PSBL phot+astrom search remains tractable for a
+    controlled backend comparison; the three injected scenarios probe
+    robustness across different binaries. Data-driven generators are
+    retained for ``xS0``, ``muS``, and ``mag_src``.
+    """
+    # Data-driven sites for well-measured astrometric / photometric params.
+    fitter.make_default_priors(stats_pkg=stats_pkg)
+    make = model_fitter.make_gen
+    truth = _truth_dict(p_in, fitter.fitter_param_names)
+
+    # Open absolute half-widths (~40× the narrow comparison).
+    widths = {
+        "mLp": 4.0, "mLs": 4.0, "t0": 200.0, "beta": 4.0,
+        "sep": 8.0, "muL_E": 5.0, "muL_N": 5.0, "dL": 800.0, "dS": 1000.0,
+        "b_sff1": 0.35, "dmag_Lp_Ls1": 12.0,
+        "xS0_E": 5e-3, "xS0_N": 5e-3, "muS_E": 1.5, "muS_N": 1.5,
+        "mag_src1": 1.0,
+    }
+
+    for name in fitter.fitter_param_names:
+        # Fully open binary orientation.
+        if name == "alpha":
+            fitter.priors[name] = make(name, 0.0, 360.0, stats_pkg=stats_pkg)
+            continue
+
+        # Keep data-driven mag_src / xS0 / muS when already set, unless we
+        # have an explicit open width override below.
+        if name.startswith("mag_src") and name not in widths:
+            digits = "".join(c for c in name if c.isdigit())
+            filt = int(digits) if digits else 1
+            fitter.priors[name] = model_fitter.make_mag_src_gen(
+                name, fitter.data[f"mag{filt}"], stats_pkg=stats_pkg
+            )
+            continue
+
+        half = widths.get(name)
+        if half is None:
+            # Fall back to any default prior already installed.
+            if name not in fitter.priors:
+                raise RuntimeError(f"Open priors missing width for: {name}")
+            continue
+
+        lo = truth[name] - half
+        hi = truth[name] + half
+        if name.startswith("mL") and lo <= 0:
+            lo = 1e-3
+        if name.startswith("dL") or name.startswith("dS"):
+            lo = max(lo, 100.0)
+        if name.startswith("sep") and lo <= 0:
+            lo = 1e-3
+        if name.startswith("b_sff"):
+            lo = max(lo, 0.01)
+            hi = min(hi, 1.5)
+        fitter.priors[name] = make(name, lo, hi, stats_pkg=stats_pkg)
+
+    # Enforce dS > dL at the prior edges when both are free.
+    if "dL" in fitter.priors and "dS" in fitter.priors:
+        dL_hi = truth["dL"] + widths["dL"]
+        dS_lo = max(truth["dS"] - widths["dS"], dL_hi + 100.0)
+        dS_hi = max(truth["dS"] + widths["dS"], dS_lo + 100.0)
+        fitter.priors["dS"] = make("dS", dS_lo, dS_hi, stats_pkg=stats_pkg)
+
+    missing = [n for n in fitter.fitter_param_names if n not in fitter.priors]
+    if missing:
+        raise RuntimeError(f"Open priors missing for: {missing}")
+
+    return None
+
+
+def apply_priors(fitter, p_in, prior_mode, stats_pkg):
+    """Dispatch narrow vs open prior setup.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Target solver.
+    p_in : dict
+        Injected parameters (used for narrow priors).
+    prior_mode : {'narrow', 'open'}
+        Prior width mode.
+    stats_pkg : str
+        Prior backend.
+
+    Returns
+    -------
+    None
+    """
+    if prior_mode == "open":
+        apply_open_priors(fitter, p_in, stats_pkg=stats_pkg)
+    else:
+        apply_narrow_priors(fitter, p_in, stats_pkg=stats_pkg)
+    return None
+
+
 def _best_params(fitter, def_best="maxl"):
     """Return a flat best-fit parameter dict."""
     best = fitter.get_best_fit(def_best=def_best)
@@ -159,8 +294,31 @@ def _max_lnL(fitter, best):
     return host, jax_lnL
 
 
+def _dense_times(t_obs, cadence_days=10.0, pad_days=30.0):
+    """Build a dense model time grid spanning the data (and seasonal gaps).
+
+    Parameters
+    ----------
+    t_obs : array_like
+        Observation epochs (MJD).
+    cadence_days : float, optional
+        Model sampling cadence through gaps (days).
+    pad_days : float, optional
+        Extra padding beyond the first/last observation.
+
+    Returns
+    -------
+    t_mod : ndarray
+        Sorted dense times in MJD.
+    """
+    t_obs = np.asarray(t_obs, dtype=float).ravel()
+    t0 = float(np.nanmin(t_obs)) - pad_days
+    t1 = float(np.nanmax(t_obs)) + pad_days
+    return np.arange(t0, t1 + cadence_days, cadence_days)
+
+
 def _save_trace_png(fitter, out_png, n_params=8):
-    """Write a compact posterior-trace / 1D histogram figure."""
+    """Write a compact posterior-trace figure."""
     tab = fitter.load_mnest_results()
     names = list(fitter.fitter_param_names)[:n_params]
     n = len(names)
@@ -182,60 +340,96 @@ def _save_trace_png(fitter, out_png, n_params=8):
     return None
 
 
-def _save_model_data_png(fitter, best, truth_model, out_png):
-    """Photometry + astrometry data vs best-fit model panels."""
+def _save_model_data_png(fitter, best, truth_model, out_png, cadence_days=10.0):
+    """Photometry + astrometry data vs oversampled best-fit / truth models.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Fitted solver (provides data).
+    best : dict
+        Best-fit parameter dictionary.
+    truth_model : bagle model
+        Injected-truth model.
+    out_png : str or Path
+        Output PNG path.
+    cadence_days : float, optional
+        Model oversampling cadence through seasonal gaps.
+
+    Returns
+    -------
+    None
+    """
     mod = fitter.get_model(best)
     data = fitter.data
 
     fig, axes = plt.subplots(2, 2, figsize=(11, 8))
 
-    # Photometry.
+    # Photometry with dense model through gaps.
     t = data["t_phot1"]
     mag = data["mag1"]
     err = data["mag_err1"]
-    t_mod = np.linspace(t.min(), t.max(), 800)
-    axes[0, 0].errorbar(t, mag, yerr=err, fmt=".", ms=2, alpha=0.5, color="k",
-                        label="data")
-    axes[0, 0].plot(t_mod, mod.get_photometry(t_mod), color="C1", lw=1.5,
-                    label="best fit")
-    axes[0, 0].plot(t_mod, truth_model.get_photometry(t_mod), color="C0",
-                    lw=1.0, ls="--", label="truth")
+    t_mod = _dense_times(t, cadence_days=cadence_days)
+    axes[0, 0].errorbar(
+        t, mag, yerr=err, fmt=".", ms=2, alpha=0.5, color="k", label="data"
+    )
+    axes[0, 0].plot(
+        t_mod, mod.get_photometry(t_mod), color="C1", lw=1.5, label="best fit"
+    )
+    axes[0, 0].plot(
+        t_mod, truth_model.get_photometry(t_mod), color="C0", lw=1.0,
+        ls="--", label="truth"
+    )
     axes[0, 0].invert_yaxis()
     axes[0, 0].set_ylabel("mag")
-    axes[0, 0].set_title("Photometry")
+    axes[0, 0].set_title(f"Photometry (model Δt={cadence_days:g} d)")
     axes[0, 0].legend(fontsize=8)
 
-    # Phot residuals.
+    # Phot residuals at data epochs.
     mag_best = np.asarray(mod.get_photometry(t))
-    axes[1, 0].errorbar(t, mag - mag_best, yerr=err, fmt=".", ms=2, alpha=0.5,
-                        color="k")
+    axes[1, 0].errorbar(
+        t, mag - mag_best, yerr=err, fmt=".", ms=2, alpha=0.5, color="k"
+    )
     axes[1, 0].axhline(0.0, color="C1", lw=1)
     axes[1, 0].set_xlabel("MJD")
     axes[1, 0].set_ylabel("residual (mag)")
 
-    # Astrometry on-sky.
+    # Astrometry on-sky: dense model tracks + data.
     ta = data["t_ast1"]
     xe, ye = data["xpos1"], data["ypos1"]
     xe_err, ye_err = data["xpos_err1"], data["ypos_err1"]
+    t_ast_mod = _dense_times(ta, cadence_days=cadence_days)
+    pos_b_dense = np.asarray(mod.get_astrometry(t_ast_mod))
+    pos_t_dense = np.asarray(truth_model.get_astrometry(t_ast_mod))
     pos_b = np.asarray(mod.get_astrometry(ta))
-    pos_t = np.asarray(truth_model.get_astrometry(ta))
-    axes[0, 1].errorbar(xe * 1e3, ye * 1e3, xerr=xe_err * 1e3, yerr=ye_err * 1e3,
-                        fmt=".", ms=3, alpha=0.6, color="k", label="data")
-    axes[0, 1].plot(pos_b[:, 0] * 1e3, pos_b[:, 1] * 1e3, color="C1", lw=1.5,
-                    label="best fit")
-    axes[0, 1].plot(pos_t[:, 0] * 1e3, pos_t[:, 1] * 1e3, color="C0", lw=1.0,
-                    ls="--", label="truth")
+
+    axes[0, 1].errorbar(
+        xe * 1e3, ye * 1e3, xerr=xe_err * 1e3, yerr=ye_err * 1e3,
+        fmt=".", ms=3, alpha=0.6, color="k", label="data", zorder=3
+    )
+    axes[0, 1].plot(
+        pos_b_dense[:, 0] * 1e3, pos_b_dense[:, 1] * 1e3,
+        color="C1", lw=1.5, label="best fit", zorder=2
+    )
+    axes[0, 1].plot(
+        pos_t_dense[:, 0] * 1e3, pos_t_dense[:, 1] * 1e3,
+        color="C0", lw=1.0, ls="--", label="truth", zorder=1
+    )
     axes[0, 1].set_xlabel("East (mas)")
     axes[0, 1].set_ylabel("North (mas)")
-    axes[0, 1].set_title("Astrometry")
+    axes[0, 1].set_title(f"Astrometry (model Δt={cadence_days:g} d)")
     axes[0, 1].legend(fontsize=8)
     axes[0, 1].invert_xaxis()
 
-    # Astrom residuals vs time.
-    axes[1, 1].errorbar(ta, (xe - pos_b[:, 0]) * 1e3, yerr=xe_err * 1e3,
-                        fmt=".", ms=3, alpha=0.6, color="C3", label="E")
-    axes[1, 1].errorbar(ta, (ye - pos_b[:, 1]) * 1e3, yerr=ye_err * 1e3,
-                        fmt=".", ms=3, alpha=0.6, color="C0", label="N")
+    # Astrom residuals vs time at data epochs.
+    axes[1, 1].errorbar(
+        ta, (xe - pos_b[:, 0]) * 1e3, yerr=xe_err * 1e3,
+        fmt=".", ms=3, alpha=0.6, color="C3", label="E"
+    )
+    axes[1, 1].errorbar(
+        ta, (ye - pos_b[:, 1]) * 1e3, yerr=ye_err * 1e3,
+        fmt=".", ms=3, alpha=0.6, color="C0", label="N"
+    )
     axes[1, 1].axhline(0.0, color="0.5", lw=1)
     axes[1, 1].set_xlabel("MJD")
     axes[1, 1].set_ylabel("residual (mas)")
@@ -247,7 +441,8 @@ def _save_model_data_png(fitter, best, truth_model, out_png):
     return None
 
 
-def run_one(label, factory, outdir, data, p_in, truth_model, resume=False):
+def run_one(label, factory, outdir, data, p_in, truth_model, resume=False,
+            cadence_days=10.0, skip_fitter_plots=True, timeout_sec=None):
     """Run one sampler configuration and return a result record.
 
     Parameters
@@ -264,12 +459,20 @@ def run_one(label, factory, outdir, data, p_in, truth_model, resume=False):
         Injected-truth model instance for plots.
     resume : bool, optional
         Pass through to MultiNest when supported.
+    cadence_days : float, optional
+        Model oversampling cadence for model-vs-data plots.
+    skip_fitter_plots : bool, optional
+        If True, skip heavy ``plot_model_and_data`` PNG dumps.
+    timeout_sec : float or None, optional
+        Soft wall-clock limit for ``fitter.solve()`` via SIGALRM.
 
     Returns
     -------
     record : dict
         Summary metrics, paths, and best-fit parameters.
     """
+    import signal
+
     print(f"\n===== Starting {label} =====", flush=True)
     run_dir = outdir / label
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -280,10 +483,23 @@ def run_one(label, factory, outdir, data, p_in, truth_model, resume=False):
         "error": None,
     }
 
+    def _alarm_handler(signum, frame):
+        raise TimeoutError(f"{label} exceeded timeout of {timeout_sec:.0f}s")
+
     try:
         fitter = factory()
         t0 = time.time()
-        fitter.solve()
+        old_handler = None
+        if timeout_sec is not None and hasattr(signal, "SIGALRM"):
+            old_handler = signal.signal(signal.SIGALRM, _alarm_handler)
+            signal.alarm(int(timeout_sec))
+        try:
+            fitter.solve()
+        finally:
+            if timeout_sec is not None and hasattr(signal, "SIGALRM"):
+                signal.alarm(0)
+                if old_handler is not None:
+                    signal.signal(signal.SIGALRM, old_handler)
         runtime = time.time() - t0
         print(f"===== Finished {label} in {runtime:.1f}s =====", flush=True)
 
@@ -298,15 +514,17 @@ def run_one(label, factory, outdir, data, p_in, truth_model, resume=False):
         trace_png = run_dir / "trace.png"
         model_png = run_dir / "model_data.png"
         _save_trace_png(fitter, trace_png)
-        _save_model_data_png(fitter, best, truth_model, model_png)
+        _save_model_data_png(
+            fitter, best, truth_model, model_png, cadence_days=cadence_days
+        )
 
-        # Optional fitter-native diagnostic plots.
-        try:
-            fitter.plot_model_and_data(
-                fitter.get_model(best), input_model=truth_model, N_traces=30
-            )
-        except Exception as exc:
-            print(f"plot_model_and_data warning ({label}): {exc}", flush=True)
+        if not skip_fitter_plots:
+            try:
+                fitter.plot_model_and_data(
+                    fitter.get_model(best), input_model=truth_model, N_traces=30
+                )
+            except Exception as exc:
+                print(f"plot_model_and_data warning ({label}): {exc}", flush=True)
 
         # Persist raw posterior table when possible.
         try:
@@ -346,22 +564,37 @@ def build_factories(data, p_in, outdir, args):
     """Construct sampler factory callables for the comparison suite."""
     model_class = model.PSBL_PhotAstrom_Par_Param1
     base = str(outdir) + os.sep
+    prior_mode = args.prior_mode
 
     def multinest():
+        # Wrap alpha on [0, 360) for MultiNest mode exploration.
+        n_dim = len(model_class.fitter_param_names)
+        wrapped = [0] * n_dim
+        if "alpha" in model_class.fitter_param_names:
+            wrapped[model_class.fitter_param_names.index("alpha")] = 1
+
         fitter = MicrolensSolverJaxLike(
             data,
             model_class,
             n_live_points=args.mnest_live,
             max_iter=args.mnest_max_iter,
             evidence_tolerance=args.mnest_tol,
-            sampling_efficiency=0.8,
+            # Open priors: constant-efficiency helps keep acceptance stable
+            # on sharp PSBL peaks in wide prior volumes.
+            sampling_efficiency=0.3 if args.prior_mode == "open" else 0.8,
+            const_efficiency_mode=(args.prior_mode == "open"),
+            multimodal=True,
+            wrapped_params=wrapped,
             outputfiles_basename=base + "multinest_",
             dump_callback=None,
-            verbose=False,
+            verbose=bool(getattr(args, "verbose", False)),
             resume=args.resume,
         )
-        apply_narrow_priors(fitter, p_in, stats_pkg="scipy")
+        apply_priors(fitter, p_in, prior_mode, stats_pkg="scipy")
         return fitter
+
+    # Progress bars / MultiNest chatter when --verbose is set.
+    verb = bool(getattr(args, "verbose", False))
 
     def nuts():
         fitter = model_fitter.MicrolensSolverNumPyro(
@@ -373,11 +606,12 @@ def build_factories(data, p_in, outdir, args):
             tune=args.nuts_tune,
             chains=args.nuts_chains,
             target_accept=0.9,
+            max_tree_depth=8 if args.prior_mode == "open" else 10,
             random_seed=0,
             outputfiles_basename=base + "nuts_",
-            verbose=False,
+            verbose=verb,
         )
-        apply_narrow_priors(fitter, p_in, stats_pkg="numpyro")
+        apply_priors(fitter, p_in, prior_mode, stats_pkg="numpyro")
         return fitter
 
     def sa():
@@ -391,9 +625,9 @@ def build_factories(data, p_in, outdir, args):
             chains=1,
             random_seed=1,
             outputfiles_basename=base + "sa_",
-            verbose=False,
+            verbose=verb,
         )
-        apply_narrow_priors(fitter, p_in, stats_pkg="numpyro")
+        apply_priors(fitter, p_in, prior_mode, stats_pkg="numpyro")
         return fitter
 
     def jaxns_grad():
@@ -409,9 +643,9 @@ def build_factories(data, p_in, outdir, args):
             posterior_samples=args.jaxns_posterior,
             random_seed=2,
             outputfiles_basename=base + "jaxns_grad_",
-            verbose=False,
+            verbose=verb,
         )
-        apply_narrow_priors(fitter, p_in, stats_pkg="numpyro")
+        apply_priors(fitter, p_in, prior_mode, stats_pkg="numpyro")
         return fitter
 
     def jaxns_nograd():
@@ -427,9 +661,9 @@ def build_factories(data, p_in, outdir, args):
             posterior_samples=args.jaxns_posterior,
             random_seed=3,
             outputfiles_basename=base + "jaxns_nograd_",
-            verbose=False,
+            verbose=verb,
         )
-        apply_narrow_priors(fitter, p_in, stats_pkg="numpyro")
+        apply_priors(fitter, p_in, prior_mode, stats_pkg="numpyro")
         return fitter
 
     factories = [
@@ -445,41 +679,33 @@ def build_factories(data, p_in, outdir, args):
     return factories
 
 
-def parse_args(argv=None):
-    """Parse CLI arguments for the comparison runner."""
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--outdir", type=Path, default=DEFAULT_OUTDIR)
-    p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--resume", action="store_true")
-    p.add_argument("--only", type=str, default="",
-                   help="Comma-separated subset of run labels")
-    p.add_argument("--mnest-live", type=int, default=100)
-    p.add_argument("--mnest-max-iter", type=int, default=4000)
-    p.add_argument("--mnest-tol", type=float, default=0.5)
-    p.add_argument("--nuts-draws", type=int, default=800)
-    p.add_argument("--nuts-tune", type=int, default=400)
-    p.add_argument("--nuts-chains", type=int, default=2)
-    p.add_argument("--sa-draws", type=int, default=1200)
-    p.add_argument("--sa-tune", type=int, default=600)
-    p.add_argument("--jaxns-live", type=int, default=100)
-    p.add_argument("--jaxns-max-samples", type=int, default=30000)
-    p.add_argument("--jaxns-dlogz", type=float, default=0.5)
-    p.add_argument("--jaxns-posterior", type=int, default=1000)
-    return p.parse_args(argv)
+def make_fake_data(scenario_name, seed=None):
+    """Generate noisy PhotAstrom PSBL fake data for one scenario.
 
+    Parameters
+    ----------
+    scenario_name : str
+        Key into :data:`SCENARIOS`.
+    seed : int or None, optional
+        RNG seed override (defaults to the scenario seed).
 
-def main(argv=None):
-    """Run the full PSBL sampler comparison and write the HTML report."""
-    args = parse_args(argv)
-    outdir = args.outdir.resolve()
-    outdir.mkdir(parents=True, exist_ok=True)
-
-    np.random.seed(args.seed)
-    data, p_in, _, _ = fake_data.fake_data_PSBL(parallax=True, animate=False)
-
-    with open(outdir / "fake_data.pkl", "wb") as f:
-        pickle.dump({"data": data, "p_in": p_in}, f)
-
+    Returns
+    -------
+    data, p_in, truth_model
+        Fake data dict, injected parameter dict, and truth model instance.
+    """
+    if scenario_name not in SCENARIOS:
+        raise KeyError(
+            f"Unknown scenario {scenario_name!r}; "
+            f"choose from {sorted(SCENARIOS)}"
+        )
+    sc = SCENARIOS[scenario_name]
+    if seed is None:
+        seed = sc["seed"]
+    np.random.seed(seed)
+    data, p_in, _, _ = fake_data.fake_data_PSBL(
+        parallax=True, animate=False, **sc["kwargs"]
+    )
     truth_model = model.PSBL_PhotAstrom_Par_Param1(
         p_in["mLp"], p_in["mLs"], p_in["t0"], p_in["xS0_E"], p_in["xS0_N"],
         p_in["beta"], p_in["muL_E"], p_in["muL_N"], p_in["muS_E"], p_in["muS_N"],
@@ -487,21 +713,212 @@ def main(argv=None):
         p_in["b_sff"], p_in["mag_src"], p_in["dmag_Lp_Ls"],
         raL=data["raL"], decL=data["decL"], root_tol=1e-8,
     )
+    return data, p_in, truth_model
+
+
+def run_scenario(scenario_name, args, outdir):
+    """Run all backends for one injected scenario and write its HTML report.
+
+    Parameters
+    ----------
+    scenario_name : str
+        Scenario key.
+    args : argparse.Namespace
+        CLI options.
+    outdir : Path
+        Scenario output directory.
+
+    Returns
+    -------
+    results : list of dict
+        Per-backend result records.
+    """
+    outdir = Path(outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    sc = SCENARIOS[scenario_name]
+    print(
+        f"\n######## Scenario {scenario_name}: {sc['description']} ########",
+        flush=True,
+    )
+
+    data, p_in, truth_model = make_fake_data(scenario_name, seed=args.seed)
+    with open(outdir / "fake_data.pkl", "wb") as f:
+        pickle.dump(
+            {"data": data, "p_in": p_in, "scenario": scenario_name,
+             "description": sc["description"], "kwargs": sc["kwargs"]},
+            f,
+        )
 
     factories = build_factories(data, p_in, outdir, args)
+    title = f"PSBL {args.prior_mode}-prior comparison — {scenario_name}"
+    subtitle = (
+        f"{sc['description']} · prior_mode=<code>{args.prior_mode}</code> "
+        f"(open ≈40× narrow half-widths, α∈[0,360)) · "
+        f"model oversampled at {args.model_cadence:g} d · "
+        "MultiNest / NUTS / SA / jaxns±grad"
+    )
+
     results = []
+    # Reuse completed backend results when present (for resume after kills).
     for label, factory in factories:
+        prior = outdir / label / "result.json"
+        if args.resume and prior.exists():
+            with open(prior) as f:
+                record = json.load(f)
+            # Only skip successful runs so failed/timed-out backends can retry.
+            if record.get("status") == "ok":
+                print(
+                    f"===== Skipping {label} "
+                    f"(resume, status={record.get('status')}) =====",
+                    flush=True,
+                )
+                record["scenario"] = scenario_name
+                record["prior_mode"] = args.prior_mode
+                results.append(record)
+                write_html_report(
+                    results, outdir / "comparison_report.html",
+                    title=title, subtitle=subtitle,
+                )
+                continue
+            print(
+                f"===== Re-running {label} "
+                f"(resume found status={record.get('status')}) =====",
+                flush=True,
+            )
+        # Open-prior NUTS can hang on pathological leapfrog steps.
+        timeout = None
+        if args.prior_mode == "open" and "nuts" in label:
+            timeout = 1200.0
+        elif args.prior_mode == "open" and "jaxns" in label:
+            timeout = 7200.0
         record = run_one(
-            label, factory, outdir, data, p_in, truth_model, resume=args.resume
+            label, factory, outdir, data, p_in, truth_model,
+            resume=args.resume, cadence_days=args.model_cadence,
+            skip_fitter_plots=not args.fitter_plots,
+            timeout_sec=timeout,
         )
+        record["scenario"] = scenario_name
+        record["prior_mode"] = args.prior_mode
         results.append(record)
-        # Incremental report after each backend.
-        write_html_report(results, outdir / "comparison_report.html")
+        write_html_report(
+            results, outdir / "comparison_report.html",
+            title=title, subtitle=subtitle,
+        )
 
     with open(outdir / "all_results.json", "w") as f:
         json.dump(results, f, indent=2, default=float)
 
     print(f"\nReport: {outdir / 'comparison_report.html'}", flush=True)
+    return results
+
+
+def parse_args(argv=None):
+    """Parse CLI arguments for the comparison runner."""
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--outdir", type=Path, default=DEFAULT_OUTDIR)
+    p.add_argument("--seed", type=int, default=None,
+                   help="Override scenario RNG seed")
+    p.add_argument("--resume", action="store_true")
+    p.add_argument("--only", type=str, default="",
+                   help="Comma-separated subset of run labels")
+    p.add_argument(
+        "--prior-mode", choices=("narrow", "open"), default="open",
+        help="Prior width (default: open)",
+    )
+    p.add_argument(
+        "--scenario", type=str, default="all",
+        help="Scenario name, comma list, or 'all'",
+    )
+    p.add_argument("--model-cadence", type=float, default=10.0,
+                   help="Model oversampling cadence in days")
+    p.add_argument("--fitter-plots", action="store_true",
+                   help="Also write fitter.plot_model_and_data PNGs")
+    p.add_argument(
+        "--verbose", action="store_true",
+        help="Enable sampler progress bars / verbose MultiNest output",
+    )
+    # Nested / MCMC knobs (open-prior defaults are more generous).
+    p.add_argument("--mnest-live", type=int, default=200)
+    p.add_argument("--mnest-max-iter", type=int, default=50000)
+    p.add_argument("--mnest-tol", type=float, default=0.5)
+    p.add_argument("--nuts-draws", type=int, default=1000)
+    p.add_argument("--nuts-tune", type=int, default=1000)
+    p.add_argument("--nuts-chains", type=int, default=2)
+    p.add_argument("--sa-draws", type=int, default=6000)
+    p.add_argument("--sa-tune", type=int, default=2500)
+    p.add_argument("--jaxns-live", type=int, default=150)
+    p.add_argument("--jaxns-max-samples", type=int, default=80000)
+    p.add_argument("--jaxns-dlogz", type=float, default=0.5)
+    p.add_argument("--jaxns-posterior", type=int, default=1500)
+    return p.parse_args(argv)
+
+
+def main(argv=None):
+    """Run PSBL sampler comparison(s) and write HTML report(s)."""
+    args = parse_args(argv)
+    root = args.outdir.resolve()
+    root.mkdir(parents=True, exist_ok=True)
+
+    if args.scenario == "all":
+        names = list(SCENARIOS.keys())
+    else:
+        names = [s.strip() for s in args.scenario.split(",") if s.strip()]
+        for name in names:
+            if name not in SCENARIOS:
+                raise SystemExit(
+                    f"Unknown scenario {name!r}; "
+                    f"choose from {sorted(SCENARIOS)} or 'all'"
+                )
+
+    index = []
+    for name in names:
+        outdir = root / name
+        results = run_scenario(name, args, outdir)
+        index.append(
+            {
+                "scenario": name,
+                "description": SCENARIOS[name]["description"],
+                "report": str(outdir / "comparison_report.html"),
+                "n_ok": sum(1 for r in results if r.get("status") == "ok"),
+                "n_total": len(results),
+            }
+        )
+
+    # Lightweight index page linking all scenario reports.
+    index_path = root / "index.html"
+    rows = []
+    for item in index:
+        rows.append(
+            "<tr>"
+            f"<td>{item['scenario']}</td>"
+            f"<td>{item['description']}</td>"
+            f"<td>{item['n_ok']}/{item['n_total']}</td>"
+            f"<td><a href='{item['scenario']}/comparison_report.html'>"
+            "open report</a></td>"
+            "</tr>"
+        )
+    index_path.write_text(
+        f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>PSBL sampler comparisons</title>
+<style>
+body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+       margin: 2rem; background: #f4f5f7; color: #20242a; }}
+table {{ border-collapse: collapse; background: white; }}
+th, td {{ padding: 10px 14px; border-bottom: 1px solid #dde1e8; text-align: left; }}
+th {{ background: #eef1f5; }}
+</style></head><body>
+<h1>PSBL sampler comparisons</h1>
+<p>Prior mode: <code>{args.prior_mode}</code> ·
+model cadence: {args.model_cadence:g} d</p>
+<table>
+<tr><th>scenario</th><th>description</th><th>backends ok</th><th>report</th></tr>
+{''.join(rows)}
+</table>
+</body></html>
+"""
+    )
+    print(f"\nIndex: {index_path}", flush=True)
     return 0
 
 

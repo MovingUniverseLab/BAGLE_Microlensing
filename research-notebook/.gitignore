@@ -1,9 +1,0 @@
-client_secret.json
-token.json
-*.egg-info/
-__pycache__/
-.pytest_cache/
-.venv/
-dist/
-build/
-.DS_Store

@@ -957,6 +957,12 @@ class MicrolensSolver(Solver):
                     param_name, self.data['mag' + str(filt_index)],
                     stats_pkg=stats_pkg
                 )
+
+            elif prior_type == 'make_mag_src_gen':
+                self.priors[param_name] = make_mag_src_gen(
+                    param_name, self.data['mag' + str(filt_index)],
+                    stats_pkg=stats_pkg
+                )
                 
         return
 
@@ -2591,7 +2597,83 @@ class MicrolensSolver(Solver):
             chi_m_list = []
 
         return chi_x_list, chi_y_list, chi_m_list
-        
+
+
+class MicrolensSolverJaxLike(MicrolensSolver):
+    """MultiNest solver that evaluates the explicit JAX likelihood.
+
+    Overrides :meth:`LogLikelihood` to call :meth:`evaluate_loglik_jax`
+    and return a finite floor for non-finite or unphysical draws so
+    PyMultiNest does not abort on NaN/Inf.
+
+    Notes
+    -----
+    When both ``dL`` and ``dS`` appear in :attr:`fitter_param_names`
+    (as on many PSBL PhotAstrom Param mixins), draws with
+    ``dS <= dL`` or non-positive distances are rejected before the
+    expensive JAX evaluation. Models that use ``dL_dS`` instead of
+    free ``dS``, or that have no distance parameters, skip that guard.
+    """
+
+    # MultiNest aborts on NaN/Inf; keep a finite floor for bad draws.
+    _LN_L_FLOOR = -1.0e300
+
+    def _unphysical_distances(self, cube):
+        """Return True if free ``dL``/``dS`` violate ``dS > dL > 0``.
+
+        Parameters
+        ----------
+        cube : array_like
+            Parameter vector in the same order as ``fitter_param_names``.
+
+        Returns
+        -------
+        bad : bool
+            True when both distances are free parameters and the
+            ordering / positivity constraint fails. False when either
+            name is absent from the cube (skip the check).
+        """
+        names = self.fitter_param_names
+
+        # Only enforce when both distances are free on this model.
+        if "dL" not in names or "dS" not in names:
+            return False
+
+        dL = float(cube[names.index("dL")])
+        dS = float(cube[names.index("dS")])
+
+        return not (dS > dL > 0.0)
+
+    def LogLikelihood(self, cube, ndim=None, n_params=None):
+        """Evaluate JAX lnL for PyMultiNest.
+
+        Parameters
+        ----------
+        cube : array_like
+            Current parameter vector (unit-cube transformed).
+        ndim, n_params : int or None
+            Unused PyMultiNest signature arguments.
+
+        Returns
+        -------
+        lnL : float
+            Joint photometry + astrometry log-likelihood (always finite).
+        """
+        try:
+            # Reject unphysical dL/dS before the expensive JAX call.
+            if self._unphysical_distances(cube):
+                return self._LN_L_FLOOR
+
+            lnL = float(self.evaluate_loglik_jax(cube))
+        except Exception:
+            return self._LN_L_FLOOR
+
+        if not np.isfinite(lnL):
+            return self._LN_L_FLOOR
+
+        return lnL
+
+
 class MicrolensSolverWeighted(MicrolensSolver):
     """
     Soliver where the likelihood function has each data

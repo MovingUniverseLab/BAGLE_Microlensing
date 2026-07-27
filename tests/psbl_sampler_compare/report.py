@@ -86,7 +86,7 @@ def _bayes_factor_rows(results):
     return rows
 
 
-def write_html_report(results, out_path):
+def write_html_report(results, out_path, title=None, subtitle=None):
     """Write a self-contained HTML comparison report.
 
     Parameters
@@ -95,6 +95,10 @@ def write_html_report(results, out_path):
         Per-backend result records from ``run_comparison.run_one``.
     out_path : str or Path
         Destination HTML file.
+    title : str, optional
+        Page / ``<h1>`` title.
+    subtitle : str, optional
+        Short description under the title.
 
     Returns
     -------
@@ -103,6 +107,15 @@ def write_html_report(results, out_path):
     """
     out_path = Path(out_path)
     ok = [r for r in results if r.get("status") == "ok"]
+    if title is None:
+        title = "PSBL Phot+Astrom sampler comparison"
+    if subtitle is None:
+        subtitle = (
+            "Fake noisy photometry + astrometry · "
+            "<code>PSBL_PhotAstrom_Par_Param1</code> · "
+            "MultiNest (JAX lnL) · NumPyro NUTS · NumPyro SA · "
+            "jaxns ± gradient-guided"
+        )
 
     # Summary metric cards.
     metric_html = []
@@ -213,7 +226,7 @@ def write_html_report(results, out_path):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PSBL Phot+Astrom sampler comparison</title>
+<title>{escape(title)}</title>
 <style>
 body {{
   margin: 0;
@@ -260,12 +273,8 @@ td.err {{ text-align: left; color: #8a1c25; font-size: 0.8rem; max-width: 240px;
 </head>
 <body>
 <main>
-<h1>PSBL Phot+Astrom sampler comparison</h1>
-<p class="subtitle">
-Fake noisy photometry + astrometry ·
-<code>PSBL_PhotAstrom_Par_Param1</code> ·
-MultiNest (JAX lnL) · NumPyro NUTS · NumPyro SA · jaxns ± gradient-guided
-</p>
+<h1>{escape(title)}</h1>
+<p class="subtitle">{subtitle}</p>
 
 <div class="metrics">
 {''.join(metric_html)}

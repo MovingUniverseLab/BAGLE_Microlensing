@@ -20,9 +20,14 @@ import pytest
 # Always generate the same fake data.
 np.random.seed(0)
 
+# All figures / fit outputs from this module go under tests/test_output/.
+_TESTS_DIR = os.path.dirname(os.path.realpath(__file__))
+TEST_OUTPUT_DIR = os.path.join(_TESTS_DIR, 'test_output')
+os.makedirs(TEST_OUTPUT_DIR, exist_ok=True)
+
 @pytest.mark.skip(reason="broken- error in test")
 def test_pspl_parallax_fit_geoproj(verbose=False, resume=False):
-    outdir = './test_mnest_lmc/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
     data, p_in = fake_data.fake_data_parallax_lmc()
@@ -106,7 +111,7 @@ def test_pspl_parallax_fit_geoproj(verbose=False, resume=False):
 
 
 def test_pspl_parallax_fit(verbose=False, resume=False):
-    outdir = './test_mnest_lmc/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
     data, p_in = fake_data.fake_data_parallax_lmc()
@@ -273,7 +278,7 @@ def test_make_t0_gen():
 
 
 def test_PSPL_Solver(plot=False, verbose=False, resume=False):
-    outdir = './test_pspl_solver/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_pspl_solver/'
     base = outdir + 'aa_'
 
     # Make directory if it doesn't exist.
@@ -491,7 +496,7 @@ def test_pspl_ultranest_fit():
 
     fitter = model_fitter.MicrolensSolver(data, model.PSPL_PhotAstrom_noPar_Param1,
                                           custom_additional_param_names = [],
-                                          outputfiles_basename='./test_fit_ultranest_pspl/a1_')
+                                          outputfiles_basename=f'{TEST_OUTPUT_DIR}/test_fit_ultranest_pspl/a1_')
 
     # Lets adjust some priors for faster solving.
     fitter.priors['mL'] = model_fitter.make_gen(9.9, 10.1)
@@ -513,7 +518,7 @@ def test_pspl_ultranest_fit():
 
     sampler = ultranest.ReactiveNestedSampler(fitter.fitter_param_names,
                                               fitter.LogLikelihood, fitter.Prior_copy,
-                                              log_dir='test_fit_ultranest_pspl/',
+                                              log_dir=f'{TEST_OUTPUT_DIR}/test_fit_ultranest_pspl/',
                                               resume='overwrite')
 
 
@@ -616,7 +621,7 @@ def test_pspl_ultranest_fit():
 
 
 def test_lumlens_parallax_fit(verbose=False):
-    outdir = './test_mnest_lumlens_bulge/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lumlens_bulge/'
     os.makedirs(outdir, exist_ok=True)
 
     data, p_in = fake_data.fake_data_lumlens_parallax_bulge()
@@ -715,7 +720,7 @@ def test_lumlens_parallax_fit(verbose=False):
 
 
 def test_lumlens_parallax_fit_2p1a(verbose=False):
-    outdir = './test_mnest_lumlens_bulge_DEBUG/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lumlens_bulge_DEBUG/'
     os.makedirs(outdir, exist_ok=True)
 
     data1, data2, params1, params2 = fake_data.fake_data_lumlens_parallax_bulge2()
@@ -831,7 +836,7 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
 
 
 def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
-    outdir = './test_mnest_lumlens_bulge4_DEBUG/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lumlens_bulge4_DEBUG/'
     os.makedirs(outdir, exist_ok=True)
 
     data1, data2, data3, data4, params1, params2, params3, params4 = \
@@ -987,7 +992,7 @@ def test_correlated_data2(resume=False):
     #####
     # Fit correlated data with GP
     #####
-    base = './test_correlated_data/aa_'
+    base = f'{TEST_OUTPUT_DIR}/test_correlated_data/aa_'
 
     fitter_corr = MicrolensSolver(data_corr,
                                   model.PSPL_Phot_Par_GP_Param2,
@@ -1032,7 +1037,7 @@ def test_correlated_data_astrom(verbose=False, resume=False):
     #####
     # Fit correlated data with GP
     #####
-    base = './test_correlated_data_astrom/corr_gp_'
+    base = f'{TEST_OUTPUT_DIR}/test_correlated_data_astrom/corr_gp_'
 
     fitter_corr = MicrolensSolver(data_corr,
                                   model.PSPL_PhotAstrom_Par_GP_Param2,
@@ -1074,7 +1079,7 @@ def test_correlated_data_astrom(verbose=False, resume=False):
     return
 
 def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=False):
-    base = './test_psbl_photastrom_par_param3_solver/aa_'
+    base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param3_solver/aa_'
 
     data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
 
@@ -1163,7 +1168,7 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
 
 
 def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=False):
-    base = './test_psbl_photastrom_par_param2_solver/aa_'
+    base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param2_solver/aa_'
 
     data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
 
@@ -1258,7 +1263,7 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
     return
 
 def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
-    base = './test_psbl_photastrom_par_param1_solver/aa_'
+    base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param1_solver/aa_'
 
     data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
 
@@ -1344,7 +1349,7 @@ def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
 def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', resume=False):
     # Choose which base you want to use.
     # Comment out the one you don't want.
-    outdir = './test_psbl_phot_solver/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_psbl_phot_solver/'
     outroot = 'nopar' + suffix + '_'
     base = outdir + outroot
 
@@ -1458,11 +1463,11 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', 
 def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', resume=False):
     # Choose which base you want to use.
     # Comment out the one you don't want.
-    base = './test_psbl_phot_solver/par' + suffix + '_'
+    base = f'{TEST_OUTPUT_DIR}/test_psbl_phot_solver/par' + suffix + '_'
 
     # Make directory if it doesn't exist.
-    if not os.path.exists('./test_psbl_phot_solver/'):
-        os.makedirs('./test_psbl_phot_solver/')
+    if not os.path.exists(f'{TEST_OUTPUT_DIR}/test_psbl_phot_solver/'):
+        os.makedirs(f'{TEST_OUTPUT_DIR}/test_psbl_phot_solver/')
 
     pkl_file = base + 'data' + suffix + '.pkl'
 
@@ -1642,8 +1647,8 @@ def test_generate_params_dict():
 @pytest.mark.skip(reason="broken")
 def test_u0_sign_change(new_u0_sign=False, resume=False):
     # This is an old run from when the 0 sign was wrong. 
-    old_base = './test_pspl_solver/aa_old_u0_'
-    new_base = './test_pspl_solver/aa_new_u0_'
+    old_base = f'{TEST_OUTPUT_DIR}/test_pspl_solver/aa_old_u0_'
+    new_base = f'{TEST_OUTPUT_DIR}/test_pspl_solver/aa_new_u0_'
 
     if new_u0_sign:
         # Load up the data for the fitter object. 
@@ -1699,7 +1704,7 @@ def test_pspl_solver_gp_params(resume=False):
     b_sff_in2 = 1.0
     mag_src_in2 = 17.0
 
-    outdir = 'test_multiphot_data/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_multiphot_data/'
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
@@ -1957,7 +1962,7 @@ def test_plot_model_and_data_GP_err():
 #     return
     
 def test_cache_parallax_vector(verbose=False, resume=False):
-    outdir = './test_mnest_lmc/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
     data, p_in = fake_data.fake_data_parallax_lmc()
@@ -2060,7 +2065,7 @@ def test_cache_parallax_vector(verbose=False, resume=False):
     return
 
 def test_hobson_weights(hobson=True, resume=False, verbose=False):
-    outdir = './test_mnest_hobson/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_mnest_hobson/'
     os.makedirs(outdir, exist_ok=True)
 
     data, p_in = fake_data.fake_data_parallax_lmc()
@@ -2236,7 +2241,7 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
 
 
 def test_bspl_parallax_fit(verbose=False, resume=False):
-    outdir = './test_bspl_solver/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_bspl_solver/'
     os.makedirs(outdir, exist_ok=True)
 
     data, p_in, bspl_in, ani = fake_data.fake_data_BSPL()
@@ -2317,7 +2322,7 @@ def test_bspl_parallax_fit(verbose=False, resume=False):
     return
 
 def test_multi_obsLocation(resume=False, verbose=False):
-    outdir = './test_mnest_bulge_multiLoc/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_mnest_bulge_multiLoc/'
     outroot = 'aa_'
     base = outdir + outroot
 
@@ -2429,7 +2434,7 @@ def test_multi_obsLocation(resume=False, verbose=False):
 
 
 def _test_figures_dir():
-    figdir = os.path.join(os.path.dirname(__file__), 'figures')
+    figdir = os.path.join(TEST_OUTPUT_DIR, 'figures')
     os.makedirs(figdir, exist_ok=True)
     return figdir
 
@@ -2745,7 +2750,7 @@ def test_microlens_solver_pymc_vs_multinest(plot=False):
     pytest.importorskip('pymc')
     from bagle.model_fitter import MicrolensSolverPyMC
 
-    outdir = './test_pymc_solver/'
+    outdir = f'{TEST_OUTPUT_DIR}/test_pymc_solver/'
     os.makedirs(outdir, exist_ok=True)
 
     data, p_in = fake_data.fake_data1()

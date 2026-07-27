@@ -1,0 +1,35 @@
+<frozen importlib._bootstrap>:491: FutureWarning: pybind11-bound class 'celerite.solver.CholeskySolver' is using an old-style placement-new '__setstate__' which has been deprecated. See the upgrade guide in pybind11's docs. This message is only visible when compiled in debug mode.
+/Users/jlu/.conda/envs/py314/lib/python3.14/site-packages/erfa/core.py:133: ErfaWarning: ERFA function "dtf2d" yielded 1 of "dubious year (Note 6)"
+  warn(f'ERFA function "{func_name}" yielded {wmsg}', ErfaWarning)
+
+######## Scenario wide_near_equal: Wider near-equal binary (q≈0.9), α=160° ########
+It took 0.26 seconds to evaluate the model at 6567 time steps
+===== Skipping multinest (resume, status=ok) =====
+===== Skipping numpyro_nuts_grad (resume, status=failed) =====
+
+===== Starting numpyro_sa_nograd =====
+*************************************************
+*** Using NumPyro (sa) for sampling. ***
+*************************************************
+===== Finished numpyro_sa_nograd in 36.9s =====
+
+===== Starting jaxns_grad =====
+*************************************************
+*** Using NumPyro (jaxns) for sampling. ***
+*************************************************
+INFO:jaxns:Number of Markov-chains set to: 5
+/Users/jlu/.conda/envs/py314/lib/python3.14/site-packages/jaxns/samplers/uni_slice_sampler.py:325: UserWarning: Gradient guided slice sampler is experimental and will likely change.
+  warnings.warn("Gradient guided slice sampler is experimental and will likely change.")
+===== Finished jaxns_grad in 928.9s =====
+
+===== Starting jaxns_nograd =====
+*************************************************
+*** Using NumPyro (jaxns) for sampling. ***
+*************************************************
+INFO:jaxns:Number of Markov-chains set to: 5
+===== Finished jaxns_nograd in 750.9s =====
+
+Report: /Users/jlu/code/python/bagle/tests/psbl_sampler_compare/runs_open/wide_near_equal/comparison_report.html
+
+Index: /Users/jlu/code/python/bagle/tests/psbl_sampler_compare/runs_open/index.html
+EXIT:0
