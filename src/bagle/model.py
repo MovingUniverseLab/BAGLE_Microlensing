@@ -20924,7 +20924,11 @@ class FSPL(PSPL):
 
         # Shape = [len(t), N_outline, [+,-], [E,N]]
         images = self.get_resolved_astrometry_outline(t, filt_idx=filt_idx)
-        radiusS = self.radiusS * 1e3 / self.thetaE_amp # unit = thetaE
+        # PhotAstrom stores radiusS in arcsec; Phot-only stores it in thetaE already.
+        if hasattr(self, 'thetaE_amp'):
+            radiusS = self.radiusS * 1e3 / self.thetaE_amp  # unit = thetaE
+        else:
+            radiusS = self.radiusS
 
 
         angles = (np.arange(self.n_outline) / self.n_outline) * 2 * np.pi  # radians
@@ -20999,9 +21003,11 @@ class FSPL(PSPL):
         Cminus_y +=  (1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 1]**2 * d1_minus[:, :-1, 0] + d1_minus[:, :-1, 1] * wp_d1_d2_i_minus) +
                                                       (d1_minus[:, 1: , 1]**2 * d1_minus[:, 1: , 0] + d1_minus[:, 1: , 1] * wp_d1_d2_ip1_minus)), axis=1)
         
-        # Correction for when the source-lens separation is less than or equal to 2 * source radius. 
-        adaptive_time = jnp.where(jnp.linalg.norm(self.get_u(t), axis=1) <= 2* radiusS)
-        Aplus[adaptive_time], Aminus[adaptive_time], Cplus_x[adaptive_time],  Cplus_y[adaptive_time], Cminus_x[adaptive_time], Cminus_y[adaptive_time] =  self.get_all_arrays_amg(t[adaptive_time])
+        # Correction for when the source-lens separation is less than or equal to 2 * source radius.
+        # Adaptive mesh requires PhotAstrom quantities (xS0, thetaE_amp, etc.).
+        adaptive_idx = np.where(np.linalg.norm(self.get_u(t), axis=1) <= 2 * radiusS)[0]
+        if len(adaptive_idx) > 0 and hasattr(self, 'xS0') and hasattr(self, 'thetaE_amp'):
+            Aplus[adaptive_idx], Aminus[adaptive_idx], Cplus_x[adaptive_idx], Cplus_y[adaptive_idx], Cminus_x[adaptive_idx], Cminus_y[adaptive_idx] = self.get_all_arrays_amg(t[adaptive_idx])
 
         Aplus = np.array(Aplus)
         Aminus = np.array(Aminus)
@@ -21080,8 +21086,8 @@ class FSPL(PSPL):
                 img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
                 amp_arr_mskd = amp_arr
                 amp = np.sum(amp_arr_mskd, axis=1)
-        index = np.where(amp<=1)
-        amp[index]*=-1
+        # Contour-integral amps can flip sign with outline orientation.
+        amp = np.abs(np.asarray(amp, dtype=float))
         return amp
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
@@ -21115,9 +21121,8 @@ class FSPL(PSPL):
 
         amp_arr_mskd = amp_arr
         amp = np.sum(amp_arr_mskd, axis=1)
-        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
-            print("True")
-            amp = -1 * amp
+        # Contour-integral amps can flip sign with outline orientation.
+        amp = np.abs(np.asarray(amp, dtype=float))
 
         flux_src = mag2flux(self.mag_src[filt_idx])
         flux_model = flux_src * amp
@@ -21520,13 +21525,9 @@ decL - if parallax model
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
         amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-        # FSBL returns 1D magnification (one per time); PSBL returns 2D (per time, per image).
-        if amp_arr_mskd.ndim == 1:
-            amp = np.asarray(amp_arr_mskd)
-        else:
-            amp = np.sum(amp_arr_mskd, axis=1)
-            if np.abs(np.max(amp)) < np.abs(np.min(amp)):
-                amp = -1 * amp
+        amp = np.sum(amp_arr_mskd, axis=1)
+        # Contour-integral amps can flip sign with outline orientation.
+        amp = np.abs(np.asarray(amp, dtype=float))
 
         flux_src = mag2flux(self.mag_src[filt_idx])
         flux_model = flux_src * amp
@@ -24321,97 +24322,6 @@ class FSBL_PhotAstrom(FSBL, PSBL_PhotAstrom):
         ani.save("%s.mp4" % name, writer="ffmpeg", dpi=600)                
 
         return ani
-
-
-class FSPL_Phot(PSBL):
-    photometryFlag = True
-    astrometryFlag = False
-
-    def get_u_outline(self, t, filt_idx=0):
-        """
-        Get the separation vector, \\vec{u}(t), which is the unlensed
-        source - lens separation vector for each point of the source
-        outline. Positions are  on the plane of the sky in units of \\theta_E.
-
-        Parameters
-        ----------
-        t : array, float
-            Times in MJD at which to evaluate the separation.
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        Returns
-        -------
-        u : array, float, shape = [len(t), n_outline, [E, N]]
-            Separation vector in East, North on the sky in units of \\theta_E.
-        """
-        if self.n_outline != False:
-            u_vec = self.get_u(t, filt_idx=filt_idx)
-
-            # Now expand and do this for all the outline points.
-            u_vec_outline = np.zeros((len(t), self.n_outline, 2), dtype=float)
-    
-            # The angles of the points equally spaced around the source circumference.
-            angles = (np.arange(self.n_outline) / self.n_outline) * 2 * np.pi  # radians
-            rho = self.radiusS  # in units of thetaE already.
-    
-            dux = rho * np.cos(angles)
-            duy = rho * np.sin(angles)
-    
-            # This could be faster with repeat, etc. Get rid of the for loop.
-            u_vec_outline[:, :, 0] = u_vec[:, 0, np.newaxis] + dux[np.newaxis, :]
-            u_vec_outline[:, :, 1] = u_vec[:, 1, np.newaxis] + duy[np.newaxis, :]
-
-            return u_vec_outline
-        else:
-            print("You've selected a parameterization without outlines")
-
-
-    def get_resolved_astrometry_outline(self, t, filt_idx=0):
-        """Get the delta-x, delta-y astrometry for each of the two lensed source images
-        and all the associated outline points for each. The two lensed source images
-        are labeled plus and minus.
-
-        These are relative offsets from the lens (at origin) in units of
-        thetaE. (xS - xL) / thetaE
-
-        Returns
-        -------
-        u_lensed_resolved_outline : numpy array
-            Vector position of the plus and minus images.
-            shape = [len(t), self.n_outline, [+,-], [E,N]]
-            where the last axis contains East and North positions.
-        """
-        
-        # Things we will need.
-        if self.n_outline!=False:
-            dt_in_years = (t - self.t0) / days_per_year
-
-            # Get the source-lens position in units of thetaE
-            # Shape = [len(t), N_outline, [E, N]]
-            u_vec = self.get_u_outline(t, filt_idx=filt_idx)
-            # Shape = [len(t), N_outline]
-            u = np.linalg.norm(u_vec, axis=2)
-            # Shape = [len(t), N_outline, [E, N]]
-            u_hat = u_vec / u[:, :, np.newaxis]
-    
-            # Calculate the shifts, separately for + and - images.
-            u2_plus4_sq = np.sqrt(u ** 2 + 4)
-            u_obs_amp_plus = ((u + u2_plus4_sq) / 2.0)
-            u_obs_amp_minu = ((u - u2_plus4_sq) / 2.0)
-            u_obs_vec_plus = u_obs_amp_plus[:, :, np.newaxis] * u_hat
-            u_obs_vec_minu = u_obs_amp_minu[:, :, np.newaxis] * u_hat
-    
-            # Shape = [len(t), N_outline, [+, -], [E, N]]
-            shifts_res = np.zeros((len(t), self.n_outline, 2, 2), dtype=float)
-    
-            shifts_res[:, :, 0, :] = u_obs_vec_plus
-            shifts_res[:, :, 1, :] = u_obs_vec_minu
-    
-            # Shape = [len(t), N_outline, [+, -], [E, N]]
-            return shifts_res
-        else:
-            print("You've selected a parameterization without outlines")
 
 
 class FSBL_noParallax(PSPL_noParallax):
@@ -31116,11 +31026,14 @@ class PSTL_PhotAstrom_EllOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
             Number of outline points used on the boundary of this source. 
     """
 
-    fitter_param_names = ['mLp', 'mLs', 'mLt','t0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N',
-                          'omega_pri', 'omega_sec', 'big_omega_sec', 'big_omega_ter', 'i', 'e', 'tp', 'a',
+    fitter_param_names = ['mLp', 'mLs', 'mLt', 't0_com', 'xS0_E', 'xS0_N',
+                          'beta_com', 'muL_E', 'muL_N',
+                          'omega_pri', 'omega_sec', 'big_omega_sec', 'big_omega_ter',
+                          'i_12', 'e_12', 'tp_12', 'a_12',
+                          'i_23', 'e_23', 'tp_23', 'a_23',
                           'muS_E', 'muS_N', 'dL', 'dS']
     phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = []
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
@@ -31265,11 +31178,16 @@ class PSTL_PhotAstrom_EllOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
     obsLocation: str or list[str], optional
         The observers location for each photometric dataset (def=['earth'])
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'omega', 'big_omega', 'i', 'e', 'tp', 'sep', 'arat', 'muS_E',
-                          'muS_N', 'dL', 'dS', 'alpha']
-
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
+                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
+                          'q_12', 'q_13', 'omega_pri', 'omega_sec',
+                          'big_omega_sec', 'big_omega_ter',
+                          'i_12', 'e_12', 'tp_12', 'a_12',
+                          'i_23', 'e_23', 'tp_23', 'a_23']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = ['mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -31406,11 +31324,11 @@ class PSTL_PhotAstromParam1(PSBL_PhotAstromParam1):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
 
     """
-    fitter_param_names = ['mLp', 'mLs', 'mLt','t0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'sep_12', 'sep_23' 'muS_E',
-                          'muS_N', 'dL', 'dS', 'alpha']
-
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = ['mLp', 'mLs', 'mLt', 't0', 'xS0_E', 'xS0_N',
+                          'beta', 'muL_E', 'muL_N', 'sep_12', 'sep_23', 'muS_E',
+                          'muS_N', 'dL', 'dS', 'alpha', 'psi']
+    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    additional_param_names = []
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -31644,7 +31562,7 @@ class PSTL_PhotAstromParam3(PSBL_PhotAstromParam3):
                           'piE_E', 'piE_N',
                           'xS0_E', 'xS0_N',
                           'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
+                          'q_12', 'q_13', 'sep_12', 'sep_23', 'alpha', 'psi']
     phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',

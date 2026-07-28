@@ -15,6 +15,11 @@ from astropy.time import Time
 from astropy.coordinates import solar_system_ephemeris
 from astropy.coordinates import get_body_barycentric_posvel
 
+
+import jax
+jax.config.update('jax_platform_name', 'cpu')
+jax.config.update("jax_enable_x64", True)
+
 # Always generate the same fake data.
 np.random.seed(0)
 
@@ -55,10 +60,27 @@ def test_default_priors():
         model.BSPL_PhotAstrom_EllOrbs_Param1, model.BSPL_PhotAstrom_EllOrbs_Param2, model.BSPL_PhotAstrom_EllOrbs_Param3,
         model.BSPL_PhotAstrom_EllOrbs_Param1, model.BSPL_PhotAstrom_EllOrbs_Param2, model.BSPL_PhotAstrom_EllOrbs_Param3]
     
+    all_classes_fsbl = [model.FSBL_PhotAstrom_LinOrbs_Param6, model.FSBL_PhotAstrom_LinOrbs_Param7,
+                        model.FSBL_PhotAstrom_AccOrbs_Param6, model.FSBL_PhotAstrom_AccOrbs_Param7,
+                        model.FSBL_PhotAstrom_CircOrbs_Param1, model.FSBL_PhotAstrom_CircOrbs_Param3,
+                        model.FSBL_PhotAstrom_CircOrbs_Param4, model.FSBL_PhotAstrom_CircOrbs_Param8,
+                        model.FSBL_PhotAstrom_EllOrbs_Param1, model.FSBL_PhotAstrom_EllOrbs_Param3,
+                        model.FSBL_PhotAstrom_EllOrbs_Param4, model.FSBL_PhotAstrom_EllOrbs_Param8,
+                        model.FSBL_PhotAstrom_LinOrbs_Param6, model.FSBL_PhotAstrom_LinOrbs_Param7,
+                        model.FSBL_PhotAstrom_AccOrbs_Param6, model.FSBL_PhotAstrom_AccOrbs_Param7,
+                        model.FSBL_PhotAstrom_CircOrbs_Param1, model.FSBL_PhotAstrom_CircOrbs_Param3,
+                        model.FSBL_PhotAstrom_CircOrbs_Param4, model.FSBL_PhotAstrom_CircOrbs_Param8,
+                        model.FSBL_PhotAstrom_EllOrbs_Param1, model.FSBL_PhotAstrom_EllOrbs_Param3,
+                        model.FSBL_PhotAstrom_EllOrbs_Param4, model.FSBL_PhotAstrom_EllOrbs_Param8]
+
+    all_classes_pstl = [model.PSTL_PhotAstrom_EllOrbs_Param1, model.PSTL_PhotAstrom_EllOrbs_Param2, 
+                        model.PSTL_PhotAstromParam1, model.PSTL_PhotAstromParam2, model.PSTL_PhotAstromParam3]
+
     import re
     import inspect
     
     check_keys = model_fitter.MicrolensSolver.default_priors.keys()
+    unmatched = []
     
     def check_lengths(carg):
         fitter_params = carg.fitter_param_names + carg.phot_param_names
@@ -85,7 +107,21 @@ def test_default_priors():
     
     for i in all_classes_bspl:
         check_lengths(i)
-        
+    
+    for i in all_classes_fsbl:
+        check_lengths(i)
+
+    
+    for i in all_classes_pstl:
+        check_lengths(i)
+
+    assert unmatched == [], (
+        "Missing default_priors for: "
+        + "; ".join(
+            f"{carg.__name__}: {missing}" for carg, missing in unmatched
+        )
+    )
+
 
 def test_PSPL_other(plot=False):
     mL = 10.0  # msun
@@ -1706,6 +1742,94 @@ def example_astropy_parallax():
 
     return
 
+
+def plot_FSBL(fsbl, t_obs):
+    """
+    Make some standard plots for PSBL.
+    """
+    images, _ , amps, _ = fsbl.get_all_arrays(t_obs)
+    ##########
+    # Photometry
+    ##########
+    phot = fsbl.get_photometry(t_obs, amp_arr=amps)
+
+    # Plot the photometry
+    plt.figure(1)
+    plt.clf()
+    plt.plot(t_obs, phot, 'r-')
+    plt.ylabel('Photometry (mag)')
+    plt.xlabel('Time (MJD)')
+    plt.gca().invert_yaxis()
+
+    ##########
+    # Astrometry
+    ##########
+    if fsbl.astrometryFlag:
+        # Find the points closest to t0
+        t0idx = np.argmin(np.abs(t_obs - fsbl.t0))
+
+        xL1, xL2 = fsbl.get_resolved_lens_astrometry(t_obs)
+        xL1 *= 1e3
+        xL2 *= 1e3
+        xS_unlens = fsbl.get_astrometry_unlensed(t_obs) * 1e3
+        xS_lensed = fsbl.get_astrometry(t_obs, image_arr=images, amp_arr=amps) * 1e3
+
+        dxS = (xS_lensed - xS_unlens)
+
+        # Plot the positions of everything
+        plt.figure(2)
+        plt.clf()
+        plt.plot(xS_unlens[:, 0], xS_unlens[:, 1], 'b--', mfc='blue',
+                 mec='blue')
+        plt.plot(xS_lensed[:, 0], xS_lensed[:, 1], 'b-')
+        plt.plot(xL1[:, 0], xL1[:, 1], 'g--', mfc='none',
+                 mec='green')
+        plt.plot(xL2[:, 0], xL2[:, 1], 'g--', mfc='none',
+                 mec='dark green')
+
+        plt.plot(xS_unlens[t0idx, 0], xS_unlens[t0idx, 1], 'bx', mfc='blue',
+                 mec='blue',
+                 label='xS, unlensed')
+        plt.plot(xS_lensed[t0idx, 0], xS_lensed[t0idx, 1], 'bo',
+                 label='xS, lensed')
+        plt.plot(xL1[t0idx, 0], xL1[t0idx, 1], 'gs', mfc='green',
+                 mec='green',
+                 label='Primary lens')
+        plt.plot(xL2[t0idx, 0], xL2[t0idx, 1], 'gs', mfc='none',
+                 mec='green',
+                 label='Secondary lens')
+
+        plt.legend()
+        plt.gca().invert_xaxis()
+        plt.xlabel('R.A. (mas)')
+        plt.ylabel('Dec. (mas)')
+
+        # Check just the astrometric shift part.
+        plt.figure(3)
+        plt.clf()
+        plt.plot(t_obs, dxS[:, 0], 'r--', label='R.A.')
+        plt.plot(t_obs, dxS[:, 1], 'b--', label='Dec.')
+        plt.legend(fontsize=10)
+        plt.ylabel('Astrometric Shift (mas)')
+        plt.xlabel('Time (MJD)')
+
+        plt.figure(4)
+        plt.clf()
+        plt.plot(dxS[:, 0], dxS[:, 1], 'r-')
+        plt.axhline(0, linestyle='--')
+        plt.axvline(0, linestyle='--')
+        plt.gca().invert_xaxis()
+        plt.xlabel('Shift RA (mas)')
+        plt.ylabel('Shift Dec (mas)')
+        plt.axis('equal')
+
+        print('Einstein radius: ', psbl.thetaE_amp)
+        print('Einstein crossing time: ', psbl.tE)
+
+    return
+
+
+
 def plot_PSBL(psbl, t_obs):
     """
     Make some standard plots for PSBL.
@@ -1789,6 +1913,246 @@ def plot_PSBL(psbl, t_obs):
 
         print('Einstein radius: ', psbl.thetaE_amp)
         print('Einstein crossing time: ', psbl.tE)
+
+    return
+
+
+def test_FSBL_PhotAstrom_Par_Param2(plot=False, verbose=False):
+    """
+    General testing of PSBL... caustic crossings.
+    """
+
+    raL = 259.5
+    decL = -29.0
+    t0 = 57000
+    u0 = 0.3  # in units of Einstein radii
+    tE = 200.0
+    piE_E = 0.01
+    piE_N = -0.01
+    b_sff = np.array([1.0])
+    mag_src = np.array([18])
+    dmag_Lp_Ls = np.array([0.0])
+    thetaE = 3.0  # in mas
+    xS0_E = 0.0
+    xS0_N = 0.01
+    muS_E = 3.0
+    muS_N = 0.0
+    piS = (1.0 / 8000.0) * 1e3  # mas
+    q = 0.8  # M2 / M1
+    sep = 3.0  # mas
+    alpha = 135.0
+    rho = 1e-8
+
+    psbl_p = model.PSBL_PhotAstrom_Par_Param2(t0, u0, tE,
+                                              thetaE, piS,
+                                              piE_E, piE_N,
+                                              xS0_E, xS0_N,
+                                              muS_E, muS_N,
+                                              q, sep, alpha,
+                                              b_sff, mag_src, dmag_Lp_Ls,
+                                              raL=raL, decL=decL,
+                                              root_tol=1e-4)
+
+    fsbl_p = model.FSBL_PhotAstrom_Par_Param2(t0, u0, tE,
+                                              thetaE, piS, rho,
+                                              piE_E, piE_N,
+                                              xS0_E, xS0_N,
+                                              muS_E, muS_N,
+                                              q, sep, alpha,
+                                              b_sff, mag_src, dmag_Lp_Ls,
+                                              raL=raL, decL=decL,
+                                              root_tol=1e-4)
+
+    psbl_n = model.PSBL_PhotAstrom_Par_Param2(t0, u0, tE,
+                                              thetaE, piS,
+                                              piE_E, piE_N,
+                                              xS0_E, xS0_N,
+                                              muS_E, muS_N,
+                                              q, sep, alpha,
+                                              b_sff, mag_src, dmag_Lp_Ls,
+                                              raL=raL, decL=decL,
+                                              root_tol=1e-4)
+
+    fsbl_n = model.FSBL_PhotAstrom_Par_Param2(t0, u0, tE,
+                                              thetaE, piS, rho,
+                                              piE_E, piE_N,
+                                              xS0_E, xS0_N,
+                                              muS_E, muS_N,
+                                              q, sep, alpha,
+                                              b_sff, mag_src, dmag_Lp_Ls,
+                                              raL=raL, decL=decL,
+                                              root_tol=1e-4)
+    t_obs = np.arange(56000.0, 58000.0, 3)
+
+    fsbl_amps = fsbl_p.get_amplification(t_obs)
+    fsbl_n_amps = fsbl_n.get_amplification(t_obs)
+
+    psbl_amps = psbl_p.get_amplification(t_obs)
+    psbl_n_amps = psbl_n.get_amplification(t_obs)
+
+    # Tiny rho should recover the point-source (PSBL) amplification.
+    np.testing.assert_allclose(fsbl_amps, psbl_amps, rtol=1e-6, atol=1e-6)
+    np.testing.assert_allclose(fsbl_n_amps, psbl_n_amps, rtol=1e-6, atol=1e-6)
+
+    # Plot the photometry
+    plt.figure(1)
+    plt.clf()
+    plt.plot(t_obs, fsbl_amps, 'r-', label='FSBL')
+    plt.plot(t_obs, psbl_amps, 'b-', label='PSBL')
+    plt.legend()
+    plt.ylabel('Amplification (mag)')
+    plt.xlabel('Time (MJD)')
+
+    return
+
+
+def standard_FSBL_plot(plot=False, verbose=False):
+    """
+    Make some standard plots for FSBL.
+    """
+    mLp = 10     # Msun
+    mLs = 10
+    t0 = 57755  # MJD
+    beta = .5   # milli-arcsecond
+    dL = 4000   # pc
+    dL_dS = .5
+    xS0_E = 0.000 # arcsec
+    xS0_N = 0.001 # arcsec
+    muL_E = 0     # mas/yr
+    muL_N = 0     # mas/yr
+    ra = 17.5 * 15. # deg
+    dec = -30       # deg
+    muS_E = 4       # mas/yr
+    muS_N = 0      # mas/yr
+    radiusS_pri = 5e-3  # arcsec
+    b_sff = np.array([1])
+    dS = 8000
+    sep = 5
+    alpha = 0
+
+    t_obs = np.arange(fsbl.t0 - 5 * fsbl.tE, fsbl.t0 +  5 * fsbl.tE, 1)
+#time_mjd = time_mjd[1700:1900]
+
+    mag_src = np.array([18])
+
+    psbl = model.PSBL_PhotAstrom_noPar_Param1(mLp, mLs, t0, xS0_E, xS0_N,
+                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls = 20)
+
+    fsbl = model.FSBL_PhotAstrom_noPar_Param1(mLp, mLs, t0, radiusS_pri, xS0_E, xS0_N,
+                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS, 
+                 sep, alpha, b_sff, mag_src, n_outline = 600, dmag_Lp_Ls = 20, root_tol=1e-8)
+
+    fsbl_n = model.FSBL_PhotAstrom_noPar_Param1(mLp, mLs, t0, 1e-8, xS0_E, xS0_N,
+                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS, 
+                 sep, alpha, b_sff, mag_src, dmag_Lp_Ls = 20, root_tol=1e-8)
+
+    fsbl_n_amps = fsbl_n.get_amplification(t_obs)
+    fsbl_amps = fsbl.get_amplification(t_obs)
+    psbl_amps = psbl.get_amplification(t_obs)
+    
+    np.testing.assert_allclose(fsbl_n_amps, psbl_amps, rtol=1e-6, atol=1e-6)
+
+
+    cmap = plt.cm.get_cmap('tab10')
+    colors = cmap(np.linspace(0, 1, 10))
+
+    if plot:
+        fig, ax = plt.subplots(1, 1, figsize=(8, 4),sharex=True, num=2)
+        plt.clf()
+        #ax[0].plot(time_mjd, fsbl.get_amplification(time_mjd), color=colors[6], ls='-.', lw = 2, label = 'PSBL', alpha = 0.8)
+        #ax[0].plot(time_mjd, pspl.get_amplification(time_mjd), label='PSPL BAGLE', color=colors[3], ls='-', lw=2, marker='None')
+        ax.plot(t_obs, fsbl_amps, label='FSBL BAGLE', color=colors[1], ls='-', lw=2, marker='None')
+        #ax.plot(time_mjd, fsbl_mag_two, label='FSBL BAGLE', color=colors[3], ls='-', lw=2, marker='None')
+        ax.plot(t_obs, psbl_amps, label='PSBL BAGLE', color=colors[2], ls=':', lw=2, marker='None')
+        #ax[0].plot(time_mjd, mag_t_contour, label='FSBL BAGLE 2', color=colors[2], ls='-.', lw=2, marker='None')
+        ax.legend(loc='best')
+        ax.set_xlabel('Time (MJD)')
+
+        ax.set_ylabel('Amplification')
+        rho = radiusS_pri * 1e3 / psbl.thetaE_amp
+        ax.set_title(rf'$\rho={np.round(rho,2)}$  $\theta_E$')
+        #ax[1].plot(time_mjd, fsbl.get_amplification(time_mjd) - mag_t_contour, 'x', color=colors[3], lw=2, label='VBM - BAGLE')
+        ax.legend(loc='best')
+        #plt.xlim(fsbl.t0-500, fsbl.t0+500)
+    
+
+    return
+
+
+
+
+def standard_FSBL_plot_orb(plot=False, verbose=False):
+    """
+    Make some standard plots for FSBL with orbital motion.
+    """
+    mLp = 15
+    mLs = 10
+    t0_p = 5700.00
+    xS0_E = 0
+    xS0_N = 0
+    beta_p = 5
+    muL_E = 4 #mas/yr
+    muL_N = 0 #mas/yr
+    muS_E = 0
+    muS_N = 4
+    i = 0
+    e = 0.03
+    omega = 0
+    big_omega = 90
+    a = 5
+    tp = 5700
+    dL = 1000 #parsecs
+    dS = 1200
+    mag_src = 20
+    b_sff = 1
+    ra_L = 260
+    dec_L = -29
+    dmag_Lp_Ls=20
+    n_outline = 600
+    #alpha = 90
+
+    radiusS = 5e-5
+    fsbl = model.FSBL_PhotAstrom_noPar_EllOrbs_Param7(
+                mLp, mLs, t0_p, xS0_E, xS0_N, radiusS,
+                    beta_p, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
+                    b_sff, mag_src,dmag_Lp_Ls=dmag_Lp_Ls, n_outline=n_outline,
+                    raL=None, decL=None, root_tol=1e-10)
+                    
+    psbl = model.PSBL_PhotAstrom_noPar_EllOrbs_Param7(
+                mLp, mLs, t0_p, xS0_E, xS0_N,
+                    beta_p, muL_E, muL_N, omega, big_omega, i, e, tp, a, muS_E, muS_N, dL, dS,
+                    b_sff, mag_src,dmag_Lp_Ls=dmag_Lp_Ls,
+                    raL=None, decL=None, root_tol=1e-8)
+    t_obs = np.arange(fsbl.t0 - 5 * fsbl.tE, fsbl.t0 +  5 * fsbl.tE, 1)
+
+    def plot_psbl_check(psbl, fsbl, t_obs):
+        plt.clf()
+        fsbl_mag = fsbl.get_amplification(t_obs)
+        psbl_mag = psbl.get_amplification(t_obs)
+        rho = fsbl.radiusS * 1e3 / fsbl.thetaE_amp
+        print(rho)
+        cmap = plt.cm.get_cmap('tab10')
+        colors = cmap(np.linspace(0, 1, 10))
+        fig, ax = plt.subplots(1, 1, figsize=(10, 4),sharex=True, num=2)
+        #ax[0].plot(time_mjd, bagle_mod.get_amplification(time_mjd), color=colors[6], ls='-.', lw = 2, label = 'PSBL', alpha = 0.8)
+        #ax[0].plot(time_mjd, pspl.get_amplification(time_mjd), label='PSPL BAGLE', color=colors[3], ls='-', lw=2, marker='None')
+        ax.plot(t_obs, fsbl_mag, label='FSBL BAGLE', color=colors[1], ls='-', lw=2, marker='None')
+        ax.plot(t_obs, psbl_mag, label='PSBL BAGLE', color=colors[2], ls=':', lw=2, marker='None')
+        #ax[0].plot(time_mjd, mag_t_contour, label='FSBL BAGLE 2', color=colors[2], ls='-.', lw=2, marker='None')
+        ax.legend(loc='best')
+        ax.set_xlabel('Time (MJD)')
+        
+        ax.set_ylabel('Amplification')
+        ax.set_title(rf'$\rho={np.round(rho,2)}$  $\theta_E$')
+        #ax[1].plot(time_mjd, bagle_mod.get_amplification(time_mjd) - mag_t_contour, 'x', color=colors[3], lw=2, label='VBM - BAGLE')
+        ax.legend(loc='best')
+        #plt.xlim(fsbl.t0-500, fsbl.t0+500)
+        return
+    
+    if plot:
+        plot_psbl_check(psbl, fsbl, t_obs)
+    np.testing.assert_allclose(fsbl, psbl, rtol=1e-6, atol=1e-6)
 
     return
 
@@ -3961,22 +4325,22 @@ def test_FSPL_Phot_methods(plot=False):
     ##########
     # FSPL n=100, r=0.001
     ##########
-    fspl_arr_n100_good = np.array([18.99937 , 18.998671, 18.995582, 18.984057, 18.868018, 17.380096,
-                  18.87193 , 18.984165, 18.995645, 18.99868 ])
+    fspl_arr_n100_good = np.array([19.00000675, 18.99930753, 18.9962187 , 18.9846942 , 18.86866221,
+                                   17.38078716, 18.87257451, 18.9848028 , 18.99628203, 18.99931641])
     fspl_arr_n100 = test_fspl_phot_once(100, fspl_arr_n100_good, mod='FSPL')
 
     ##########
     # FSPL n=500, r=0.001
     ##########
-    fspl_arr_n500_good = np.array([19.00193193, 19.00123287, 18.9981446, 18.98662051, 18.87056724,
-                                  17.38275375, 18.87459054, 18.98673675, 18.99820897, 19.00124183])
+    fspl_arr_n500_good = np.array([18.99938958, 18.99869031, 18.99560128, 18.98407607, 18.86803722,
+                                   17.38011686, 18.87194974, 18.98418467, 18.99566462, 18.99869919])
     fspl_arr_n500 = test_fspl_phot_once(500, fspl_arr_n500_good, mod='FSPL')
 
     ##########
     # FSPL n=1000, r=0.001
     ##########
-    fspl_arr_n1000_good = np.array([19.00000684, 18.99930765, 18.99621877, 18.98469243, 18.86861775,
-                                   17.38066274, 18.87264176, 18.98480869, 18.99628315, 18.99931661])
+    fspl_arr_n1000_good = np.array([18.99937029, 18.99867102, 18.99558199, 18.98405675, 18.86801769,
+                                    17.38009591, 18.87193022, 18.98416535, 18.99564532, 18.9986799 ])
     fspl_arr_n1000 = test_fspl_phot_once(1000, fspl_arr_n1000_good, mod='FSPL')
 
 
