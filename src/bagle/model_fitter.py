@@ -1471,6 +1471,72 @@ class MicrolensSolver(Solver):
 
         return results_list
 
+    def plot_ultranest_style(self, sim_vals=None, fit_vals=None, remake_fits=False,
+                             dims=None, kde=True):
+        """Same as `plot_dynesty_style`, but make the trace plot with
+        UltraNest's plotting code instead. UltraNest's `traceplot` takes
+        the same (samples, logvol, weights) sequences that
+        `load_mnest_results_for_dynesty` already returns.
+
+        Parameters
+        ----------
+        sim_vals : dict
+            Dictionary of simulated input or comparison values to
+            overplot on posteriors.
+
+        fit_vals : str
+            Choices are 'map' (maximum a posteriori), 'mean', or
+            'maxl' (maximum likelihood)
+
+        """
+        from ultranest.plot import traceplot as un_traceplot
+
+        res = self.load_mnest_results(remake_fits=remake_fits)
+        smy = self.load_mnest_summary(remake_fits=remake_fits)
+
+        truths = None
+
+        # Sort the parameters into the right order.
+        if sim_vals != None:
+            truths = []
+            for param in self.all_param_names:
+                if param in sim_vals:
+                    truths.append(sim_vals[param])
+                else:
+                    truths.append(None)
+
+        if fit_vals == 'map':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['MAP_' + param][0])  # global best fit.
+
+        if fit_vals == 'mean':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['Mean_' + param][0])  # global best fit.
+
+        if fit_vals == 'maxl':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['MaxLike_' + param][0])  # global best fit.
+
+        # UltraNest's traceplot has no `dims` keyword, so trim the samples.
+        if dims is not None:
+            labels = [self.all_param_names[i] for i in dims]
+            res = dict(res, samples=res['samples'][:, dims])
+            if truths is not None:
+                truths = [truths[i] for i in dims]
+        else:
+            labels = self.all_param_names
+
+        un_traceplot(results=res, labels=labels,
+                     show_titles=True, truths=truths, kde=kde)
+        plt.subplots_adjust(hspace=0.7)
+        plt.savefig(self.outputfiles_basename + 'un_trace.png')
+        plt.close()
+
+        return
+
     def plot_dynesty_style(self, sim_vals=None, fit_vals=None, remake_fits=False, dims=None,
                            traceplot=True, cornerplot=True, kde=True):
         """
