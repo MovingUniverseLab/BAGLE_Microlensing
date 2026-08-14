@@ -434,6 +434,44 @@ def animate_PSPL(pspl, duration=10, time_steps=300, outfile='pspl_movie.gif'):
     
     return ani
 
+def _draw_model_class_title(model_obj, x=0.802, y=0.84):
+    """
+    Draw the concrete model class name on the parameter panel.
+
+    Parameters
+    ----------
+    model_obj : object
+        BAGLE model instance. ``type(model_obj).__name__`` is shown.
+    x : float, optional
+        Figure x coordinate in figure fraction. Default is 0.802.
+    y : float, optional
+        Figure y coordinate in figure fraction. Default is 0.84.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    Long ``PhotAstrom`` class names are wrapped onto two lines so they
+    fit the right-hand panel.
+    """
+    name = type(model_obj).__name__
+
+    # Wrap after PhotAstrom / Phot so the title stays in the panel.
+    for token in ('_PhotAstrom_', '_Phot_'):
+        if token in name:
+            cut = name.find(token) + len(token) - 1
+            name = name[:cut] + '\n' + name[cut + 1:]
+            break
+
+    plt.figtext(
+        x, y, name, fontsize=8, fontweight='bold',
+        va='top', ha='left',
+    )
+
+    return None
+
 def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     """
     Make an animated GIF of a point-source binary-lens event. Animate the photometry
@@ -530,8 +568,8 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     ax2.set_ylabel("Brightness (mag)")
     ax2.invert_yaxis()
 
-    # Print out all of the parameters.
-    plt.figtext(0.802, 0.8, 'PSBL Model')
+    # Concrete class name at the top of the parameter panel.
+    _draw_model_class_title(psbl)
 
     fmt_dict = {'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\\odot$',
                 'mLs': r'M$_{{L2}}$ = {0:.3f} M$_\\odot$',
@@ -560,13 +598,16 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
         print_vars = ['tE', 'u0', 'q', 'sep', 'phi',
                       'piE', 'mag_src', 'b_sff']
 
-    for pp in range(len(print_vars)):
-        dy = 0.05
-        par = print_vars[pp]
+    dy = 0.05
+    row = 0
+    for par in print_vars:
+        if not hasattr(psbl, par):
+            continue
         fmt = fmt_dict[par]
         val = getattr(psbl, par)
 
         if par == 'mag_src' or par == 'b_sff':
+            val = np.atleast_1d(val)
             fmt += '[' + '{:.2f} ' * len(val) + ']'
 
         if isinstance(val, (list,np.ndarray)):
@@ -574,7 +615,8 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
         else:
             txt = fmt.format(val)
             
-        plt.figtext(0.805, 0.75-pp*dy, txt, fontsize=12)
+        plt.figtext(0.805, 0.75-row*dy, txt, fontsize=12)
+        row += 1
         
     plt.show()
     plt.savefig(outfile)
@@ -624,7 +666,8 @@ def plot_PSBL_static(psbl, duration=10, time_steps=300,
 
     Instantaneous positions at ``t0`` are taken from the trajectory
     sample nearest to ``psbl.t0``. Image tracks that are non-finite
-    at that sample are omitted from the snapshot markers.
+    at that sample are omitted from the snapshot markers. The
+    right-hand panel title is ``type(psbl).__name__``.
     """
     # Build a time array centered on t0, in days (MJD).
     tmin = psbl.t0 - ((duration / 2.0) * psbl.tE)
@@ -768,8 +811,8 @@ def plot_PSBL_static(psbl, duration=10, time_steps=300,
     ax2.set_ylabel("Brightness (mag)")
     ax2.invert_yaxis()
 
-    # Parameter panel on the right, matching plot_PSBL.
-    plt.figtext(0.802, 0.8, 'PSBL Model')
+    # Concrete class name at the top of the parameter panel.
+    _draw_model_class_title(psbl)
 
     fmt_dict = {
         'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\odot$',
@@ -804,12 +847,15 @@ def plot_PSBL_static(psbl, duration=10, time_steps=300,
         ]
 
     dy = 0.05
-    for pp in range(len(print_vars)):
-        par = print_vars[pp]
+    row = 0
+    for par in print_vars:
+        if not hasattr(psbl, par):
+            continue
         fmt = fmt_dict[par]
         val = getattr(psbl, par)
 
         if par == 'mag_src' or par == 'b_sff':
+            val = np.atleast_1d(val)
             fmt += '[' + '{:.2f} ' * len(val) + ']'
 
         if isinstance(val, (list, np.ndarray)):
@@ -817,7 +863,8 @@ def plot_PSBL_static(psbl, duration=10, time_steps=300,
         else:
             txt = fmt.format(val)
 
-        plt.figtext(0.805, 0.75 - pp * dy, txt, fontsize=12)
+        plt.figtext(0.805, 0.75 - row * dy, txt, fontsize=12)
+        row += 1
 
     # Save first so the file is written even if show() closes the fig.
     plt.savefig(outfile)
@@ -934,12 +981,13 @@ def _draw_bsbl_param_panel(bsbl):
     ----------
     bsbl : bagle.model.BSBL
         Model whose attributes are printed on the right-hand panel.
+        The panel title is ``type(bsbl).__name__``.
 
     Returns
     -------
     None
     """
-    plt.figtext(0.802, 0.8, 'BSBL Model')
+    _draw_model_class_title(bsbl)
 
     fmt_dict = {
         'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\odot$',
@@ -1041,7 +1089,8 @@ def plot_BSBL(bsbl, duration=10, time_steps=300,
     ``animate_PSBL``, with extra artists for the second source and
     its lensed images. East (RA) increases to the left. Positions
     are in milliarcsec when ``bsbl.astrometryFlag`` is True,
-    otherwise in units of ``thetaE``.
+    otherwise in units of ``thetaE``. The right-hand panel title is
+    ``type(bsbl).__name__``.
     """
     data = _bsbl_geometry_arrays(bsbl, duration, time_steps)
     t = data['t']
@@ -1227,7 +1276,8 @@ def plot_BSBL_static(bsbl, duration=10, time_steps=300,
 
     Instantaneous positions at ``t0`` are taken from the trajectory
     sample nearest to ``bsbl.t0``. Image tracks that are non-finite
-    at that sample are omitted from the snapshot markers.
+    at that sample are omitted from the snapshot markers. The
+    right-hand panel title is ``type(bsbl).__name__``.
     """
     data = _bsbl_geometry_arrays(bsbl, duration, time_steps)
     t = data['t']
