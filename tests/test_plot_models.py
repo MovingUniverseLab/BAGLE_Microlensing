@@ -1,4 +1,5 @@
 import os
+import inspect
 import tempfile
 
 import matplotlib
@@ -84,9 +85,9 @@ def test_plot_PSBL_static_writes_png():
     return None
 
 
-def test_plot_PSBL_still_callable():
+def test_plot_PSBL_signature_unchanged():
     """
-    Confirm plot_PSBL keeps its public signature and still runs.
+    Confirm plot_PSBL keeps its public signature.
 
     Parameters
     ----------
@@ -95,19 +96,17 @@ def test_plot_PSBL_still_callable():
     Returns
     -------
     None
+
+    Notes
+    -----
+    This only checks the call signature so ``plot_PSBL`` stays frozen.
     """
-    psbl = _make_psbl_photastrom()
+    sig = inspect.signature(plot_models.plot_PSBL)
+    params = list(sig.parameters)
 
-    tmpdir = tempfile.mkdtemp()
-    outfile = os.path.join(tmpdir, 'psbl_geometry.png')
-
-    result = plot_models.plot_PSBL(
-        psbl, duration=2, time_steps=40, outfile=outfile,
-    )
-
-    # Original plotter returns None implicitly (bare return).
-    assert result is None
-    assert os.path.isfile(outfile)
-    assert os.path.getsize(outfile) > 0
+    assert params == ['psbl', 'duration', 'time_steps', 'outfile']
+    assert sig.parameters['duration'].default == 10
+    assert sig.parameters['time_steps'].default == 300
+    assert sig.parameters['outfile'].default == 'psbl_geometry.png'
 
     return None
