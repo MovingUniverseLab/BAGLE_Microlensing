@@ -581,6 +581,250 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
 
     return
 
+def plot_PSBL_static(psbl, duration=10, time_steps=300,
+                     outfile='psbl_geometry_static.png'):
+    """
+    Make a static plot of a point-source binary-lens event.
+
+    Draw all astrometric trajectories over a time window centered on
+    ``t0`` and mark the positions of both lenses, the unlensed source,
+    the unresolved lensed source, and all lensed images at ``t0``.
+    Photometry is shown in a second panel with the ``t0`` epoch marked.
+
+    Parameters
+    ----------
+    psbl : bagle.model.PSBL
+        The PSBL model to plot. Photometry-only and
+        photometry+astrometry models are both supported.
+    duration : float, optional
+        Total time to plot, in units of ``tE``. The plotted window
+        is ``[t0 - duration/2 * tE, t0 + duration/2 * tE]``.
+        Default is 10.
+    time_steps : int, optional
+        Number of time samples used to draw each trajectory.
+        The resulting time array has shape ``(time_steps,)``.
+        Default is 300.
+    outfile : str, optional
+        Filename for the saved figure. Default is
+        ``'psbl_geometry_static.png'``.
+
+    Returns
+    -------
+    None
+        The figure is saved to ``outfile`` and displayed.
+
+    Notes
+    -----
+    This is the static counterpart to ``plot_PSBL``. Coordinate
+    conventions, plotted objects, and visual style match
+    ``plot_PSBL`` where a still frame allows: East (RA) increases
+    to the left, North (Dec) increases up, and positions are in
+    milliarcsec when ``psbl.astrometryFlag`` is True, otherwise in
+    units of ``thetaE``.
+
+    Instantaneous positions at ``t0`` are taken from the trajectory
+    sample nearest to ``psbl.t0``. Image tracks that are non-finite
+    at that sample are omitted from the snapshot markers.
+    """
+    # Build a time array centered on t0, in days (MJD).
+    tmin = psbl.t0 - ((duration / 2.0) * psbl.tE)
+    tmax = psbl.t0 + ((duration / 2.0) * psbl.tE)
+    t = np.linspace(tmin, tmax, time_steps)
+
+    # Image positions and magnifications, computed once.
+    img, amp = psbl.get_all_arrays(t)
+
+    # Lens, unlensed source, unresolved lensed source, and images.
+    rL_1, rL_2 = psbl.get_resolved_lens_astrometry(t)
+    rS = psbl.get_astrometry_unlensed(t)
+    rS_img = psbl.get_astrometry(t, image_arr=img, amp_arr=amp)
+    rS_img_all = psbl.get_resolved_astrometry(
+        t, image_arr=img, amp_arr=amp
+    )
+    pS = psbl.get_photometry(t, amp_arr=amp)
+
+    # Convert arcsec -> mas for astrometric models.
+    if psbl.astrometryFlag:
+        rL_1 *= 1e3
+        rL_2 *= 1e3
+        rS *= 1e3
+        rS_img *= 1e3
+        rS_img_all *= 1e3
+        ast_unit = '(mas)'
+    else:
+        ast_unit = r'($\theta_E$)'
+
+    # Index of the sample nearest t0, used for snapshot markers.
+    t0idx = np.argmin(np.abs(t - psbl.t0))
+
+    # Two-panel figure: astrometry (left) and photometry (right).
+    plt.close(3)
+    plt.figure(3, figsize=(12, 4))
+
+    ax1 = plt.axes([0.08, 0.17, 0.3, 0.78])
+    ax2 = plt.axes([0.48, 0.17, 0.3, 0.78])
+    plt.subplots_adjust(wspace=0.44, left=0.1)
+
+    # Full trajectories (same objects and colors as plot_PSBL).
+    # Lenses are drawn as lines so the t0 star markers stand out.
+    ax1.plot(
+        rS[:, 0], rS[:, 1], 'b--', alpha=0.5,
+        label="Source, unlensed",
+    )
+    ax1.plot(
+        rL_1[:, 0], rL_1[:, 1], 'k-', alpha=0.5,
+        label="Lens 1",
+    )
+    ax1.plot(
+        rL_2[:, 0], rL_2[:, 1], color='grey', alpha=0.5,
+        label="Lens 2",
+    )
+    ax1.plot(
+        rS_img[:, 0], rS_img[:, 1], 'r-',
+        label='Source, lensed, unresolved',
+    )
+
+    # Photometry vs time relative to t0.
+    ax2.plot(t - psbl.t0, pS, 'r-')
+
+    # Image trajectories: faint purple, one artist per image.
+    n_images = rS_img_all.shape[1]
+    for ii in range(n_images):
+        if ii == 0:
+            label = 'Source, lensed images'
+        else:
+            label = ''
+
+        ax1.plot(
+            rS_img_all[:, ii, 0], rS_img_all[:, ii, 1],
+            '.', markersize=2, alpha=0.5, color='purple',
+            label=label,
+        )
+
+    # Positions of everything at t0, drawn on top of the tracks.
+    ax1.plot(
+        rS[t0idx, 0], rS[t0idx, 1],
+        'bo', markersize=6, zorder=5,
+        label='Positions at t0',
+    )
+    ax1.plot(
+        rL_1[t0idx, 0], rL_1[t0idx, 1],
+        'k*', markersize=10, zorder=5,
+    )
+    ax1.plot(
+        rL_2[t0idx, 0], rL_2[t0idx, 1],
+        '*', color='grey', markersize=10, zorder=5,
+    )
+    ax1.plot(
+        rS_img[t0idx, 0], rS_img[t0idx, 1],
+        'ro', markersize=6, zorder=5,
+    )
+
+    # Lensed-image positions at t0; skip images that are not real.
+    for ii in range(n_images):
+        x_ii = rS_img_all[t0idx, ii, 0]
+        y_ii = rS_img_all[t0idx, ii, 1]
+        if np.isfinite(x_ii) and np.isfinite(y_ii):
+            ax1.plot(
+                x_ii, y_ii, 'o', color='purple',
+                markersize=6, zorder=5,
+            )
+
+    # Mark t0 on the light curve (x-axis is t - t0).
+    ax2.axvline(0.0, color='k', linestyle='--', alpha=0.5)
+    ax2.plot(t[t0idx] - psbl.t0, pS[t0idx], 'ro', zorder=5)
+
+    # Einstein radius around the origin, same as plot_PSBL.
+    if psbl.astrometryFlag:
+        thetaE = psbl.thetaE_amp
+    else:
+        thetaE = 1.0
+
+    circ = plt.Circle(
+        (0, 0), thetaE, fill=False, color='black',
+        linestyle='--',
+    )
+    ax1.add_artist(circ)
+
+    # Time-direction arrow at the end of the unresolved track.
+    arr_dx = (rS_img[-1, 0] - rS_img[-2, 0]) * 1e1
+    arr_dy = (rS_img[-1, 1] - rS_img[-2, 1]) * 1e1
+    ax1.arrow(
+        rS_img[-2, 0], rS_img[-2, 1], arr_dx, arr_dy,
+        color='red', width=0.1,
+    )
+
+    # Shared astrometric limits; RA increases to the left.
+    ast_lim = np.max(
+        np.abs(np.concatenate([rL_1, rL_2, rS, rS_img]).flatten())
+    ) * 1.2
+
+    ax1.set_xlabel(r'$\Delta \alpha^*$ ' + ast_unit)
+    ax1.set_ylabel(r'$\Delta \delta$ ' + ast_unit)
+    ax1.set_xlim(ast_lim, -ast_lim)
+    ax1.set_ylim(-ast_lim, ast_lim)
+    ax1.legend(fontsize=8)
+    ax2.set_xlabel("Time (days)")
+    ax2.set_ylabel("Brightness (mag)")
+    ax2.invert_yaxis()
+
+    # Parameter panel on the right, matching plot_PSBL.
+    plt.figtext(0.802, 0.8, 'PSBL Model')
+
+    fmt_dict = {
+        'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\\odot$',
+        'mLs': r'M$_{{L2}}$ = {0:.3f} M$_\\odot$',
+        'sep': r'sep = {0:.4f} arcsec or $\theta_E$',
+        'alpha': r'$\alpha$ = {0:.2f} deg',
+        'beta': r'$\beta$ = {0:.1f} mas',
+        'xS0': r'x$_{{S0}}$ = [{0:.4f}, {1:.4f}] arcsec',
+        'muL': r'$\mu_L$ = [{0:.2f}, {1:.2f}] mas/yr',
+        'muS': r'$\mu_S$ = [{0:.2f}, {1:.2f}] mas/yr',
+        'piE': r'$\pi_E$ = [{0:.2f}, {1:.2f}]',
+        'dL': r'd$_L$ = {0:.0f} pc',
+        'dS': r'd$_S$ = {0:.0f} pc',
+        'mag_src': r'mag$_S$ = ',
+        'b_sff': r'b$_{{sff}}$ = ',
+        'tE': r't$_E$ = {0:.1f} days',
+        'u0': r'u$_0$ = {0:.3f}',
+        'q': 'q = {0:.3f}',
+        'phi': r'$\alpha$ = {0:.2f} deg',
+    }
+
+    if psbl.astrometryFlag:
+        print_vars = [
+            'mLp', 'mLs', 'sep', 'alpha', 'beta',
+            'xS0', 'muL', 'muS', 'dL', 'dS',
+            'mag_src', 'b_sff',
+        ]
+    else:
+        print_vars = [
+            'tE', 'u0', 'q', 'sep', 'phi',
+            'piE', 'mag_src', 'b_sff',
+        ]
+
+    dy = 0.05
+    for pp in range(len(print_vars)):
+        par = print_vars[pp]
+        fmt = fmt_dict[par]
+        val = getattr(psbl, par)
+
+        if par == 'mag_src' or par == 'b_sff':
+            fmt += '[' + '{:.2f} ' * len(val) + ']'
+
+        if isinstance(val, (list, np.ndarray)):
+            txt = fmt.format(*val)
+        else:
+            txt = fmt.format(val)
+
+        plt.figtext(0.805, 0.75 - pp * dy, txt, fontsize=12)
+
+    # Save first so the file is written even if show() closes the fig.
+    plt.savefig(outfile)
+    plt.show()
+
+    return None
+
 def plot_critical_curves(critical_curves, thetaE_amp = None, ax = None, show = True):
     """
     Plots critical_curves
