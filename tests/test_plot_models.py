@@ -421,3 +421,81 @@ def test_plot_BSBL_par_ellorbs_static_writes_png():
     assert type(bsbl).__name__ in _fig_text_blob()
 
     return None
+
+
+def _make_bspl_photastrom():
+    """
+    Build a simple BSPL photometry+astrometry test model.
+
+    Returns
+    -------
+    bspl : bagle.model.BSPL_PhotAstrom_noPar_Param1
+        A static-binary BSPL event used by plotter smoke tests.
+        Parameters match ``test_BSPL_PhotAstrom_Par_Param1_lumlens``
+        in ``tests/test_model.py``.
+    """
+    # Physical parameters from the existing BSPL unit tests.
+    raL = 259.5
+    decL = -28.5
+    mL = 10.0
+    t0 = 57000.0
+    beta = 1.0
+    dL = 4000.0
+    dS = 8000.0
+    dL_dS = dL / dS
+    xS0_E = 0.001
+    xS0_N = 0.0
+    muL_E = 0.0
+    muL_N = 0.0
+    muS_E = -3.0
+    muS_N = 0.0
+    sepS = 0.5
+    alphaS = 0.0
+    mag_src_pri = np.array([18.0])
+    mag_src_sec = np.array([19.0])
+    b_sff = np.array([1.0])
+
+    bspl = model.BSPL_PhotAstrom_noPar_Param1(
+        mL, t0, beta, dL, dL_dS,
+        xS0_E, xS0_N,
+        muL_E, muL_N, muS_E, muS_N,
+        sepS, alphaS,
+        mag_src_pri, mag_src_sec, b_sff,
+        raL=raL, decL=decL,
+    )
+
+    return bspl
+
+
+def test_plot_BSPL_static_writes_png():
+    """
+    Smoke-test the static BSPL geometry plotter.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    Uses a short time window and few samples so the calculation
+    stays cheap. The Agg backend avoids a GUI display.
+    """
+    bspl = _make_bspl_photastrom()
+    tmpdir = tempfile.mkdtemp()
+    outfile = os.path.join(tmpdir, 'bspl_geometry_static.png')
+
+    result = plot_models.plot_BSPL_static(
+        bspl, duration=2, time_steps=40, outfile=outfile,
+    )
+
+    assert result is None
+    assert os.path.isfile(outfile)
+    assert os.path.getsize(outfile) > 0
+    assert type(bspl).__name__ in _fig_text_blob()
+
+    return None
+

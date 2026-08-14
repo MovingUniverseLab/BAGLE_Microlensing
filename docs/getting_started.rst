@@ -5,8 +5,9 @@ photometric or astrometric plots, we have created an `Intro Jupyter Notebook
 <https://github.com/MovingUniverseLab/BAGLE_Microlensing/blob/main/BAGLE_TUTORIAL.ipynb>`_
 tutorial. A subset of the content is reproduced below.
 
-Static geometry plots of PSBL and BSBL events, including Keplerian
-orbits and parallax, are shown in `example_plot_PSBL_BSBL.ipynb
+Static geometry plots of PSBL, BSPL, and BSBL events, including
+Keplerian orbits and parallax-only (no orbits) examples, are shown in
+`example_plot_PSBL_BSBL.ipynb
 <https://github.com/MovingUniverseLab/BAGLE_Microlensing/blob/dev/docs/notebooks/example_plot_PSBL_BSBL.ipynb>`_.
 
 Using BAGLE
