@@ -434,6 +434,44 @@ def animate_PSPL(pspl, duration=10, time_steps=300, outfile='pspl_movie.gif'):
     
     return ani
 
+def _draw_model_class_title(model_obj, x=0.802, y=0.84):
+    """
+    Draw the concrete model class name on the parameter panel.
+
+    Parameters
+    ----------
+    model_obj : object
+        BAGLE model instance. ``type(model_obj).__name__`` is shown.
+    x : float, optional
+        Figure x coordinate in figure fraction. Default is 0.802.
+    y : float, optional
+        Figure y coordinate in figure fraction. Default is 0.84.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    Long ``PhotAstrom`` class names are wrapped onto two lines so they
+    fit the right-hand panel.
+    """
+    name = type(model_obj).__name__
+
+    # Wrap after PhotAstrom / Phot so the title stays in the panel.
+    for token in ('_PhotAstrom_', '_Phot_'):
+        if token in name:
+            cut = name.find(token) + len(token) - 1
+            name = name[:cut] + '\n' + name[cut + 1:]
+            break
+
+    plt.figtext(
+        x, y, name, fontsize=8, fontweight='bold',
+        va='top', ha='left',
+    )
+
+    return None
+
 def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     """
     Make an animated GIF of a point-source binary-lens event. Animate the photometry
@@ -530,8 +568,8 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     ax2.set_ylabel("Brightness (mag)")
     ax2.invert_yaxis()
 
-    # Print out all of the parameters.
-    plt.figtext(0.802, 0.8, 'PSBL Model')
+    # Concrete class name at the top of the parameter panel.
+    _draw_model_class_title(psbl)
 
     fmt_dict = {'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\\odot$',
                 'mLs': r'M$_{{L2}}$ = {0:.3f} M$_\\odot$',
@@ -560,13 +598,16 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
         print_vars = ['tE', 'u0', 'q', 'sep', 'phi',
                       'piE', 'mag_src', 'b_sff']
 
-    for pp in range(len(print_vars)):
-        dy = 0.05
-        par = print_vars[pp]
+    dy = 0.05
+    row = 0
+    for par in print_vars:
+        if not hasattr(psbl, par):
+            continue
         fmt = fmt_dict[par]
         val = getattr(psbl, par)
 
         if par == 'mag_src' or par == 'b_sff':
+            val = np.atleast_1d(val)
             fmt += '[' + '{:.2f} ' * len(val) + ']'
 
         if isinstance(val, (list,np.ndarray)):
@@ -574,12 +615,1150 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
         else:
             txt = fmt.format(val)
             
-        plt.figtext(0.805, 0.75-pp*dy, txt, fontsize=12)
+        plt.figtext(0.805, 0.75-row*dy, txt, fontsize=12)
+        row += 1
         
     plt.show()
     plt.savefig(outfile)
 
     return
+
+def plot_PSBL_static(psbl, duration=10, time_steps=300,
+                     outfile='psbl_geometry_static.png'):
+    """
+    Make a static plot of a point-source binary-lens event.
+
+    Draw all astrometric trajectories over a time window centered on
+    ``t0`` and mark the positions of both lenses, the unlensed source,
+    the unresolved lensed source, and all lensed images at ``t0``.
+    Photometry is shown in a second panel with the ``t0`` epoch marked.
+
+    Parameters
+    ----------
+    psbl : bagle.model.PSBL
+        The PSBL model to plot. Photometry-only and
+        photometry+astrometry models are both supported.
+    duration : float, optional
+        Total time to plot, in units of ``tE``. The plotted window
+        is ``[t0 - duration/2 * tE, t0 + duration/2 * tE]``.
+        Default is 10.
+    time_steps : int, optional
+        Number of time samples used to draw each trajectory.
+        The resulting time array has shape ``(time_steps,)``.
+        Default is 300.
+    outfile : str, optional
+        Filename for the saved figure. Default is
+        ``'psbl_geometry_static.png'``.
+
+    Returns
+    -------
+    None
+        The figure is saved to ``outfile`` and displayed.
+
+    Notes
+    -----
+    This is the static counterpart to ``plot_PSBL``. Coordinate
+    conventions, plotted objects, and visual style match
+    ``plot_PSBL`` where a still frame allows: East (RA) increases
+    to the left, North (Dec) increases up, and positions are in
+    milliarcsec when ``psbl.astrometryFlag`` is True, otherwise in
+    units of ``thetaE``.
+
+    Instantaneous positions at ``t0`` are taken from the trajectory
+    sample nearest to ``psbl.t0``. Image tracks that are non-finite
+    at that sample are omitted from the snapshot markers. The
+    right-hand panel title is ``type(psbl).__name__``.
+    """
+    # Build a time array centered on t0, in days (MJD).
+    tmin = psbl.t0 - ((duration / 2.0) * psbl.tE)
+    tmax = psbl.t0 + ((duration / 2.0) * psbl.tE)
+    t = np.linspace(tmin, tmax, time_steps)
+
+    # Image positions and magnifications, computed once.
+    img, amp = psbl.get_all_arrays(t)
+
+    # Lens, unlensed source, unresolved lensed source, and images.
+    rL_1, rL_2 = psbl.get_resolved_lens_astrometry(t)
+    rS = psbl.get_astrometry_unlensed(t)
+    rS_img = psbl.get_astrometry(t, image_arr=img, amp_arr=amp)
+    rS_img_all = psbl.get_resolved_astrometry(
+        t, image_arr=img, amp_arr=amp
+    )
+    pS = psbl.get_photometry(t, amp_arr=amp)
+
+    # Convert arcsec -> mas for astrometric models.
+    if psbl.astrometryFlag:
+        rL_1 *= 1e3
+        rL_2 *= 1e3
+        rS *= 1e3
+        rS_img *= 1e3
+        rS_img_all *= 1e3
+        ast_unit = '(mas)'
+    else:
+        ast_unit = r'($\theta_E$)'
+
+    # Index of the sample nearest t0, used for snapshot markers.
+    t0idx = np.argmin(np.abs(t - psbl.t0))
+
+    # Two-panel figure: astrometry (left) and photometry (right).
+    plt.close(3)
+    plt.figure(3, figsize=(12, 4))
+
+    ax1 = plt.axes([0.08, 0.17, 0.3, 0.78])
+    ax2 = plt.axes([0.48, 0.17, 0.3, 0.78])
+    plt.subplots_adjust(wspace=0.44, left=0.1)
+
+    # Full trajectories (same objects and colors as plot_PSBL).
+    # Lenses are drawn as lines so the t0 star markers stand out.
+    ax1.plot(
+        rS[:, 0], rS[:, 1], 'b--', alpha=0.5,
+        label="Source, unlensed",
+    )
+    ax1.plot(
+        rL_1[:, 0], rL_1[:, 1], 'k-', alpha=0.5,
+        label="Lens 1",
+    )
+    ax1.plot(
+        rL_2[:, 0], rL_2[:, 1], color='grey', alpha=0.5,
+        label="Lens 2",
+    )
+    ax1.plot(
+        rS_img[:, 0], rS_img[:, 1], 'r-',
+        label='Source, lensed, unresolved',
+    )
+
+    # Photometry vs time relative to t0.
+    ax2.plot(t - psbl.t0, pS, 'r-')
+
+    # Image trajectories: faint purple, one artist per image.
+    n_images = rS_img_all.shape[1]
+    for ii in range(n_images):
+        if ii == 0:
+            label = 'Source, lensed images'
+        else:
+            label = ''
+
+        ax1.plot(
+            rS_img_all[:, ii, 0], rS_img_all[:, ii, 1],
+            '.', markersize=2, alpha=0.5, color='purple',
+            label=label,
+        )
+
+    # Positions of everything at t0, drawn on top of the tracks.
+    ax1.plot(
+        rS[t0idx, 0], rS[t0idx, 1],
+        'bo', markersize=6, zorder=5,
+        label='Positions at t0',
+    )
+    ax1.plot(
+        rL_1[t0idx, 0], rL_1[t0idx, 1],
+        'k*', markersize=10, zorder=5,
+    )
+    ax1.plot(
+        rL_2[t0idx, 0], rL_2[t0idx, 1],
+        '*', color='grey', markersize=10, zorder=5,
+    )
+    ax1.plot(
+        rS_img[t0idx, 0], rS_img[t0idx, 1],
+        'ro', markersize=6, zorder=5,
+    )
+
+    # Lensed-image positions at t0; skip images that are not real.
+    for ii in range(n_images):
+        x_ii = rS_img_all[t0idx, ii, 0]
+        y_ii = rS_img_all[t0idx, ii, 1]
+        if np.isfinite(x_ii) and np.isfinite(y_ii):
+            ax1.plot(
+                x_ii, y_ii, 'o', color='purple',
+                markersize=6, zorder=5,
+            )
+
+    # Mark t0 on the light curve (x-axis is t - t0).
+    ax2.axvline(0.0, color='k', linestyle='--', alpha=0.5)
+    ax2.plot(t[t0idx] - psbl.t0, pS[t0idx], 'ro', zorder=5)
+
+    # Einstein radius around the origin, same as plot_PSBL.
+    if psbl.astrometryFlag:
+        thetaE = psbl.thetaE_amp
+    else:
+        thetaE = 1.0
+
+    circ = plt.Circle(
+        (0, 0), thetaE, fill=False, color='black',
+        linestyle='--',
+    )
+    ax1.add_artist(circ)
+
+    # Time-direction arrow at the end of the unresolved track.
+    arr_dx = (rS_img[-1, 0] - rS_img[-2, 0]) * 1e1
+    arr_dy = (rS_img[-1, 1] - rS_img[-2, 1]) * 1e1
+    ax1.arrow(
+        rS_img[-2, 0], rS_img[-2, 1], arr_dx, arr_dy,
+        color='red', width=0.1,
+    )
+
+    # Shared astrometric limits; RA increases to the left.
+    ast_lim = np.max(
+        np.abs(np.concatenate([rL_1, rL_2, rS, rS_img]).flatten())
+    ) * 1.2
+
+    ax1.set_xlabel(r'$\Delta \alpha^*$ ' + ast_unit)
+    ax1.set_ylabel(r'$\Delta \delta$ ' + ast_unit)
+    ax1.set_xlim(ast_lim, -ast_lim)
+    ax1.set_ylim(-ast_lim, ast_lim)
+    ax1.legend(fontsize=8)
+    ax2.set_xlabel("Time (days)")
+    ax2.set_ylabel("Brightness (mag)")
+    ax2.invert_yaxis()
+
+    # Concrete class name at the top of the parameter panel.
+    _draw_model_class_title(psbl)
+
+    fmt_dict = {
+        'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\odot$',
+        'mLs': r'M$_{{L2}}$ = {0:.3f} M$_\odot$',
+        'sep': r'sep = {0:.4f} arcsec or $\theta_E$',
+        'alpha': r'$\alpha$ = {0:.2f} deg',
+        'beta': r'$\beta$ = {0:.1f} mas',
+        'xS0': r'x$_{{S0}}$ = [{0:.4f}, {1:.4f}] arcsec',
+        'muL': r'$\mu_L$ = [{0:.2f}, {1:.2f}] mas/yr',
+        'muS': r'$\mu_S$ = [{0:.2f}, {1:.2f}] mas/yr',
+        'piE': r'$\pi_E$ = [{0:.2f}, {1:.2f}]',
+        'dL': r'd$_L$ = {0:.0f} pc',
+        'dS': r'd$_S$ = {0:.0f} pc',
+        'mag_src': r'mag$_S$ = ',
+        'b_sff': r'b$_{{sff}}$ = ',
+        'tE': r't$_E$ = {0:.1f} days',
+        'u0': r'u$_0$ = {0:.3f}',
+        'q': 'q = {0:.3f}',
+        'phi': r'$\alpha$ = {0:.2f} deg',
+    }
+
+    if psbl.astrometryFlag:
+        print_vars = [
+            'mLp', 'mLs', 'sep', 'alpha', 'beta',
+            'xS0', 'muL', 'muS', 'dL', 'dS',
+            'mag_src', 'b_sff',
+        ]
+    else:
+        print_vars = [
+            'tE', 'u0', 'q', 'sep', 'phi',
+            'piE', 'mag_src', 'b_sff',
+        ]
+
+    dy = 0.05
+    row = 0
+    for par in print_vars:
+        if not hasattr(psbl, par):
+            continue
+        fmt = fmt_dict[par]
+        val = getattr(psbl, par)
+
+        if par == 'mag_src' or par == 'b_sff':
+            val = np.atleast_1d(val)
+            fmt += '[' + '{:.2f} ' * len(val) + ']'
+
+        if isinstance(val, (list, np.ndarray)):
+            txt = fmt.format(*val)
+        else:
+            txt = fmt.format(val)
+
+        plt.figtext(0.805, 0.75 - row * dy, txt, fontsize=12)
+        row += 1
+
+    # Save first so the file is written even if show() closes the fig.
+    plt.savefig(outfile)
+    plt.show()
+
+    return None
+
+def _bsbl_geometry_arrays(bsbl, duration, time_steps):
+    """
+    Compute BSBL trajectories used by the BSBL plotters.
+
+    Parameters
+    ----------
+    bsbl : bagle.model.BSBL
+        Binary-source binary-lens model.
+    duration : float
+        Total time window in units of ``tE``, centered on ``t0``.
+    time_steps : int
+        Number of time samples. The time array has shape
+        ``(time_steps,)``.
+
+    Returns
+    -------
+    data : dict
+        Mapping of array names to trajectories. Positions have shape
+        ``(time_steps, 2)`` except ``rS_img_all``, which has shape
+        ``(time_steps, 2, n_images, 2)``. ``pS`` has shape
+        ``(time_steps,)``. ``t0idx`` is the sample nearest ``t0``.
+
+    Notes
+    -----
+    Astrometric models are converted from arcsec to milliarcsec.
+    Photometry-only models stay in units of ``thetaE``.
+    """
+    # Time window centered on t0, in days (MJD).
+    tmin = bsbl.t0 - ((duration / 2.0) * bsbl.tE)
+    tmax = bsbl.t0 + ((duration / 2.0) * bsbl.tE)
+    t = np.linspace(tmin, tmax, time_steps)
+
+    # Image positions and magnifications, computed once.
+    img, amp = bsbl.get_all_arrays(t)
+
+    # Lenses: some BSBL methods return a stacked (2, N, 2) array.
+    rL = np.asarray(bsbl.get_resolved_lens_astrometry(t))
+    rL_1 = np.array(rL[0], copy=True, dtype=float)
+    rL_2 = np.array(rL[1], copy=True, dtype=float)
+
+    # Unlensed source tracks, shape (N_times, 2 sources, 2).
+    rS_res = np.array(
+        bsbl.get_resolved_source_astrometry_unlensed(t),
+        copy=True, dtype=float,
+    )
+    rS1 = rS_res[:, 0, :]
+    rS2 = rS_res[:, 1, :]
+
+    # Unresolved (flux-weighted) lensed centroid, shape (N_times, 2).
+    rS_img = np.array(
+        bsbl.get_astrometry(t, image_arr=img, amp_arr=amp),
+        copy=True, dtype=float,
+    )
+
+    # Resolved images, shape (N_times, 2 sources, n_images, 2).
+    rS_img_all = np.array(
+        bsbl.get_resolved_astrometry(
+            t, image_arr=img, amp_arr=amp
+        ),
+        copy=True, dtype=float,
+    )
+
+    # Unresolved light curve, shape (N_times,).
+    pS = np.array(
+        bsbl.get_photometry(t, amp_arr=amp),
+        copy=True, dtype=float,
+    )
+
+    # Convert arcsec -> mas for astrometric models.
+    if bsbl.astrometryFlag:
+        rL_1 *= 1e3
+        rL_2 *= 1e3
+        rS1 *= 1e3
+        rS2 *= 1e3
+        rS_img *= 1e3
+        rS_img_all *= 1e3
+        ast_unit = '(mas)'
+        thetaE = bsbl.thetaE_amp
+    else:
+        ast_unit = r'($\theta_E$)'
+        thetaE = 1.0
+
+    # Sample used for the t0 snapshot markers.
+    t0idx = int(np.argmin(np.abs(t - bsbl.t0)))
+
+    data = {
+        't': t,
+        'rL_1': rL_1,
+        'rL_2': rL_2,
+        'rS1': rS1,
+        'rS2': rS2,
+        'rS_img': rS_img,
+        'rS_img_all': rS_img_all,
+        'pS': pS,
+        'ast_unit': ast_unit,
+        'thetaE': thetaE,
+        't0idx': t0idx,
+    }
+
+    return data
+
+def _draw_bsbl_param_panel(bsbl):
+    """
+    Draw the BSBL parameter list on the current figure.
+
+    Parameters
+    ----------
+    bsbl : bagle.model.BSBL
+        Model whose attributes are printed on the right-hand panel.
+        The panel title is ``type(bsbl).__name__``.
+
+    Returns
+    -------
+    None
+    """
+    _draw_model_class_title(bsbl)
+
+    fmt_dict = {
+        'mLp': r'M$_{{L1}}$ = {0:.3f} M$_\odot$',
+        'mLs': r'M$_{{L2}}$ = {0:.3f} M$_\odot$',
+        'sepL': r'sep$_L$ = {0:.3f} mas',
+        'alphaL': r'$\alpha_L$ = {0:.1f} deg',
+        'sepS': r'sep$_S$ = {0:.3f} mas',
+        'alphaS': r'$\alpha_S$ = {0:.1f} deg',
+        'beta': r'$\beta$ = {0:.1f} mas',
+        'xS0': r'x$_{{S0}}$ = [{0:.4f}, {1:.4f}] arcsec',
+        'muL': r'$\mu_L$ = [{0:.2f}, {1:.2f}] mas/yr',
+        'muS': r'$\mu_S$ = [{0:.2f}, {1:.2f}] mas/yr',
+        'dL': r'd$_L$ = {0:.0f} pc',
+        'dS': r'd$_S$ = {0:.0f} pc',
+        'tE': r't$_E$ = {0:.1f} days',
+        'u0': r'u$_0$ = {0:.3f}',
+        'mag_src_pri': r'mag$_{{S1}}$ = ',
+        'mag_src_sec': r'mag$_{{S2}}$ = ',
+        'b_sff': r'b$_{{sff}}$ = ',
+    }
+
+    # Astrometric models print physical parameters; phot-only is tE.
+    if bsbl.astrometryFlag:
+        print_vars = [
+            'mLp', 'mLs', 'sepL', 'alphaL', 'sepS', 'alphaS',
+            'beta', 'muL', 'muS', 'dL', 'dS',
+            'mag_src_pri', 'mag_src_sec', 'b_sff',
+        ]
+    else:
+        print_vars = [
+            'tE', 'u0', 'sepL', 'sepS',
+            'mag_src_pri', 'mag_src_sec', 'b_sff',
+        ]
+
+    list_pars = ('mag_src_pri', 'mag_src_sec', 'b_sff')
+    dy = 0.045
+    row = 0
+
+    for par in print_vars:
+        if not hasattr(bsbl, par):
+            continue
+        if par not in fmt_dict:
+            continue
+
+        fmt = fmt_dict[par]
+        val = getattr(bsbl, par)
+
+        # Photometric arrays are printed as bracketed lists.
+        if par in list_pars:
+            val = np.atleast_1d(val)
+            fmt += '[' + '{:.2f} ' * len(val) + ']'
+
+        if isinstance(val, (list, np.ndarray)):
+            txt = fmt.format(*np.ravel(val))
+        else:
+            txt = fmt.format(val)
+
+        plt.figtext(
+            0.805, 0.75 - row * dy, txt, fontsize=10,
+        )
+        row += 1
+
+    return None
+
+def plot_BSBL(bsbl, duration=10, time_steps=300,
+              outfile='bsbl_movie'):
+    """
+    Make an animated plot of a binary-source binary-lens event.
+
+    Animate the photometry and the astrometry. Both unlensed source
+    tracks grow with time, lens and image positions are shown at the
+    current frame, and the unresolved lensed centroid is drawn as a
+    growing red track.
+
+    Parameters
+    ----------
+    bsbl : bagle.model.BSBL
+        The BSBL model to plot. Photometry-only and
+        photometry+astrometry models are both supported.
+    duration : float, optional
+        Total time to plot, in units of ``tE``. The plotted window
+        is ``[t0 - duration/2 * tE, t0 + duration/2 * tE]``.
+        Default is 10.
+    time_steps : int, optional
+        Number of animation frames / time samples. The time array
+        has shape ``(time_steps,)``. Default is 300.
+    outfile : str, optional
+        Basename or path for the saved movie. A ``.mp4`` suffix is
+        appended if missing. Default is ``'bsbl_movie'``.
+
+    Returns
+    -------
+    None
+        The animation is written to ``outfile``.
+
+    Notes
+    -----
+    Layout, coordinates, and colors follow ``plot_PSBL`` /
+    ``animate_PSBL``, with extra artists for the second source and
+    its lensed images. East (RA) increases to the left. Positions
+    are in milliarcsec when ``bsbl.astrometryFlag`` is True,
+    otherwise in units of ``thetaE``. The right-hand panel title is
+    ``type(bsbl).__name__``.
+    """
+    data = _bsbl_geometry_arrays(bsbl, duration, time_steps)
+    t = data['t']
+    rL_1 = data['rL_1']
+    rL_2 = data['rL_2']
+    rS1 = data['rS1']
+    rS2 = data['rS2']
+    rS_img = data['rS_img']
+    rS_img_all = data['rS_img_all']
+    pS = data['pS']
+    ast_unit = data['ast_unit']
+    thetaE = data['thetaE']
+
+    n_images = rS_img_all.shape[2]
+    img_colors = ['purple', 'hotpink']
+
+    # Two-panel figure: astrometry (left) and photometry (right).
+    plt.close(4)
+    fig = plt.figure(4, figsize=(12, 4))
+    ax1 = plt.axes([0.08, 0.17, 0.3, 0.78])
+    ax2 = plt.axes([0.48, 0.17, 0.3, 0.78])
+    plt.subplots_adjust(wspace=0.44, left=0.1)
+
+    # Growing tracks and instantaneous markers, same roles as
+    # animate_PSBL plus a second source.
+    line_s1, = ax1.plot(
+        [], [], 'b--', alpha=0.5,
+        label='Source 1, unlensed',
+    )
+    line_s2, = ax1.plot(
+        [], [], linestyle='--', color='deepskyblue',
+        alpha=0.5, label='Source 2, unlensed',
+    )
+    line_l1, = ax1.plot(
+        [], [], 'k*', markersize=6, alpha=0.8,
+        label='Lens 1',
+    )
+    line_l2, = ax1.plot(
+        [], [], '*', color='grey', markersize=6,
+        alpha=0.8, label='Lens 2',
+    )
+    line_unres, = ax1.plot(
+        [], [], 'r-',
+        label='Sources, lensed, unresolved',
+    )
+    line_phot, = ax2.plot([], [], 'r-')
+
+    ttext = ax2.text(
+        0.98, 0.98, 'Time', fontsize=10,
+        horizontalalignment='right',
+        verticalalignment='top',
+        transform=ax2.transAxes,
+    )
+
+    artists = [
+        line_s1, line_s2, line_l1, line_l2,
+        line_unres, line_phot, ttext,
+    ]
+
+    # Instantaneous image markers: source 1 then source 2.
+    for ss in range(2):
+        for ii in range(n_images):
+            if ii == 0:
+                label = (
+                    'Source {0:d}, lensed images'.format(ss + 1)
+                )
+            else:
+                label = ''
+            line_tmp, = ax1.plot(
+                [], [], '.', markersize=6, alpha=0.7,
+                color=img_colors[ss], label=label,
+            )
+            artists.append(line_tmp)
+
+    # Einstein radius around the origin.
+    circ = plt.Circle(
+        (0, 0), thetaE, fill=False, color='black',
+        linestyle='--',
+    )
+    ax1.add_artist(circ)
+
+    ast_lim = np.max(
+        np.abs(
+            np.concatenate(
+                [rL_1, rL_2, rS1, rS2, rS_img]
+            ).flatten()
+        )
+    ) * 1.2
+
+    ax1.set_xlabel(r'$\Delta \alpha^*$ ' + ast_unit)
+    ax1.set_ylabel(r'$\Delta \delta$ ' + ast_unit)
+    ax1.set_xlim(ast_lim, -ast_lim)
+    ax1.set_ylim(-ast_lim, ast_lim)
+    ax1.legend(fontsize=7)
+    ax2.set_xlabel("Time (days)")
+    ax2.set_ylabel("Brightness (mag)")
+    ax2.set_xlim(t[0] - bsbl.t0, t[-1] - bsbl.t0)
+    ax2.set_ylim(np.nanmax(pS) + 0.05, np.nanmin(pS) - 0.05)
+
+    _draw_bsbl_param_panel(bsbl)
+
+    def update(i):
+        # Grow the unlensed source tracks and unresolved centroid.
+        line_s1.set_data(rS1[:i + 1, 0], rS1[:i + 1, 1])
+        line_s2.set_data(rS2[:i + 1, 0], rS2[:i + 1, 1])
+        line_l1.set_data([rL_1[i, 0]], [rL_1[i, 1]])
+        line_l2.set_data([rL_2[i, 0]], [rL_2[i, 1]])
+        line_unres.set_data(
+            rS_img[:i + 1, 0], rS_img[:i + 1, 1],
+        )
+        line_phot.set_data(t[:i + 1] - bsbl.t0, pS[:i + 1])
+        ttext.set_text(
+            'time = {0:.0f} days'.format(t[i] - bsbl.t0)
+        )
+
+        # Instantaneous image positions for both sources.
+        n_base = 7
+        for ss in range(2):
+            for jj in range(n_images):
+                x_jj = rS_img_all[i, ss, jj, 0]
+                y_jj = rS_img_all[i, ss, jj, 1]
+                k = n_base + ss * n_images + jj
+                if np.isfinite(x_jj) and np.isfinite(y_jj):
+                    artists[k].set_data([x_jj], [y_jj])
+                else:
+                    artists[k].set_data([], [])
+
+        return artists
+
+    ani = animation.FuncAnimation(
+        fig, update, frames=len(t), blit=True, interval=10,
+    )
+
+    # Save an mp4, matching animate_PSBL.
+    movie_path = outfile
+    if not movie_path.endswith('.mp4'):
+        movie_path = movie_path + '.mp4'
+    ani.save(movie_path, writer='ffmpeg')
+
+    return None
+
+def plot_BSBL_static(bsbl, duration=10, time_steps=300,
+                     outfile='bsbl_geometry_static.png'):
+    """
+    Make a static plot of a binary-source binary-lens event.
+
+    Draw all astrometric trajectories over a time window centered on
+    ``t0`` and mark the positions of both lenses, both unlensed
+    sources, the unresolved lensed centroid, and all lensed images
+    at ``t0``. Photometry is shown in a second panel with the ``t0``
+    epoch marked.
+
+    Parameters
+    ----------
+    bsbl : bagle.model.BSBL
+        The BSBL model to plot. Photometry-only and
+        photometry+astrometry models are both supported.
+    duration : float, optional
+        Total time to plot, in units of ``tE``. The plotted window
+        is ``[t0 - duration/2 * tE, t0 + duration/2 * tE]``.
+        Default is 10.
+    time_steps : int, optional
+        Number of time samples used to draw each trajectory.
+        The resulting time array has shape ``(time_steps,)``.
+        Default is 300.
+    outfile : str, optional
+        Filename for the saved figure. Default is
+        ``'bsbl_geometry_static.png'``.
+
+    Returns
+    -------
+    None
+        The figure is saved to ``outfile`` and displayed.
+
+    Notes
+    -----
+    This is the static counterpart to ``plot_BSBL``. Coordinate
+    conventions match ``plot_PSBL_static``: East (RA) increases to
+    the left, North (Dec) increases up, and positions are in
+    milliarcsec when ``bsbl.astrometryFlag`` is True, otherwise in
+    units of ``thetaE``. The second source and its images are drawn
+    in cyan / hotpink so they stay distinct from the primary.
+
+    Instantaneous positions at ``t0`` are taken from the trajectory
+    sample nearest to ``bsbl.t0``. Image tracks that are non-finite
+    at that sample are omitted from the snapshot markers. The
+    right-hand panel title is ``type(bsbl).__name__``.
+    """
+    data = _bsbl_geometry_arrays(bsbl, duration, time_steps)
+    t = data['t']
+    rL_1 = data['rL_1']
+    rL_2 = data['rL_2']
+    rS1 = data['rS1']
+    rS2 = data['rS2']
+    rS_img = data['rS_img']
+    rS_img_all = data['rS_img_all']
+    pS = data['pS']
+    ast_unit = data['ast_unit']
+    thetaE = data['thetaE']
+    t0idx = data['t0idx']
+
+    n_images = rS_img_all.shape[2]
+    img_colors = ['purple', 'hotpink']
+
+    # Two-panel figure: astrometry (left) and photometry (right).
+    plt.close(4)
+    plt.figure(4, figsize=(12, 4))
+    ax1 = plt.axes([0.08, 0.17, 0.3, 0.78])
+    ax2 = plt.axes([0.48, 0.17, 0.3, 0.78])
+    plt.subplots_adjust(wspace=0.44, left=0.1)
+
+    # Full trajectories for both sources and both lenses.
+    ax1.plot(
+        rS1[:, 0], rS1[:, 1], 'b--', alpha=0.5,
+        label='Source 1, unlensed',
+    )
+    ax1.plot(
+        rS2[:, 0], rS2[:, 1], linestyle='--',
+        color='deepskyblue', alpha=0.5,
+        label='Source 2, unlensed',
+    )
+    ax1.plot(
+        rL_1[:, 0], rL_1[:, 1], 'k-', alpha=0.5,
+        label='Lens 1',
+    )
+    ax1.plot(
+        rL_2[:, 0], rL_2[:, 1], color='grey', alpha=0.5,
+        label='Lens 2',
+    )
+    ax1.plot(
+        rS_img[:, 0], rS_img[:, 1], 'r-',
+        label='Sources, lensed, unresolved',
+    )
+
+    # Photometry vs time relative to t0.
+    ax2.plot(t - bsbl.t0, pS, 'r-')
+
+    # Image trajectories: one color per source.
+    for ss in range(2):
+        for ii in range(n_images):
+            if ii == 0:
+                label = (
+                    'Source {0:d}, lensed images'.format(ss + 1)
+                )
+            else:
+                label = ''
+            ax1.plot(
+                rS_img_all[:, ss, ii, 0],
+                rS_img_all[:, ss, ii, 1],
+                '.', markersize=2, alpha=0.5,
+                color=img_colors[ss], label=label,
+            )
+
+    # Positions of everything at t0, drawn on top of the tracks.
+    ax1.plot(
+        rS1[t0idx, 0], rS1[t0idx, 1],
+        'bo', markersize=6, zorder=5,
+        label='Positions at t0',
+    )
+    ax1.plot(
+        rS2[t0idx, 0], rS2[t0idx, 1],
+        'o', color='deepskyblue', markersize=6, zorder=5,
+    )
+    ax1.plot(
+        rL_1[t0idx, 0], rL_1[t0idx, 1],
+        'k*', markersize=10, zorder=5,
+    )
+    ax1.plot(
+        rL_2[t0idx, 0], rL_2[t0idx, 1],
+        '*', color='grey', markersize=10, zorder=5,
+    )
+    ax1.plot(
+        rS_img[t0idx, 0], rS_img[t0idx, 1],
+        'ro', markersize=6, zorder=5,
+    )
+
+    # Lensed-image positions at t0; skip images that are not real.
+    for ss in range(2):
+        for ii in range(n_images):
+            x_ii = rS_img_all[t0idx, ss, ii, 0]
+            y_ii = rS_img_all[t0idx, ss, ii, 1]
+            if np.isfinite(x_ii) and np.isfinite(y_ii):
+                ax1.plot(
+                    x_ii, y_ii, 'o', color=img_colors[ss],
+                    markersize=6, zorder=5,
+                )
+
+    # Mark t0 on the light curve (x-axis is t - t0).
+    ax2.axvline(0.0, color='k', linestyle='--', alpha=0.5)
+    ax2.plot(t[t0idx] - bsbl.t0, pS[t0idx], 'ro', zorder=5)
+
+    # Einstein radius around the origin.
+    circ = plt.Circle(
+        (0, 0), thetaE, fill=False, color='black',
+        linestyle='--',
+    )
+    ax1.add_artist(circ)
+
+    # Time-direction arrow at the end of the unresolved track.
+    arr_dx = (rS_img[-1, 0] - rS_img[-2, 0]) * 1e1
+    arr_dy = (rS_img[-1, 1] - rS_img[-2, 1]) * 1e1
+    ax1.arrow(
+        rS_img[-2, 0], rS_img[-2, 1], arr_dx, arr_dy,
+        color='red', width=0.1,
+    )
+
+    # Shared astrometric limits; RA increases to the left.
+    ast_lim = np.max(
+        np.abs(
+            np.concatenate(
+                [rL_1, rL_2, rS1, rS2, rS_img]
+            ).flatten()
+        )
+    ) * 1.2
+
+    ax1.set_xlabel(r'$\Delta \alpha^*$ ' + ast_unit)
+    ax1.set_ylabel(r'$\Delta \delta$ ' + ast_unit)
+    ax1.set_xlim(ast_lim, -ast_lim)
+    ax1.set_ylim(-ast_lim, ast_lim)
+    ax1.legend(fontsize=7)
+    ax2.set_xlabel("Time (days)")
+    ax2.set_ylabel("Brightness (mag)")
+    ax2.invert_yaxis()
+
+    _draw_bsbl_param_panel(bsbl)
+
+    # Save first so the file is written even if show() closes the fig.
+    plt.savefig(outfile)
+    plt.show()
+
+    return None
+
+def _bspl_geometry_arrays(bspl, duration, time_steps):
+    """
+    Compute BSPL trajectories used by ``plot_BSPL_static``.
+
+    Parameters
+    ----------
+    bspl : bagle.model.BSPL
+        Binary-source point-lens model.
+    duration : float
+        Total time window in units of ``tE``, centered on ``t0``.
+    time_steps : int
+        Number of time samples. The time array has shape
+        ``(time_steps,)``.
+
+    Returns
+    -------
+    data : dict
+        Mapping of array names to trajectories. ``rL``, ``rS1``,
+        ``rS2``, and ``rS_img`` have shape ``(time_steps, 2)``.
+        ``rS_img_all`` has shape ``(time_steps, 2, n_images, 2)``.
+        ``pS`` has shape ``(time_steps,)``. ``t0idx`` is the sample
+        nearest ``t0``.
+
+    Notes
+    -----
+    Astrometric models are converted from arcsec to milliarcsec.
+    Photometry-only models stay in units of ``thetaE``.
+    """
+    # Time window centered on t0, in days (MJD).
+    tmin = bspl.t0 - ((duration / 2.0) * bspl.tE)
+    tmax = bspl.t0 + ((duration / 2.0) * bspl.tE)
+    t = np.linspace(tmin, tmax, time_steps)
+
+    # Single point lens, shape (N_times, 2).
+    rL = np.array(bspl.get_lens_astrometry(t), copy=True, dtype=float)
+
+    # Unlensed source tracks, shape (N_times, 2 sources, 2).
+    rS_res = np.array(
+        bspl.get_resolved_source_astrometry_unlensed(t),
+        copy=True, dtype=float,
+    )
+    rS1 = rS_res[:, 0, :]
+    rS2 = rS_res[:, 1, :]
+
+    # Unresolved (flux-weighted) lensed centroid, shape (N_times, 2).
+    rS_img = np.array(bspl.get_astrometry(t), copy=True, dtype=float)
+
+    # Resolved images, shape (N_times, 2 sources, n_images, 2).
+    rS_img_all = np.array(
+        bspl.get_resolved_astrometry(t), copy=True, dtype=float,
+    )
+
+    # Unresolved light curve, shape (N_times,).
+    pS = np.array(bspl.get_photometry(t), copy=True, dtype=float)
+
+    # Convert arcsec -> mas for astrometric models.
+    if bspl.astrometryFlag:
+        rL *= 1e3
+        rS1 *= 1e3
+        rS2 *= 1e3
+        rS_img *= 1e3
+        rS_img_all *= 1e3
+        ast_unit = '(mas)'
+        thetaE = bspl.thetaE_amp
+    else:
+        ast_unit = r'($\theta_E$)'
+        thetaE = 1.0
+
+    t0idx = int(np.argmin(np.abs(t - bspl.t0)))
+
+    data = {
+        't': t,
+        'rL': rL,
+        'rS1': rS1,
+        'rS2': rS2,
+        'rS_img': rS_img,
+        'rS_img_all': rS_img_all,
+        'pS': pS,
+        'ast_unit': ast_unit,
+        'thetaE': thetaE,
+        't0idx': t0idx,
+    }
+
+    return data
+
+
+def _draw_bspl_param_panel(bspl):
+    """
+    Draw the BSPL parameter list on the current figure.
+
+    Parameters
+    ----------
+    bspl : bagle.model.BSPL
+        Model whose attributes are printed on the right-hand panel.
+        The panel title is ``type(bspl).__name__``.
+
+    Returns
+    -------
+    None
+    """
+    _draw_model_class_title(bspl)
+
+    fmt_dict = {
+        'mL': r'M$_L$ = {0:.3f} M$_\odot$',
+        'sep': r'sep$_S$ = {0:.3f} mas',
+        'alpha': r'$\alpha_S$ = {0:.1f} deg',
+        'beta': r'$\beta$ = {0:.1f} mas',
+        'xS0': r'x$_{{S0}}$ = [{0:.4f}, {1:.4f}] arcsec',
+        'muL': r'$\mu_L$ = [{0:.2f}, {1:.2f}] mas/yr',
+        'muS': r'$\mu_S$ = [{0:.2f}, {1:.2f}] mas/yr',
+        'dL': r'd$_L$ = {0:.0f} pc',
+        'dS': r'd$_S$ = {0:.0f} pc',
+        'tE': r't$_E$ = {0:.1f} days',
+        'u0': r'u$_0$ = {0:.3f}',
+        'mag_src_pri': r'mag$_{{S1}}$ = ',
+        'mag_src_sec': r'mag$_{{S2}}$ = ',
+        'b_sff': r'b$_{{sff}}$ = ',
+    }
+
+    if bspl.astrometryFlag:
+        print_vars = [
+            'mL', 'sep', 'alpha', 'beta',
+            'muL', 'muS', 'dL', 'dS',
+            'mag_src_pri', 'mag_src_sec', 'b_sff',
+        ]
+    else:
+        print_vars = [
+            'tE', 'u0', 'sep',
+            'mag_src_pri', 'mag_src_sec', 'b_sff',
+        ]
+
+    list_pars = ('mag_src_pri', 'mag_src_sec', 'b_sff')
+    dy = 0.045
+    row = 0
+
+    for par in print_vars:
+        if not hasattr(bspl, par):
+            continue
+        if par not in fmt_dict:
+            continue
+
+        fmt = fmt_dict[par]
+        val = getattr(bspl, par)
+
+        if par in list_pars:
+            val = np.atleast_1d(val)
+            fmt += '[' + '{:.2f} ' * len(val) + ']'
+
+        if isinstance(val, (list, np.ndarray)):
+            txt = fmt.format(*np.ravel(val))
+        else:
+            txt = fmt.format(val)
+
+        plt.figtext(
+            0.805, 0.75 - row * dy, txt, fontsize=10,
+        )
+        row += 1
+
+    return None
+
+
+def plot_BSPL_static(bspl, duration=10, time_steps=300,
+                     outfile='bspl_geometry_static.png'):
+    """
+    Make a static plot of a binary-source point-lens event.
+
+    Draw all astrometric trajectories over a time window centered on
+    ``t0`` and mark the positions of the lens, both unlensed sources,
+    the unresolved lensed centroid, and all lensed images at ``t0``.
+    Photometry is shown in a second panel with the ``t0`` epoch marked.
+
+    Parameters
+    ----------
+    bspl : bagle.model.BSPL
+        The BSPL model to plot. Photometry-only and
+        photometry+astrometry models are both supported.
+    duration : float, optional
+        Total time to plot, in units of ``tE``. The plotted window
+        is ``[t0 - duration/2 * tE, t0 + duration/2 * tE]``.
+        Default is 10.
+    time_steps : int, optional
+        Number of time samples used to draw each trajectory.
+        The resulting time array has shape ``(time_steps,)``.
+        Default is 300.
+    outfile : str, optional
+        Filename for the saved figure. Default is
+        ``'bspl_geometry_static.png'``.
+
+    Returns
+    -------
+    None
+        The figure is saved to ``outfile`` and displayed.
+
+    Notes
+    -----
+    Coordinate conventions match ``plot_PSBL_static``: East (RA)
+    increases to the left, North (Dec) increases up, and positions
+    are in milliarcsec when ``bspl.astrometryFlag`` is True,
+    otherwise in units of ``thetaE``. The second source and its
+    images are drawn in cyan / hotpink so they stay distinct from
+    the primary.
+
+    Instantaneous positions at ``t0`` are taken from the trajectory
+    sample nearest to ``bspl.t0``. Image tracks that are non-finite
+    at that sample are omitted from the snapshot markers. The
+    right-hand panel title is ``type(bspl).__name__``.
+    """
+    data = _bspl_geometry_arrays(bspl, duration, time_steps)
+    t = data['t']
+    rL = data['rL']
+    rS1 = data['rS1']
+    rS2 = data['rS2']
+    rS_img = data['rS_img']
+    rS_img_all = data['rS_img_all']
+    pS = data['pS']
+    ast_unit = data['ast_unit']
+    thetaE = data['thetaE']
+    t0idx = data['t0idx']
+
+    n_images = rS_img_all.shape[2]
+    img_colors = ['purple', 'hotpink']
+
+    # Two-panel figure: astrometry (left) and photometry (right).
+    plt.close(5)
+    plt.figure(5, figsize=(12, 4))
+    ax1 = plt.axes([0.08, 0.17, 0.3, 0.78])
+    ax2 = plt.axes([0.48, 0.17, 0.3, 0.78])
+    plt.subplots_adjust(wspace=0.44, left=0.1)
+
+    # Full trajectories: two sources, one lens.
+    ax1.plot(
+        rS1[:, 0], rS1[:, 1], 'b--', alpha=0.5,
+        label='Source 1, unlensed',
+    )
+    ax1.plot(
+        rS2[:, 0], rS2[:, 1], linestyle='--',
+        color='deepskyblue', alpha=0.5,
+        label='Source 2, unlensed',
+    )
+    ax1.plot(
+        rL[:, 0], rL[:, 1], 'k-', alpha=0.5,
+        label='Lens',
+    )
+    ax1.plot(
+        rS_img[:, 0], rS_img[:, 1], 'r-',
+        label='Sources, lensed, unresolved',
+    )
+
+    # Photometry vs time relative to t0.
+    ax2.plot(t - bspl.t0, pS, 'r-')
+
+    # Image trajectories: one color per source.
+    for ss in range(2):
+        for ii in range(n_images):
+            if ii == 0:
+                label = (
+                    'Source {0:d}, lensed images'.format(ss + 1)
+                )
+            else:
+                label = ''
+            ax1.plot(
+                rS_img_all[:, ss, ii, 0],
+                rS_img_all[:, ss, ii, 1],
+                '.', markersize=2, alpha=0.5,
+                color=img_colors[ss], label=label,
+            )
+
+    # Positions of everything at t0, drawn on top of the tracks.
+    ax1.plot(
+        rS1[t0idx, 0], rS1[t0idx, 1],
+        'bo', markersize=6, zorder=5,
+        label='Positions at t0',
+    )
+    ax1.plot(
+        rS2[t0idx, 0], rS2[t0idx, 1],
+        'o', color='deepskyblue', markersize=6, zorder=5,
+    )
+    ax1.plot(
+        rL[t0idx, 0], rL[t0idx, 1],
+        'k*', markersize=10, zorder=5,
+    )
+    ax1.plot(
+        rS_img[t0idx, 0], rS_img[t0idx, 1],
+        'ro', markersize=6, zorder=5,
+    )
+
+    # Lensed-image positions at t0; skip images that are not real.
+    for ss in range(2):
+        for ii in range(n_images):
+            x_ii = rS_img_all[t0idx, ss, ii, 0]
+            y_ii = rS_img_all[t0idx, ss, ii, 1]
+            if np.isfinite(x_ii) and np.isfinite(y_ii):
+                ax1.plot(
+                    x_ii, y_ii, 'o', color=img_colors[ss],
+                    markersize=6, zorder=5,
+                )
+
+    # Mark t0 on the light curve (x-axis is t - t0).
+    ax2.axvline(0.0, color='k', linestyle='--', alpha=0.5)
+    ax2.plot(t[t0idx] - bspl.t0, pS[t0idx], 'ro', zorder=5)
+
+    circ = plt.Circle(
+        (0, 0), thetaE, fill=False, color='black',
+        linestyle='--',
+    )
+    ax1.add_artist(circ)
+
+    # Time-direction arrow at the end of the unresolved track.
+    arr_dx = (rS_img[-1, 0] - rS_img[-2, 0]) * 1e1
+    arr_dy = (rS_img[-1, 1] - rS_img[-2, 1]) * 1e1
+    ax1.arrow(
+        rS_img[-2, 0], rS_img[-2, 1], arr_dx, arr_dy,
+        color='red', width=0.1,
+    )
+
+    # Shared astrometric limits; RA increases to the left.
+    ast_lim = np.max(
+        np.abs(np.concatenate([rL, rS1, rS2, rS_img]).flatten())
+    ) * 1.2
+
+    ax1.set_xlabel(r'$\Delta \alpha^*$ ' + ast_unit)
+    ax1.set_ylabel(r'$\Delta \delta$ ' + ast_unit)
+    ax1.set_xlim(ast_lim, -ast_lim)
+    ax1.set_ylim(-ast_lim, ast_lim)
+    ax1.legend(fontsize=7)
+    ax2.set_xlabel("Time (days)")
+    ax2.set_ylabel("Brightness (mag)")
+    ax2.invert_yaxis()
+
+    _draw_bspl_param_panel(bspl)
+
+    # Save first so the file is written even if show() closes the fig.
+    plt.savefig(outfile)
+    plt.show()
+
+    return None
 
 def plot_critical_curves(critical_curves, thetaE_amp = None, ax = None, show = True):
     """
