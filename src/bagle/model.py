@@ -623,7 +623,77 @@ class PSPL(ABC):
         pos_unlensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
 
         return pos_unlensed
-    
+
+    def get_astrometry_unlensed_noparallax(self, t, filt_idx=0):
+        """
+        Get the unlensed, flux-weighted source+lens astrometry with only the
+        rectilinear proper-motion motion (no parallax).
+
+        Equivalent to :meth:`get_astrometry_unlensed` evaluated with parallax
+        disabled. Useful as the linear baseline to subtract when isolating
+        parallax (and lensing) signals.
+
+        Parameters
+        ----------
+        t : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+
+        Returns
+        -------
+        pos_nopar : numpy array, dtype=float, shape = [len(t), 2]
+            Unlensed positions in arcsec with parallax omitted.
+        """
+        old_par = self.parallaxFlag
+        old_ref = getattr(self, 'ref_frame_parallax_flag', False)
+        self.parallaxFlag = False
+        self.ref_frame_parallax_flag = False
+        try:
+            pos_nopar = self.get_astrometry_unlensed(t, filt_idx=filt_idx)
+        finally:
+            self.parallaxFlag = old_par
+            self.ref_frame_parallax_flag = old_ref
+
+        return pos_nopar
+
+    def get_astrometry_pm_removed(self, t, filt_idx=0, unlensed=False):
+        """
+        Get astrometry with the rectilinear proper motion subtracted, but with
+        parallax retained. Optionally also remove microlensing by using the
+        unlensed astrometry.
+
+        Computed as ``get_astrometry[(_unlensed)] - get_astrometry_unlensed_noparallax``,
+        i.e. the full no-parallax unlensed trajectory (flux-weighted source+lens
+        linear motion) is removed, leaving parallax and (unless ``unlensed``)
+        microlensing deflection.
+
+        Parameters
+        ----------
+        t : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+        unlensed : bool, optional
+            If False (default), start from :meth:`get_astrometry` so the
+            result includes parallax and microlensing deflection.
+            If True, start from :meth:`get_astrometry_unlensed` so the
+            result is the unlensed parallax motion only.
+
+        Returns
+        -------
+        pos_pm_removed : numpy array, dtype=float, shape = [len(t), 2]
+            Positions in arcsec with proper motion removed.
+            Second dimension is [RA, Dec].
+        """
+        if unlensed:
+            pos = self.get_astrometry_unlensed(t, filt_idx=filt_idx)
+        else:
+            pos = self.get_astrometry(t, filt_idx=filt_idx)
+
+        pos_linear = self.get_astrometry_unlensed_noparallax(t, filt_idx=filt_idx)
+
+        return pos - pos_linear
 
     def get_resolved_amplification(self, t, filt_idx=0):
         """
