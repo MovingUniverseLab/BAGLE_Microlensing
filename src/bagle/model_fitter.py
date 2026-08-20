@@ -1471,6 +1471,72 @@ class MicrolensSolver(Solver):
 
         return results_list
 
+    def plot_ultranest_style(self, sim_vals=None, fit_vals=None, remake_fits=False,
+                             dims=None, kde=True):
+        """Same as `plot_dynesty_style`, but make the trace plot with
+        UltraNest's plotting code instead. UltraNest's `traceplot` takes
+        the same (samples, logvol, weights) sequences that
+        `load_mnest_results_for_dynesty` already returns.
+
+        Parameters
+        ----------
+        sim_vals : dict
+            Dictionary of simulated input or comparison values to
+            overplot on posteriors.
+
+        fit_vals : str
+            Choices are 'map' (maximum a posteriori), 'mean', or
+            'maxl' (maximum likelihood)
+
+        """
+        from ultranest.plot import traceplot as un_traceplot
+
+        res = self.load_mnest_results_for_dynesty(remake_fits=remake_fits)
+        smy = self.load_mnest_summary(remake_fits=remake_fits)
+
+        truths = None
+
+        # Sort the parameters into the right order.
+        if sim_vals != None:
+            truths = []
+            for param in self.all_param_names:
+                if param in sim_vals:
+                    truths.append(sim_vals[param])
+                else:
+                    truths.append(None)
+
+        if fit_vals == 'map':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['MAP_' + param][0])  # global best fit.
+
+        if fit_vals == 'mean':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['Mean_' + param][0])  # global best fit.
+
+        if fit_vals == 'maxl':
+            truths = []
+            for param in self.all_param_names:
+                truths.append(smy['MaxLike_' + param][0])  # global best fit.
+
+        # UltraNest's traceplot has no `dims` keyword, so trim the samples.
+        if dims is not None:
+            labels = [self.all_param_names[i] for i in dims]
+            res = dict(res, samples=res['samples'][:, dims])
+            if truths is not None:
+                truths = [truths[i] for i in dims]
+        else:
+            labels = self.all_param_names
+
+        un_traceplot(results=res, labels=labels,
+                     show_titles=True, truths=truths, kde=kde)
+        plt.subplots_adjust(hspace=0.7)
+        plt.savefig(self.outputfiles_basename + 'un_trace.png')
+        plt.close()
+
+        return
+
     def plot_dynesty_style(self, sim_vals=None, fit_vals=None, remake_fits=False, dims=None,
                            traceplot=True, cornerplot=True, kde=True):
         """
@@ -1785,6 +1851,12 @@ class MicrolensSolver(Solver):
 
                 fig_list[9].savefig(
                     self.outputfiles_basename + 'astr_longtime_remove_pm' + str(i + 1) + suffix + '.png')
+
+                fig_list[10].savefig(
+                    self.outputfiles_basename + 'astr_time_RA_remove_pm_keep_par_' + str(i + 1) + suffix + '.png')
+
+                fig_list[11].savefig(
+                    self.outputfiles_basename + 'astr_time_Dec_remove_pm_keep_par_' + str(i + 1) + suffix + '.png')
 
                 for fig in fig_list:
                     plt.close(fig)
@@ -4315,6 +4387,70 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     plt.axis('equal')
     plt.xlabel(r'$\Delta \alpha^*$ (mas) - $\Delta \alpha^*_{unlensed}$')
     plt.ylabel(r'$\Delta \delta$ (mas) - $\Delta \delta_{unlensed}$')
+
+    #####
+    # Proper motion subtracted, parallax kept (and lensing kept).
+    # Unlike the "remove_pm" / unlensed-subtracted panels above (which remove
+    # PM + parallax), subtract only the no-parallax unlensed trajectory.
+    #####
+    p_linear_tdat = model.get_astrometry_unlensed_noparallax(dat_t, filt_idx=filt_index)
+    x_keep_par = data['xpos' + str(data_filt_index + 1)] - p_linear_tdat[:, 0]
+    y_keep_par = data['ypos' + str(data_filt_index + 1)] - p_linear_tdat[:, 1]
+
+    if (x_keep_par.ndim == 2 and x_keep_par.shape[0] == 1):
+        x_keep_par = x_keep_par.reshape(len(x_keep_par[0]))
+        y_keep_par = y_keep_par.reshape(len(y_keep_par[0]))
+
+    p_mod_keep_par_tmod = model.get_astrometry_pm_removed(t_mod, filt_idx=filt_index)
+    if input_model is not None:
+        p_in_keep_par_tmod = input_model.get_astrometry_pm_removed(t_mod, filt_idx=filt_index)
+
+    p_tr_keep_par_tmod = []
+    for tt in range(N_traces):
+        p_tr_keep_par_tmod.append(
+            trace_models[tt].get_astrometry_pm_removed(t_mod, filt_idx=filt_index))
+
+    # AST FIG 11: RA vs time -- PM removed, parallax kept
+    plt.close(n_phot_sets + 11)
+    fig = plt.figure(n_phot_sets + 11, figsize=(10, 10))  # PLOT 11
+    fig_list.append(fig)
+    plt.clf()
+
+    plt.errorbar(dat_t, x_keep_par * 1e3,
+                 yerr=dat_xe, fmt='k.', label='Data')
+    plt.plot(t_mod, p_mod_keep_par_tmod[:, 0] * 1e3, 'r-', label='Model')
+
+    for tt in range(N_traces):
+        plt.plot(t_mod, p_tr_keep_par_tmod[tt][:, 0] * 1e3,
+                 color='c', alpha=0.5, linewidth=1, zorder=-1)
+
+    if input_model is not None:
+        plt.plot(t_mod, p_in_keep_par_tmod[:, 0] * 1e3, 'g-', label='Input')
+
+    plt.xlabel('t - t0 (days)')
+    plt.ylabel(r'$\Delta \alpha^*$ - linear PM (mas)')
+    plt.legend()
+
+    # AST FIG 12: Dec vs time -- PM removed, parallax kept
+    plt.close(n_phot_sets + 12)
+    fig = plt.figure(n_phot_sets + 12, figsize=(10, 10))  # PLOT 12
+    fig_list.append(fig)
+    plt.clf()
+
+    plt.errorbar(dat_t, y_keep_par * 1e3,
+                 yerr=dat_ye, fmt='k.', label='Data')
+    plt.plot(t_mod, p_mod_keep_par_tmod[:, 1] * 1e3, 'r-', label='Model')
+
+    for tt in range(N_traces):
+        plt.plot(t_mod, p_tr_keep_par_tmod[tt][:, 1] * 1e3,
+                 color='c', alpha=0.5, linewidth=1, zorder=-1)
+
+    if input_model is not None:
+        plt.plot(t_mod, p_in_keep_par_tmod[:, 1] * 1e3, 'g-', label='Input')
+
+    plt.xlabel('t - t0 (days)')
+    plt.ylabel(r'$\Delta \delta$ - linear PM (mas)')
+    plt.legend()
 
     return fig_list
 

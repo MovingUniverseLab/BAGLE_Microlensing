@@ -16,3 +16,10 @@ PSBL Developer Classes
    PSBL_Param.rst
    PSBL_Data.rst
    PSBL_Parallax.rst
+
+Example notebooks
+=================
+Static geometry plots of PSBL models with Keplerian orbits and
+parallax, and with parallax but no orbital motion
+(``plot_PSBL_static``), are in `example_plot_PSBL_BSBL.ipynb
+<https://github.com/MovingUniverseLab/BAGLE_Microlensing/blob/dev/docs/notebooks/example_plot_PSBL_BSBL.ipynb>`_.
