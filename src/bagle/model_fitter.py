@@ -197,7 +197,7 @@ class MicrolensSolver(Solver):
         'piE_N': ('make_gen', -1, 1),
         'piEN_piEE' : ('make_gen', -10, 10),
         'thetaE': ('make_lognorm_gen', 0, 1),
-        'log10_thetaE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
+        'log10_thetaE': ('make_truncnorm_gen', 0.02, 0.35, -4, 4), #Updated prior from PopSyCLE runs in Abrams+ 2025
         'log_piE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
         'pi_ref_frame': ('make_norm_gen', 0.0, 1.0),
         'q': ('make_gen', 0.001, 1),
@@ -2457,39 +2457,41 @@ class MicrolensSolverWeighted(MicrolensSolver):
         # All the photometry is weighted equally to the astrometry.
         # The relative weights between the photometric data sets don't change.
         #####
-        if weights == 'phot_ast_equal':
-            denom = n_ast_data * self.n_phot_sets + n_phot_data * self.n_ast_sets
+        if isinstance(weights, str):
+            if weights == 'phot_ast_equal':
+                denom = n_ast_data * self.n_phot_sets + n_phot_data * self.n_ast_sets
             
-            # Photometry weights
-            for i in range(self.n_phot_sets):
-                weights_arr[i] = n_sets * n_ast_data / denom
+                # Photometry weights
+                for i in range(self.n_phot_sets):
+                    weights_arr[i] = n_sets * n_ast_data / denom
 
-            # Astrometry weights
-            for i in range(self.n_ast_sets):
-                weights_arr[self.n_phot_sets + i] = n_sets * n_phot_data / denom
+                # Astrometry weights
+                for i in range(self.n_ast_sets):
+                    weights_arr[self.n_phot_sets + i] = n_sets * n_phot_data / denom
             
-            return weights_arr
+                return weights_arr
         
         #####
         # Each data set is given equal weights, regardless of photometry
         # or astrometry.
         #####
-        if weights == 'all_equal':
-            weights_sum = 0.0
+        if isinstance(weights, str):
+            if weights == 'all_equal':
+                weights_sum = 0.0
             
-            # Photometry weights
-            for i in range(self.n_phot_sets):
-                n_i = len(self.data['t_phot' + str(i + 1)])
-                weights_arr[i] = (1.0 / n_i)
-                weights_sum += (1.0 / n_i)
+                # Photometry weights
+                for i in range(self.n_phot_sets):
+                    n_i = len(self.data['t_phot' + str(i + 1)])
+                    weights_arr[i] = (1.0 / n_i)
+                    weights_sum += (1.0 / n_i)
                 
-            # Astrometry weight
-            for i in range(self.n_ast_sets):
-                n_i = 2*len(self.data['t_ast' + str(i + 1)])
-                weights_arr[self.n_phot_sets + i] = (1.0 / n_i)
-                weights_sum += (1.0 / n_i)
+                # Astrometry weight
+                for i in range(self.n_ast_sets):
+                    n_i = 2*len(self.data['t_ast' + str(i + 1)])
+                    weights_arr[self.n_phot_sets + i] = (1.0 / n_i)
+                    weights_sum += (1.0 / n_i)
 
-            return weights_arr * n_sets / weights_sum
+                return weights_arr * n_sets / weights_sum
 
         #####
         # Custom weights.
