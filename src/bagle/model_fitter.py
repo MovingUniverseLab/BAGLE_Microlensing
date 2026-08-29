@@ -1972,7 +1972,7 @@ class MicrolensSolver(Solver):
 
         return
 
-    def print_likelihood(self, params='best', verbose=True):
+    def print_likelihood(self, params='best', def_best='maxl', verbose=True):
         """
         Parameters
         ----------
@@ -1982,7 +1982,7 @@ class MicrolensSolver(Solver):
                 with the model parameters to use.
         """
         if params == 'best':
-            params = self.get_best_fit()
+            params = self.get_best_fit(def_best=def_best)
 
         lnL = self.log_likely(params, verbose)
         chi2 = self.calc_chi2(params, verbose)
@@ -1992,7 +1992,7 @@ class MicrolensSolver(Solver):
 
         return
 
-    def calc_chi2(self, params='best', verbose=False):
+    def calc_chi2(self, params='best', def_best='maxl', verbose=False):
         """
         Parameters
         ----------
@@ -2002,7 +2002,7 @@ class MicrolensSolver(Solver):
             with the model parameters to use.
         """
         if (type(params) == 'str') and (params == 'best'):
-            params = self.get_best_fit()
+            params = self.get_best_fit(def_best=def_best)
 
         # Get likelihoods.
         pspl = self.get_model(params)
@@ -2108,7 +2108,7 @@ class MicrolensSolver(Solver):
         return chi2
 
 
-    def calc_chi2_manual(self, params='best', verbose=False):
+    def calc_chi2_manual(self, params='best', def_best='maxl', verbose=False):
         """
         Parameters
         ----------
@@ -2118,7 +2118,7 @@ class MicrolensSolver(Solver):
             with the model parameters to use.
         """
         if params == 'best':
-            params = self.get_best_fit()
+            params = self.get_best_fit(def_best=def_best)
 
         pspl = self.get_model(params)
 
@@ -2291,7 +2291,7 @@ class MicrolensSolver(Solver):
                 plt.savefig(self.outputfiles_basename + 'chi_m_cdf_{0}.png'.format(ii))
                 plt.close()
 
-    def get_residual(self, params='best'):
+    def get_residual(self, params='best', def_best='maxl'):
         """
         This is basically copied from calc_chi2.
         
@@ -2303,7 +2303,7 @@ class MicrolensSolver(Solver):
             with the model parameters to use.
         """
         if params == 'best':
-            params = self.get_best_fit()
+            params = self.get_best_fit(def_best=def_best)
 
         # Get model.
         pspl = self.get_model(params)
@@ -2566,7 +2566,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
 
         return lnL_phot
         
-    def calc_chi2(self, params='best', verbose=False):
+    def calc_chi2(self, params='best', def_best='maxl', verbose=False):
         """
         Parameters
         ----------
@@ -2576,7 +2576,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
             with the model parameters to use.
         """
         if params == 'best':
-            params = self.get_best_fit()
+            params = self.get_best_fit(def_best=def_best)
 
         # Get likelihoods.
         pspl = self.get_model(params)
@@ -2681,7 +2681,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
 
         return chi2
 
-    def calc_chi2_manual(self, params='best', verbose=False):
+    def calc_chi2_manual(self, params='best', def_best='maxl', verbose=False):
         """
         Parameters
         ----------
@@ -2693,7 +2693,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
         raise NotImplementedError("calc_chi2_manual not yet implemented for weighted fits")
         
         if params == 'best':
-            params = self.get_best_fit()
+            params = self.get_best_fit(def_best=def_best)
 
         pspl = self.get_model(params)
 
