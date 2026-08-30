@@ -22178,8 +22178,105 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
         self.radiusS = radiusS
                       
         return 
+
+
+class FSPL_PhotAstromParam3(PSPL_PhotAstromParam3):
+    """FSPL model for photometry and astrometry -- photom-like parameterization
+
+    Finite Source Point Lens model for microlensing. This model includes
+    proper motions of the source and the source position on the sky.
+    It is the same as FSPL_PhotAstromParam2 except it fits for
+    log10(thetaE) instead of thetaE and mag_base instead of mag_src.
+
+    Attributes
+    ----------
+    t0: float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in Solar System barycentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
+    u0_amp: float 
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. Can be
         
-                     
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+          * negative (u0_amp < 0 when u0_hat[0] < 0).
+          
+    tE: float 
+        Einstein crossing time (days).
+    log10_thetaE: float
+        Log10 of the size of the Einstein radius in (mas).
+    piS: float
+        Amplitude of the parallax (1AU/dS) of the source. (mas)
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    xS0_E: float
+        RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    xS0_N: float
+        Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+    muS_E: float
+        RA Source proper motion (mas/yr)
+    muS_N: float
+        Source proper motion (mas/yr)
+    radiusS: float
+        Projected radius of the source star in arcsec on the sky plane.
+    b_sff: numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base: numpy array or list
+        Photometric magnitude of the base. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    n_outline: int (optional)
+        Number of boundary points to use when approximating the source outline.
+        Calculation time scales approximately linearly with 'n_outline'.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_src
+        or b_sff (e.g. other photometric parameters).
+    """
+
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+                          'piE_E', 'piE_N',
+                          'xS0_E', 'xS0_N',
+                          'muS_E', 'muS_N', 'radiusS']
+    phot_param_names = ['b_sff', 'mag_base']
+    additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N',
+                              'mag_src']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+    LeeFlag = False
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 radiusS,
+                 b_sff, mag_base, n_outline=50,
+                 raL=None, decL=None, obsLocation='earth'):
+
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
+                     piE_E, piE_N,
+                     xS0_E, xS0_N,
+                     muS_E, muS_N,
+                     b_sff, mag_base,
+                     raL=raL, decL=decL, obsLocation=obsLocation)
+
+        self.n_outline = n_outline
+        self.radiusS = radiusS
+
+        return
+
 
 #
 # IN PROGRESS
@@ -25804,6 +25901,29 @@ class FSPL_PhotAstrom_noPar_Param2(ModelClassABC,
                                    FSPL_PhotAstrom,
                                    FSPL_noParallax,
                                    FSPL_PhotAstromParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+# FSPL_parallax
+@inheritdocstring
+class FSPL_PhotAstrom_Par_Param3(ModelClassABC,
+                                 FSPL_PhotAstrom,
+                                 FSPL_Parallax,
+                                 FSPL_PhotAstromParam3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class FSPL_PhotAstrom_noPar_Param3(ModelClassABC,
+                                   FSPL_PhotAstrom,
+                                   FSPL_noParallax,
+                                   FSPL_PhotAstromParam3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
