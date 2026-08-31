@@ -20681,9 +20681,12 @@ class FSPL(PSPL):
 
         # Shape = [len(t), N_outline, [+,-], [E,N]]
         def im_pos1(w, z1):
-            u = w - z1                
+            u = w - z1
+            # A source-boundary point sitting on the lens has no unique image.
+            # Nudge it off the origin so 1/|u|^2 stays finite.
+            u = np.where(np.abs(u) < 1e-15, 1e-15 + 0j, u)
             z_major = u * (1 + np.sqrt(1 + 4 / np.abs(u)**2)) / 2
-            return z_major + z1       
+            return z_major + z1
         
         def im_pos_all(w, z1):
             z_major = im_pos1(w, z1)
@@ -20691,17 +20694,14 @@ class FSPL(PSPL):
             return z_major, z_minor
         
         def detJac(z, z1):
-            return 1.0 - 1.0 / np.abs(z - z1)**4
+            dz = np.abs(z - z1)
+            dz = np.where(dz < 1e-15, 1e-15, dz)
+            return 1.0 - 1.0 / dz**4
         
-        days_in_a_year = 365.25
+        n_times = len(t)
 
         # Put everything in units of thetaE
-        xS0 = (self.xS0 * 1e3) / self.thetaE_amp   # unit = thetaE
         radiusS = self.radiusS * 1e3 / self.thetaE_amp # unit = thetaE
-
-        # Convert to imaginary numbers with East = real, North = imag
-        xS0_cplx = xS0[0] + 1j * xS0[1]
-        muS_cplx = (self.muS[0] + 1j * self.muS[1]) / self.thetaE_amp
 
         maxsamps = 1000
         
@@ -20709,148 +20709,163 @@ class FSPL(PSPL):
             maxsamps = maxsamps * 5
 
         # wIms is the lensed image positions for the + and - image.
-        # Shape = N_times, N_outline, [+/-]
-        wIms   = np.zeros((len(t), maxsamps, 2), dtype=complex)
-        counts = np.zeros(len(t), dtype=int)
-        thetas = np.zeros((len(t), maxsamps))
+        # Shape = N_times, maxsamps, [+/-]
+        # Unused slots stay empty until they are filled by repeating the
+        # first contour point (not 0 or NaN — those create spikes to the
+        # origin or poison the contour sums).
+        wIms = np.empty((n_times, maxsamps, 2), dtype=complex)
+        counts = np.zeros(n_times, dtype=int)
             
         dtheta = 2 * np.pi / self.n_outline
-        lens_asts = self.get_lens_astrometry(t) / self.thetaE_amp  * 1e3 #thetaE
+        # Include parallax (and the same reference frame) as the rest of the model.
+        # Linear muS * (t-t0) omitted source parallax and put the limb crossing
+        # at the wrong time.
+        lens_asts = self.get_lens_astrometry(t, filt_idx=filt_idx) / self.thetaE_amp * 1e3
+        xS_unl = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx) / self.thetaE_amp * 1e3
 
-        t_year = (t - self.t0) / days_in_a_year
-
-        # Calculate the number of points that should be used
-        # to do the contour integration with good accuracy.
         z1 = lens_asts[:, 0] + 1j * lens_asts[:, 1]
-        w_center = xS0_cplx + t_year * muS_cplx
+        w_center = xS_unl[:, 0] + 1j * xS_unl[:, 1]
 
-        for i in range(len(t)):
-            theta = 0.0
-            count = 0
-            while (theta < 2*np.pi) and (count < maxsamps):
-                w_now = w_center[i] + radiusS * np.exp(1j * theta)
-            
-                zp, zm = im_pos_all(w_now, z1[i])
-                wIms[i, count, 0] = zp
-                wIms[i, count, 1] = zm
-                thetas[i, count] = theta
-            
-                detp = np.abs(detJac(zp, z1[i]))
-                detm = np.abs(detJac(zm, z1[i]))
-                theta += dtheta * min(detp, detm)
-                count += 1
-        
-            counts[i] = count
-
-        # Digitize counts into a few unique bins. (N_c_bins
-        # This speeds up the calculations later.
-        # cmin = counts.min()
-        # cmax = counts.max()
-        # N_c_bins = 4
-        # cnt_bins = np.geomspace(cmin, cmax+1, num=N_c_bins).astype('int')
-        # cnt_bins = np.insert(cnt_bins, 0, 1)  # append a left bin in prep for digitize
+        # Adaptive stepping is sequential in angle, but independent across
+        # times. Loop over sample index and update only the times that have
+        # not yet closed the source boundary.
         #
-        # idx = np.digitize(counts, cnt_bins, right=True)
-        # counts = cnt_bins[idx]
+        # When the lens crosses the source limb, |det J| -> 0 and a purely
+        # adaptive step can burn maxsamps before theta reaches 2π. Closing
+        # that truncated path makes a sharp, fake dip in magnification.
+        # Floor the step so the remaining angle always fits in the remaining
+        # samples; extra edges stay zero-length via first-point padding.
+        theta = np.zeros(n_times, dtype=float)
+        active = np.ones(n_times, dtype=bool)
+        two_pi = 2.0 * np.pi
+        for k in range(maxsamps):
+            idx = np.flatnonzero(active)
+            if idx.size == 0:
+                break
+
+            w_now = w_center[idx] + radiusS * np.exp(1j * theta[idx])
+            zp, zm = im_pos_all(w_now, z1[idx])
+            wIms[idx, k, 0] = zp
+            wIms[idx, k, 1] = zm
+            counts[idx] = k + 1
+
+            n_steps_left = maxsamps - k - 1
+            if n_steps_left <= 0:
+                break
+
+            detp = np.abs(detJac(zp, z1[idx]))
+            detm = np.abs(detJac(zm, z1[idx]))
+            natural_step = dtheta * np.minimum(detp, detm)
+            remaining = np.maximum(two_pi - theta[idx], 0.0)
+            min_step = remaining / n_steps_left
+            theta[idx] += np.maximum(natural_step, min_step)
+            active[idx] = theta[idx] < two_pi
 
         # Convert back to arcsec
         wIms = (wIms * self.thetaE_amp) * 1e-3
 
-        n_times = len(counts)
-        Aplus = np.zeros(n_times, dtype=float)
-        Aminus = np.zeros(n_times, dtype=float)
-        Cplus_x = np.zeros(n_times, dtype=float)
-        Cplus_y = np.zeros(n_times, dtype=float)
-        Cminus_x = np.zeros(n_times, dtype=float)
-        Cminus_y = np.zeros(n_times, dtype=float)
+        # Pad unused samples by repeating the first contour point of each
+        # time. Repeating that point makes the extra edges zero-length, so
+        # they do not contribute to area or centroid. Then close each
+        # contour by appending the same first point.
+        max_n = int(np.max(counts)) if n_times else 0
+        if n_times == 0 or max_n == 0:
+            images = np.zeros((n_times, 2, 2), dtype=float)
+            amps = np.zeros((n_times, 2), dtype=float)
+            return images, amps
 
-        for i in range(n_times):
-            n = counts[i]
-        
-            plus_x = wIms[i, :n, 0].real
-            plus_y = wIms[i, :n, 0].imag
-            minus_x = wIms[i, :n, 1].real
-            minus_y = wIms[i, :n, 1].imag
-        
-            px = np.empty(n+1)
-            py = np.empty(n+1)
-            qx = np.empty(n+1)
-            qy = np.empty(n+1)
-        
-            px[:n], py[:n] = plus_x, plus_y
-            qx[:n], qy[:n] = minus_x, minus_y
-            # Temporarily duplicate the first point as the last point
-            # to speed up our contour integrals.
-            px[n], py[n] = plus_x[0], plus_y[0]
-            qx[n], qy[n] = minus_x[0], minus_y[0]
-        
-            # derivatives
-            d1_px = np.diff(px)
-            d1_py = np.diff(py)
-            d1_qx = np.diff(qx)
-            d1_qy = np.diff(qy)
-            d2_px = np.diff(np.append(d1_px, d1_px[0]))
-            d2_py = np.diff(np.append(d1_py, d1_py[0]))
-            d2_qx = np.diff(np.append(d1_qx, d1_qx[0]))
-            d2_qy = np.diff(np.append(d1_qy, d1_qy[0]))
-            
-            # Eq 9 areas Bozza 2021.
-            Aplus[i]  = -0.5 * np.sum((px[:-1]+px[1:]) * d1_py)
-            Aminus[i] =  0.5 * np.sum((qx[:-1]+qx[1:]) * d1_qy)
+        samp = np.arange(max_n)
+        valid_pts = samp[None, :] < counts[:, None]
 
-            angles = (np.arange(n) / n) * 2 * np.pi
-            d_angles = np.diff(angles)
-            d_angles3 = d_angles ** 3
-            
-            #pdb.set_trace()
-            # Eq 10 areas Bozza 2021.
+        plus = np.where(valid_pts, wIms[:, :max_n, 0], wIms[:, 0:1, 0])
+        minus = np.where(valid_pts, wIms[:, :max_n, 1], wIms[:, 0:1, 1])
+        plus = np.concatenate([plus, plus[:, 0:1]], axis=1)
+        minus = np.concatenate([minus, minus[:, 0:1]], axis=1)
 
-            wp_d1_d2_i_plus    = d1_px[:-1] * d2_py[:-1] - d1_py[:-1] * d2_px[:-1]
-            wp_d1_d2_ip1_plus  = d1_px[1:] * d2_py[1:] - d1_py[1:] * d2_px[1:]
-            wp_d1_d2_i_minus   = d1_qx[:-1] * d2_qy[:-1] - d1_qy[:-1] * d2_qx[:-1]
-            wp_d1_d2_ip1_minus = d1_qx[1:] * d2_qy[1:] - d1_qy[1:] * d2_qx[1:]
-    
-            Aplus[i] += (1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus))
-            Aminus[i] += -(1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus))
-        
-            # Eq 19 Bozza centroids
-            Cplus_x[i]  =  0.125 * np.sum((px[:-1] + px[1:])**2 * d1_py)
-            Cplus_y[i]  = -0.125 * np.sum((py[:-1] + py[1:])**2 * d1_px)
-            Cminus_x[i] = -0.125 * np.sum((qx[:-1] + qx[1:])**2 * d1_qy)
-            Cminus_y[i] =  0.125 * np.sum((qy[:-1] + qy[1:])**2 * d1_qx)
+        px = plus.real
+        py = plus.imag
+        qx = minus.real
+        qy = minus.imag
 
-            #Eq 21 and 22 Bozza 2021. Parabolic corrections
-            Cplus_x[i]  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + px[:-2]  * wp_d1_d2_i_plus) +
-                                                             (d1_px[1: ]**2 * d1_py[1: ] + px[1:-1] * wp_d1_d2_ip1_plus)))
-            Cplus_y[i]  += -(1. / 24.) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + py[:-2]  * wp_d1_d2_i_plus) +
-                                                             (d1_py[1: ]**2 * d1_px[1: ] + py[1:-1] * wp_d1_d2_ip1_plus)))
-            Cminus_x[i] += -(1. / 24.) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + qx[:-2]  * wp_d1_d2_i_minus) +
-                                                             (d1_qx[1: ]**2 * d1_qy[1: ] + qx[1:-1] * wp_d1_d2_ip1_minus)))
-            Cminus_y[i] +=  (1. / 24.) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + qy[:-2]  * wp_d1_d2_i_minus) +
-                                                             (d1_qy[1: ]**2 * d1_qx[1: ] + qy[1:-1] * wp_d1_d2_ip1_minus)))
-        
-        Aplus = np.array(Aplus)
-        Aminus = np.array(Aminus)
-        Cplus_x, Cplus_y = np.array(Cplus_x), np.array(Cplus_y) 
-        Cminus_x, Cminus_y = np.array(Cminus_x), np.array(Cminus_y)
-        
-        amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
-        amp_minus = np.abs(Aminus) / (np.pi * self.radiusS ** 2)
-        
-        img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])  #Units to mas
-        img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])  #Units to mas
+        d1_px = np.diff(px, axis=1)
+        d1_py = np.diff(py, axis=1)
+        d1_qx = np.diff(qx, axis=1)
+        d1_qy = np.diff(qy, axis=1)
 
-        images = np.zeros((len(t), 2, 2), dtype=float)
+        # Second derivatives wrap at the last *valid* segment (index n-1),
+        # not at the padded array edge. Without this correction the closing
+        # segment would see a jump onto the zero-length pad.
+        def _wrap_d2(d1):
+            d2 = np.diff(np.concatenate([d1, d1[:, :1]], axis=1), axis=1)
+            rows = np.arange(n_times)
+            close = np.maximum(counts - 1, 0)
+            d2[rows, close] = d1[rows, 0] - d1[rows, close]
+            return d2
+
+        d2_px = _wrap_d2(d1_px)
+        d2_py = _wrap_d2(d1_py)
+        d2_qx = _wrap_d2(d1_qx)
+        d2_qy = _wrap_d2(d1_qy)
+
+        # Eq 9 areas Bozza 2021.
+        Aplus = -0.5 * np.sum((px[:, :-1] + px[:, 1:]) * d1_py, axis=1)
+        Aminus = 0.5 * np.sum((qx[:, :-1] + qx[:, 1:]) * d1_qy, axis=1)
+
+        # Parabolic terms use n-1 angle spacings of 2π/n. Zero the unused
+        # slots so padded edges do not enter the correction.
+        n_pts = np.maximum(counts, 1).astype(float)
+        n_parab = max_n - 1
+        if n_parab > 0:
+            parab_valid = np.arange(n_parab)[None, :] < (counts[:, None] - 1)
+            d_angles = np.where(parab_valid, two_pi / n_pts[:, None], 0.0)
+        else:
+            d_angles = np.zeros((n_times, 0), dtype=float)
+        d_angles3 = d_angles ** 3
+
+        wp_d1_d2_i_plus = d1_px[:, :-1] * d2_py[:, :-1] - d1_py[:, :-1] * d2_px[:, :-1]
+        wp_d1_d2_ip1_plus = d1_px[:, 1:] * d2_py[:, 1:] - d1_py[:, 1:] * d2_px[:, 1:]
+        wp_d1_d2_i_minus = d1_qx[:, :-1] * d2_qy[:, :-1] - d1_qy[:, :-1] * d2_qx[:, :-1]
+        wp_d1_d2_ip1_minus = d1_qx[:, 1:] * d2_qy[:, 1:] - d1_qy[:, 1:] * d2_qx[:, 1:]
+
+        # Eq 10 areas Bozza 2021.
+        Aplus += (1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus), axis=1)
+        Aminus += -(1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus), axis=1)
+
+        # Eq 19 Bozza centroids
+        Cplus_x = 0.125 * np.sum((px[:, :-1] + px[:, 1:]) ** 2 * d1_py, axis=1)
+        Cplus_y = -0.125 * np.sum((py[:, :-1] + py[:, 1:]) ** 2 * d1_px, axis=1)
+        Cminus_x = -0.125 * np.sum((qx[:, :-1] + qx[:, 1:]) ** 2 * d1_qy, axis=1)
+        Cminus_y = 0.125 * np.sum((qy[:, :-1] + qy[:, 1:]) ** 2 * d1_qx, axis=1)
+
+        # Eq 21 and 22 Bozza 2021. Parabolic corrections
+        Cplus_x += (1. / 24.) * np.sum(
+            d_angles3 * ((d1_px[:, :-1] ** 2 * d1_py[:, :-1] + px[:, :-2] * wp_d1_d2_i_plus) +
+                         (d1_px[:, 1:] ** 2 * d1_py[:, 1:] + px[:, 1:-1] * wp_d1_d2_ip1_plus)),
+            axis=1)
+        Cplus_y += -(1. / 24.) * np.sum(
+            d_angles3 * ((d1_py[:, :-1] ** 2 * d1_px[:, :-1] + py[:, :-2] * wp_d1_d2_i_plus) +
+                         (d1_py[:, 1:] ** 2 * d1_px[:, 1:] + py[:, 1:-1] * wp_d1_d2_ip1_plus)),
+            axis=1)
+        Cminus_x += -(1. / 24.) * np.sum(
+            d_angles3 * ((d1_qx[:, :-1] ** 2 * d1_qy[:, :-1] + qx[:, :-2] * wp_d1_d2_i_minus) +
+                         (d1_qx[:, 1:] ** 2 * d1_qy[:, 1:] + qx[:, 1:-1] * wp_d1_d2_ip1_minus)),
+            axis=1)
+        Cminus_y += (1. / 24.) * np.sum(
+            d_angles3 * ((d1_qy[:, :-1] ** 2 * d1_qx[:, :-1] + qy[:, :-2] * wp_d1_d2_i_minus) +
+                         (d1_qy[:, 1:] ** 2 * d1_qx[:, 1:] + qy[:, 1:-1] * wp_d1_d2_ip1_minus)),
+            axis=1)
+
+        img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])
+        img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])
+
+        images = np.zeros((n_times, 2, 2), dtype=float)
         images[:, 0, :] = img_pos_plus.T
         images[:, 1, :] = img_pos_minus.T
-        
-        interim_plus = (Aplus) / (np.pi * self.radiusS ** 2)
-        interim_minus = (Aminus) / (np.pi * self.radiusS ** 2)
-        
-        amps_interim = np.array((interim_plus, interim_minus)).T  
-        amps = np.array((interim_plus,interim_minus)).T
 
-        
+        interim_plus = Aplus / (np.pi * self.radiusS ** 2)
+        interim_minus = Aminus / (np.pi * self.radiusS ** 2)
+        amps = np.array((interim_plus, interim_minus)).T
+
         return images, amps
 
         
