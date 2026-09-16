@@ -20477,413 +20477,6 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
 # ==================================================
 class FSPL(PSPL):
     """Finite-Source, Point-Lens models."""
-    
-    def im_pos1(self, w, z1):
-        u = w - z1                
-        z_major = u * (1 + np.sqrt(1 + 4 / np.abs(u)**2)) / 2
-        return z_major + z1       
-    
-    def im_pos_all(self, w, z1):
-        z_major = self.im_pos1(w, z1)
-        z_minor = -1 / jnp.conjugate(z_major - z1) + z1
-        return z_major, z_minor
-    
-    def detJac(self, z, z1):
-        return 1.0 - 1.0 / np.abs(z - z1)**4
-    
-
-    def get_all_arrays_amg(self, t, filt_idx=0):
-        """
-        Obtain the image and amplitude arrays for each t. These arrays
-        contain the positions for each point in the outline for each lensed image.
-
-        Adaptive mesh grid creates more boundary points around the source only
-        when it enters the Einstein ring.
-        
-        Parameters
-        ----------
-        t : array_like
-            Array of times to model.
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        Returns
-        -------
-        images : array_like
-            Array/tuple of positions of each lensed image at each t.
-            Shape = [len(t), n_images=2, [E,N]]
-            The last axis contains East and North positions on the sky
-            in arcseconds.
-
-        amp_arr : array_like
-            Array/tuple of amplification of each lensed image at each t.
-            Shape = [len(t), n_images=2]
-
-        Notes
-        -----
-        The algorithm uses Green's theorem to change an area integral of the
-        image of the source into a path integral around the outline.
-        For the amplification, we perform a first-order contour integral to
-        approximate the area, and include a second-order parabolic correction.
-        For the centroid calculation, we perform only the first-order contour
-        integral with no second-order parabolic correction.
-        Equations for the contour integrals come from Bozza et al. (2021).
-        """
-        # Lensed positions of each outline point for both plus/minus images.
-        # Note these are positions on the sky. in arcsec
-
-        # Shape = [len(t), N_outline, [+,-], [E,N]]
-        days_in_a_year = 365.25
-
-        # Put everything in units of thetaE
-        xS0 = (self.xS0 * 1e3) / self.thetaE_amp   # unit = thetaE
-        radiusS = self.radiusS * 1e3 / self.thetaE_amp # unit = thetaE
-
-
-        # Convert to imaginary numbers with East = real, North = imag
-        xS0_cplx = xS0[0] + 1j * xS0[1]
-        muS_cplx = (self.muS[0] + 1j * self.muS[1]) / self.thetaE_amp
-
-        maxsamps = 1000
-        
-        if self.n_outline >= maxsamps / 4:
-            maxsamps = maxsamps * 5
-
-        # wIms is the lensed image positions for the + and - image.
-        # Shape = N_times, N_outline, [+/-]
-        wIms   = np.zeros((len(t), maxsamps, 2), dtype=complex)
-        counts = np.full(len(t), fill_value = self.n_outline, dtype=int)
-        thetas = np.zeros((len(t), maxsamps))
-            
-        dtheta = 2 * np.pi / self.n_outline
-        lens_asts = self.get_lens_astrometry(t) / self.thetaE_amp  * 1e3 #thetaE
-
-        t_year = (t - self.t0) / days_in_a_year
-
-        # Calculate the number of points that should be used
-        # to do the contour integration with good accuracy.
-        z1 = lens_asts[:, 0] + 1j * lens_asts[:, 1]
-        w_center = xS0_cplx + t_year * muS_cplx
-
-
-        for i in range(len(t)):
-            theta = 0.0
-            count = 0
-            while (theta < 2*np.pi) and (count < maxsamps):
-                w_now = w_center[i] + radiusS * np.exp(1j * theta)
-            
-                zp, zm = self.im_pos_all(w_now, z1[i])
-                wIms[i, count, 0] = zp
-                wIms[i, count, 1] = zm
-                thetas[i, count] = theta
-            
-                detp = np.abs(self.detJac(zp, z1[i]))
-                detm = np.abs(self.detJac(zm, z1[i]))
-                theta += dtheta * min(detp, detm)
-                count += 1
-        
-            counts[i] = count
-
-
-        # Convert back to arcsec
-        wIms = (wIms * self.thetaE_amp) * 1e-3
-
-        n_times = len(t)
-        Aplus = np.zeros(n_times, dtype=float)
-        Aminus = np.zeros(n_times, dtype=float)
-        Cplus_x = np.zeros(n_times, dtype=float)
-        Cplus_y = np.zeros(n_times, dtype=float)
-        Cminus_x = np.zeros(n_times, dtype=float)
-        Cminus_y = np.zeros(n_times, dtype=float)
-
-        for i in range(n_times):
-            n = counts[i]
-        
-            plus_x = wIms[i, :n, 0].real
-            plus_y = wIms[i, :n, 0].imag
-            minus_x = wIms[i, :n, 1].real
-            minus_y = wIms[i, :n, 1].imag
-        
-            px = np.empty(n+1)
-            py = np.empty(n+1)
-            qx = np.empty(n+1)
-            qy = np.empty(n+1)
-        
-            px[:n], py[:n] = plus_x, plus_y
-            qx[:n], qy[:n] = minus_x, minus_y
-            # Temporarily duplicate the first point as the last point
-            # to speed up our contour integrals.
-            px[n], py[n] = plus_x[0], plus_y[0]
-            qx[n], qy[n] = minus_x[0], minus_y[0]
-        
-            # derivatives
-            d1_px = np.diff(px)
-            d1_py = np.diff(py)
-            d1_qx = np.diff(qx)
-            d1_qy = np.diff(qy)
-            d2_px = np.diff(np.append(d1_px, d1_px[0]))
-            d2_py = np.diff(np.append(d1_py, d1_py[0]))
-            d2_qx = np.diff(np.append(d1_qx, d1_qx[0]))
-            d2_qy = np.diff(np.append(d1_qy, d1_qy[0]))
-            
-            # Eq 9 areas Bozza 2021.
-            Aplus[i]  = -0.5 * np.sum((px[:-1]+px[1:]) * d1_py)
-            Aminus[i] =  0.5 * np.sum((qx[:-1]+qx[1:]) * d1_qy)
-
-            angles = (np.arange(n) / n) * 2 * np.pi
-            d_angles = np.diff(angles)
-            d_angles3 = d_angles ** 3
-            
-            ##pdb.set_trace()
-            # Eq 10 areas Bozza 2021.
-
-            wp_d1_d2_i_plus    = d1_px[:-1] * d2_py[:-1] - d1_py[:-1] * d2_px[:-1]
-            wp_d1_d2_ip1_plus  = d1_px[1:] * d2_py[1:] - d1_py[1:] * d2_px[1:]
-            wp_d1_d2_i_minus   = d1_qx[:-1] * d2_qy[:-1] - d1_qy[:-1] * d2_qx[:-1]
-            wp_d1_d2_ip1_minus = d1_qx[1:] * d2_qy[1:] - d1_qy[1:] * d2_qx[1:]
-    
-            Aplus[i] += (1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus))
-            Aminus[i] += -(1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus))
-        
-            # Eq 19 Bozza centroids
-            Cplus_x[i]  =  0.125 * np.sum((px[:-1] + px[1:])**2 * d1_py)
-            Cplus_y[i]  = -0.125 * np.sum((py[:-1] + py[1:])**2 * d1_px)
-            Cminus_x[i] = -0.125 * np.sum((qx[:-1] + qx[1:])**2 * d1_qy)
-            Cminus_y[i] =  0.125 * np.sum((qy[:-1] + qy[1:])**2 * d1_qx)
-
-            #Eq 21 and 22 Bozza 2021. Parabolic corrections
-            Cplus_x[i]  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + d1_px[:-1] * wp_d1_d2_i_plus) +
-                                                             (d1_px[1: ]**2 * d1_py[1: ] + d1_px[1: ] * wp_d1_d2_ip1_plus)))
-            Cplus_y[i]  += -(1. / 24.) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + d1_py[:-1] * wp_d1_d2_i_plus) +
-                                                             (d1_py[1: ]**2 * d1_px[1: ] + d1_py[1: ] * wp_d1_d2_ip1_plus)))
-            Cminus_x[i] += -(1. / 24.) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + d1_qx[:-1] * wp_d1_d2_i_minus) +
-                                                             (d1_qx[1: ]**2 * d1_qy[1: ] + d1_qx[1: ] * wp_d1_d2_ip1_minus)))
-            Cminus_y[i] +=  (1. / 24.) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + d1_qy[:-1] * wp_d1_d2_i_minus) +
-                                                             (d1_qy[1: ]**2 * d1_qx[1: ] + d1_qy[1: ] * wp_d1_d2_ip1_minus)))
-        
-        Aplus = np.array(Aplus)
-        Aminus = np.array(Aminus)
-        Cplus_x, Cplus_y = np.array(Cplus_x), np.array(Cplus_y) 
-        Cminus_x, Cminus_y = np.array(Cminus_x), np.array(Cminus_y)
-
-        return Aplus, Aminus, Cplus_x, Cplus_y, Cminus_x, Cminus_y
-
-    
-    def get_all_arrays_amg_only(self, t, filt_idx=0):
-        """
-        Obtain the image and amplitude arrays for each t. These arrays
-        contain the positions for each point in the outline for each lensed image.
-
-        Adaptive mesh grid creates more boundary points around the source only
-        when it enters the Einstein ring.
-        
-        Parameters
-        ----------
-        t : array_like
-            Array of times to model.
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        Returns
-        -------
-        images : array_like
-            Array/tuple of positions of each lensed image at each t.
-            Shape = [len(t), n_images=2, [E,N]]
-            The last axis contains East and North positions on the sky
-            in arcseconds.
-
-        amp_arr : array_like
-            Array/tuple of amplification of each lensed image at each t.
-            Shape = [len(t), n_images=2]
-
-        Notes
-        -----
-        The algorithm uses Green's theorem to change an area integral of the
-        image of the source into a path integral around the outline.
-        For the amplification, we perform a first-order contour integral to
-        approximate the area, and include a second-order parabolic correction.
-        For the centroid calculation, we perform only the first-order contour
-        integral with no second-order parabolic correction.
-        Equations for the contour integrals come from Bozza et al. (2021).
-        """
-        # Lensed positions of each outline point for both plus/minus images.
-        # Note these are positions on the sky. in arcsec
-
-        # Shape = [len(t), N_outline, [+,-], [E,N]]
-        def im_pos1(w, z1):
-            u = w - z1                
-            z_major = u * (1 + np.sqrt(1 + 4 / np.abs(u)**2)) / 2
-            return z_major + z1       
-        
-        def im_pos_all(w, z1):
-            z_major = self.im_pos1(w, z1)
-            z_minor = -1 / jnp.conjugate(z_major - z1) + z1
-            return z_major, z_minor
-        
-        def detJac(z, z1):
-            return 1.0 - 1.0 / np.abs(z - z1)**4
-        
-        days_in_a_year = 365.25
-
-        # Put everything in units of thetaE
-        xS0 = (self.xS0 * 1e3) / self.thetaE_amp   # unit = thetaE
-        radiusS = self.radiusS * 1e3 / self.thetaE_amp # unit = thetaE
-
-        # Convert to imaginary numbers with East = real, North = imag
-        xS0_cplx = xS0[0] + 1j * xS0[1]
-        muS_cplx = (self.muS[0] + 1j * self.muS[1]) / self.thetaE_amp
-
-        maxsamps = 1000
-        
-        if self.n_outline >= maxsamps / 4:
-            maxsamps = maxsamps * 5
-
-        # wIms is the lensed image positions for the + and - image.
-        # Shape = N_times, N_outline, [+/-]
-        wIms   = np.zeros((len(t), maxsamps, 2), dtype=complex)
-        counts = np.zeros(len(t), dtype=int)
-        thetas = np.zeros((len(t), maxsamps))
-            
-        dtheta = 2 * np.pi / self.n_outline
-        lens_asts = self.get_lens_astrometry(t) / self.thetaE_amp  * 1e3 #thetaE
-
-        t_year = (t - self.t0) / days_in_a_year
-
-        # Calculate the number of points that should be used
-        # to do the contour integration with good accuracy.
-        z1 = lens_asts[:, 0] + 1j * lens_asts[:, 1]
-        w_center = xS0_cplx + t_year * muS_cplx
-
-        for i in range(len(t)):
-            theta = 0.0
-            count = 0
-            while (theta < 2*np.pi) and (count < maxsamps):
-                w_now = w_center[i] + radiusS * np.exp(1j * theta)
-            
-                zp, zm = im_pos_all(w_now, z1[i])
-                wIms[i, count, 0] = zp
-                wIms[i, count, 1] = zm
-                thetas[i, count] = theta
-            
-                detp = np.abs(self.detJac(zp, z1[i]))
-                detm = np.abs(self.detJac(zm, z1[i]))
-                theta += dtheta * min(detp, detm)
-                count += 1
-        
-            counts[i] = count
-
-        # Digitize counts into a few unique bins. (N_c_bins
-        # This speeds up the calculations later.
-        # cmin = counts.min()
-        # cmax = counts.max()
-        # N_c_bins = 4
-        # cnt_bins = np.geomspace(cmin, cmax+1, num=N_c_bins).astype('int')
-        # cnt_bins = np.insert(cnt_bins, 0, 1)  # append a left bin in prep for digitize
-        #
-        # idx = np.digitize(counts, cnt_bins, right=True)
-        # counts = cnt_bins[idx]
-
-        # Convert back to arcsec
-        wIms = (wIms * self.thetaE_amp) * 1e-3
-
-        n_times = len(counts)
-        Aplus = np.zeros(n_times, dtype=float)
-        Aminus = np.zeros(n_times, dtype=float)
-        Cplus_x = np.zeros(n_times, dtype=float)
-        Cplus_y = np.zeros(n_times, dtype=float)
-        Cminus_x = np.zeros(n_times, dtype=float)
-        Cminus_y = np.zeros(n_times, dtype=float)
-
-        for i in range(n_times):
-            n = counts[i]
-        
-            plus_x = wIms[i, :n, 0].real
-            plus_y = wIms[i, :n, 0].imag
-            minus_x = wIms[i, :n, 1].real
-            minus_y = wIms[i, :n, 1].imag
-        
-            px = np.empty(n+1)
-            py = np.empty(n+1)
-            qx = np.empty(n+1)
-            qy = np.empty(n+1)
-        
-            px[:n], py[:n] = plus_x, plus_y
-            qx[:n], qy[:n] = minus_x, minus_y
-            # Temporarily duplicate the first point as the last point
-            # to speed up our contour integrals.
-            px[n], py[n] = plus_x[0], plus_y[0]
-            qx[n], qy[n] = minus_x[0], minus_y[0]
-        
-            # derivatives
-            d1_px = np.diff(px)
-            d1_py = np.diff(py)
-            d1_qx = np.diff(qx)
-            d1_qy = np.diff(qy)
-            d2_px = np.diff(np.append(d1_px, d1_px[0]))
-            d2_py = np.diff(np.append(d1_py, d1_py[0]))
-            d2_qx = np.diff(np.append(d1_qx, d1_qx[0]))
-            d2_qy = np.diff(np.append(d1_qy, d1_qy[0]))
-            
-            # Eq 9 areas Bozza 2021.
-            Aplus[i]  = -0.5 * np.sum((px[:-1]+px[1:]) * d1_py)
-            Aminus[i] =  0.5 * np.sum((qx[:-1]+qx[1:]) * d1_qy)
-
-            angles = (np.arange(n) / n) * 2 * np.pi
-            d_angles = np.diff(angles)
-            d_angles3 = d_angles ** 3
-            
-            ##pdb.set_trace()
-            # Eq 10 areas Bozza 2021.
-
-            wp_d1_d2_i_plus    = d1_px[:-1] * d2_py[:-1] - d1_py[:-1] * d2_px[:-1]
-            wp_d1_d2_ip1_plus  = d1_px[1:] * d2_py[1:] - d1_py[1:] * d2_px[1:]
-            wp_d1_d2_i_minus   = d1_qx[:-1] * d2_qy[:-1] - d1_qy[:-1] * d2_qx[:-1]
-            wp_d1_d2_ip1_minus = d1_qx[1:] * d2_qy[1:] - d1_qy[1:] * d2_qx[1:]
-    
-            Aplus[i] += (1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus))
-            Aminus[i] += -(1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus))
-        
-            # Eq 19 Bozza centroids
-            Cplus_x[i]  =  0.125 * np.sum((px[:-1] + px[1:])**2 * d1_py)
-            Cplus_y[i]  = -0.125 * np.sum((py[:-1] + py[1:])**2 * d1_px)
-            Cminus_x[i] = -0.125 * np.sum((qx[:-1] + qx[1:])**2 * d1_qy)
-            Cminus_y[i] =  0.125 * np.sum((qy[:-1] + qy[1:])**2 * d1_qx)
-
-            #Eq 21 and 22 Bozza 2021. Parabolic corrections
-            Cplus_x[i]  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_px[:-1]**2 * d1_py[:-1] + d1_px[:-1] * wp_d1_d2_i_plus) +
-                                                             (d1_px[1: ]**2 * d1_py[1: ] + d1_px[1: ] * wp_d1_d2_ip1_plus)))
-            Cplus_y[i]  += -(1. / 24.) * np.sum(d_angles3 * ((d1_py[:-1]**2 * d1_px[:-1] + d1_py[:-1] * wp_d1_d2_i_plus) +
-                                                             (d1_py[1: ]**2 * d1_px[1: ] + d1_py[1: ] * wp_d1_d2_ip1_plus)))
-            Cminus_x[i] += -(1. / 24.) * np.sum(d_angles3 * ((d1_qx[:-1]**2 * d1_qy[:-1] + d1_qx[:-1] * wp_d1_d2_i_minus) +
-                                                             (d1_qx[1: ]**2 * d1_qy[1: ] + d1_qx[1: ] * wp_d1_d2_ip1_minus)))
-            Cminus_y[i] +=  (1. / 24.) * np.sum(d_angles3 * ((d1_qy[:-1]**2 * d1_qx[:-1] + d1_qy[:-1] * wp_d1_d2_i_minus) +
-                                                             (d1_qy[1: ]**2 * d1_qx[1: ] + d1_qy[1: ] * wp_d1_d2_ip1_minus)))
-        
-        Aplus = np.array(Aplus)
-        Aminus = np.array(Aminus)
-        Cplus_x, Cplus_y = np.array(Cplus_x), np.array(Cplus_y) 
-        Cminus_x, Cminus_y = np.array(Cminus_x), np.array(Cminus_y)
-        
-        amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
-        amp_minus = np.abs(Aminus) / (np.pi * self.radiusS ** 2)
-        
-        img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])  #Units to mas
-        img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])  #Units to mas
-
-        images = np.zeros((len(t), 2, 2), dtype=float)
-        images[:, 0, :] = img_pos_plus.T
-        images[:, 1, :] = img_pos_minus.T
-        
-        interim_plus = (Aplus) / (np.pi * self.radiusS ** 2)
-        interim_minus = (Aminus) / (np.pi * self.radiusS ** 2)
-        
-        amps_interim = np.array((interim_plus, interim_minus)).T  
-        amps = np.array((interim_plus,interim_minus)).T
-
-        
-        return images, amps
-
-
 
     def get_all_arrays_CI(self, t, filt_idx=0):
         """
@@ -20924,12 +20517,6 @@ class FSPL(PSPL):
 
         # Shape = [len(t), N_outline, [+,-], [E,N]]
         images = self.get_resolved_astrometry_outline(t, filt_idx=filt_idx)
-        # PhotAstrom stores radiusS in arcsec; Phot-only stores it in thetaE already.
-        if hasattr(self, 'thetaE_amp'):
-            radiusS = self.radiusS * 1e3 / self.thetaE_amp  # unit = thetaE
-        else:
-            radiusS = self.radiusS
-
 
         angles = (np.arange(self.n_outline) / self.n_outline) * 2 * np.pi  # radians
         d_angles = np.diff(angles)
@@ -20990,54 +20577,300 @@ class FSPL(PSPL):
 
         # Centroid equations (Eq. 19). EQ43 in BAGLE paper
         Cminus_x = -(1. / 8.0) * np.sum(b2_minus[:, :, 0] ** 2 * d1_minus[:, :, 1], axis=1)
-        Cminus_y =  (1. / 8.0) * np.sum(b2_minus[:, :, 1] ** 2 * d1_minus[:, :, 0], axis=1)
+        Cminus_y = (1. / 8.0) * np.sum(b2_minus[:, :, 1] ** 2 * d1_minus[:, :, 0], axis=1)
 
         # Parabolic Correction
-        #Eq 21 and 22 Bozza 2021. Parabolic corrections
-        Cplus_x  +=  (1. / 24.) * np.sum(d_angles3 * ((d1_plus[:, :-1, 0]**2 * d1_plus[:, :-1, 1] + d1_plus[:, :-1, 0] * wp_d1_d2_i_plus) +
-                                                      (d1_plus[:, 1: , 0]**2 * d1_plus[:, 1: , 1] + d1_plus[:, 1:,  0] * wp_d1_d2_ip1_plus)), axis=1)
-        Cplus_y  += -(1. / 24.) * np.sum(d_angles3 * ((d1_plus[:, :-1, 1]**2 * d1_plus[:, :-1, 0] + d1_plus[:, :-1, 1] * wp_d1_d2_i_plus) +
-                                                      (d1_plus[:, 1:,  1]**2 * d1_plus[:, 1: , 0] + d1_plus[:, 1: , 1] * wp_d1_d2_ip1_plus)), axis=1)
-        Cminus_x += -(1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 0]**2 * d1_minus[:, :-1, 1] + d1_minus[:, :-1, 0] * wp_d1_d2_i_minus) +
-                                                      (d1_minus[:, 1: , 0]**2 * d1_minus[:, 1: , 1] + d1_minus[:, 1: , 0] * wp_d1_d2_ip1_minus)), axis=1)
-        Cminus_y +=  (1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 1]**2 * d1_minus[:, :-1, 0] + d1_minus[:, :-1, 1] * wp_d1_d2_i_minus) +
-                                                      (d1_minus[:, 1: , 1]**2 * d1_minus[:, 1: , 0] + d1_minus[:, 1: , 1] * wp_d1_d2_ip1_minus)), axis=1)
-        
-        # Correction for when the source-lens separation is less than or equal to 2 * source radius.
-        # Adaptive mesh requires PhotAstrom quantities (xS0, thetaE_amp, etc.).
-        adaptive_idx = np.where(np.linalg.norm(self.get_u(t), axis=1) <= 2 * radiusS)[0]
-        if len(adaptive_idx) > 0 and hasattr(self, 'xS0') and hasattr(self, 'thetaE_amp'):
-            Aplus[adaptive_idx], Aminus[adaptive_idx], Cplus_x[adaptive_idx], Cplus_y[adaptive_idx], Cminus_x[adaptive_idx], Cminus_y[adaptive_idx] = self.get_all_arrays_amg(t[adaptive_idx])
+        # Eq 21 and 22 Bozza 2021. Parabolic corrections
+        Cplus_x += (1. / 24.) * np.sum(
+            d_angles3 * ((d1_plus[:, :-1, 0] ** 2 * d1_plus[:, :-1, 1] + plus[:, :-2, 0] * wp_d1_d2_i_plus) +
+                         (d1_plus[:, 1:, 0] ** 2 * d1_plus[:, 1:, 1] + plus[:, 1:-1, 0] * wp_d1_d2_ip1_plus)), axis=1)
+        Cplus_y += -(1. / 24.) * np.sum(
+            d_angles3 * ((d1_plus[:, :-1, 1] ** 2 * d1_plus[:, :-1, 0] + plus[:, :-2, 1] * wp_d1_d2_i_plus) +
+                         (d1_plus[:, 1:, 1] ** 2 * d1_plus[:, 1:, 0] + plus[:, 1:-1, 1] * wp_d1_d2_ip1_plus)), axis=1)
+        Cminus_x += -(1. / 24.) * np.sum(
+            d_angles3 * ((d1_minus[:, :-1, 0] ** 2 * d1_minus[:, :-1, 1] + minus[:, :-2, 0] * wp_d1_d2_i_minus) +
+                         (d1_minus[:, 1:, 0] ** 2 * d1_minus[:, 1:, 1] + minus[:, 1:-1, 0] * wp_d1_d2_ip1_minus)),
+            axis=1)
+        Cminus_y += (1. / 24.) * np.sum(
+            d_angles3 * ((d1_minus[:, :-1, 1] ** 2 * d1_minus[:, :-1, 0] + minus[:, :-2, 1] * wp_d1_d2_i_minus) +
+                         (d1_minus[:, 1:, 1] ** 2 * d1_minus[:, 1:, 0] + minus[:, 1:-1, 1] * wp_d1_d2_ip1_minus)),
+            axis=1)
 
-        Aplus = np.array(Aplus)
-        Aminus = np.array(Aminus)
-        Cplus_x, Cplus_y = np.array(Cplus_x), np.array(Cplus_y) 
-        Cminus_x, Cminus_y = np.array(Cminus_x), np.array(Cminus_y)
-        
         amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
         amp_minus = np.abs(Aminus) / (np.pi * self.radiusS ** 2)
-        
-        img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])  #Units to mas
-        img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])  #Units to mas
+        img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])
+        img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])
 
+        # Final shape = [N_times, [+, -], [E, N]]
         images = np.zeros((len(t), 2, 2), dtype=float)
         images[:, 0, :] = img_pos_plus.T
         images[:, 1, :] = img_pos_minus.T
-        
-        interim_plus = (Aplus) / (np.pi * self.radiusS ** 2)
-        interim_minus = (Aminus) / (np.pi * self.radiusS ** 2)
-        
-        amps_interim = np.array((interim_plus, interim_minus)).T  
-        amps = np.array((interim_plus,interim_minus)).T
 
+        # Final shape = [N_times, [+, -]]
+        amps = np.array((amp_plus, amp_minus)).T  # amplifications
 
         return images, amps
 
+    def amg_im_pos_all(self, w, z1):
+        """Major and minor image positions for a source point relative to the lens."""
+        u = w - z1
+        # A source-boundary point sitting on the lens has no unique image.
+        # Nudge it off the origin so 1/|u|^2 stays finite.
+        u = np.where(np.abs(u) < 1e-15, 1e-15 + 0j, u)
+        z_major = u * (1.0 + np.sqrt(1.0 + 4.0 / np.abs(u) ** 2)) / 2.0 + z1
+        z_minor = -1.0 / np.conjugate(z_major - z1) + z1
+        return z_major, z_minor
+
+    def amg_detJac(self, z, z1):
+        dz = np.abs(z - z1)
+        dz = np.where(dz < 1e-15, 1e-15, dz)
+        return 1.0 - 1.0 / dz ** 4
+
+    def amg_wrap_d2(self, d1, counts):
+        """Second derivatives wrap at the last valid segment, not the pad edge."""
+        n_times = d1.shape[0]
+        d2 = np.diff(np.concatenate([d1, d1[:, :1]], axis=1), axis=1)
+        rows = np.arange(n_times)
+        close = np.maximum(counts - 1, 0)
+        d2[rows, close] = d1[rows, 0] - d1[rows, close]
+        return d2
+
+    def amg_contour_integrals(self, wIms, counts):
+        """Green's theorem area and centroid on padded, closed image contours."""
+        n_times = wIms.shape[0]
+        n_pts = wIms.shape[1]
+        if n_times == 0 or n_pts == 0:
+            return (np.zeros((n_times, 2, 2), dtype=float),
+                    np.zeros((n_times, 2), dtype=float))
+
+        samp = np.arange(n_pts)
+        valid_pts = samp[None, :] < counts[:, None]
+        plus = np.where(valid_pts, wIms[:, :, 0], wIms[:, 0:1, 0])
+        minus = np.where(valid_pts, wIms[:, :, 1], wIms[:, 0:1, 1])
+        plus = np.concatenate([plus, plus[:, 0:1]], axis=1)
+        minus = np.concatenate([minus, minus[:, 0:1]], axis=1)
+
+        px = plus.real
+        py = plus.imag
+        qx = minus.real
+        qy = minus.imag
+
+        d1_px = np.diff(px, axis=1)
+        d1_py = np.diff(py, axis=1)
+        d1_qx = np.diff(qx, axis=1)
+        d1_qy = np.diff(qy, axis=1)
+
+        d2_px = self.amg_wrap_d2(d1_px, counts)
+        d2_py = self.amg_wrap_d2(d1_py, counts)
+        d2_qx = self.amg_wrap_d2(d1_qx, counts)
+        d2_qy = self.amg_wrap_d2(d1_qy, counts)
+
+        Aplus = -0.5 * np.sum((px[:, :-1] + px[:, 1:]) * d1_py, axis=1)
+        Aminus = 0.5 * np.sum((qx[:, :-1] + qx[:, 1:]) * d1_qy, axis=1)
+
+        n_parab = n_pts - 1
+        n_pts_f = np.maximum(counts, 1).astype(float)
+        two_pi = 2.0 * np.pi
+        if n_parab > 0:
+            parab_valid = np.arange(n_parab)[None, :] < (counts[:, None] - 1)
+            d_angles = np.where(parab_valid, two_pi / n_pts_f[:, None], 0.0)
+        else:
+            d_angles = np.zeros((n_times, 0), dtype=float)
+        d_angles3 = d_angles ** 3
+
+        wp_d1_d2_i_plus = d1_px[:, :-1] * d2_py[:, :-1] - d1_py[:, :-1] * d2_px[:, :-1]
+        wp_d1_d2_ip1_plus = d1_px[:, 1:] * d2_py[:, 1:] - d1_py[:, 1:] * d2_px[:, 1:]
+        wp_d1_d2_i_minus = d1_qx[:, :-1] * d2_qy[:, :-1] - d1_qy[:, :-1] * d2_qx[:, :-1]
+        wp_d1_d2_ip1_minus = d1_qx[:, 1:] * d2_qy[:, 1:] - d1_qy[:, 1:] * d2_qx[:, 1:]
+
+        Aplus += (1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus), axis=1)
+        Aminus += -(1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus), axis=1)
+
+        Cplus_x = 0.125 * np.sum((px[:, :-1] + px[:, 1:]) ** 2 * d1_py, axis=1)
+        Cplus_y = -0.125 * np.sum((py[:, :-1] + py[:, 1:]) ** 2 * d1_px, axis=1)
+        Cminus_x = -0.125 * np.sum((qx[:, :-1] + qx[:, 1:]) ** 2 * d1_qy, axis=1)
+        Cminus_y = 0.125 * np.sum((qy[:, :-1] + qy[:, 1:]) ** 2 * d1_qx, axis=1)
+
+        Cplus_x += (1.0 / 24.0) * np.sum(
+            d_angles3 * ((d1_px[:, :-1] ** 2 * d1_py[:, :-1] + px[:, :-2] * wp_d1_d2_i_plus)
+                         + (d1_px[:, 1:] ** 2 * d1_py[:, 1:] + px[:, 1:-1] * wp_d1_d2_ip1_plus)),
+            axis=1)
+        Cplus_y += -(1.0 / 24.0) * np.sum(
+            d_angles3 * ((d1_py[:, :-1] ** 2 * d1_px[:, :-1] + py[:, :-2] * wp_d1_d2_i_plus)
+                         + (d1_py[:, 1:] ** 2 * d1_px[:, 1:] + py[:, 1:-1] * wp_d1_d2_ip1_plus)),
+            axis=1)
+        Cminus_x += -(1.0 / 24.0) * np.sum(
+            d_angles3 * ((d1_qx[:, :-1] ** 2 * d1_qy[:, :-1] + qx[:, :-2] * wp_d1_d2_i_minus)
+                         + (d1_qx[:, 1:] ** 2 * d1_qy[:, 1:] + qx[:, 1:-1] * wp_d1_d2_ip1_minus)),
+            axis=1)
+        Cminus_y += (1.0 / 24.0) * np.sum(
+            d_angles3 * ((d1_qy[:, :-1] ** 2 * d1_qx[:, :-1] + qy[:, :-2] * wp_d1_d2_i_minus)
+                         + (d1_qy[:, 1:] ** 2 * d1_qx[:, 1:] + qy[:, 1:-1] * wp_d1_d2_ip1_minus)),
+            axis=1)
+
+        abs_Aplus = np.abs(Aplus)
+        abs_Aminus = np.abs(Aminus)
+        img_pos_plus = np.array([Cplus_x / abs_Aplus, Cplus_y / abs_Aplus])
+        img_pos_minus = np.array([Cminus_x / abs_Aminus, Cminus_y / abs_Aminus])
+
+        images = np.zeros((n_times, 2, 2), dtype=float)
+        images[:, 0, :] = img_pos_plus.T
+        images[:, 1, :] = img_pos_minus.T
+
+        inv_area = 1.0 / (np.pi * self.radiusS ** 2)
+        # Signed image areas (minus-image orientation can be negative). The
+        # physical magnification is their sum; a per-epoch flip keeps that
+        # sum positive so AMG can mix with CI without a global sign flip.
+        amps = np.stack((Aplus * inv_area, Aminus * inv_area), axis=1)
+        tot = amps.sum(axis=1, keepdims=True)
+        amps = np.where(tot < 0.0, -amps, amps)
+        return images, amps
+
+    def amg_numpy(self, w_center, z1, radiusS, dtheta, maxsamps):
+        """Vectorized AMG in numpy itself. Faster than Jax on CPUs"""
+        w_center = np.asarray(w_center, dtype=complex)
+        z1 = np.asarray(z1, dtype=complex)
+        n_times = w_center.size
+        if n_times == 0:
+            return np.zeros((0, 2, 2), dtype=float), np.zeros((0, 2), dtype=float)
+
+        wIms = np.empty((n_times, maxsamps, 2), dtype=complex)
+        counts = np.zeros(n_times, dtype=int)
+        theta = np.zeros(n_times, dtype=float)
+        active = np.ones(n_times, dtype=bool)
+        two_pi = 2.0 * np.pi
+
+        for k in range(maxsamps):
+            idx = np.flatnonzero(active)
+            if idx.size == 0:
+                break
+
+            w_now = w_center[idx] + radiusS * np.exp(1j * theta[idx])
+            zp, zm = self.amg_im_pos_all(w_now, z1[idx])
+            wIms[idx, k, 0] = zp
+            wIms[idx, k, 1] = zm
+            counts[idx] = k + 1
+
+            n_steps_left = maxsamps - k - 1
+            if n_steps_left <= 0:
+                break
+
+            detp = np.abs(self.amg_detJac(zp, z1[idx]))
+            detm = np.abs(self.amg_detJac(zm, z1[idx]))
+            natural_step = dtheta * np.minimum(detp, detm)
+            remaining = np.maximum(two_pi - theta[idx], 0.0)
+            min_step = remaining / n_steps_left
+            theta[idx] += np.maximum(natural_step, min_step)
+            active[idx] = theta[idx] < two_pi
+
+        max_n = int(np.max(counts)) if n_times else 0
+        if max_n == 0:
+            return np.zeros((n_times, 2, 2), dtype=float), np.zeros((n_times, 2), dtype=float)
+
+        wIms = (wIms[:, :max_n, :] * self.thetaE_amp) * 1e-3
+        return self.amg_contour_integrals(wIms, counts)
+
+    def get_all_arrays_amg(self, t, filt_idx=0):
+        """
+        Obtain the image and amplitude arrays for each t. These arrays
+        contain the positions for each point in the outline for each lensed image.
+
+        Adaptive mesh grid creates more boundary points around the source only
+        when it enters the Einstein ring.
+
+        Parameters
+        ----------
+        t : array_like
+            Array of times to model.
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+
+        Returns
+        -------
+        images : array_like
+            Array/tuple of positions of each lensed image at each t.
+            Shape = [len(t), n_images=2, [E,N]]
+            The last axis contains East and North positions on the sky
+            in arcseconds.
+
+        amp_arr : array_like
+            Array/tuple of amplification of each lensed image at each t.
+            Shape = [len(t), n_images=2]
+
+        Notes
+        -----
+        The algorithm uses Green's theorem to change an area integral of the
+        image of the source into a path integral around the outline.
+        For the amplification, we perform a first-order contour integral to
+        approximate the area, and include a second-order parabolic correction.
+        For the centroid calculation, we perform only the first-order contour
+        integral with no second-order parabolic correction.
+        Equations for the contour integrals come from Bozza et al. (2021).
+
+        Adaptive sampling is sequential in angle but independent across
+        times, so every epoch is updated together.
+        Adaptive mesh grid creates more boundary points around the source only
+        when it enters the Einstein ring.
+        Unused contour slots repeat that epoch's first point (zero-length padded edges).
+        """
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        n_times = t.size
+        if n_times == 0:
+            return np.zeros((0, 2, 2), dtype=float), np.zeros((0, 2), dtype=float)
+
+        radiusS = self.radiusS * 1e3 / self.thetaE_amp  # unit = thetaE
+        maxsamps = 1000
+        if self.n_outline >= maxsamps / 4:
+            maxsamps = maxsamps * 5
+        dtheta = 2.0 * np.pi / self.n_outline
+
+        # Include parallax (and the same reference frame) as the rest of the model.
+        lens_asts = self.get_lens_astrometry(t, filt_idx=filt_idx) / self.thetaE_amp * 1e3
+        xS_unl = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx) / self.thetaE_amp * 1e3
+        lens_asts = np.atleast_2d(np.asarray(lens_asts, dtype=float))
+        xS_unl = np.atleast_2d(np.asarray(xS_unl, dtype=float))
+
+        z1 = lens_asts[:, 0] + 1j * lens_asts[:, 1]
+        w_center = xS_unl[:, 0] + 1j * xS_unl[:, 1]
+
+        return self.amg_numpy(w_center, z1, radiusS, dtheta, maxsamps)
+
+    def im_pos1(self, w, z1):
+        z1 = z1[0] + 1j * z1[1]
+        z1bar = np.conjugate(z1)
+        return (w + z1) * (1 + np.sqrt(1 + 4 / np.abs(w - z1bar) ** 2)) / 2
+
+    def detJac(self, z, z1bar):
+        return 1 - 1 / np.abs(z) ** 4
+
+    def cent(self, ims, z1bar):
+        return np.sum(ims / abs(self.detJac(ims, z1bar)), axis=1) / np.sum(1 / abs(self.detJac(ims, z1bar)), axis=1)
+
     def get_all_arrays(self, t, filt_idx=0):
-        u_vectors = np.linalg.norm(self.get_u(t), axis=1)
-        images, amps = self.get_all_arrays_CI(t, filt_idx)
-        return images, amps 
-  
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        u_amp = np.linalg.norm(self.get_u(t, filt_idx=filt_idx), axis=1)
+        if self.astrometryFlag == True:
+            # Adaptive mesh is only needed when a source-boundary point can
+            # sit on the lens (|u| ~ rho). Uniform CI is enough farther away
+            # and is fully vectorized over times.
+            rho = self.radiusS * 1e3 / self.thetaE_amp
+            close = u_amp < (2.0 * rho)
+            if not np.any(close):
+                self.amgFlag = False
+                return self.get_all_arrays_CI(t, filt_idx)
+            if np.all(close):
+                self.amgFlag = True
+                return self.get_all_arrays_amg(t, filt_idx)
+            far = ~close
+            images = np.empty((t.size, 2, 2), dtype=float)
+            amps = np.empty((t.size, 2), dtype=float)
+            images[far], amps[far] = self.get_all_arrays_CI(t[far], filt_idx)
+            images[close], amps[close] = self.get_all_arrays_amg(t[close], filt_idx)
+            self.amgFlag = True
+            return images, amps
+        self.amgFlag = False
+        return self.get_all_arrays_CI(t, filt_idx)
+
     def get_u(self, t, filt_idx=0):
         """
         Get the separation vector, \\vec{u}(t), which is the unlensed
@@ -21067,7 +20900,6 @@ class FSPL(PSPL):
 
         return u_vec
 
-
     def get_amplification(self, t, filt_idx=0, amp_arr=None):
         """
         Get an array of the photometric amplifications at the input times.
@@ -21083,11 +20915,11 @@ class FSPL(PSPL):
         mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
         flux_zp = 1.0
         if amp_arr is None:
-                img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-                amp_arr_mskd = amp_arr
-                amp = np.sum(amp_arr_mskd, axis=1)
-        # Contour-integral amps can flip sign with outline orientation.
-        amp = np.abs(np.asarray(amp, dtype=float))
+            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+            amp_arr_mskd = amp_arr
+            amp = np.sum(amp_arr_mskd, axis=1)
+        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
+            amp = -1 * amp
         return amp
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
@@ -21121,8 +20953,9 @@ class FSPL(PSPL):
 
         amp_arr_mskd = amp_arr
         amp = np.sum(amp_arr_mskd, axis=1)
-        # Contour-integral amps can flip sign with outline orientation.
-        amp = np.abs(np.asarray(amp, dtype=float))
+        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
+            print("True")
+            amp = -1 * amp
 
         flux_src = mag2flux(self.mag_src[filt_idx])
         flux_model = flux_src * amp
@@ -21141,67 +20974,66 @@ class FSPL(PSPL):
 
 
 class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
-    """Contains methods for model FSPL photometry + astrometry.
-This is a Data-type class in our hierarchy. It is abstract and should not
-be instantiated. 
+    """
+    Contains methods for model FSPL photometry + astrometry.
+    This is a Data-type class in our hierarchy. It is abstract and should not
+    be instantiated.
 
-Attributes
-----------
-Available class variables that should be defined.
+    Attributes
+    ----------
+    Available class variables that should be defined.
 
-t0
-tE
-u0_amp
-u0_E
-u0_N
-beta
-piE_E - valid only if parallax model
-piE_N - valid only if parallax model
-piE_amp
-mL
-thetaE_amp
-thetaE_E
-thetaE_N
-xS0_E
-xS0_N
-xL0_E
-xL0_N
-muS_E
-muS_N
-muL_E
-muL_N
-muRel_E
-muRel_N
-muRel_amp
-piS
-piL
-dL
-dS
-dL_dS (dL over dS)
-radiusS
-n
-b_sff[#]
-mag_src[#]
-mag_base[#]
-raL - if parallax model
-decL - if parallax model
-    radiusS: float
-        Projected radius of the source star in arcsec on the sky plane.
-    n_outline: int
-        Number of outline points used on the boundary of this source. """
+    t0
+    tE
+    u0_amp
+    u0_E
+    u0_N
+    beta
+    piE_E - valid only if parallax model
+    piE_N - valid only if parallax model
+    piE_amp
+    mL
+    thetaE_amp
+    thetaE_E
+    thetaE_N
+    xS0_E
+    xS0_N
+    xL0_E
+    xL0_N
+    muS_E
+    muS_N
+    muL_E
+    muL_N
+    muRel_E
+    muRel_N
+    muRel_amp
+    piS
+    piL
+    dL
+    dS
+    dL_dS (dL over dS)
+    radiusS
+    n
+    b_sff[#]
+    mag_src[#]
+    mag_base[#]
+    raL - if parallax model
+    decL - if parallax model
+
+    """
     photometryFlag = True
     astrometryFlag = True
 
     def get_astrometry_outline_unlensed(self, t, filt_idx=0):
         """Get the astrometry of the source outline if the lens didn't exist.
-        
+
         Parameters
         ----------
         t : array, float
             Times in MJD at which to evaluate the separation.
         filt_idx : int, optional
             Index of the astrometric filter or data set.
-            
+
         Returns
         -------
         xS_unlensed : numpy array, dtype=float, shape = [len(t), self.n_outline, 2]
@@ -21209,26 +21041,23 @@ decL - if parallax model
             The source outline is described by a list of points along the circumference
             of the circular source. The last axis contains East/North positions.
         """
-       
+
         if self.n_outline != False:
-        
+
             xS_unlensed_center = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)  # arcsec
-    
+
             xS_unlensed_outline = np.zeros((len(t), self.n_outline, 2), dtype=float)
-    
+
             # The angles of the points equally spaced around the source circumference.
             angles = (np.arange(self.n_outline) / self.n_outline) * 2 * np.pi  # radians
             dx = self.radiusS * np.cos(angles)  # arcsec
             dy = self.radiusS * np.sin(angles)  # arcsec
-    
-            # This could be faster with repeat, etc. Get rid of the for loop.
-            for n in range(self.n_outline):
-                xS_unlensed_outline[:, n, 0] = xS_unlensed_center[:, 0] + dx[n]
-                xS_unlensed_outline[:, n, 1] = xS_unlensed_center[:, 1] + dy[n]
-        else: 
+
+            xS_unlensed_outline[:, :, 0] = xS_unlensed_center[:, 0, np.newaxis] + dx[np.newaxis, :]
+            xS_unlensed_outline[:, :, 1] = xS_unlensed_center[:, 1, np.newaxis] + dy[np.newaxis, :]
+        else:
             print("You've selected a parameterization without outlines")
 
-        
         return xS_unlensed_outline
 
     def get_u_outline(self, t, filt_idx=0):
@@ -21249,28 +21078,27 @@ decL - if parallax model
         u : array, float, shape = [len(t), n_outline, [E, N]]
             Separation vector in East, North on the sky in units of \\theta_E.
         """
-        if self.n_outline!=False:
+        if self.n_outline != False:
             u_vec = self.get_u(t, filt_idx=filt_idx)
-    
+
             # Now expand and do this for all the outline points.
             u_vec_outline = np.zeros((len(t), self.n_outline, 2), dtype=float)
-    
+
             # The angles of the points equally spaced around the source circumference.
             angles = (np.arange(self.n_outline) / self.n_outline) * 2 * np.pi  # radians
             rho = self.radiusS * 1e3 / self.thetaE_amp
-    
+
             dux = rho * np.cos(angles)
             duy = rho * np.sin(angles)
-    
+
             # This could be faster with repeat, etc. Get rid of the for loop.
             u_vec_outline[:, :, 0] = u_vec[:, 0, np.newaxis] + dux[np.newaxis, :]
             u_vec_outline[:, :, 1] = u_vec[:, 1, np.newaxis] + duy[np.newaxis, :]
 
-        else: 
+        else:
             print("You've selected a parameterization without outlines")
-            
-        return u_vec_outline
 
+        return u_vec_outline
 
     def get_resolved_shift_outline(self, t, filt_idx=0):
         """
@@ -21293,36 +21121,36 @@ decL - if parallax model
             Relative astrometric position of the plus and minus image in East, North
             w.r.t. the lens in units of milli-arcseconds.
         """
-        if self.n_outline!=False:
+        if self.n_outline != False:
             # Shape = [len(t), self.n_outline, 2]
             u_vec = self.get_u_outline(t, filt_idx=filt_idx)
-    
+
             # Shape = [len(t), self.n_outline]
             u_amp = np.linalg.norm(u_vec, axis=2)
             u_hat = u_vec / u_amp[:, :, np.newaxis]
-    
+
             # Lensed u amplitude:
             # Shape = [len(t), self.n_outline]
             u_obs_amp_plus = ((u_amp + np.sqrt(u_amp ** 2 + 4)) / 2.0)
             u_obs_amp_minus = ((u_amp - np.sqrt(u_amp ** 2 + 4)) / 2.0)
-    
+
             # Lensed u vector:
             # Shape = [len(t), self.n_outline, [E, N]]
             u_obs_vec_plus = u_obs_amp_plus[:, :, np.newaxis] * u_hat
             u_obs_vec_minus = u_obs_amp_minus[:, :, np.newaxis] * u_hat
-    
+
             # Shift vector.
             # Shape = [len(t), self.n_outline, [E, N]]
             xSL_plus = u_obs_vec_plus * self.thetaE_amp  # in mas
             xSL_minus = u_obs_vec_minus * self.thetaE_amp  # in mas
-    
+
             # Shape = [len(t), N_outline, [+, -], [E, N]]
             xSL_lensed_res = np.zeros((len(t), self.n_outline, 2, 2), dtype=float)
-    
+
             xSL_lensed_res[:, :, 0, :] = xSL_plus
             xSL_lensed_res[:, :, 1, :] = xSL_minu
 
-        else: 
+        else:
             print("You've selected a parameterization without outlines")
 
         return xSL_lensed_res
@@ -21342,13 +21170,13 @@ decL - if parallax model
             where the last axis contains East and North positions.
         """
         # Things we will need.
-        if self.n_outline!=False:
-                
+        if self.n_outline != False:
+
             dt_in_years = (t - self.t0) / days_per_year
-    
+
             # Lens position over time
             xL = self.get_lens_astrometry(t, filt_idx=filt_idx)  # arcsec
-    
+
             # Get the source-lens position in units of thetaE
             # Shape = [len(t), N_outline, [E, N]]
             u_vec = self.get_u_outline(t, filt_idx=filt_idx)
@@ -21356,32 +21184,31 @@ decL - if parallax model
             u = np.linalg.norm(u_vec, axis=2)
             # Shape = [len(t), N_outline, [E, N]]
             u_hat = u_vec / u[:, :, np.newaxis]
-    
+
             # Calculate the shifts, separately for + and - images.
             u2_plus4_sq = np.sqrt(u ** 2 + 4)
             u_obs_amp_plus = ((u + u2_plus4_sq) / 2.0)
             u_obs_amp_minu = ((u - u2_plus4_sq) / 2.0)
             u_obs_vec_plus = u_obs_amp_plus[:, :, np.newaxis] * u_hat
             u_obs_vec_minu = u_obs_amp_minu[:, :, np.newaxis] * u_hat
-    
+
             # Lensed Source Images - Lens Image
             xSL_plus = u_obs_vec_plus * self.thetaE_amp  # in mas
             xSL_minu = u_obs_vec_minu * self.thetaE_amp  # in mas
-    
+
             # Shape = [len(t), N_outline, [+, -], [E, N]]
             xSL = np.zeros((len(t), self.n_outline, 2, 2), dtype=float)
-    
+
             xSL[:, :, 0, :] = xSL_plus
             xSL[:, :, 1, :] = xSL_minu
-    
+
             # xS = xL + xSL = xL + (xS - xL)
             xS_res = xL[:, np.newaxis, np.newaxis, :] + (xSL * 1e-3)  # arcsec
-        else: 
+        else:
             print("You've selected a parameterization without outlines")
 
         # Shape = [len(t), N_outline, [+, -], [E, N]]
         return xS_res
-
 
     def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
         """
@@ -21425,7 +21252,7 @@ decL - if parallax model
         t: Array of times in MJD.DDD
         filt_idx : int, optional
             Index of the astrometric filter or data set.
-            
+
         Returns
         _______
         amp_arr : array_like
@@ -21526,8 +21353,13 @@ decL - if parallax model
 
         amp_arr_mskd = np.ma.masked_invalid(amp_arr)
         amp = np.sum(amp_arr_mskd, axis=1)
-        # Contour-integral amps can flip sign with outline orientation.
-        amp = np.abs(np.asarray(amp, dtype=float))
+        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
+            amp = -1 * amp
+
+        # amp_arr_mskd = amp_arr
+        # amp = np.sum(amp_arr_mskd, axis=1)
+        # Mask invalid values from the amplification array.
+        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
 
         flux_src = mag2flux(self.mag_src[filt_idx])
         flux_model = flux_src * amp
@@ -21577,7 +21409,7 @@ decL - if parallax model
 
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-        
+
             # amp_arr shape = [N_times, [+, -]]
             # image_arr shape = [N_times, [+, -], [E, N]]
 
@@ -21590,16 +21422,14 @@ decL - if parallax model
         ftot = fL + np.sum(fS * amp_arr, axis=1)
         pos = np.sum(image_arr * amp_arr[:, :, np.newaxis] * fS, axis=1)
 
-
         # Calculate the flux-weighted centroid. Components are:
         #  - all lensed source images
         #  - luminous lens
-        
+
         pos += fL * xL
         pos /= ftot[:, np.newaxis]
 
         return pos
-
 
     def get_centroid_shift(self, t, filt_idx=0, image_arr=None, amp_arr=None):
         """Parallax: Get the centroid shift (in mas) for a list of
@@ -21628,7 +21458,6 @@ decL - if parallax model
 
         return shift * 1e3
 
-
     def animate(self, crossings, time_steps, frame_time, name, size, zoom,
                 astrometry, filt_idx=0):
         # TODO: BROKEN
@@ -21641,11 +21470,11 @@ decL - if parallax model
         rs = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)  # position of source
         rl = self.get_lens_astrometry(t, filt_idx=filt_idx)  # position of lens
         images = self.get_resolved_astrometry(t, filt_idx=filt_idx)  # positions of images
-        #print(images.shape)
+        # print(images.shape)
         plus = images[:, 0, :]  # plus image
         minus = images[:, 1, :]  # minus image
-        #print(filt_idx)
-        #C = self.get_centroid_shift(t, filt_idx=filt_idx)
+        # print(filt_idx)
+        # C = self.get_centroid_shift(t, filt_idx=filt_idx)
         A = self.get_amplification(t)
         times = range(time_steps)  # gets time in units of the einstein crossing time
 
@@ -21657,58 +21486,52 @@ decL - if parallax model
         line1, = ax1.plot(rl[:, 0], rl[:, 1], markersize=4, c='k', marker='.', label="Lens")
         line1_2, = ax1.plot(rl[:, 0], rl[:, 1], markersize=4, c='k', marker='.')
 
-
-                    
         line2, = ax1.plot([], 'g.', markersize=0.5, label="Source")
         line2_2, = ax1.plot([], 'g-', markersize=1.5)
 
-                    
         line3, = ax1.plot([], 'r.', markersize=2., label="+ Image")
         line3_2, = ax1.plot([], 'r-', markersize=2.5)
-                    
-        line4, = ax1.plot([], 'b.', markersize=2., label = "- Image")
+
+        line4, = ax1.plot([], 'b.', markersize=2., label="- Image")
         line4_2, = ax1.plot([], 'b-', markersize=2.5)
 
         ax1.set_xlabel("RA")
         ax1.set_ylabel("Dec")
 
-        #ax1.set_xlim((rl[0][0] + rl[-1][0]) / 2 - 2 * (size[0]) / (2 * size[1]) * (rl[-1][1] - rl[0][1] + 2 * zoom * self.thetaE_amp * 1e-3),
-         #            (rl[0][0] + rl[-1][0]) / 2 + 2 * (size[0]) / (2 * size[1]) * (rl[-1][1] - rl[0][1] + 2 * zoom * self.thetaE_amp * 1e-3))
-        #ax1.set_ylim(rl[0, 1] - zoom * self.thetaE_amp * 0.001,
-         #            rl[-1, 1] + zoom * self.thetaE_amp * 0.001)
+        # ax1.set_xlim((rl[0][0] + rl[-1][0]) / 2 - 2 * (size[0]) / (2 * size[1]) * (rl[-1][1] - rl[0][1] + 2 * zoom * self.thetaE_amp * 1e-3),
+        #            (rl[0][0] + rl[-1][0]) / 2 + 2 * (size[0]) / (2 * size[1]) * (rl[-1][1] - rl[0][1] + 2 * zoom * self.thetaE_amp * 1e-3))
+        # ax1.set_ylim(rl[0, 1] - zoom * self.thetaE_amp * 0.001,
+        #            rl[-1, 1] + zoom * self.thetaE_amp * 0.001)
 
         ax1.set_xlim(0.01, -0.01)
         ax1.set_ylim(-0.01, 0.01)
         a = self.get_centroid_shift(t)
 
-                    
-        #line5, = ax1.plot([], 'm.', markersize=size[0] * 2.5, label="Image Centroid")
-        #line5_2, = ax1.plot([], 'm-', markersize=size[0] * 2.5)
+        # line5, = ax1.plot([], 'm.', markersize=size[0] * 2.5, label="Image Centroid")
+        # line5_2, = ax1.plot([], 'm-', markersize=size[0] * 2.5)
 
         line6, = ax2.plot(tau, A)
-        ax1.legend(loc = "upper right")
+        ax1.legend(loc="upper right")
 
-                    
         ax2.set_xlabel("Time(tE)")
         ax2.set_ylabel("Magnification")
 
-        line = [line1,line1_2, line2, line2_2, line3, line3_2, line4, line4_2, line6]
+        line = [line1, line1_2, line2, line2_2, line3, line3_2, line4, line4_2, line6]
 
         # this function is called at every frame,
         # with i being the number of the frame that it's currently on
         def update(i, rs, rl, line, plus, minus, astrometry, tau, A):
             line[0].set_data(rl[i, 0], rl[i, 1])
-            line[1].set_data(rl[:i+1, 0], rl[:i+1, 1])
+            line[1].set_data(rl[:i + 1, 0], rl[:i + 1, 1])
 
             line[2].set_data(rs[i, 0], rs[i, 1])
-            line[3].set_data(rs[:i+1, 0], rs[:i+1, 1])
-            
+            line[3].set_data(rs[:i + 1, 0], rs[:i + 1, 1])
+
             line[4].set_data(plus[i, 0], plus[i, 1])
-            line[5].set_data(plus[:i+1, 0], plus[:i+1, 1])
+            line[5].set_data(plus[:i + 1, 0], plus[:i + 1, 1])
 
             line[6].set_data(minus[i, 0], minus[i, 1])
-            line[7].set_data(minus[:i+1, 0], minus[:i+1, 1])
-
+            line[7].set_data(minus[:i + 1, 0], minus[:i + 1, 1])
 
             line[8].set_data(tau[:i], A[:i])
             return line
@@ -21737,7 +21560,7 @@ decL - if parallax model
                                       fargs=[rs, rl, line, plus, minus, a, tau,
                                              A],
                                       blit=True, interval=frame_time)
-        ani.save("%s.mp4" % name, writer="ffmpeg", dpi=600)                
+        ani.save("%s.mp4" % name, writer="ffmpeg", dpi=600)
 
         return ani
 
@@ -21769,14 +21592,14 @@ class FSPL_Phot(FSPL):
 
             # Now expand and do this for all the outline points.
             u_vec_outline = np.zeros((len(t), self.n_outline, 2), dtype=float)
-    
+
             # The angles of the points equally spaced around the source circumference.
             angles = (np.arange(self.n_outline) / self.n_outline) * 2 * np.pi  # radians
             rho = self.radiusS  # in units of thetaE already.
-    
+
             dux = rho * np.cos(angles)
             duy = rho * np.sin(angles)
-    
+
             # This could be faster with repeat, etc. Get rid of the for loop.
             u_vec_outline[:, :, 0] = u_vec[:, 0, np.newaxis] + dux[np.newaxis, :]
             u_vec_outline[:, :, 1] = u_vec[:, 1, np.newaxis] + duy[np.newaxis, :]
@@ -21784,7 +21607,6 @@ class FSPL_Phot(FSPL):
             return u_vec_outline
         else:
             print("You've selected a parameterization without outlines")
-
 
     def get_resolved_astrometry_outline(self, t, filt_idx=0):
         """Get the delta-x, delta-y astrometry for each of the two lensed source images
@@ -21801,9 +21623,9 @@ class FSPL_Phot(FSPL):
             shape = [len(t), self.n_outline, [+,-], [E,N]]
             where the last axis contains East and North positions.
         """
-        
+
         # Things we will need.
-        if self.n_outline!=False:
+        if self.n_outline != False:
             dt_in_years = (t - self.t0) / days_per_year
 
             # Get the source-lens position in units of thetaE
@@ -21813,20 +21635,20 @@ class FSPL_Phot(FSPL):
             u = np.linalg.norm(u_vec, axis=2)
             # Shape = [len(t), N_outline, [E, N]]
             u_hat = u_vec / u[:, :, np.newaxis]
-    
+
             # Calculate the shifts, separately for + and - images.
             u2_plus4_sq = np.sqrt(u ** 2 + 4)
             u_obs_amp_plus = ((u + u2_plus4_sq) / 2.0)
             u_obs_amp_minu = ((u - u2_plus4_sq) / 2.0)
             u_obs_vec_plus = u_obs_amp_plus[:, :, np.newaxis] * u_hat
             u_obs_vec_minu = u_obs_amp_minu[:, :, np.newaxis] * u_hat
-    
+
             # Shape = [len(t), N_outline, [+, -], [E, N]]
             shifts_res = np.zeros((len(t), self.n_outline, 2, 2), dtype=float)
-    
+
             shifts_res[:, :, 0, :] = u_obs_vec_plus
             shifts_res[:, :, 1, :] = u_obs_vec_minu
-    
+
             # Shape = [len(t), N_outline, [+, -], [E, N]]
             return shifts_res
         else:
@@ -21835,10 +21657,124 @@ class FSPL_Phot(FSPL):
 
 class FSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+    ref_frame_parallax_flag = False
 
 
 class FSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+    ref_frame_parallax_flag = False
+
+
+class FSPL_PhotParam1(PSPL_Param):
+    """
+    Point source point lens model for microlensing photometry only.
+    This model includes the relative proper motion between the lens
+    and the source. Parameters are reduced with the use of piRel
+    (rather than dL and dS) and muRel (rather than muL and muS).
+    Same as PSPL_PhotParam1.
+
+    Attributes
+    ----------
+    t0: float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in Solar System barycentric coordinates. This should be close,
+        but not exactly aligned with the photometric peak, as seen
+        from Earth or a Solar System satellite.
+    u0_amp: float
+         Angular distance between the lens and source on the plane of the
+         sky at closest approach in units of thetaE. It can be
+         positive (u0_amp > 0 when u0_hat[0] > 0) or
+         negative (u0_amp < 0 when u0_hat[0] < 0).
+    tE: float
+        Einstein crossing time in days.
+    piE_E: float
+        The microlensing parallax in the East direction in units of thetaE.
+    piE_N: float
+        The microlensing parallax in the North direction in units of thetaE
+    radiusS: float
+        Apparent radius on the sky of the source star (in thetaE).
+    b_sff: numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_src: numpy array or list
+        Photometric magnitude of the source. This must be passed in as a
+        list or array, with one entry for each photometric filter.
+    n_outline: int (optional)
+        Number of boundary points to use when approximating the source outline.
+        Calculation time scales approximately linearly with 'n_outline'.
+
+    Notes
+    -----
+    .. note:: Required parameters if calculating with parallax
+
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location for each photometric
+                       dataset (def=['earth']) such as 'jwst' or 'spitzer'.
+                       Can be a single string if all observer locations are
+                       identical. Otherwise, array of same length as mag_src
+                       or b_sff (e.g. other photometric parameters).
+    """
+
+    fitter_param_names = ['t0', 'u0_amp', 'tE',
+                          'piE_E', 'piE_N', 'radiusS']
+    phot_param_names = ['b_sff', 'mag_src']
+    additional_param_names = ['mag_base']
+
+    paramAstromFlag = False
+    paramPhotFlag = True
+    LeeFlag = False
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_src,
+                 n_outline=50,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.t0 = t0
+        self.u0_amp = u0_amp
+        self.tE = tE
+        self.piE = np.array([piE_E, piE_N])
+        self.b_sff = b_sff
+        self.mag_src = mag_src
+        self.n_outline = n_outline
+        self.raL = raL
+        self.decL = decL
+        self.obsLocation = obsLocation
+        self.radiusS = radiusS
+        # Must call after setting parameters.
+        # This checks for proper parameter formatting.
+        super().__init__()
+
+        # Derived quantities
+        self.mag_base = self.mag_src + 2.5 * np.log10(self.b_sff)
+
+        # Calculate the microlensing parallax amplitude
+        self.piE_amp = np.linalg.norm(self.piE)
+
+        # Get thetaE_hat (same direction as piE
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+
+        # Comment on sign conventions:
+        # thetaS0 = xS0 - xL0
+        # (difference in positions on sky, Solar System barycentric, at t0)
+        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
+        # if u0_E > 0 then the Source is to the East of the lens
+        # if u0_E < 0 then the source is to the West of the lens
+        # We adopt the following sign convention (same as Gould:2004):
+        #    u0_amp > 0 means u0_E > 0
+        #    u0_amp < 0 means u0_E < 0
+        # Note that we assume beta = u0_amp (with same signs).
+
+        # Calculate the closest approach vector. Define beta sign convention
+        # same as of Andy Gould does with beta > 0 means u0_E > 0
+        # (lens passes to the right of the source as seen from Earth or Sun).
+        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
+        # the sign of beta is always the same as the sign of u0_amp. Therefore this
+        # usage of the function with u0_amp works exactly the same.
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        return
 
 
 class FSPL_PhotParam2(PSPL_Param):
@@ -21854,7 +21790,7 @@ class FSPL_PhotParam2(PSPL_Param):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
     u0_amp: float
@@ -21901,7 +21837,7 @@ class FSPL_PhotParam2(PSPL_Param):
 
     paramAstromFlag = False
     paramPhotFlag = True
-    LeeFlag = False 
+    LeeFlag = False
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_base,
                  n_outline=50,
@@ -21933,7 +21869,7 @@ class FSPL_PhotParam2(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -21952,17 +21888,17 @@ class FSPL_PhotParam2(PSPL_Param):
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
 
         return
-                     
+
 
 class FSPL_PhotAstromParam1(PSPL_Param):
     """PSPL model for astrometry and photometry - physical parameterization.
 
-    A Point Source Point Lens model for microlensing. This model uses a 
-    parameterization that depends on only physical quantities such as the 
-    lens mass and positions and proper motions of both the lens and source. 
+    A Point Source Point Lens model for microlensing. This model uses a
+    parameterization that depends on only physical quantities such as the
+    lens mass and positions and proper motions of both the lens and source.
 
-    Note the attributes, RA (raL) and Dec (decL) are required 
-    if you are calculating a model with parallax. 
+    Note the attributes, RA (raL) and Dec (decL) are required
+    if you are calculating a model with parallax.
 
     Parameters
     ----------
@@ -21973,9 +21909,9 @@ class FSPL_PhotAstromParam1(PSPL_Param):
     beta: float
         Angular distance between the lens and source on the plane of the sky (mas). Can be
 
-        * positive (u0_amp > 0 when u0_hat[0] (East component) < 0) or 
+        * positive (u0_amp > 0 when u0_hat[0] (East component) < 0) or
         * negative (u0_amp < 0 when u0_hat[0] (East component) > 0).
-        
+
     dL: float
         Distance from the observer to the lens (pc)
     dL_dS: float
@@ -22090,7 +22026,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
 
         # Comment on sign conventions:
         # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, heliocentric, at t0)
+        # (difference in positions on sky, Solar System barycentric, at t0)
         # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
         # if u0_E > 0 then the Source is to the East of the lens
         # if u0_E < 0 then the source is to the West of the lens
@@ -22137,17 +22073,17 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
     ----------
     t0: float
         Time (MJD.DDD) of closest projected approach between source and lens
-        as seen in heliocentric coordinates. This should be close,
+        as seen in Solar System barycentric coordinates. This should be close,
         but not exactly aligned with the photometric peak, as seen
         from Earth or a Solar System satellite.
-    u0_amp: float 
+    u0_amp: float
         Angular distance between the lens and source on the plane of the
         sky at closest approach in units of thetaE. Can be
-        
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
-          
-    tE: float 
+
+    tE: float
         Einstein crossing time (days).
     thetaE: float
         The size of the Einstein radius in (mas).
@@ -22208,22 +22144,21 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
                  radiusS,
                  b_sff, mag_src, n_outline=50,
                  raL=None, decL=None, obsLocation='earth'):
-                     
         super().__init__(t0, u0_amp, tE, thetaE, piS,
-                     piE_E, piE_N,
-                     xS0_E, xS0_N,
-                     muS_E, muS_N, 
-                     b_sff, mag_src,
-                     raL=raL, decL=decL, obsLocation=obsLocation)
-                     
+                         piE_E, piE_N,
+                         xS0_E, xS0_N,
+                         muS_E, muS_N,
+                         b_sff, mag_src,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
         self.n_outline = n_outline
         self.radiusS = radiusS
-                      
-        return 
-        
-                     
 
-#
+        return
+
+    #
+
+
 # IN PROGRESS
 #
 class FSPL_Limb(FSPL):
@@ -22257,7 +22192,7 @@ class FSPL_Limb(FSPL):
         -------
         mag_model : array_like
             Magnitude of the unresolved microlensing event at t.
-            
+
         '''
         mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
         flux_zp = 1.0
@@ -22385,10 +22320,12 @@ class FSPL_Limb(FSPL):
 
 class FSPL_Limb_noParallax(FSPL_noParallax):
     parallaxFlag = False
+    ref_frame_parallax_flag = False
 
 
 class FSPL_Limb_Parallax(FSPL_Parallax):
     parallaxFlag = True
+    ref_frame_parallax_flag = False
 
 
 # FIXME: Use super here
@@ -22441,7 +22378,6 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
         self.xL0 = self.xS0[0] - self.thetas0 * 1e-3  # [RA, Dec] position of the lens at peak
         self.tE = get_einstein_time(self.thetaE_amp, self.muRel,
                                     365.25)  # Einstein crossing time
-
 
 
 # ==================================================
