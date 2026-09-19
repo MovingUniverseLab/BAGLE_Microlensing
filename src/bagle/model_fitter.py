@@ -3303,6 +3303,100 @@ def make_piS():
                                  loc=piS_mean, scale=piS_std)
 
 
+def make_sed_distance_gen(csv_file, prob_col='P_SEDdust_XP',
+                          param='dS', distance_unit='kpc'):
+    """Build a source-distance or source-parallax prior from a tabulated SED PDF.
+
+    The input CSV is the format written by declens ``sed_distance_prior.py``:
+    0.1 kpc bins with ``D_lo_kpc`` / ``D_hi_kpc`` edges and a probability
+    column (for example ``P_SEDdust_XP``) that already sums to 1 over the
+    bins. This function re-normalizes that column and returns a
+    piecewise-constant PDF whose integral is 1.
+
+    For ``param='piS'``, each distance bin is mapped to source parallax
+    with :math:`\\pi_S = 1/D` (D in kpc, :math:`\\pi_S` in mas). Bin
+    probabilities are conserved, so the Jacobian is included.
+
+    Parameters
+    ----------
+    csv_file : str
+        Path to the SED distance-prior CSV.
+    prob_col : str, optional
+        Probability column to use. Default is ``P_SEDdust_XP``.
+    param : {'dS', 'piS'}, optional
+        Parameter the returned prior is defined on. ``'dS'`` is source
+        distance; ``'piS'`` is source parallax in mas.
+    distance_unit : {'pc', 'kpc'}, optional
+        Unit of the returned distribution when ``param='dS'``. BAGLE
+        ``dS`` is in parsecs, so the default is ``'pc'``. Ignored for
+        ``param='piS'``.
+
+    Returns
+    -------
+    dist : scipy.stats.rv_histogram
+        Frozen distribution with ``pdf``, ``logpdf``, ``ppf``, and ``rvs``.
+
+    Examples
+    --------
+    Source distance (BAGLE ``dS`` in parsecs)::
+
+        fitter.priors['dS'] = model_fitter.make_sed_distance_gen(
+            'sed_distance_prior_xp.csv')
+
+    Source parallax (BAGLE ``piS`` in mas)::
+
+        fitter.priors['piS'] = model_fitter.make_sed_distance_gen(
+            'sed_distance_prior_xp.csv', param='piS')
+    """
+    tab = Table.read(csv_file, format='ascii.csv')
+    if prob_col not in tab.colnames:
+        raise ValueError(f"Column '{prob_col}' not found in {csv_file}. "
+                         f"Available columns: {tab.colnames}")
+    for edge_col in ('D_lo_kpc', 'D_hi_kpc'):
+        if edge_col not in tab.colnames:
+            raise ValueError(f"Column '{edge_col}' not found in {csv_file}.")
+    if param not in ('dS', 'piS'):
+        raise ValueError("param must be 'dS' or 'piS'.")
+
+    d_lo = np.asarray(tab['D_lo_kpc'], dtype=float)
+    d_hi = np.asarray(tab['D_hi_kpc'], dtype=float)
+    prob = np.asarray(tab[prob_col], dtype=float)
+
+    if len(prob) == 0:
+        raise ValueError(f"No rows found in {csv_file}.")
+    if np.any(~np.isfinite(prob)) or np.any(prob < 0):
+        raise ValueError(f"Column '{prob_col}' must be finite and non-negative.")
+    if np.sum(prob) <= 0:
+        raise ValueError(f"Column '{prob_col}' has zero total probability.")
+    if np.any(d_hi <= d_lo):
+        raise ValueError("Each bin must have D_hi_kpc > D_lo_kpc.")
+    if np.any(d_lo <= 0):
+        raise ValueError("Distance bins must be positive to convert to piS.")
+
+    # Contiguous edges: [D_lo_0, D_lo_1, ..., D_lo_n, D_hi_n]
+    bin_edges_kpc = np.append(d_lo, d_hi[-1])
+    if not np.allclose(d_hi[:-1], d_lo[1:]):
+        raise ValueError("Distance bins in the CSV must be contiguous.")
+
+    # Probability per bin, then convert to a density so ∫ pdf dx = 1.
+    prob = prob / prob.sum()
+
+    if param == 'piS':
+        # π_S (mas) = 1 / D (kpc). Invert and reverse so edges increase.
+        bin_edges = 1.0 / bin_edges_kpc[::-1]
+        prob = prob[::-1]
+    elif distance_unit == 'pc':
+        bin_edges = bin_edges_kpc * 1000.0
+    elif distance_unit == 'kpc':
+        bin_edges = bin_edges_kpc
+    else:
+        raise ValueError("distance_unit must be 'pc' or 'kpc'.")
+
+    density = prob / np.diff(bin_edges)
+
+    return scipy.stats.rv_histogram((density, bin_edges), density=True)
+
+
 def make_fdfdt():
     return scipy.stats.norm(loc=0, scale=1 / 365.25)
 

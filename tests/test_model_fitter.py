@@ -2427,3 +2427,60 @@ def test_multi_obsLocation(resume=False, verbose=False):
     assert (np.abs(lnL_out - lnL_in) / np.abs(lnL_in)) < 0.1
 
     return
+
+
+def test_make_sed_distance_gen(tmp_path):
+    """SED distance prior is a piecewise PDF that integrates to 1."""
+    csv_file = tmp_path / 'sed_distance_prior.csv'
+    csv_file.write_text(
+        'D_lo_kpc,D_hi_kpc,D_mid_kpc,P_SEDdust_XP\n'
+        '1.0,2.0,1.5,0.2\n'
+        '2.0,3.0,2.5,0.5\n'
+        '3.0,4.0,3.5,0.3\n'
+    )
+
+    dist_kpc = model_fitter.make_sed_distance_gen(str(csv_file),
+                                                  distance_unit='kpc')
+    dist_pc = model_fitter.make_sed_distance_gen(str(csv_file),
+                                                 distance_unit='pc')
+
+    # Piecewise-constant density: P_bin / bin_width, after renormalizing.
+    assert dist_kpc.pdf(0.5) == 0.0
+    assert dist_kpc.pdf(1.5) == pytest.approx(0.2)
+    assert dist_kpc.pdf(2.5) == pytest.approx(0.5)
+    assert dist_kpc.pdf(3.5) == pytest.approx(0.3)
+    assert dist_kpc.pdf(4.5) == 0.0
+    assert dist_kpc.expect() == pytest.approx(2.6)
+
+    # PDF integrates to 1 over the tabulated range.
+    assert dist_kpc.cdf(4.0) - dist_kpc.cdf(1.0) == pytest.approx(1.0)
+
+    # BAGLE dS is in parsecs: same shape, edges scaled by 1000.
+    assert dist_pc.pdf(1500.0) == pytest.approx(0.2 / 1000.0)
+    assert dist_pc.pdf(2500.0) == pytest.approx(0.5 / 1000.0)
+    assert dist_pc.ppf(0.0) == pytest.approx(1000.0)
+    assert dist_pc.ppf(1.0) == pytest.approx(4000.0)
+
+    # Nested-sampling prior transform stays inside the support.
+    u = np.linspace(0.0, 1.0, 11)
+    samples = dist_pc.ppf(u)
+    assert np.all(samples >= 1000.0)
+    assert np.all(samples <= 4000.0)
+
+    # piS (mas) = 1 / D (kpc). Bin probabilities are conserved.
+    dist_pi = model_fitter.make_sed_distance_gen(str(csv_file), param='piS')
+    assert dist_pi.pdf(0.1) == 0.0
+    assert dist_pi.pdf(0.28) == pytest.approx(0.3 / (1.0 / 3.0 - 0.25))
+    assert dist_pi.pdf(0.4) == pytest.approx(0.5 / (0.5 - 1.0 / 3.0))
+    assert dist_pi.pdf(0.75) == pytest.approx(0.2 / (1.0 - 0.5))
+    assert dist_pi.pdf(1.5) == 0.0
+    assert dist_pi.cdf(1.0) - dist_pi.cdf(0.25) == pytest.approx(1.0)
+    assert dist_pi.ppf(0.0) == pytest.approx(0.25)
+    assert dist_pi.ppf(1.0) == pytest.approx(1.0)
+
+    # P(D < 2 kpc) = 0.2 = P(piS > 0.5 mas)
+    assert 1.0 - dist_pi.cdf(0.5) == pytest.approx(0.2)
+
+    samples_pi = dist_pi.ppf(u)
+    assert np.all(samples_pi >= 0.25)
+    assert np.all(samples_pi <= 1.0)
