@@ -74,3 +74,13 @@ tests/figures/
 # Local virtual environment
 .venv/
 
+
+# Time-test / sampler-compare outputs (datasets, fits, reports)
+# Keep scripts (run_comparison.py, report.py, launch_*.sh) tracked.
+tests/psbl_sampler_compare/runs/
+tests/psbl_sampler_compare/runs_*/
+tests/psbl_sampler_compare/.mplconfig/
+
+# MultNest / fitter scratch at repo root
+chains/
+cache/
