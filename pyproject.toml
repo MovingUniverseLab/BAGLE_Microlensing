@@ -42,7 +42,10 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-jaxns = ["jaxns>=2.5", "tensorflow-probability>=0.24"]
+# jaxns installs its compatible tfp-nightly dependency.  Do not add the stable
+# tensorflow-probability distribution here: both distributions install the same
+# module path and conflict with one another.
+jaxns = ["jaxns>=2.5"]
 
 [project.urls]
 Homepage = "https://github.com/MovingUniverseLab/BAGLE_Microlensing"
