@@ -3249,3 +3249,248 @@ def test_microlens_solver_numpyro_jaxns_smoke():
     assert np.isfinite(float(summary['logZ'][0]))
     assert np.isfinite(float(summary['maxlogL'][0]))
     return None
+
+
+def test_microlens_solver_numpyro_smc_nuts_smoke():
+    """NumPyro SMC-NUTS smoke: finite logZ and MultiNest-compatible table."""
+    pytest.importorskip('numpyro')
+
+    outdir = f'{TEST_OUTPUT_DIR}/test_numpyro_smc_nuts/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = fake_data.fake_data1()
+    model_class = model.PSPL_PhotAstrom_noPar_Param1
+
+    fitter = MicrolensSolverNumPyro(
+        data,
+        model_class,
+        outputfiles_basename=outdir + 'numpyro_smc_nuts_',
+        sampler='smc_nuts',
+        n_live_points=16,
+        n_temperatures=4,
+        tune=15,
+        smc_rejuvenate_steps=1,
+        max_tree_depth=5,
+        chain_method='sequential',
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_pspl_fake_data1_priors(fitter, p_in)
+    fitter.solve()
+
+    tab = fitter.load_mnest_results()
+    summary = fitter.load_mnest_summary()
+    assert len(tab) == 16
+    assert 'logLike' in tab.colnames
+    for name in fitter.fitter_param_names:
+        assert name in tab.colnames
+        assert np.all(np.isfinite(tab[name]))
+    assert np.isfinite(float(summary['logZ'][0]))
+    assert np.isfinite(float(summary['maxlogL'][0]))
+    return None
+
+
+def test_microlens_solver_numpyro_smc_nuts_vs_multinest(plot=False,
+                                                        resume_mnest=False):
+    """NumPyro SMC-NUTS medians should be near MultiNest on fake_data1."""
+    pytest.importorskip('numpyro')
+
+    outdir = f'{TEST_OUTPUT_DIR}/test_numpyro_smc_nuts/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = fake_data.fake_data1()
+    model_class = model.PSPL_PhotAstrom_noPar_Param1
+
+    fitter_mn = MicrolensSolver(
+        data,
+        model_class,
+        n_live_points=100,
+        outputfiles_basename=outdir + 'mnest_jax_',
+        sampling_efficiency=0.9,
+        evidence_tolerance=0.8,
+        max_iter=5000,
+        dump_callback=None,
+        verbose=False,
+        resume=resume_mnest,
+    )
+    _apply_pspl_fake_data1_priors(fitter_mn, p_in)
+
+    t0 = time.time()
+    fitter_mn.solve()
+    t_mn = time.time() - t0
+
+    best_mn = fitter_mn.get_best_fit(def_best='median')[0]
+    tab_mn = fitter_mn.load_mnest_results()
+
+    fitter_smc = MicrolensSolverNumPyro(
+        data,
+        model_class,
+        outputfiles_basename=outdir + 'numpyro_smc_nuts_cmp_',
+        sampler='smc_nuts',
+        n_live_points=24,
+        n_temperatures=5,
+        tune=25,
+        smc_rejuvenate_steps=1,
+        max_tree_depth=8,
+        chain_method='sequential',
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_pspl_fake_data1_priors(fitter_smc, p_in)
+
+    t0 = time.time()
+    fitter_smc.solve()
+    t_smc = time.time() - t0
+
+    print(f'MultiNest runtime: {t_mn:.1f}s, NumPyro SMC-NUTS: {t_smc:.1f}s')
+
+    best_smc = fitter_smc.get_best_fit(def_best='median')[0]
+    tab_smc = fitter_smc.load_mnest_results()
+
+    if plot:
+        figdir = os.path.join(_test_figures_dir(), 'numpyro_smc_nuts_vs_multinest')
+        model_mn = fitter_mn.get_model(best_mn)
+        model_smc = fitter_smc.get_model(best_smc)
+        model_in = fitter_mn.get_model(p_in)
+        map_mn = fitter_mn.get_best_fit(def_best='map')
+        map_smc = fitter_smc.get_best_fit(def_best='map')
+        _plot_data_and_both_models(
+            data, model_mn, model_smc, model_in, figdir,
+            other_label='SMC-NUTS')
+        _plot_posterior_comparison(
+            tab_mn, tab_smc, fitter_mn.fitter_param_names, figdir,
+            priors=fitter_mn.priors, map_mn=map_mn, map_other=map_smc,
+            other_label='SMC-NUTS')
+
+    for key in fitter_mn.fitter_param_names:
+        a = best_mn[key]
+        b = best_smc[key]
+        # Near-zero params (e.g. xS0) need an absolute floor with few particles.
+        atol = max(5e-2, 0.35 * np.abs(a))
+        assert np.isclose(a, b, rtol=0.35, atol=atol)
+
+    lnL_mn = fitter_mn.log_likely(best_mn)
+    lnL_smc = fitter_smc.log_likely(best_smc)
+    assert np.abs(lnL_mn - lnL_smc) < 15
+
+    return None
+
+
+def test_microlens_solver_pymc_smc_smoke():
+    """PyMC SMC smoke: finite logZ and MultiNest-compatible table."""
+    pytest.importorskip('pymc')
+
+    outdir = f'{TEST_OUTPUT_DIR}/test_pymc_smc/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = fake_data.fake_data1()
+    model_class = model.PSPL_PhotAstrom_noPar_Param1
+
+    fitter = MicrolensSolverPyMC(
+        data,
+        model_class,
+        outputfiles_basename=outdir + 'pymc_smc_',
+        sampler='smc',
+        draws=100,
+        chains=1,
+        cores=1,
+        pymc_random_seed=0,
+        verbose=False,
+    )
+    _apply_pspl_fake_data1_priors(fitter, p_in)
+    fitter.solve()
+
+    tab = fitter.load_mnest_results()
+    summary = fitter.load_mnest_summary()
+    assert len(tab) == 100
+    assert 'logLike' in tab.colnames
+    for name in fitter.fitter_param_names:
+        assert name in tab.colnames
+        assert np.all(np.isfinite(tab[name]))
+    assert np.isfinite(float(summary['logZ'][0]))
+    assert np.isfinite(float(summary['maxlogL'][0]))
+    return None
+
+
+def test_microlens_solver_pymc_smc_vs_multinest(plot=False, resume_mnest=False):
+    """PyMC SMC medians should be near MultiNest on fake_data1."""
+    pytest.importorskip('pymc')
+
+    outdir = f'{TEST_OUTPUT_DIR}/test_pymc_smc/'
+    os.makedirs(outdir, exist_ok=True)
+
+    data, p_in = fake_data.fake_data1()
+    model_class = model.PSPL_PhotAstrom_noPar_Param1
+
+    fitter_mn = MicrolensSolver(
+        data,
+        model_class,
+        n_live_points=100,
+        outputfiles_basename=outdir + 'mnest_jax_',
+        sampling_efficiency=0.9,
+        evidence_tolerance=0.8,
+        max_iter=5000,
+        dump_callback=None,
+        verbose=False,
+        resume=resume_mnest,
+    )
+    _apply_pspl_fake_data1_priors(fitter_mn, p_in)
+
+    t0 = time.time()
+    fitter_mn.solve()
+    t_mn = time.time() - t0
+
+    best_mn = fitter_mn.get_best_fit(def_best='median')[0]
+    tab_mn = fitter_mn.load_mnest_results()
+
+    fitter_smc = MicrolensSolverPyMC(
+        data,
+        model_class,
+        outputfiles_basename=outdir + 'pymc_smc_cmp_',
+        sampler='smc',
+        draws=400,
+        chains=2,
+        cores=1,
+        pymc_random_seed=0,
+        verbose=False,
+    )
+    _apply_pspl_fake_data1_priors(fitter_smc, p_in)
+
+    t0 = time.time()
+    fitter_smc.solve()
+    t_smc = time.time() - t0
+
+    print(f'MultiNest runtime: {t_mn:.1f}s, PyMC SMC runtime: {t_smc:.1f}s')
+
+    best_smc = fitter_smc.get_best_fit(def_best='median')[0]
+    tab_smc = fitter_smc.load_mnest_results()
+
+    if plot:
+        figdir = os.path.join(_test_figures_dir(), 'pymc_smc_vs_multinest')
+        model_mn = fitter_mn.get_model(best_mn)
+        model_smc = fitter_smc.get_model(best_smc)
+        model_in = fitter_mn.get_model(p_in)
+        map_mn = {
+            name: tab_mn[name][np.argmax(tab_mn['logLike'])]
+            for name in fitter_mn.fitter_param_names
+        }
+        map_smc = {
+            name: tab_smc[name][np.argmax(tab_smc['logLike'])]
+            for name in fitter_smc.fitter_param_names
+        }
+        _plot_data_and_both_models(
+            data, model_mn, model_smc, model_in, figdir,
+            other_label='PyMC-SMC')
+        _plot_posterior_comparison(
+            tab_mn, tab_smc, fitter_mn.fitter_param_names, figdir,
+            priors=fitter_mn.priors, map_mn=map_mn, map_other=map_smc,
+            other_label='PyMC-SMC')
+
+    for key in fitter_mn.fitter_param_names:
+        assert _relative_param_diff(best_mn[key], best_smc[key]) < 0.5
+
+    lnL_mn = fitter_mn.log_likely(best_mn)
+    lnL_smc = fitter_smc.log_likely(best_smc)
+    assert np.abs(lnL_mn - lnL_smc) < 20
+
+    return None

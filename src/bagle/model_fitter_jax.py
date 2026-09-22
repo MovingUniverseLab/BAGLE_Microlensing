@@ -15,6 +15,7 @@ from pymultinest.solve import Solver
 import os
 import glob
 import math
+import inspect
 import numpy as np
 import pylab as plt
 import scipy.stats
@@ -307,13 +308,21 @@ def build_explicit_jax_loglik_fn(fitter):
                                         fixed_jitter='GPnoJitter' not in model_class.__name__)
 
         # Compute sum of log-likelihood contributions from each astrometric dataset
+        # Only forward mag_src / dmag to methods that accept them (PSBL).
+        ast_accepts_mag = False
+        ast_accepts_dmag = False
+        if ast_method is not None:
+            ast_sig = inspect.signature(ast_method)
+            ast_accepts_mag = 'mag_src' in ast_sig.parameters
+            ast_accepts_dmag = 'dmag_Lp_Ls' in ast_sig.parameters
+
         for (t, x_obs, y_obs, x_err, y_err, pvec, idx_b, idx_mag_src,
              idx_dmag, weight) in ast_blocks:
             assert ast_method is not None
             b_sff = param_vec[idx_b] if idx_b is not None else 1.0
             # Optional luminous-lens / mag args for PSBL-style methods.
             kwargs = dict(b_sff=b_sff, parallax_vectors=pvec)
-            if idx_mag_src is not None:
+            if ast_accepts_mag and idx_mag_src is not None:
                 mag_value = param_vec[idx_mag_src]
                 # Convert mag_base → mag_src when needed.
                 phot_names = tuple(
@@ -324,7 +333,7 @@ def build_explicit_jax_loglik_fn(fitter):
                         jnp.maximum(b_sff, 1e-12)
                     )
                 kwargs['mag_src'] = mag_value
-            if idx_dmag is not None:
+            if ast_accepts_dmag and idx_dmag is not None:
                 kwargs['dmag_Lp_Ls'] = param_vec[idx_dmag]
             lnL += weight * ast_method(
                 base_vec, t, x_obs, y_obs, x_err, y_err, **kwargs
@@ -3507,14 +3516,14 @@ class MicrolensSolverPyMC(MicrolensSolver):
         chains=2,
         cores=1,
         pymc_random_seed=0,
-        sampler='metropolis',
+        sampler='nuts',
         use_jax_grad=True,
         **kwargs,
     ):
         """
         Initialize the MicrolensSolverPyMC object.
 
-        Parameters 
+        Parameters
         ----------
         data : dict
             Data dictionary containing the data for the fit.
@@ -3537,16 +3546,18 @@ class MicrolensSolverPyMC(MicrolensSolver):
         verbose : bool, optional
             Verbose output.
         draws : int, optional
-            Number of draws.
+            MCMC draws, or SMC particle count when ``sampler='smc'``.
         tune : int, optional
+            MCMC warmup steps (ignored by SMC).
         chains : int, optional
             Number of chains.
         cores : int, optional
             Number of cores.
         pymc_random_seed : int, optional
             PyMC random seed.
-        sampler : str, optional
-            Sampler to use.
+        sampler : {'nuts', 'metropolis', 'smc'}, optional
+            Inference backend. ``'smc'`` uses :func:`pymc.sample_smc`
+            (Independent Metropolis-Hastings kernel).
         use_jax_grad : bool, optional
             Use JAX gradients.
         **kwargs : dict, optional
@@ -3557,7 +3568,7 @@ class MicrolensSolverPyMC(MicrolensSolver):
         MicrolensSolverPyMC
             MicrolensSolverPyMC object.
         """
-        
+
         super().__init__(
             data,
             model_class,
@@ -3572,6 +3583,15 @@ class MicrolensSolverPyMC(MicrolensSolver):
             dump_callback=None,
             **kwargs,
         )
+
+        # Validate sampler choice up front.
+        sampler = str(sampler).lower()
+        if sampler not in ('nuts', 'metropolis', 'smc'):
+            raise ValueError(
+                f"sampler must be 'nuts', 'metropolis', or 'smc', "
+                f"got {sampler!r}"
+            )
+
         self.draws = draws
         self.tune = tune
         self.chains = chains
@@ -3581,11 +3601,17 @@ class MicrolensSolverPyMC(MicrolensSolver):
         self.use_jax_grad = use_jax_grad
         self.idata = None
         self.pymc_model = None
+        self._logZ = np.nan
         self._results_table = None
         self._summary_table = None
 
     def solve(self):
-        """Run PyMC sampling to find optimal parameters and posteriors."""
+        """Run PyMC sampling to find optimal parameters and posteriors.
+
+        Returns
+        -------
+        None
+        """
         self.write_params_yaml()
 
         print('*************************************************')
@@ -3596,27 +3622,42 @@ class MicrolensSolverPyMC(MicrolensSolver):
             self, use_jax_grad=self.use_jax_grad
         ).build()
 
-        # Set up initialization by sampling from prior.
+        # Prior-median start for MCMC kernels (SMC draws from the prior).
         initvals = {}
         for name in self.fitter_param_names:
             initvals[name] = float(self.priors[name].ppf(0.5))
 
-        # Generate samples.
         with self.pymc_model:
-            #step = pm.Metropolis()
-            step = pm.NUTS()
+            if self.sampler == 'smc':
+                # Sequential Monte Carlo (IMH kernel); draws = particles.
+                self.idata = pm.sample_smc(
+                    draws=self.draws,
+                    chains=self.chains,
+                    cores=self.cores,
+                    random_seed=self.pymc_random_seed,
+                    progressbar=self.verbose,
+                    return_inferencedata=True,
+                )
+                self._logZ = self._logZ_from_pymc_smc(self.idata)
+            else:
+                # Gradient NUTS or random-walk Metropolis.
+                if self.sampler == 'metropolis':
+                    step = pm.Metropolis()
+                else:
+                    step = pm.NUTS()
 
-            self.idata = pm.sample(
-                draws=self.draws,
-                tune=self.tune,
-                chains=self.chains,
-                cores=self.cores,
-                step=step,
-                initvals=initvals,
-                random_seed=self.pymc_random_seed,
-                progressbar=self.verbose,
-                return_inferencedata=True,
-            )
+                self.idata = pm.sample(
+                    draws=self.draws,
+                    tune=self.tune,
+                    chains=self.chains,
+                    cores=self.cores,
+                    step=step,
+                    initvals=initvals,
+                    random_seed=self.pymc_random_seed,
+                    progressbar=self.verbose,
+                    return_inferencedata=True,
+                )
+                self._logZ = np.nan
 
         self._results_table = None
         self._summary_table = None
@@ -3624,7 +3665,37 @@ class MicrolensSolverPyMC(MicrolensSolver):
         self.load_pymc_results(remake_fits=True)
         self.load_pymc_summary(remake_fits=True)
 
-        return
+        return None
+
+    @staticmethod
+    def _logZ_from_pymc_smc(idata):
+        """Extract SMC log marginal likelihood from InferenceData/DataTree.
+
+        Parameters
+        ----------
+        idata : arviz.InferenceData or xarray.DataTree
+            Result of :func:`pymc.sample_smc`.
+
+        Returns
+        -------
+        float
+            Log evidence from finite ``log_marginal_likelihood`` entries
+            (PyMC may pad intermediate stages with NaN), or ``nan``.
+        """
+        try:
+            stats = idata.sample_stats
+            if 'log_marginal_likelihood' not in stats:
+                return np.nan
+            vals = np.asarray(
+                stats['log_marginal_likelihood'], dtype=float
+            ).reshape(-1)
+            finite = vals[np.isfinite(vals)]
+            if finite.size == 0:
+                return np.nan
+            # Final tempered stage holds the cumulative log evidence.
+            return float(finite[-1])
+        except Exception:
+            return np.nan
 
     def _samples_from_idata(self):
         stacked = []
@@ -3701,7 +3772,8 @@ class MicrolensSolverPyMC(MicrolensSolver):
             return self._summary_table
 
         tab = self.load_pymc_results(remake_fits=remake_fits)
-        row = {'logZ': np.nan, 'maxlogL': float(np.max(tab['logLike']))}
+        logZ = float(getattr(self, '_logZ', np.nan))
+        row = {'logZ': logZ, 'maxlogL': float(np.max(tab['logLike']))}
 
         best_idx = int(np.argmax(tab['logLike']))
         for name in self.all_param_names:
@@ -3768,6 +3840,29 @@ def _prior_period_any(prior):
 
     # Default: degrees on [0, 360).
     return 360.0, 0.0
+
+
+def _systematic_resample(weights, seed):
+    """Systematic resampling indices for SMC particles.
+
+    Parameters
+    ----------
+    weights : array_like, shape (N,)
+        Normalized particle weights (sum to 1).
+    seed : int
+        RNG seed for the uniform offset.
+
+    Returns
+    -------
+    indices : ndarray, dtype=int, shape (N,)
+        Parent indices into the particle array.
+    """
+    weights = np.asarray(weights, dtype=float)
+    n = weights.size
+    rng = np.random.default_rng(int(seed) % (2**31 - 1))
+    positions = (np.arange(n) + rng.random()) / n
+    cumsum = np.cumsum(weights)
+    return np.searchsorted(cumsum, positions)
 
 
 def scipy_to_numpyro_dist(prior):
@@ -3910,17 +4005,22 @@ class MicrolensNumPyroModel:
     ----------
     fitter : MicrolensSolver
         Configured solver with priors and parameter names.
+    temperature : float, optional
+        Likelihood tempering factor ``β`` for SMC (``β=1`` is posterior).
     """
 
-    def __init__(self, fitter):
+    def __init__(self, fitter, temperature=1.0):
         """Store the solver used to build the NumPyro model.
 
         Parameters
         ----------
         fitter : MicrolensSolver
             Solver instance with ``priors`` and ``fitter_param_names``.
+        temperature : float, optional
+            Scale applied to the χ² log-likelihood factor.
         """
         self.fitter = fitter
+        self.temperature = float(temperature)
 
         # Build the jitted Param-mixin χ² lnL once for NUTS / factor use.
         lnL, _ctx = build_explicit_jax_loglik_fn(fitter)
@@ -3935,7 +4035,7 @@ class MicrolensNumPyroModel:
         return None
 
     def model(self):
-        """NumPyro model: priors + factor likelihood.
+        """NumPyro model: priors + tempered factor likelihood.
 
         Returns
         -------
@@ -3962,8 +4062,10 @@ class MicrolensNumPyroModel:
         # Stack into the vector expected by build_explicit_jax_loglik_fn.
         param_vec = jnp.stack(values)
 
-        # Add χ² lnL as a potential (same metric as Normal(obs=pred)).
-        numpyro.factor('likelihood', self._lnL(param_vec))
+        # Tempered χ² lnL (β=1 recovers the usual posterior factor).
+        numpyro.factor(
+            'likelihood', self.temperature * self._lnL(param_vec)
+        )
         return None
 
 
@@ -3996,6 +4098,8 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         posterior_samples=None,
         use_jax_grad=True,
         gradient_guided=True,
+        n_temperatures=15,
+        smc_rejuvenate_steps=1,
         **kwargs,
     ):
         """
@@ -4023,14 +4127,13 @@ class MicrolensSolverNumPyro(MicrolensSolver):
             Output files basename.
         verbose : bool, optional
             Verbose output / progress bars.
-        sampler : {'nuts', 'jaxns'}, optional
-            Inference backend. ``'jaxns'`` uses
-            :class:`numpyro.contrib.nested_sampling.NestedSampler`
-            (jaxns under the hood).
+        sampler : {'nuts', 'sa', 'jaxns', 'smc_nuts'}, optional
+            Inference backend. ``'smc_nuts'`` runs tempered sequential
+            Monte Carlo with NUTS rejuvenation at each temperature.
         draws : int, optional
             NUTS posterior draws (also default jaxns resample count).
         tune : int, optional
-            NUTS warmup steps.
+            NUTS warmup steps (also SMC-NUTS rejuvenation warmup).
         chains : int, optional
             Number of NUTS chains.
         target_accept : float, optional
@@ -4042,7 +4145,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         random_seed : int, optional
             PRNG seed.
         n_live_points : int, optional
-            JAXNS live points.
+            JAXNS live points, or SMC-NUTS particle count.
         max_samples : int, optional
             JAXNS maximum nested samples.
         dlogz : float, optional
@@ -4054,6 +4157,10 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         gradient_guided : bool, optional
             Enable jaxns gradient-guided nested sampling (passed through
             NumPyro nested-sampling constructor kwargs).
+        n_temperatures : int, optional
+            Number of SMC tempering levels including ``β=0`` and ``β=1``.
+        smc_rejuvenate_steps : int, optional
+            NUTS draws kept per particle after warmup at each SMC stage.
         **kwargs : dict, optional
             Additional keyword arguments passed to MicrolensSolver.
 
@@ -4083,17 +4190,18 @@ class MicrolensSolverNumPyro(MicrolensSolver):
 
         # Validate sampler and gradient requirements.
         sampler = str(sampler).lower()
-        if sampler not in ('nuts', 'sa', 'jaxns'):
+        if sampler not in ('nuts', 'sa', 'jaxns', 'smc_nuts'):
             raise ValueError(
-                f"sampler must be 'nuts', 'sa', or 'jaxns', got {sampler!r}"
+                f"sampler must be 'nuts', 'sa', 'jaxns', or 'smc_nuts', "
+                f"got {sampler!r}"
             )
 
-        # NUTS requires autodiff; SA / jaxns evaluate lnL without needing
-        # user-facing gradient_guided for the MCMC kernel itself.
-        if sampler == 'nuts' and not use_jax_grad:
+        # NUTS / SMC-NUTS require autodiff; SA / jaxns evaluate lnL without
+        # needing user-facing gradient_guided for the MCMC kernel itself.
+        if sampler in ('nuts', 'smc_nuts') and not use_jax_grad:
             raise ValueError(
-                'sampler=\"nuts\" requires use_jax_grad=True. '
-                'Use sampler=\"sa\" for gradient-free MCMC.'
+                f'sampler="{sampler}" requires use_jax_grad=True. '
+                'Use sampler="sa" for gradient-free MCMC.'
             )
 
         # NUTS / SA / shared sampling knobs.
@@ -4106,7 +4214,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         self.chain_method = chain_method
         self.random_seed = int(random_seed)
 
-        # JAXNS nested-sampling knobs.
+        # JAXNS nested-sampling knobs (n_live_points also sizes SMC).
         self.n_live_points = int(n_live_points)
         self.max_samples = int(max_samples)
 
@@ -4122,6 +4230,8 @@ class MicrolensSolverNumPyro(MicrolensSolver):
 
         self.use_jax_grad = bool(use_jax_grad)
         self.gradient_guided = bool(gradient_guided)
+        self.n_temperatures = max(2, int(n_temperatures))
+        self.smc_rejuvenate_steps = max(1, int(smc_rejuvenate_steps))
 
         # Runtime products filled by solve().
         self.mcmc = None
@@ -4134,7 +4244,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         return None
 
     def solve(self):
-        """Run NumPyro NUTS or JAXNS and write MultiNest-compatible outputs.
+        """Run NumPyro NUTS, SMC-NUTS, or JAXNS and write outputs.
 
         Returns
         -------
@@ -4161,9 +4271,11 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         print(f'*** Using NumPyro ({self.sampler}) for sampling. ***')
         print('*************************************************')
 
-        # Dispatch to NUTS / SA MCMC or NumPyro nested sampling (jaxns).
+        # Dispatch to MCMC, tempered SMC-NUTS, or nested sampling.
         if self.sampler in ('nuts', 'sa'):
             self._run_nuts()
+        elif self.sampler == 'smc_nuts':
+            self._run_smc_nuts()
         else:
             self._run_jaxns()
 
@@ -4240,6 +4352,142 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         self._logZ = np.nan
         self._loglikes = None
         return None
+
+    def _run_smc_nuts(self):
+        """Run tempered SMC with NUTS rejuvenation at each temperature.
+
+        Particles are drawn from the prior at ``β=0``, then annealed to
+        ``β=1`` with importance reweighting, systematic resampling, and a
+        short NUTS chain per particle on the tempered posterior.
+
+        Returns
+        -------
+        None
+        """
+        from numpyro.infer import MCMC, NUTS, Predictive
+        from jax.scipy.special import logsumexp as jax_logsumexp
+
+        names = list(self.fitter_param_names)
+        n_particles = int(self.n_live_points)
+        n_temps = int(self.n_temperatures)
+        model_builder = MicrolensNumPyroModel(self, temperature=0.0)
+
+        # Quadratic tempering schedule from prior (β=0) to posterior (β=1).
+        betas = np.linspace(0.0, 1.0, n_temps) ** 2
+
+        # Draw initial particles from the prior (temperature=0).
+        rng_key = jax.random.PRNGKey(self.random_seed)
+        rng_key, prior_key = jax.random.split(rng_key)
+        predictive = Predictive(model_builder.model, num_samples=n_particles)
+        prior_draws = predictive(prior_key)
+        particles = np.column_stack(
+            [np.asarray(prior_draws[name]).reshape(-1) for name in names]
+        )
+
+        # Vectorized χ² lnL for reweighting.
+        lnL_fn = model_builder._lnL
+        logZ = 0.0
+
+        for t in range(1, n_temps):
+            dbeta = float(betas[t] - betas[t - 1])
+
+            # Incremental importance weights ∝ exp(Δβ · lnL).
+            lnL_vals = np.asarray(
+                jax.vmap(lnL_fn)(jnp.asarray(particles, dtype=jnp.float64))
+            )
+            log_w = dbeta * lnL_vals
+            logZ += float(jax_logsumexp(log_w) - np.log(n_particles))
+
+            # Normalize weights and systematically resample.
+            log_w = log_w - float(jax_logsumexp(log_w))
+            weights = np.exp(log_w)
+            rng_key, rs_key = jax.random.split(rng_key)
+            indices = _systematic_resample(
+                weights, int(jax.random.randint(rs_key, (), 0, 2**31 - 1))
+            )
+            particles = particles[indices]
+
+            # Rejuvenate on the tempered posterior at current β.
+            model_builder.temperature = float(betas[t])
+            rng_key, nuts_key = jax.random.split(rng_key)
+            particles = self._smc_nuts_rejuvenate(
+                model_builder, particles, names, nuts_key
+            )
+
+            if self.verbose:
+                print(
+                    f'SMC-NUTS stage {t}/{n_temps - 1}: '
+                    f'β={betas[t]:.4f}, logZ≈{logZ:.3f}'
+                )
+
+        # Final untempered lnL for MultiNest-like products.
+        self._loglikes = np.asarray(
+            jax.vmap(lnL_fn)(jnp.asarray(particles, dtype=jnp.float64))
+        )
+        self._samples_array = np.asarray(particles, dtype=float)
+        self._logZ = float(logZ)
+        self.mcmc = None
+        return None
+
+    def _smc_nuts_rejuvenate(self, model_builder, particles, names, rng_key):
+        """Run short NUTS chains from each SMC particle.
+
+        Parameters
+        ----------
+        model_builder : MicrolensNumPyroModel
+            Model whose ``temperature`` is already set for this stage.
+        particles : ndarray, shape (n_particles, n_params)
+            Current particle locations.
+        names : list of str
+            Parameter names matching columns of ``particles``.
+        rng_key : jax.Array
+            PRNG key for MCMC.
+
+        Returns
+        -------
+        ndarray, shape (n_particles, n_params)
+            Rejuvenated particle locations (last NUTS draw per chain).
+
+        Notes
+        -----
+        Each particle is rejuvenated in its own 1-chain NUTS run with
+        ``init_to_value``. Batched multi-chain ``init_params`` is avoided
+        because the JAX microlensing likelihood is not safely vmap'd over
+        an extra chain axis for these Param-mixin methods.
+        """
+        from numpyro.infer import MCMC, NUTS, init_to_value
+
+        n_particles = particles.shape[0]
+        out = np.empty_like(particles, dtype=float)
+        keys = jax.random.split(rng_key, n_particles)
+
+        for i in range(n_particles):
+            # Point-init this particle on the tempered posterior.
+            init_values = {
+                name: float(particles[i, jj])
+                for jj, name in enumerate(names)
+            }
+            kernel = NUTS(
+                model_builder.model,
+                target_accept_prob=self.target_accept,
+                max_tree_depth=self.max_tree_depth,
+                init_strategy=init_to_value(values=init_values),
+            )
+            mcmc = MCMC(
+                kernel,
+                num_warmup=self.tune,
+                num_samples=self.smc_rejuvenate_steps,
+                num_chains=1,
+                progress_bar=False,
+            )
+            mcmc.run(keys[i])
+
+            # Keep the final draw as the updated particle.
+            samples = mcmc.get_samples()
+            for jj, name in enumerate(names):
+                out[i, jj] = float(np.asarray(samples[name]).reshape(-1)[-1])
+
+        return out
 
     def _run_jaxns(self):
         """Run nested sampling via ``numpyro.contrib.nested_sampling``.

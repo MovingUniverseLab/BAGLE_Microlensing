@@ -112,9 +112,8 @@ def write_html_report(results, out_path, title=None, subtitle=None):
     if subtitle is None:
         subtitle = (
             "Fake noisy photometry + astrometry · "
-            "<code>PSBL_PhotAstrom_Par_Param1</code> · "
-            "MultiNest (JAX lnL) · NumPyro NUTS · NumPyro SA · "
-            "jaxns ± gradient-guided"
+            "MultiNest (JAX lnL) · NumPyro NUTS / SA / SMC-NUTS · "
+            "PyMC SMC · jaxns ± gradient-guided"
         )
 
     # Summary metric cards.
@@ -319,6 +318,219 @@ td.err {{ text-align: left; color: #8a1c25; font-size: 0.8rem; max-width: 240px;
 
 {''.join(figure_sections)}
 
+</main>
+</body>
+</html>
+"""
+    out_path.write_text(html)
+    return out_path
+
+
+def write_suite_summary_html(suite_results, out_path, title=None):
+    """Write a cross-model suite summary (timing, lnL, logZ, bias).
+
+    Parameters
+    ----------
+    suite_results : list of dict
+        Flattened result records from one or more scenarios / models.
+        Each record should include ``label``, ``model``, ``scenario``,
+        ``runtime_sec``, ``jax_lnL``, ``logZ``, ``bias``, ``truth``,
+        and optional ``jax`` / ``grads`` / ``family`` metadata.
+    out_path : str or Path
+        Destination HTML file.
+    title : str, optional
+        Page title.
+
+    Returns
+    -------
+    out_path : Path
+        Path written.
+    """
+    out_path = Path(out_path)
+    if title is None:
+        title = "Sampler suite summary — timing, accuracy, bias, logZ"
+
+    # Group by model / scenario for section headings.
+    groups = {}
+    for r in suite_results:
+        key = (r.get("model", "?"), r.get("scenario", "?"))
+        groups.setdefault(key, []).append(r)
+
+    sections = []
+    for (model, scenario), results in sorted(groups.items()):
+        ok = [r for r in results if r.get("status") == "ok"]
+
+        # Timing / accuracy / logZ table.
+        summary_rows = []
+        for r in results:
+            jax_flag = r.get("jax")
+            grads_flag = r.get("grads")
+            jax_s = "yes" if jax_flag is True else ("no" if jax_flag is False else "—")
+            grads_s = (
+                "yes" if grads_flag is True
+                else ("no" if grads_flag is False else "—")
+            )
+            summary_rows.append(
+                "<tr>"
+                f"<td>{escape(r.get('label', ''))}</td>"
+                f"<td>{escape(r.get('family', ''))}</td>"
+                f"<td>{escape(jax_s)}</td>"
+                f"<td>{escape(grads_s)}</td>"
+                f"<td>{escape(r.get('status', ''))}</td>"
+                f"<td>{escape(_fmt_runtime(r.get('runtime_sec')))}</td>"
+                f"<td>{escape(_fmt_float(r.get('jax_lnL'), 3))}</td>"
+                f"<td>{escape(_fmt_float(r.get('host_lnL'), 3))}</td>"
+                f"<td>{escape(_fmt_float(r.get('logZ'), 3))}</td>"
+                f"<td class='err'>{escape(str(r.get('error') or '')[:100])}</td>"
+                "</tr>"
+            )
+
+        # Bias table.
+        param_names = []
+        for r in ok:
+            param_names = list(r.get("param_names") or [])
+            if param_names:
+                break
+        truth = ok[0].get("truth", {}) if ok else {}
+        bias_header = (
+            "<tr><th>parameter</th><th>truth</th>"
+            + "".join(f"<th>{escape(r['label'])}</th>" for r in ok)
+            + "".join(f"<th>bias:{escape(r['label'])}</th>" for r in ok)
+            + "</tr>"
+        )
+        bias_rows = []
+        for name in param_names:
+            cells = [
+                f"<td>{escape(name)}</td>",
+                f"<td>{_fmt_float(truth.get(name), 5)}</td>",
+            ]
+            for r in ok:
+                cells.append(
+                    f"<td>{_fmt_float(r.get('best', {}).get(name), 5)}</td>"
+                )
+            for r in ok:
+                bias = r.get("bias", {}).get(name)
+                cls = "bias-neutral"
+                try:
+                    b = abs(float(bias))
+                    t = abs(float(truth.get(name, 0.0))) + 1e-12
+                    rel = b / t
+                    if rel < 0.01 or b < 1e-3:
+                        cls = "bias-good"
+                    elif rel < 0.1:
+                        cls = "bias-warning"
+                    else:
+                        cls = "bias-bad"
+                except Exception:
+                    pass
+                cells.append(f"<td class='{cls}'>{_fmt_float(bias, 5)}</td>")
+            bias_rows.append("<tr>" + "".join(cells) + "</tr>")
+
+        # Mean |relative bias| score per backend (accuracy summary).
+        acc_rows = []
+        for r in ok:
+            biases = r.get("bias", {}) or {}
+            rels = []
+            for name, b in biases.items():
+                try:
+                    t = abs(float(truth.get(name, 0.0))) + 1e-12
+                    rels.append(abs(float(b)) / t)
+                except Exception:
+                    continue
+            mean_rel = float(sum(rels) / len(rels)) if rels else float("nan")
+            max_rel = float(max(rels)) if rels else float("nan")
+            acc_rows.append(
+                "<tr>"
+                f"<td>{escape(r['label'])}</td>"
+                f"<td>{_fmt_float(mean_rel, 4)}</td>"
+                f"<td>{_fmt_float(max_rel, 4)}</td>"
+                f"<td>{_fmt_float(r.get('jax_lnL'), 3)}</td>"
+                f"<td>{_fmt_float(r.get('logZ'), 3)}</td>"
+                f"<td>{_fmt_runtime(r.get('runtime_sec'))}</td>"
+                "</tr>"
+            )
+
+        sections.append(
+            f"""
+<section>
+  <h2>{escape(str(model).upper())} · {escape(str(scenario))}</h2>
+  <p class="note">{escape(str(results[0].get('prior_mode', '')))} priors ·
+     {len(ok)}/{len(results)} backends ok</p>
+
+  <h3>Timing, accuracy (lnL), evidence</h3>
+  <div class="table-wrap">
+  <table>
+    <tr><th>backend</th><th>family</th><th>JAX</th><th>grads</th>
+        <th>status</th><th>runtime</th><th>jax lnL</th><th>host lnL</th>
+        <th>logZ</th><th>error</th></tr>
+    {''.join(summary_rows)}
+  </table>
+  </div>
+
+  <h3>Accuracy summary (bias vs truth)</h3>
+  <div class="table-wrap">
+  <table>
+    <tr><th>backend</th><th>mean |rel bias|</th><th>max |rel bias|</th>
+        <th>jax lnL</th><th>logZ</th><th>runtime</th></tr>
+    {''.join(acc_rows) if acc_rows else '<tr><td colspan="6">No successful fits.</td></tr>'}
+  </table>
+  </div>
+
+  <h3>Best-fit parameters &amp; bias</h3>
+  <div class="table-wrap">
+  <table>
+    {bias_header}
+    {''.join(bias_rows) if bias_rows else '<tr><td colspan="99">No successful fits.</td></tr>'}
+  </table>
+  </div>
+</section>
+"""
+        )
+
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{escape(title)}</title>
+<style>
+body {{
+  margin: 0; background: #f4f5f7; color: #20242a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.45;
+}}
+main {{ max-width: 1400px; margin: 0 auto; padding: 30px 24px 60px; }}
+h1, h2, h3 {{ color: #172033; }}
+.note {{ color: #5b6472; }}
+section {{
+  background: white; border: 1px solid #d9dde5; border-radius: 7px;
+  margin-top: 20px; padding: 20px;
+}}
+.table-wrap {{ overflow-x: auto; }}
+table {{
+  width: 100%; border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}}
+th, td {{
+  padding: 8px 10px; border-bottom: 1px solid #e3e6ec;
+  text-align: right; white-space: nowrap;
+}}
+th:first-child, td:first-child {{ text-align: left; }}
+th {{ background: #eef1f5; color: #30394a; }}
+.bias-good {{ background: #dff3e4; color: #176b34; font-weight: 600; }}
+.bias-warning {{ background: #fff1bf; color: #795b00; font-weight: 600; }}
+.bias-bad {{ background: #f8d7da; color: #8a1c25; font-weight: 600; }}
+.bias-neutral {{ color: #687284; }}
+td.err {{ text-align: left; color: #8a1c25; font-size: 0.8rem; max-width: 220px; }}
+</style>
+</head>
+<body>
+<main>
+<h1>{escape(title)}</h1>
+<p class="note">Narrow-prior timing &amp; accuracy across MultiNest
+(host/JAX), NumPyro (NUTS / SA / SMC-NUTS), PyMC SMC (JAX / host),
+and jaxns (± gradient-guided).</p>
+{''.join(sections)}
 </main>
 </body>
 </html>
