@@ -1,0 +1,85 @@
+BAGLE Roman BH + Earth-mass planet demo
+========================================================================
+Model class                                    PSBL_PhotAstrom_Par_CircOrbs_Param1
+Orbit                                          circular Keplerian, face-on, e = 0
+Why not LinOrbs/AccOrbs                        P ~ 129 d is not << t_E
+Finite-source binary lens                      unavailable (FSBL commented out)
+Cadence helper                                 fake_data.get_times_roman_gbtds
+Photometric noise                              fake_data.add_photometric_noise, zp=28
+Astrometric error                              FWHM/(2 SNR), floor 0.1 mas; no 1e-5
+M_BH (Msun)                                    8.0
+M_planet (Msun)                                3.003489e-06
+M_planet                                       1 M_earth
+q = M_planet/M_BH                              3.754362e-07
+D_L (kpc)                                      1.5
+D_S (kpc)                                      8.0
+a_3D (AU)                                      1.0
+Inclination (deg)                              0.0 (face-on)
+omega_pri (deg)                                0.0
+big_omega_sec (deg)                            45.0
+tp                                             equals the geocentric crossing
+Projection                                     face-on; a_proj = a_3D at all t
+s = a / r_E                                    1.122232e-01
+sep at t0 (mas)                                6.666667e-01
+alpha at crossing (deg E of N)                 45.0000
+mu direction (deg E of N)                      90.0
+angle(trajectory, axis) at t0                  45.0000 deg
+alpha at t0+P/4 (deg)                          135.0000
+b_sff                                          1 (no blend, no lens flux)
+dmag_Lp_Ls                                     0 (both components dark)
+mag_src F146W                                  19
+mu_rel (mas/yr)                                7.0 due East
+t0 geocentric crossing (MJD)                   61667.19847 (2027-09-19T04:45:48.000)
+Season                                         2nd fast window, 2027 Aug 13 to Oct 26
+t0_com barycentric (MJD)                       61683.30207 (2027-10-05T07:14:58.965)
+t0 geometric barycentric (MJD)                 61695.60067 (2027-10-17T14:24:57.832)
+45 deg convention                              at the geocentric crossing, not t0_com
+beta_com (mas)                                 1.802053e-02
+u0_com barycentric                             3.033483e-03
+miss from COM at crossing (mas)                2.146720e-14
+min sep from BH, Roman grid (mas)              8.439757e-05
+theta_E (mas)                                  5.940542
+r_E at lens (AU)                               8.9108
+t_E (days)                                     309.9690
+pi_L (mas)                                     0.666667
+pi_S (mas)                                     0.125000
+pi_rel (mas)                                   0.541667
+pi_E                                           0.091181
+R_source assumed                               1 R_sun
+theta_source (mas)                             5.813084e-04
+rho = theta_*/theta_E                          9.785443e-05
+central caustic width analytic (theta_E)       1.939858e-08
+BAGLE caustic East extent (theta_E)            1.513346e-08
+BAGLE caustic North extent (theta_E)           1.513346e-08
+BAGLE cusp radius (theta_E)                    1.132515e-08
+point-source caustic duration (s)              0.6066
+source-radius crossing (days)                  0.03033
+finite-source peak A (point lens)              20438.5
+finite-source peak F146 (mag)                  8.224
+planet period (days)                           129.1378
+orbits per t_E                                 2.400
+orbits in the 5-year survey                    14.14
+N F146 in the 2nd fast season                  7964
+N F146 epochs                                  46958
+N F087 epochs (not simulated)                  1065
+fast-cadence median (minutes)                  12.800
+F146 mag err at mag 19                         0.01723
+F146 ast err at mag 19 (mas)                   1.2299
+max |A_PSBL-A_point|/A outside caustic         1.901e-03
+max |dm| planet vs point lens (mag)            2.063356e-03
+chi2 phot of that residual                     2.118551e+03
+Roman epochs inside the stellar disk           6
+max |dm| outside the stellar disk (mag)        2.952836e-04
+chi2 phot outside the stellar disk             1.357450e+01
+max |dpos| planet vs point lens (mas)          2.015659e-03
+chi2 ast of that residual                      1.001026e-03
+peak BH centroid shift (mas)                   2.1003
+max |dm| vs static within 1 day (mag)          5.034749e-08
+max |d(source-BH)| vs static (mas)             1.217667e-08
+planet shift vs static at P/4 (mas)            0.9428
+planetary caustic radius (theta_E)             8.7986
+min |u_source - r_caustic| (theta_E)           3.9853
+images within 1e-7 day of crossing             4
+Notes                                          Angle is defined at the geocentric crossing.
+Notes 2                                        Axis rotates by 360 deg each orbital period.
+Notes 3                                        1e-5 factor in test_roman_lightcurve was not applied.

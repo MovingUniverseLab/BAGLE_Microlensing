@@ -113,7 +113,7 @@ fake_data, model, parallax = _import_bagle()
 DAYS_PER_YEAR = float(model.days_per_year)
 
 HERE = Path(__file__).resolve().parent
-OUTDIR = HERE / 'output'
+OUTDIR = HERE / 'output' / 'v1_static_0p1AU'
 ARTIFACT_DIR = Path('/opt/cursor/artifacts')
 
 # Galactic Center line of sight used by get_times_roman_gbtds.
