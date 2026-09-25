@@ -1,0 +1,89 @@
+BAGLE Roman BH + Earth-mass planet demo
+========================================================================
+Model class                                    PSBL_PhotAstrom_Par_Param1
+Orbit                                          none (static projected separation)
+Image solver                                   BAGLE 5th-order poly, Einstein units
+Why not get_all_arrays                         root_tol drops planetary images
+Finite-source binary                           unavailable (FSBL commented out)
+Source treatment                               point source; disk drawn for scale
+Cadence helper                                 fake_data.get_times_roman_gbtds
+Photometric noise                              fake_data.add_photometric_noise, zp=28
+Astrometric error                              FWHM/(2 SNR), floor 0.1 mas; no 1e-5
+M_BH (Msun)                                    8.0
+M_planet (Msun)                                3.003489e-06
+M_planet                                       1 M_earth
+q = M_planet/M_BH                              3.754362e-07
+D_L (kpc)                                      5.0
+D_S (kpc)                                      8.0
+a_proj (AU)                                    6.0 (face-on snapshot)
+sep (mas)                                      1.200000
+s = a / r_E                                    0.542863
+topology                                       close (s < 1), two planetary caustics
+1/s - s                                        1.299221
+alpha (deg E of N)                             85.6705
+mu direction (deg E of N)                      90 (due East)
+angle(trajectory, axis)                        4.3295 deg
+b_sff                                          1 (no blend, no lens flux)
+dmag_Lp_Ls                                     0 (both components dark)
+mag_src F146W                                  19
+mu_rel (mas/yr)                                7.0 due East
+t0 barycentric (MJD)                           61472.76737 (2027-03-08T18:25:00.927)
+geocentric peak (MJD)                          61507.43722 (2027-04-12T10:29:36.000)
+peak season                                    1st fast window, 2027 Feb 9 to Apr 22
+crossing (MJD)                                 61649.61584 (2027-09-01T14:46:48.528)
+crossing season                                2nd fast window, 2027 Aug 13 to Oct 26
+peak-to-crossing (days)                        142.179
+beta (mas)                                     2.665519e-01
+u0 barycentric                                 1.205844e-01
+u at geocentric peak                           0.102614
+A at geocentric peak                           9.7837
+F146 at geocentric peak                        16.524
+aim residual (mas)                             2.665e-15
+within 0.1 mas?                                no; outer caustic is ~3 mas from the BH
+theta_E (mas)                                  2.210501
+r_E at lens (AU)                               11.0525
+t_E (days)                                     115.3408
+pi_L (mas)                                     0.200000
+pi_S (mas)                                     0.125000
+pi_rel (mas)                                   0.075000
+pi_E                                           0.033929
+R_source                                       1 R_sun (not in the PSBL integral)
+theta_source (mas)                             5.813084e-04
+rho = theta_*/theta_E                          2.629759e-04
+crossed caustic radius (theta_E)               8.584340e-05
+caustic East span (theta_E)                    1.520218e-04
+caustic North span (theta_E)                   1.041106e-04
+rho / caustic radius                           3.063
+central caustic radius (theta_E)               7.714780e-07
+central width analytic (theta_E)               8.896728e-07
+5-image duration (seconds)                     562.46
+1 Rsun sweep time (minutes)                    87.36
+images at the aim epoch                        5
+interior median dm (mag)                       -1.1005
+fine-grid max |dm| (mag)                       3.8765
+fine-grid max |dpos| (mas)                     4.7141
+N F146 inside the 5-image window               0
+N F146 with |dm| > 0.01 mag                    43
+N F146 with |dm| > 0.1 mag                     13
+max |dm| on Roman grid (mag)                   0.437014
+chi2 of that residual                          4829.2256
+max demagnification (mag)                      0.007208
+max |dpos| on Roman grid (mas)                 1.607333
+chi2 ast of that residual                      14.2956
+peak BH centroid shift (mas)                   0.7973
+BAGLE default A at crossing                    1.095108
+solver A at crossing                           3.190217
+non-finite model samples                       0
+N F146 epochs                                  46958
+N F087 epochs (not simulated)                  1065
+fast-cadence median (minutes)                  12.800
+F146 mag err at mag 19                         0.01723
+F146 ast err at mag 19 (mas)                   1.2299
+|A-Apoint|/A at the peak                       7.338e-08
+|A-Apoint|/A, >5 d from caustic                1.537e-04
+Trade-off                                      u0=0.10; peak and crossing in consecutive seasons
+Trough                                         trajectory crosses one triangle, not the gap
+FSBL re-enable                                 uncomment, match PSBL API, integrate the disk
+Notes                                          1e-5 factor in test_roman_lightcurve was not applied.
+Notes 2                                        chi2 is the residual against Roman errors, not a refit.
+Notes 3                                        Fine-grid max |dm| samples the point-source fold.
