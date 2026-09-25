@@ -44,6 +44,7 @@ from scipy import spatial
 from scipy.ndimage import gaussian_filter as norm_kde
 from scipy.stats import gaussian_kde
 import warnings
+from bagle.b_sff_prior import check_b_sff_astrom_priors as _check_b_sff_astrom_priors
 from bagle.dynesty.utils import resample_equal, unitcheck
 from bagle.dynesty.utils import quantile as _quantile
 import re
@@ -465,6 +466,9 @@ class MicrolensSolver(Solver):
         'dL': ('make_gen', 1000, 8000),
         'dS': ('make_gen', 100, 10000),
         'dL_dS': ('make_gen', 0.01, 0.99),
+        # Upper edge stays 1.5 so photometry-only fits may use b_sff > 1.
+        # Combined phot+astrom fits must override this to <= 1 before
+        # solve(); check_b_sff_astrom_priors rejects a wider prior.
         'b_sff': ('make_gen', 0.0, 1.5),
         'mag_src': ('make_mag_src_gen', None, None),
         'mag_src_pri': ('make_mag_src_gen', None, None),
@@ -1006,7 +1010,32 @@ class MicrolensSolver(Solver):
 
     # FIXME: Is there a reason Prior takes ndim and nparams when those aren't used?
     # Is it the same reason as LogLikelihood?
+    def check_b_sff_astrom_priors(self):
+        """Fail if a combined phot+astrom ``b_sff`` prior exceeds 1.
+
+        Parameters
+        ----------
+        self : MicrolensSolver
+            Solver with priors and dataset counts already built.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        Called from ``solve`` and from the unit-cube prior transforms
+        (``Prior``, ``Prior_copy``, ``Prior_from_post``) so MultiNest,
+        dynesty, and UltraNest cannot skip it. PyMC and NumPyro child
+        classes call it at the start of their own ``solve``.
+        """
+        _check_b_sff_astrom_priors(self)
+        return None
+
     def Prior(self, cube, ndim=None, nparams=None):
+        # Reject b_sff > 1 on combined phot+astrom datasets before sampling.
+        self.check_b_sff_astrom_priors()
+
         for i, param_name in enumerate(self.fitter_param_names):
             cube[i] = self.priors[param_name].ppf(cube[i])
 
@@ -1014,6 +1043,9 @@ class MicrolensSolver(Solver):
 
 
     def Prior_copy(self, cube):
+        # Same b_sff guard as Prior. UltraNest calls this transform.
+        self.check_b_sff_astrom_priors()
+
         cube_copy = cube.copy()
         for i, param_name in enumerate(self.fitter_param_names):
             cube_copy[i] = self.priors[param_name].ppf(cube[i])
@@ -1031,6 +1063,9 @@ class MicrolensSolver(Solver):
     def Prior_from_post(self, cube, ndim=None, nparams=None):
         """Get the bin midpoints
         """
+        # Posterior-backed sampling still has to obey the b_sff cap.
+        self.check_b_sff_astrom_priors()
+
         binmids = []
         for bb in np.arange(len(self.post_param_bins)):
             binmids.append((self.post_param_bins[bb][:-1] + self.post_param_bins[bb][1:])/2)
@@ -1345,6 +1380,9 @@ class MicrolensSolver(Solver):
 
         Note we will ALWAYS tell multinest to be verbose.
         """
+        # Combined phot+astrom datasets cannot draw b_sff > 1.
+        self.check_b_sff_astrom_priors()
+
         self.write_params_yaml()
 
         # Choose whether to use self.Prior or self.Prior_from_post depending
@@ -3401,6 +3439,9 @@ class MicrolensSolverPyMC2(MicrolensSolver):
 
     def solve(self):
         """Run PyMC sampling to find optimal parameters and posteriors."""
+        # Combined phot+astrom datasets cannot draw b_sff > 1.
+        self.check_b_sff_astrom_priors()
+
         self.write_params_yaml()
 
         print('*************************************************')
@@ -3612,6 +3653,9 @@ class MicrolensSolverPyMC(MicrolensSolver):
         -------
         None
         """
+        # Combined phot+astrom datasets cannot draw b_sff > 1.
+        self.check_b_sff_astrom_priors()
+
         self.write_params_yaml()
 
         print('*************************************************')
@@ -4250,6 +4294,9 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         -------
         None
         """
+        # Combined phot+astrom datasets cannot draw b_sff > 1.
+        self.check_b_sff_astrom_priors()
+
         import numpyro
 
         # jaxns preference for float64.
