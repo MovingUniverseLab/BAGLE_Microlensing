@@ -45,6 +45,7 @@ from scipy.ndimage import gaussian_filter as norm_kde
 from scipy.stats import gaussian_kde
 import warnings
 from bagle.b_sff_prior import check_b_sff_astrom_priors as _check_b_sff_astrom_priors
+from bagle.b_sff_prior import default_b_sff_upper
 from bagle.dynesty.utils import resample_equal, unitcheck
 from bagle.dynesty.utils import quantile as _quantile
 import re
@@ -466,9 +467,10 @@ class MicrolensSolver(Solver):
         'dL': ('make_gen', 1000, 8000),
         'dS': ('make_gen', 100, 10000),
         'dL_dS': ('make_gen', 0.01, 0.99),
-        # Upper edge stays 1.5 so photometry-only fits may use b_sff > 1.
-        # Combined phot+astrom fits must override this to <= 1 before
-        # solve(); check_b_sff_astrom_priors rejects a wider prior.
+        # Template upper edge is 1.5 so photometry-only fits may use
+        # b_sff > 1. make_default_priors lowers this to 1.0 for each
+        # b_sffN whose photometry dataset is paired with astrometry.
+        # A prior the user assigns later is not rewritten.
         'b_sff': ('make_gen', 0.0, 1.5),
         'mag_src': ('make_mag_src_gen', None, None),
         'mag_src_pri': ('make_mag_src_gen', None, None),
@@ -866,13 +868,25 @@ class MicrolensSolver(Solver):
         they can be over-written by custom priors as desired.
 
         To make your own custom priors, use the make_gen() functions
-        with different limits.
+        with different limits and assign ``self.priors[name]``.
 
         Parameters
         ----------
         stats_pkg : {'scipy', 'pymc', 'numpyro'}, optional
             Statistics backend for ``make_*_gen``. Defaults to
             ``self.stats_pkg``. When given, also updates ``self.stats_pkg``.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        The ``b_sff`` template upper bound is 1.5 so photometry-only
+        fits may draw a negative lens flux. When photometry dataset N
+        is paired with an astrometry dataset, ``b_sffN`` is generated
+        with upper bound 1.0 instead. A prior the user assigns later
+        is not rewritten.
         """
         if stats_pkg is not None:
             self.stats_pkg = stats_pkg
@@ -892,6 +906,11 @@ class MicrolensSolver(Solver):
             if prior_type == 'make_gen':
                 prior_min = foo[1]
                 prior_max = foo[2]
+                # Paired phot+astrom datasets cannot draw b_sff > 1.
+                if priors_name == 'b_sff':
+                    prior_max = default_b_sff_upper(
+                        self, param_name, filt_index, prior_max
+                    )
                 self.priors[param_name] = make_gen(
                     param_name, prior_min, prior_max, stats_pkg=stats_pkg
                 )
@@ -1025,9 +1044,11 @@ class MicrolensSolver(Solver):
         Notes
         -----
         Called from ``solve`` and from the unit-cube prior transforms
-        (``Prior``, ``Prior_copy``, ``Prior_from_post``) so MultiNest,
-        dynesty, and UltraNest cannot skip it. PyMC and NumPyro child
-        classes call it at the start of their own ``solve``.
+        (``Prior``, ``Prior_copy``, ``Prior_from_post``). The support
+        read is cached on this solver (see ``b_sff_prior``), so repeated
+        sample draws skip it until a ``b_sff`` prior or the dataset map
+        changes. PyMC and NumPyro child classes call it at the start of
+        their own ``solve``.
         """
         _check_b_sff_astrom_priors(self)
         return None

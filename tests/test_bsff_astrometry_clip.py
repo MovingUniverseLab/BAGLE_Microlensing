@@ -1,6 +1,7 @@
 """Host/JAX agreement when b_sff > 1, and the PhotAstrom prior guard."""
 
 import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -307,11 +308,65 @@ def _make_solver(tmp_path, with_ast):
     return fitter
 
 
+def test_default_bsff_prior_follows_astrometry(tmp_path):
+    """Default b_sff is 1.0 with astrometry and 1.5 for photometry only."""
+    (tmp_path / "combined").mkdir()
+    (tmp_path / "phot").mkdir()
+    combined = _make_solver(tmp_path / "combined", with_ast=True)
+    phot = _make_solver(tmp_path / "phot", with_ast=False)
+
+    # A default-constructed combined solver passes without an override.
+    assert prior_upper_bound(combined.priors["b_sff1"]) == pytest.approx(1.0)
+    assert combined.check_b_sff_astrom_priors() is None
+
+    # Photometry-only keeps the historical template upper bound.
+    assert prior_upper_bound(phot.priors["b_sff1"]) == pytest.approx(1.5)
+    assert phot.check_b_sff_astrom_priors() is None
+    return None
+
+
+def test_bsff_prior_check_cached_on_repeated_prior(tmp_path, monkeypatch):
+    """Repeated Prior calls skip the check until a prior is replaced."""
+    import bagle.b_sff_prior as b_sff_prior
+
+    fitter = _make_solver(tmp_path, with_ast=True)
+    calls = {"n": 0}
+    real = b_sff_prior._validate_b_sff_astrom_priors
+
+    def _counting(solver):
+        calls["n"] += 1
+        return real(solver)
+
+    monkeypatch.setattr(
+        b_sff_prior, "_validate_b_sff_astrom_priors", _counting
+    )
+
+    cube = np.full(fitter.n_dims, 0.5)
+    fitter.Prior(cube.copy())
+    assert calls["n"] == 1
+
+    # Same prior objects: the support read is not repeated.
+    fitter.Prior(cube.copy())
+    fitter.Prior_copy(cube.copy())
+    assert calls["n"] == 1
+
+    # Replacing the prior misses the cache, re-runs, and raises.
+    fitter.priors["b_sff1"] = make_gen("b_sff1", 0.0, 1.5)
+    with pytest.raises(ValueError, match="b_sff1"):
+        fitter.Prior(cube.copy())
+    assert calls["n"] == 2
+    return None
+
+
 def test_bsff_prior_upper_bound_on_combined_datasets(tmp_path, monkeypatch):
-    """Combined datasets reject b_sff priors that extend above 1."""
+    """Combined datasets reject user b_sff priors that extend above 1."""
     fitter = _make_solver(tmp_path, with_ast=True)
 
-    # Default uniform(0, 1.5) is intentionally wider than 1.
+    # Generated default is already at 1, so solve is not rejected for it.
+    assert prior_upper_bound(fitter.priors["b_sff1"]) == pytest.approx(1.0)
+
+    # A user-supplied wider prior is still rejected.
+    fitter.priors["b_sff1"] = make_gen("b_sff1", 0.0, 1.5)
     with pytest.raises(ValueError, match="b_sff1") as exc:
         fitter.solve()
     message = str(exc.value)
@@ -356,6 +411,7 @@ def test_bsff_prior_upper_bound_on_combined_datasets(tmp_path, monkeypatch):
 def test_bsff_prior_ignores_photometry_only(tmp_path, monkeypatch):
     """Photometry-only datasets may keep a b_sff prior above 1."""
     fitter = _make_solver(tmp_path, with_ast=False)
+    assert prior_upper_bound(fitter.priors["b_sff1"]) == pytest.approx(1.5)
     fitter.priors["b_sff1"] = make_gen("b_sff1", 0.0, 1.5)
     assert fitter.check_b_sff_astrom_priors() is None
 
@@ -443,4 +499,85 @@ def test_prior_upper_bound_readers():
         }
 
     assert check_b_sff_astrom_priors(_Fitter2()) is None
+    return None
+
+
+# Injected values wide enough for both PhotAstrom Param1 and phot-only.
+_COMPARISON_TRUTH = {
+    "mL": 0.5,
+    "t0": 57050.0,
+    "beta": 0.2,
+    "dL": 4000.0,
+    "dL_dS": 0.5,
+    "xS0_E": 0.0,
+    "xS0_N": 0.0,
+    "muL_E": 0.0,
+    "muL_N": 0.0,
+    "muS_E": 0.0,
+    "muS_N": 0.0,
+    "b_sff": 1.0,
+    "mag_src": 18.0,
+    "u0_amp": 0.1,
+    "tE": 30.0,
+    "piE_E": 0.1,
+    "piE_N": 0.1,
+}
+
+
+def _load_run_comparison():
+    """Import the sampler-comparison script (it is not a package).
+
+    Returns
+    -------
+    module : module
+        ``run_comparison`` loaded from its file path.
+    """
+    import importlib.util
+
+    path = (
+        Path(__file__).resolve().parent
+        / "psbl_sampler_compare"
+        / "run_comparison.py"
+    )
+    spec = importlib.util.spec_from_file_location(
+        "psbl_run_comparison", path
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_run_comparison_caps_bsff_with_astrometry(tmp_path):
+    """Narrow and open comparison priors clip b_sff only with astrometry."""
+    comp = _load_run_comparison()
+    (tmp_path / "ast").mkdir()
+    (tmp_path / "phot").mkdir()
+    combined = _make_solver(tmp_path / "ast", with_ast=True)
+    phot = _make_solver(tmp_path / "phot", with_ast=False)
+
+    # Truth sits on 1, so truth + half-width would exceed the cap.
+    comp.apply_narrow_priors(combined, _COMPARISON_TRUTH)
+    lo, hi = combined.priors["b_sff1"].support()
+    assert hi == pytest.approx(1.0)
+    assert lo < hi
+    assert lo == pytest.approx(0.95)
+
+    comp.apply_narrow_priors(phot, _COMPARISON_TRUTH)
+    _lo, hi = phot.priors["b_sff1"].support()
+    assert hi == pytest.approx(1.05)
+
+    comp.apply_open_priors(combined, _COMPARISON_TRUTH)
+    lo, hi = combined.priors["b_sff1"].support()
+    assert hi == pytest.approx(1.0)
+    assert lo < hi
+
+    comp.apply_open_priors(phot, _COMPARISON_TRUTH)
+    _lo, hi = phot.priors["b_sff1"].support()
+    # Open half-width is 0.35, still under the phot-only 1.5 cap.
+    assert hi == pytest.approx(1.35)
+
+    # A zero-width window on the cap stays a non-empty interval.
+    lo, hi = comp._clip_bsff_edges(combined, "b_sff1", 1.0, 1.0)
+    assert hi == pytest.approx(1.0)
+    assert lo < hi
     return None
