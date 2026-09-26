@@ -27,6 +27,7 @@ import numpy as np
 from bagle import fake_data
 from bagle import model_fitter_jax as model_fitter
 from bagle import model_jax as model
+from bagle.b_sff_prior import phot_dataset_has_astrometry
 from bagle.model_fitter_jax import MicrolensSolver, MicrolensSolverJaxLike
 
 try:
@@ -238,6 +239,69 @@ def _truth_dict(p_in, names):
     return out
 
 
+def _bsff_phot_index(name):
+    """Zero-based photometry index encoded in a ``b_sff`` name.
+
+    Parameters
+    ----------
+    name : str
+        Parameter name, for example ``b_sff1`` or bare ``b_sff``.
+
+    Returns
+    -------
+    phot_idx : int
+        ``b_sff1`` is 0. A name with no digits is dataset 0.
+    """
+    digits = "".join(c for c in name if c.isdigit())
+    if digits:
+        return int(digits) - 1
+
+    return 0
+
+
+def _clip_bsff_edges(fitter, name, lo, hi):
+    """Cap a ``b_sff`` window when that dataset has astrometry.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Solver whose photometry-to-astrometry map selects the cap.
+    name : str
+        Parameter name, for example ``b_sff1``.
+    lo : float
+        Proposed lower edge.
+    hi : float
+        Proposed upper edge (truth plus half-width, or the open window).
+
+    Returns
+    -------
+    lo : float
+        Lower edge, kept strictly below ``hi``.
+    hi : float
+        Upper edge. At most 1.0 when this photometry dataset is paired
+        with astrometry. Photometry-only datasets are left unchanged.
+
+    Notes
+    -----
+    A truth of 1.0 plus a positive half-width would otherwise put the
+    upper edge above 1. Clipping that edge can leave ``lo >= hi`` when
+    the truth sits on the cap and the half-width is zero; a small gap
+    is opened in that case so ``make_gen`` still receives a window.
+    """
+    lo = float(lo)
+    hi = float(hi)
+    if name.startswith("b_sff"):
+        phot_idx = _bsff_phot_index(name)
+        if phot_dataset_has_astrometry(fitter, phot_idx):
+            hi = min(hi, 1.0)
+
+    # Truth at the cap must not collapse the uniform interval.
+    if lo >= hi:
+        lo = hi - 1e-3
+
+    return lo, hi
+
+
 def apply_narrow_priors(fitter, p_in, half_width=0.05, stats_pkg="scipy"):
     """Set tight uniform priors around the injected truth.
 
@@ -295,6 +359,10 @@ def apply_narrow_priors(fitter, p_in, half_width=0.05, stats_pkg="scipy"):
             hi = min(hi, 0.999)
         if name.startswith("sep") and lo <= 0:
             lo = 1e-3
+        # Astrometry partners cannot draw b_sff > 1. Phot-only windows
+        # keep truth ± half-width, including an edge above 1.
+        if name.startswith("b_sff"):
+            lo, hi = _clip_bsff_edges(fitter, name, lo, hi)
         fitter.priors[name] = make(name, lo, hi, stats_pkg=stats_pkg)
 
     return None
@@ -376,7 +444,14 @@ def apply_open_priors(fitter, p_in, stats_pkg="scipy"):
             lo = 1e-3
         if name.startswith("b_sff"):
             lo = max(lo, 0.01)
-            hi = min(hi, 1.5)
+            phot_idx = _bsff_phot_index(name)
+            # Photometry-only keeps the historical 1.5 cap. A dataset
+            # paired with astrometry is clipped at 1.0.
+            if phot_dataset_has_astrometry(fitter, phot_idx):
+                hi = min(hi, 1.0)
+            else:
+                hi = min(hi, 1.5)
+            lo, hi = _clip_bsff_edges(fitter, name, lo, hi)
         fitter.priors[name] = make(name, lo, hi, stats_pkg=stats_pkg)
 
     # Enforce dS > dL at the prior edges when both are free.

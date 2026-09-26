@@ -355,6 +355,73 @@ def compute_parallax_offset(parallax_vectors, piE_E, piE_N):
 # ---------------------------------------------------------------------------
 
 
+def lens_flux_for_astrometry_jax(flux_src, b_sff):
+    """Lens flux implied by ``b_sff``, clipped at zero for astrometry.
+
+    Parameters
+    ----------
+    flux_src : float or array_like
+        Unlensed source flux, or the sum of source fluxes. Scalar, or
+        an array broadcastable with ``b_sff``.
+    b_sff : float or array_like
+        Source flux fraction ``f_S / (f_S + f_L + f_N)``.
+
+    Returns
+    -------
+    flux_lens : jnp.ndarray
+        Lens flux used by the centroid. Shape follows broadcasting of
+        ``flux_src`` and ``b_sff``. Every value is ``>= 0``.
+
+    Notes
+    -----
+    ``f_L = f_S * (1 - b_sff) / b_sff`` is negative when ``b_sff > 1``
+    (or ``b_sff < 0``). That flux is clipped to 0 in flux space so the
+    lens is dark. Photometry must keep the unclipped blend. For
+    ``0 < b_sff <= 1`` the value matches the raw expression.
+    """
+    b = jnp.asarray(b_sff, dtype=jnp.float64)
+    flux_src = jnp.asarray(flux_src, dtype=jnp.float64)
+
+    # Raw lens flux. No extra floor on b_sff, so b_sff <= 1 stays exact.
+    flux_lens = flux_src * (1.0 - b) / b
+
+    # Dark lens when the implied flux is negative.
+    flux_lens = jnp.maximum(flux_lens, 0.0)
+    return flux_lens
+
+
+def astrometric_source_weight_jax(b_sff):
+    """Source weight after clipping a negative lens flux at zero.
+
+    Parameters
+    ----------
+    b_sff : float or array_like
+        Source flux fraction.
+
+    Returns
+    -------
+    b_eff : jnp.ndarray
+        Weight of the source in ``b * x_S + (1 - b) * x_L``. Same shape
+        as ``b_sff``. Equal to ``b_sff`` when the lens flux is ``>= 0``,
+        and 1 when the lens flux is negative (dark lens).
+
+    Notes
+    -----
+    ``jnp.clip(b_sff, 0, 1)`` is not the same operation. ``b_sff < 0``
+    would put the centroid on the lens; a negative lens flux is a dark
+    lens, so the centroid stays on the source. Returning ``b_sff``
+    unchanged when ``(1 - b) / b >= 0`` keeps ``b_sff <= 1`` bit-identical.
+    """
+    b = jnp.asarray(b_sff, dtype=jnp.float64)
+
+    # Lens/source flux ratio. Negative means the lens must be clipped.
+    g_raw = (1.0 - b) / b
+
+    # Keep the caller's weight whenever the lens is luminous.
+    b_eff = jnp.where(g_raw >= 0.0, b, 1.0)
+    return b_eff
+
+
 def mag2flux_jax(mag):
     """
     mag2flux_jax.
@@ -1113,6 +1180,11 @@ def pspl_phot_astrometry(t, t0, tE, u0, thetaE_hat, mag_src, b_sff,
     -------
     u_cent
         See summary above.
+
+    Notes
+    -----
+    Lens flux derived from ``b_sff`` is clipped at zero in flux space.
+    Photometry does not use this clip.
     """
     u = pspl_u(
         t,
@@ -1136,9 +1208,10 @@ def pspl_phot_astrometry(t, t0, tE, u0, thetaE_hat, mag_src, b_sff,
         u_plus * a_plus[:, jnp.newaxis] + u_minus * a_minus[:, jnp.newaxis]
     ) / a_total[:, jnp.newaxis]
 
-    # Source and blend fluxes; blend light is centered on the lens (u=0).
+    # Source flux, and lens flux clipped at zero (dark when b_sff > 1).
+    # Photometry keeps the unclipped blend; this clip is astrometry only.
     f_src = mag2flux_jax(mag_src)
-    f_l = f_src * (1.0 - b_sff) / b_sff
+    f_l = lens_flux_for_astrometry_jax(f_src, b_sff)
 
     # Flux-weighted unresolved centroid including blend.
     u_cent = (u_cent * f_src * a_total[:, jnp.newaxis]) / (
@@ -1179,6 +1252,11 @@ def pspl_phot_astrometry_unlensed(t, t0, tE, u0, thetaE_hat, b_sff,
     -------
     u_cent
         See summary above.
+
+    Notes
+    -----
+    A negative lens flux (``b_sff > 1``) is a dark lens, so the source
+    weight is 1. ``b_sff <= 1`` is unchanged.
     """
     # Source-lens separation, then flux-weighted centroid with blend on lens.
     u = pspl_u(
@@ -1193,8 +1271,10 @@ def pspl_phot_astrometry_unlensed(t, t0, tE, u0, thetaE_hat, b_sff,
         parallax_correction=parallax_correction,
     )
 
-    # Without lensing, the centroid is just the blend-weighted source track.
-    u_cent = jnp.asarray(b_sff, dtype=jnp.float64) * u
+    # Blend-weighted source track. A negative lens flux is a dark lens,
+    # so the weight becomes 1 instead of extrapolating past the source.
+    b_eff = astrometric_source_weight_jax(b_sff)
+    u_cent = b_eff * u
     return u_cent
 
 
@@ -2354,6 +2434,13 @@ def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
     -------
     pos
         See summary above.
+
+    Notes
+    -----
+    The blend ratio ``g = (1 - b_sff) / b_sff`` is clipped at zero, and
+    the source weight becomes 1 when that ratio is negative. Both the
+    microlensing shift and the source/lens blend use the clipped values.
+    Photometry is unchanged.
     """
     t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
     dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
@@ -2373,8 +2460,13 @@ def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
     u_vec = thetaS / (thetaE_amp * 1e-3)
     u_amp = jnp.linalg.norm(u_vec, axis=1)
 
-    # Blend ratio and flux-weighted centroid shift (matches PSPL.get_astrometry).
-    g = (1.0 - b_sff) / b_sff
+    # Lens/source flux ratio. Clip a negative ratio (b_sff > 1) to 0
+    # so the lens is dark. b_sff <= 1 keeps g and the source weight exact.
+    g_raw = (1.0 - b_sff) / b_sff
+    g = jnp.maximum(g_raw, 0.0)
+    b_eff = jnp.where(g_raw >= 0.0, b_sff, 1.0)
+
+    # Flux-weighted centroid shift (matches PSPL.get_astrometry).
     sqrt_term = jnp.sqrt(u_amp**2 + 4.0)
     numer_u = u_amp**2 - u_amp * sqrt_term + 3.0
     denom_u = u_amp**2 + 2.0 + g * u_amp * sqrt_term
@@ -2383,7 +2475,7 @@ def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
     shift = numer / denom[:, jnp.newaxis]
 
     # Blend of source / lens positions plus the microlensing centroid shift.
-    pos = b_sff * xS + (1.0 - b_sff) * xL + shift
+    pos = b_eff * xS + (1.0 - b_eff) * xL + shift
     return pos
 
 
@@ -2675,7 +2767,39 @@ def gaussian_astrometry_log_likelihood_sum(pos_model, x_obs, y_obs, x_err, y_err
 def pspl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
                                b_sff, x_obs, y_obs, x_err, y_err,
                                parallax_vectors=None, piS=None, piL=None):
-    """Evaluate a PSPL absolute-astrometry Gaussian log-likelihood."""
+    """Evaluate a PSPL absolute-astrometry Gaussian log-likelihood.
+
+    Parameters
+    ----------
+    t : array_like, shape (N_times,)
+        Observation times (MJD).
+    t0 : float
+        Reference time (MJD).
+    xS0, xL0 : array_like, shape (2,)
+        Source and lens sky positions at ``t0`` (arcsec).
+    muS, muL : array_like, shape (2,)
+        Proper motions (mas/yr).
+    thetaE_amp : float
+        Einstein radius (mas).
+    b_sff : float
+        Source flux fraction.
+    x_obs, y_obs, x_err, y_err : array_like, shape (N_times,)
+        Observed East/North positions and uncertainties (arcsec).
+    parallax_vectors : array_like or None
+        Parallax table, shape ``(N_times, 2)``.
+    piS, piL : float or None
+        Source and lens parallax (mas).
+
+    Returns
+    -------
+    lnL : float
+        Summed Gaussian log-likelihood.
+
+    Notes
+    -----
+    The centroid is :func:`pspl_astrometry_param1`, which clips a
+    negative lens flux at zero. Photometry is not clipped.
+    """
     pos_model = pspl_astrometry_param1(
         t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
         parallax_vectors=parallax_vectors, piS=piS, piL=piL
@@ -2732,6 +2856,12 @@ def psbl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp,
     -------
     pos : jnp.ndarray, shape (N_times, 2)
         East / North centroid positions in arcsec.
+
+    Notes
+    -----
+    Non-source flux from ``b_sff`` is clipped at zero before it is split
+    between the two lenses. ``b_sff > 1`` is a dark lens. Photometry
+    keeps the unclipped blend.
     """
     t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
     dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
@@ -2771,9 +2901,14 @@ def psbl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp,
     amp_3 = amp_f.reshape((amp_f.shape[0], amp_f.shape[1], 1))
     xS_f = jnp.where(jnp.isfinite(xS_img), xS_img, 0.0)
 
-    # Source and luminous-lens fluxes (neighbor light assumed zero).
+    # Source flux, then non-source flux assigned to the lenses.
+    # The 1e-12 floor only guards b_sff ~ 0. The following clip is the
+    # astrometric rule: b_sff > 1 is a dark lens (flux 0), not a
+    # negative weight that pushes the centroid away from the lens.
+    # Photometry does not apply this clip.
     fS = mag2flux_jax(mag_src)
     flux_non = fS * (1.0 - b_sff) / jnp.maximum(b_sff, 1e-12)
+    flux_non = jnp.maximum(flux_non, 0.0)
     fr = jnp.nan_to_num(10.0 ** (dmag_Lp_Ls / -2.5), nan=0.0)
     fL1 = flux_non * fr / (1.0 + fr)
     fL2 = flux_non / (1.0 + fr)
@@ -2793,7 +2928,49 @@ def psbl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
                                mag_src, b_sff, x_obs, y_obs, x_err, y_err,
                                dmag_Lp_Ls=20.0, parallax_vectors=None,
                                piS=None, piL=None, root_tol=1e-8):
-    """Evaluate a static PSBL absolute-astrometry Gaussian log-likelihood."""
+    """Evaluate a static PSBL absolute-astrometry Gaussian log-likelihood.
+
+    Parameters
+    ----------
+    t : array_like, shape (N_times,)
+        Observation times (MJD).
+    t0 : float
+        Reference time (MJD).
+    xS0, xL0 : array_like, shape (2,)
+        Source and geometric-center lens positions at ``t0`` (arcsec).
+    muS, muL : array_like, shape (2,)
+        Proper motions (mas/yr).
+    thetaE_amp : float
+        Einstein radius (mas).
+    xL1_over_theta, xL2_over_theta : array_like, shape (2,)
+        Companion offsets in Einstein radii.
+    m1, m2 : float
+        Normalized lens masses (mass fractions).
+    mag_src : float
+        Unlensed source magnitude.
+    b_sff : float
+        Source flux fraction.
+    x_obs, y_obs, x_err, y_err : array_like, shape (N_times,)
+        Observed East/North positions and uncertainties (arcsec).
+    dmag_Lp_Ls : float, optional
+        Primary-minus-secondary lens magnitude difference.
+    parallax_vectors : array_like or None
+        Parallax table, shape ``(N_times, 2)``.
+    piS, piL : float or None
+        Source and lens parallax (mas).
+    root_tol : float, optional
+        Witt quintic root tolerance.
+
+    Returns
+    -------
+    lnL : float
+        Summed Gaussian log-likelihood.
+
+    Notes
+    -----
+    The centroid is :func:`psbl_astrometry_param1`, which clips lens
+    flux from ``b_sff`` at zero. Photometry is not clipped.
+    """
     pos_model = psbl_astrometry_param1(
         t, t0, xS0, xL0, muS, muL, thetaE_amp,
         xL1_over_theta, xL2_over_theta, m1, m2,

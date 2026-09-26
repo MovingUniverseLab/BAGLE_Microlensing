@@ -720,10 +720,12 @@ class PSPL(ABC):
             return np.asarray(u_cent, dtype=np.float64)
 
         # PhotAstrom path: blend absolute source and lens sky tracks.
+        # Clip a negative lens flux (b_sff > 1) so the lens is dark.
         xS_unlensed = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
         b_sff = self._phot_scalar("b_sff", filt_idx, default=1.0)
-        pos_unlensed = b_sff * xS_unlensed + (1.0 - b_sff) * xL_unlensed
+        b_eff = astrometric_source_weight(b_sff)
+        pos_unlensed = b_eff * xS_unlensed + (1.0 - b_eff) * xL_unlensed
 
         return pos_unlensed
 
@@ -1487,10 +1489,10 @@ class PSPL_Phot(PSPL):
         # Flux-weighted centroid of just the sources.
         u_unlens = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
 
-        # Calculate the flux-weighted centroid (source + lens)
-        # fS * u + (fL - fS) * [0, 0]
-        # where u is position of source relative to lens.
-        pos_unlensed = self.b_sff[filt_idx] * u_unlens
+        # Lens is at the origin. Clip a negative lens flux (b_sff > 1)
+        # so the source weight becomes 1 instead of extrapolating.
+        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
+        pos_unlensed = b_eff * u_unlens
 
         return pos_unlensed
 
@@ -5522,8 +5524,12 @@ class PSBL(PSPL):
         # Flux of the source.
         flux_sorc = mag2flux(self.mag_src[filt_idx])
 
-        # Flux of everythign else. We will assume this is all lens (no neighbor) light.
-        flux_non_sorc = flux_sorc * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+        # Non-source flux assigned to the lenses. Clip at zero in flux
+        # space so b_sff > 1 is a dark lens for astrometry. Event
+        # photometry does not use this helper; it keeps the raw blend.
+        flux_non_sorc = lens_flux_for_astrometry(
+            flux_sorc, self.b_sff[filt_idx]
+        )
 
         # Flux Ratio of f_Lp / f_Ls
         fr_Lp_Ls = jnp.nan_to_num(dmag2fratio(self.dmag_Lp_Ls[filt_idx]), nan=0)
@@ -6503,11 +6509,12 @@ class PSBL(PSPL):
         # Get the source flux.
         fS = mag2flux(self.mag_src[filt_idx])
 
-        # Get the lens position and flux
+        # Lens positions, and lens fluxes clipped at zero in flux space.
+        # Do not round-trip through magnitudes: b_sff > 1 is a dark lens.
         xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
-        magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
-        fL1 = mag2flux(magL1)
-        fL2 = mag2flux(magL2)
+        fL1, fL2 = resolved_lens_fluxes_for_astrometry(
+            fS, self.b_sff[filt_idx], self.dmag_Lp_Ls[filt_idx]
+        )
 
         # Derivations are in https://www.overleaf.com/project/5c058eb8e5b5b14080d3d567
         # centroid = [ sum(A_i*fS*xS_i) + fL1*xL1 + fL2*xL2 ] / [ sum(A_i*fS) + fL1 + fL2 ]
@@ -6762,11 +6769,12 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         .. note::
            Note, this is a photometry only model, so units are in Einstein radii.
         """
-        magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
+        # Lens fluxes clipped at zero in flux space. b_sff > 1 is dark.
         xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
-
-        fL1 = mag2flux(magL1)
-        fL2 = mag2flux(magL2)
+        fS = mag2flux(self.mag_src[filt_idx])
+        fL1, fL2 = resolved_lens_fluxes_for_astrometry(
+            fS, self.b_sff[filt_idx], self.dmag_Lp_Ls[filt_idx]
+        )
 
         xL_centroid = (xL1 * fL1 + xL2 * fL2) / (fL1 + fL2)
 
@@ -6827,10 +6835,10 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         # Get the relative unlensed separation.
         u = self.get_u(t, filt_idx=filt_idx)
 
-        # Calculate the flux-weighted centroid (source + lens)
-        # fS * u + (fL - fS) * [0, 0]
-        # where u is position of source relative to lens.
-        pos_unlensed = self.b_sff[filt_idx] * u
+        # Lens is at the origin. Clip a negative lens flux (b_sff > 1)
+        # so the source weight becomes 1 instead of extrapolating.
+        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
+        pos_unlensed = b_eff * u
 
         return pos_unlensed
 
@@ -7118,8 +7126,9 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         xS_unlensed = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
-        # Flux-weighted centroid, lensed
-        pos_lensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
+        # Clip a negative lens flux (b_sff > 1) so the lens is dark.
+        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
+        pos_lensed = b_eff * xS_unlensed + (1.0 - b_eff) * xL_unlensed
 
         return pos_lensed
 
@@ -12506,10 +12515,10 @@ class BSPL_Phot(BSPL, PSPL_Phot):
         # Flux-weighted centroid of just the sources.
         u_unlens = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
 
-        # Calculate the flux-weighted centroid (source + lens)
-        # fS * u + (fL - fS) * [0, 0]
-        # where u is position of source relative to lens.
-        pos_unlensed = self.b_sff[filt_idx] * u_unlens
+        # Lens is at the origin. Clip a negative lens flux (b_sff > 1)
+        # so the source weight becomes 1 instead of extrapolating.
+        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
+        pos_unlensed = b_eff * u_unlens
 
         return pos_unlensed
 
@@ -12591,8 +12600,9 @@ class BSPL_Phot(BSPL, PSPL_Phot):
         fS1 = mag2flux(self.mag_src_pri[filt_idx])
         fS2 = mag2flux(self.mag_src_sec[filt_idx])
 
-        # Assume all blended light comes from the lens.
-        fL = (fS1 + fS2) * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+        # Blended light assigned to the lens, clipped at zero in flux
+        # space. b_sff > 1 is a dark lens. Photometry stays unclipped.
+        fL = lens_flux_for_astrometry(fS1 + fS2, self.b_sff[filt_idx])
 
         # Calculate the flux-weighted centroid of all the source images and lens.
         # Remember lens is at origin (pos=0) in this coordinate system.
@@ -12729,8 +12739,9 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         xS_unlensed = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
-        # Flux-weighted centroid of source and lens, lensed
-        pos_lensed = self.b_sff[filt_idx] * xS_unlensed + (1 - self.b_sff[filt_idx]) * xL_unlensed
+        # Clip a negative lens flux (b_sff > 1) so the lens is dark.
+        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
+        pos_lensed = b_eff * xS_unlensed + (1.0 - b_eff) * xL_unlensed
 
         return pos_lensed
 
@@ -12829,8 +12840,9 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         # Convenient fS array.
         fS = np.array([fS1, fS2])
 
-        # Assume all blended light comes from the lens.
-        fL = (fS1 + fS2) * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+        # Blended light assigned to the lens, clipped at zero in flux
+        # space. b_sff > 1 is a dark lens. Photometry stays unclipped.
+        fL = lens_flux_for_astrometry(fS1 + fS2, self.b_sff[filt_idx])
 
         # Calculate the lensed flux for each image and each source at each time.
         fS_lensed4 = A_lensed4 * fS[np.newaxis, :, np.newaxis] # Shape = [len(t), N_sources, [+/-]]
@@ -17582,8 +17594,12 @@ class BSBL(PSBL):
         fS2 = mag2flux(self.mag_src_sec[filt_idx])
         flux_sorc = fS1 + fS2
 
-        # Flux of everythign else. We will assume this is all lens (no neighbor) light.
-        flux_non_sorc = flux_sorc * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+        # Non-source flux assigned to the lenses. Clip at zero in flux
+        # space so b_sff > 1 is a dark lens for astrometry. Event
+        # photometry does not use this helper; it keeps the raw blend.
+        flux_non_sorc = lens_flux_for_astrometry(
+            flux_sorc, self.b_sff[filt_idx]
+        )
 
         # Flux Ratio of f_Lp / f_Ls
         fr_Lp_Ls = np.nan_to_num(dmag2fratio(self.dmag_Lp_Ls[filt_idx]), nan=0)
@@ -17676,12 +17692,15 @@ class BSBL(PSBL):
         xS_unlensed : numpy array, dtype=float, shape = [len(t), 2]
             The unlensed, flux-weighted centroid position of the source+lens in arcseconds.
         """
-        # Get the lens position and flux.
-        magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
+        # Lens positions and fluxes. Clip at zero in flux space so
+        # b_sff > 1 is a dark lens. Do not round-trip through magnitudes.
         xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
-
-        fL1 = mag2flux(magL1)
-        fL2 = mag2flux(magL2)
+        fS_tot = mag2flux(self.mag_src_pri[filt_idx]) + mag2flux(
+            self.mag_src_sec[filt_idx]
+        )
+        fL1, fL2 = resolved_lens_fluxes_for_astrometry(
+            fS_tot, self.b_sff[filt_idx], self.dmag_Lp_Ls[filt_idx]
+        )
 
         # Get the source position and flux.
         xS_both = self.get_resolved_source_astrometry_unlensed(t, filt_idx=filt_idx)
@@ -18164,11 +18183,13 @@ class BSBL(PSBL):
         fS_lensed[:, 0, :] *= fS1
         fS_lensed[:, 1, :] *= fS2
 
-        # Get the lens position and flux
+        # Lens positions and fluxes clipped at zero in flux space.
+        # b_sff > 1 is a dark lens. Photometry keeps the raw blend.
         xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
-        magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
-        fL1 = mag2flux(magL1)
-        fL2 = mag2flux(magL2)
+        fS_tot = fS1 + fS2
+        fL1, fL2 = resolved_lens_fluxes_for_astrometry(
+            fS_tot, self.b_sff[filt_idx], self.dmag_Lp_Ls[filt_idx]
+        )
 
         # Calculate the flux-weighted centroid.
         # Derivations are in https://www.overleaf.com/project/5c058eb8e5b5b14080d3d567
@@ -21885,9 +21906,10 @@ decL - if parallax model
             # amp_arr shape = [N_times, [+, -]]
             # image_arr shape = [N_times, [+, -], [E, N]]
 
-        # Add in the flux of the lens objects as well.
+        # Lens flux clipped at zero in flux space. b_sff > 1 is dark.
+        # Photometry above keeps the unclipped blend.
         fS = mag2flux(self.mag_src[filt_idx])
-        fL = fS * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+        fL = lens_flux_for_astrometry(fS, self.b_sff[filt_idx])
 
         # Calculate the total flux from all lensed source images and the lens itself.
         amp_arr = np.abs(amp_arr)
@@ -23587,11 +23609,12 @@ class FSBL_Phot(FSBL, PSPL_Phot):
         .. note::
            Note, this is a photometry only model, so units are in Einstein radii.
         """
-        magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
+        # Lens fluxes clipped at zero in flux space. b_sff > 1 is dark.
         xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
-
-        fL1 = mag2flux(magL1)
-        fL2 = mag2flux(magL2)
+        fS = mag2flux(self.mag_src[filt_idx])
+        fL1, fL2 = resolved_lens_fluxes_for_astrometry(
+            fS, self.b_sff[filt_idx], self.dmag_Lp_Ls[filt_idx]
+        )
 
         xL_centroid = (xL1 * fL1 + xL2 * fL2) / (fL1 + fL2)
 
@@ -23652,10 +23675,10 @@ class FSBL_Phot(FSBL, PSPL_Phot):
         # Get the relative unlensed separation.
         u = self.get_u(t, filt_idx=filt_idx)
 
-        # Calculate the flux-weighted centroid (source + lens)
-        # fS * u + (fL - fS) * [0, 0]
-        # where u is position of source relative to lens.
-        pos_unlensed = self.b_sff[filt_idx] * u
+        # Lens is at the origin. Clip a negative lens flux (b_sff > 1)
+        # so the source weight becomes 1 instead of extrapolating.
+        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
+        pos_unlensed = b_eff * u
 
         return pos_unlensed
 
@@ -24342,10 +24365,11 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
         pos = np.stack((pos_c.real, pos_c.imag), axis=-1)
         ftot_src = np.sum(zc, axis=(1, 2))
         
+        # Lens fluxes clipped at zero in flux space. b_sff > 1 is dark.
         xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
-        magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
-        fL1 = mag2flux(magL1)
-        fL2 = mag2flux(magL2)
+        fL1, fL2 = resolved_lens_fluxes_for_astrometry(
+            fS, self.b_sff[filt_idx], self.dmag_Lp_Ls[filt_idx]
+        )
         
         numer = pos + xL1 * fL1 + xL2 * fL2
         denom = ftot_src + fL1 + fL2
@@ -28414,8 +28438,9 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
         fS1 = mag2flux(self.mag_src_pri[filt_idx])
         fS2 = mag2flux(self.mag_src_sec[filt_idx])
 
-        # Assume all blended light comes from the lens.
-        fL = (fS1 + fS2) * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+        # Blended light assigned to the lens, clipped at zero in flux
+        # space. b_sff > 1 is a dark lens. Photometry stays unclipped.
+        fL = lens_flux_for_astrometry(fS1 + fS2, self.b_sff[filt_idx])
 
         # Calculate the flux-weighted centroid of all the source images and lens.
         # Remember lens is at origin (pos=0) in this coordinate system.
@@ -31960,6 +31985,109 @@ def get_model(model_class, params, params_fixed):
         mod = model_class(*params.values())
 
     return mod
+
+
+def lens_flux_for_astrometry(flux_src, b_sff):
+    """Lens flux implied by ``b_sff``, clipped at zero for astrometry.
+
+    Parameters
+    ----------
+    flux_src : float or array_like
+        Unlensed source flux, or the sum of source fluxes. Scalar, or
+        an array broadcastable with ``b_sff``.
+    b_sff : float or array_like
+        Source flux fraction ``f_S / (f_S + f_L + f_N)``.
+
+    Returns
+    -------
+    flux_lens : ndarray
+        Lens flux used by the centroid. Shape follows NumPy broadcasting
+        of ``flux_src`` and ``b_sff``. Every value is ``>= 0``.
+
+    Notes
+    -----
+    ``f_L = f_S * (1 - b_sff) / b_sff`` is negative when ``b_sff > 1``
+    (or ``b_sff < 0``). The clip is in flux space, not a magnitude
+    round-trip. Photometry must keep the unclipped blend. For
+    ``0 < b_sff <= 1`` the value matches the raw expression.
+    """
+    b = np.asarray(b_sff, dtype=np.float64)
+    flux_src = np.asarray(flux_src, dtype=np.float64)
+
+    # Raw lens flux. No extra floor on b_sff, so b_sff <= 1 stays exact.
+    flux_lens = flux_src * (1.0 - b) / b
+
+    # Dark lens when the implied flux is negative.
+    flux_lens = np.maximum(flux_lens, 0.0)
+    return flux_lens
+
+
+def astrometric_source_weight(b_sff):
+    """Source weight after clipping a negative lens flux at zero.
+
+    Parameters
+    ----------
+    b_sff : float or array_like
+        Source flux fraction.
+
+    Returns
+    -------
+    b_eff : ndarray
+        Weight of the source in ``b * x_S + (1 - b) * x_L``. Same shape
+        as ``b_sff``. Equal to ``b_sff`` when the lens flux is ``>= 0``,
+        and 1 when the lens flux is negative (dark lens).
+
+    Notes
+    -----
+    ``np.clip(b_sff, 0, 1)`` is not the same operation. ``b_sff < 0``
+    would put the centroid on the lens; a negative lens flux is a dark
+    lens, so the centroid stays on the source. Returning ``b_sff``
+    unchanged when ``(1 - b) / b >= 0`` keeps ``b_sff <= 1`` bit-identical.
+    """
+    b = np.asarray(b_sff, dtype=np.float64)
+
+    # Lens/source flux ratio. Negative means the lens must be clipped.
+    g_raw = (1.0 - b) / b
+
+    # Keep the caller's weight whenever the lens is luminous.
+    b_eff = np.where(g_raw >= 0.0, b, 1.0)
+    return b_eff
+
+
+def resolved_lens_fluxes_for_astrometry(flux_src, b_sff, dmag_Lp_Ls):
+    """Primary and secondary lens fluxes, clipped at zero.
+
+    Parameters
+    ----------
+    flux_src : float or array_like
+        Total unlensed source flux.
+    b_sff : float or array_like
+        Source flux fraction.
+    dmag_Lp_Ls : float or array_like
+        Primary-minus-secondary lens magnitude difference.
+
+    Returns
+    -------
+    flux_Lp : ndarray
+        Primary lens flux, ``>= 0``. Same broadcast shape as the inputs.
+    flux_Ls : ndarray
+        Secondary lens flux, ``>= 0``.
+
+    Notes
+    -----
+    The split matches ``get_resolved_lens_photometry``:
+    ``f_Lp / f_Ls = 10 ** (dmag_Lp_Ls / -2.5)``. The total is clipped
+    before the split, so ``b_sff > 1`` makes both lenses dark. Event
+    photometry must not use this helper.
+    """
+    # Clipped non-source flux, all of it assigned to the lenses.
+    flux_non = lens_flux_for_astrometry(flux_src, b_sff)
+
+    # Same flux ratio the magnitude helper uses.
+    fr = np.nan_to_num(dmag2fratio(dmag_Lp_Ls), nan=0.0)
+    flux_lp = flux_non * fr / (1.0 + fr)
+    flux_ls = flux_non / (1.0 + fr)
+    return flux_lp, flux_ls
 
 
 def mag2flux(mag):
