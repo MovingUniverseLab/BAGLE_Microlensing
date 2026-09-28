@@ -295,6 +295,11 @@ def apply_narrow_priors(fitter, p_in, half_width=0.05, stats_pkg="scipy"):
             hi = min(hi, 0.999)
         if name.startswith("sep") and lo <= 0:
             lo = 1e-3
+        # Astrometry clips a negative lens flux, so b_sff stays <= 1.
+        if name.startswith("b_sff"):
+            hi = min(hi, 1.0)
+            if lo >= hi:
+                lo = hi - 1e-3
         fitter.priors[name] = make(name, lo, hi, stats_pkg=stats_pkg)
 
     return None
@@ -376,7 +381,9 @@ def apply_open_priors(fitter, p_in, stats_pkg="scipy"):
             lo = 1e-3
         if name.startswith("b_sff"):
             lo = max(lo, 0.01)
-            hi = min(hi, 1.5)
+            hi = min(hi, 1.0)
+            if lo >= hi:
+                lo = hi - 1e-3
         fitter.priors[name] = make(name, lo, hi, stats_pkg=stats_pkg)
 
     # Enforce dS > dL at the prior edges when both are free.

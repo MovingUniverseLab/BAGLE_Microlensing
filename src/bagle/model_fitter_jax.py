@@ -465,7 +465,8 @@ class MicrolensSolver(Solver):
         'dL': ('make_gen', 1000, 8000),
         'dS': ('make_gen', 100, 10000),
         'dL_dS': ('make_gen', 0.01, 0.99),
-        'b_sff': ('make_gen', 0.0, 1.5),
+        # Astrometry clips a negative lens flux, so b_sff stays at most 1.
+        'b_sff': ('make_gen', 0.0, 1.0),
         'mag_src': ('make_mag_src_gen', None, None),
         'mag_src_pri': ('make_mag_src_gen', None, None),
         'mag_src_sec': ('make_mag_src_gen', None, None),
@@ -1004,6 +1005,61 @@ class MicrolensSolver(Solver):
 
         return mod
 
+    def _check_b_sff_upper_bound(self):
+        """Raise if a phot+astrom ``b_sff`` prior exceeds 1.
+
+        Parameters
+        ----------
+        self : MicrolensSolver
+            Solver with ``priors`` and ``map_phot_idx_to_ast_idx`` set.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            ``b_sffN`` for a photometry dataset paired with astrometry
+            has an upper bound above 1, or no finite upper bound.
+
+        Notes
+        -----
+        Called once at the start of ``solve``. The default prior is
+        already uniform on [0, 1]. Photometry-only fits are skipped.
+        """
+        n_ast = int(self.n_ast_sets or 0)
+        if n_ast == 0:
+            return None
+
+        # One photometry partner per astrometry dataset. A string-style
+        # map can run past n_ast_sets; those extra entries are ignored.
+        mapping = list(self.map_phot_idx_to_ast_idx or [])
+        n_check = min(n_ast, len(mapping))
+        for ast_i in range(n_check):
+            name = f"b_sff{int(mapping[ast_i]) + 1}"
+            if name not in self.priors:
+                continue
+
+            prior = self.priors[name]
+            # scipy make_gen: ppf(1) is the upper edge. NumPyro Uniform
+            # stores it on .high. Anything else is treated as unbounded.
+            if callable(getattr(prior, "ppf", None)):
+                upper = float(np.asarray(prior.ppf(1.0)).ravel()[0])
+            elif getattr(prior, "high", None) is not None:
+                upper = float(np.asarray(prior.high).ravel()[0])
+            else:
+                upper = np.inf
+
+            if (not np.isfinite(upper)) or upper > 1.0:
+                raise ValueError(
+                    f"{name} prior upper bound is {upper}; photometry "
+                    "paired with astrometry requires an upper bound "
+                    "of 1 or less."
+                )
+
+        return None
+
     # FIXME: Is there a reason Prior takes ndim and nparams when those aren't used?
     # Is it the same reason as LogLikelihood?
     def Prior(self, cube, ndim=None, nparams=None):
@@ -1345,6 +1401,9 @@ class MicrolensSolver(Solver):
 
         Note we will ALWAYS tell multinest to be verbose.
         """
+        # Phot+astrom datasets cannot draw b_sff above 1.
+        self._check_b_sff_upper_bound()
+
         self.write_params_yaml()
 
         # Choose whether to use self.Prior or self.Prior_from_post depending
@@ -3401,6 +3460,9 @@ class MicrolensSolverPyMC2(MicrolensSolver):
 
     def solve(self):
         """Run PyMC sampling to find optimal parameters and posteriors."""
+        # Phot+astrom datasets cannot draw b_sff above 1.
+        self._check_b_sff_upper_bound()
+
         self.write_params_yaml()
 
         print('*************************************************')
@@ -3612,6 +3674,9 @@ class MicrolensSolverPyMC(MicrolensSolver):
         -------
         None
         """
+        # Phot+astrom datasets cannot draw b_sff above 1.
+        self._check_b_sff_upper_bound()
+
         self.write_params_yaml()
 
         print('*************************************************')
@@ -4250,6 +4315,9 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         -------
         None
         """
+        # Phot+astrom datasets cannot draw b_sff above 1.
+        self._check_b_sff_upper_bound()
+
         import numpyro
 
         # jaxns preference for float64.
