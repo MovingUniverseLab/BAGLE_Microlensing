@@ -84,7 +84,7 @@ def test_pspl_parallax_fit_geoproj(verbose=False, resume=False):
     fitter.priors['u0_amp'] = model_fitter.make_gen(p_in['u0_amp']-0.1, p_in['u0_amp']+0.1)
     fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.1, p_in['piE_E']+0.1)
     fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.1, p_in['piE_N']+0.1)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.01, np.minimum(p_in['b_sff']+0.01, 1.0))
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff']-0.01, p_in['b_sff']+0.01)
     fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src']-0.01, p_in['mag_src']+0.01)
 
     fitter.solve()
@@ -1010,7 +1010,7 @@ def test_correlated_data2(resume=False):
     fitter_corr.priors['tE'] = model_fitter.make_gen(150 - 5, 150 + 5)
     fitter_corr.priors['piE_E'] = model_fitter.make_gen(0.05 - 0.01, 0.05 + 0.01)
     fitter_corr.priors['piE_N'] = model_fitter.make_gen(0.05 - 0.01, 0.05 + 0.01)
-    fitter_corr.priors['b_sff1'] = model_fitter.make_gen(0.9 - 0.01, np.minimum(0.9 + 0.01, 1.0))
+    fitter_corr.priors['b_sff1'] = model_fitter.make_gen(0.9 - 0.01, 0.9 + 0.01)
     fitter_corr.priors['mag_src1'] = model_fitter.make_gen(19.0 - 0.01, 19.0 + 0.01)
     fitter_corr.priors['gp_log_sigma'] = model_fitter.make_norm_gen(0.5, 1.5)
     fitter_corr.priors['gp_rho'] = model_fitter.make_invgamma_gen(data_corr['t_phot1'])
@@ -1430,7 +1430,7 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', 
     fitter.priors['q'] = model_fitter.make_gen(p_in['q'] - 0.01, p_in['q'] + 0.01)
     fitter.priors['sep'] = model_fitter.make_gen(p_in['sep'] - 0.01, p_in['sep'] + 0.01)
     fitter.priors['phi'] = model_fitter.make_gen(p_in['phi'] - 0.01, p_in['phi'] + 0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1'] - 0.01, np.minimum(p_in['b_sff1'] + 0.01, 1.0))
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
     fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1'] - 0.01, p_in['mag_src1'] + 0.01)
 
     # Sampler = dynesty.DynamicNestedSampler(fitter.LogLikelihood, fitter.Prior,
@@ -1538,7 +1538,7 @@ def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', re
     fitter.priors['q'] = model_fitter.make_gen(p_in['q'] - 0.01, p_in['q'] + 0.01)
     fitter.priors['sep'] = model_fitter.make_gen(p_in['sep'] - 0.01, p_in['sep'] + 0.01)
     fitter.priors['phi'] = model_fitter.make_gen(p_in['phi'] - 0.01, p_in['phi'] + 0.01)
-    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1'] - 0.01, np.minimum(p_in['b_sff1'] + 0.01, 1.0))
+    fitter.priors['b_sff1'] = model_fitter.make_gen(p_in['b_sff1'] - 0.01, p_in['b_sff1'] + 0.01)
     fitter.priors['mag_src1'] = model_fitter.make_gen(p_in['mag_src1'] - 0.01, p_in['mag_src1'] + 0.01)
     
     # sampler = dynesty.DynamicNestedSampler(fitter.LogLikelihood, fitter.Prior, 
