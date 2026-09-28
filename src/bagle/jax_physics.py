@@ -390,8 +390,8 @@ def lens_flux_for_astrometry_jax(flux_src, b_sff):
     return flux_lens
 
 
-def astrometric_source_weight_jax(b_sff):
-    """Source weight after clipping a negative lens flux at zero.
+def astrometric_source_flux_fraction_jax(b_sff):
+    """Source flux fraction after clipping a negative lens flux at zero.
 
     Parameters
     ----------
@@ -400,10 +400,10 @@ def astrometric_source_weight_jax(b_sff):
 
     Returns
     -------
-    b_eff : jnp.ndarray
-        Weight of the source in ``b * x_S + (1 - b) * x_L``. Same shape
-        as ``b_sff``. Equal to ``b_sff`` when the lens flux is ``>= 0``,
-        and 1 when the lens flux is negative (dark lens).
+    src_flux_frac : jnp.ndarray
+        Fraction of the source in ``b * x_S + (1 - b) * x_L``. Same
+        shape as ``b_sff``. Equal to ``b_sff`` when the lens flux is
+        ``>= 0``, and 1 when the lens flux is negative (dark lens).
 
     Notes
     -----
@@ -417,9 +417,9 @@ def astrometric_source_weight_jax(b_sff):
     # Lens/source flux ratio. Negative means the lens must be clipped.
     g_raw = (1.0 - b) / b
 
-    # Keep the caller's weight whenever the lens is luminous.
-    b_eff = jnp.where(g_raw >= 0.0, b, 1.0)
-    return b_eff
+    # Keep the caller's fraction whenever the lens is luminous.
+    src_flux_frac = jnp.where(g_raw >= 0.0, b, 1.0)
+    return src_flux_frac
 
 
 def mag2flux_jax(mag):
@@ -1256,7 +1256,7 @@ def pspl_phot_astrometry_unlensed(t, t0, tE, u0, thetaE_hat, b_sff,
     Notes
     -----
     A negative lens flux (``b_sff > 1``) is a dark lens, so the source
-    weight is 1. ``b_sff <= 1`` is unchanged.
+    flux fraction is 1. ``b_sff <= 1`` is unchanged.
     """
     # Source-lens separation, then flux-weighted centroid with blend on lens.
     u = pspl_u(
@@ -1271,10 +1271,10 @@ def pspl_phot_astrometry_unlensed(t, t0, tE, u0, thetaE_hat, b_sff,
         parallax_correction=parallax_correction,
     )
 
-    # Blend-weighted source track. A negative lens flux is a dark lens,
-    # so the weight becomes 1 instead of extrapolating past the source.
-    b_eff = astrometric_source_weight_jax(b_sff)
-    u_cent = b_eff * u
+    # Blended source track. A negative lens flux is a dark lens, so
+    # the source flux fraction becomes 1 instead of going past the source.
+    src_flux_frac = astrometric_source_flux_fraction_jax(b_sff)
+    u_cent = src_flux_frac * u
     return u_cent
 
 
@@ -2438,8 +2438,9 @@ def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
     Notes
     -----
     The blend ratio ``g = (1 - b_sff) / b_sff`` is clipped at zero, and
-    the source weight becomes 1 when that ratio is negative. Both the
-    microlensing shift and the source/lens blend use the clipped values.
+    the source flux fraction becomes 1 when that ratio is negative.
+    Both the microlensing shift and the source/lens blend use the
+    clipped values.
     Photometry is unchanged.
     """
     t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
@@ -2461,12 +2462,13 @@ def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
     u_amp = jnp.linalg.norm(u_vec, axis=1)
 
     # Lens/source flux ratio. Clip a negative ratio (b_sff > 1) to 0
-    # so the lens is dark. b_sff <= 1 keeps g and the source weight exact.
+    # so the lens is dark. b_sff <= 1 keeps g and the source flux
+    # fraction exact.
     g_raw = (1.0 - b_sff) / b_sff
     g = jnp.maximum(g_raw, 0.0)
-    b_eff = jnp.where(g_raw >= 0.0, b_sff, 1.0)
+    src_flux_frac = jnp.where(g_raw >= 0.0, b_sff, 1.0)
 
-    # Flux-weighted centroid shift (matches PSPL.get_astrometry).
+    # Centroid shift from source and lens fluxes (PSPL.get_astrometry).
     sqrt_term = jnp.sqrt(u_amp**2 + 4.0)
     numer_u = u_amp**2 - u_amp * sqrt_term + 3.0
     denom_u = u_amp**2 + 2.0 + g * u_amp * sqrt_term
@@ -2475,7 +2477,7 @@ def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
     shift = numer / denom[:, jnp.newaxis]
 
     # Blend of source / lens positions plus the microlensing centroid shift.
-    pos = b_eff * xS + (1.0 - b_eff) * xL + shift
+    pos = src_flux_frac * xS + (1.0 - src_flux_frac) * xL + shift
     return pos
 
 
@@ -2904,7 +2906,7 @@ def psbl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp,
     # Source flux, then non-source flux assigned to the lenses.
     # The 1e-12 floor only guards b_sff ~ 0. The following clip is the
     # astrometric rule: b_sff > 1 is a dark lens (flux 0), not a
-    # negative weight that pushes the centroid away from the lens.
+    # negative lens flux that pushes the centroid away from the lens.
     # Photometry does not apply this clip.
     fS = mag2flux_jax(mag_src)
     flux_non = fS * (1.0 - b_sff) / jnp.maximum(b_sff, 1e-12)

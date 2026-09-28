@@ -724,8 +724,8 @@ class PSPL(ABC):
         xS_unlensed = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
         b_sff = self._phot_scalar("b_sff", filt_idx, default=1.0)
-        b_eff = astrometric_source_weight(b_sff)
-        pos_unlensed = b_eff * xS_unlensed + (1.0 - b_eff) * xL_unlensed
+        src_flux_frac = astrometric_source_flux_fraction(b_sff)
+        pos_unlensed = src_flux_frac * xS_unlensed + (1.0 - src_flux_frac) * xL_unlensed
 
         return pos_unlensed
 
@@ -1490,9 +1490,9 @@ class PSPL_Phot(PSPL):
         u_unlens = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
 
         # Lens is at the origin. Clip a negative lens flux (b_sff > 1)
-        # so the source weight becomes 1 instead of extrapolating.
-        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
-        pos_unlensed = b_eff * u_unlens
+        # so the source flux fraction becomes 1 instead of extrapolating.
+        src_flux_frac = astrometric_source_flux_fraction(self.b_sff[filt_idx])
+        pos_unlensed = src_flux_frac * u_unlens
 
         return pos_unlensed
 
@@ -6836,9 +6836,9 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         u = self.get_u(t, filt_idx=filt_idx)
 
         # Lens is at the origin. Clip a negative lens flux (b_sff > 1)
-        # so the source weight becomes 1 instead of extrapolating.
-        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
-        pos_unlensed = b_eff * u
+        # so the source flux fraction becomes 1 instead of extrapolating.
+        src_flux_frac = astrometric_source_flux_fraction(self.b_sff[filt_idx])
+        pos_unlensed = src_flux_frac * u
 
         return pos_unlensed
 
@@ -7127,8 +7127,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
         # Clip a negative lens flux (b_sff > 1) so the lens is dark.
-        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
-        pos_lensed = b_eff * xS_unlensed + (1.0 - b_eff) * xL_unlensed
+        src_flux_frac = astrometric_source_flux_fraction(self.b_sff[filt_idx])
+        pos_lensed = src_flux_frac * xS_unlensed + (1.0 - src_flux_frac) * xL_unlensed
 
         return pos_lensed
 
@@ -12516,9 +12516,9 @@ class BSPL_Phot(BSPL, PSPL_Phot):
         u_unlens = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
 
         # Lens is at the origin. Clip a negative lens flux (b_sff > 1)
-        # so the source weight becomes 1 instead of extrapolating.
-        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
-        pos_unlensed = b_eff * u_unlens
+        # so the source flux fraction becomes 1 instead of extrapolating.
+        src_flux_frac = astrometric_source_flux_fraction(self.b_sff[filt_idx])
+        pos_unlensed = src_flux_frac * u_unlens
 
         return pos_unlensed
 
@@ -12740,8 +12740,8 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
         xL_unlensed = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
         # Clip a negative lens flux (b_sff > 1) so the lens is dark.
-        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
-        pos_lensed = b_eff * xS_unlensed + (1.0 - b_eff) * xL_unlensed
+        src_flux_frac = astrometric_source_flux_fraction(self.b_sff[filt_idx])
+        pos_lensed = src_flux_frac * xS_unlensed + (1.0 - src_flux_frac) * xL_unlensed
 
         return pos_lensed
 
@@ -23676,9 +23676,9 @@ class FSBL_Phot(FSBL, PSPL_Phot):
         u = self.get_u(t, filt_idx=filt_idx)
 
         # Lens is at the origin. Clip a negative lens flux (b_sff > 1)
-        # so the source weight becomes 1 instead of extrapolating.
-        b_eff = astrometric_source_weight(self.b_sff[filt_idx])
-        pos_unlensed = b_eff * u
+        # so the source flux fraction becomes 1 instead of extrapolating.
+        src_flux_frac = astrometric_source_flux_fraction(self.b_sff[filt_idx])
+        pos_unlensed = src_flux_frac * u
 
         return pos_unlensed
 
@@ -32022,8 +32022,8 @@ def lens_flux_for_astrometry(flux_src, b_sff):
     return flux_lens
 
 
-def astrometric_source_weight(b_sff):
-    """Source weight after clipping a negative lens flux at zero.
+def astrometric_source_flux_fraction(b_sff):
+    """Source flux fraction after clipping a negative lens flux at zero.
 
     Parameters
     ----------
@@ -32032,10 +32032,10 @@ def astrometric_source_weight(b_sff):
 
     Returns
     -------
-    b_eff : ndarray
-        Weight of the source in ``b * x_S + (1 - b) * x_L``. Same shape
-        as ``b_sff``. Equal to ``b_sff`` when the lens flux is ``>= 0``,
-        and 1 when the lens flux is negative (dark lens).
+    src_flux_frac : ndarray
+        Fraction of the source in ``b * x_S + (1 - b) * x_L``. Same
+        shape as ``b_sff``. Equal to ``b_sff`` when the lens flux is
+        ``>= 0``, and 1 when the lens flux is negative (dark lens).
 
     Notes
     -----
@@ -32049,9 +32049,9 @@ def astrometric_source_weight(b_sff):
     # Lens/source flux ratio. Negative means the lens must be clipped.
     g_raw = (1.0 - b) / b
 
-    # Keep the caller's weight whenever the lens is luminous.
-    b_eff = np.where(g_raw >= 0.0, b, 1.0)
-    return b_eff
+    # Keep the caller's fraction whenever the lens is luminous.
+    src_flux_frac = np.where(g_raw >= 0.0, b, 1.0)
+    return src_flux_frac
 
 
 def resolved_lens_fluxes_for_astrometry(flux_src, b_sff, dmag_Lp_Ls):
