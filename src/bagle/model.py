@@ -25821,26 +25821,26 @@ class FSPL_PhotAstrom_noPar_Param2(ModelClassABC,
 
 
 # FSPL_parallax
-@inheritdocstring
-class FSPL_PhotAstrom_Par_Param3(ModelClassABC,
-                                 FSPL_PhotAstrom,
-                                 FSPL_Parallax,
-                                 FSPL_PhotAstromParam3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
+#@inheritdocstring
+#class FSPL_PhotAstrom_Par_Param3(ModelClassABC,
+#                                 FSPL_PhotAstrom,
+#                                 FSPL_Parallax,
+#                                 FSPL_PhotAstromParam3):
+#    def __init__(self, *args, **kwargs):
+#        super().__init__(*args, **kwargs)
+#        startbases(self)
+#        checkconflicts(self)
 
 
-@inheritdocstring
-class FSPL_PhotAstrom_noPar_Param3(ModelClassABC,
-                                   FSPL_PhotAstrom,
-                                   FSPL_noParallax,
-                                   FSPL_PhotAstromParam3):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        startbases(self)
-        checkconflicts(self)
+#@inheritdocstring
+#class FSPL_PhotAstrom_noPar_Param3(ModelClassABC,
+#                                   FSPL_PhotAstrom,
+#                                   FSPL_noParallax,
+#                                   FSPL_PhotAstromParam3):
+#    def __init__(self, *args, **kwargs):
+#        super().__init__(*args, **kwargs)
+#        startbases(self)
+#        checkconflicts(self)
 
 
 
