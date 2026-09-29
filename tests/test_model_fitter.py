@@ -128,8 +128,8 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0'] - 1, p_in['t0'] + 1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E'] - 1e-4, p_in['xS0_E'] + 1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N'] - 1e-4, p_in['xS0_N'] + 1e-4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E'] - 1e-4, p_in['xS0_E'] + 1e-4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N'] - 1e-4, p_in['xS0_N'] + 1e-4)
     fitter.priors['beta'] = model_fitter.make_gen(p_in['beta'] - 0.01, p_in['beta'] + 0.01)
     fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E'] - 0.05, p_in['muL_E'] + 0.05)
     fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N'] - 0.05, p_in['muL_N'] + 0.05)
@@ -149,8 +149,8 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
                                                 best['beta'],
                                                 best['dL'],
                                                 best['dL_dS'],
-                                                best['xS0_E'],
-                                                best['xS0_N'],
+                                                best['xS0_E1'],
+                                                best['xS0_N1'],
                                                 best['muL_E'],
                                                 best['muL_N'],
                                                 best['muS_E'],
@@ -309,8 +309,8 @@ def test_PSPL_Solver(plot=False, verbose=False, resume=False):
     fitter.priors['dL_dS'] = model_fitter.make_gen(0.49, 0.51)
     fitter.priors['b_sff1'] = model_fitter.make_gen(0.95, 1.0)
     fitter.priors['mag_src1'] = model_fitter.make_gen(18.9, 19.1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(-10 ** -4, 10 ** -4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(-10 ** -4, 10 ** -4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(-10 ** -4, 10 ** -4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(-10 ** -4, 10 ** -4)
 
     fitter.solve()
 
@@ -321,8 +321,8 @@ def test_PSPL_Solver(plot=False, verbose=False, resume=False):
                                                 beta=best['beta'],
                                                 dL=best['dL'],
                                                 dL_dS=best['dL_dS'],
-                                                xS0_E=best['xS0_E'],
-                                                xS0_N=best['xS0_N'],
+                                                xS0_E=best['xS0_E1'],
+                                                xS0_N=best['xS0_N1'],
                                                 muL_E=best['muL_E'],
                                                 muL_N=best['muL_N'],
                                                 muS_E=best['muS_E'],
@@ -398,8 +398,8 @@ def test_pspl_dy_fit():
     fitter.priors['dL_dS'] = model_fitter.make_gen(0.45, 0.55)
     fitter.priors['b_sff1'] = model_fitter.make_gen(0.95, 1.0)
     fitter.priors['mag_src1'] = model_fitter.make_gen(18.9, 19.1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(-1e-4, 1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(-1e-4, 1e-4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(-1e-4, 1e-4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(-1e-4, 1e-4)
 
     # n_cpu = 4
     # pool = Pool(n_cpu)
@@ -510,8 +510,8 @@ def test_pspl_ultranest_fit():
     fitter.priors['dL_dS'] = model_fitter.make_gen(0.45, 0.55)
     fitter.priors['b_sff1'] = model_fitter.make_gen(0.95, 1.0)
     fitter.priors['mag_src1'] = model_fitter.make_gen(18.9, 19.1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(-1e-4, 1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(-1e-4, 1e-4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(-1e-4, 1e-4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(-1e-4, 1e-4)
 
     # n_cpu = 4
     # pool = Pool(n_cpu)
@@ -637,8 +637,8 @@ def test_lumlens_parallax_fit(verbose=False):
 #                         outputfiles_basename=outdir + 'bb_')
 
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-2, p_in['t0']+2)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
     fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
     fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
     fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
@@ -658,8 +658,8 @@ def test_lumlens_parallax_fit(verbose=False):
                                                 best['beta'],
                                                 best['dL'],
                                                 best['dL_dS'],
-                                                best['xS0_E'],
-                                                best['xS0_N'],
+                                                best['xS0_E1'],
+                                                best['xS0_N1'],
                                                 best['muL_E'],
                                                 best['muL_N'],
                                                 best['muS_E'],
@@ -751,8 +751,8 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
 #                         outputfiles_basename=outdir + 'bb_')
 
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-1, p_in['t0']+1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
     fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
     fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
     fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
@@ -774,8 +774,8 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
                                                 best['beta'],
                                                 best['dL'],
                                                 best['dL_dS'],
-                                                best['xS0_E'],
-                                                best['xS0_N'],
+                                                best['xS0_E1'],
+                                                best['xS0_N1'],
                                                 best['muL_E'],
                                                 best['muL_N'],
                                                 best['muS_E'],
@@ -887,8 +887,8 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
                              verbose=False)
 
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-1, p_in['t0']+1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
     fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
     fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
     fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
@@ -920,8 +920,8 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
                                                 best['beta'],
                                                 best['dL'],
                                                 best['dL_dS'],
-                                                best['xS0_E'],
-                                                best['xS0_N'],
+                                                best['xS0_E1'],
+                                                best['xS0_N1'],
                                                 best['muL_E'],
                                                 best['muL_N'],
                                                 best['muS_E'],
@@ -1056,8 +1056,8 @@ def test_correlated_data_astrom(verbose=False, resume=False):
     fitter_corr.priors['piS'] = model_fitter.make_gen(params['piS']-0.05, params['piS']+0.05)
     fitter_corr.priors['piE_E'] = model_fitter.make_gen(params['piE_E']-0.01, params['piE_E']+0.01)
     fitter_corr.priors['piE_N'] = model_fitter.make_gen(params['piE_N']-0.01, params['piE_N']+0.01)
-    fitter_corr.priors['xS0_E'] = model_fitter.make_gen(params['xS0_E']-1E-4, params['xS0_E']+1E-4)
-    fitter_corr.priors['xS0_N'] = model_fitter.make_gen(params['xS0_N']-1E-4, params['xS0_N']+1E-4)
+    fitter_corr.priors['xS0_E1'] = model_fitter.make_gen(params['xS0_E']-1E-4, params['xS0_E']+1E-4)
+    fitter_corr.priors['xS0_N1'] = model_fitter.make_gen(params['xS0_N']-1E-4, params['xS0_N']+1E-4)
     fitter_corr.priors['muS_E'] = model_fitter.make_gen(params['muS_E']-0.01, params['muS_E']+0.01)
     fitter_corr.priors['muS_N'] = model_fitter.make_gen(params['muS_N']-0.01, params['muS_N']+0.01)
     fitter_corr.priors['b_sff1'] = model_fitter.make_gen(params['b_sff1']-0.01, np.minimum(params['b_sff1']+0.01, 1.0))
@@ -1109,8 +1109,8 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
         fitter.priors['piS'] = model_fitter.make_gen(p_in['piS']-0.01, p_in['piS']+0.01)
         fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.01, p_in['piE_E']+0.01)
         fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.01, p_in['piE_N']+0.01)
-        fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-0.0001, p_in['xS0_E']+0.0001)
-        fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-0.0001, p_in['xS0_N']+0.0001)
+        fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E']-0.0001, p_in['xS0_E']+0.0001)
+        fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N']-0.0001, p_in['xS0_N']+0.0001)
         fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.01, p_in['muS_E']+0.01)
         fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.01, p_in['muS_N']+0.01)
         fitter.priors['q'] = model_fitter.make_gen(p_in['q']-0.01, p_in['q']+0.01)
@@ -1126,7 +1126,7 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
 
     psbl_out = model.PSBL_PhotAstrom_Par_Param3(best['t0'], best['u0_amp'], best['tE'],
                                                 best['log10_thetaE'], best['piS'],
-                                                best['piE_E'], best['piE_N'], best['xS0_E'], best['xS0_N'],
+                                                best['piE_E'], best['piE_N'], best['xS0_E1'], best['xS0_N1'],
                                                 best['muS_E'], best['muS_N'],
                                                 best['q'], best['sep'], best['alpha'],
                                                 best['b_sff1'], best['mag_base1'], best['dmag_Lp_Ls1'],
@@ -1191,8 +1191,8 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
         fitter.priors['piS'] = model_fitter.make_gen(p_in['piS']-0.01, p_in['piS']+0.01)
         fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.01, p_in['piE_E']+0.01)
         fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.01, p_in['piE_N']+0.01)
-        fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-0.0001, p_in['xS0_E']+0.0001)
-        fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-0.0001, p_in['xS0_N']+0.0001)
+        fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E']-0.0001, p_in['xS0_E']+0.0001)
+        fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N']-0.0001, p_in['xS0_N']+0.0001)
         fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-0.01, p_in['muS_E']+0.01)
         fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-0.01, p_in['muS_N']+0.01)
         fitter.priors['q'] = model_fitter.make_gen(p_in['q']-0.01, p_in['q']+0.01)
@@ -1209,8 +1209,8 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
         fitter.priors['piS'] = model_fitter.make_gen(p_in['piS']-0.1, p_in['piS']+0.5)
         fitter.priors['piE_E'] = model_fitter.make_gen(p_in['piE_E']-0.5, p_in['piE_E']+0.5)
         fitter.priors['piE_N'] = model_fitter.make_gen(p_in['piE_N']-0.5, p_in['piE_N']+0.5)
-        fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1, p_in['xS0_E']+1)
-        fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1, p_in['xS0_N']+1)
+        fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E']-1, p_in['xS0_E']+1)
+        fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N']-1, p_in['xS0_N']+1)
         fitter.priors['muS_E'] = model_fitter.make_gen(p_in['muS_E']-3, p_in['muS_E']+3)
         fitter.priors['muS_N'] = model_fitter.make_gen(p_in['muS_N']-3, p_in['muS_N']+3)
         fitter.priors['q'] = model_fitter.make_gen(p_in['q']-0.1, p_in['q']+0.1) 
@@ -1224,7 +1224,7 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
     best = fitter.get_best_fit()
 
     psbl_out = model.PSBL_PhotAstrom_Par_Param2(best['t0'], best['u0_amp'], best['tE'], best['thetaE'], best['piS'],
-                                                best['piE_E'], best['piE_N'], best['xS0_E'], best['xS0_N'],
+                                                best['piE_E'], best['piE_N'], best['xS0_E1'], best['xS0_N1'],
                                                 best['muS_E'], best['muS_N'],
                                                 best['q'], best['sep'], best['alpha'],
                                                 best['b_sff1'], best['mag_src1'], best['dmag_Lp_Ls1'],
@@ -1281,8 +1281,8 @@ def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
     fitter.priors['mLp'] = model_fitter.make_gen(p_in['mLp']-0.01, p_in['mLp']+0.01)
     fitter.priors['mLs'] = model_fitter.make_gen(p_in['mLs']-0.01, p_in['mLs']+0.01)
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-0.01, p_in['t0']+0.01)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-0.01, p_in['xS0_E']+0.01)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-0.01, p_in['xS0_N']+0.01)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E']-0.01, p_in['xS0_E']+0.01)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N']-0.01, p_in['xS0_N']+0.01)
     fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
     fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
     fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
@@ -1299,7 +1299,7 @@ def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
 
     best = fitter.get_best_fit()
 
-    psbl_out = model.PSBL_PhotAstrom_Par_Param1(best['mLp'], best['mLs'], best['t0'], best['xS0_E'], best['xS0_N'],
+    psbl_out = model.PSBL_PhotAstrom_Par_Param1(best['mLp'], best['mLs'], best['t0'], best['xS0_E1'], best['xS0_N1'],
                                                 best['beta'], best['muL_E'], best['muL_N'],
                                                 best['muS_E'], best['muS_N'], best['dL'], best['dS'], best['sep'],
                                                 best['alpha'], best['b_sff1'], best['mag_src1'], best['dmag_Lp_Ls1'],
@@ -1979,8 +1979,8 @@ def test_cache_parallax_vector(verbose=False, resume=False):
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-2, p_in['t0']+2)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
     fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
     fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
     fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
@@ -2002,8 +2002,8 @@ def test_cache_parallax_vector(verbose=False, resume=False):
                                                 best['beta'],
                                                 best['dL'],
                                                 best['dL_dS'],
-                                                best['xS0_E'],
-                                                best['xS0_N'],
+                                                best['xS0_E1'],
+                                                best['xS0_N1'],
                                                 best['muL_E'],
                                                 best['muL_N'],
                                                 best['muS_E'],
@@ -2094,8 +2094,8 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
     
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-2, p_in['t0']+2)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
     fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
     fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.01, p_in['muL_E']+0.01)
     fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.01, p_in['muL_N']+0.01)
@@ -2157,8 +2157,8 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
                                                 best['beta'],
                                                 best['dL'],
                                                 best['dL_dS'],
-                                                best['xS0_E'],
-                                                best['xS0_N'],
+                                                best['xS0_E1'],
+                                                best['xS0_N1'],
                                                 best['muL_E'],
                                                 best['muL_N'],
                                                 best['muS_E'],
@@ -2258,8 +2258,8 @@ def test_bspl_parallax_fit(verbose=False, resume=False):
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0'] - 2, p_in['t0'] + 2)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E'] - 1e-4, p_in['xS0_E'] + 1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N'] - 1e-4, p_in['xS0_N'] + 1e-4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E'] - 1e-4, p_in['xS0_E'] + 1e-4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N'] - 1e-4, p_in['xS0_N'] + 1e-4)
     fitter.priors['beta'] = model_fitter.make_gen(p_in['beta'] - 0.01, p_in['beta'] + 0.01)
     fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E'] - 0.01, p_in['muL_E'] + 0.01)
     fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N'] - 0.01, p_in['muL_N'] + 0.01)
@@ -2345,8 +2345,8 @@ def test_multi_obsLocation(resume=False, verbose=False):
     # Lets adjust some priors for faster solving.
     fitter.priors['mL'] = model_fitter.make_gen(p_in['mL']-1, p_in['mL']+1)
     fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-1, p_in['t0']+1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
     fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.01, p_in['beta']+0.01)
     fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-1e-3, p_in['muL_E']+1e-3)
     fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-1e-3, p_in['muL_N']+1e-3)
@@ -2371,8 +2371,8 @@ def test_multi_obsLocation(resume=False, verbose=False):
                                                 beta=best['beta'],
                                                 dL=best['dL'],
                                                 dL_dS=best['dL_dS'],
-                                                xS0_E=best['xS0_E'],
-                                                xS0_N=best['xS0_N'],
+                                                xS0_E=best['xS0_E1'],
+                                                xS0_N=best['xS0_N1'],
                                                 muL_E=best['muL_E'],
                                                 muL_N=best['muL_N'],
                                                 muS_E=best['muS_E'],
@@ -2638,8 +2638,8 @@ def _apply_pspl_fake_data1_priors(fitter, p_in):
     fitter.priors['dL_dS'] = model_fitter.make_gen(0.45, 0.55)
     fitter.priors['b_sff1'] = model_fitter.make_gen(0.95, 1.0)
     fitter.priors['mag_src1'] = model_fitter.make_gen(18.9, 19.1)
-    fitter.priors['xS0_E'] = model_fitter.make_gen(-1e-4, 1e-4)
-    fitter.priors['xS0_N'] = model_fitter.make_gen(-1e-4, 1e-4)
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(-1e-4, 1e-4)
+    fitter.priors['xS0_N1'] = model_fitter.make_gen(-1e-4, 1e-4)
 
 
 def _relative_param_diff(a, b):
