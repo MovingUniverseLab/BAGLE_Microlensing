@@ -1079,7 +1079,13 @@ def plot_astrometry(t_model, source_mas, centroid_mas, point_mas,
     if np.any(crossing):
         ax_sky.plot(
             centroid_mas[crossing, 0], centroid_mas[crossing, 1],
-            color=CROSS_COLOR, lw=2.2, zorder=5, label='Caustic crossing',
+            color=CROSS_COLOR, lw=2.4, zorder=5, label='Caustic crossing',
+        )
+        # The 5-image segment is only ~1 mas long on a 40 mas track.
+        mid_xy = np.median(centroid_mas[crossing], axis=0)
+        ax_sky.scatter(
+            [mid_xy[0]], [mid_xy[1]], s=55, facecolors='none',
+            edgecolors=CROSS_COLOR, linewidths=1.5, zorder=7,
         )
     ax_sky.plot(
         primary_mas[sane, 0], primary_mas[sane, 1], color='0.15', lw=0.8,
@@ -1181,7 +1187,10 @@ def plot_astrometry(t_model, source_mas, centroid_mas, point_mas,
 
     near = (np.abs(t_model - t_cross) < 1.0) & sane
     near_body = near & ~crossing
-    ax_cau.axvspan(t_enter, t_exit, color=CROSS_COLOR, alpha=0.22, zorder=0)
+    ax_cau.axvspan(
+        t_enter, t_exit, color=CROSS_COLOR, alpha=0.35, zorder=0,
+        label='Inside caustic',
+    )
     ax_cau.plot(
         t_model[near_body], shift[near_body, 0], color=TRACK_COLOR, lw=1.3,
         label='PSBL East',
@@ -1672,7 +1681,11 @@ def main():
     _formula_err, ast_err_mas = v1.roman_f146_uncertainties(mag_roman)
     chi2_phot = float(np.nansum((delta_mag / mag_err) ** 2))
     roman_max = float(np.nanmax(np.abs(delta_mag)))
-    fine_mask = np.abs(t_model - t_cross) <= 0.01
+    # Cover the folds, which sit at the edges of the 5-image window
+    # rather than at its midpoint.
+    fine_mask = (
+        (t_model >= t_enter - 0.02) & (t_model <= t_exit + 0.02)
+    )
     fine_delta = mag_model[fine_mask] - mag_point_model[fine_mask]
     fine_max = float(np.nanmax(np.abs(fine_delta)))
     span = t_exit - t_enter
@@ -1798,6 +1811,8 @@ def main():
     size_factor = cau_radius / V4_CAUSTIC_RADIUS
     narrow = min(cau_east, cau_north)
     disk_vs_narrow = (2.0 * rho) / narrow
+    n_bagle_peak = int(bagle_eval['n_images'][0])
+    n_solver_peak = int(n_check[0])
     if misses_images:
         miss_text = (
             f'yes: default n={n_bagle_on}, A={bagle_on:.3f}; '
@@ -1805,8 +1820,7 @@ def main():
         )
     else:
         miss_text = (
-            f'no: default n={n_bagle_on}, A={bagle_on:.3f}; '
-            f'solver n={n_solver_on}, A={solver_on:.3f}'
+            f'no: both n=5, A={bagle_on:.3f} vs {solver_on:.3f}'
         )
     if abs(phase_days) > 0.0:
         phase_text = (
@@ -1814,11 +1828,12 @@ def main():
         )
     else:
         phase_text = 'no nudge; a Roman epoch already falls inside'
+    # The star does not cover the triangle (rho < radius, and the
+    # diameter is smaller than the narrow axis). The plateau survives;
+    # the disk mainly rounds the fold spikes.
     smooth_text = (
-        f'disk radius is {rho / cau_radius:.2f}x the caustic radius; '
-        f'diameter is {disk_vs_narrow:.2f}x the narrow axis. '
-        f'Point-source max |dm| {fine_max:.2f} mag vs disk {disk_max:.2f} mag; '
-        f'interior median {interior_dm:.2f} vs {disk_interior_dm:.2f} mag.'
+        f'no: interior {interior_dm:.2f} -> {disk_interior_dm:.2f} mag; '
+        f'disk max |dm| {disk_max:.2f}'
     )
 
     season_start = Time(season0[0], format='mjd').iso[:10]
@@ -1904,6 +1919,7 @@ def main():
         ('caustic East span (theta_E)', f'{cau_east:.6e}'),
         ('caustic North span (theta_E)', f'{cau_north:.6e}'),
         ('rho / caustic radius', f'{rho / cau_radius:.3f}'),
+        ('disk diameter / narrow axis', f'{disk_vs_narrow:.2f}'),
         ('vs 6 AU caustic radius', f'{size_factor:.2f} times larger'),
         ('central caustic radius (theta_E)', f'{half_central:.6e}'),
         ('central width analytic (theta_E)', f'{width_analytic:.6e}'),
@@ -1929,7 +1945,9 @@ def main():
         ('disk-average max |dm| (mag)', f'{disk_max:.4f}'),
         ('disk interior median dm (mag)', f'{disk_interior_dm:.4f}'),
         ('disk |dm|>0.05 span (hours)', f'{disk_span_days * 24.0:.3f}'),
-        ('1 Rsun smoothing', smooth_text),
+        ('1 Rsun erases the anomaly?', smooth_text),
+        ('default n_images at the peak',
+         f'{n_bagle_peak} (solver {n_solver_peak}; faint image)'),
         ('BAGLE default A at crossing', f'{bagle_on:.6f}'),
         ('solver A at crossing', f'{solver_on:.6f}'),
         ('non-finite model samples', f'{n_bad}'),
@@ -1943,7 +1961,7 @@ def main():
         ('Placement', 'u0=0.10; peak and crossing share one fast season'),
         ('Notes', '1e-5 factor in test_roman_lightcurve was not applied.'),
         ('Notes 2', 'chi2 is the residual against Roman errors, not a refit.'),
-        ('Notes 3', 'Fine-grid max |dm| samples the point-source fold.'),
+        ('Notes 3', 'Model max |dm| includes unresolved point-source folds.'),
     ]
     v1.write_tables(rows, OUTDIR)
     (OUTDIR / 'parameters.txt').rename(OUTDIR / 'v5_parameters.txt')
