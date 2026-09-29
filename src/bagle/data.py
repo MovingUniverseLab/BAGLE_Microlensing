@@ -96,8 +96,32 @@ class EventDataDict(dict):
         
 
     
+def _auto_observer(name):
+    """Map a catalog name to an observer for ``obs_location='auto'``.
+
+    Parameters
+    ----------
+    name : str
+        Photometric or astrometric dataset name.
+
+    Returns
+    -------
+    observer : str
+        ``'spitzer'`` for ``Ch1_Spitzer``, otherwise ``'earth'``.
+
+    Notes
+    -----
+    OGLE, Keck, HST, MOA, and KMT names are Earth. Any other name is
+    also Earth. This does not retarget an existing Spitzer fit unless
+    the catalog name is ``Ch1_Spitzer``.
+    """
+    if name == 'Ch1_Spitzer':
+        return 'spitzer'
+    return 'earth'
+
+
 def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
-            time_format='mjd', verbose=False):
+            time_format='mjd', verbose=False, obs_location=None):
     """
     Helper function to illustrate how to load photometric and astrometric data.
     You will likely want to write your own version of this. 
@@ -124,7 +148,12 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
         The time format (default = 'mjd') such as mjd, year, jd.
 
     verbose : bool
-        Print out extra information. 
+        Print out extra information.
+
+    obs_location : None, 'auto', str, list, or dict
+        Observer for each unified filter. ``None`` leaves the key unset.
+        ``'auto'`` maps ``Ch1_Spitzer`` to ``spitzer`` and every other
+        catalog name to ``earth``. A dict is stored as given.
 
     Returns
     ----------
@@ -334,6 +363,20 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
     # Keep a record of the types of data.
     data_in['phot_data'] = phot_data
     data_in['ast_data'] = ast_data
+
+    # None means the fitter default (Earth for every filter).
+    if obs_location is not None:
+        from bagle.filt_params import build_filt_index
+
+        filt_names, _, _, _, _ = build_filt_index(
+            list(phot_data), list(ast_data)
+        )
+        if obs_location == 'auto':
+            data_in['obsLocation'] = {
+                name: _auto_observer(name) for name in filt_names
+            }
+        else:
+            data_in['obsLocation'] = obs_location
 
     data_in['phot_files'] = phot_files
     data_in['ast_files'] = ast_files

@@ -2499,13 +2499,23 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
                                       b_sff_in2, mag_src_in2, obsLocation2,
                                       b_sff_in3, mag_src_in3, obsLocation3,
                                       outdir='', target='Unknown', noise=True):
+    # A length-2 origin is the same zero point in every filter.
+    # A (n, 2) array is one East/North origin per filter.
+    xS0_arr = np.asarray(xS0_in, dtype=float)
+    if xS0_arr.shape == (2,):
+        xS0_E = np.repeat(float(xS0_arr[0]), 3)
+        xS0_N = np.repeat(float(xS0_arr[1]), 3)
+    else:
+        xS0_E = np.asarray(xS0_arr[:, 0], dtype=float)
+        xS0_N = np.asarray(xS0_arr[:, 1], dtype=float)
+
     pspl_par_in = model.PSPL_PhotAstrom_Par_Param1(mL_in,
                                                    t0_in,
                                                    beta_in,
                                                    dL_in,
                                                    dL_in / dS_in,
-                                                   xS0_in[0],
-                                                   xS0_in[1],
+                                                   xS0_E,
+                                                   xS0_N,
                                                    muL_in[0],
                                                    muL_in[1],
                                                    muS_in[0],
@@ -2597,10 +2607,14 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
 
     data['raL'] = raL_in
     data['decL'] = decL_in
-    data['obsLocation'] = [obsLocation1, obsLocation2, obsLocation3]
+    data['obsLocation'] = {
+        'ogle': obsLocation1,
+        'spitzer': obsLocation2,
+        'keck': obsLocation3,
+    }
     data['target'] = target
-    data['phot_data'] = 'sim'
-    data['ast_data'] = 'sim'
+    data['phot_data'] = ['ogle', 'spitzer', 'keck']
+    data['ast_data'] = ['keck']
 
     params = {}
     params['raL'] = raL_in
@@ -2608,8 +2622,8 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
     params['obsLocation'] = [obsLocation1, obsLocation2, obsLocation3]
     params['mL'] = mL_in
     params['t0'] = t0_in
-    params['xS0_E'] = xS0_in[0]
-    params['xS0_N'] = xS0_in[1]
+    params['xS0_E'] = xS0_E
+    params['xS0_N'] = xS0_N
     params['beta'] = beta_in
     params['muS_E'] = muS_in[0]
     params['muS_N'] = muS_in[1]
