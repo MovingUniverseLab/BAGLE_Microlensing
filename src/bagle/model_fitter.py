@@ -2495,6 +2495,23 @@ class MicrolensSolverWeighted(MicrolensSolver):
 
             
     def log_likely_astrometry(self, model):
+        """Weighted astrometric log-likelihood.
+
+        Each astrometry dataset is scaled by its weight. The filter
+        index matches ``MicrolensSolver``: the dataset index when there
+        is no photometry, and ``map_phot_idx_to_ast_idx`` when there is.
+        That index selects the filter's source flux fraction.
+
+        Parameters
+        ----------
+        model : PSPL
+            Microlensing model. Uses ``astrometryFlag``.
+
+        Returns
+        -------
+        lnL_ast : float
+            Sum of the weighted astrometric log-likelihoods.
+        """
         if model.astrometryFlag:
             lnL_ast = 0.0
 
@@ -2507,12 +2524,26 @@ class MicrolensSolverWeighted(MicrolensSolver):
 
                 weight = self.weights[self.n_phot_sets + i]
 
-                lnL_ast_unwgt = model.log_likely_astrometry(t_ast, xpos, ypos, xpos_err, ypos_err)
+                # If no photometry, the astrometry set index is the filter.
+                # If photometry, map this set onto its photometric filter.
+                if len(self.map_phot_idx_to_ast_idx) == 0:
+                    filt_idx = i
+                else:
+                    filt_idx = self.map_phot_idx_to_ast_idx[i]
+
+                lnL_ast_unwgt = model.log_likely_astrometry(
+                    t_ast, xpos, ypos, xpos_err, ypos_err,
+                    filt_idx=filt_idx)
                 lnL_ast_i = lnL_ast_unwgt * weight
                 lnL_ast += lnL_ast_i
 
                 if self.verbose:
-                    print(f'lnL_ast: i = {i} L_unwgt = {lnL_ast_unwgt:15.1f}, L_wgt = {lnL_ast_i:15.1f}, weights = {weight:.1e}')
+                    print(
+                        f'lnL_ast: i = {i} '
+                        f'L_unwgt = {lnL_ast_unwgt:15.1f}, '
+                        f'L_wgt = {lnL_ast_i:15.1f}, '
+                        f'weights = {weight:.1e}'
+                    )
         else:
             lnL_ast = 0
 
