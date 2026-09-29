@@ -506,6 +506,15 @@ from bagle import jax_physics
 from bagle import frame_convert as fc
 from bagle import orbits as orbits
 from bagle import parallax
+from bagle.filt_params import (
+    astrom_param_view,
+    en_components,
+    filt_scalar,
+    phot_param_view,
+    sky_origin,
+    stack_en,
+    validate_param_declaration,
+)
 from abc import ABC
 
 
@@ -1903,7 +1912,7 @@ class PSPL_Parallax(ParallaxClassABC):
 
         """
         xS0E_g, xS0N_g, muSE_g, muSN_g = fc.convert_helio_geo_ast(self.raL, self.decL,
-                                                                  self.piS, self.xS0[0], self.xS0[1],
+                                                                  self.piS, *en_components(sky_origin(self.xS0, 0)),
                                                                   self.muS[0], self.muS[1],
                                                                   self.t0, self.u0_amp,
                                                                   self.tE, self.piE[0], self.piE[1],
@@ -2319,13 +2328,17 @@ class PSPL_GPnoJitter(ABC):
 #    MUST be set. 
 #
 class PSPL_Param(ABC):
-    # Fit parameters: Shared fit parameters
+    # Fit parameters: Shared fit parameters, plus filter-indexed names.
     fitter_param_names = []
 
-    # Fit parameters: Filter specific fit parameters -- handled as arrays.
-    # Every photometric data-set has them.
-    # (e.g. b_sff, mag_src, mag_base)
-    phot_param_names = []
+    # One value per filter, in fitter_param_names order.
+    # Usage is 'phot', 'astrom', or 'both'.
+    filt_param_names = []
+    filt_param_usage = []
+
+    # Derived views. Subclasses must not assign these names.
+    phot_param_names = phot_param_view
+    astrom_param_names = astrom_param_view
 
     # Fit parameters: Optional data-set specific fit parameters -- handled as dictionaries
     # (with keys on the filter index). Not every data-set needs these.
@@ -2356,20 +2369,82 @@ class PSPL_Param(ABC):
     paramAstromFlag = False
     paramPhotFlag = False
 
-    def __init__(self, *args, **kwargs):
-        # Check that required phot_params are proper arrays.
-        # If not, then make them arrays of len(1).
-        for param in self.phot_param_names:
-            param_var = getattr(self, param)
-            if not isinstance(param_var, (list, np.ndarray)):
-                setattr(self, param, np.array([param_var]))
-            elif isinstance(param_var, list):
-                setattr(self, param, np.array(param_var))
-            param_var = getattr(self, param)
+    def __init_subclass__(cls, **kwargs):
+        """Validate the parallel filter-parameter lists.
 
-            # Ensure array shape only has 1 dimension.
-            if len(param_var.shape) > 1:
-                setattr(self, param, param_var.reshape(np.max(param_var.shape)))
+        Parameters
+        ----------
+        cls : type
+            Subclass being created.
+        **kwargs : dict
+            Forwarded to ``ABC.__init_subclass__``.
+
+        Returns
+        -------
+        None
+        """
+        super().__init_subclass__(**kwargs)
+        validate_param_declaration(cls)
+        return None
+
+    def __init__(self, *args, **kwargs):
+        """Broadcast every filter-indexed parameter to one length.
+
+        Parameters
+        ----------
+        *args : tuple
+            Unused. Subclasses assign attributes before calling this.
+        **kwargs : dict
+            Unused.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        A length-1 value is repeated to the length set by any longer
+        filter parameter. ``xS0`` is rebuilt afterwards. One filter is
+        stored as shape ``(2,)``. More than one filter is shape
+        ``(n_filters, 2)``. ``xS0`` is the catalog position at ``t0``
+        in that filter's frame. A constant Earth-spacecraft offset is
+        absorbed by a free ``xS0``; the time-variable parallax is not.
+        """
+        # Normalize each declared filter parameter that the subclass set.
+        normalized = []
+        for param in self.filt_param_names:
+            if not hasattr(self, param):
+                continue
+            param_var = getattr(self, param)
+            if isinstance(param_var, (str, bytes)):
+                continue
+            if not isinstance(param_var, (list, np.ndarray)):
+                param_var = np.array([param_var], dtype=float)
+            else:
+                param_var = np.asarray(param_var, dtype=float).ravel()
+            setattr(self, param, param_var)
+            normalized.append(param)
+
+        # Repeat scalars up to the longest filter parameter.
+        n_filters = 1
+        if normalized:
+            lengths = [int(np.size(getattr(self, name))) for name in normalized]
+            n_filters = max(lengths)
+            for name, length in zip(normalized, lengths):
+                if length == n_filters:
+                    continue
+                if length == 1:
+                    setattr(self, name, np.repeat(getattr(self, name), n_filters))
+                    continue
+                msg = (
+                    'Mis-matched length for filter parameter: {0:s}. '
+                    'Expected length = {1:d} and got {2:d}'
+                )
+                raise RuntimeError(msg.format(name, n_filters, length))
+
+        # Catalog position follows the normalized components.
+        if hasattr(self, 'xS0_E') and hasattr(self, 'xS0_N'):
+            self.xS0 = stack_en(self.xS0_E, self.xS0_N)
 
         # Check that required fixed_phot_params are proper arrays.
         # If not, then make them arrays of the appropriate length.
@@ -2519,10 +2594,22 @@ class PSPL_AstromParam3(PSPL_Param):
                        or b_sff (e.g. other photometric parameters).
 
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -2557,15 +2644,19 @@ class PSPL_AstromParam3(PSPL_Param):
                  piE_E, piE_N,
                  xS0_E, xS0_N,
                  muS_E, muS_N,
+                 b_sff=1.0,
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = 10 ** log10_thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
+        self.b_sff = b_sff
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -2693,10 +2784,22 @@ class PSPL_AstromParam4(PSPL_Param):
                        or b_sff (e.g. other photometric parameters).
 
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both']
     #    phot_param_names = ['b_sff', 'mag_base']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -2710,15 +2813,19 @@ class PSPL_AstromParam4(PSPL_Param):
                  piE_E, piE_N,
                  xS0_E, xS0_N,
                  muS_E, muS_N,
+                 b_sff=1.0,
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
+        self.b_sff = b_sff
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -2785,7 +2892,7 @@ class PSPL_AstromParam4(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        self.xL0_E, self.xL0_N = self.xL0
+        self.xL0_E, self.xL0_N = en_components(self.xL0)
 
         return
 
@@ -2835,9 +2942,9 @@ class PSPL_PhotParam1(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE',
-                          'piE_E', 'piE_N']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N', 'b_sff', 'mag_src']
+    filt_param_names = ['b_sff', 'mag_src']
+    filt_param_usage = ['both', 'phot']
     jax_loglik_mode = 'phot'
 
     paramAstromFlag = False
@@ -2961,9 +3068,9 @@ class PSPL_PhotParam2(PSPL_Param):
                        or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE',
-                          'piE_E', 'piE_N']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N', 'b_sff', 'mag_base']
+    filt_param_names = ['b_sff', 'mag_base']
+    filt_param_usage = ['both', 'phot']
     additional_param_names = ['mag_src']
     jax_loglik_mode = 'phot'
     mag_fitter = 'mag_base'
@@ -3086,9 +3193,17 @@ class PSPL_PhotParam3(PSPL_Param):
                        or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'log_tE',
-                          'log_piE', 'phi_muRel']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'log_tE',
+        'log_piE',
+        'phi_muRel',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['b_sff', 'mag_base']
+    filt_param_usage = ['both', 'phot']
     additional_param_names = ['mag_src']
     jax_loglik_mode = 'phot'
     mag_fitter = 'mag_base'
@@ -3171,12 +3286,16 @@ class PSPL_PhotParam3(PSPL_Param):
 
 class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
     fitter_param_names = [
-        "t0_geotr",
-        "u0_amp_geotr",
-        "tE_geotr",
-        "piE_E_geotr",
-        "piE_N_geotr",
+        't0_geotr',
+        'u0_amp_geotr',
+        'tE_geotr',
+        'piE_E_geotr',
+        'piE_N_geotr',
+        'b_sff',
+        'mag_src',
     ]
+    filt_param_names = ['b_sff', 'mag_src']
+    filt_param_usage = ['both', 'phot']
 
     """PSPL model for photometry only.
 
@@ -3322,11 +3441,23 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -3385,7 +3516,9 @@ class PSPL_PhotAstromParam1(PSPL_Param):
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.mL = mL
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -3528,11 +3661,23 @@ class PSPL_PhotAstromParam2(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -3595,7 +3740,9 @@ class PSPL_PhotAstromParam2(PSPL_Param):
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -3735,11 +3882,23 @@ class PSPL_PhotAstromParam3(PSPL_Param):
                        identical. Otherwise, array of same length as mag_src
                        or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -3807,7 +3966,9 @@ class PSPL_PhotAstromParam3(PSPL_Param):
         self.log10_thetaE = log10_thetaE
         self.thetaE = 10 ** log10_thetaE
         self.thetaE_amp = 10 ** log10_thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -3945,11 +4106,23 @@ class PSPL_PhotAstromParam4(PSPL_Param):
                        identical. Otherwise, array of same length as mag_src
                        or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -3969,7 +4142,9 @@ class PSPL_PhotAstromParam4(PSPL_Param):
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -4047,18 +4222,22 @@ class PSPL_PhotAstromParam4(PSPL_Param):
 
 class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
     fitter_param_names = [
-        "t0_geotr",
-        "u0_amp_geotr",
-        "tE_geotr",
-        "thetaE",
-        "piS",
-        "piE_E_geotr",
-        "piE_N_geotr",
-        "xS0_E",
-        "xS0_N",
-        "muS_E",
-        "muS_N",
+        't0_geotr',
+        'u0_amp_geotr',
+        'tE_geotr',
+        'thetaE',
+        'piS',
+        'piE_E_geotr',
+        'piE_N_geotr',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_base',
     ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
 
     """
     Point Source Point Lens model for microlensing in the
@@ -4142,7 +4321,9 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
         self.tE_geotr = tE_geotr
         self.piE_geotr = np.array([piE_E_geotr, piE_N_geotr])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -4235,11 +4416,23 @@ class PSPL_PhotAstromParam5(PSPL_Param):
                        identical. Otherwise, array of same length as mag_src
                        or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piEN_piEE', 'piE_E',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piEN_piEE',
+        'piE_E',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -4263,7 +4456,9 @@ class PSPL_PhotAstromParam5(PSPL_Param):
         self.log10_thetaE = log10_thetaE
         self.thetaE = 10 ** log10_thetaE
         self.thetaE_amp = 10 ** log10_thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -4395,11 +4590,23 @@ class PSPL_PhotAstromParam6(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'log_piE', 'phi_muRel',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'log_piE',
+        'phi_muRel',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -4418,7 +4625,9 @@ class PSPL_PhotAstromParam6(PSPL_Param):
         self.thetaE_amp = thetaE
         self.log_piE = log_piE
         self.phi_muRel = phi_muRel  # degrees
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -6982,7 +7191,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
             Position of the lens system (geometric center) over time.
         """
         dt_in_years = (t - self.t0) / days_per_year
-        xL = self.xL0 + np.outer(dt_in_years, self.muL) * 1e-3
+        xL = sky_origin(self.xL0, filt_idx) + np.outer(dt_in_years, self.muL) * 1e-3
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
@@ -7038,7 +7247,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 xL1 = np.zeros((len(t), 2), dtype=float)
                 xL2 = np.zeros((len(t), 2), dtype=float)
 
-                xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
+                xLCoM = sky_origin(self.xL0_com, filt_idx) + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
 
                 orb = orbits.Orbit()
                 orb.w = self.omega_pri
@@ -7434,10 +7643,27 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -7500,7 +7726,9 @@ root_tol : float
         self.mLs = mLs  # Msun
 
         self.t0 = t0
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -7659,11 +7887,29 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N',
-                          'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -7758,11 +8004,31 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N', 'beta',
-                          'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
-                          'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -7859,11 +8125,31 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N', 'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_com',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -7877,7 +8163,9 @@ root_tol : float
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_com = t0_com
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta_com = beta_com
 
         self.muL = np.array([muL_E, muL_N])
@@ -8013,7 +8301,7 @@ root_tol : float
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        self.xL0_E, self.xL0_N = self.xL0
+        self.xL0_E, self.xL0_N = en_components(self.xL0)
 
         thetaS0_com = self.u0_com * self.thetaE_amp
         self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
@@ -8094,11 +8382,30 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'tp', 'a', 'muS_E', 'muS_N',
-                          'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_com',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -8185,10 +8492,27 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8207,7 +8531,9 @@ root_tol : float
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -8371,11 +8697,29 @@ class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha',
-                          'delta_muL_sec_E', 'delta_muL_sec_N']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8473,11 +8817,31 @@ class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha',
-                          'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8579,10 +8943,31 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     obsLocation: str or list[str], optional
         The observers location for each photometric dataset (def=['earth'])
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'a', 'big_omega_sec', 'omega_pri', 'i', 'e', 'tp']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'a',
+        'big_omega_sec',
+        'omega_pri',
+        'i',
+        'e',
+        'tp',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8602,7 +8987,9 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -8799,10 +9186,30 @@ class PSBL_PhotAstrom_CircOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'a', 'big_omega_sec', 'omega_pri', 'i', 'tp']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'a',
+        'big_omega_sec',
+        'omega_pri',
+        'i',
+        'tp',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8895,12 +9302,27 @@ class PSBL_PhotAstromParam3(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -8922,7 +9344,9 @@ class PSBL_PhotAstromParam3(PSPL_Param):
         self.log10_thetaE = log10_thetaE
         self.thetaE = 10 ** log10_thetaE
         self.thetaE_amp = 10 ** log10_thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -9082,13 +9506,29 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha',
-                          'delta_muL_sec_E', 'delta_muL_sec_N']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -9193,13 +9633,31 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha',
-                          'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -9305,11 +9763,31 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -9481,11 +9959,30 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega_pri', 'big_omega_sec', 'i', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -9581,13 +10078,30 @@ class PSBL_PhotAstromParam4(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -9603,7 +10117,9 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -9776,12 +10292,31 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -9947,11 +10482,30 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega_pri', 'big_omega_sec', 'i', 'tp', 'a'
-                         , 'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -10044,10 +10598,27 @@ class PSBL_PhotAstromParam5(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_prim', 'u0_amp_prim', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piEN_piEE', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_prim',
+        'u0_amp_prim',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piEN_piEE',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['piE_N', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N', 'mag_src']
@@ -10070,7 +10641,9 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         self.piE_N = piE_N
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -10227,10 +10800,27 @@ class PSBL_PhotAstromParam6(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -10252,7 +10842,9 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
 
         self.piS = piS
@@ -10414,11 +11006,31 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -10511,10 +11123,29 @@ class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -10600,10 +11231,27 @@ class PSBL_PhotAstromParam7(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     orbitFlag=False
@@ -10617,7 +11265,9 @@ class PSBL_PhotAstromParam7(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muL_E, self.muL_N = self.muL
@@ -10793,11 +11443,31 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N', 'beta_p',
-                          'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
-                          'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -10885,10 +11555,29 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -10984,10 +11673,31 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a', 'muS_E', 'muS_N',
-                          'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     orbitFlag='Keplerian'
@@ -11001,7 +11711,9 @@ root_tol : float
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -11225,10 +11937,30 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'omega_pri', 'big_omega_sec', 'i', 'tp', 'a', 'muS_E', 'muS_N',
-                          'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     orbitFlag='Keplerian'
@@ -11316,10 +12048,27 @@ class PSBL_PhotAstromParam8(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -11340,7 +12089,9 @@ class PSBL_PhotAstromParam8(PSPL_Param):
         self.log10_thetaE = log10_thetaE
         self.thetaE = 10 ** log10_thetaE
         self.thetaE_amp = 10 ** log10_thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -11509,11 +12260,31 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -11678,11 +12449,30 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
 
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega_pri', 'big_omega_sec', 'i', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -11762,9 +12552,20 @@ class PSBL_PhotParam1(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'phi']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'q',
+        'sep',
+        'phi',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['b_sff', 'mag_src']
+    filt_param_usage = ['both', 'phot']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -11933,9 +12734,25 @@ class PSBL_Phot_EllOrbs_Param1(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'v_para', 'v_rad', 'v_perp', 'r_s', 'a_s', 'dmag_Lp_Ls']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'q',
+        'sep',
+        'v_para',
+        'v_rad',
+        'v_perp',
+        'r_s',
+        'a_s',
+        'dmag_Lp_Ls',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['dmag_Lp_Ls', 'b_sff', 'mag_src']
+    filt_param_usage = ['both', 'both', 'phot']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -12100,9 +12917,23 @@ class PSBL_Phot_CircOrbs_Param1(PSBL_Phot_EllOrbs_Param1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'v_para', 'v_rad', 'v_perp', 'dmag_Lp_Ls']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'q',
+        'sep',
+        'v_para',
+        'v_rad',
+        'v_perp',
+        'dmag_Lp_Ls',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['dmag_Lp_Ls', 'b_sff', 'mag_src']
+    filt_param_usage = ['both', 'both', 'phot']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -12240,11 +13071,13 @@ class BSPL(PSPL):
         tau_pri = (t - self.t0_pri) / self.tE
 
         if self.astrometryFlag == True:
-            xS_unlensed = self.get_resolved_source_astrometry_unlensed(t)
+            xS_unlensed = self.get_resolved_source_astrometry_unlensed(
+                t, filt_idx=filt_idx
+            )
             xS1_unlens = xS_unlensed[:, 0, :]
             xS2_unlens = xS_unlensed[:, 1, :]
 
-            xL = self.get_lens_astrometry(t)
+            xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
             thetaE_amp = self.thetaE_amp * 1e-3
             u_pri = (xS1_unlens - xL) / thetaE_amp
             u_sec = (xS2_unlens - xL)/thetaE_amp
@@ -12645,14 +13478,14 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
         # Calculate position vs. time in arcsec
         if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
-            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
+            xS1_unlens = sky_origin(self.xS0_pri, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = sky_origin(self.xS0_sec, filt_idx) + np.outer(dt1_in_years, self.muS_sec) * 1e-3
             if self.orbitFlag == 'accelerated':
                 xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.accS) * 1e-3
 
         elif self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
-            xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass. xS0_com is the initial source CoM position at t0=t0_p.
+            xCoM_unlens = sky_origin(self.xS0_com, filt_idx) + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass. xS0_com is the initial source CoM position at t0=t0_p.
 
             orb = orbits.Orbit()
             orb.w = self.omega_pri
@@ -12674,8 +13507,8 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             xS2_unlens[:,1] += xCoM_unlens[:, 1] + y2
 
         else:
-            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS1_unlens = sky_origin(self.xS0_pri, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = sky_origin(self.xS0_sec, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
 
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
@@ -13181,8 +14014,23 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 class BSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
 
-    def get_amplification(self, t):
-        u_vec = self.get_u(t)
+    def get_amplification(self, t, filt_idx=0):
+        """Sum the two point-source amplifications.
+
+        Parameters
+        ----------
+        t : array_like
+            Observation times in MJD.
+        filt_idx : int, optional
+            0-based filter index passed through to ``get_u``.
+
+        Returns
+        -------
+        amplification : ndarray
+            Sum of the two point-source amplifications. Shape ``(N_times,)``.
+        """
+        # The source-lens separation depends on this filter's origin.
+        u_vec = self.get_u(t, filt_idx=filt_idx)
 
         u_vec1 = u_vec[:, 0, :]
         u_vec2 = u_vec[:, 1, :]
@@ -13198,8 +14046,23 @@ class BSPL_Parallax(PSPL_Parallax):
 class BSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
 
-    def get_amplification(self, t):
-        u_vec = self.get_u(t)
+    def get_amplification(self, t, filt_idx=0):
+        """Sum the two point-source amplifications.
+
+        Parameters
+        ----------
+        t : array_like
+            Observation times in MJD.
+        filt_idx : int, optional
+            0-based filter index passed through to ``get_u``.
+
+        Returns
+        -------
+        amplification : ndarray
+            Sum of the two point-source amplifications. Shape ``(N_times,)``.
+        """
+        # The source-lens separation depends on this filter's origin.
+        u_vec = self.get_u(t, filt_idx=filt_idx)
 
         u_vec1 = u_vec[:, 0, :]
         u_vec2 = u_vec[:, 1, :]
@@ -13270,9 +14133,20 @@ class BSPL_PhotParam1(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'sep', 'phi']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'sep',
+        'phi',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['phot', 'both', 'both']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -13463,12 +14337,26 @@ class BSPL_PhotAstromParam1(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
 
     """
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'sep', 'alpha']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'sep',
+        'alpha',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -13488,7 +14376,9 @@ class BSPL_PhotAstromParam1(PSPL_Param):
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0  # time of closest approach for system=primary pos
         self.mL = mL
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -13676,12 +14566,26 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -13703,7 +14607,9 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         self.thetaE_amp = thetaE
         self.piS = piS
         self.piE = np.array([piE_E, piE_N])
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)
@@ -13878,12 +14784,26 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -13905,7 +14825,9 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         self.thetaE_amp = 10 ** log10_thetaE
         self.piS = piS
         self.piE = np.array([piE_E, piE_N])
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS = np.array([muS_E, muS_N])
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)
@@ -14558,13 +15480,28 @@ class BSPL_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstromParam1):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'sep',
+        'alpha',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -14688,14 +15625,30 @@ class BSPL_PhotAstrom_AccOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'accSsec_E', 'accSsec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'accSsec_E',
+        'accSsec_N',
+        'sep',
+        'alpha',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -14820,13 +15773,28 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -14950,14 +15918,30 @@ class BSPL_PhotAstrom_AccOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'accSsec_E', 'accSsec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'accSsec_E',
+        'accSsec_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -15077,13 +16061,28 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -15207,14 +16206,30 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'accSsec_E', 'accSsec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'accSsec_E',
+        'accSsec_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -15346,14 +16361,32 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'e',
-                          'p', 'tp', 'aleph', 'aleph_sec'
-                          ]
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -15375,7 +16408,9 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.t0 = t0  # time of closest approach for system=primary pos
 
         self.mL = mL
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])  # mas
@@ -15628,13 +16663,33 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                           'omega_pri', 'big_omega_sec', 'i', 'e',
-                          'p', 'tp', 'aleph', 'aleph_sec', 'muS_E', 'muS_N',
-                          'xS0_E', 'xS0_N']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'muS_E',
+        'muS_N',
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
 
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -15661,7 +16716,9 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.thetaE_amp = thetaE
         self.piS = piS
         self.piE = np.array([piE_E, piE_N])
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS_E = muS_E
         self.muS_N = muS_N
         self.muS = np.array([muS_E, muS_N])  # mas
@@ -15866,14 +16923,32 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'e', 'p',
-                          'tp', 'aleph', 'aleph_sec',
-                          'muS_E', 'muS_N',
-                          'xS0_E', 'xS0_N'
-                          ]
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'muS_E',
+        'muS_N',
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -15899,7 +16974,9 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.thetaE_amp = 10 ** log10_thetaE
         self.piS = piS
         self.piE = np.array([piE_E, piE_N])
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muS_E = muS_E
         self.muS_N = muS_N
         self.muS = np.array([muS_E, muS_N])  # mas
@@ -16147,15 +17224,32 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'omega_pri', 'big_omega_sec',
-                           'i', 'e',
-                          'tp', 'log_a',
-                          'mass_source_p', 'mass_source_s']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'log_a',
+        'mass_source_p',
+        'mass_source_s',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -16177,7 +17271,9 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         self.t0 = t0  # time of closest approach for system=primary pos
 
         self.mL = mL
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])  # mas
@@ -16451,14 +17547,31 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['mL', 't0_com', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'omega_pri', 'big_omega_sec', 'i',
-                          'p', 'tp', 'aleph', 'aleph_sec'
-                          ]
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0_com',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -16577,13 +17690,32 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
 
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'omega_pri', 'big_omega_sec', 'i',
-                          'p', 'tp', 'aleph', 'aleph_sec', 'muS_E', 'muS_N',
-                          'xS0_E', 'xS0_N']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'muS_E',
+        'muS_N',
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
 
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -16706,14 +17838,31 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'p',
-                          'tp', 'aleph', 'aleph_sec',
-                          'muS_E', 'muS_N',
-                          'xS0_E', 'xS0_N'
-                          ]
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'muS_E',
+        'muS_N',
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -17537,7 +18686,7 @@ class BSBL(PSBL):
                 xL1 = np.zeros((len(t), 2), dtype=float)
                 xL2 = np.zeros((len(t), 2), dtype=float)
 
-                xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
+                xLCoM = sky_origin(self.xL0_com, filt_idx) + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
 
                 orb = orbits.Orbit()
                 orb.w = self.omegaL_pri
@@ -17645,11 +18794,13 @@ class BSBL(PSBL):
         tau_pri = (t - self.t0_pri) / self.tE
 
         if self.astrometryFlag == True:
-            xS_unlensed = self.get_resolved_source_astrometry_unlensed(t)
+            xS_unlensed = self.get_resolved_source_astrometry_unlensed(
+                t, filt_idx=filt_idx
+            )
             xS1_unlens = xS_unlensed[:, 0, :]
             xS2_unlens = xS_unlensed[:, 1, :]
 
-            xL = self.get_lens_astrometry(t)
+            xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
             thetaE_amp = self.thetaE_amp * 1e-3
             u_pri = (xS1_unlens - xL) / thetaE_amp
             u_sec = (xS2_unlens - xL)/thetaE_amp
@@ -18284,14 +19435,14 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         dt1_in_years = (t - self.t0) / days_per_year
 
         if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
-            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
+            xS1_unlens = sky_origin(self.xS0_pri, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = sky_origin(self.xS0_sec, filt_idx) + np.outer(dt1_in_years, self.muS_sec) * 1e-3
             if self.orbitFlag == 'accelerated':
                 xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.accS) * 1e-3
 
         elif self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0_com) / days_per_year
-            xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3
+            xCoM_unlens = sky_origin(self.xS0_com, filt_idx) + np.outer(dt_in_years, self.muS_system) * 1e-3
 
             orb = orbits.Orbit()
             orb.w = self.omegaS_pri
@@ -18313,8 +19464,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
             xS2_unlens[:,0] += xCoM_unlens[:, 0] + x2
             xS2_unlens[:,1] += xCoM_unlens[:, 1] + y2
         else:
-            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS1_unlens = sky_origin(self.xS0_pri, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = sky_origin(self.xS0_sec, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
 
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
@@ -18550,9 +19701,24 @@ class BSBL_PhotParam1(PSPL_Param):
 
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'sep_SL', 'sep_S', 'phi_S', 'sep_L', 'phi_L']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'sep_SL',
+        'sep_S',
+        'phi_S',
+        'sep_L',
+        'phi_L',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    filt_param_usage = ['phot', 'both', 'both', 'both']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -18723,10 +19889,37 @@ class BSBL_PhotAstromParam1(PSPL_Param):
      root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sepL',
+        'alphaL',
+        'sepS',
+        'alphaS',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -18740,7 +19933,9 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0 = t0
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -18960,12 +20155,41 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
 
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                         'delta_muL_sec_E', 'delta_muL_sec_N']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sepL',
+        'alphaL',
+        'sepS',
+        'alphaS',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -19103,12 +20327,45 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
 
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                         'delta_muL_sec_E', 'delta_muL_sec_N', 'accSsec_E', 'accSsec_N', 'accLsec_E', 'accLsec_N']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sepL',
+        'alphaL',
+        'sepS',
+        'alphaS',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accSsec_E',
+        'accSsec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -19235,10 +20492,37 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sepL',
+        'alphaL',
+        'sepS',
+        'alphaS',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -19252,7 +20536,9 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -19493,11 +20779,47 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'eL', 'tpL', 'aL',
-                          'omegaS_pri', 'big_omegaS_sec', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_com',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'eL',
+        'tpL',
+        'aL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'eS',
+        'pS',
+        'tpS',
+        'alephS',
+        'aleph_secS',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
@@ -19511,7 +20833,9 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_com = t0_com
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
         self.beta = beta
@@ -19693,7 +21017,7 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        self.xL0_E, self.xL0_N = self.xL0
+        self.xL0_E, self.xL0_N = en_components(self.xL0)
 
 
         com_vec = self.alephS * np.array((np.sin(self.alphaS_rad),
@@ -19797,12 +21121,46 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'tpL', 'sepL',
-                          'omegaS_pri', 'big_omegaS_sec', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_com',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'tpL',
+        'sepL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'pS',
+        'tpS',
+        'alephS',
+        'aleph_secS',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
@@ -19926,10 +21284,47 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 
-                          'xS0_N', 'muS_E', 'muS_N', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'eL', 'tpL', 'aL',
-                          'omegaS_pri', 'big_omegaS_sec', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'q',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'eL',
+        'tpL',
+        'aL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'eS',
+        'pS',
+        'tpS',
+        'alephS',
+        'aleph_secS',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both', 'both']
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
@@ -19953,7 +21348,9 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.muS_E, self.muS_N = self.muS
 
 
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
 
@@ -20108,7 +21505,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0=t0_g (closest approach between geometric center of lens and primary source).
         #self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        #self.xL0_E, self.xL0_N = self.xL0
+        #self.xL0_E, self.xL0_N = en_components(self.xL0)
 
         self.xL0_com = self.xS0  - self.thetaS0_com * 1e-3
         com_vec = self.alephS * np.array((np.sin(self.alphaS_rad),
@@ -20234,11 +21631,46 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
 
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                 'omegaL_pri', 'big_omegaL_sec', 'iL',  'tpL', 'sepL',
-                 'omegaS_pri', 'big_omegaS_sec', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'q',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'tpL',
+        'sepL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'pS',
+        'tpS',
+        'alephS',
+        'aleph_secS',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both', 'both']
 
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
@@ -20362,11 +21794,47 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'eL', 'tpL', 'aL',
-                 'omegaS_pri', 'big_omegaS_sec', 'iS', 'eS', 'tpS', 'aS', 'mass_source_p', 'mass_source_s']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'eL',
+        'tpL',
+        'aL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'eS',
+        'tpS',
+        'aS',
+        'mass_source_p',
+        'mass_source_s',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -20380,7 +21848,9 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -20721,12 +22191,47 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'eL',
-                          'tpL', 'aL', 'omegaS_pri', 'big_omegaS_sec', 'iS', 'eS',
-                          'pS', 'tpS', 'alephS', 'aleph_secS']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'eL',
+        'tpL',
+        'aL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'eS',
+        'pS',
+        'tpS',
+        'alephS',
+        'aleph_secS',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -20824,12 +22329,16 @@ class FSPL(PSPL):
         days_in_a_year = 365.25
 
         # Put everything in units of thetaE
-        xS0 = (self.xS0 * 1e3) / self.thetaE_amp   # unit = thetaE
+        # This filter's origin, in thetaE units, is built below.
         radiusS = self.source_radius_thetaE_units()
 
 
         # Convert to imaginary numbers with East = real, North = imag
-        xS0_cplx = xS0[0] + 1j * xS0[1]
+        origin = sky_origin(self.xS0, filt_idx)
+        xS0_cplx = (
+            (origin[0] * 1e3) / self.thetaE_amp
+            + 1j * (origin[1] * 1e3) / self.thetaE_amp
+        )
         muS_cplx = (self.muS[0] + 1j * self.muS[1]) / self.thetaE_amp
 
         maxsamps = 1000
@@ -20844,7 +22353,9 @@ class FSPL(PSPL):
         thetas = np.zeros((len(t), maxsamps))
             
         dtheta = 2 * np.pi / self.n_outline
-        lens_asts = self.get_lens_astrometry(t) / self.thetaE_amp  * 1e3 #thetaE
+        lens_asts = self.get_lens_astrometry(
+            t, filt_idx=filt_idx
+        ) / self.thetaE_amp * 1e3  # thetaE
 
         t_year = (t - self.t0) / days_in_a_year
 
@@ -21014,11 +22525,15 @@ class FSPL(PSPL):
         days_in_a_year = 365.25
 
         # Put everything in units of thetaE
-        xS0 = (self.xS0 * 1e3) / self.thetaE_amp   # unit = thetaE
+        # This filter's origin, in thetaE units, is built below.
         radiusS = self.source_radius_thetaE_units()
 
         # Convert to imaginary numbers with East = real, North = imag
-        xS0_cplx = xS0[0] + 1j * xS0[1]
+        origin = sky_origin(self.xS0, filt_idx)
+        xS0_cplx = (
+            (origin[0] * 1e3) / self.thetaE_amp
+            + 1j * (origin[1] * 1e3) / self.thetaE_amp
+        )
         muS_cplx = (self.muS[0] + 1j * self.muS[1]) / self.thetaE_amp
 
         maxsamps = 1000
@@ -21033,7 +22548,9 @@ class FSPL(PSPL):
         thetas = np.zeros((len(t), maxsamps))
             
         dtheta = 2 * np.pi / self.n_outline
-        lens_asts = self.get_lens_astrometry(t) / self.thetaE_amp  * 1e3 #thetaE
+        lens_asts = self.get_lens_astrometry(
+            t, filt_idx=filt_idx
+        ) / self.thetaE_amp * 1e3  # thetaE
 
         t_year = (t - self.t0) / days_in_a_year
 
@@ -21290,7 +22807,9 @@ class FSPL(PSPL):
         # AMG refinement needs physical xS0/muS/thetaE_amp (see get_all_arrays_amg).
         if hasattr(self, "xS0") and hasattr(self, "muS") and hasattr(self, "thetaE_amp"):
             adaptive_time = jnp.where(
-                jnp.linalg.norm(self.get_u(t), axis=1) <= 2 * radiusS
+                jnp.linalg.norm(
+                    self.get_u(t, filt_idx=filt_idx), axis=1
+                ) <= 2 * radiusS
             )
             if len(adaptive_time) > 0:
                 (
@@ -21300,7 +22819,9 @@ class FSPL(PSPL):
                     Cplus_y[adaptive_time],
                     Cminus_x[adaptive_time],
                     Cminus_y[adaptive_time],
-                ) = self.get_all_arrays_amg(t[adaptive_time])
+                ) = self.get_all_arrays_amg(
+                    t[adaptive_time], filt_idx=filt_idx
+                )
 
         Aplus = np.array(Aplus)
         Aminus = np.array(Aminus)
@@ -21327,7 +22848,7 @@ class FSPL(PSPL):
         return images, amps
 
     def get_all_arrays(self, t, filt_idx=0):
-        u_vectors = np.linalg.norm(self.get_u(t), axis=1)
+        u_vectors = np.linalg.norm(self.get_u(t, filt_idx=filt_idx), axis=1)
         if self.astrometryFlag == True:
             self.amgFlag = True
             images, amps = self.get_all_arrays_amg_only(t, filt_idx)
@@ -22239,9 +23760,18 @@ class FSPL_PhotParam2(PSPL_Param):
                        or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE',
-                          'piE_E', 'piE_N', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'radiusS',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['b_sff', 'mag_base']
+    filt_param_usage = ['both', 'phot']
     additional_param_names = ['mag_src']
 
     paramAstromFlag = False
@@ -22360,11 +23890,24 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'radiusS',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -22389,7 +23932,9 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         self.dL = dL
         self.dL_dS = dL_dS
         self.dS = self.dL / self.dL_dS
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
         self.n_outline = n_outline
@@ -22533,11 +24078,24 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'radiusS',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -22783,7 +24341,9 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
         self.u0 = get_u0(self.thetaE_hat, self.beta,
                          self.thetaE_amp)  # closest approach vector
         self.thetas0 = self.u0 * self.thetaE_amp  # [RA,Dec] position of the source at peak
-        self.xL0 = self.xS0[0] - self.thetas0 * 1e-3  # [RA, Dec] position of the lens at peak
+        # Filter 0's full East/North origin. xS0[0] was East-only
+        # when xS0 has shape (2,).
+        self.xL0 = sky_origin(self.xS0, 0) - self.thetas0 * 1e-3
         self.tE = get_einstein_time(self.thetaE_amp, self.muRel,
                                     365.25)  # Einstein crossing time
 
@@ -23487,11 +25047,12 @@ class FSBL(PSBL):
         Same layout as :meth:`FSBL.get_all_arrays_CI`, but magnification uses
         the caustics contour pipeline.
         """
-        u_vec = self.get_u(t)
+        u_vec = self.get_u(t, filt_idx=filt_idx)
         if self.astrometryFlag:
             rho = self.source_radius_thetaE_units()
-            lens_asts_1 = self.get_resolved_lens_astrometry(t)[0, :, :] / self.thetaE_amp * 1e3
-            lens_asts_2 = self.get_resolved_lens_astrometry(t)[1, :, :] / self.thetaE_amp * 1e3
+            lens_res = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+            lens_asts_1 = lens_res[0, :, :] / self.thetaE_amp * 1e3
+            lens_asts_2 = lens_res[1, :, :] / self.thetaE_amp * 1e3
 
         else: 
             rho = self.radiusS
@@ -23859,7 +25420,7 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
             Position of the lens system (geometric center) over time.
         """
         dt_in_years = (t - self.t0) / days_per_year
-        xL = self.xL0 + np.outer(dt_in_years, self.muL) * 1e-3
+        xL = sky_origin(self.xL0, filt_idx) + np.outer(dt_in_years, self.muL) * 1e-3
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
@@ -23915,7 +25476,7 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
                 xL1 = np.zeros((len(t), 2), dtype=float)
                 xL2 = np.zeros((len(t), 2), dtype=float)
 
-                xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
+                xLCoM = sky_origin(self.xL0_com, filt_idx) + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
 
                 orb = orbits.Orbit()
                 orb.w = self.omega_pri
@@ -24580,9 +26141,21 @@ class FSBL_PhotParam1(PSBL_PhotParam1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'phi', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'q',
+        'sep',
+        'phi',
+        'radiusS',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['b_sff', 'mag_src']
+    filt_param_usage = ['both', 'phot']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -24666,10 +26239,28 @@ class FSBL_PhotAstromParam1(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'radiusS', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'radiusS',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -24684,7 +26275,9 @@ class FSBL_PhotAstromParam1(PSPL_Param):
         self.radiusS = radiusS  # arcsec
         self.t0 = t0
         self.n_outline = n_outline
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -24841,11 +26434,30 @@ class FSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstrom_LinOrbs_Param1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'radiusS', 'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N',
-                          'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'radiusS',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -24940,11 +26552,32 @@ class FSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstrom_AccOrbs_Param1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'radiusS', 'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
-                          'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'radiusS',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -25039,11 +26672,32 @@ class FSBL_PhotAstrom_EllOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'radiusS',
-                          'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N', 'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_com',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'radiusS',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -25135,11 +26789,31 @@ class FSBL_PhotAstrom_CircOrbs_Param1(FSBL_PhotAstrom_EllOrbs_Param1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'radiusS',
-                          'omega_pri', 'big_omega_sec', 'i', 'tp', 'a', 'muS_E', 'muS_N',
-                          'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_com',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'radiusS',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -25225,10 +26899,28 @@ class FSBL_PhotAstromParam2(PSBL_PhotAstromParam2):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -25331,10 +27023,32 @@ class FSBL_PhotAstrom_EllOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N', 'radiusS',
-                          'beta_p', 'muL_E', 'muL_N', 'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a', 'muS_E', 'muS_N',
-                          'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'radiusS',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     orbitFlag='Keplerian'
@@ -25423,12 +27137,28 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstromParam3.additional_param_names
 
     paramAstromFlag = True
@@ -25524,13 +27254,30 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha',
-                          'delta_muL_sec_E', 'delta_muL_sec_N']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstrom_LinOrbs_Param3.additional_param_names
 
     paramAstromFlag = True
@@ -25632,13 +27379,32 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha',
-                          'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstrom_AccOrbs_Param3.additional_param_names
 
     paramAstromFlag = True
@@ -25740,11 +27506,32 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstrom_EllOrbs_Param3.additional_param_names
 
     paramAstromFlag = True
@@ -25846,11 +27633,31 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega_pri', 'big_omega_sec', 'i', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstrom_CircOrbs_Param3.additional_param_names
 
     paramAstromFlag = True
@@ -25944,10 +27751,28 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstromParam4.additional_param_names
 
     paramAstromFlag = True
@@ -26049,12 +27874,32 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstrom_EllOrbs_Param4.additional_param_names
 
     paramAstromFlag = True
@@ -26156,11 +28001,31 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega_pri', 'big_omega_sec', 'i', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstrom_CircOrbs_Param4.additional_param_names
 
     paramAstromFlag = True
@@ -26252,10 +28117,28 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0_prim', 'u0_amp_prim', 'tE', 'thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piEN_piEE', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_prim',
+        'u0_amp_prim',
+        'tE',
+        'thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piEN_piEE',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstromParam5.additional_param_names
 
     paramAstromFlag = True
@@ -26346,10 +28229,28 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstromParam6.additional_param_names
 
     paramAstromFlag = True
@@ -26442,11 +28343,32 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstrom_AccOrbs_Param6.additional_param_names
 
     paramAstromFlag = True
@@ -26536,10 +28458,30 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstrom_LinOrbs_Param6.additional_param_names
 
     paramAstromFlag = True
@@ -26626,10 +28568,28 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N', 'radiusS',
-                          'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'radiusS',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     orbitFlag = False
@@ -26714,10 +28674,30 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N', 'radiusS',
-                          'beta_p', 'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'radiusS',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -26808,11 +28788,32 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N', 'beta_p', 'radiusS',
-                          'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
-                          'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'radiusS',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -26908,10 +28909,31 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N', 'radiusS',
-                          'beta_p', 'muL_E', 'muL_N', 'omega_pri', 'big_omega_sec', 'i', 'tp', 'a', 'muS_E', 'muS_N',
-                          'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'radiusS',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     orbitFlag = 'Keplerian'
@@ -26998,10 +29020,28 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstromParam8.additional_param_names
 
     paramAstromFlag = True
@@ -27101,11 +29141,32 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstrom_EllOrbs_Param8.additional_param_names
 
     paramAstromFlag = True
@@ -27211,11 +29272,31 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS', 'radiusS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega_pri', 'big_omega_sec', 'i', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'radiusS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = PSBL_PhotAstrom_CircOrbs_Param8.additional_param_names
 
     paramAstromFlag = True
@@ -27300,9 +29381,26 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'v_para', 'v_rad', 'v_perp', 'r_s', 'a_s', 'dmag_Lp_Ls', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'q',
+        'sep',
+        'v_para',
+        'v_rad',
+        'v_perp',
+        'r_s',
+        'a_s',
+        'dmag_Lp_Ls',
+        'radiusS',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['dmag_Lp_Ls', 'b_sff', 'mag_src']
+    filt_param_usage = ['both', 'both', 'phot']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -27376,9 +29474,24 @@ root_tol : float
         Projected radius of the source star in arcsec on the sky plane.
     n_outline: int
         Number of outline points used on the boundary of this source. """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'v_para', 'v_rad', 'v_perp', 'dmag_Lp_Ls', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'q',
+        'sep',
+        'v_para',
+        'v_rad',
+        'v_perp',
+        'dmag_Lp_Ls',
+        'radiusS',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['dmag_Lp_Ls', 'b_sff', 'mag_src']
+    filt_param_usage = ['both', 'both', 'phot']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -27451,6 +29564,8 @@ root_tol : float
     n_outline: int
         Number of outline points used on the boundary of this source. """
     fitter_param_names = FSBL_PhotParam1.fitter_param_names
+    filt_param_names = FSBL_PhotParam1.filt_param_names
+    filt_param_usage = FSBL_PhotParam1.filt_param_usage
     phot_optional_param_names = PSBL_GP_PhotParam1.phot_optional_param_names
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS,
@@ -27530,6 +29645,8 @@ root_tol : float
     n_outline: int
         Number of outline points used on the boundary of this source. """
     fitter_param_names = FSBL_PhotAstromParam1.fitter_param_names
+    filt_param_names = FSBL_PhotAstromParam1.filt_param_names
+    filt_param_usage = FSBL_PhotAstromParam1.filt_param_usage
     phot_optional_param_names = PSBL_GP_PhotAstromParam1.phot_optional_param_names
 
     def __init__(self, mLp, mLs, t0, radiusS, xS0_E, xS0_N,
@@ -27614,6 +29731,8 @@ root_tol : float
     n_outline: int
         Number of outline points used on the boundary of this source. """
     fitter_param_names = FSBL_PhotAstromParam2.fitter_param_names
+    filt_param_names = FSBL_PhotAstromParam2.filt_param_names
+    filt_param_usage = FSBL_PhotAstromParam2.filt_param_usage
     phot_optional_param_names = PSBL_GP_PhotAstromParam2.phot_optional_param_names
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS, radiusS,
@@ -27847,7 +29966,9 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
         self.u0 = get_u0(self.thetaE_hat, self.beta,
                          self.thetaE_amp)  # closest approach vector
         self.thetas0 = self.u0 * self.thetaE_amp  # [RA,Dec] position of the source at peak
-        self.xL0 = self.xS0[0] - self.thetas0 * 1e-3  # [RA, Dec] position of the lens at peak
+        # Filter 0's full East/North origin. xS0[0] was East-only
+        # when xS0 has shape (2,).
+        self.xL0 = sky_origin(self.xS0, 0) - self.thetas0 * 1e-3
         self.tE = get_einstein_time(self.thetaE_amp, self.muRel,
                                     365.25)  # Einstein crossing time
 
@@ -28130,7 +30251,7 @@ class BFSPL(PSPL):
             
             return bottomp, bottomm
         
-        u_center = self.get_u(t)
+        u_center = self.get_u(t, filt_idx=filt_idx)
         u_pri = u_center[:, 0, :] 
         u_sec = u_center[:, 1, :] 
 
@@ -28154,7 +30275,7 @@ class BFSPL(PSPL):
 
         amp_plus_sec = au + 1/2 * al
         amp_minus_sec = am + 1/2 * al
-        xL = self.get_lens_astrometry(t)
+        xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
         
         bp, bm = astrometry_bottom(t, rho_pri, u_amp_pri)
@@ -28697,11 +30818,24 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'radiusS',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -28728,7 +30862,9 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         self.alpha_rad = np.deg2rad(alpha)
         self.dL_dS = dL_dS
         self.dS = self.dL / self.dL_dS
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.xS0 = stack_en(xS0_E, xS0_N)
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
         self.n_outline = n_outline_pri
@@ -28935,7 +31071,23 @@ def checkconflicts(self):
 # --------------------------------------------------
 # Abstract base class for Model objects (end-user uses these).
 class ModelClassABC(ABC):
-    pass
+    def __init_subclass__(cls, **kwargs):
+        """Validate filter lists on concrete model classes.
+
+        Parameters
+        ----------
+        cls : type
+            Concrete model class being created.
+        **kwargs : dict
+            Forwarded to ``ABC.__init_subclass__``.
+
+        Returns
+        -------
+        None
+        """
+        super().__init_subclass__(**kwargs)
+        validate_param_declaration(cls)
+        return None
 
 
 # PSPL
