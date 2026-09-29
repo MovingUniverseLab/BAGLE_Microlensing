@@ -285,6 +285,84 @@ def test_sim_string_is_not_a_catalog_list():
     return None
 
 
+def test_refpar_jax_likelihood_uses_per_filter_pi_ref(monkeypatch):
+    """NumPy and JAX log-likelihoods both apply each filter's offset."""
+    def _fake(ra, dec, mjd, obsLocation='earth'):
+        times = np.atleast_1d(np.asarray(mjd, dtype=float))
+        if str(obsLocation) == 'spitzer':
+            east, north = 0.4, -0.2
+        else:
+            east, north = 0.05, 0.01
+        return np.column_stack([
+            np.full(times.size, east),
+            np.full(times.size, north),
+        ])
+
+    monkeypatch.setattr(
+        'bagle.parallax.parallax_in_direction', _fake
+    )
+    data = make_data(
+        ['ogle', 'spitzer'],
+        ['ogle', 'spitzer'],
+        obs={'ogle': 'earth', 'spitzer': 'spitzer'},
+    )
+    numpy_fit = _solver(data, model.PSPL_PhotAstrom_RefPar_Param3)
+    names = list(numpy_fit.fitter_param_names)
+    assert 'pi_ref_frame1' in names
+    assert 'pi_ref_frame2' in names
+    # Prior medians put piE at 0, which makes thetaE_hat undefined.
+    # Use a physical point, with a different offset on each filter.
+    defaults = {
+        't0': 57000.0,
+        'u0_amp': 0.05,
+        'tE': 30.0,
+        'log10_thetaE': float(np.log10(0.8)),
+        'piS': 0.15,
+        'piE_E': 0.01,
+        'piE_N': 0.02,
+        'xS0_E': 0.0,
+        'xS0_N': 0.0,
+        'muS_E': 0.0,
+        'muS_N': 0.0,
+        'b_sff': 0.8,
+        'mag_base': 19.0,
+    }
+    cube = []
+    for name in names:
+        if name == 'pi_ref_frame1':
+            cube.append(0.4)
+        elif name == 'pi_ref_frame2':
+            cube.append(-0.7)
+        else:
+            cube.append(defaults[name.rstrip('123456789')])
+    cube = np.asarray(cube, dtype=float)
+    ln_numpy = float(numpy_fit.log_likely(cube))
+
+    from bagle import model_fitter_jax
+    jax_fit = model_fitter_jax.MicrolensSolver(
+        data,
+        model_fitter_jax.mmodel.PSPL_PhotAstrom_RefPar_Param3,
+        outputfiles_basename='/tmp/bagle_refpar_jax_',
+        verbose=False,
+    )
+    assert list(jax_fit.fitter_param_names) == names
+    assert list(jax_fit.obs_locations) == ['earth', 'spitzer']
+    ln_jax = float(jax_fit.evaluate_loglik_jax(cube))
+    assert np.isfinite(ln_numpy) and np.isfinite(ln_jax)
+    np.testing.assert_allclose(ln_jax, ln_numpy, rtol=1e-5, atol=1e-4)
+
+    # Filter 2's offset is in the likelihood, not ignored.
+    shifted = cube.copy()
+    shifted[names.index('pi_ref_frame2')] = 1.5
+    ln_shift = float(numpy_fit.log_likely(shifted))
+    ln_shift_jax = float(jax_fit.evaluate_loglik_jax(shifted))
+    assert abs(ln_shift - ln_numpy) > 1.0
+    np.testing.assert_allclose(
+        ln_shift_jax, ln_shift, rtol=1e-5, atol=1e-4
+    )
+    return None
+
+
 def test_auto_observer_names():
     """Catalog auto-mapping sends Spitzer off Earth and leaves OGLE."""
     from bagle.data import _auto_observer

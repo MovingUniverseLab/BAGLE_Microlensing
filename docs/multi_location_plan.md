@@ -32,8 +32,8 @@ by the code are listed at the end.
   chain.
 - The audit below is the full name/usage table. Orbit, GP, geoproj,
   and concrete leaf classes inherit it. `model_jax.py` matches
-  `model.py` on every shared parameter class. It does not yet define
-  the RefPar mixins or `FSPL_PhotParam1`.
+  `model.py` on every shared parameter class, including the RefPar
+  mixins and `FSPL_PhotParam1`.
 
 The short version: one barycentric event, one list of filters, and a
 catalog zero point on each filter that has astrometry. A filter with
@@ -739,11 +739,10 @@ then the names that today are only in `phot_param_names`, in that
 list's current order.
 
 `model_jax.py` has the same `fitter_param_names` and `phot_param_names`
-assignments on every class it shares with `model.py`. It does not
-define `PSPL_PhotAstromParam3_RefPar`, `PSPL_PhotAstromParam4_RefPar`,
-their four GP variants, or `FSPL_PhotParam1`. Those seven get the same
-lists when they are ported. `FSPL_Limb_PhotAstromParam1` is marked do
-not use and has no `fitter_param_names`. Leave it out.
+assignments on every class it shares with `model.py`, including
+`PSPL_PhotAstromParam3_RefPar`, `PSPL_PhotAstromParam4_RefPar`, their
+four GP variants, and `FSPL_PhotParam1`. `FSPL_Limb_PhotAstromParam1`
+is marked do not use and has no `fitter_param_names`. Leave it out.
 
 Photometry only, no `xS0`. Usage `'both'`, `'phot'` for
 `b_sff`, `mag_src`.
@@ -766,9 +765,10 @@ Point source, photometry plus astrometry. `xS0_E`, `xS0_N` are
 `BFSPL_PhotAstromParam1` also samples a shared `radiusS`. That name
 stays out of `filt_param_names`.
 
-RefPar, `model.py` only today. Same as `PSPL_PhotAstromParam3` or
-`Param4`, plus `pi_ref_frame` with usage `'astrom'`, placed where it
-already is, after `muS_N`. The GP RefPar classes inherit this.
+RefPar, in both `model.py` and `model_jax.py`. Same as
+`PSPL_PhotAstromParam3` or `Param4`, plus `pi_ref_frame` with usage
+`'astrom'`, placed where it already is, after `muS_N`. The GP RefPar
+classes inherit this.
 `filt_param_names` order is `xS0_E`, `xS0_N`, `pi_ref_frame`, `b_sff`,
 `mag_base`.
 
@@ -1534,37 +1534,35 @@ on `convert_helio_geo_*`, and light-travel time.
    that list is at least `n_params` long. A sampled-only vector is
    left unchanged.
 
-10. `model_jax` does not gain `PSPL_PhotAstromParam3_RefPar`,
-    `PSPL_PhotAstromParam4_RefPar`, the GP RefPar variants, or
-    `FSPL_PhotParam1`. Those classes exist only in `model.py`.
-
-11. The JAX likelihood used by `evaluate_loglik_jax` rebuilds one
+10. The JAX likelihood used by `evaluate_loglik_jax` rebuilds one
     vector in class `fitter_param_names` order for each filter.
     Shared names come from the cube. Filter names come from the
     suffixed sample, or from the fixed value when that suffix was
-    dropped. Parallax is precomputed with that filter's observer.
+    dropped. That vector includes `pi_ref_frame` when the class
+    lists it, and the astrometry kernel applies that filter's value.
+    Parallax is precomputed with that filter's observer.
     `build_jax_joint_likelihood_context` still packs a single base
     vector and, for filter-indexed names, uses suffix `1` when that
     suffix is sampled. It returns `None` when suffix `1` was fixed.
 
-12. The BFSPL assignment `xL0 = xS0[0] - thetas0` used only the East
+11. The BFSPL assignment `xL0 = xS0[0] - thetas0` used only the East
     component when `xS0` has shape `(2,)`. It now uses filter 0's
     full East/North origin.
 
-13. `split_param_filter_index1` still does not strip a trailing `0`,
+12. `split_param_filter_index1` still does not strip a trailing `0`,
     so `b_sff10` is unchanged.
 
-14. Missing `phot_data` / `ast_data` keys synthesize the names
+13. Missing `phot_data` / `ast_data` keys synthesize the names
     `phot1` and `ast1`. Repeated names in one list are still an error.
 
-15. There is no separate astrometric overlay helper.
+14. There is no separate astrometric overlay helper.
     `plot_astrometry_multi_filt` passes the unified filter index into
     both lensed and unlensed astrometry.
 
-16. Roman's Horizons id is not in the alias table. `Earth` and
+15. Roman's Horizons id is not in the alias table. `Earth` and
     `EARTH` map to `earth`. `'l2'` is not special-cased.
 
-17. A string `phot_data` or `ast_data`, including the historical
+16. A string `phot_data` or `ast_data`, including the historical
     label `'sim'`, is not a list of catalog names. The fitter
     synthesizes `phot1`, `phot2`, and so on. When both sides are
     unlabeled, astrometry series `i` reuses photometric name `i`,
@@ -1572,7 +1570,7 @@ on `convert_helio_geo_*`, and light-travel time.
     list whose length does not match the data arrays is still an
     error.
 
-18. `get_model` and the JAX log-likelihood vector accept an
+17. `get_model` and the JAX log-likelihood vector accept an
     unsuffixed legacy key. `xS0_E` fills every `xS0_E{k}` slot that
     does not have its own entry. This is the same copy rule as the
     FITS loader, applied to in-memory dictionaries such as

@@ -6903,3 +6903,265 @@ def test_pspl_phot_model_jax_get_astrometry_matches_numpy(class_name):
     out = np.asarray(jax_inst.get_astrometry(t), dtype=np.float64)
     np.testing.assert_allclose(out, ref, rtol=1e-10, atol=1e-12)
 
+
+def _patch_constant_parallax(monkeypatch):
+    """Replace the ephemeris with a constant vector per observer.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Fixture that restores ``parallax_in_direction`` after the test.
+
+    Returns
+    -------
+    None
+    """
+    def _fake(ra, dec, mjd, obsLocation='earth'):
+        times = np.atleast_1d(np.asarray(mjd, dtype=float))
+        if str(obsLocation) == 'spitzer':
+            east, north = 0.4, -0.2
+        else:
+            east, north = 0.05, 0.01
+        return np.column_stack([
+            np.full(times.size, east),
+            np.full(times.size, north),
+        ])
+
+    monkeypatch.setattr('bagle.parallax.parallax_in_direction', _fake)
+    return None
+
+
+_REFPAR_LIST_CLASSES = (
+    'PSPL_PhotAstromParam3_RefPar',
+    'PSPL_PhotAstromParam4_RefPar',
+    'PSPL_GP_PhotAstromParam3_RefPar',
+    'PSPL_GP_PhotAstromParam3_1_RefPar',
+    'PSPL_GP_PhotAstromParam4_RefPar',
+    'PSPL_GP_PhotAstromParam4_1_RefPar',
+    'FSPL_PhotParam1',
+)
+
+_REFPAR_MODELS = (
+    'PSPL_PhotAstrom_RefPar_Param3',
+    'PSPL_PhotAstrom_RefPar_Param4',
+    'PSPL_PhotAstrom_RefPar_GP_Param3',
+    'PSPL_PhotAstrom_RefPar_GP_Param3_1',
+    'PSPL_PhotAstrom_RefPar_GP_Param4',
+    'PSPL_PhotAstrom_RefPar_GP_Param4_1',
+)
+
+_FSPL_PHOT1_MODELS = (
+    'FSPL_Phot_noPar_Param1',
+    'FSPL_Phot_Par_Param1',
+)
+
+
+def test_refpar_and_fspl_param_lists_match_numpy():
+    """JAX parameter classes copy the NumPy filter declarations."""
+    from bagle import model as nmodel
+
+    for name in _REFPAR_LIST_CLASSES:
+        numpy_cls = getattr(nmodel, name)
+        jax_cls = getattr(model, name)
+        assert list(jax_cls.filt_param_names) == list(
+            numpy_cls.filt_param_names
+        )
+        assert list(jax_cls.filt_param_usage) == list(
+            numpy_cls.filt_param_usage
+        )
+        assert list(jax_cls.fitter_param_names) == list(
+            numpy_cls.fitter_param_names
+        )
+        assert list(jax_cls.additional_param_names) == list(
+            numpy_cls.additional_param_names
+        )
+        assert getattr(jax_cls, 'phot_optional_param_names', None) == (
+            getattr(numpy_cls, 'phot_optional_param_names', None)
+        )
+
+    assert model.PSPL_Parallax_RefFrame.ref_frame_parallax_flag is True
+    assert nmodel.PSPL_Parallax_RefFrame.ref_frame_parallax_flag is True
+    for name in _REFPAR_MODELS:
+        assert getattr(model, name).ref_frame_parallax_flag is True
+        assert getattr(nmodel, name).ref_frame_parallax_flag is True
+    for name in _FSPL_PHOT1_MODELS:
+        assert getattr(model, name).ref_frame_parallax_flag is False
+        assert getattr(nmodel, name).ref_frame_parallax_flag is False
+    return None
+
+
+def _refpar_common():
+    """Shared two-filter RefPar constructor values.
+
+    Returns
+    -------
+    kwargs : dict
+        Arguments accepted by every RefPar photometry-plus-astrometry
+        class except the Einstein-radius name and GP hyperparameters.
+    """
+    return dict(
+        t0=57100.0,
+        u0_amp=0.05,
+        tE=45.0,
+        piS=0.15,
+        piE_E=0.01,
+        piE_N=0.02,
+        xS0_E=[0.0, 0.002],
+        xS0_N=[0.0, -0.001],
+        muS_E=0.0,
+        muS_N=0.0,
+        pi_ref_frame=[0.4, -0.7],
+        b_sff=[0.8, 0.7],
+        mag_base=[18.5, 19.0],
+        raL=259.5,
+        decL=-29.0,
+        obsLocation=['earth', 'spitzer'],
+    )
+
+
+def _build_refpar(module, class_name, pi_ref=None):
+    """Construct one RefPar model, including GP dictionaries.
+
+    Parameters
+    ----------
+    module : module
+        ``bagle.model`` or ``bagle.model_jax``.
+    class_name : str
+        Concrete RefPar class name.
+    pi_ref : sequence of float or None
+        Per-filter reference-frame parallax. ``None`` keeps the
+        default pair ``[0.4, -0.7]``.
+
+    Returns
+    -------
+    instance : object
+        Constructed model.
+    """
+    kwargs = _refpar_common()
+    if pi_ref is not None:
+        kwargs['pi_ref_frame'] = list(pi_ref)
+    if 'Param4' in class_name:
+        kwargs['thetaE'] = 0.8
+    else:
+        kwargs['log10_thetaE'] = math.log10(0.8)
+    if '_GP_' in class_name:
+        kwargs['gp_log_sigma'] = {0: -1.0, 1: -1.2}
+        kwargs['gp_rho'] = {0: math.exp(0.5), 1: math.exp(0.4)}
+        kwargs['gp_log_omega0'] = {0: 0.0, 1: 0.1}
+        if class_name.endswith('_1'):
+            kwargs['gp_log_omega0_S0'] = {0: -2.0, 1: -1.8}
+        else:
+            kwargs['gp_log_omega04_S0'] = {0: -6.0, 1: -5.5}
+    return getattr(module, class_name)(**kwargs)
+
+
+def _compare_refpar_outputs(numpy_mod, jax_mod, times):
+    """Assert centroid and photometry agree on both filters.
+
+    Parameters
+    ----------
+    numpy_mod, jax_mod : object
+        Paired NumPy and JAX models.
+    times : array_like, shape (N_times,)
+        Observation times (MJD).
+
+    Returns
+    -------
+    None
+    """
+    for filt_idx in (0, 1):
+        ref_ast = np.asarray(
+            numpy_mod.get_astrometry(times, filt_idx=filt_idx)
+        )
+        jax_ast = np.asarray(
+            jax_mod.get_astrometry(times, filt_idx=filt_idx)
+        )
+        np.testing.assert_allclose(
+            jax_ast, ref_ast, rtol=1e-10, atol=1e-12
+        )
+        ref_phot = np.asarray(
+            numpy_mod.get_photometry(times, filt_idx=filt_idx)
+        )
+        jax_phot = np.asarray(
+            jax_mod.get_photometry(times, filt_idx=filt_idx)
+        )
+        np.testing.assert_allclose(
+            jax_phot, ref_phot, rtol=1e-10, atol=1e-12
+        )
+    return None
+
+
+@pytest.mark.parametrize('class_name', _REFPAR_MODELS)
+def test_refpar_numpy_matches_jax(class_name, monkeypatch):
+    """Centroid and photometry agree, and pi_ref_frame is per filter."""
+    from bagle import model as nmodel
+
+    _patch_constant_parallax(monkeypatch)
+    times = np.array([57080.0, 57100.0, 57120.0, 57160.0, 57220.0])
+    numpy_mod = _build_refpar(nmodel, class_name)
+    jax_mod = _build_refpar(model, class_name)
+    _compare_refpar_outputs(numpy_mod, jax_mod, times)
+
+    # A different offset on filter 0 must not move filter 1.
+    numpy_alt = _build_refpar(nmodel, class_name, pi_ref=[0.0, -0.7])
+    jax_alt = _build_refpar(model, class_name, pi_ref=[0.0, -0.7])
+    moved = np.max(np.abs(
+        numpy_mod.get_astrometry(times, filt_idx=0)
+        - numpy_alt.get_astrometry(times, filt_idx=0)
+    ))
+    still = np.max(np.abs(
+        numpy_mod.get_astrometry(times, filt_idx=1)
+        - numpy_alt.get_astrometry(times, filt_idx=1)
+    ))
+    assert moved > 1.0e-6
+    np.testing.assert_allclose(still, 0.0, atol=1e-12)
+    _compare_refpar_outputs(numpy_alt, jax_alt, times)
+
+    # Photometry does not see the reference-frame offset.
+    np.testing.assert_allclose(
+        numpy_mod.get_photometry(times, filt_idx=0),
+        numpy_alt.get_photometry(times, filt_idx=0),
+        rtol=1e-10,
+        atol=1e-12,
+    )
+    if '_GP_' in class_name:
+        np.testing.assert_array_equal(
+            numpy_mod.use_gp_phot, jax_mod.use_gp_phot
+        )
+        assert list(numpy_mod.use_gp_phot) == [True, True]
+    return None
+
+
+@pytest.mark.parametrize('class_name', _FSPL_PHOT1_MODELS)
+def test_fspl_photparam1_numpy_matches_jax(class_name, monkeypatch):
+    """Finite-source photometry agrees on a short outline."""
+    from bagle import model as nmodel
+
+    _patch_constant_parallax(monkeypatch)
+    kwargs = dict(
+        t0=57100.0,
+        u0_amp=0.3,
+        tE=20.0,
+        piE_E=0.1,
+        piE_N=0.05,
+        radiusS=0.01,
+        b_sff=[0.8, 0.6],
+        mag_src=[18.0, 18.5],
+        n_outline=6,
+        raL=259.5,
+        decL=-29.0,
+        obsLocation=['earth', 'spitzer'],
+    )
+    numpy_mod = getattr(nmodel, class_name)(**kwargs)
+    jax_mod = getattr(model, class_name)(**kwargs)
+    times = np.linspace(57095.0, 57105.0, 4)
+    for filt_idx in (0, 1):
+        ref = np.asarray(
+            numpy_mod.get_photometry(times, filt_idx=filt_idx)
+        )
+        out = np.asarray(
+            jax_mod.get_photometry(times, filt_idx=filt_idx)
+        )
+        np.testing.assert_allclose(out, ref, rtol=1e-10, atol=1e-12)
+    return None
+

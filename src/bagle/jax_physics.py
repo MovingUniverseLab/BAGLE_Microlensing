@@ -1278,7 +1278,8 @@ def pspl_phot_astrometry_unlensed(t, t0, tE, u0, thetaE_hat, b_sff,
     return u_cent
 
 
-def pspl_linear_astrometry(t, t0, x0, mu, parallax_vectors=None, pi=None):
+def pspl_linear_astrometry(t, t0, x0, mu, parallax_vectors=None, pi=None,
+                           pi_ref=None):
     """
     Linear sky motion in arcsec (PSPL source or lens).
 
@@ -1296,6 +1297,10 @@ def pspl_linear_astrometry(t, t0, x0, mu, parallax_vectors=None, pi=None):
         Precomputed parallax table, shape ``(N_times, 2)``.
     pi : float or None
         Parallax amplitude applied to ``parallax_vectors`` (mas).
+    pi_ref : float or None
+        Reference-frame parallax for this filter (mas). Added on top
+        of ``pi`` and does not change source-minus-lens separation
+        when the same value is applied to the lens and the source.
 
     Returns
     -------
@@ -1316,11 +1321,18 @@ def pspl_linear_astrometry(t, t0, x0, mu, parallax_vectors=None, pi=None):
             parallax_vectors, dtype=jnp.float64
         ) * 1e-3
 
+    # Reference-frame offset, same units as the annual parallax term.
+    if parallax_vectors is not None and pi_ref is not None:
+        pos = pos + jnp.asarray(pi_ref, dtype=jnp.float64) * jnp.asarray(
+            parallax_vectors, dtype=jnp.float64
+        ) * 1e-3
+
     return pos
 
 
-def pspl_source_astrometry_unlensed(t, t0, xS0, muS, 
-                                    parallax_vectors=None, piS=None):
+def pspl_source_astrometry_unlensed(t, t0, xS0, muS,
+                                    parallax_vectors=None, piS=None,
+                                    pi_ref=None):
     """
     Unlensed source astrometry in arcsec.
 
@@ -1338,6 +1350,8 @@ def pspl_source_astrometry_unlensed(t, t0, xS0, muS,
         Precomputed parallax table, shape ``(N_times, 2)``.
     piS : float or None
         Source parallax (mas).
+    pi_ref : float or None
+        Reference-frame parallax for this filter (mas).
 
     Returns
     -------
@@ -1345,7 +1359,9 @@ def pspl_source_astrometry_unlensed(t, t0, xS0, muS,
         See summary above.
     """
     # Thin wrapper around the shared linear sky-motion kernel.
-    pos = pspl_linear_astrometry(t, t0, xS0, muS, parallax_vectors, piS)
+    pos = pspl_linear_astrometry(
+        t, t0, xS0, muS, parallax_vectors, piS, pi_ref=pi_ref
+    )
     return pos
 
 
@@ -1402,7 +1418,7 @@ def pspl_resolved_amplification(t, t0, tE, u0, thetaE_hat,
 
 def pspl_resolved_astrometry(t, t0, tE, u0, thetaE_hat, xL0, muL, thetaE_amp,
     parallax_vectors=None, piE_E=None, piE_N=None, piL=None,
-    parallax_correction=None):
+    parallax_correction=None, pi_ref=None):
     """
     Plus/minus PSPL image astrometry in arcsec; shape ``(2, N_times, 2)``.
 
@@ -1434,6 +1450,8 @@ def pspl_resolved_astrometry(t, t0, tE, u0, thetaE_hat, xL0, muL, thetaE_amp,
         Lens parallax (mas).
     parallax_correction : array_like or None
         Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+    pi_ref : float or None
+        Reference-frame parallax for this filter (mas).
 
     Returns
     -------
@@ -1456,7 +1474,10 @@ def pspl_resolved_astrometry(t, t0, tE, u0, thetaE_hat, xL0, muL, thetaE_amp,
     u_plus, u_minus = pspl_resolved_astrometry_from_u(u)
 
     # Lens sky track and Einstein radius in arcsec.
-    xL = pspl_linear_astrometry(t, t0, xL0, muL, parallax_vectors, piL)
+    # pi_ref shifts both images together because they share the lens.
+    xL = pspl_linear_astrometry(
+        t, t0, xL0, muL, parallax_vectors, piL, pi_ref=pi_ref
+    )
     scale = jnp.asarray(thetaE_amp, dtype=jnp.float64) * 1e-3
 
     # Absolute image positions on the sky; shape (2, N_times, 2).
@@ -2401,7 +2422,7 @@ def derive_pspl_photastrom_param1_geometry(mL, t0, beta, dL, dL_dS, xS0_E, xS0_N
 
 
 def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
-    parallax_vectors=None, piS=None, piL=None):
+    parallax_vectors=None, piS=None, piL=None, pi_ref=None):
     """
     PSPL flux-weighted centroid astrometry (arcsec), matching
 
@@ -2429,6 +2450,10 @@ def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
         Source parallax (mas).
     piL : float or None
         Lens parallax (mas).
+    pi_ref : float or None
+        Reference-frame parallax for this filter (mas). The same
+        offset is added to the source and the lens, so it shifts the
+        centroid and cancels in their separation.
 
     Returns
     -------
@@ -2453,6 +2478,11 @@ def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
         pvec = jnp.asarray(parallax_vectors, dtype=jnp.float64)
         xS = xS + piS * pvec * 1e-3
         xL = xL + piL * pvec * 1e-3
+        # Same reference-frame offset on both, so u is unchanged.
+        if pi_ref is not None:
+            shift = jnp.asarray(pi_ref, dtype=jnp.float64) * pvec * 1e-3
+            xS = xS + shift
+            xL = xL + shift
 
     # Angular separation and Einstein-normalized u vector.
     thetaS = xS - xL
@@ -2766,7 +2796,8 @@ def gaussian_astrometry_log_likelihood_sum(pos_model, x_obs, y_obs, x_err, y_err
 
 def pspl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
                                b_sff, x_obs, y_obs, x_err, y_err,
-                               parallax_vectors=None, piS=None, piL=None):
+                               parallax_vectors=None, piS=None, piL=None,
+                               pi_ref=None):
     """Evaluate a PSPL absolute-astrometry Gaussian log-likelihood.
 
     Parameters
@@ -2789,6 +2820,8 @@ def pspl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
         Parallax table, shape ``(N_times, 2)``.
     piS, piL : float or None
         Source and lens parallax (mas).
+    pi_ref : float or None
+        Reference-frame parallax for this filter (mas).
 
     Returns
     -------
@@ -2802,7 +2835,8 @@ def pspl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
     """
     pos_model = pspl_astrometry_param1(
         t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
-        parallax_vectors=parallax_vectors, piS=piS, piL=piL
+        parallax_vectors=parallax_vectors, piS=piS, piL=piL,
+        pi_ref=pi_ref,
     )
     lnL = gaussian_astrometry_log_likelihood_sum(
         pos_model, x_obs, y_obs, x_err, y_err

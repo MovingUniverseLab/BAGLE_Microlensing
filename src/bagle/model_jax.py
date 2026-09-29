@@ -561,6 +561,48 @@ class PSPL(ABC):
 
         return parallax_vectors
 
+    def _origin_for_jax(self, name, filt_idx):
+        """One filter's sky position as a length-2 JAX vector.
+
+        Parameters
+        ----------
+        name : str
+            Attribute holding ``xS0`` or ``xL0``.
+        filt_idx : int
+            0-based filter index.
+
+        Returns
+        -------
+        origin : jax.numpy.ndarray, shape (2,)
+            East and North in arcsec.
+        """
+        return jnp.asarray(
+            sky_origin(getattr(self, name), filt_idx),
+            dtype=jnp.float64,
+        )
+
+    def _pi_ref_for_jax(self, filt_idx):
+        """Reference-frame parallax for one filter, or None.
+
+        Parameters
+        ----------
+        filt_idx : int
+            0-based filter index.
+
+        Returns
+        -------
+        pi_ref : jax.numpy.ndarray or None
+            Scalar parallax in mas when this model has a reference-frame
+            offset. ``None`` otherwise.
+        """
+        if not getattr(self, 'ref_frame_parallax_flag', False):
+            return None
+
+        return jnp.asarray(
+            filt_scalar(self.pi_ref_frame, filt_idx),
+            dtype=jnp.float64,
+        )
+
     def _phot_scalar(self, phot_param_name, filt_idx=0, default=None):
         """
         Return a scalar photometry parameter for filter ``filt_idx``.
@@ -652,10 +694,11 @@ class PSPL(ABC):
         xL = jax_physics.pspl_linear_astrometry(
             t_j,
             jnp.asarray(self.t0, dtype=jnp.float64),
-            jnp.asarray(self.xL0, dtype=jnp.float64),
+            self._origin_for_jax('xL0', filt_idx),
             jnp.asarray(self.muL, dtype=jnp.float64),
             parallax_vectors=pvec,
             pi=None if piL is None else jnp.asarray(piL, dtype=jnp.float64),
+            pi_ref=self._pi_ref_for_jax(filt_idx),
         )
 
         return np.asarray(xL, dtype=np.float64)
@@ -684,10 +727,11 @@ class PSPL(ABC):
         xS_unlensed = jax_physics.pspl_source_astrometry_unlensed(
             jnp.asarray(t, dtype=jnp.float64).reshape(-1),
             jnp.asarray(self.t0, dtype=jnp.float64),
-            jnp.asarray(self.xS0, dtype=jnp.float64),
+            self._origin_for_jax('xS0', filt_idx),
             jnp.asarray(self.muS, dtype=jnp.float64),
             parallax_vectors=pvec,
             piS=None if pi_s is None else jnp.asarray(pi_s, dtype=jnp.float64),
+            pi_ref=self._pi_ref_for_jax(filt_idx),
         )
 
         return np.asarray(xS_unlensed, dtype=np.float64)
@@ -833,13 +877,14 @@ class PSPL(ABC):
             jnp.asarray(self.tE, dtype=jnp.float64),
             jnp.asarray(self.u0, dtype=jnp.float64),
             jnp.asarray(self.thetaE_hat, dtype=jnp.float64),
-            jnp.asarray(self.xL0, dtype=jnp.float64),
+            self._origin_for_jax('xL0', filt_idx),
             jnp.asarray(self.muL, dtype=jnp.float64),
             jnp.asarray(self.thetaE_amp, dtype=jnp.float64),
             parallax_vectors=pvec,
             piE_E=jnp.asarray(self.piE[0], dtype=jnp.float64),
             piE_N=jnp.asarray(self.piE[1], dtype=jnp.float64),
             piL=jnp.asarray(self.piL, dtype=jnp.float64),
+            pi_ref=self._pi_ref_for_jax(filt_idx),
         )
 
         return np.asarray(pos_images, dtype=np.float64)
@@ -890,8 +935,8 @@ class PSPL(ABC):
         centroid = jax_physics.pspl_astrometry_param1(
             t_j,
             jnp.asarray(self.t0, dtype=jnp.float64),
-            jnp.asarray(self.xS0, dtype=jnp.float64),
-            jnp.asarray(self.xL0, dtype=jnp.float64),
+            self._origin_for_jax('xS0', filt_idx),
+            self._origin_for_jax('xL0', filt_idx),
             jnp.asarray(self.muS, dtype=jnp.float64),
             jnp.asarray(self.muL, dtype=jnp.float64),
             jnp.asarray(self.thetaE_amp, dtype=jnp.float64),
@@ -899,6 +944,7 @@ class PSPL(ABC):
             parallax_vectors=pvec,
             piS=jnp.asarray(self.piS, dtype=jnp.float64),
             piL=jnp.asarray(self.piL, dtype=jnp.float64),
+            pi_ref=self._pi_ref_for_jax(filt_idx),
         )
 
         return np.asarray(centroid, dtype=np.float64)
@@ -1774,6 +1820,7 @@ class ParallaxClassABC(ABC):
 
 class PSPL_noParallax(ParallaxClassABC):
     parallaxFlag = False
+    ref_frame_parallax_flag = False
 
     def calc_piE_ecliptic(self, filt_idx=0):
         """Not supported on this object."""
@@ -1784,6 +1831,7 @@ class PSPL_noParallax(ParallaxClassABC):
 
 class PSPL_Parallax(ParallaxClassABC):
     parallaxFlag = True
+    ref_frame_parallax_flag = False
     fixed_param_names = ['raL', 'decL']
     fixed_phot_param_names = ['obsLocation']
 
@@ -1923,6 +1971,30 @@ class PSPL_Parallax(ParallaxClassABC):
                                                                   plot=plot)
 
         return xS0E_g, xS0N_g, muSE_g, muSN_g
+
+
+class PSPL_Parallax_RefFrame(PSPL_Parallax):
+    """Parallax mixin that also fits a reference-frame offset.
+
+    Parameters
+    ----------
+    None
+        This mixin only sets flags. ``pi_ref_frame`` lives on the
+        parameter class.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    ``ref_frame_parallax_flag`` tells the astrometry methods to add
+    ``pi_ref_frame[filt_idx] * parallax_vector`` to the source and the
+    lens. The offset cancels in their separation.
+    """
+
+    parallaxFlag = True
+    ref_frame_parallax_flag = True
 
 
 # --------------------------------------------------
@@ -4044,6 +4116,199 @@ class PSPL_PhotAstromParam3(PSPL_Param):
         return
 
 
+class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
+    """PSPL parameters with log10(thetaE) and a reference-frame parallax.
+
+    Parameters
+    ----------
+    t0, u0_amp, tE, log10_thetaE, piS : float
+        Peak time (MJD), impact parameter (Einstein radii), Einstein
+        time (days), log10 Einstein radius (mas), source parallax (mas).
+    piE_E, piE_N : float
+        Microlensing parallax, East and North, in Einstein radii.
+    xS0_E, xS0_N : float or array_like
+        Source position at ``t0`` (arcsec). One value, or shape
+        ``(n_filters,)``.
+    muS_E, muS_N : float
+        Source proper motion (mas/yr).
+    pi_ref_frame : float or array_like
+        Reference-frame parallax (mas), one value per filter.
+    b_sff, mag_base : array_like
+        Blend and baseline magnitude, one entry per filter.
+    raL, decL : float, optional
+        Lens coordinates in degrees.
+    obsLocation : str or sequence of str, optional
+        Observer for each filter. Default is ``'earth'``.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    ``pi_ref_frame`` is assigned after the parent constructor, matching
+    ``model.py``. A scalar applies to every filter. An array is one
+    value per filter.
+    """
+
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'pi_ref_frame',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'pi_ref_frame', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'astrom', 'both', 'phot']
+    additional_param_names = [
+        'thetaE_amp',
+        'mL',
+        'piL',
+        'piRel',
+        'muL_E',
+        'muL_N',
+        'muRel_E',
+        'muRel_N',
+        'mag_src',
+    ]
+    jax_loglik_mode = 'joint'
+    mag_fitter = 'mag_base'
+    paramAstromFlag = True
+    paramPhotFlag = True
+
+    @classmethod
+    def _jax_geometry(cls, vec):
+        """Static geometry for one filter's parameter vector.
+
+        Parameters
+        ----------
+        vec : array_like
+            Values in ``fitter_param_names`` order. ``pi_ref_frame`` is
+            the scalar for this filter.
+
+        Returns
+        -------
+        p : dict
+            Parameter name to value.
+        geom : tuple
+            Shared PSPL geometry, including source and lens positions.
+        """
+        from bagle.jax.geometry import derive_pspl_photastrom_log10_thetaE
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_pspl_photastrom_log10_thetaE(
+            p['t0'], p['u0_amp'], p['tE'], p['log10_thetaE'],
+            p['piS'], p['piE_E'], p['piE_N'], p['xS0_E'],
+            p['xS0_N'], p['muS_E'], p['muS_N']
+        )
+        return p, geom
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_base, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Photometric log-likelihood. ``pi_ref_frame`` does not enter.
+
+        Parameters
+        ----------
+        vec : array_like
+            Class-order parameters for one filter.
+        t : array_like, shape (N_times,)
+            Observation times (MJD).
+        mag_obs, mag_err : array_like, shape (N_times,)
+            Magnitudes and uncertainties.
+        b_sff : float
+            Source flux fraction for this filter.
+        mag_base : float
+            Baseline magnitude for this filter.
+        parallax_vectors : array_like or None
+            Parallax table, shape ``(N_times, 2)``.
+        gp_params : dict or None
+            Optional Gaussian-process hyperparameters.
+        fixed_jitter : bool
+            Use a fixed jitter term when a GP is present.
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        p, geom = cls._jax_geometry(vec)
+        (u0, thetaE_hat, tE, piE_E, piE_N, _, _, _, _, _, _,
+         _) = geom
+        mag_src = mag_base - 2.5 * jnp.log10(b_sff)
+        lnL = jax_physics.pspl_log_likely_photometry(
+            t, p['t0'], tE, u0, thetaE_hat, mag_src, b_sff,
+            mag_obs, mag_err, parallax_vectors=parallax_vectors,
+            piE_E=piE_E, piE_N=piE_N, gp_params=gp_params,
+            fixed_jitter=fixed_jitter
+        )
+        return lnL
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0,
+                                  parallax_vectors=None):
+        """Astrometric log-likelihood with this filter's pi_ref_frame.
+
+        Parameters
+        ----------
+        vec : array_like
+            Class-order parameters for one filter.
+        t : array_like, shape (N_times,)
+            Observation times (MJD).
+        x_obs, y_obs, x_err, y_err : array_like, shape (N_times,)
+            East/North positions and uncertainties (arcsec).
+        b_sff : float, optional
+            Source flux fraction.
+        parallax_vectors : array_like or None
+            Parallax table, shape ``(N_times, 2)``.
+
+        Returns
+        -------
+        lnL : float
+            Summed astrometric log-likelihood.
+        """
+        p, geom = cls._jax_geometry(vec)
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE, piS,
+         piL) = geom
+        lnL = jax_physics.pspl_log_likely_astrometry(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE, b_sff,
+            x_obs, y_obs, x_err, y_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL,
+            pi_ref=p['pi_ref_frame'],
+        )
+        return lnL
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 pi_ref_frame,
+                 b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth'):
+        super().__init__(
+            t0, u0_amp, tE, log10_thetaE, piS,
+            piE_E, piE_N,
+            xS0_E, xS0_N,
+            muS_E, muS_N,
+            b_sff, mag_base,
+            raL=raL, decL=decL, obsLocation=obsLocation,
+        )
+        self.pi_ref_frame = pi_ref_frame
+        return None
+
+
+
 class PSPL_PhotAstromParam4(PSPL_Param):
     """
     Point Source Point Lens model for microlensing. This model includes
@@ -4218,6 +4483,199 @@ class PSPL_PhotAstromParam4(PSPL_Param):
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         return
+
+
+class PSPL_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4):
+    """PSPL parameters with thetaE and a reference-frame parallax.
+
+    Parameters
+    ----------
+    t0, u0_amp, tE, thetaE, piS : float
+        Peak time (MJD), impact parameter (Einstein radii), Einstein
+        time (days), Einstein radius (mas), source parallax (mas).
+    piE_E, piE_N : float
+        Microlensing parallax, East and North, in Einstein radii.
+    xS0_E, xS0_N : float or array_like
+        Source position at ``t0`` (arcsec). One value, or shape
+        ``(n_filters,)``.
+    muS_E, muS_N : float
+        Source proper motion (mas/yr).
+    pi_ref_frame : float or array_like
+        Reference-frame parallax (mas), one value per filter.
+    b_sff, mag_base : array_like
+        Blend and baseline magnitude, one entry per filter.
+    raL, decL : float, optional
+        Lens coordinates in degrees.
+    obsLocation : str or sequence of str, optional
+        Observer for each filter. Default is ``'earth'``.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    ``pi_ref_frame`` is assigned after the parent constructor, matching
+    ``model.py``. A scalar applies to every filter. An array is one
+    value per filter.
+    """
+
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'pi_ref_frame',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'pi_ref_frame', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'astrom', 'both', 'phot']
+    additional_param_names = [
+        'log10_thetaE',
+        'mL',
+        'piL',
+        'piRel',
+        'muL_E',
+        'muL_N',
+        'muRel_E',
+        'muRel_N',
+        'mag_src',
+    ]
+    jax_loglik_mode = 'joint'
+    mag_fitter = 'mag_base'
+    paramAstromFlag = True
+    paramPhotFlag = True
+
+    @classmethod
+    def _jax_geometry(cls, vec):
+        """Static geometry for one filter's parameter vector.
+
+        Parameters
+        ----------
+        vec : array_like
+            Values in ``fitter_param_names`` order. ``pi_ref_frame`` is
+            the scalar for this filter.
+
+        Returns
+        -------
+        p : dict
+            Parameter name to value.
+        geom : tuple
+            Shared PSPL geometry, including source and lens positions.
+        """
+        from bagle.jax.geometry import derive_pspl_photastrom_reduced
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_pspl_photastrom_reduced(
+            p['t0'], p['u0_amp'], p['tE'], p['thetaE'],
+            p['piS'], p['piE_E'], p['piE_N'], p['xS0_E'],
+            p['xS0_N'], p['muS_E'], p['muS_N']
+        )
+        return p, geom
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_base, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Photometric log-likelihood. ``pi_ref_frame`` does not enter.
+
+        Parameters
+        ----------
+        vec : array_like
+            Class-order parameters for one filter.
+        t : array_like, shape (N_times,)
+            Observation times (MJD).
+        mag_obs, mag_err : array_like, shape (N_times,)
+            Magnitudes and uncertainties.
+        b_sff : float
+            Source flux fraction for this filter.
+        mag_base : float
+            Baseline magnitude for this filter.
+        parallax_vectors : array_like or None
+            Parallax table, shape ``(N_times, 2)``.
+        gp_params : dict or None
+            Optional Gaussian-process hyperparameters.
+        fixed_jitter : bool
+            Use a fixed jitter term when a GP is present.
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        p, geom = cls._jax_geometry(vec)
+        (u0, thetaE_hat, tE, piE_E, piE_N, _, _, _, _, _, _,
+         _) = geom
+        mag_src = mag_base - 2.5 * jnp.log10(b_sff)
+        lnL = jax_physics.pspl_log_likely_photometry(
+            t, p['t0'], tE, u0, thetaE_hat, mag_src, b_sff,
+            mag_obs, mag_err, parallax_vectors=parallax_vectors,
+            piE_E=piE_E, piE_N=piE_N, gp_params=gp_params,
+            fixed_jitter=fixed_jitter
+        )
+        return lnL
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0,
+                                  parallax_vectors=None):
+        """Astrometric log-likelihood with this filter's pi_ref_frame.
+
+        Parameters
+        ----------
+        vec : array_like
+            Class-order parameters for one filter.
+        t : array_like, shape (N_times,)
+            Observation times (MJD).
+        x_obs, y_obs, x_err, y_err : array_like, shape (N_times,)
+            East/North positions and uncertainties (arcsec).
+        b_sff : float, optional
+            Source flux fraction.
+        parallax_vectors : array_like or None
+            Parallax table, shape ``(N_times, 2)``.
+
+        Returns
+        -------
+        lnL : float
+            Summed astrometric log-likelihood.
+        """
+        p, geom = cls._jax_geometry(vec)
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE, piS,
+         piL) = geom
+        lnL = jax_physics.pspl_log_likely_astrometry(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE, b_sff,
+            x_obs, y_obs, x_err, y_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL,
+            pi_ref=p['pi_ref_frame'],
+        )
+        return lnL
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 pi_ref_frame,
+                 b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth'):
+        super().__init__(
+            t0, u0_amp, tE, thetaE, piS,
+            piE_E, piE_N,
+            xS0_E, xS0_N,
+            muS_E, muS_N,
+            b_sff, mag_base,
+            raL=raL, decL=decL, obsLocation=obsLocation,
+        )
+        self.pi_ref_frame = pi_ref_frame
+        return None
+
 
 
 class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
@@ -5698,6 +6156,300 @@ class PSPL_GP_PhotAstromParam4_2(PSPL_PhotAstromParam4):
             self.use_gp_phot[key] = True
 
         return
+class PSPL_GP_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3_RefPar):
+    """GP mean model on top of Param3 with a reference-frame parallax.
+
+    Parameters
+    ----------
+    t0, u0_amp, tE, log10_thetaE, piS : float
+        Same as ``PSPL_PhotAstromParam3_RefPar``.
+    piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N : float or array_like
+        Parallax, source position (arcsec), and source proper motion.
+    pi_ref_frame : float or array_like
+        Reference-frame parallax (mas), one value per filter.
+    b_sff, mag_base : array_like
+        Blend and baseline magnitude.
+    gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0 : dict
+        Gaussian-process hyperparameters keyed by filter index.
+    raL, decL : float, optional
+        Lens coordinates in degrees.
+    obsLocation : str or sequence of str, optional
+        Observer for each filter.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    ``gp_log_rho`` and ``gp_log_S0`` are derived from the sampled
+    kernel parameters. Filters present in ``gp_log_sigma`` use a GP.
+    """
+
+    phot_optional_param_names = [
+        'gp_log_sigma',
+        'gp_rho',
+        'gp_log_omega04_S0',
+        'gp_log_omega0',
+    ]
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 pi_ref_frame,
+                 b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega04_S0 = gp_log_omega04_S0
+        self.gp_log_omega0 = gp_log_omega0
+        super().__init__(
+            t0, u0_amp, tE, log10_thetaE, piS,
+            piE_E, piE_N,
+            xS0_E, xS0_N,
+            muS_E, muS_N,
+            pi_ref_frame,
+            b_sff, mag_base,
+            raL=raL, decL=decL, obsLocation=obsLocation,
+        )
+
+        # Derived kernel amplitudes, keyed like the sampled dicts.
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+        self.gp_log_S0 = {}
+        for key, val in self.gp_log_omega04_S0.items():
+            self.gp_log_S0[key] = val - 4 * self.gp_log_omega0[key]
+
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+        return None
+
+
+class PSPL_GP_PhotAstromParam3_1_RefPar(PSPL_PhotAstromParam3_RefPar):
+    """GP mean model using ``gp_log_omega0_S0`` and a reference frame.
+
+    Parameters
+    ----------
+    t0, u0_amp, tE, log10_thetaE, piS : float
+        Same as ``PSPL_PhotAstromParam3_RefPar``.
+    piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N : float or array_like
+        Parallax, source position (arcsec), and source proper motion.
+    pi_ref_frame : float or array_like
+        Reference-frame parallax (mas), one value per filter.
+    b_sff, mag_base : array_like
+        Blend and baseline magnitude.
+    gp_log_sigma, gp_rho, gp_log_omega0_S0, gp_log_omega0 : dict
+        Gaussian-process hyperparameters keyed by filter index.
+    raL, decL : float, optional
+        Lens coordinates in degrees.
+    obsLocation : str or sequence of str, optional
+        Observer for each filter.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    ``gp_log_S0`` and ``gp_log_omega04_S0`` are derived from
+    ``gp_log_omega0_S0`` and ``gp_log_omega0``.
+    """
+
+    phot_optional_param_names = [
+        'gp_log_sigma',
+        'gp_rho',
+        'gp_log_omega0_S0',
+        'gp_log_omega0',
+    ]
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 pi_ref_frame,
+                 b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega0_S0, gp_log_omega0,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega0_S0 = gp_log_omega0_S0
+        self.gp_log_omega0 = gp_log_omega0
+        super().__init__(
+            t0, u0_amp, tE, log10_thetaE, piS,
+            piE_E, piE_N,
+            xS0_E, xS0_N,
+            muS_E, muS_N,
+            pi_ref_frame,
+            b_sff, mag_base,
+            raL=raL, decL=decL, obsLocation=obsLocation,
+        )
+
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+        self.gp_log_S0 = {}
+        self.gp_log_omega04_S0 = {}
+        for key, val in self.gp_log_omega0_S0.items():
+            self.gp_log_S0[key] = val - self.gp_log_omega0[key]
+            self.gp_log_omega04_S0[key] = val + 3 * self.gp_log_omega0[key]
+
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+        return None
+
+
+class PSPL_GP_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4_RefPar):
+    """GP mean model on top of Param4 with a reference-frame parallax.
+
+    Parameters
+    ----------
+    t0, u0_amp, tE, thetaE, piS : float
+        Same as ``PSPL_PhotAstromParam4_RefPar``.
+    piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N : float or array_like
+        Parallax, source position (arcsec), and source proper motion.
+    pi_ref_frame : float or array_like
+        Reference-frame parallax (mas), one value per filter.
+    b_sff, mag_base : array_like
+        Blend and baseline magnitude.
+    gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0 : dict
+        Gaussian-process hyperparameters keyed by filter index.
+    raL, decL : float, optional
+        Lens coordinates in degrees.
+    obsLocation : str or sequence of str, optional
+        Observer for each filter.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    ``gp_log_rho`` and ``gp_log_S0`` are derived from the sampled
+    kernel parameters.
+    """
+
+    phot_optional_param_names = [
+        'gp_log_sigma',
+        'gp_rho',
+        'gp_log_omega04_S0',
+        'gp_log_omega0',
+    ]
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 pi_ref_frame,
+                 b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega04_S0 = gp_log_omega04_S0
+        self.gp_log_omega0 = gp_log_omega0
+        super().__init__(
+            t0, u0_amp, tE, thetaE, piS,
+            piE_E, piE_N,
+            xS0_E, xS0_N,
+            muS_E, muS_N,
+            pi_ref_frame,
+            b_sff, mag_base,
+            raL=raL, decL=decL, obsLocation=obsLocation,
+        )
+
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+        self.gp_log_S0 = {}
+        for key, val in self.gp_log_omega04_S0.items():
+            self.gp_log_S0[key] = val - 4 * self.gp_log_omega0[key]
+
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+        return None
+
+
+class PSPL_GP_PhotAstromParam4_1_RefPar(PSPL_PhotAstromParam4_RefPar):
+    """GP mean model using ``gp_log_omega0_S0`` on Param4 RefPar.
+
+    Parameters
+    ----------
+    t0, u0_amp, tE, thetaE, piS : float
+        Same as ``PSPL_PhotAstromParam4_RefPar``.
+    piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N : float or array_like
+        Parallax, source position (arcsec), and source proper motion.
+    pi_ref_frame : float or array_like
+        Reference-frame parallax (mas), one value per filter.
+    b_sff, mag_base : array_like
+        Blend and baseline magnitude.
+    gp_log_sigma, gp_rho, gp_log_omega0_S0, gp_log_omega0 : dict
+        Gaussian-process hyperparameters keyed by filter index.
+    raL, decL : float, optional
+        Lens coordinates in degrees.
+    obsLocation : str or sequence of str, optional
+        Observer for each filter.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    ``gp_log_S0`` and ``gp_log_omega04_S0`` are derived from
+    ``gp_log_omega0_S0`` and ``gp_log_omega0``.
+    """
+
+    phot_optional_param_names = [
+        'gp_log_sigma',
+        'gp_rho',
+        'gp_log_omega0_S0',
+        'gp_log_omega0',
+    ]
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS,
+                 piE_E, piE_N,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 pi_ref_frame,
+                 b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega0_S0, gp_log_omega0,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega0_S0 = gp_log_omega0_S0
+        self.gp_log_omega0 = gp_log_omega0
+        super().__init__(
+            t0, u0_amp, tE, thetaE, piS,
+            piE_E, piE_N,
+            xS0_E, xS0_N,
+            muS_E, muS_N,
+            pi_ref_frame,
+            b_sff, mag_base,
+            raL=raL, decL=decL, obsLocation=obsLocation,
+        )
+
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+        self.gp_log_S0 = {}
+        self.gp_log_omega04_S0 = {}
+        for key, val in self.gp_log_omega0_S0.items():
+            self.gp_log_S0[key] = val - self.gp_log_omega0[key]
+            self.gp_log_omega04_S0[key] = val + 3 * self.gp_log_omega0[key]
+
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+        return None
+
+
+
 ######################################################
 ### POINT SOURCE BINARY LENS (PSBL) CLASSES ###
 ######################################################
@@ -23701,10 +24453,89 @@ class FSPL_Phot(FSPL):
 
 class FSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+    ref_frame_parallax_flag = False
 
 
 class FSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+
+
+class FSPL_PhotParam1(PSPL_Param):
+    """Finite-source photometry fitting source magnitude.
+
+    Same parameters as ``PSPL_PhotParam1``, plus the source radius in
+    units of the Einstein radius.
+
+    Parameters
+    ----------
+    t0, u0_amp, tE : float
+        Peak time (MJD), impact parameter (Einstein radii), and
+        Einstein time (days).
+    piE_E, piE_N : float
+        Microlensing parallax, East and North, in Einstein radii.
+    radiusS : float
+        Source radius in units of thetaE.
+    b_sff, mag_src : array_like
+        Blend and source magnitude, one entry per filter.
+    n_outline : int, optional
+        Number of points on the source outline. Default is 50.
+    raL, decL : float, optional
+        Lens coordinates in degrees.
+    obsLocation : str or sequence of str, optional
+        Observer for each filter. Default is ``'earth'``.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    ``mag_base`` is derived from ``mag_src`` and ``b_sff``.
+    """
+
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'radiusS',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['b_sff', 'mag_src']
+    filt_param_usage = ['both', 'phot']
+    additional_param_names = ['mag_base']
+    paramAstromFlag = False
+    paramPhotFlag = True
+    LeeFlag = False
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_src,
+                 n_outline=50,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.t0 = t0
+        self.u0_amp = u0_amp
+        self.tE = tE
+        self.piE = np.array([piE_E, piE_N])
+        self.b_sff = b_sff
+        self.mag_src = mag_src
+        self.n_outline = n_outline
+        self.raL = raL
+        self.decL = decL
+        self.obsLocation = obsLocation
+        self.radiusS = radiusS
+
+        # Broadcast filter parameters before the derived quantities.
+        super().__init__()
+
+        self.mag_base = self.mag_src + 2.5 * np.log10(self.b_sff)
+        self.piE_amp = np.linalg.norm(self.piE)
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+        return None
+
 
 
 class FSPL_PhotParam2(PSPL_Param):
@@ -31206,6 +32037,55 @@ class PSPL_PhotAstrom_Par_Param4(ModelClassABC,
         checkconflicts(self)
 
 
+@inheritdocstring
+class PSPL_PhotAstrom_RefPar_Param3(ModelClassABC,
+                                    PSPL_PhotAstrom,
+                                    PSPL_Parallax_RefFrame,
+                                    PSPL_PhotAstromParam3_RefPar):
+    """Photometry, astrometry, and a per-filter reference parallax.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Forwarded to ``PSPL_PhotAstromParam3_RefPar``.
+
+    Returns
+    -------
+    None
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        return None
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_RefPar_Param4(ModelClassABC,
+                                    PSPL_PhotAstrom,
+                                    PSPL_Parallax_RefFrame,
+                                    PSPL_PhotAstromParam4_RefPar):
+    """Param4 with a per-filter reference-frame parallax.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Forwarded to ``PSPL_PhotAstromParam4_RefPar``.
+
+    Returns
+    -------
+    None
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        return None
+
+
+
 # Note change in order in geoproj classes is necessary to
 # get the right "get_amplification" routine inherited.
 @inheritdocstring
@@ -31608,6 +32488,107 @@ class PSPL_PhotAstrom_Par_GP_Param4_2(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_RefPar_GP_Param3(ModelClassABC,
+                                       PSPL_GP,
+                                       PSPL_PhotAstrom,
+                                       PSPL_Parallax_RefFrame,
+                                       PSPL_GP_PhotAstromParam3_RefPar):
+    """GP Param3 with a per-filter reference-frame parallax.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Forwarded to ``PSPL_GP_PhotAstromParam3_RefPar``.
+
+    Returns
+    -------
+    None
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        return None
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_RefPar_GP_Param3_1(ModelClassABC,
+                                         PSPL_GP,
+                                         PSPL_PhotAstrom,
+                                         PSPL_Parallax_RefFrame,
+                                         PSPL_GP_PhotAstromParam3_1_RefPar):
+    """GP Param3_1 with a per-filter reference-frame parallax.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Forwarded to ``PSPL_GP_PhotAstromParam3_1_RefPar``.
+
+    Returns
+    -------
+    None
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        return None
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_RefPar_GP_Param4(ModelClassABC,
+                                       PSPL_GP,
+                                       PSPL_PhotAstrom,
+                                       PSPL_Parallax_RefFrame,
+                                       PSPL_GP_PhotAstromParam4_RefPar):
+    """GP Param4 with a per-filter reference-frame parallax.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Forwarded to ``PSPL_GP_PhotAstromParam4_RefPar``.
+
+    Returns
+    -------
+    None
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        return None
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_RefPar_GP_Param4_1(ModelClassABC,
+                                         PSPL_GP,
+                                         PSPL_PhotAstrom,
+                                         PSPL_Parallax_RefFrame,
+                                         PSPL_GP_PhotAstromParam4_1_RefPar):
+    """GP Param4_1 with a per-filter reference-frame parallax.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Forwarded to ``PSPL_GP_PhotAstromParam4_1_RefPar``.
+
+    Returns
+    -------
+    None
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        return None
+
 
 
 # PSPL PhotAstrom, parallax with GP, but no jitter term
@@ -33917,6 +34898,55 @@ class BFSPL_PhotAstrom_noPar_Param1(ModelClassABC,
 # =====
 # FSPL_noparallax
 @inheritdocstring
+@inheritdocstring
+class FSPL_Phot_noPar_Param1(ModelClassABC,
+                             FSPL_Phot,
+                             FSPL_noParallax,
+                             FSPL_PhotParam1):
+    """Finite-source photometry without parallax, fitting mag_src.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Forwarded to ``FSPL_PhotParam1``.
+
+    Returns
+    -------
+    None
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        return None
+
+
+@inheritdocstring
+class FSPL_Phot_Par_Param1(ModelClassABC,
+                           FSPL_Phot,
+                           FSPL_Parallax,
+                           FSPL_PhotParam1):
+    """Finite-source photometry with parallax, fitting mag_src.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Forwarded to ``FSPL_PhotParam1``.
+
+    Returns
+    -------
+    None
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+        return None
+
+
+
 class FSPL_Phot_noPar_Param2(ModelClassABC,
                              FSPL_Phot,
                              FSPL_noParallax,
