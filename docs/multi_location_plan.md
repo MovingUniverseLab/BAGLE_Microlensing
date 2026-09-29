@@ -1563,3 +1563,18 @@ on `convert_helio_geo_*`, and light-travel time.
 
 16. Roman's Horizons id is not in the alias table. `Earth` and
     `EARTH` map to `earth`. `'l2'` is not special-cased.
+
+17. A string `phot_data` or `ast_data`, including the historical
+    label `'sim'`, is not a list of catalog names. The fitter
+    synthesizes `phot1`, `phot2`, and so on. When both sides are
+    unlabeled, astrometry series `i` reuses photometric name `i`,
+    so a one-dataset `'sim'` fit stays one joint filter. A real
+    list whose length does not match the data arrays is still an
+    error.
+
+18. `get_model` and the JAX log-likelihood vector accept an
+    unsuffixed legacy key. `xS0_E` fills every `xS0_E{k}` slot that
+    does not have its own entry. This is the same copy rule as the
+    FITS loader, applied to in-memory dictionaries such as
+    `fake_data` output. A name present in neither form still raises
+    `KeyError`.

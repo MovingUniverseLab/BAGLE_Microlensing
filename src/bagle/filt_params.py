@@ -96,6 +96,37 @@ def split_param_filter_index1(name):
     return base, filt_index
 
 
+def lookup_param(params, name):
+    """Return one sampled value, accepting an unsuffixed legacy name.
+
+    Parameters
+    ----------
+    params : mapping
+        Name to value. Keys may be ``xS0_E`` or ``xS0_E1``.
+    name : str
+        Sampled name, possibly with a 1-based filter suffix.
+
+    Returns
+    -------
+    value
+        ``params[name]`` when that key exists. Otherwise the value
+        stored under the unsuffixed name.
+
+    Notes
+    -----
+    One historical ``xS0_E`` is reused for every suffixed slot that
+    does not have its own entry. A name present in neither form
+    raises ``KeyError``.
+    """
+    if name in params:
+        return params[name]
+
+    base, filt_index = split_param_filter_index1(name)
+    if filt_index is not None and base in params:
+        return params[base]
+    raise KeyError(name)
+
+
 def validate_param_declaration(cls):
     """Check one parameter class's parallel filter lists.
 
@@ -195,6 +226,45 @@ def lists_for_fitter(fitter_param_names):
         filt_param_usage.append(FILT_USAGE[name])
 
     return filt_param_names, filt_param_usage
+
+
+def dataset_names(value, n_sets, kind):
+    """Return catalog names, or synthesize ``phot1`` / ``ast1`` labels.
+
+    Parameters
+    ----------
+    value : sequence of str, str, or None
+        ``phot_data`` or ``ast_data``. A plain string is the historical
+        label, such as ``'sim'``, and is not a list of catalogs.
+    n_sets : int
+        Number of ``t_phot`` or ``t_ast`` arrays.
+    kind : str
+        ``'phot'`` or ``'ast'``. Used as the synthesized-name stem and
+        in the length-mismatch message.
+
+    Returns
+    -------
+    names : list of str
+        One name per data array. Shape is a Python list of length
+        ``n_sets``.
+
+    Notes
+    -----
+    A list whose length is not ``n_sets`` is an error. ``None`` and a
+    string both mean the arrays are unnamed, so the names are
+    ``{kind}1``, ``{kind}2``, and so on.
+    """
+    n_sets = int(n_sets)
+    if isinstance(value, (str, bytes)) or value is None:
+        return ['%s%d' % (kind, i + 1) for i in range(n_sets)]
+
+    names = [str(item) for item in value]
+    if len(names) != n_sets:
+        raise ValueError(
+            f'{kind}_data length does not match the number of '
+            f't_{kind} arrays'
+        )
+    return names
 
 
 def expand_fitter_names(fitter_param_names, filt_param_names, n_filters):

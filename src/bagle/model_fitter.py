@@ -23,6 +23,8 @@ import bagle.model as mmodel
 import bagle.frame_convert as fconv
 from bagle.filt_params import (
     build_filt_index,
+    dataset_names,
+    lookup_param,
     expand_fitter_names,
     fixed_slots,
     interleave_optional,
@@ -466,25 +468,28 @@ class MicrolensSolver(Solver):
                 1 for key in self.data.keys() if 't_ast' in key
             )
 
-        if 'phot_data' in self.data and use_phot:
-            phot_names = list(self.data['phot_data'])
-            if len(phot_names) != n_phot_sets:
-                raise ValueError(
-                    'phot_data length does not match the number of '
-                    't_phot arrays'
-                )
+        # A string such as 'sim' is a label, not a list of catalogs.
+        phot_raw = self.data.get('phot_data') if use_phot else None
+        ast_raw = self.data.get('ast_data') if use_ast else None
+        phot_labeled = isinstance(phot_raw, (list, tuple))
+        ast_labeled = isinstance(ast_raw, (list, tuple))
+        if use_phot:
+            phot_names = dataset_names(phot_raw, n_phot_sets, 'phot')
         else:
-            phot_names = ['phot%d' % (i + 1) for i in range(n_phot_sets)]
+            phot_names = []
+        if use_ast:
+            ast_names = dataset_names(ast_raw, n_ast_sets, 'ast')
+        else:
+            ast_names = []
 
-        if 'ast_data' in self.data and use_ast:
-            ast_names = list(self.data['ast_data'])
-            if len(ast_names) != n_ast_sets:
-                raise ValueError(
-                    'ast_data length does not match the number of '
-                    't_ast arrays'
-                )
-        else:
-            ast_names = ['ast%d' % (i + 1) for i in range(n_ast_sets)]
+        # Unlabeled photometry and astrometry are one event, paired
+        # in order. Named lists stay independent catalogs.
+        if (
+            use_phot and use_ast
+            and not phot_labeled and not ast_labeled
+        ):
+            for i in range(min(n_phot_sets, n_ast_sets)):
+                ast_names[i] = phot_names[i]
 
         (
             filt_names, has_phot, has_ast, phot_series, ast_series,
@@ -802,7 +807,7 @@ class MicrolensSolver(Solver):
         """
         names = list(self.fitter_param_names)
         if isinstance(params, (dict, Row)):
-            values = [params[name] for name in names]
+            values = [lookup_param(params, name) for name in names]
         else:
             values = [params[i] for i in range(len(names))]
 
@@ -1092,28 +1097,63 @@ class MicrolensSolver(Solver):
         return lnL
 
     def evaluate_loglik_jax(self, cube):
-        """Evaluate log-likelihood via JAX registry (vector from ``cube``)."""
+        """Evaluate log-likelihood via the JAX registry.
+
+        Parameters
+        ----------
+        cube : array_like or mapping
+            Sampled values in ``fitter_param_names`` order, or a mapping
+            keyed by those names. An unsuffixed ``xS0_E`` fills every
+            suffixed slot that has no entry of its own.
+
+        Returns
+        -------
+        lnL : float
+            Log-likelihood. The NumPy likelihood is used when no JAX
+            function is registered.
+        """
         fn, _ = jax_physics.build_jax_loglik_fn(self)
         if fn is None:
             return float(self.log_likely(cube))
-        if isinstance(cube, dict):
+        if isinstance(cube, (dict, Row)):
             vec = np.array(
-                [cube[n] for n in self.fitter_param_names], dtype=np.float64
+                [lookup_param(cube, n) for n in self.fitter_param_names],
+                dtype=np.float64,
             )
         else:
             vec = np.asarray(cube, dtype=np.float64)
         return float(fn(vec))
 
     def grad_loglik_jax(self, cube):
-        """Gradient of log-likelihood w.r.t. fitter parameters (JAX autodiff)."""
+        """Gradient of the log-likelihood with respect to fitter parameters.
+
+        Parameters
+        ----------
+        cube : array_like or mapping
+            Sampled values in ``fitter_param_names`` order, or a mapping
+            keyed by those names. An unsuffixed legacy name fills every
+            suffixed slot that has no entry of its own.
+
+        Returns
+        -------
+        grad : ndarray
+            Gradient of the log-likelihood. Shape is
+            ``(len(fitter_param_names),)``.
+
+        Raises
+        ------
+        NotImplementedError
+            No JAX log-likelihood is registered for this fitter.
+        """
         fn, _ = jax_physics.build_jax_loglik_fn(self)
         if fn is None:
             raise NotImplementedError(
                 "No JAX log-likelihood for this fitter configuration."
             )
-        if isinstance(cube, dict):
+        if isinstance(cube, (dict, Row)):
             vec = np.array(
-                [cube[n] for n in self.fitter_param_names], dtype=np.float64
+                [lookup_param(cube, n) for n in self.fitter_param_names],
+                dtype=np.float64,
             )
         else:
             vec = np.asarray(cube, dtype=np.float64)

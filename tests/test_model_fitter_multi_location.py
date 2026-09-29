@@ -254,6 +254,37 @@ def test_both_plain_and_suffixed_origin_raises():
     return None
 
 
+def test_get_model_accepts_unsuffixed_origin():
+    """A fake-data dict keyed by ``xS0_E`` fills every filter slot."""
+    data = make_data(['ogle', 'keck'], ['ogle', 'keck'])
+    fitter = _solver(data, model.PSPL_PhotAstrom_noPar_Param1)
+    params = {}
+    for name in fitter.fitter_param_names:
+        if name.startswith('xS0_'):
+            continue
+        median = fitter.priors[name].ppf(0.5)
+        params[name] = 0.0 if not np.isfinite(median) else float(median)
+
+    # One historical origin is copied into both joint filters.
+    params['xS0_E'] = 0.01
+    params['xS0_N'] = -0.02
+    mod = fitter.get_model(params)
+    np.testing.assert_allclose(mod.xS0[:, 0], 0.01)
+    np.testing.assert_allclose(mod.xS0[:, 1], -0.02)
+    return None
+
+
+def test_sim_string_is_not_a_catalog_list():
+    """The historical ``phot_data='sim'`` label still builds a fitter."""
+    data = make_data(['ogle'], ['ogle'])
+    data['phot_data'] = 'sim'
+    data['ast_data'] = 'sim'
+    fitter = _solver(data, model.PSPL_PhotAstrom_noPar_Param1)
+    assert fitter.filt_names == ['phot1']
+    assert 'xS0_E1' in fitter.fitter_param_names
+    return None
+
+
 def test_auto_observer_names():
     """Catalog auto-mapping sends Spitzer off Earth and leaves OGLE."""
     from bagle.data import _auto_observer

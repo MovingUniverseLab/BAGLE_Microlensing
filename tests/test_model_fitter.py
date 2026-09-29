@@ -431,11 +431,13 @@ def test_pspl_dy_fit():
 
     # TEST that output params match input within 20%
     for key in best:
-        print(best[key], p_in[key], best[key] - p_in[key])
-        if p_in[key] == 0:
-            assert np.abs(best[key] - p_in[key]) < 0.2
+        # xS0_E1 is the sampled name; fake data still stores xS0_E.
+        truth = p_in[key] if key in p_in else p_in[key.rstrip('123456789')]
+        print(best[key], truth, best[key] - truth)
+        if truth == 0:
+            assert np.abs(best[key] - truth) < 0.2
         else:
-            assert np.abs( (best[key] - p_in[key]) / p_in[key] ) < 0.2
+            assert np.abs((best[key] - truth) / truth) < 0.2
 
     # TEST that the generated photometry closely matches the input.
     filt_idx = 0
@@ -2227,12 +2229,14 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
     if verbose: print("INPUT:")
     lnL_in = fitter.log_likely(p_in, verbose=verbose)
 
-    # TEST that output params match input within 20%
+    # TEST that output params match input within 20%.
+    # Sampled names are suffixed; fake data still stores xS0_E.
     for key in fitter.fitter_param_names:
-        if p_in[key] == 0:
-            assert np.abs(best[key] - p_in[key]) < 0.3
+        truth = p_in[key] if key in p_in else p_in[key.rstrip('123456789')]
+        if truth == 0:
+            assert np.abs(best[key] - truth) < 0.3
         else:
-            assert np.abs( (best[key] - p_in[key]) / p_in[key] ) < 0.3
+            assert np.abs((best[key] - truth) / truth) < 0.3
     
  
     assert np.abs(lnL_out - lnL_in) < 50
