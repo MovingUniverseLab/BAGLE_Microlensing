@@ -22,6 +22,15 @@ import scipy.stats
 import pymultinest
 import bagle.model_jax as mmodel 
 import bagle.frame_convert as fconv
+from bagle.filt_params import (
+    build_filt_index,
+    expand_fitter_names,
+    fixed_slots,
+    interleave_optional,
+    longest_ast_series,
+    pack_constructor_params,
+    resolve_obs_locations,
+)
 from astropy.table import Table
 from astropy.table import Row
 from astropy import units
@@ -69,17 +78,107 @@ muS_scale_factor = 100.0
 # Global variable to define all array-style parameters (i.e. multiple filters).
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
                      'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
+                     'xS0_E', 'xS0_N', 'pi_ref_frame',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
                      'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
                      'add_err', 'mult_err']
 
 
 def _jax_param_index(names, base, filt_idx=None):
-    """Return a scalar or one-based per-filter parameter index."""
+    """Return a scalar or one-based per-filter parameter index.
+
+    Parameters
+    ----------
+    names : sequence of str
+        Sampled fitter parameter names.
+    base : str
+        Parameter name without a filter suffix.
+    filt_idx : int or None
+        0-based filter index. ``None`` selects the unsuffixed name.
+
+    Returns
+    -------
+    index : int or None
+        Position in ``names``, or ``None`` when the name was fixed
+        and dropped from the sampled cube.
+    """
     key = base if filt_idx is None else f'{base}{filt_idx + 1}'
-    if key not in names and base in names:
-        key = base
-    return names.index(key)
+    if key in names:
+        return names.index(key)
+
+    # An unsuffixed name is only a fallback for parameters that were
+    # never expanded. A dropped fixed slot must stay None.
+    if filt_idx is not None and base in names:
+        return names.index(base)
+    return None
+
+
+def _class_vector_slots(names, base_names, filt_names, fixed, filt_idx):
+    """Map one filter onto the class ``fitter_param_names`` order.
+
+    Parameters
+    ----------
+    names : sequence of str
+        Sampled cube names.
+    base_names : sequence of str
+        Unsuffixed class ``fitter_param_names``.
+    filt_names : set of str
+        Names that expand once per filter.
+    fixed : dict
+        Suffixed name -> fixed value for slots omitted from the cube.
+    filt_idx : int
+        0-based unified filter index.
+
+    Returns
+    -------
+    slots : tuple
+        Each entry is ``('i', index)`` for a sampled value or
+        ``('v', float)`` for a fixed value. The tuple follows
+        ``base_names``.
+
+    Notes
+    -----
+    Shared event parameters are read once. Per-filter parameters use
+    the 1-based suffix of ``filt_idx``, or the fixed value when that
+    suffix was deleted from the cube.
+    """
+    slots = []
+    for name in base_names:
+        if name not in filt_names:
+            slots.append(('i', names.index(name)))
+            continue
+
+        # 1-based suffix matches the expanded cube.
+        key = f'{name}{int(filt_idx) + 1}'
+        if key in names:
+            slots.append(('i', names.index(key)))
+        else:
+            slots.append(('v', float(fixed.get(key, 0.0))))
+    return tuple(slots)
+
+
+def _assemble_class_vector(param_vec, slots):
+    """Stack one filter's class-order parameter vector.
+
+    Parameters
+    ----------
+    param_vec : array_like, shape (n_sampled,)
+        Sampled fitter cube.
+    slots : tuple
+        Output of :func:`_class_vector_slots`.
+
+    Returns
+    -------
+    class_vec : jax.numpy.ndarray, shape (n_class,)
+        Values in the unsuffixed class ``fitter_param_names`` order.
+    """
+    cols = []
+    for kind, payload in slots:
+        if kind == 'i':
+            cols.append(param_vec[payload])
+        else:
+            cols.append(jnp.asarray(payload, dtype=jnp.float64))
+    return jnp.stack(cols)
 
 
 def build_explicit_jax_loglik_fn(fitter):
@@ -108,12 +207,33 @@ def build_explicit_jax_loglik_fn(fitter):
     This function also uses caching to avoid redundant compilation.
     """
 
-    # Check for cached likelihood function
-    cached = getattr(fitter, '_explicit_jax_loglik_cache', None)
-    if cached is not None:
-        return cached  # Return cached result
-
     names = tuple(fitter.fitter_param_names)
+    # Do not use ``or`` on these: a NumPy array has no single truth value.
+    obs_raw = getattr(fitter, 'obs_locations', None)
+    phot_raw = getattr(fitter, 'has_phot', None)
+    ast_raw = getattr(fitter, 'has_ast', None)
+    obs_locations = tuple(obs_raw) if obs_raw is not None else ()
+    has_phot = tuple(phot_raw) if phot_raw is not None else ()
+    has_ast = tuple(ast_raw) if ast_raw is not None else ()
+    n_phot = int(getattr(fitter, 'n_phot_sets', 0) or 0)
+    n_ast = int(getattr(fitter, 'n_ast_sets', 0) or 0)
+
+    # Recompile when the observer list, the sampled names, or the
+    # time-array identity changes. The cache lives on this fitter.
+    cache_key = (
+        names,
+        obs_locations,
+        has_phot,
+        has_ast,
+        float(fitter.data['raL']) if 'raL' in fitter.data else None,
+        float(fitter.data['decL']) if 'decL' in fitter.data else None,
+        tuple(id(fitter.data.get(f't_phot{i + 1}')) for i in range(n_phot)),
+        tuple(id(fitter.data.get(f't_ast{i + 1}')) for i in range(n_ast)),
+    )
+    cached = getattr(fitter, '_explicit_jax_loglik_cache', None)
+    cached_key = getattr(fitter, '_explicit_jax_loglik_cache_key', None)
+    if cached is not None and cached_key == cache_key:
+        return cached
 
     # Models with additive/multiplicative error parameters are not supported
     if any(('add_err' in name or 'mult_err' in name) for name in names):
@@ -136,10 +256,15 @@ def build_explicit_jax_loglik_fn(fitter):
         return None, None
 
     base_names = tuple(model_class.fitter_param_names)
+    filt_names = set(getattr(model_class, 'filt_param_names', ()) or ())
+    fixed = dict(getattr(fitter, 'fixed_dataset_params', {}) or {})
+    # Shared names must still be in the sampled cube. Per-filter names
+    # are filled later, including slots fixed at 0.
     try:
-        # Find indices mapping from full param vector to model's "base" params
-        base_indices = tuple(names.index(name) for name in base_names)
-    except ValueError:
+        for name in base_names:
+            if name not in filt_names and name not in names:
+                return None, None
+    except TypeError:
         return None, None
 
     # Check if parallax info is needed and available
@@ -166,12 +291,19 @@ def build_explicit_jax_loglik_fn(fitter):
         # Observation times (MJD)
         t = np.asarray(fitter.data[f't_phot{filt_idx + 1}'], dtype=np.float64)
 
-        # Precompute parallax vectors if needed
+        # This photometric series is a prefix of the unified list.
+        obs_loc = 'earth'
+        if filt_idx < len(obs_locations):
+            obs_loc = obs_locations[filt_idx]
+
+        # Precompute parallax vectors for this filter's observer.
         pvec = None
         if use_parallax:
-            pvec = jax_physics.precompute_parallax_vectors(raL, decL, t)
+            pvec = jax_physics.precompute_parallax_vectors(
+                raL, decL, t, obs_location=obs_loc
+            )
 
-        # Index for "b_sff" parameter for this filter
+        # Index for "b_sff" parameter for this filter. None means fixed.
         idx_b = _jax_param_index(names, 'b_sff', filt_idx)
 
         # Determine which magnitude param is being used
@@ -186,18 +318,24 @@ def build_explicit_jax_loglik_fn(fitter):
         else:
             idx_mag = _jax_param_index(names, 'mag_src', filt_idx)
 
+        # Class-order vector for this filter, including fixed zeros.
+        try:
+            slots = _class_vector_slots(
+                names, base_names, filt_names, fixed, filt_idx
+            )
+        except ValueError:
+            return None, None
+
         # Build GP parameter indices if using GP
         gp_indices = {}
         if is_gp:
             for key in ('gp_log_sigma', 'gp_log_rho', 'gp_rho',
                         'gp_log_S0', 'gp_log_omega0',
                         'gp_log_jit_sigma'):
-                try:
-                    gp_indices[key] = _jax_param_index(
-                        names, key, filt_idx
-                    )
-                except ValueError:
+                gp_idx = _jax_param_index(names, key, filt_idx)
+                if gp_idx is None:
                     continue
+                gp_indices[key] = gp_idx
 
         # Compute data weight for this filter (default 1.0)
         weight = 1.0
@@ -208,7 +346,7 @@ def build_explicit_jax_loglik_fn(fitter):
         phot_blocks.append((
             t, np.asarray(fitter.data[f'mag{filt_idx + 1}']),
             np.asarray(fitter.data[f'mag_err{filt_idx + 1}']),
-            pvec, idx_b, idx_mag, gp_indices, weight
+            pvec, idx_b, idx_mag, gp_indices, weight, slots
         ))
 
     # --- Build astrometry blocks for each astrometric dataset ---
@@ -218,33 +356,39 @@ def build_explicit_jax_loglik_fn(fitter):
         # Observation times (MJD)
         t = np.asarray(fitter.data[f't_ast{ast_idx + 1}'], dtype=np.float64)
 
-        # Parallax vectors if needed
-        pvec = None
-        if use_parallax:
-            pvec = jax_physics.precompute_parallax_vectors(raL, decL, t)
-
-        # Map this astrometric dataset to its photometric dataset (if any)
+        # Map this astrometric series onto its unified filter.
         phot_idx = (
             mapping[ast_idx] if ast_idx < len(mapping) else ast_idx
         )
-        # Get b_sff / mag_src / dmag indices when photometry is available.
-        idx_b = None
+        obs_loc = 'earth'
+        if phot_idx < len(obs_locations):
+            obs_loc = obs_locations[phot_idx]
+
+        # Parallax table for this filter's observer, not a default Earth.
+        pvec = None
+        if use_parallax:
+            pvec = jax_physics.precompute_parallax_vectors(
+                raL, decL, t, obs_location=obs_loc
+            )
+
+        # b_sff is usage 'both', so it is sampled. Magnitudes may be fixed.
+        idx_b = _jax_param_index(names, 'b_sff', phot_idx)
         idx_mag_src = None
         idx_dmag = None
-        if need_phot:
-            idx_b = _jax_param_index(names, 'b_sff', phot_idx)
-            phot_names = tuple(getattr(model_class, 'phot_param_names', ()))
-            if 'mag_src' in phot_names:
-                idx_mag_src = _jax_param_index(names, 'mag_src', phot_idx)
-            elif 'mag_base' in phot_names:
-                idx_mag_src = _jax_param_index(names, 'mag_base', phot_idx)
-            if 'dmag_Lp_Ls' in phot_names:
-                try:
-                    idx_dmag = _jax_param_index(
-                        names, 'dmag_Lp_Ls', phot_idx
-                    )
-                except ValueError:
-                    idx_dmag = None
+        phot_names = tuple(getattr(model_class, 'phot_param_names', ()))
+        if 'mag_src' in phot_names:
+            idx_mag_src = _jax_param_index(names, 'mag_src', phot_idx)
+        elif 'mag_base' in phot_names:
+            idx_mag_src = _jax_param_index(names, 'mag_base', phot_idx)
+        if 'dmag_Lp_Ls' in phot_names:
+            idx_dmag = _jax_param_index(names, 'dmag_Lp_Ls', phot_idx)
+
+        try:
+            slots = _class_vector_slots(
+                names, base_names, filt_names, fixed, phot_idx
+            )
+        except ValueError:
+            return None, None
 
         # Compute data weight for this astrometric dataset (default 1.0)
         weight_idx = fitter.n_phot_sets + ast_idx
@@ -258,11 +402,8 @@ def build_explicit_jax_loglik_fn(fitter):
             np.asarray(fitter.data[f'ypos{ast_idx + 1}']),
             np.asarray(fitter.data[f'xpos_err{ast_idx + 1}']),
             np.asarray(fitter.data[f'ypos_err{ast_idx + 1}']),
-            pvec, idx_b, idx_mag_src, idx_dmag, weight
+            pvec, idx_b, idx_mag_src, idx_dmag, weight, slots
         ))
-
-    # Indices that select "base" parameters out of the full input parameter vector
-    base_idx = jnp.asarray(base_indices, dtype=jnp.int32)
 
     def log_likely(param_vec):
         """
@@ -279,20 +420,24 @@ def build_explicit_jax_loglik_fn(fitter):
             The total log-likelihood for the observations given param_vec.
         """
         param_vec = jnp.asarray(param_vec, dtype=jnp.float64)
-
-        # Select "base" parameters for the core model
-        base_vec = param_vec[base_idx]
         lnL = jnp.asarray(0.0, dtype=jnp.float64)
 
-        # Compute sum of log-likelihood contributions from each photometric dataset
+        # Each filter rebuilds the unsuffixed class vector so xS0 and
+        # the other filt parameters match that observer.
         for (t, mag_obs, mag_err, pvec, idx_b, idx_mag, gp_indices,
-             weight) in phot_blocks:
+             weight, slots) in phot_blocks:
             assert phot_method is not None
-            b_sff = param_vec[idx_b]
+            base_vec = _assemble_class_vector(param_vec, slots)
+            b_sff = param_vec[idx_b] if idx_b is not None else 1.0
 
-            # Handle scalar or pair of magnitude parameters (e.g. mag_src_pri/sec)
+            # A missing magnitude index is a fixed slot (value 0).
             if isinstance(idx_mag, tuple):
-                mag_param = tuple(param_vec[idx] for idx in idx_mag)
+                mag_param = tuple(
+                    param_vec[idx] if idx is not None else 0.0
+                    for idx in idx_mag
+                )
+            elif idx_mag is None:
+                mag_param = 0.0
             else:
                 mag_param = param_vec[idx_mag]
 
@@ -317,13 +462,17 @@ def build_explicit_jax_loglik_fn(fitter):
             ast_accepts_dmag = 'dmag_Lp_Ls' in ast_sig.parameters
 
         for (t, x_obs, y_obs, x_err, y_err, pvec, idx_b, idx_mag_src,
-             idx_dmag, weight) in ast_blocks:
+             idx_dmag, weight, slots) in ast_blocks:
             assert ast_method is not None
+            base_vec = _assemble_class_vector(param_vec, slots)
             b_sff = param_vec[idx_b] if idx_b is not None else 1.0
             # Optional luminous-lens / mag args for PSBL-style methods.
             kwargs = dict(b_sff=b_sff, parallax_vectors=pvec)
-            if ast_accepts_mag and idx_mag_src is not None:
-                mag_value = param_vec[idx_mag_src]
+            if ast_accepts_mag:
+                if idx_mag_src is None:
+                    mag_value = jnp.asarray(0.0, dtype=jnp.float64)
+                else:
+                    mag_value = param_vec[idx_mag_src]
                 # Convert mag_base → mag_src when needed.
                 phot_names = tuple(
                     getattr(model_class, 'phot_param_names', ())
@@ -344,7 +493,8 @@ def build_explicit_jax_loglik_fn(fitter):
     # Compile the likelihood using JAX JIT
     result = jax.jit(log_likely), None
 
-    fitter._explicit_jax_loglik_cache = result  # Cache for future calls
+    fitter._explicit_jax_loglik_cache = result
+    fitter._explicit_jax_loglik_cache_key = cache_key
 
     return result
 
@@ -701,104 +851,167 @@ class MicrolensSolver(Solver):
                                    'run %s' % str(self.model_class))
 
     def setup_params(self):
-        # Number of photometry sets
+        """Build the sampled cube and the unified filter index.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        ``map_phot_idx_to_ast_idx[j]`` is the unified filter index of
+        astrometric series ``j``. It matches the old photometric index
+        when that series is also in ``phot_data``. Fixed slots are
+        omitted without renumbering and stored on
+        ``fixed_dataset_params``.
+        """
+        use_phot = (
+            self.model_class.paramPhotFlag or self.model_class.photometryFlag
+        )
+        use_ast = (
+            self.model_class.paramAstromFlag or self.model_class.astrometryFlag
+        )
+
+        # Count data arrays only for the quantities this model fits.
         n_phot_sets = 0
-        # Number of astrometry sets
         n_ast_sets = 0
+        if use_phot:
+            n_phot_sets = sum(
+                1 for key in self.data.keys() if 't_phot' in key
+            )
+        if use_ast:
+            n_ast_sets = sum(
+                1 for key in self.data.keys() if 't_ast' in key
+            )
 
-        phot_params = []
+        if 'phot_data' in self.data and use_phot:
+            phot_names = list(self.data['phot_data'])
+            if len(phot_names) != n_phot_sets:
+                raise ValueError(
+                    'phot_data length does not match the number of '
+                    't_phot arrays'
+                )
+        else:
+            phot_names = ['phot%d' % (i + 1) for i in range(n_phot_sets)]
+
+        if 'ast_data' in self.data and use_ast:
+            ast_names = list(self.data['ast_data'])
+            if len(ast_names) != n_ast_sets:
+                raise ValueError(
+                    'ast_data length does not match the number of '
+                    't_ast arrays'
+                )
+        else:
+            ast_names = ['ast%d' % (i + 1) for i in range(n_ast_sets)]
+
+        (
+            filt_names, has_phot, has_ast, phot_series, ast_series,
+        ) = build_filt_index(phot_names, ast_names)
+
+        # Unified index of each astrometric series, in ast_data order.
+        filt_for_ast = [None] * n_ast_sets
+        for k, series in enumerate(ast_series):
+            if series is not None:
+                filt_for_ast[series] = k
+
+        # Optional photometric names stay interleaved with the last
+        # filter run. The suffix is the unified filter index.
+        optional_by_filter = [[] for _ in range(len(filt_names))]
+        warned_phot = False
+        for i, name in enumerate(phot_names):
+            k = filt_names.index(name)
+            suffix = str(k + 1)
+            for opt_phot_name in self.model_class.phot_optional_param_names:
+                use = self.use_phot_optional_params
+                if isinstance(use, (list, np.ndarray)):
+                    enabled = bool(use[i])
+                else:
+                    enabled = bool(use)
+                    if (not enabled) and (not warned_phot):
+                        msg = 'WARNING: Your model supports optional '
+                        msg += 'photometric parameters; but you have '
+                        msg += 'disabled them for all filters. '
+                        msg += 'Consider using a simpler model instead.'
+                        print(msg)
+                        warned_phot = True
+                if not enabled:
+                    continue
+                if self.single_gp is True and i > 0:
+                    continue
+                optional_by_filter[k].append(opt_phot_name + suffix)
+
+            if self.add_error_on_photometry:
+                add = self.add_error_on_photometry
+                if isinstance(add, (list, np.ndarray)):
+                    if add[i]:
+                        optional_by_filter[k].append('add_err' + suffix)
+                else:
+                    optional_by_filter[k].append('add_err' + suffix)
+
+            if self.multiply_error_on_photometry:
+                mult = self.multiply_error_on_photometry
+                if isinstance(mult, (list, np.ndarray)):
+                    if mult[i]:
+                        optional_by_filter[k].append('mult_err' + suffix)
+                else:
+                    optional_by_filter[k].append('mult_err' + suffix)
+
+        # Astrometric optional suffixes stay in ast_data order.
         ast_params = []
+        warned_ast = False
+        for j in range(n_ast_sets):
+            for opt_ast_name in self.model_class.ast_optional_param_names:
+                use = self.use_ast_optional_params
+                if isinstance(use, (list, np.ndarray)):
+                    enabled = bool(use[j])
+                else:
+                    enabled = bool(use)
+                    if (not enabled) and (not warned_ast):
+                        msg = 'WARNING: Your model supports optional '
+                        msg += 'astrometric parameters; but you have '
+                        msg += 'disabled them for all filters. '
+                        msg += 'Consider using a simpler model instead.'
+                        print(msg)
+                        warned_ast = True
+                if not enabled:
+                    continue
+                ast_params.append(opt_ast_name + str(j + 1))
 
-        # The indices in map_phot_idx_to_ast_idx map phot to astrom
-        # map_phot_idx_to_ast_idx <--> [0, 1, 2, ... len(map_phot_idx_to_ast_idx)-1]
-        map_phot_idx_to_ast_idx = []
-
-        for key in self.data.keys():
-            if 't_phot' in key and (self.model_class.paramPhotFlag or self.model_class.photometryFlag):
-                n_phot_sets += 1
-
-                # Photometry parameters
-                for phot_name in self.model_class.phot_param_names:
-                    phot_params.append(phot_name + str(n_phot_sets))
-
-                # Optional photometric parameters -- not all filters
-                for opt_phot_name in self.model_class.phot_optional_param_names:
-                    if isinstance(self.use_phot_optional_params, (list, np.ndarray)):
-                        if self.use_phot_optional_params[n_phot_sets-1]:
-                            if self.single_gp is True and n_phot_sets > 1:
-                                continue
-                            else:
-                                phot_params.append(opt_phot_name + str(n_phot_sets))
-                    # Case: single value -- set for all filters. 
-                    else:
-                        if self.use_phot_optional_params:
-                            if self.single_gp is True and n_phot_sets > 1:
-                                continue
-                            else:
-                                phot_params.append(opt_phot_name + str(n_phot_sets))
-                        else:
-                            msg = 'WARNING: Your model supports optional photometric parameters; '
-                            msg += 'but you have disabled them for all filters. '
-                            msg += 'Consider using a simpler model instead.'
-                            print(msg)
-                            
-                # Additive error parameters (not on the model) -- not all filters
-                if self.add_error_on_photometry:
-                    # Case: List -- control additive error on each filter.
-                    if isinstance(self.add_error_on_photometry, (list, np.ndarray)):
-                        if self.add_error_on_photometry[n_phot_sets-1]:
-                            phot_params.append('add_err' + str(n_phot_sets))
-                    # Case: single value -- set for all filters. 
-                    else:
-                        phot_params.append('add_err' + str(n_phot_sets))
-                    
-                # Multiplicative error parameters (not on the model) -- not all filters
-                if self.multiply_error_on_photometry:
-                    # Case: List -- control additive error on each filter.
-                    if isinstance(self.multiply_error_on_photometry, (list, np.ndarray)):
-                        if self.multiply_error_on_photometry[n_phot_sets-1]:
-                            phot_params.append('mult_err' + str(n_phot_sets))
-                    # Case: single value -- set for all filters. 
-                    else:
-                        phot_params.append('mult_err' + str(n_phot_sets))
-
-            if 't_ast' in key and (self.model_class.paramAstromFlag or self.model_class.astrometryFlag):
-                n_ast_sets += 1
-
-                # Optional astrometric parameters -- not all filters
-                for opt_ast_name in self.model_class.ast_optional_param_names:
-                    if isinstance(self.use_ast_optional_params, (list, np.ndarray)):
-                        if self.use_ast_optional_params[n_ast_sets-1]:
-                            ast_params.append(opt_ast_name + str(n_ast_sets))
-                    # Case: single value -- set for all filters. 
-                    else:
-                        if self.use_ast_optional_params:
-                            ast_params.append(opt_ast_name + str(n_ast_sets))
-                        else:
-                            msg = 'WARNING: Your model supports optional astrometric parameters; '
-                            msg += 'but you have disabled them for all filters. '
-                            msg += 'Consider using a simpler model instead.'
-                            print(msg)
-                
-        # The indices in map_phot_idx_to_ast_idx map phot to astrom
-        # map_phot_idx_to_ast_idx <--> [0, 1, 2, ... len(map_phot_idx_to_ast_idx)-1]
-        if n_ast_sets > 0 and n_phot_sets > 0:
-            for aa in self.data['ast_data']:
-                try:
-                    idx = self.data['phot_data'].index(aa)
-                    map_phot_idx_to_ast_idx.append(idx)
-                except ValueError:
-                    print('*** CHECK YOUR INPUT! All astrometry data must have a corresponding photometry data set! ***')
-                    raise
+        expanded = expand_fitter_names(
+            self.model_class.fitter_param_names,
+            self.model_class.filt_param_names,
+            len(filt_names),
+        )
+        sampled, fixed = fixed_slots(
+            expanded,
+            self.model_class.filt_param_names,
+            self.model_class.filt_param_usage,
+            has_phot,
+            has_ast,
+        )
+        self.fitter_param_names = interleave_optional(
+            sampled,
+            self.model_class.fitter_param_names,
+            self.model_class.filt_param_names,
+            len(filt_names),
+            optional_by_filter,
+            ast_params,
+        )
 
         self.n_phot_sets = n_phot_sets
         self.n_ast_sets = n_ast_sets
-        self.map_phot_idx_to_ast_idx = map_phot_idx_to_ast_idx
-        #import pdb
-        #pdb.set_trace()
-#        print("Fitter new", self.model_class.fitter_param_names)
-        self.fitter_param_names = self.model_class.fitter_param_names + \
-                                  phot_params + ast_params
+        self.n_filters = len(filt_names)
+        self.filt_names = list(filt_names)
+        self.has_phot = has_phot
+        self.has_ast = has_ast
+        self.phot_series = phot_series
+        self.ast_series = ast_series
+        self.fixed_dataset_params = fixed
+        self.map_phot_idx_to_ast_idx = filt_for_ast
+        self.obs_locations = resolve_obs_locations(
+            self.data.get('obsLocation', None), filt_names
+        )
+
 
         # Is this necessary?
         if len(self.model_class.fixed_param_names) > 0:
@@ -927,35 +1140,49 @@ class MicrolensSolver(Solver):
                 )
 
             elif prior_type == 'make_t0_gen':
-                # Hard-coded to use the first data set to set the t0 prior.
-                self.priors[param_name] = make_t0_gen(
-                    param_name, self.data['t_phot1'], self.data['mag1'],
-                    stats_pkg=stats_pkg
-                )
+                if self.n_phot_sets:
+                    self.priors[param_name] = make_t0_gen(
+                        param_name, self.data['t_phot1'], self.data['mag1'],
+                        stats_pkg=stats_pkg
+                    )
+                else:
+                    times = np.asarray(self.data['t_ast1'], dtype=float)
+                    self.priors[param_name] = make_gen(
+                        float(np.min(times)), float(np.max(times))
+                    )
 
             elif prior_type == 'make_xS0_gen':
-
-                if param_name == 'xS0_E':
-                    pos = self.data['xpos1']
-
-                elif param_name == 'xS0_N':
-                    pos = self.data['ypos1']
-
+                # The suffix is the unified filter. Read that series.
+                k = 0 if filt_index is None else int(filt_index) - 1
+                series = self.ast_series[k]
+                if series is None:
+                    raise ValueError(
+                        'xS0 prior for a filter with no astrometry: '
+                        + param_name
+                    )
+                if priors_name == 'xS0_E':
+                    pos = self.data['xpos' + str(int(series) + 1)]
+                elif priors_name == 'xS0_N':
+                    pos = self.data['ypos' + str(int(series) + 1)]
+                else:
+                    raise ValueError(param_name)
                 self.priors[param_name] = make_xS0_gen(
                     param_name, pos, stats_pkg=stats_pkg
                 )
 
             elif prior_type == 'make_muS_EN_gen':
-
+                series = longest_ast_series(self.data, self.ast_series)
+                if series is None:
+                    series = 0
                 if param_name == 'muS_E':
-                    pos = self.data['xpos1']
-
+                    pos = self.data['xpos' + str(int(series) + 1)]
                 elif param_name == 'muS_N':
-                    pos = self.data['ypos1']
-
+                    pos = self.data['ypos' + str(int(series) + 1)]
+                else:
+                    raise ValueError(param_name)
                 self.priors[param_name] = make_muS_EN_gen(
-                    param_name, self.data['t_ast1'], pos,
-                    scale_factor=muS_scale_factor, stats_pkg=stats_pkg
+                    param_name, self.data['t_ast' + str(int(series) + 1)],
+                    pos, scale_factor=muS_scale_factor, stats_pkg=stats_pkg
                 )
             elif prior_type == 'make_piS':
                 self.priors[param_name] = make_piS(
@@ -963,45 +1190,77 @@ class MicrolensSolver(Solver):
                 )
 
             elif prior_type == 'make_mag_base_gen':
+                k = 0 if filt_index is None else int(filt_index) - 1
+                series = self.phot_series[k]
                 self.priors[param_name] = make_mag_base_gen(
-                    param_name, self.data['mag' + str(filt_index)],
+                    param_name, self.data['mag' + str(int(series) + 1)],
                     stats_pkg=stats_pkg
                 )
 
             elif prior_type == 'make_mag_src_gen':
-                self.priors[param_name] = make_mag_src_gen(
-                    param_name, self.data['mag' + str(filt_index)],
-                    stats_pkg=stats_pkg
-                )
+                k = 0 if filt_index is None else int(filt_index) - 1
+                if priors_name == 'mag_src_sec' and not bool(self.has_phot[k]):
+                    self.priors[param_name] = make_gen(-5.0, 5.0)
+                else:
+                    series = self.phot_series[k]
+                    self.priors[param_name] = make_mag_src_gen(
+                        param_name, self.data['mag' + str(int(series) + 1)],
+                        stats_pkg=stats_pkg
+                    )
                 
         return
 
     def get_model(self, params):
-        params_dict = generate_params_dict(params,
-                                           self.fitter_param_names)
-        if self.fixed_param_names is not None:
-            fixed_params_dict = generate_fixed_params_dict(self.data, 
-                                                           self.fixed_param_names)        
+        """Build a model from sampled values plus fixed filter slots.
 
-            mod = self.model_class(*params_dict.values(), **fixed_params_dict)
+        Parameters
+        ----------
+        params : array_like or dict
+            Sampled values in ``fitter_param_names`` order, or a mapping
+            keyed by those names.
 
+        Returns
+        -------
+        mod : object
+            Model instance. Filter-indexed constructor arguments have
+            length ``n_filters``, including zeros that were not sampled.
+            ``obsLocation`` is the resolved body list.
+        """
+        names = list(self.fitter_param_names)
+        if isinstance(params, (dict, Row)):
+            values = [params[name] for name in names]
         else:
-            #print(self.fitter_param_names)
-            #print(*params_dict.values())
-            mod = self.model_class(*params_dict.values())
+            values = [params[i] for i in range(len(names))]
 
-        # FIXME: Why are we updating params here???
+        arguments = pack_constructor_params(
+            names,
+            values,
+            self.model_class.fitter_param_names,
+            self.model_class.filt_param_names,
+            self.n_filters,
+            self.fixed_dataset_params,
+        )
+        fixed_params_dict = {}
+        if self.fixed_param_names:
+            fixed_params_dict = generate_fixed_params_dict(
+                self.data, self.fixed_param_names
+            )
+        fixed_params_dict = dict(fixed_params_dict)
+        fixed_params_dict['obsLocation'] = list(self.obs_locations)
 
-        if not isinstance(params, (dict, Row)):
+        mod = self.model_class(*arguments, **fixed_params_dict)
 
-            # FIXME: is there better way to do this.
+        # Derived parameters are written back into a positional cube
+        # that already has room for them. A sampled-only list is left
+        # alone; MultiNest allocates the longer cube itself.
+        if (not isinstance(params, (dict, Row))
+                and len(params) >= self.n_params):
             for i, param_name in enumerate(self.additional_param_names):
                 filt_name, filt_idx = split_param_filter_index1(param_name)
-
-                if filt_idx == None:   # Not a multi-filter paramter.
+                if filt_idx is None:
                     params[self.n_dims + i] = getattr(mod, param_name)
                 else:
-                    params[self.n_dims + i] = getattr(mod, filt_name)[filt_idx-1]
+                    params[self.n_dims + i] = getattr(mod, filt_name)[filt_idx - 1]
 
         return mod
 
@@ -1683,6 +1942,31 @@ class MicrolensSolver(Solver):
 
         return pspl_mod_list
 
+    def _write_schema2(self, outroot):
+        """Write the schema-2 sidecar for this fitter.
+
+        Parameters
+        ----------
+        outroot : str
+            Results path without an extension.
+
+        Returns
+        -------
+        None
+        """
+        from bagle.filt_params import write_results_schema2
+
+        write_results_schema2(
+            outroot,
+            getattr(self, 'fitter_param_names', []),
+            getattr(self, 'fixed_dataset_params', {}),
+            getattr(self, 'filt_names', []),
+            getattr(self, 'has_phot', []),
+            getattr(self, 'has_ast', []),
+            getattr(self, 'obs_locations', []),
+        )
+        return None
+
     def load_mnest_results(self, remake_fits=False):
         """Load up the MultiNest results into an astropy table.
         """
@@ -1705,10 +1989,16 @@ class MicrolensSolver(Solver):
                 tab.rename_column('col{0:d}'.format(cc), self.all_param_names[ff])
 
             tab.write(outroot + '.fits', overwrite=True)
+            self._write_schema2(outroot)
         else:
             # Load much faster from fits file.
             tab = Table.read(outroot + '.fits')
 
+        # Old chains store one xS0 / pi_ref_frame for every filter.
+        from bagle.filt_params import adapt_legacy_filter_columns
+
+        n_filters = int(getattr(self, 'n_filters', 1) or 1)
+        tab = adapt_legacy_filter_columns(tab, n_filters)
         return tab
 
     def load_mnest_summary(self, remake_fits=False):
@@ -2902,7 +3192,14 @@ class MicrolensSolverWeighted(MicrolensSolver):
 
                 weight = self.weights[self.n_phot_sets + i]
 
-                lnL_ast_unwgt = model.log_likely_astrometry(t_ast, xpos, ypos, xpos_err, ypos_err)
+                # Unified filter index, including astrometry-only slots.
+                if len(self.map_phot_idx_to_ast_idx) == 0:
+                    filt_idx = i
+                else:
+                    filt_idx = self.map_phot_idx_to_ast_idx[i]
+                lnL_ast_unwgt = model.log_likely_astrometry(
+                    t_ast, xpos, ypos, xpos_err, ypos_err, filt_idx=filt_idx
+                )
                 lnL_ast_i = lnL_ast_unwgt * weight
                 lnL_ast += lnL_ast_i
 
@@ -3828,6 +4125,12 @@ class MicrolensSolverPyMC(MicrolensSolver):
         outroot = self.outputfiles_basename
         if os.path.exists(outroot + '.fits'):
             self._results_table = Table.read(outroot + '.fits')
+            from bagle.filt_params import adapt_legacy_filter_columns
+
+            n_filters = int(getattr(self, 'n_filters', 1) or 1)
+            self._results_table = adapt_legacy_filter_columns(
+                self._results_table, n_filters
+            )
             return self._results_table
 
         raise RuntimeError('No PyMC results found.')
@@ -4749,6 +5052,12 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         outroot = self.outputfiles_basename
         if os.path.exists(outroot + '.fits'):
             self._results_table = Table.read(outroot + '.fits')
+            from bagle.filt_params import adapt_legacy_filter_columns
+
+            n_filters = int(getattr(self, 'n_filters', 1) or 1)
+            self._results_table = adapt_legacy_filter_columns(
+                self._results_table, n_filters
+            )
             return self._results_table
 
         raise RuntimeError('No NumPyro results found.')
@@ -6373,8 +6682,12 @@ def plot_astrometry_multi_filt(data, model, fitter, long_time=False):
             p_mod_unlens_tdat.append( model.get_astrometry_unlensed(t_dat[ff], filt_idx=ff_mod) * 1e3 )
             p_mod_unlens_tmod.append( model.get_astrometry_unlensed(t_mod, filt_idx=ff_mod) * 1e3 )
         else:
-            p_mod_unlens_tdat.append( model.get_astrometry_unlensed(t_dat[ff]) * 1e3 )
-            p_mod_unlens_tmod.append( model.get_astrometry_unlensed(t_mod) * 1e3 )
+            p_mod_unlens_tdat.append(
+                model.get_astrometry_unlensed(t_dat[ff], filt_idx=ff_mod) * 1e3
+            )
+            p_mod_unlens_tmod.append(
+                model.get_astrometry_unlensed(t_mod, filt_idx=ff_mod) * 1e3
+            )
 
             
     # Setup colors for each astrometry filter.

@@ -3103,11 +3103,12 @@ def build_jax_phot_likelihood_context(fitter) -> JaxPhotLikelihoodContext | None
     else:
         base_names = PSBL_PHOT_PARAM1_FITTER_NAMES
 
-    # Reject fitters whose leading parameter order does not match.
-    if names[: len(base_names)] != base_names:
+    # Shared geometric names stay unsuffixed. Look them up by name so
+    # the expanded photometric tail does not have to be a prefix.
+    try:
+        base_param_indices = tuple(names.index(name) for name in base_names)
+    except ValueError:
         return None
-
-    base_param_indices = tuple(range(len(base_names)))
 
     # Parallax tables need lens sky coordinates on the host.
     use_parallax = "raL" in fitter.data and "decL" in fitter.data
@@ -3124,10 +3125,16 @@ def build_jax_phot_likelihood_context(fitter) -> JaxPhotLikelihoodContext | None
         mag_err = np.asarray(fitter.data[f"mag_err{filt_1}"], dtype=np.float64)
         weight = float(getattr(fitter, "weights", [1.0] * fitter.n_phot_sets)[i])
 
-        # Optional host-side parallax direction table.
+        # Optional host-side parallax direction table for this observer.
         pvec = None
         if use_parallax:
-            pvec = precompute_parallax_vectors(ra_l, dec_l, t)
+            obs_list = getattr(fitter, "obs_locations", None)
+            loc = "earth"
+            if obs_list is not None and i < len(obs_list):
+                loc = obs_list[i]
+            pvec = precompute_parallax_vectors(
+                ra_l, dec_l, t, obs_location=loc
+            )
 
         # Indices into the full fitter vector for blend and mag_src.
         idx_b = _param_index(names, "b_sff", filt_1 if f"b_sff{filt_1}" in names else None)
@@ -3343,10 +3350,23 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
 
     names = tuple(fitter.fitter_param_names)
     base_names = tuple(fitter.model_class.fitter_param_names)
+    filt_names = set(getattr(fitter.model_class, "filt_param_names", ()) or ())
+    # One class-order vector. Per-filter names use filter 1 when that
+    # suffix is sampled. The explicit builder is the per-filter path.
+    base_indices = []
     try:
-        base_indices = tuple(names.index(name) for name in base_names)
+        for name in base_names:
+            if name in filt_names:
+                key = f"{name}1"
+                if key not in names:
+                    return None
+                base_indices.append(names.index(key))
+            else:
+                base_indices.append(names.index(name))
     except ValueError:
         return None
+    base_indices = tuple(base_indices)
+    obs_list = getattr(fitter, "obs_locations", None)
 
     # Parallax tables need lens sky coordinates when raL/decL are present.
     use_parallax = "raL" in fitter.data and "decL" in fitter.data
@@ -3368,9 +3388,14 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
         x_err = np.asarray(fitter.data[f"xpos_err{ast_filt}"], dtype=np.float64)
         y_err = np.asarray(fitter.data[f"ypos_err{ast_filt}"], dtype=np.float64)
         ast_weight = _fitter_weight(fitter, fitter.n_phot_sets + i)
+        loc = "earth"
+        if obs_list is not None and phot_idx < len(obs_list):
+            loc = obs_list[phot_idx]
         pvec_ast = None
         if use_parallax:
-            pvec_ast = precompute_parallax_vectors(ra_l, dec_l, t_ast)
+            pvec_ast = precompute_parallax_vectors(
+                ra_l, dec_l, t_ast, obs_location=loc
+            )
 
         # Blend index comes from the paired photometry filter.
         idx_b_ast = _param_index(
@@ -3386,7 +3411,9 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
             phot_weight = _fitter_weight(fitter, phot_idx)
             pvec_phot = None
             if use_parallax:
-                pvec_phot = precompute_parallax_vectors(ra_l, dec_l, t_phot)
+                pvec_phot = precompute_parallax_vectors(
+                    ra_l, dec_l, t_phot, obs_location=loc
+                )
             idx_m = _param_index(
                 names, "mag_src", phot_filt if f"mag_src{phot_filt}" in names else None
             )
@@ -3423,9 +3450,14 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
         mag_obs = np.asarray(fitter.data[f"mag{phot_filt}"], dtype=np.float64)
         mag_err = np.asarray(fitter.data[f"mag_err{phot_filt}"], dtype=np.float64)
         phot_weight = _fitter_weight(fitter, phot_idx)
+        loc = "earth"
+        if obs_list is not None and phot_idx < len(obs_list):
+            loc = obs_list[phot_idx]
         pvec_phot = None
         if use_parallax:
-            pvec_phot = precompute_parallax_vectors(ra_l, dec_l, t_phot)
+            pvec_phot = precompute_parallax_vectors(
+                ra_l, dec_l, t_phot, obs_location=loc
+            )
         idx_b = _param_index(
             names, "b_sff", phot_filt if f"b_sff{phot_filt}" in names else None
         )
