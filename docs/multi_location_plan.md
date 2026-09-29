@@ -1532,7 +1532,9 @@ on `convert_helio_geo_*`, and light-travel time.
 
 9. `get_model` writes derived parameters back into a list only when
    that list is at least `n_params` long. A sampled-only vector is
-   left unchanged.
+   left unchanged. A ctypes pointer, which is how PyMultiNest passes
+   the cube, has no `len`; that buffer is the full allocation, so
+   derived values are written into it.
 
 10. The JAX likelihood used by `evaluate_loglik_jax` rebuilds one
     vector in class `fitter_param_names` order for each filter.

@@ -28,8 +28,11 @@ from bagle.filt_params import (
     expand_fitter_names,
     fixed_slots,
     interleave_optional,
+    cube_as_floats,
+    cube_has_derived_room,
     longest_ast_series,
     pack_constructor_params,
+    pack_optional_param_dicts,
     resolve_obs_locations,
 )
 from astropy.table import Table
@@ -819,6 +822,13 @@ class MicrolensSolver(Solver):
             self.n_filters,
             self.fixed_dataset_params,
         )
+        # GP hyperparameters are sampled per filter but the constructor
+        # takes one dictionary per name, keyed by the 0-based index.
+        arguments.extend(pack_optional_param_dicts(
+            names,
+            values,
+            getattr(self.model_class, 'phot_optional_param_names', []),
+        ))
         fixed_params_dict = {}
         if self.fixed_param_names:
             fixed_params_dict = generate_fixed_params_dict(
@@ -831,9 +841,10 @@ class MicrolensSolver(Solver):
 
         # Derived parameters are written back into a positional cube
         # that already has room for them. A sampled-only list is left
-        # alone; MultiNest allocates the longer cube itself.
+        # alone. PyMultiNest passes a ctypes pointer of length n_params,
+        # which has no len(); that buffer does have room.
         if (not isinstance(params, (dict, Row))
-                and len(params) >= self.n_params):
+                and cube_has_derived_room(params, self.n_params)):
             for i, param_name in enumerate(self.additional_param_names):
                 filt_name, filt_idx = split_param_filter_index1(param_name)
                 if filt_idx is None:
@@ -1121,7 +1132,7 @@ class MicrolensSolver(Solver):
                 dtype=np.float64,
             )
         else:
-            vec = np.asarray(cube, dtype=np.float64)
+            vec = cube_as_floats(cube, len(self.fitter_param_names))
         return float(fn(vec))
 
     def grad_loglik_jax(self, cube):
@@ -1156,7 +1167,7 @@ class MicrolensSolver(Solver):
                 dtype=np.float64,
             )
         else:
-            vec = np.asarray(cube, dtype=np.float64)
+            vec = cube_as_floats(cube, len(self.fitter_param_names))
         return np.asarray(jax.grad(fn)(vec), dtype=np.float64)
 
     def callback_plotter(self, nSamples, nlive, nPar,
@@ -3961,25 +3972,42 @@ def plot_params(model):
 
         return pvalue
 
-    for ff in range(len(model.fitter_param_names)):
-        pname = model.fitter_param_names[ff]
-        pvalu = get_param_value(pname)
-
+    # Filter-indexed names now live in fitter_param_names, so b_sff
+    # and xS0_E are sequences. One line per filter, and a length-1
+    # sequence is still printed as a scalar.
+    filt_names = set(getattr(model, 'filt_param_names', []) or [])
+    row = 0
+    for pname in model.fitter_param_names:
         fmt_str = '{0:s} = {1:.2f}'
         if pname.startswith('x'):
             fmt_str = '{0:s} = {1:.4f}'
 
-        #pdb.set_trace()
         if pname == 'thetaE':
-            fmt_str = '{0:s}'
-            ax_lab.text(x0, y0 - (ff + 1) * dy,
+            pvalu = get_param_value(pname)
+            ax_lab.text(x0, y0 - (row + 1) * dy,
                     f'thetaE = {np.around(pvalu, 2)}',
                     fontsize=10)
+            row += 1
+            continue
+
+        if pname in filt_names:
+            values = np.asarray(getattr(model, pname), dtype=float).reshape(-1)
         else:
-            ax_lab.text(x0, y0 - (ff + 1) * dy,
-                        fmt_str.format(pname, pvalu),
+            values = np.asarray(get_param_value(pname), dtype=float).reshape(-1)
+
+        if values.size == 1:
+            ax_lab.text(x0, y0 - (row + 1) * dy,
+                        fmt_str.format(pname, float(values[0])),
                         fontsize=10)
-    nrow = len(model.fitter_param_names)
+            row += 1
+            continue
+
+        for rr, value in enumerate(values):
+            ax_lab.text(x0, y0 - (row + 1) * dy,
+                        fmt_str.format(f'{pname}{rr + 1}', float(value)),
+                        fontsize=10)
+            row += 1
+    nrow = row
     for ff in range(len(model.phot_param_names)):
         pname = model.phot_param_names[ff]
         pvalu = np.array(get_param_value(pname))

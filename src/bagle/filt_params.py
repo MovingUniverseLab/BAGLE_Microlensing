@@ -7,6 +7,7 @@ run of filter-indexed names index-major, then drops fixed slots without
 renumbering the suffixes.
 """
 
+import ctypes
 import json
 import warnings
 
@@ -661,6 +662,110 @@ def pack_constructor_params(sampled_names, sampled_values, class_fitter_names,
         arguments.append(sequence)
 
     return arguments
+
+
+def pack_optional_param_dicts(sampled_names, sampled_values, optional_names):
+    """Group suffixed optional parameters into constructor dictionaries.
+
+    Parameters
+    ----------
+    sampled_names : sequence of str
+        Cube column names, including suffixes.
+    sampled_values : sequence
+        One value per sampled name, in the same order.
+    optional_names : sequence of str
+        Unsuffixed optional names, in constructor order. GP classes
+        declare these on ``phot_optional_param_names``.
+
+    Returns
+    -------
+    dicts : list of dict
+        One dictionary per optional name, keyed by the 0-based filter
+        index. Empty when none of those names were sampled. ``add_err``
+        and ``mult_err`` are not in this list; they stay on the cube
+        and are not constructor arguments.
+
+    Notes
+    -----
+    A missing optional name becomes an empty dictionary so the
+    remaining names stay aligned with the constructor. Values are
+    Python floats. A ctypes pointer's entries are floats already;
+    converting them keeps a NumPy scalar from leaking into the model.
+    """
+    optional = list(optional_names)
+    if not optional:
+        return []
+
+    grouped = {name: {} for name in optional}
+    present = False
+    allowed = set(optional)
+    for name, value in zip(sampled_names, sampled_values):
+        base, filt_index = split_param_filter_index1(name)
+        if filt_index is None or base not in allowed:
+            continue
+        present = True
+        grouped[base][int(filt_index) - 1] = float(value)
+
+    if not present:
+        return []
+    return [grouped[name] for name in optional]
+
+
+def cube_has_derived_room(params, n_params):
+    """Return whether derived parameters can be written into ``params``.
+
+    Parameters
+    ----------
+    params : array_like
+        Positional cube. Mappings are not passed here.
+    n_params : int
+        Sampled names plus derived names. That is the MultiNest
+        allocation.
+
+    Returns
+    -------
+    has_room : bool
+        True for a ctypes pointer. PyMultiNest passes the cube that
+        way: item access works, ``len`` does not, and the buffer is
+        ``n_params`` long. True for a sequence at least that long.
+        False for a shorter sequence, which is left unchanged.
+
+    Notes
+    -----
+    Any other object that supports indexing but not ``len`` is treated
+    as that same MultiNest buffer.
+    """
+    if isinstance(params, ctypes._Pointer):
+        return True
+    try:
+        size = len(params)
+    except TypeError:
+        return True
+    return size >= int(n_params)
+
+
+def cube_as_floats(cube, n):
+    """Copy the first ``n`` cube entries, including a ctypes pointer.
+
+    Parameters
+    ----------
+    cube : array_like
+        Sequence or ctypes pointer. Entry ``i`` is ``cube[i]``.
+    n : int
+        Number of values to read.
+
+    Returns
+    -------
+    values : ndarray, shape (n,)
+        Float64 copy.
+
+    Notes
+    -----
+    ``numpy.asarray`` is not used. A MultiNest pointer has no length
+    and does not wrap as an array.
+    """
+    values = [float(cube[i]) for i in range(int(n))]
+    return np.asarray(values, dtype=np.float64)
 
 
 def last_filt_run(fitter_param_names, filt_param_names):

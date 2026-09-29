@@ -363,6 +363,186 @@ def test_refpar_jax_likelihood_uses_per_filter_pi_ref(monkeypatch):
     return None
 
 
+def _physical_cube(fitter):
+    """Sampled values that keep piE and the GP dictionaries finite.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Solver whose ``fitter_param_names`` set the cube order.
+
+    Returns
+    -------
+    values : list of float
+        One value per sampled name.
+    """
+    defaults = {
+        't0': 57000.0,
+        'u0_amp': 0.1,
+        'tE': 30.0,
+        'thetaE': 0.8,
+        'log10_thetaE': float(np.log10(0.8)),
+        'piS': 0.15,
+        'piE_E': 0.05,
+        'piE_N': 0.05,
+        'xS0_E': 0.0,
+        'xS0_N': 0.0,
+        'muS_E': 0.0,
+        'muS_N': 0.0,
+        'b_sff': 0.9,
+        'mag_src': 19.0,
+        'mag_base': 19.0,
+        'gp_log_sigma': -1.0,
+        'gp_log_rho': 0.5,
+        'gp_log_S0': -2.0,
+        'gp_log_omega0': 0.0,
+        'gp_rho': 1.5,
+        'gp_log_omega04_S0': -6.0,
+        'gp_log_omega0_S0': -2.0,
+        'gp_log_jit_sigma': -4.0,
+        'pi_ref_frame': 0.0,
+        'mL': 1.0,
+        'beta': 0.4,
+        'dL': 4000.0,
+        'dL_dS': 0.5,
+        'muL_E': 1.0,
+        'muL_N': -1.0,
+    }
+    values = []
+    for name in fitter.fitter_param_names:
+        base = name.rstrip('123456789')
+        if base in defaults:
+            values.append(defaults[base])
+            continue
+        raw = fitter.priors[name].ppf(0.5)
+        value = float(np.asarray(raw).ravel()[0])
+        if not np.isfinite(value):
+            value = 1.0
+        values.append(value)
+    return values
+
+
+def _ctypes_cube(values, n_params):
+    """A PyMultiNest-style pointer plus the backing buffer.
+
+    Parameters
+    ----------
+    values : sequence of float
+        Sampled parameters. Derived slots stay zero.
+    n_params : int
+        Full MultiNest length, including derived parameters.
+
+    Returns
+    -------
+    pointer : ctypes.POINTER(ctypes.c_double)
+        What ``pymultinest`` passes into the likelihood.
+    buffer : ctypes.Array
+        The allocation ``pointer`` refers to. Keep this alive.
+    """
+    import ctypes
+
+    buf = (ctypes.c_double * int(n_params))()
+    for i, value in enumerate(values):
+        buf[i] = float(value)
+    pointer = ctypes.cast(buf, ctypes.POINTER(ctypes.c_double))
+    return pointer, buf
+
+
+def test_get_model_accepts_ctypes_multinest_cube():
+    """A ctypes cube builds the model and receives derived parameters."""
+    import ctypes
+
+    data = make_data(['ogle'], ['ogle'])
+    fitter = _solver(data, model.PSPL_PhotAstrom_noPar_Param1)
+    sampled = _physical_cube(fitter)
+    pointer, buf = _ctypes_cube(sampled, fitter.n_params)
+    # This is the TypeError on 3ecd079: LP_c_double has no len().
+    with pytest.raises(TypeError):
+        len(pointer)
+    assert isinstance(pointer, ctypes._Pointer)
+
+    mod = fitter.get_model(pointer)
+    assert np.isfinite(mod.t0)
+    written = [pointer[fitter.n_dims + i]
+               for i in range(len(fitter.additional_param_names))]
+    assert any(np.isfinite(value) and value != 0.0 for value in written)
+
+    # A sampled-only list is not extended.
+    short = list(sampled)
+    fitter.get_model(short)
+    assert len(short) == fitter.n_dims
+
+    lnL = float(fitter.log_likely(pointer))
+    assert np.isfinite(lnL)
+
+    from bagle import model_fitter_jax
+    jax_fit = model_fitter_jax.MicrolensSolver(
+        data,
+        model_fitter_jax.mmodel.PSPL_PhotAstrom_noPar_Param1,
+        outputfiles_basename='/tmp/bagle_ctypes_jax_',
+        verbose=False,
+    )
+    jax_pointer, _jax_buf = _ctypes_cube(
+        _physical_cube(jax_fit), jax_fit.n_params
+    )
+    jax_mod = jax_fit.get_model(jax_pointer)
+    assert np.isfinite(jax_mod.t0)
+    ln_jax = float(jax_fit.log_likely(jax_pointer))
+    assert np.isfinite(ln_jax)
+    np.testing.assert_allclose(ln_jax, lnL, rtol=1e-5, atol=1e-4)
+    return None
+
+
+def test_gp_get_model_passes_optional_dicts():
+    """GP hyperparameters reach the constructor as per-filter dicts."""
+    cases = [
+        (
+            ['ogle'],
+            [],
+            model.PSPL_Phot_Par_GP_Param2,
+            'PSPL_Phot_Par_GP_Param2',
+        ),
+        (
+            ['ogle'],
+            ['ogle'],
+            model.PSPL_PhotAstrom_Par_GP_Param2,
+            'PSPL_PhotAstrom_Par_GP_Param2',
+        ),
+    ]
+    from bagle import model_fitter_jax
+
+    for phot, ast, numpy_cls, jax_name in cases:
+        data = make_data(phot, ast)
+        fitter = _solver(data, numpy_cls)
+        assert any(name.startswith('gp_') for name in fitter.fitter_param_names)
+        pointer, _buf = _ctypes_cube(
+            _physical_cube(fitter), fitter.n_params
+        )
+        mod = fitter.get_model(pointer)
+        assert isinstance(mod.gp_log_sigma, dict)
+        assert 0 in mod.gp_log_sigma
+        assert list(mod.use_gp_phot) == [True]
+        lnL = float(fitter.log_likely(pointer))
+        assert np.isfinite(lnL)
+
+        jax_cls = getattr(model_fitter_jax.mmodel, jax_name)
+        jax_fit = model_fitter_jax.MicrolensSolver(
+            data,
+            jax_cls,
+            outputfiles_basename='/tmp/bagle_gp_jax_',
+            verbose=False,
+        )
+        jax_pointer, _jax_buf = _ctypes_cube(
+            _physical_cube(jax_fit), jax_fit.n_params
+        )
+        jax_mod = jax_fit.get_model(jax_pointer)
+        assert isinstance(jax_mod.gp_log_sigma, dict)
+        assert 0 in jax_mod.gp_log_sigma
+        ln_jax = float(jax_fit.log_likely(jax_pointer))
+        assert np.isfinite(ln_jax)
+    return None
+
+
 def test_auto_observer_names():
     """Catalog auto-mapping sends Spitzer off Earth and leaves OGLE."""
     from bagle.data import _auto_observer
