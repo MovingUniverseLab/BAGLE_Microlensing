@@ -1,5 +1,6 @@
 """Cube expansion, mixed filters, observers, and the legacy loader."""
 
+import ctypes
 import os
 import warnings
 
@@ -12,6 +13,7 @@ from bagle import model_fitter
 from bagle.filt_params import (
     adapt_legacy_filter_columns,
     expand_fitter_names,
+    prior_draw_scalar,
 )
 
 
@@ -169,6 +171,65 @@ def test_unused_suffix_prior_warns():
     jax_fit.priors['xS0_E1'] = model_fitter.make_gen(-1e-4, 1e-4)
     with pytest.warns(UserWarning, match='xS0_E1'):
         jax_fit._check_b_sff_upper_bound()
+    return None
+
+
+class _ArrayPPF:
+    """Prior whose ppf returns a fixed array."""
+
+    def __init__(self, draw):
+        self.draw = draw
+
+    def ppf(self, unit):
+        return self.draw
+
+
+def _ctypes_unit_cube(n):
+    """A PyMultiNest-style cube of unit-interval doubles."""
+    return (ctypes.c_double * int(n))(*([0.5] * int(n)))
+
+
+def test_prior_writes_size1_ppf_into_ctypes_cube():
+    """A length-1 ppf is a Python float in the MultiNest cube."""
+    data = make_data(['ogle'], ['ogle'])
+    fitter = _solver(data, model.PSPL_PhotAstrom_Par_Param1)
+    # b_sff / mag_src from fake data are often np.array([value]).
+    wrapped = model_fitter.make_gen(np.array([0.2]), np.array([0.4]))
+    draw = wrapped.ppf(0.5)
+    assert np.asarray(draw).shape == ()
+    assert type(prior_draw_scalar(draw, 'b_sff1')) is float
+
+    fitter.priors['mL'] = _ArrayPPF(np.array([3.5]))
+    raw = _ctypes_unit_cube(len(fitter.fitter_param_names))
+    fitter.Prior(raw)
+    idx = list(fitter.fitter_param_names).index('mL')
+    assert raw[idx] == pytest.approx(3.5)
+    assert type(raw[idx]) is float
+
+    # The multi-location origin is length 3. That draw is not one slot.
+    vector = np.repeat(0.0, 3)
+    wide = model_fitter.make_gen(vector - 1e-4, vector + 1e-4)
+    assert np.asarray(wide.ppf(0.5)).shape == (3,)
+    with pytest.raises(ValueError, match='xS0_E3'):
+        prior_draw_scalar(wide.ppf(0.5), 'xS0_E3')
+
+    fitter.priors['mL'] = _ArrayPPF(np.zeros(3))
+    with pytest.raises(ValueError, match='mL'):
+        fitter.Prior(raw)
+
+    from bagle import model_fitter_jax
+    jax_fit = model_fitter_jax.MicrolensSolver(
+        data,
+        model_fitter_jax.mmodel.PSPL_PhotAstrom_Par_Param1,
+        outputfiles_basename='/tmp/bagle_prior_scalar_',
+        verbose=False,
+    )
+    jax_fit.priors['mL'] = _ArrayPPF(np.array([4.5]))
+    jax_raw = _ctypes_unit_cube(len(jax_fit.fitter_param_names))
+    jax_fit.Prior(jax_raw)
+    jax_idx = list(jax_fit.fitter_param_names).index('mL')
+    assert jax_raw[jax_idx] == pytest.approx(4.5)
+    assert type(jax_raw[jax_idx]) is float
     return None
 
 

@@ -31,6 +31,8 @@ from bagle.filt_params import (
     interleave_optional,
     cube_as_floats,
     cube_has_derived_room,
+    prior_draw_scalar,
+    scalar_bound,
     longest_ast_series,
     pack_constructor_params,
     pack_optional_param_dicts,
@@ -1345,16 +1347,47 @@ class MicrolensSolver(Solver):
     # FIXME: Is there a reason Prior takes ndim and nparams when those aren't used?
     # Is it the same reason as LogLikelihood?
     def Prior(self, cube, ndim=None, nparams=None):
+        """Map the unit cube through each parameter's prior.
+
+        Parameters
+        ----------
+        cube : array_like
+            Unit-interval values, one per sampled name. PyMultiNest
+            passes this as a ctypes pointer.
+        ndim, nparams : int, optional
+            Unused. PyMultiNest supplies them.
+
+        Returns
+        -------
+        cube : array_like
+            The same object, with one physical value written per slot.
+        """
         for i, param_name in enumerate(self.fitter_param_names):
-            cube[i] = self.priors[param_name].ppf(cube[i])
+            # A length-1 ppf is one number wrapped in an array.
+            # A longer draw cannot be stored in one ctypes slot.
+            draw = self.priors[param_name].ppf(cube[i])
+            cube[i] = prior_draw_scalar(draw, param_name)
 
         return cube
 
 
     def Prior_copy(self, cube):
+        """Copy ``cube`` and write physical prior draws into the copy.
+
+        Parameters
+        ----------
+        cube : array_like
+            Unit-interval values with a ``copy`` method.
+
+        Returns
+        -------
+        cube_copy : ndarray
+            Physical values, with room for additional parameters.
+        """
         cube_copy = cube.copy()
         for i, param_name in enumerate(self.fitter_param_names):
-            cube_copy[i] = self.priors[param_name].ppf(cube[i])
+            draw = self.priors[param_name].ppf(cube[i])
+            cube_copy[i] = prior_draw_scalar(draw, param_name)
 
         # Append on additional parameters.
         add_params = np.zeros(len(self.additional_param_names), dtype='float')
@@ -1380,9 +1413,10 @@ class MicrolensSolver(Solver):
         for i, param_name in enumerate(self.fitter_param_names):
             if param_name in self.post_param_names:
                 pdx = self.post_param_names.index(param_name)
-                cube[i] = post_params[pdx]
+                draw = post_params[pdx]
             else:
-                cube[i] = self.priors[param_name].ppf(cube[i])
+                draw = self.priors[param_name].ppf(cube[i])
+            cube[i] = prior_draw_scalar(draw, param_name)
 
         return cube
 
@@ -1430,8 +1464,21 @@ class MicrolensSolver(Solver):
         return lnL
     
     def dyn_prior(self, cube):
+        """Map a dynesty unit cube through each parameter's prior.
+
+        Parameters
+        ----------
+        cube : array_like
+            Unit-interval values, one per sampled name.
+
+        Returns
+        -------
+        cube : array_like
+            The same object, with one physical value per slot.
+        """
         for i, param_name in enumerate(self.fitter_param_names):
-            cube[i] = self.priors[param_name].ppf(cube[i])
+            draw = self.priors[param_name].ppf(cube[i])
+            cube[i] = prior_draw_scalar(draw, param_name)
 
         return cube
 
@@ -5196,8 +5243,9 @@ def make_gen(param_name, min, max, stats_pkg='scipy'):
     ----------
     param_name : str
         Parameter name (used by PyMC RVs; unused for scipy/numpyro).
-    min, max : float
-        Inclusive lower and upper bounds.
+    min, max : float or array_like
+        Inclusive bounds. A length-1 array is stored as a Python
+        float. A longer array stays vectorized on the scipy path.
     stats_pkg : {'scipy', 'pymc', 'numpyro'}, optional
         Statistics backend.
 
@@ -5206,13 +5254,17 @@ def make_gen(param_name, min, max, stats_pkg='scipy'):
     prior
         Frozen scipy dist, PyMC RV, or NumPyro distribution.
     """
+    # A length-1 bound is one number. A longer array stays vectorized
+    # on the scipy path; NumPyro and PyMC still need scalars.
+    lo = scalar_bound(min)
+    hi = scalar_bound(max)
     if stats_pkg == 'scipy':
-        return scipy.stats.uniform(loc=min, scale=max - min)
+        return scipy.stats.uniform(loc=lo, scale=hi - lo)
     elif stats_pkg == 'pymc':
-        return pm.Uniform(param_name, lower=min, upper=max)
+        return pm.Uniform(param_name, lower=lo, upper=hi)
     elif stats_pkg == 'numpyro':
         import numpyro.distributions as dist
-        return dist.Uniform(float(min), float(max))
+        return dist.Uniform(float(lo), float(hi))
     _unsupported_stats_pkg(stats_pkg)
 
 

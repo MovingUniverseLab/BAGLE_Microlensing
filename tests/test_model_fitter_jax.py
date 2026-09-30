@@ -2353,13 +2353,21 @@ def test_multi_obsLocation(resume=False, verbose=False):
     # This simulation's astrometry is the third photometric filter.
     fitter.priors['mL'] = model_fitter.make_gen('mL', p_in['mL']-1, p_in['mL']+1)
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-1, p_in['t0']+1)
+    # The simulator stores one East/North origin per filter. The cube
+    # samples only the astrometric filter, so the prior is that
+    # filter's scalar. The whole vector makes ppf return an array.
+    xE = np.asarray(p_in['xS0_E'], dtype=float).reshape(-1)
+    xN = np.asarray(p_in['xS0_N'], dtype=float).reshape(-1)
     for filt in fitter.map_phot_idx_to_ast_idx:
-        suffix = int(filt) + 1
+        k = int(filt)
+        suffix = k + 1
+        e0 = float(xE[k])
+        n0 = float(xN[k])
         fitter.priors[f'xS0_E{suffix}'] = model_fitter.make_gen(
-            'xS0_E', p_in['xS0_E'] - 1e-4, p_in['xS0_E'] + 1e-4
+            'xS0_E', e0 - 1e-4, e0 + 1e-4
         )
         fitter.priors[f'xS0_N{suffix}'] = model_fitter.make_gen(
-            'xS0_N', p_in['xS0_N'] - 1e-4, p_in['xS0_N'] + 1e-4
+            'xS0_N', n0 - 1e-4, n0 + 1e-4
         )
     fitter.priors['beta'] = model_fitter.make_gen('beta', p_in['beta']-0.01, p_in['beta']+0.01)
     fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', p_in['muL_E']-1e-3, p_in['muL_E']+1e-3)

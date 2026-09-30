@@ -794,6 +794,65 @@ def warn_unmatched_suffixed_priors(priors, fitter_param_names):
     return None
 
 
+def scalar_bound(value):
+    """Return a Python float when a bound is one number.
+
+    Parameters
+    ----------
+    value : float or array_like
+        Lower or upper edge passed to a prior generator. A length-1
+        array is the scalar produced by ``np.array([x])``.
+
+    Returns
+    -------
+    bound : float or array_like
+        ``float`` when ``value`` has one element. A longer sequence
+        is returned unchanged, so a vectorized distribution stays
+        vectorized.
+
+    Notes
+    -----
+    One cube slot cannot store a vector draw. ``prior_draw_scalar``
+    raises when ``ppf`` returns more than one value.
+    """
+    arr = np.asarray(value, dtype=float)
+    if arr.size == 1:
+        return float(arr.reshape(-1)[0])
+    return value
+
+
+def prior_draw_scalar(value, name):
+    """Turn one prior draw into a Python float for a cube slot.
+
+    Parameters
+    ----------
+    value : float or array_like
+        Result of ``prior.ppf`` or one posterior sample.
+    name : str
+        Cube parameter this draw belongs to.
+
+    Returns
+    -------
+    draw : float
+        The single value. A length-1 array is unwrapped. A NumPy
+        scalar is converted with ``float`` so a ctypes ``c_double``
+        slot can store it.
+
+    Raises
+    ------
+    ValueError
+        If ``value`` does not contain exactly one element. A
+        multi-element draw is not reduced to its first entry.
+    """
+    arr = np.asarray(value, dtype=float).reshape(-1)
+    if arr.size != 1:
+        raise ValueError(
+            f"Prior for {name!r} returned {int(arr.size)} values; "
+            "each cube parameter needs one scalar."
+        )
+    return float(arr[0])
+
+
 def cube_as_floats(cube, n):
     """Copy the first ``n`` cube entries, including a ctypes pointer.
 

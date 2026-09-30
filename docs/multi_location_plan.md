@@ -1583,3 +1583,10 @@ on `convert_helio_geo_*`, and light-travel time.
     and is not in `fitter_param_names` produces a `UserWarning`.
     The default prior on the real cube name is left in place.
     Unsuffixed keys are not checked.
+
+19. `Prior` writes one Python float into each cube slot. A length-1
+    `ppf` result is unwrapped. A longer result raises `ValueError`
+    and is not reduced to its first element. `make_gen` stores a
+    length-1 bound as a Python float. A per-filter origin vector,
+    such as the length-3 `xS0_E` from the multi-location simulator,
+    is not a legal bound for one sampled suffix.
