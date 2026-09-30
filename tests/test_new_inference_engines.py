@@ -1,8 +1,9 @@
 """Fast end-to-end checks for the extra microlensing inference engines.
 
-DEMetropolisZ, nautilus, pocoMC, and replica exchange are run on a tiny
-PSPL photometry-only light curve. A shorter photometry+astrometry run
-covers the joint likelihood when the engine is cheap enough.
+DEMetropolisZ, nautilus, pocoMC, replica exchange, and BlackJAX are run
+on a tiny PSPL photometry-only light curve. A shorter
+photometry+astrometry run covers the joint likelihood when the engine
+is cheap enough.
 """
 import os
 
@@ -13,6 +14,7 @@ from bagle import model_fitter_jax as model_fitter
 from bagle import model_jax as model
 from bagle.model_fitter_jax import (
     MicrolensSolver,
+    MicrolensSolverBlackJAX,
     MicrolensSolverImportance,
     MicrolensSolverNumPyro,
     MicrolensSolverPyMC,
@@ -678,16 +680,177 @@ def test_evaluate_loglik_jax_batch_matches_point():
     return None
 
 
+def _assert_blackjax_diagnostics(fitter, expect_rhat):
+    """Check acceptance, step size, and MCMC diagnostics on the summary.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolverBlackJAX
+        Solver that has already been solved.
+    expect_rhat : bool
+        Whether R-hat and ESS must be finite (MCMC with enough draws).
+
+    Returns
+    -------
+    None
+    """
+    summary = fitter.load_mnest_summary()
+    accept = float(summary['mean_accept'][0])
+    step = float(summary['step_size'][0])
+    print(
+        'blackjax', fitter.sampler,
+        'accept', accept,
+        'step', step,
+        'rhat', float(summary['rhat_max'][0]),
+        'ess', float(summary['ess_min'][0]),
+        'logZ', float(summary['logZ'][0]),
+    )
+    if fitter.sampler == 'smc':
+        beta = float(summary['smc_beta'][0])
+        print('smc_beta', beta)
+        assert beta > 0.95
+    if fitter.sampler in ('nuts', 'mclmc', 'smc'):
+        assert np.isfinite(accept)
+        assert 0.0 <= accept <= 1.0
+        assert np.isfinite(step)
+        assert step > 0.0
+    if expect_rhat:
+        assert np.isfinite(float(summary['rhat_max'][0]))
+        assert np.isfinite(float(summary['ess_min'][0]))
+    if fitter.sampler == 'mclmc':
+        assert np.isfinite(float(summary['mclmc_L'][0]))
+        assert float(summary['mclmc_L'][0]) > 0.0
+    return None
+
+
+def test_blackjax_nuts_phot():
+    """Window-adapted BlackJAX NUTS recovers a tiny PSPL light curve."""
+    pytest.importorskip('blackjax')
+    data, truth = _tiny_pspl_phot()
+    out = os.path.join(TEST_OUTPUT_DIR, 'blackjax_nuts_')
+    fitter = MicrolensSolverBlackJAX(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=out,
+        sampler='nuts',
+        draws=40,
+        tune=80,
+        chains=2,
+        max_num_doublings=4,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_phot_priors(fitter, truth)
+    fitter.solve()
+
+    tab = fitter.load_mnest_results()
+    assert len(tab) == 40 * 2
+    assert fitter.sampler == 'nuts'
+    _assert_blackjax_diagnostics(fitter, expect_rhat=True)
+    _assert_samples(
+        fitter,
+        truth,
+        expect_logz=False,
+        t0_atol=2.5,
+        extra_atol={
+            'u0_amp': 0.15,
+            'tE': 5.0,
+            'mag_src1': 0.3,
+            'b_sff1': 0.15,
+        },
+    )
+    return None
+
+
+def test_blackjax_mclmc_phot():
+    """Tuned BlackJAX MCLMC recovers a tiny PSPL light curve."""
+    pytest.importorskip('blackjax')
+    data, truth = _tiny_pspl_phot()
+    out = os.path.join(TEST_OUTPUT_DIR, 'blackjax_mclmc_')
+    fitter = MicrolensSolverBlackJAX(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=out,
+        sampler='mclmc',
+        draws=40,
+        chains=2,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_phot_priors(fitter, truth)
+    fitter.solve()
+
+    tab = fitter.load_mnest_results()
+    assert len(tab) == 40 * 2
+    _assert_blackjax_diagnostics(fitter, expect_rhat=True)
+    _assert_samples(
+        fitter,
+        truth,
+        expect_logz=False,
+        t0_atol=2.5,
+        extra_atol={
+            'u0_amp': 0.2,
+            'tE': 6.0,
+            'mag_src1': 0.4,
+            'b_sff1': 0.2,
+        },
+    )
+    return None
+
+
+def test_blackjax_smc_phot():
+    """Adaptive tempered SMC returns finite logZ near the photometry truth."""
+    pytest.importorskip('blackjax')
+    data, truth = _tiny_pspl_phot()
+    out = os.path.join(TEST_OUTPUT_DIR, 'blackjax_smc_')
+    fitter = MicrolensSolverBlackJAX(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=out,
+        sampler='smc',
+        chains=2,
+        smc_inner='hmc',
+        smc_particles=16,
+        smc_mcmc_steps=4,
+        smc_integration_steps=8,
+        smc_max_iter=30,
+        smc_target_ess=0.4,
+        initial_step_size=0.05,
+        posterior_samples=40,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_phot_priors(fitter, truth)
+    fitter.solve()
+
+    tab = fitter.load_mnest_results()
+    assert len(tab) == 40
+    _assert_blackjax_diagnostics(fitter, expect_rhat=False)
+    _assert_samples(
+        fitter,
+        truth,
+        expect_logz=True,
+        t0_atol=3.0,
+        extra_atol={
+            'u0_amp': 0.25,
+            'tE': 8.0,
+            'mag_src1': 0.5,
+            'b_sff1': 0.25,
+        },
+    )
+    return None
+
+
 def test_blackjax_ns_phot():
     """BlackJAX nested sampling returns finite logZ near the truth."""
     pytest.importorskip('blackjax')
     data, truth = _tiny_pspl_phot()
     out = os.path.join(TEST_OUTPUT_DIR, 'blackjax_ns_')
-    fitter = MicrolensSolverImportance(
+    fitter = MicrolensSolverBlackJAX(
         data,
         model.PSPL_Phot_noPar_Param1,
         outputfiles_basename=out,
-        sampler='blackjax_ns',
+        sampler='ns',
         n_live=20,
         ns_inner_steps=2,
         ns_num_delete=2,
@@ -704,7 +867,7 @@ def test_blackjax_ns_phot():
 
     tab = fitter.load_mnest_results()
     assert len(tab) == 40
-    print('blackjax_ns phot logZ', float(fitter._logZ))
+    print('blackjax ns phot logZ', float(fitter._logZ))
     _assert_samples(
         fitter,
         truth,
@@ -725,11 +888,11 @@ def test_blackjax_ns_phot_astrom():
     pytest.importorskip('blackjax')
     data, truth = _tiny_pspl_phot_astrom()
     out = os.path.join(TEST_OUTPUT_DIR, 'blackjax_ns_joint_')
-    fitter = MicrolensSolverImportance(
+    fitter = MicrolensSolverBlackJAX(
         data,
         model.PSPL_PhotAstrom_noPar_Param1,
         outputfiles_basename=out,
-        sampler='blackjax_ns',
+        sampler='ns',
         n_live=24,
         ns_inner_steps=4,
         ns_num_delete=2,
@@ -743,7 +906,7 @@ def test_blackjax_ns_phot_astrom():
     )
     _apply_joint_priors(fitter, truth)
     fitter.solve()
-    print('blackjax_ns joint logZ', float(fitter._logZ))
+    print('blackjax ns joint logZ', float(fitter._logZ))
     _assert_samples(
         fitter,
         truth,

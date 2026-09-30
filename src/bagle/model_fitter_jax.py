@@ -3957,47 +3957,16 @@ class MicrolensSolverPyMC(MicrolensSolver):
             raise RuntimeError('No PyMC results. Run solve() first.')
 
         samples = self._samples_from_idata()
-        n_samples = samples.shape[0]
-        weights = np.ones(n_samples, dtype=float) / n_samples
 
         # One batched call. Falls back to log_likely if JAX is unavailable.
         loglikes = np.asarray(
             self.evaluate_loglik_jax(samples), dtype=float
         )
-
-        tab = Table()
-        tab['weights'] = weights
-        tab['logLike'] = loglikes
-
-        for jj, name in enumerate(self.fitter_param_names):
-            tab[name] = samples[:, jj]
-
-        for add_idx, name in enumerate(self.additional_param_names):
-            col = np.zeros(n_samples, dtype=float)
-            for ii in range(n_samples):
-                cube = np.zeros(self.n_params, dtype=float)
-                for jj, pname in enumerate(self.fitter_param_names):
-                    cube[jj] = samples[ii, jj]
-                self.get_model(cube)
-                col[ii] = cube[self.n_dims + add_idx]
-            tab[name] = col
-
-        return tab
+        return _build_posterior_table(self, samples, loglikes)
 
     def _write_pymc_results(self):
-        tab = self._build_results_table()
-        outroot = self.outputfiles_basename
-
-        with open(outroot + '.txt', 'w') as f:
-            for row in tab:
-                line = [row['weights'], -2.0 * row['logLike']]
-                for name in self.all_param_names:
-                    line.append(row[name])
-                f.write(' '.join(f'{val:.12e}' for val in line) + '\n')
-
-        tab.write(outroot + '.fits', overwrite=True)
-        self._results_table = tab
-        return
+        _write_multinest_files(self, self._build_results_table())
+        return None
 
     def load_pymc_results(self, remake_fits=False):
         if not remake_fits and self._results_table is not None:
@@ -4922,37 +4891,11 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         if self._samples_array is None:
             raise RuntimeError('No NumPyro results. Run solve() first.')
 
-        samples = self._samples_array
-        n_samples = samples.shape[0]
-
-        # Equal weights for MCMC / resampled nested samples.
-        weights = np.ones(n_samples, dtype=float) / n_samples
-
         # Cache lnL evaluations for summary / MaxLike selection.
-        if self._loglikes is None:
-            self._loglikes = self._evaluate_loglikes(samples)
-        loglikes = self._loglikes
-
-        tab = Table()
-        tab['weights'] = weights
-        tab['logLike'] = loglikes
-
-        # Fit parameters in fitter_param_names order.
-        for jj, name in enumerate(self.fitter_param_names):
-            tab[name] = samples[:, jj]
-
-        # Derived / additional params via get_model side effects on cube.
-        for add_idx, name in enumerate(self.additional_param_names):
-            col = np.zeros(n_samples, dtype=float)
-            for ii in range(n_samples):
-                cube = np.zeros(self.n_params, dtype=float)
-                for jj, pname in enumerate(self.fitter_param_names):
-                    cube[jj] = samples[ii, jj]
-                self.get_model(cube)
-                col[ii] = cube[self.n_dims + add_idx]
-            tab[name] = col
-
-        return tab
+        loglikes = _ensure_loglikes(self, self._samples_array)
+        return _build_posterior_table(
+            self, self._samples_array, loglikes
+        )
 
     def _write_numpyro_results(self):
         """Write MultiNest-like ``.txt`` and ``.fits`` result files.
@@ -4961,20 +4904,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         -------
         None
         """
-        tab = self._build_results_table()
-        outroot = self.outputfiles_basename
-
-        # MultiNest .txt layout: weight, -2*lnL, then all_param_names.
-        with open(outroot + '.txt', 'w') as f:
-            for row in tab:
-                line = [row['weights'], -2.0 * row['logLike']]
-                for name in self.all_param_names:
-                    line.append(row[name])
-                f.write(' '.join(f'{val:.12e}' for val in line) + '\n')
-
-        # Astropy table for load_mnest_results / plotting helpers.
-        tab.write(outroot + '.fits', overwrite=True)
-        self._results_table = tab
+        _write_multinest_files(self, self._build_results_table())
         return None
 
     def load_numpyro_results(self, remake_fits=False):
@@ -4990,22 +4920,9 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         tab : astropy.table.Table
             Posterior results.
         """
-        # Prefer cached table unless a rebuild was requested.
-        if not remake_fits and self._results_table is not None:
-            return self._results_table
-
-        # Rebuild from in-memory posterior draws when available.
-        if self._samples_array is not None:
-            self._results_table = self._build_results_table()
-            return self._results_table
-
-        # Fall back to a previously written FITS file.
-        outroot = self.outputfiles_basename
-        if os.path.exists(outroot + '.fits'):
-            self._results_table = Table.read(outroot + '.fits')
-            return self._results_table
-
-        raise RuntimeError('No NumPyro results found.')
+        return _load_posterior_table(
+            self, remake_fits, 'No NumPyro results found.'
+        )
 
     def load_numpyro_summary(self, remake_fits=False):
         """Build a MultiNest-like summary table from NumPyro samples.
@@ -5026,19 +4943,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         tab = self.load_numpyro_results(remake_fits=remake_fits)
 
         # logZ is finite for jaxns, SMC-NUTS, and replica exchange.
-        row = {
-            'logZ': float(self._logZ),
-            'maxlogL': float(np.max(tab['logLike'])),
-        }
-
-        # MAP / MaxLike taken as the highest-lnL sample.
-        best_idx = int(np.argmax(tab['logLike']))
-        for name in self.all_param_names:
-            vals = tab[name]
-            row['Mean_' + name] = float(np.mean(vals))
-            row['StDev_' + name] = float(np.std(vals))
-            row['MaxLike_' + name] = float(vals[best_idx])
-            row['MAP_' + name] = float(vals[best_idx])
+        row = _multinest_summary_row(self, tab)
 
         # Replica exchange: per-gap DEO swap rates and round trips.
         rates = getattr(self, '_swap_accept_rate', None)
@@ -5402,8 +5307,9 @@ def _import_blackjax():
         import blackjax
     except ImportError as error:
         raise ImportError(
-            'BlackJAX nested sampling requires blackjax. Install with: '
-            'pip install "bagle[blackjax]" (or pip install "blackjax>=1.6,<1.7").'
+            'BlackJAX sampling requires blackjax. Install with: '
+            'pip install "bagle[blackjax]" '
+            '(or pip install "blackjax>=1.6,<1.7").'
         ) from error
     return blackjax
 
@@ -5472,14 +5378,174 @@ def _equal_weight_resample(samples, weights, loglikes, n_out, rng):
     return samples[idx], loglikes[idx]
 
 
-class MicrolensSolverImportance(MicrolensSolver):
-    """nautilus, pocoMC, and BlackJAX nested sampling.
+def _ensure_loglikes(fitter, samples):
+    """Evaluate lnL for each row when the fitter has not cached them.
 
-    nautilus and pocoMC use the inverse-CDF prior transform.
-    BlackJAX nested sampling uses the JAX log-prior and log-likelihood.
-    ``n_workers`` is the process-pool size for nautilus and pocoMC.
-    Results are written in the MultiNest ``.txt`` / ``.fits`` layout,
-    with finite ``logZ``.
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Solver with ``evaluate_loglik_jax`` and ``_loglikes``.
+    samples : array_like, shape (n_samples, n_dim)
+        Physical parameter rows.
+
+    Returns
+    -------
+    loglikes : ndarray, shape (n_samples,)
+        Cached or newly evaluated log-likelihoods. The batch path
+        replaces non-finite values with ``-1e300``.
+    """
+    if fitter._loglikes is None:
+        # One batched call. Falls back to log_likely without JAX.
+        fitter._loglikes = np.asarray(
+            fitter.evaluate_loglik_jax(
+                np.asarray(samples, dtype=np.float64)
+            ),
+            dtype=float,
+        ).reshape(-1)
+    return np.asarray(fitter._loglikes, dtype=float).reshape(-1)
+
+
+def _build_posterior_table(fitter, samples, loglikes):
+    """Build the shared MultiNest-style posterior table.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Solver used to evaluate derived parameters.
+    samples : array_like, shape (n_samples, n_dim)
+        Physical parameter rows in ``fitter_param_names`` order.
+    loglikes : array_like, shape (n_samples,)
+        Log-likelihood of each row.
+
+    Returns
+    -------
+    tab : astropy.table.Table
+        Columns: weights, logLike, fit params, derived params.
+        Weights are equal.
+    """
+    samples = np.asarray(samples, dtype=float)
+    loglikes = np.asarray(loglikes, dtype=float).reshape(-1)
+    n_samples = samples.shape[0]
+    weights = np.ones(n_samples, dtype=float) / n_samples
+
+    tab = Table()
+    tab['weights'] = weights
+    tab['logLike'] = loglikes
+
+    for jj, name in enumerate(fitter.fitter_param_names):
+        tab[name] = samples[:, jj]
+
+    # Derived parameters via get_model side effects on the cube.
+    for add_idx, name in enumerate(fitter.additional_param_names):
+        col = np.zeros(n_samples, dtype=float)
+        for ii in range(n_samples):
+            cube = np.zeros(fitter.n_params, dtype=float)
+            for jj, pname in enumerate(fitter.fitter_param_names):
+                cube[jj] = samples[ii, jj]
+            fitter.get_model(cube)
+            col[ii] = cube[fitter.n_dims + add_idx]
+        tab[name] = col
+
+    return tab
+
+
+def _write_multinest_files(fitter, tab):
+    """Write a posterior table as MultiNest ``.txt`` and ``.fits``.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Solver whose ``outputfiles_basename`` is the file root.
+    tab : astropy.table.Table
+        Table from :func:`_build_posterior_table`.
+
+    Returns
+    -------
+    None
+    """
+    outroot = fitter.outputfiles_basename
+    with open(outroot + '.txt', 'w') as handle:
+        for row in tab:
+            line = [row['weights'], -2.0 * row['logLike']]
+            for name in fitter.all_param_names:
+                line.append(row[name])
+            handle.write(' '.join(f'{val:.12e}' for val in line) + '\n')
+
+    tab.write(outroot + '.fits', overwrite=True)
+    fitter._results_table = tab
+    return None
+
+
+def _load_posterior_table(fitter, remake_fits, missing):
+    """Return a cached, rebuilt, or on-disk posterior table.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Solver with ``_results_table``, ``_samples_array``, and
+        ``_build_results_table``.
+    remake_fits : bool
+        Rebuild from in-memory samples when True.
+    missing : str
+        Error text when no samples and no FITS file exist.
+
+    Returns
+    -------
+    tab : astropy.table.Table
+        Posterior results.
+    """
+    if not remake_fits and fitter._results_table is not None:
+        return fitter._results_table
+
+    if fitter._samples_array is not None:
+        fitter._results_table = fitter._build_results_table()
+        return fitter._results_table
+
+    outroot = fitter.outputfiles_basename
+    if os.path.exists(outroot + '.fits'):
+        fitter._results_table = Table.read(outroot + '.fits')
+        return fitter._results_table
+
+    raise RuntimeError(missing)
+
+
+def _multinest_summary_row(fitter, tab):
+    """One summary row: logZ, max lnL, and mean / std / MAP columns.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Solver whose ``_logZ`` is copied into the row.
+    tab : astropy.table.Table
+        Posterior table with ``logLike`` and parameter columns.
+
+    Returns
+    -------
+    row : dict
+        Keys ``logZ``, ``maxlogL``, and ``Mean_`` / ``StDev_`` /
+        ``MaxLike_`` / ``MAP_`` for each name in ``all_param_names``.
+    """
+    row = {
+        'logZ': float(fitter._logZ),
+        'maxlogL': float(np.max(tab['logLike'])),
+    }
+    best_idx = int(np.argmax(tab['logLike']))
+    for name in fitter.all_param_names:
+        vals = tab[name]
+        row['Mean_' + name] = float(np.mean(vals))
+        row['StDev_' + name] = float(np.std(vals))
+        row['MaxLike_' + name] = float(vals[best_idx])
+        row['MAP_' + name] = float(vals[best_idx])
+    return row
+
+
+class MicrolensSolverImportance(MicrolensSolver):
+    """nautilus and pocoMC importance sampling.
+
+    Both use the inverse-CDF prior transform. ``n_workers`` is the
+    process-pool size. Results are written in the MultiNest ``.txt`` /
+    ``.fits`` layout, with finite ``logZ``. BlackJAX samplers live on
+    :class:`MicrolensSolverBlackJAX`.
     """
 
     def __init__(
@@ -5508,15 +5574,10 @@ class MicrolensSolverImportance(MicrolensSolver):
         n_evidence=512,
         precondition=True,
         flow='nsf6',
-        ns_inner_steps=None,
-        ns_num_delete=1,
-        ns_max_iter=None,
-        ns_max_slice_steps=10,
-        ns_max_shrinkage=100,
         **kwargs,
     ):
         """
-        Initialize a nautilus, pocoMC, or BlackJAX nested-sampling solver.
+        Initialize a nautilus or pocoMC solver.
 
         Parameters
         ----------
@@ -5540,24 +5601,23 @@ class MicrolensSolverImportance(MicrolensSolver):
             Output files basename.
         verbose : bool, optional
             Verbose sampler output.
-        sampler : {'nautilus', 'pocomc', 'blackjax_ns'}, optional
+        sampler : {'nautilus', 'pocomc'}, optional
             ``'nautilus'`` is neural-network importance nested sampling.
             ``'pocomc'`` is preconditioned / flow-assisted SMC.
-            ``'blackjax_ns'`` is BlackJAX nested slice sampling.
         n_workers : int, optional
             Process-pool size for nautilus and pocoMC. ``1`` runs
-            in-process. ``blackjax_ns`` is a single JAX process.
+            in-process.
         posterior_samples : int, optional
             Equal-weight rows written to the result table.
         random_seed : int, optional
             Seed for the sampler and the equal-weight resample.
         n_live : int, optional
-            Nautilus or BlackJAX live points. Default 400.
+            Nautilus live points. Default 400.
         n_networks : int, optional
             Nautilus networks per bound. Default 4.
         f_live : float, optional
             Stopping fraction of evidence left in the live set.
-            Used by nautilus and BlackJAX nested sampling.
+            Used by nautilus.
         n_eff : int, optional
             Nautilus effective-sample stopping size.
         n_effective : int, optional
@@ -5576,19 +5636,6 @@ class MicrolensSolverImportance(MicrolensSolver):
         flow : str, optional
             pocoMC flow architecture (``'nsf3'``, ``'nsf6'``, ...).
             Default ``'nsf6'``.
-        ns_inner_steps : int or None, optional
-            BlackJAX slice steps per new particle. ``None`` uses
-            ``max(5, n_dim)``.
-        ns_num_delete : int, optional
-            BlackJAX particles deleted per nested-sampling step.
-            Default 1.
-        ns_max_iter : int or None, optional
-            Maximum BlackJAX nested-sampling steps. ``None`` uses
-            ``30 * n_live / ns_num_delete``.
-        ns_max_slice_steps : int, optional
-            Cap on BlackJAX slice stepping-out expansions. Default 10.
-        ns_max_shrinkage : int, optional
-            Cap on BlackJAX slice shrinkage evaluations. Default 100.
         **kwargs : dict, optional
             Passed to :class:`MicrolensSolver`.
 
@@ -5613,10 +5660,10 @@ class MicrolensSolverImportance(MicrolensSolver):
         )
 
         sampler = str(sampler).lower()
-        if sampler not in ('nautilus', 'pocomc', 'blackjax_ns'):
+        if sampler not in ('nautilus', 'pocomc'):
             raise ValueError(
-                "sampler must be 'nautilus', 'pocomc', or "
-                f"'blackjax_ns', got {sampler!r}"
+                "sampler must be 'nautilus' or 'pocomc', "
+                f"got {sampler!r}"
             )
 
         self.sampler = sampler
@@ -5633,11 +5680,6 @@ class MicrolensSolverImportance(MicrolensSolver):
         self.n_evidence = int(n_evidence)
         self.precondition = bool(precondition)
         self.flow = str(flow)
-        self.ns_inner_steps = ns_inner_steps
-        self.ns_num_delete = max(1, int(ns_num_delete))
-        self.ns_max_iter = ns_max_iter
-        self.ns_max_slice_steps = max(1, int(ns_max_slice_steps))
-        self.ns_max_shrinkage = max(1, int(ns_max_shrinkage))
 
         self._samples_array = None
         self._loglikes = None
@@ -5648,7 +5690,7 @@ class MicrolensSolverImportance(MicrolensSolver):
         return None
 
     def solve(self):
-        """Run nautilus, pocoMC, or BlackJAX nested sampling.
+        """Run nautilus or pocoMC.
 
         Returns
         -------
@@ -5670,10 +5712,8 @@ class MicrolensSolverImportance(MicrolensSolver):
 
         if self.sampler == 'nautilus':
             self._run_nautilus()
-        elif self.sampler == 'pocomc':
-            self._run_pocomc()
         else:
-            self._run_blackjax_ns()
+            self._run_pocomc()
 
         self._results_table = None
         self._summary_table = None
@@ -5804,123 +5844,6 @@ class MicrolensSolverImportance(MicrolensSolver):
         self._logZ_err = float(logz_err)
         return None
 
-    def _run_blackjax_ns(self):
-        """Run BlackJAX nested slice sampling and store posterior rows.
-
-        Returns
-        -------
-        None
-
-        Notes
-        -----
-        The live-set evidence fraction is compared with ``f_live``.
-        ``logZ`` is ``logaddexp(logZ_dead, logZ_live)``.
-        """
-        blackjax = _import_blackjax()
-        from blackjax.ns.utils import finalise
-        from blackjax.ns.utils import sample as ns_sample
-
-        lnL_fn, _ctx = build_explicit_jax_loglik_fn(self)
-        if lnL_fn is None:
-            raise RuntimeError(
-                'blackjax_ns requires the differentiable JAX likelihood.'
-            )
-        log_prior_fn = _build_jax_log_prior(self)
-
-        def loglikelihood_fn(theta):
-            """JAX log-likelihood of one particle.
-
-            Parameters
-            ----------
-            theta : jax.Array, shape (n_dim,)
-                Physical parameters.
-
-            Returns
-            -------
-            loglike : jax.Array
-                Scalar log-likelihood. Non-finite values are ``-1e300``.
-            """
-            val = lnL_fn(theta)
-            return jnp.where(jnp.isfinite(val), val, -1.0e300)
-
-        def logprior_fn(theta):
-            """JAX log-prior of one particle.
-
-            Parameters
-            ----------
-            theta : jax.Array, shape (n_dim,)
-                Physical parameters.
-
-            Returns
-            -------
-            logprior : jax.Array
-                Scalar log-prior. Non-finite values are ``-1e300``.
-            """
-            val = log_prior_fn(theta)
-            return jnp.where(jnp.isfinite(val), val, -1.0e300)
-
-        n_dim = len(self.fitter_param_names)
-        if self.ns_inner_steps is None:
-            n_inner = max(5, n_dim)
-        else:
-            n_inner = max(1, int(self.ns_inner_steps))
-
-        n_delete = int(self.ns_num_delete)
-        if self.ns_max_iter is None:
-            max_iter = max(1, (30 * int(self.n_live)) // n_delete)
-        else:
-            max_iter = max(1, int(self.ns_max_iter))
-
-        # Nested slice sampling. BlackJAX calls these inside JIT, so
-        # they are the raw JAX densities rather than evaluate_loglik_jax.
-        alg = blackjax.nss(
-            logprior_fn,
-            loglikelihood_fn,
-            num_inner_steps=int(n_inner),
-            num_delete=n_delete,
-            max_steps=int(self.ns_max_slice_steps),
-            max_shrinkage=int(self.ns_max_shrinkage),
-        )
-
-        rng = np.random.default_rng(int(self.random_seed))
-        init_pos = _draw_prior_samples(self, int(self.n_live), rng)
-        key = jax.random.PRNGKey(int(self.random_seed))
-        key, init_key = jax.random.split(key)
-        state = alg.init(jnp.asarray(init_pos, dtype=jnp.float64), init_key)
-        step = jax.jit(alg.step)
-
-        dead = []
-        log_floor = np.log(max(float(self.f_live), 1.0e-16))
-        for iteration in range(max_iter):
-            key, subkey = jax.random.split(key)
-            state, info = step(subkey, state)
-            dead.append(info)
-
-            log_z = float(state.integrator.logZ)
-            log_z_live = float(state.integrator.logZ_live)
-            log_z_tot = float(np.logaddexp(log_z, log_z_live))
-            remain = log_z_live - log_z_tot
-            if self.verbose and (iteration % 10 == 0):
-                print(
-                    f'blackjax_ns step {iteration}: logZ≈{log_z_tot:.3f}'
-                )
-            if np.isfinite(remain) and remain < log_floor:
-                break
-
-        final = finalise(state, dead, update_info=False)
-        key, sample_key = jax.random.split(key)
-        drawn = ns_sample(
-            sample_key, final, shape=int(self.posterior_samples)
-        )
-        self._samples_array = np.asarray(drawn.position, dtype=float)
-        self._loglikes = np.asarray(drawn.loglikelihood, dtype=float)
-        self._logZ = float(np.logaddexp(
-            np.asarray(state.integrator.logZ, dtype=float),
-            np.asarray(state.integrator.logZ_live, dtype=float),
-        ))
-        self._logZ_err = np.nan
-        return None
-
     def _build_results_table(self):
         """Build an Astropy table of posterior samples and derived params.
 
@@ -5932,36 +5855,10 @@ class MicrolensSolverImportance(MicrolensSolver):
         if self._samples_array is None:
             raise RuntimeError('No importance samples. Run solve() first.')
 
-        samples = self._samples_array
-        n_samples = samples.shape[0]
-        weights = np.ones(n_samples, dtype=float) / n_samples
-
-        if self._loglikes is None:
-            # One batched call instead of a Python loop over rows.
-            self._loglikes = np.asarray(
-                self.evaluate_loglik_jax(samples), dtype=float
-            )
-        loglikes = self._loglikes
-
-        tab = Table()
-        tab['weights'] = weights
-        tab['logLike'] = loglikes
-
-        for jj, name in enumerate(self.fitter_param_names):
-            tab[name] = samples[:, jj]
-
-        # Derived parameters via get_model side effects on the cube.
-        for add_idx, name in enumerate(self.additional_param_names):
-            col = np.zeros(n_samples, dtype=float)
-            for ii in range(n_samples):
-                cube = np.zeros(self.n_params, dtype=float)
-                for jj, pname in enumerate(self.fitter_param_names):
-                    cube[jj] = samples[ii, jj]
-                self.get_model(cube)
-                col[ii] = cube[self.n_dims + add_idx]
-            tab[name] = col
-
-        return tab
+        loglikes = _ensure_loglikes(self, self._samples_array)
+        return _build_posterior_table(
+            self, self._samples_array, loglikes
+        )
 
     def _write_importance_results(self):
         """Write MultiNest-like ``.txt`` and ``.fits`` result files.
@@ -5970,18 +5867,7 @@ class MicrolensSolverImportance(MicrolensSolver):
         -------
         None
         """
-        tab = self._build_results_table()
-        outroot = self.outputfiles_basename
-
-        with open(outroot + '.txt', 'w') as handle:
-            for row in tab:
-                line = [row['weights'], -2.0 * row['logLike']]
-                for name in self.all_param_names:
-                    line.append(row[name])
-                handle.write(' '.join(f'{val:.12e}' for val in line) + '\n')
-
-        tab.write(outroot + '.fits', overwrite=True)
-        self._results_table = tab
+        _write_multinest_files(self, self._build_results_table())
         return None
 
     def load_importance_results(self, remake_fits=False):
@@ -5997,19 +5883,9 @@ class MicrolensSolverImportance(MicrolensSolver):
         tab : astropy.table.Table
             Posterior results.
         """
-        if not remake_fits and self._results_table is not None:
-            return self._results_table
-
-        if self._samples_array is not None:
-            self._results_table = self._build_results_table()
-            return self._results_table
-
-        outroot = self.outputfiles_basename
-        if os.path.exists(outroot + '.fits'):
-            self._results_table = Table.read(outroot + '.fits')
-            return self._results_table
-
-        raise RuntimeError('No importance-sampler results found.')
+        return _load_posterior_table(
+            self, remake_fits, 'No importance-sampler results found.'
+        )
 
     def load_importance_summary(self, remake_fits=False):
         """Build a one-row summary including logZ.
@@ -6028,20 +5904,7 @@ class MicrolensSolverImportance(MicrolensSolver):
             return self._summary_table
 
         tab = self.load_importance_results(remake_fits=remake_fits)
-        row = {
-            'logZ': float(self._logZ),
-            'maxlogL': float(np.max(tab['logLike'])),
-        }
-
-        best_idx = int(np.argmax(tab['logLike']))
-        for name in self.all_param_names:
-            vals = tab[name]
-            row['Mean_' + name] = float(np.mean(vals))
-            row['StDev_' + name] = float(np.std(vals))
-            row['MaxLike_' + name] = float(vals[best_idx])
-            row['MAP_' + name] = float(vals[best_idx])
-
-        self._summary_table = Table([row])
+        self._summary_table = Table([_multinest_summary_row(self, tab)])
         return self._summary_table
 
     def load_mnest_results(self, remake_fits=False):
@@ -6073,6 +5936,619 @@ class MicrolensSolverImportance(MicrolensSolver):
             One-row summary.
         """
         return self.load_importance_summary(remake_fits=remake_fits)
+
+
+class MicrolensSolverBlackJAX(MicrolensSolver):
+    """BlackJAX NUTS, MCLMC, adaptive SMC, or nested sampling.
+
+    The target density is the cached JAX log-likelihood from
+    :func:`build_explicit_jax_loglik_fn` plus :func:`_build_jax_log_prior`.
+    Posterior tables use the batch path of
+    :meth:`evaluate_loglik_jax`. Initial positions use the same
+    inverse-CDF prior transform as nautilus. Chains are mapped with
+    ``jax.vmap``, and with ``jax.pmap`` when more than one device is
+    available. Nested sampling is one live set (``blackjax.ns.nss``).
+    """
+
+    def __init__(
+        self,
+        data,
+        model_class,
+        custom_additional_param_names=None,
+        add_error_on_photometry=False,
+        multiply_error_on_photometry=False,
+        use_phot_optional_params=True,
+        use_ast_optional_params=True,
+        wrapped_params=None,
+        outputfiles_basename='chains/blackjax-',
+        verbose=False,
+        sampler='nuts',
+        draws=1000,
+        tune=500,
+        chains=2,
+        target_accept=0.80,
+        max_num_doublings=10,
+        initial_step_size=0.5,
+        random_seed=0,
+        posterior_samples=500,
+        n_live=400,
+        f_live=0.01,
+        smc_inner='hmc',
+        smc_particles=200,
+        smc_target_ess=0.5,
+        smc_mcmc_steps=10,
+        smc_integration_steps=8,
+        smc_max_iter=25,
+        ns_inner_steps=None,
+        ns_num_delete=1,
+        ns_max_iter=None,
+        ns_max_slice_steps=10,
+        ns_max_shrinkage=100,
+        **kwargs,
+    ):
+        """
+        Initialize a BlackJAX solver.
+
+        Parameters
+        ----------
+        data : dict
+            Data dictionary containing the data for the fit.
+        model_class : type
+            Model class to use for the fit.
+        custom_additional_param_names : list, optional
+            Custom additional parameter names to add to the fit.
+        add_error_on_photometry : bool, optional
+            Add error on photometry.
+        multiply_error_on_photometry : bool, optional
+            Multiply error on photometry.
+        use_phot_optional_params : bool, optional
+            Use photometric optional parameters.
+        use_ast_optional_params : bool, optional
+            Use astrometric optional parameters.
+        wrapped_params : list, optional
+            Wrapped parameter flags.
+        outputfiles_basename : str, optional
+            Output files basename.
+        verbose : bool, optional
+            Print nested-sampling progress.
+        sampler : {'nuts', 'mclmc', 'smc', 'ns'}, optional
+            ``'nuts'`` is window-adapted NUTS. ``'mclmc'`` is
+            microcanonical Langevin Monte Carlo with BlackJAX's tuner.
+            ``'smc'`` is adaptive tempered SMC and returns logZ.
+            ``'ns'`` is nested slice sampling (``blackjax.ns.nss``)
+            and returns logZ.
+        draws : int, optional
+            Draws kept per chain for NUTS and MCLMC. Default 1000.
+        tune : int, optional
+            NUTS window-adaptation steps per chain. Default 500.
+        chains : int, optional
+            Independent chains for NUTS, MCLMC, and SMC. Default 2.
+            Nested sampling uses one live set instead.
+        target_accept : float, optional
+            NUTS dual-averaging target acceptance. Default 0.80.
+        max_num_doublings : int, optional
+            NUTS trajectory cap, including the SMC inner kernel.
+            Default 10.
+        initial_step_size : float, optional
+            NUTS warmup seed and the fixed SMC step, in inverse-mass
+            units. The diagonal inverse mass is the square of each
+            prior's central width. NUTS adapts the step. SMC does not;
+            about 0.05 kept the PSPL test stable. Default 0.5.
+        random_seed : int, optional
+            PRNG seed. Default 0.
+        posterior_samples : int, optional
+            Equal-weight rows kept for SMC and nested sampling.
+            Default 500. NUTS and MCLMC keep every draw.
+        n_live : int, optional
+            Nested-sampling live points. Default 400.
+        f_live : float, optional
+            Nested sampling stops when the live evidence fraction
+            drops below this. Default 0.01.
+        smc_inner : {'hmc', 'nuts'}, optional
+            SMC rejuvenation kernel. Default ``'hmc'``.
+        smc_particles : int, optional
+            Particles in each SMC chain. Default 200.
+        smc_target_ess : float, optional
+            Target ESS fraction for the next SMC temperature.
+            Default 0.5.
+        smc_mcmc_steps : int, optional
+            Inner MCMC steps per SMC stage. Default 10.
+        smc_integration_steps : int, optional
+            Leapfrog steps when ``smc_inner='hmc'``. Default 8.
+        smc_max_iter : int, optional
+            Maximum SMC tempering stages. Default 25.
+        ns_inner_steps : int or None, optional
+            Slice steps per deletion. ``None`` uses ``max(5, n_dim)``.
+        ns_num_delete : int, optional
+            Live points removed at each nested-sampling step.
+            Default 1.
+        ns_max_iter : int or None, optional
+            Maximum nested-sampling steps. ``None`` uses
+            ``30 * n_live / ns_num_delete``.
+        ns_max_slice_steps : int, optional
+            Cap on slice stepping-out expansions. Default 10.
+        ns_max_shrinkage : int, optional
+            Cap on slice shrinkage evaluations. Default 100.
+        **kwargs : dict, optional
+            Passed to :class:`MicrolensSolver`.
+
+        Returns
+        -------
+        MicrolensSolverBlackJAX
+            Configured solver instance.
+        """
+        super().__init__(
+            data,
+            model_class,
+            custom_additional_param_names=custom_additional_param_names,
+            add_error_on_photometry=add_error_on_photometry,
+            multiply_error_on_photometry=multiply_error_on_photometry,
+            use_phot_optional_params=use_phot_optional_params,
+            use_ast_optional_params=use_ast_optional_params,
+            wrapped_params=wrapped_params,
+            outputfiles_basename=outputfiles_basename,
+            verbose=verbose,
+            dump_callback=None,
+            **kwargs,
+        )
+
+        sampler = str(sampler).lower()
+        if sampler not in ('nuts', 'mclmc', 'smc', 'ns'):
+            raise ValueError(
+                "sampler must be 'nuts', 'mclmc', 'smc', or 'ns', "
+                f"got {sampler!r}"
+            )
+        smc_inner = str(smc_inner).lower()
+        if smc_inner not in ('hmc', 'nuts'):
+            raise ValueError(
+                "smc_inner must be 'hmc' or 'nuts', "
+                f"got {smc_inner!r}"
+            )
+
+        self.sampler = sampler
+        self.draws = int(draws)
+        self.tune = int(tune)
+        self.chains = max(1, int(chains))
+        self.target_accept = float(target_accept)
+        self.max_num_doublings = int(max_num_doublings)
+        self.initial_step_size = float(initial_step_size)
+        self.random_seed = int(random_seed)
+        self.posterior_samples = int(posterior_samples)
+        self.n_live = int(n_live)
+        self.f_live = float(f_live)
+        self.smc_inner = smc_inner
+        self.smc_particles = int(smc_particles)
+        self.smc_target_ess = float(smc_target_ess)
+        self.smc_mcmc_steps = int(smc_mcmc_steps)
+        self.smc_integration_steps = int(smc_integration_steps)
+        self.smc_max_iter = int(smc_max_iter)
+        self.ns_inner_steps = ns_inner_steps
+        self.ns_num_delete = max(1, int(ns_num_delete))
+        self.ns_max_iter = ns_max_iter
+        self.ns_max_slice_steps = max(1, int(ns_max_slice_steps))
+        self.ns_max_shrinkage = max(1, int(ns_max_shrinkage))
+
+        self._samples_array = None
+        self._loglikes = None
+        self._logZ = np.nan
+        self._logZ_err = np.nan
+        self._diagnostics = None
+        self._results_table = None
+        self._summary_table = None
+        return None
+
+    def solve(self):
+        """Run the selected BlackJAX sampler and write result files.
+
+        Returns
+        -------
+        None
+        """
+        self._check_b_sff_upper_bound()
+        self.write_params_yaml()
+
+        # Match the other JAX solvers' float64 likelihood.
+        jax.config.update('jax_enable_x64', True)
+        _import_blackjax()
+
+        print('*************************************************')
+        print(f'*** Using BlackJAX ({self.sampler}) for sampling. ***')
+        print('*************************************************')
+
+        logdensity_fn, logprior_fn, loglikelihood_fn = (
+            self._jax_densities()
+        )
+        if self.sampler == 'nuts':
+            self._run_nuts(logdensity_fn)
+        elif self.sampler == 'mclmc':
+            self._run_mclmc(logdensity_fn)
+        elif self.sampler == 'smc':
+            self._run_smc(logprior_fn, loglikelihood_fn)
+        else:
+            self._run_ns(logprior_fn, loglikelihood_fn)
+
+        self._results_table = None
+        self._summary_table = None
+        _write_multinest_files(self, self._build_results_table())
+        self.load_mnest_results(remake_fits=True)
+        self.load_mnest_summary(remake_fits=True)
+        return None
+
+    def _jax_densities(self):
+        """Cached JAX log posterior, log prior, and log likelihood.
+
+        Returns
+        -------
+        logdensity_fn, logprior_fn, loglikelihood_fn : callable
+            Each accepts ``theta`` of shape ``(n_dim,)``. Non-finite
+            densities are replaced by ``-1e300``. ``logdensity_fn`` is
+            log likelihood plus log prior. The likelihood is the
+            cached function that :meth:`evaluate_loglik_jax` vmaps.
+        """
+        lnL_fn, _ctx = build_explicit_jax_loglik_fn(self)
+        if lnL_fn is None:
+            raise RuntimeError(
+                'MicrolensSolverBlackJAX requires the differentiable '
+                'JAX likelihood.'
+            )
+        log_prior_fn = _build_jax_log_prior(self)
+
+        def loglikelihood_fn(theta):
+            """Floored JAX log-likelihood of one point.
+
+            Parameters
+            ----------
+            theta : jax.Array, shape (n_dim,)
+                Physical parameters.
+
+            Returns
+            -------
+            loglike : jax.Array
+                Scalar log-likelihood.
+            """
+            val = lnL_fn(theta)
+            return jnp.where(jnp.isfinite(val), val, -1.0e300)
+
+        def logprior_fn(theta):
+            """Floored JAX log-prior of one point.
+
+            Parameters
+            ----------
+            theta : jax.Array, shape (n_dim,)
+                Physical parameters.
+
+            Returns
+            -------
+            logprior : jax.Array
+                Scalar log prior.
+            """
+            val = log_prior_fn(theta)
+            return jnp.where(jnp.isfinite(val), val, -1.0e300)
+
+        def logdensity_fn(theta):
+            """Floored JAX log posterior of one point.
+
+            Parameters
+            ----------
+            theta : jax.Array, shape (n_dim,)
+                Physical parameters.
+
+            Returns
+            -------
+            logposterior : jax.Array
+                Log likelihood plus log prior.
+            """
+            return loglikelihood_fn(theta) + logprior_fn(theta)
+
+        return logdensity_fn, logprior_fn, loglikelihood_fn
+
+    def _prior_width_vector(self):
+        """Central 68% prior width of each fit parameter.
+
+        Returns
+        -------
+        width : ndarray, shape (n_dim,)
+            Column order is ``fitter_param_names``.
+        """
+        width = [
+            _prior_width(self.priors[name])
+            for name in self.fitter_param_names
+        ]
+        return np.asarray(width, dtype=np.float64)
+
+    def _init_positions(self, n_draw):
+        """Draw ``n_draw`` points through the inverse-CDF prior.
+
+        Parameters
+        ----------
+        n_draw : int
+            Number of rows.
+
+        Returns
+        -------
+        positions : ndarray, shape (n_draw, n_dim)
+            Physical parameters.
+        """
+        rng = np.random.default_rng(int(self.random_seed))
+        return _draw_prior_samples(self, int(n_draw), rng)
+
+    def _store_result(self, result):
+        """Keep samples, logZ, and sampler diagnostics.
+
+        Parameters
+        ----------
+        result : dict
+            Return value of a ``sample_*`` helper. Weighted rows are
+            resampled to ``posterior_samples`` equal-weight draws.
+
+        Returns
+        -------
+        None
+        """
+        samples = np.asarray(result['samples'], dtype=float)
+        loglikes = result['loglikes']
+        weights = result['weights']
+        if weights is not None:
+            if loglikes is None:
+                loglikes = np.asarray(
+                    self.evaluate_loglik_jax(samples), dtype=float
+                )
+            rng = np.random.default_rng(int(self.random_seed))
+            samples, loglikes = _equal_weight_resample(
+                samples,
+                np.asarray(weights, dtype=float),
+                np.asarray(loglikes, dtype=float),
+                self.posterior_samples,
+                rng,
+            )
+
+        self._samples_array = samples
+        if loglikes is None:
+            self._loglikes = None
+        else:
+            self._loglikes = np.asarray(loglikes, dtype=float)
+        self._logZ = float(result['logz'])
+        self._logZ_err = np.nan
+        self._diagnostics = {
+            'mean_accept': float(result['mean_accept']),
+            'step_size': float(result['step_size']),
+            'rhat_max': float(result['rhat_max']),
+            'ess_min': float(result['ess_min']),
+            'L': float(result['L']),
+            'beta': float(result.get('beta', np.nan)),
+        }
+        return None
+
+    def _run_nuts(self, logdensity_fn):
+        """Run window-adapted NUTS.
+
+        Parameters
+        ----------
+        logdensity_fn : callable
+            Scalar JAX log posterior.
+
+        Returns
+        -------
+        None
+        """
+        from bagle.jax.blackjax_samplers import sample_nuts
+
+        positions = self._init_positions(self.chains)
+        result = sample_nuts(
+            logdensity_fn,
+            positions,
+            n_warmup=self.tune,
+            n_draws=self.draws,
+            seed=self.random_seed,
+            target_accept=self.target_accept,
+            max_num_doublings=self.max_num_doublings,
+            initial_step_size=self.initial_step_size,
+            inverse_mass_matrix=self._prior_width_vector() ** 2,
+        )
+        self._store_result(result)
+        return None
+
+    def _run_mclmc(self, logdensity_fn):
+        """Run tuned MCLMC.
+
+        Parameters
+        ----------
+        logdensity_fn : callable
+            Scalar JAX log posterior.
+
+        Returns
+        -------
+        None
+        """
+        from bagle.jax.blackjax_samplers import sample_mclmc
+
+        n_ess = min(50, max(10, int(self.draws) // 2))
+        positions = self._init_positions(self.chains)
+        result = sample_mclmc(
+            logdensity_fn,
+            positions,
+            n_draws=self.draws,
+            seed=self.random_seed,
+            num_effective_samples=n_ess,
+            inverse_mass_matrix=self._prior_width_vector() ** 2,
+            initial_step_size=min(self.initial_step_size, 0.2),
+        )
+        self._store_result(result)
+        return None
+
+    def _run_smc(self, logprior_fn, loglikelihood_fn):
+        """Run adaptive tempered SMC.
+
+        Parameters
+        ----------
+        logprior_fn, loglikelihood_fn : callable
+            Scalar JAX densities.
+
+        Returns
+        -------
+        None
+        """
+        from bagle.jax.blackjax_samplers import sample_smc
+
+        n_particles = int(self.smc_particles)
+        positions = self._init_positions(self.chains * n_particles)
+        particles = positions.reshape(self.chains, n_particles, -1)
+        result = sample_smc(
+            logprior_fn,
+            loglikelihood_fn,
+            particles,
+            seed=self.random_seed,
+            step_size=self.initial_step_size,
+            inverse_mass_matrix=self._prior_width_vector() ** 2,
+            inner=self.smc_inner,
+            n_mcmc_steps=self.smc_mcmc_steps,
+            n_integration_steps=self.smc_integration_steps,
+            max_num_doublings=self.max_num_doublings,
+            target_ess=self.smc_target_ess,
+            max_iter=self.smc_max_iter,
+        )
+        self._store_result(result)
+        return None
+
+    def _run_ns(self, logprior_fn, loglikelihood_fn):
+        """Run nested slice sampling.
+
+        Parameters
+        ----------
+        logprior_fn, loglikelihood_fn : callable
+            Scalar JAX densities.
+
+        Returns
+        -------
+        None
+        """
+        from bagle.jax.blackjax_samplers import sample_ns
+
+        n_dim = len(self.fitter_param_names)
+        if self.ns_inner_steps is None:
+            n_inner = max(5, n_dim)
+        else:
+            n_inner = max(1, int(self.ns_inner_steps))
+
+        n_delete = int(self.ns_num_delete)
+        if self.ns_max_iter is None:
+            max_iter = max(1, (30 * int(self.n_live)) // n_delete)
+        else:
+            max_iter = max(1, int(self.ns_max_iter))
+
+        positions = self._init_positions(self.n_live)
+        result = sample_ns(
+            logprior_fn,
+            loglikelihood_fn,
+            positions,
+            seed=self.random_seed,
+            n_inner=n_inner,
+            n_delete=n_delete,
+            max_iter=max_iter,
+            max_slice_steps=self.ns_max_slice_steps,
+            max_shrinkage=self.ns_max_shrinkage,
+            f_live=self.f_live,
+            n_posterior=self.posterior_samples,
+            verbose=self.verbose,
+        )
+        self._store_result(result)
+        return None
+
+    def _build_results_table(self):
+        """Build an Astropy table of posterior samples and derived params.
+
+        Returns
+        -------
+        tab : astropy.table.Table
+            Columns: weights, logLike, fit params, derived params.
+        """
+        if self._samples_array is None:
+            raise RuntimeError('No BlackJAX results. Run solve() first.')
+
+        loglikes = _ensure_loglikes(self, self._samples_array)
+        return _build_posterior_table(
+            self, self._samples_array, loglikes
+        )
+
+    def load_blackjax_results(self, remake_fits=False):
+        """Load the BlackJAX posterior table.
+
+        Parameters
+        ----------
+        remake_fits : bool, optional
+            Rebuild from in-memory samples when True.
+
+        Returns
+        -------
+        tab : astropy.table.Table
+            Posterior results.
+        """
+        return _load_posterior_table(
+            self, remake_fits, 'No BlackJAX results found.'
+        )
+
+    def load_blackjax_summary(self, remake_fits=False):
+        """Build a one-row summary with logZ and MCMC diagnostics.
+
+        Parameters
+        ----------
+        remake_fits : bool, optional
+            Rebuild when True.
+
+        Returns
+        -------
+        tab : astropy.table.Table
+            One row with logZ, maxlogL, mean / std / MAP, and
+            ``mean_accept``, ``step_size``, ``rhat_max``, ``ess_min``.
+            MCLMC also stores ``mclmc_L``.
+        """
+        if not remake_fits and self._summary_table is not None:
+            return self._summary_table
+
+        tab = self.load_blackjax_results(remake_fits=remake_fits)
+        row = _multinest_summary_row(self, tab)
+        diag = self._diagnostics or {}
+        row['mean_accept'] = float(diag.get('mean_accept', np.nan))
+        row['step_size'] = float(diag.get('step_size', np.nan))
+        row['rhat_max'] = float(diag.get('rhat_max', np.nan))
+        row['ess_min'] = float(diag.get('ess_min', np.nan))
+        if self.sampler == 'mclmc':
+            row['mclmc_L'] = float(diag.get('L', np.nan))
+        if self.sampler == 'smc':
+            row['smc_beta'] = float(diag.get('beta', np.nan))
+
+        self._summary_table = Table([row])
+        return self._summary_table
+
+    def load_mnest_results(self, remake_fits=False):
+        """Alias so plotting and time-test code can load these samples.
+
+        Parameters
+        ----------
+        remake_fits : bool, optional
+            Passed to :meth:`load_blackjax_results`.
+
+        Returns
+        -------
+        tab : astropy.table.Table
+            Posterior results.
+        """
+        return self.load_blackjax_results(remake_fits=remake_fits)
+
+    def load_mnest_summary(self, remake_fits=False):
+        """Alias so plotting and time-test code can load the summary.
+
+        Parameters
+        ----------
+        remake_fits : bool, optional
+            Passed to :meth:`load_blackjax_summary`.
+
+        Returns
+        -------
+        tab : astropy.table.Table
+            One-row summary.
+        """
+        return self.load_blackjax_summary(remake_fits=remake_fits)
 
 
 #########################
