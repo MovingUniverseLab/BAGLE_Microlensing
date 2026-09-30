@@ -139,6 +139,39 @@ def test_mixed_four_filter_cube():
     return None
 
 
+def test_unused_suffix_prior_warns():
+    """A prior on xS0_E1 does not replace the default on xS0_E3."""
+    data = make_data(['earth', 'spitzer', 'keck'], ['keck'])
+    fitter = _solver(data, model.PSPL_PhotAstrom_Par_Param1)
+    assert fitter.map_phot_idx_to_ast_idx == [2]
+    assert 'xS0_E3' in fitter.fitter_param_names
+    assert 'xS0_E1' not in fitter.fitter_param_names
+
+    fitter.priors['xS0_E1'] = model_fitter.make_gen(-1e-4, 1e-4)
+    with pytest.warns(UserWarning, match=r'xS0_E1.*xS0_E3'):
+        fitter._check_b_sff_upper_bound()
+
+    # The sampled suffix is silent.
+    del fitter.priors['xS0_E1']
+    fitter.priors['xS0_E3'] = model_fitter.make_gen(-1e-4, 1e-4)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        fitter._check_b_sff_upper_bound()
+
+    from bagle import model_fitter_jax
+    jax_fit = model_fitter_jax.MicrolensSolver(
+        data,
+        model_fitter_jax.mmodel.PSPL_PhotAstrom_Par_Param1,
+        outputfiles_basename='/tmp/bagle_unused_prior_',
+        verbose=False,
+    )
+    assert jax_fit.map_phot_idx_to_ast_idx == [2]
+    jax_fit.priors['xS0_E1'] = model_fitter.make_gen(-1e-4, 1e-4)
+    with pytest.warns(UserWarning, match='xS0_E1'):
+        jax_fit._check_b_sff_upper_bound()
+    return None
+
+
 def test_numpy_and_jax_likelihood_see_second_observer(monkeypatch):
     """Both fitters send each filter's observer into the parallax table."""
     seen = []

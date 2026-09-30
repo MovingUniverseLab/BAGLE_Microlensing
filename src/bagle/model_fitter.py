@@ -34,6 +34,7 @@ from bagle.filt_params import (
     pack_constructor_params,
     pack_optional_param_dicts,
     resolve_obs_locations,
+    warn_unmatched_suffixed_priors,
 )
 from astropy.table import Table
 from astropy.table import Row
@@ -876,7 +877,13 @@ class MicrolensSolver(Solver):
         -----
         Called once at the start of ``solve``. The default prior is
         already uniform on [0, 1]. Photometry-only fits are skipped.
+        A suffixed prior that is not a cube name is reported here,
+        after the caller has finished replacing defaults.
         """
+        warn_unmatched_suffixed_priors(
+            self.priors, self.fitter_param_names
+        )
+
         n_ast = int(self.n_ast_sets or 0)
         if n_ast == 0:
             return None

@@ -2349,10 +2349,18 @@ def test_multi_obsLocation(resume=False, verbose=False):
                              resume=resume, verbose=False)
 
     # Lets adjust some priors for faster solving.
+    # Astrometry is on the unified filter of ast_data, not suffix 1.
+    # This simulation's astrometry is the third photometric filter.
     fitter.priors['mL'] = model_fitter.make_gen('mL', p_in['mL']-1, p_in['mL']+1)
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-1, p_in['t0']+1)
-    fitter.priors['xS0_E1'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
-    fitter.priors['xS0_N1'] = model_fitter.make_gen('xS0_N', p_in['xS0_N']-1e-4, p_in['xS0_N']+1e-4)
+    for filt in fitter.map_phot_idx_to_ast_idx:
+        suffix = int(filt) + 1
+        fitter.priors[f'xS0_E{suffix}'] = model_fitter.make_gen(
+            'xS0_E', p_in['xS0_E'] - 1e-4, p_in['xS0_E'] + 1e-4
+        )
+        fitter.priors[f'xS0_N{suffix}'] = model_fitter.make_gen(
+            'xS0_N', p_in['xS0_N'] - 1e-4, p_in['xS0_N'] + 1e-4
+        )
     fitter.priors['beta'] = model_fitter.make_gen('beta', p_in['beta']-0.01, p_in['beta']+0.01)
     fitter.priors['muL_E'] = model_fitter.make_gen('muL_E', p_in['muL_E']-1e-3, p_in['muL_E']+1e-3)
     fitter.priors['muL_N'] = model_fitter.make_gen('muL_N', p_in['muL_N']-1e-3, p_in['muL_N']+1e-3)
@@ -2372,13 +2380,22 @@ def test_multi_obsLocation(resume=False, verbose=False):
 
     best = fitter.get_best_fit()
 
+    # Photometry-only filters keep the fixed origin. The sampled
+    # origin is the astrometric filter's cube column.
+    xS0_E_fit = np.zeros(fitter.n_filters)
+    xS0_N_fit = np.zeros(fitter.n_filters)
+    for filt in fitter.map_phot_idx_to_ast_idx:
+        k = int(filt)
+        xS0_E_fit[k] = best[f'xS0_E{k + 1}']
+        xS0_N_fit[k] = best[f'xS0_N{k + 1}']
+
     pspl_out = model.PSPL_PhotAstrom_Par_Param1(mL=best['mL'],
                                                 t0=best['t0'],
                                                 beta=best['beta'],
                                                 dL=best['dL'],
                                                 dL_dS=best['dL_dS'],
-                                                xS0_E=best['xS0_E1'],
-                                                xS0_N=best['xS0_N1'],
+                                                xS0_E=xS0_E_fit,
+                                                xS0_N=xS0_N_fit,
                                                 muL_E=best['muL_E'],
                                                 muL_N=best['muL_N'],
                                                 muS_E=best['muS_E'],

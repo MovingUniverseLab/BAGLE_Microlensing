@@ -1578,3 +1578,8 @@ on `convert_helio_geo_*`, and light-travel time.
     FITS loader, applied to in-memory dictionaries such as
     `fake_data` output. A name present in neither form still raises
     `KeyError`.
+
+18. At the start of `solve`, a prior whose name has a filter suffix
+    and is not in `fitter_param_names` produces a `UserWarning`.
+    The default prior on the real cube name is left in place.
+    Unsuffixed keys are not checked.

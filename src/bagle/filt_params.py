@@ -744,6 +744,56 @@ def cube_has_derived_room(params, n_params):
     return size >= int(n_params)
 
 
+def warn_unmatched_suffixed_priors(priors, fitter_param_names):
+    """Warn when a suffixed prior is not a sampled cube name.
+
+    Parameters
+    ----------
+    priors : mapping or None
+        Name to prior. Keys the user assigned after the defaults.
+    fitter_param_names : sequence of str
+        Names MultiNest, PyMC, and NumPyro actually sample.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    ``priors['xS0_E1'] = ...`` does not replace the default on
+    ``xS0_E3``. The extra key is ignored and the fit keeps the wide
+    default. An unsuffixed key is left alone: several generators are
+    still stored under the base name.
+    """
+    if not priors:
+        return None
+
+    sampled = [str(name) for name in fitter_param_names]
+    sampled_set = set(sampled)
+    for name in priors:
+        base, filt_index = split_param_filter_index1(str(name))
+        if filt_index is None or name in sampled_set:
+            continue
+
+        # Same base, different suffix: that is the name the user meant.
+        matches = [
+            other for other in sampled
+            if split_param_filter_index1(other)[0] == base
+        ]
+        if matches:
+            have = ', '.join(matches)
+        else:
+            have = 'none'
+        warnings.warn(
+            f'Prior {name!r} is not in the sampled cube, so it is '
+            f'ignored and the default prior stays in effect. '
+            f'Sampled {base} names: {have}.',
+            UserWarning,
+            stacklevel=4,
+        )
+    return None
+
+
 def cube_as_floats(cube, n):
     """Copy the first ``n`` cube entries, including a ctypes pointer.
 
