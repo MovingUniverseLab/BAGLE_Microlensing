@@ -97,6 +97,57 @@ def split_param_filter_index1(name):
     return base, filt_index
 
 
+def legacy_filter_value(value, filt_index):
+    """Select one filter from an unsuffixed legacy value.
+
+    Parameters
+    ----------
+    value : float or array_like
+        A scalar, a length-1 sequence, or one number per filter.
+    filt_index : int
+        1-based unified filter index.
+
+    Returns
+    -------
+    item : float
+        The scalar when ``value`` has one element. Element
+        ``filt_index - 1`` when ``value`` is a longer 1-d sequence.
+
+    Raises
+    ------
+    KeyError
+        ``value`` is not one number per filter. A multi-dimensional
+        array and a sequence that does not reach ``filt_index`` both
+        raise. The message is ``filt_index``, since the caller owns
+        the parameter name.
+
+    Notes
+    -----
+    A historical fit stored one origin and reused it. The
+    multi-location simulator stores a length-``n_filters`` vector
+    under the same unsuffixed key. A length-1 array is the scalar
+    case, not a vector that only fills filter 1.
+    """
+    if isinstance(value, (str, bytes)):
+        raise KeyError(filt_index)
+
+    try:
+        arr = np.asarray(value, dtype=float)
+    except (TypeError, ValueError):
+        raise KeyError(filt_index)
+
+    if arr.ndim == 0 or arr.size == 1:
+        return float(arr.reshape(-1)[0])
+
+    if arr.ndim != 1:
+        raise KeyError(filt_index)
+
+    k = int(filt_index) - 1
+    if k < 0 or k >= int(arr.size):
+        raise KeyError(filt_index)
+    return float(arr[k])
+
+
 def lookup_param(params, name):
     """Return one sampled value, accepting an unsuffixed legacy name.
 
@@ -110,21 +161,30 @@ def lookup_param(params, name):
     Returns
     -------
     value
-        ``params[name]`` when that key exists. Otherwise the value
-        stored under the unsuffixed name.
+        ``params[name]`` when that key exists. Otherwise one element
+        of the unsuffixed value. A scalar unsuffixed value is reused
+        for every suffix. A 1-d sequence is one value per filter.
+
+    Raises
+    ------
+    KeyError
+        Neither the suffixed name nor a usable unsuffixed value is
+        present.
 
     Notes
     -----
-    One historical ``xS0_E`` is reused for every suffixed slot that
-    does not have its own entry. A name present in neither form
-    raises ``KeyError``.
+    ``fake_data`` stores ``xS0_E`` as one East origin per filter.
+    Slot ``xS0_E3`` then receives element 2, not the whole vector.
     """
     if name in params:
         return params[name]
 
     base, filt_index = split_param_filter_index1(name)
     if filt_index is not None and base in params:
-        return params[base]
+        try:
+            return legacy_filter_value(params[base], filt_index)
+        except KeyError:
+            raise KeyError(name)
     raise KeyError(name)
 
 

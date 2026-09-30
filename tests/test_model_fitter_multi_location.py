@@ -365,6 +365,49 @@ def test_get_model_accepts_unsuffixed_origin():
     mod = fitter.get_model(params)
     np.testing.assert_allclose(mod.xS0[:, 0], 0.01)
     np.testing.assert_allclose(mod.xS0[:, 1], -0.02)
+
+    # A length-1 array is that same scalar, not a one-filter vector.
+    params['xS0_E'] = np.array([0.01])
+    params['xS0_N'] = np.array([-0.02])
+    mod = fitter.get_model(params)
+    np.testing.assert_allclose(mod.xS0[:, 0], 0.01)
+    np.testing.assert_allclose(mod.xS0[:, 1], -0.02)
+    return None
+
+
+def test_unsuffixed_origin_vector_is_per_filter():
+    """A length-n origin supplies element k to suffix k+1."""
+    data = make_data(['ogle', 'keck'], ['ogle', 'keck'])
+    fitter = _solver(data, model.PSPL_PhotAstrom_noPar_Param1)
+    params = {}
+    for name in fitter.fitter_param_names:
+        if name.startswith('xS0_'):
+            continue
+        median = fitter.priors[name].ppf(0.5)
+        params[name] = 0.0 if not np.isfinite(median) else float(median)
+    params['xS0_E'] = np.array([0.1, 0.2])
+    params['xS0_N'] = np.array([-0.3, -0.4])
+    mod = fitter.get_model(params)
+    np.testing.assert_allclose(mod.xS0, [[0.1, -0.3], [0.2, -0.4]])
+
+    # Photometry-only slots stay at the fixed origin. The sampled
+    # astrometric filter reads its own element, not the whole vector.
+    holed = make_data(['ogle', 'spitzer', 'keck'], ['keck'])
+    holed_fit = _solver(holed, model.PSPL_PhotAstrom_noPar_Param1)
+    holed_params = {}
+    for name in holed_fit.fitter_param_names:
+        if name.startswith('xS0_'):
+            continue
+        median = holed_fit.priors[name].ppf(0.5)
+        holed_params[name] = (
+            0.0 if not np.isfinite(median) else float(median)
+        )
+    holed_params['xS0_E'] = np.array([0.1, 0.2, 0.3])
+    holed_params['xS0_N'] = np.array([-0.1, -0.2, -0.3])
+    holed_mod = holed_fit.get_model(holed_params)
+    np.testing.assert_allclose(holed_mod.xS0[0], 0.0)
+    np.testing.assert_allclose(holed_mod.xS0[1], 0.0)
+    np.testing.assert_allclose(holed_mod.xS0[2], [0.3, -0.3])
     return None
 
 

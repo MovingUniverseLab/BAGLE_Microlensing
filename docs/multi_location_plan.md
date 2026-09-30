@@ -1573,11 +1573,14 @@ on `convert_helio_geo_*`, and light-travel time.
     error.
 
 17. `get_model` and the JAX log-likelihood vector accept an
-    unsuffixed legacy key. `xS0_E` fills every `xS0_E{k}` slot that
-    does not have its own entry. This is the same copy rule as the
-    FITS loader, applied to in-memory dictionaries such as
-    `fake_data` output. A name present in neither form still raises
-    `KeyError`.
+    unsuffixed legacy key. A scalar `xS0_E` fills every `xS0_E{k}`
+    slot that does not have its own entry. A 1-d sequence longer
+    than one element is one value per filter, so `xS0_E3` receives
+    element 2 of the multi-location simulator's vector. A length-1
+    array is the scalar. The FITS loader still copies an unsuffixed
+    posterior column into every filter, because that column is one
+    sample per row rather than one filter per element. A name
+    present in neither form still raises `KeyError`.
 
 18. At the start of `solve`, a prior whose name has a filter suffix
     and is not in `fitter_param_names` produces a `UserWarning`.
