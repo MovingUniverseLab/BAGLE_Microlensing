@@ -1,1 +1,1 @@
-"""JAX helpers for BAGLE models (geometry, GP, finite-source utilities)."""
+"""JAX helpers for BAGLE models (geometry, GP, finite-source, replica exchange)."""

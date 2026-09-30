@@ -12,6 +12,7 @@ import pytest
 from bagle import model_fitter_jax as model_fitter
 from bagle import model_jax as model
 from bagle.model_fitter_jax import (
+    MicrolensSolver,
     MicrolensSolverImportance,
     MicrolensSolverNumPyro,
     MicrolensSolverPyMC,
@@ -265,6 +266,40 @@ def _assert_samples(fitter, truth, expect_logz, t0_atol, extra_atol):
     return None
 
 
+def _assert_replica_diagnostics(fitter):
+    """Check DEO swap rates and round trips on the summary row.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolverNumPyro
+        Replica-exchange solver that has already been solved.
+
+    Returns
+    -------
+    None
+    """
+    summary = fitter.load_mnest_summary()
+    n_gaps = int(fitter.n_temperatures) - 1
+    rates = []
+    for gap in range(n_gaps):
+        rate = float(summary['swap_accept_' + str(gap)][0])
+        assert np.isfinite(rate)
+        assert 0.0 <= rate <= 1.0
+        rates.append(rate)
+
+    trips = int(summary['n_round_trips'][0])
+    assert trips >= 0
+    assert np.allclose(np.asarray(fitter._swap_accept_rate), rates)
+    # At least one neighboring pair should exchange on these ladders.
+    assert max(rates) > 0.0
+    print(
+        'replica swap_accept', rates,
+        'round_trips', trips,
+        'logZ', float(summary['logZ'][0]),
+    )
+    return None
+
+
 def test_unknown_pymc_sampler_rejected():
     """PyMC solver rejects sampler names it does not implement."""
     pytest.importorskip('pymc')
@@ -348,6 +383,7 @@ def test_replica_exchange_phot():
         tune=120,
         chains=2,
         n_temperatures=4,
+        n_leapfrog=4,
         random_seed=0,
         verbose=False,
     )
@@ -357,6 +393,7 @@ def test_replica_exchange_phot():
     tab = fitter.load_mnest_results()
     assert len(tab) == 100 * 2
     assert fitter.sampler == 'replica_exchange'
+    _assert_replica_diagnostics(fitter)
     _assert_samples(
         fitter,
         truth,
@@ -467,11 +504,13 @@ def test_replica_exchange_phot_astrom():
         tune=250,
         chains=2,
         n_temperatures=4,
+        n_leapfrog=4,
         random_seed=1,
         verbose=False,
     )
     _apply_joint_priors(fitter, truth)
     fitter.solve()
+    _assert_replica_diagnostics(fitter)
     _assert_samples(
         fitter,
         truth,
@@ -605,4 +644,127 @@ def test_pocomc_missing_dependency_message(monkeypatch):
     monkeypatch.setattr(builtins, '__import__', _blocked)
     with pytest.raises(ImportError, match='pocomc'):
         model_fitter._import_pocomc()
+    return None
+
+
+def test_evaluate_loglik_jax_batch_matches_point():
+    """Batched JAX log-likelihood matches pointwise evaluation."""
+    data, truth = _tiny_pspl_phot()
+    out = os.path.join(TEST_OUTPUT_DIR, 'batch_lnL_')
+    fitter = MicrolensSolver(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=out,
+    )
+    names = list(fitter.fitter_param_names)
+    theta = np.array([float(truth[name]) for name in names], dtype=np.float64)
+    rng = np.random.default_rng(0)
+    batch = np.repeat(theta[None, :], 4, axis=0)
+    batch[1:] = batch[1:] + rng.normal(0.0, 0.01, size=(3, theta.size))
+
+    point = np.array(
+        [float(fitter.evaluate_loglik_jax(batch[i])) for i in range(4)]
+    )
+    vector = np.asarray(fitter.evaluate_loglik_jax(batch), dtype=float)
+    assert vector.shape == (4,)
+    assert np.allclose(vector, point, rtol=1e-5, atol=1e-5)
+
+    # Second call must hit the cached jitted vmap.
+    cached = fitter._explicit_jax_loglik_vmap_cache
+    vector2 = np.asarray(fitter.evaluate_loglik_jax(batch), dtype=float)
+    assert fitter._explicit_jax_loglik_vmap_cache[0] is cached[0]
+    assert fitter._explicit_jax_loglik_vmap_cache[1] is cached[1]
+    assert np.allclose(vector2, point, rtol=1e-5, atol=1e-5)
+    return None
+
+
+def test_blackjax_ns_phot():
+    """BlackJAX nested sampling returns finite logZ near the truth."""
+    pytest.importorskip('blackjax')
+    data, truth = _tiny_pspl_phot()
+    out = os.path.join(TEST_OUTPUT_DIR, 'blackjax_ns_')
+    fitter = MicrolensSolverImportance(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=out,
+        sampler='blackjax_ns',
+        n_live=20,
+        ns_inner_steps=2,
+        ns_num_delete=2,
+        ns_max_iter=60,
+        ns_max_slice_steps=4,
+        ns_max_shrinkage=20,
+        f_live=0.15,
+        posterior_samples=40,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_phot_priors(fitter, truth)
+    fitter.solve()
+
+    tab = fitter.load_mnest_results()
+    assert len(tab) == 40
+    print('blackjax_ns phot logZ', float(fitter._logZ))
+    _assert_samples(
+        fitter,
+        truth,
+        expect_logz=True,
+        t0_atol=2.5,
+        extra_atol={
+            'u0_amp': 0.15,
+            'tE': 5.0,
+            'mag_src1': 0.3,
+            'b_sff1': 0.15,
+        },
+    )
+    return None
+
+
+def test_blackjax_ns_phot_astrom():
+    """BlackJAX nested sampling also runs on photometry+astrometry."""
+    pytest.importorskip('blackjax')
+    data, truth = _tiny_pspl_phot_astrom()
+    out = os.path.join(TEST_OUTPUT_DIR, 'blackjax_ns_joint_')
+    fitter = MicrolensSolverImportance(
+        data,
+        model.PSPL_PhotAstrom_noPar_Param1,
+        outputfiles_basename=out,
+        sampler='blackjax_ns',
+        n_live=24,
+        ns_inner_steps=4,
+        ns_num_delete=2,
+        ns_max_iter=80,
+        ns_max_slice_steps=6,
+        ns_max_shrinkage=24,
+        f_live=0.1,
+        posterior_samples=40,
+        random_seed=1,
+        verbose=False,
+    )
+    _apply_joint_priors(fitter, truth)
+    fitter.solve()
+    print('blackjax_ns joint logZ', float(fitter._logZ))
+    _assert_samples(
+        fitter,
+        truth,
+        expect_logz=True,
+        t0_atol=3.0,
+        extra_atol={'beta': 0.2, 'mag_src1': 0.35},
+    )
+    return None
+
+
+def test_blackjax_missing_dependency_message(monkeypatch):
+    """Requesting BlackJAX without the package raises a clear ImportError."""
+    import builtins
+    real_import = builtins.__import__
+
+    def _blocked(name, *args, **kwargs):
+        if name == 'blackjax' or name.startswith('blackjax.'):
+            raise ImportError('blocked for test')
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, '__import__', _blocked)
+    with pytest.raises(ImportError, match='blackjax'):
+        model_fitter._import_blackjax()
     return None

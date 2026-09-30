@@ -1258,10 +1258,50 @@ class MicrolensSolver(Solver):
         return lnL
 
     def evaluate_loglik_jax(self, cube):
-        """Evaluate the explicit Param-mixin JAX likelihood."""
-        fn, _ = build_explicit_jax_loglik_fn(self)
+        """Evaluate the explicit Param-mixin JAX log-likelihood.
+
+        Parameters
+        ----------
+        cube : dict, astropy.table.Row, or array_like
+            One parameter point, or a batch of shape
+            ``(n_points, n_dim)``. A dict or Row is one point keyed by
+            parameter name. A 1-D buffer, including a PyMultiNest ctypes
+            buffer, is one point in ``fitter_param_names`` order.
+
+        Returns
+        -------
+        loglike : float or ndarray, shape (n_points,)
+            Log-likelihood. A scalar is returned for one point. For a
+            batch, non-finite values are replaced by ``-1e300``.
+
+        Notes
+        -----
+        The batch path compiles ``jax.vmap`` of the cached likelihood
+        once and stores it on ``_explicit_jax_loglik_vmap_cache``.
+        When the JAX likelihood is unavailable, each point is passed
+        to :meth:`log_likely`.
+        """
+        fn, _ctx = build_explicit_jax_loglik_fn(self)
+        batch = (
+            getattr(cube, 'ndim', None) == 2
+            and not isinstance(cube, (dict, Row))
+        )
+
+        # No explicit JAX likelihood: host log_likely, including batches.
         if fn is None:
-            return float(self.log_likely(cube))
+            if not batch:
+                return float(self.log_likely(cube))
+            theta = np.asarray(cube, dtype=np.float64)
+            values = np.empty(theta.shape[0], dtype=np.float64)
+            for i in range(theta.shape[0]):
+                values[i] = float(self.log_likely(theta[i]))
+            # Same finite floor as the JAX batch path.
+            values = np.where(np.isfinite(values), values, -1.0e300)
+            return values
+
+        if batch:
+            return self._loglik_jax_batch(fn, cube)
+
         if isinstance(cube, dict) or isinstance(cube, Row):
             vec = np.array(
                 [float(cube[n]) for n in self.fitter_param_names],
@@ -1275,6 +1315,36 @@ class MicrolensSolver(Solver):
                 dtype=np.float64
             )
         return float(fn(vec))
+
+    def _loglik_jax_batch(self, fn, theta):
+        """Evaluate a cached, jitted vmap of the JAX log-likelihood.
+
+        Parameters
+        ----------
+        fn : callable
+            Scalar JAX log-likelihood from
+            :func:`build_explicit_jax_loglik_fn`.
+        theta : array_like, shape (n_points, n_dim)
+            Physical parameter rows.
+
+        Returns
+        -------
+        loglike : ndarray, shape (n_points,)
+            Log-likelihood. Non-finite entries are ``-1e300``.
+        """
+        theta = np.asarray(theta, dtype=np.float64)
+        cached = getattr(self, '_explicit_jax_loglik_vmap_cache', None)
+
+        # Rebuild only when the scalar likelihood object changes.
+        if cached is None or cached[0] is not fn:
+            vmapped = jax.jit(jax.vmap(fn))
+            self._explicit_jax_loglik_vmap_cache = (fn, vmapped)
+        else:
+            vmapped = cached[1]
+
+        values = np.asarray(vmapped(jnp.asarray(theta)), dtype=np.float64)
+        values = np.where(np.isfinite(values), values, -1.0e300)
+        return values
 
     def grad_loglik_jax(self, cube):
         """Gradient of log-likelihood w.r.t. fitter parameters (JAX autodiff)."""
@@ -3890,13 +3960,10 @@ class MicrolensSolverPyMC(MicrolensSolver):
         n_samples = samples.shape[0]
         weights = np.ones(n_samples, dtype=float) / n_samples
 
-        loglikes = np.zeros(n_samples, dtype=float)
-        for ii in range(n_samples):
-            cube = {
-                name: samples[ii, jj]
-                for jj, name in enumerate(self.fitter_param_names)
-            }
-            loglikes[ii] = self.log_likely(cube)
+        # One batched call. Falls back to log_likely if JAX is unavailable.
+        loglikes = np.asarray(
+            self.evaluate_loglik_jax(samples), dtype=float
+        )
 
         tab = Table()
         tab['weights'] = weights
@@ -4278,6 +4345,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         use_jax_grad=True,
         gradient_guided=True,
         n_temperatures=15,
+        n_leapfrog=6,
         smc_rejuvenate_steps=1,
         **kwargs,
     ):
@@ -4310,9 +4378,10 @@ class MicrolensSolverNumPyro(MicrolensSolver):
             Inference backend. ``'smc_nuts'`` runs tempered sequential
             Monte Carlo with NUTS rejuvenation at each temperature.
             ``'replica_exchange'`` (alias ``'parallel_tempering'``) runs
-            Metropolis chains on a temperature ladder. Hot chains cross
-            modes; the cold chain (``β=1``) is the posterior. logZ is
-            the thermodynamic integral of ``<lnL>_β``.
+            HMC on a temperature ladder with non-reversible even/odd
+            swaps (DEO). Hot chains cross modes; the cold chain
+            (``β=1``) is the posterior. logZ is the thermodynamic
+            integral of ``<lnL>_β``.
         draws : int, optional
             NUTS posterior draws (also default jaxns resample count).
         tune : int, optional
@@ -4344,6 +4413,9 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         n_temperatures : int, optional
             Number of SMC tempering levels, or replica-exchange rungs,
             including ``β=0`` and ``β=1``.
+        n_leapfrog : int, optional
+            Leapfrog steps in each replica-exchange HMC proposal.
+            Default 6. Per-rung step sizes adapt during ``tune``.
         smc_rejuvenate_steps : int, optional
             NUTS draws kept per particle after warmup at each SMC stage.
         **kwargs : dict, optional
@@ -4420,7 +4492,11 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         self.use_jax_grad = bool(use_jax_grad)
         self.gradient_guided = bool(gradient_guided)
         self.n_temperatures = max(2, int(n_temperatures))
+        self.n_leapfrog = max(1, int(n_leapfrog))
         self.smc_rejuvenate_steps = max(1, int(smc_rejuvenate_steps))
+        # Filled by replica exchange: per-gap swap rates and round trips.
+        self._swap_accept_rate = None
+        self._n_round_trips = 0
 
         # Runtime products filled by solve().
         self.mcmc = None
@@ -4578,8 +4654,6 @@ class MicrolensSolverNumPyro(MicrolensSolver):
             [np.asarray(prior_draws[name]).reshape(-1) for name in names]
         )
 
-        # Vectorized χ² lnL for reweighting.
-        lnL_fn = model_builder._lnL
         logZ = 0.0
 
         for t in range(1, n_temps):
@@ -4587,7 +4661,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
 
             # Incremental importance weights ∝ exp(Δβ · lnL).
             lnL_vals = np.asarray(
-                jax.vmap(lnL_fn)(jnp.asarray(particles, dtype=jnp.float64))
+                self.evaluate_loglik_jax(particles), dtype=float
             )
             log_w = dbeta * lnL_vals
             logZ += float(jax_logsumexp(log_w) - np.log(n_particles))
@@ -4616,7 +4690,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
 
         # Final untempered lnL for MultiNest-like products.
         self._loglikes = np.asarray(
-            jax.vmap(lnL_fn)(jnp.asarray(particles, dtype=jnp.float64))
+            self.evaluate_loglik_jax(particles), dtype=float
         )
         self._samples_array = np.asarray(particles, dtype=float)
         self._logZ = float(logZ)
@@ -4754,7 +4828,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         return None
 
     def _run_replica_exchange(self):
-        """Run parallel tempering and keep the cold-chain posterior.
+        """Run HMC parallel tempering and keep the cold-chain posterior.
 
         Returns
         -------
@@ -4763,8 +4837,10 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         Notes
         -----
         ``chains`` independent ladders are vectorized together. Each
-        ladder has ``n_temperatures`` Metropolis replicas. Samples are
-        the ``β=1`` chain. ``_logZ`` is a thermodynamic integral.
+        ladder has ``n_temperatures`` HMC replicas. Swaps follow the
+        deterministic even/odd (DEO) schedule. Samples are the
+        ``β=1`` chain. ``_logZ`` is a thermodynamic integral.
+        ``_swap_accept_rate`` has one entry per neighboring gap.
         """
         if int(self.n_temperatures) < 2:
             raise ValueError(
@@ -4774,17 +4850,43 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         if int(self.chains) < 1:
             raise ValueError('replica_exchange needs chains >= 1.')
 
-        samples, logz = _replica_exchange_sample(
-            self,
-            n_ladders=int(self.chains),
-            n_temperatures=int(self.n_temperatures),
+        from bagle.jax.replica_exchange import replica_exchange_sample
+
+        lnL_fn, _ctx = build_explicit_jax_loglik_fn(self)
+        if lnL_fn is None:
+            raise RuntimeError(
+                'Replica exchange needs the differentiable JAX likelihood.'
+            )
+        log_prior_fn = _build_jax_log_prior(self)
+
+        n_ladders = int(self.chains)
+        n_temps = int(self.n_temperatures)
+        n_dim = len(self.fitter_param_names)
+        rng = np.random.default_rng(int(self.random_seed))
+        pos_np = _draw_prior_samples(self, n_ladders * n_temps, rng)
+        init_pos = pos_np.reshape(n_ladders, n_temps, n_dim)
+        width = np.array(
+            [
+                _prior_width(self.priors[name])
+                for name in self.fitter_param_names
+            ],
+            dtype=np.float64,
+        )
+        samples, logz, swap_rate, n_trips = replica_exchange_sample(
+            lnL_fn,
+            log_prior_fn,
+            init_pos,
+            width,
             n_tune=int(self.tune),
             n_draws=int(self.draws),
+            n_leapfrog=int(self.n_leapfrog),
             seed=int(self.random_seed),
             verbose=bool(self.verbose),
         )
         self._samples_array = np.asarray(samples, dtype=float)
         self._logZ = float(logz)
+        self._swap_accept_rate = np.asarray(swap_rate, dtype=float)
+        self._n_round_trips = int(n_trips)
         self._loglikes = None
         self.mcmc = None
         return None
@@ -4802,22 +4904,12 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         loglikes : ndarray, shape (n_samples,)
             Log-likelihood values.
         """
-        lnL, _ctx = build_explicit_jax_loglik_fn(self)
-        if lnL is None:
-            raise RuntimeError(
-                'MicrolensSolverNumPyro requires a differentiable JAX '
-                'likelihood (explicit Param-mixin jax_log_likely_* methods). '
-                'Unsupported configurations include add_err/mult_err or '
-                'models missing JAX likelihood methods.'
-            )
-
-        # Evaluate row-by-row (same order as fitter_param_names).
-        n_samples = samples.shape[0]
-        loglikes = np.zeros(n_samples, dtype=float)
-        for ii in range(n_samples):
-            loglikes[ii] = float(lnL(samples[ii]))
-
-        return loglikes
+        # One batched evaluation. Non-finite rows become -1e300.
+        loglikes = np.asarray(
+            self.evaluate_loglik_jax(np.asarray(samples, dtype=np.float64)),
+            dtype=float,
+        )
+        return loglikes.reshape(-1)
 
     def _build_results_table(self):
         """Build an Astropy table of posterior samples and derived params.
@@ -4947,6 +5039,13 @@ class MicrolensSolverNumPyro(MicrolensSolver):
             row['StDev_' + name] = float(np.std(vals))
             row['MaxLike_' + name] = float(vals[best_idx])
             row['MAP_' + name] = float(vals[best_idx])
+
+        # Replica exchange: per-gap DEO swap rates and round trips.
+        rates = getattr(self, '_swap_accept_rate', None)
+        if rates is not None:
+            row['n_round_trips'] = int(getattr(self, '_n_round_trips', 0))
+            for gap, rate in enumerate(np.asarray(rates, dtype=float)):
+                row['swap_accept_' + str(gap)] = float(rate)
 
         self._summary_table = Table([row])
         return self._summary_table
@@ -5162,416 +5261,6 @@ def _build_jax_log_prior(fitter):
     return log_prior
 
 
-def _adjacent_temperature_pairs(n_temps, offset):
-    """Index pairs of neighboring replica-exchange rungs.
-
-    Parameters
-    ----------
-    n_temps : int
-        Number of inverse temperatures.
-    offset : int
-        0 for even pairs ``(0, 1), (2, 3), ...``; 1 for odd pairs.
-
-    Returns
-    -------
-    pairs : ndarray, shape (n_pairs, 2), dtype int
-        Empty array with shape ``(0, 2)`` when no pair starts at
-        ``offset``.
-    """
-    left = np.arange(int(offset), int(n_temps) - 1, 2, dtype=np.int32)
-    if left.size == 0:
-        return np.zeros((0, 2), dtype=np.int32)
-    return np.column_stack([left, left + 1]).astype(np.int32)
-
-
-def _make_replica_chunk(lnL_fn, log_prior_fn, betas, even_pairs, odd_pairs):
-    """JIT a block of replica-exchange Metropolis updates.
-
-    Parameters
-    ----------
-    lnL_fn : callable
-        Log-likelihood of one vector, shape ``(n_dim,)``.
-    log_prior_fn : callable
-        Log-prior of one vector, shape ``(n_dim,)``.
-    betas : array_like, shape (n_temps,)
-        Inverse temperatures. Index 0 is the cold chain (``β=1``).
-    even_pairs, odd_pairs : array_like, shape (n_pairs, 2)
-        Adjacent rungs swapped on alternate passes.
-
-    Returns
-    -------
-    chunk : callable
-        ``chunk(pos, lnL, log_prior, steps, key, n_steps=N)``.
-        ``pos`` has shape ``(n_ladders, n_temps, n_dim)``.
-        Returns updated ``pos``, ``lnL``, ``log_prior``, ``key``,
-        accept counts ``(n_ladders, n_temps)``, cold positions
-        ``(n_steps, n_ladders, n_dim)``, and tempered lnL
-        ``(n_steps, n_ladders, n_temps)``.
-    """
-    betas_j = jnp.asarray(np.asarray(betas), dtype=jnp.float64)
-    swap_even = _make_replica_swap(betas_j, even_pairs)
-    swap_odd = _make_replica_swap(betas_j, odd_pairs)
-
-    def _batch_lnL(pos):
-        """Log-likelihood of every replica.
-
-        Parameters
-        ----------
-        pos : jax.Array, shape (n_ladders, n_temps, n_dim)
-            Replica positions.
-
-        Returns
-        -------
-        lnL : jax.Array, shape (n_ladders, n_temps)
-            Log-likelihood of each replica.
-        """
-        flat = pos.reshape((-1, pos.shape[-1]))
-        values = jax.vmap(lnL_fn)(flat)
-        return values.reshape(pos.shape[:-1])
-
-    def _batch_log_prior(pos):
-        """Log-prior of every replica.
-
-        Parameters
-        ----------
-        pos : jax.Array, shape (n_ladders, n_temps, n_dim)
-            Replica positions.
-
-        Returns
-        -------
-        log_prior : jax.Array, shape (n_ladders, n_temps)
-            Log-prior of each replica.
-        """
-        flat = pos.reshape((-1, pos.shape[-1]))
-        values = jax.vmap(log_prior_fn)(flat)
-        return values.reshape(pos.shape[:-1])
-
-    def chunk(pos, lnL, log_prior, steps, key, n_steps):
-        """Advance every replica by ``n_steps`` Metropolis updates.
-
-        Parameters
-        ----------
-        pos : jax.Array, shape (n_ladders, n_temps, n_dim)
-            Current positions.
-        lnL : jax.Array, shape (n_ladders, n_temps)
-            Log-likelihood at ``pos``.
-        log_prior : jax.Array, shape (n_ladders, n_temps)
-            Log-prior at ``pos``.
-        steps : jax.Array, shape (n_ladders, n_temps, n_dim)
-            Gaussian proposal scales.
-        key : jax.Array
-            PRNG key.
-        n_steps : int
-            Number of updates. Static.
-
-        Returns
-        -------
-        pos, lnL, log_prior, key, n_accept, cold, lnL_hist
-            See :func:`_make_replica_chunk`.
-        """
-        def body(carry, _unused):
-            pos, lnL, log_prior, key, n_accept = carry
-            key, k_noise, k_u, k_even, k_odd = jax.random.split(key, 5)
-
-            # Gaussian random-walk proposal, then tempered MH.
-            prop = pos + steps * jax.random.normal(k_noise, pos.shape)
-            lnL_prop = _batch_lnL(prop)
-            lp_prop = _batch_log_prior(prop)
-            lnL_prop = jnp.where(
-                jnp.isfinite(lnL_prop), lnL_prop, -1.0e300
-            )
-            log_alpha = (lp_prop - log_prior) + betas_j * (lnL_prop - lnL)
-            log_u = jnp.log(jax.random.uniform(k_u, shape=lnL.shape))
-            accept = (log_u < log_alpha) & jnp.isfinite(log_alpha)
-
-            pos = jnp.where(accept[..., None], prop, pos)
-            lnL = jnp.where(accept, lnL_prop, lnL)
-            log_prior = jnp.where(accept, lp_prop, log_prior)
-            n_accept = n_accept + accept.astype(jnp.float64)
-
-            # Even then odd neighbor swaps (non-overlapping pairs).
-            pos, lnL, log_prior = swap_even(pos, lnL, log_prior, k_even)
-            pos, lnL, log_prior = swap_odd(pos, lnL, log_prior, k_odd)
-            cold = pos[:, 0, :]
-            return (pos, lnL, log_prior, key, n_accept), (cold, lnL)
-
-        n_accept0 = jnp.zeros(pos.shape[:2], dtype=jnp.float64)
-        carry0 = (pos, lnL, log_prior, key, n_accept0)
-        final, hist = jax.lax.scan(body, carry0, None, length=n_steps)
-        pos, lnL, log_prior, key, n_accept = final
-        cold, lnL_hist = hist
-        return pos, lnL, log_prior, key, n_accept, cold, lnL_hist
-
-    return jax.jit(chunk, static_argnames=('n_steps',))
-
-
-def _make_replica_swap(betas, pairs):
-    """Build a swap of one set of non-overlapping replica pairs.
-
-    Parameters
-    ----------
-    betas : jax.Array, shape (n_temps,)
-        Inverse temperatures.
-    pairs : array_like, shape (n_pairs, 2)
-        Rungs to exchange. An empty array returns an identity swap.
-
-    Returns
-    -------
-    swap : callable
-        ``swap(pos, lnL, log_prior, key)`` with the same array shapes
-        as its inputs.
-    """
-    pairs = np.asarray(pairs, dtype=np.int32)
-    if pairs.shape[0] == 0:
-        def _noop(pos, lnL, log_prior, key):
-            """Leave replicas in place when this pass has no pairs.
-
-            Parameters
-            ----------
-            pos, lnL, log_prior, key
-                Unused replica state. Shapes match the caller.
-
-            Returns
-            -------
-            pos, lnL, log_prior
-                Unchanged inputs.
-            """
-            return pos, lnL, log_prior
-
-        return _noop
-
-    i = jnp.asarray(pairs[:, 0], dtype=jnp.int32)
-    j = jnp.asarray(pairs[:, 1], dtype=jnp.int32)
-
-    def _swap(pos, lnL, log_prior, key):
-        """Exchange adjacent replicas with the parallel-tempering rule.
-
-        Parameters
-        ----------
-        pos : jax.Array, shape (n_ladders, n_temps, n_dim)
-            Replica positions.
-        lnL, log_prior : jax.Array, shape (n_ladders, n_temps)
-            Densities that travel with each replica.
-        key : jax.Array
-            PRNG key for the swap uniforms.
-
-        Returns
-        -------
-        pos, lnL, log_prior
-            State after accepted swaps. Priors cancel, so the
-            acceptance ratio is ``(β_i - β_j) * (lnL_j - lnL_i)``.
-        """
-        log_alpha = (betas[i] - betas[j]) * (lnL[:, j] - lnL[:, i])
-        log_u = jnp.log(jax.random.uniform(key, shape=log_alpha.shape))
-        accept = (log_u < log_alpha) & jnp.isfinite(log_alpha)
-
-        pos_i = pos[:, i, :]
-        pos_j = pos[:, j, :]
-        pos = pos.at[:, i, :].set(
-            jnp.where(accept[..., None], pos_j, pos_i)
-        )
-        pos = pos.at[:, j, :].set(
-            jnp.where(accept[..., None], pos_i, pos_j)
-        )
-
-        lnL_i = lnL[:, i]
-        lnL_j = lnL[:, j]
-        lnL = lnL.at[:, i].set(jnp.where(accept, lnL_j, lnL_i))
-        lnL = lnL.at[:, j].set(jnp.where(accept, lnL_i, lnL_j))
-
-        lp_i = log_prior[:, i]
-        lp_j = log_prior[:, j]
-        log_prior = log_prior.at[:, i].set(jnp.where(accept, lp_j, lp_i))
-        log_prior = log_prior.at[:, j].set(jnp.where(accept, lp_i, lp_j))
-        return pos, lnL, log_prior
-
-    return _swap
-
-
-def _replica_exchange_sample(
-    fitter, n_ladders, n_temperatures, n_tune, n_draws, seed, verbose
-):
-    """Sample the cold chain of a Metropolis replica-exchange ladder.
-
-    Parameters
-    ----------
-    fitter : MicrolensSolver
-        Solver with a JAX log-likelihood and independent priors.
-    n_ladders : int
-        Independent temperature ladders. Concatenated cold chains
-        are the posterior. This is the ``chains`` parallel knob.
-    n_temperatures : int
-        Rungs from ``β=1`` (posterior) down to ``β=0`` (prior).
-    n_tune : int
-        Warmup steps per replica. Discarded. Step sizes adapt here.
-    n_draws : int
-        Steps kept per cold chain after warmup.
-    seed : int
-        PRNG seed.
-    verbose : bool
-        Print stage acceptance and the running logZ estimate.
-
-    Returns
-    -------
-    samples : ndarray, shape (n_ladders * n_draws, n_dim)
-        Cold-chain parameter draws.
-    logz : float
-        Thermodynamic-integration estimate of log evidence.
-
-    Notes
-    -----
-    The quadratic ladder matches SMC-NUTS: ``β = linspace(0, 1) ** 2``,
-    stored cold-first. logZ is ``∫_0^1 <lnL>_β dβ`` by the trapezoid
-    rule on the sampling-phase averages.
-    """
-    lnL_fn, _ctx = build_explicit_jax_loglik_fn(fitter)
-    if lnL_fn is None:
-        raise RuntimeError(
-            'Replica exchange needs the differentiable JAX likelihood.'
-        )
-    log_prior_fn = _build_jax_log_prior(fitter)
-
-    n_dim = len(fitter.fitter_param_names)
-    # Cold rung first (β=1), prior last (β=0).
-    betas = np.linspace(0.0, 1.0, int(n_temperatures)) ** 2
-    betas = np.ascontiguousarray(betas[::-1], dtype=np.float64)
-
-    even_pairs = _adjacent_temperature_pairs(n_temperatures, 0)
-    odd_pairs = _adjacent_temperature_pairs(n_temperatures, 1)
-    chunk = _make_replica_chunk(
-        lnL_fn, log_prior_fn, betas, even_pairs, odd_pairs
-    )
-
-    rng = np.random.default_rng(int(seed))
-    pos_np = _draw_prior_samples(
-        fitter, int(n_ladders) * int(n_temperatures), rng
-    )
-    pos = jnp.asarray(
-        pos_np.reshape(int(n_ladders), int(n_temperatures), n_dim),
-        dtype=jnp.float64,
-    )
-
-    # Proposal scale: a fraction of each prior's central width.
-    width = np.array(
-        [_prior_width(fitter.priors[name]) for name in fitter.fitter_param_names],
-        dtype=np.float64,
-    )
-    hot = 1.0 + 2.0 * (1.0 - betas)
-    steps_np = 0.2 * hot[:, None] * width[None, :]
-    steps_np = np.broadcast_to(
-        steps_np, (int(n_ladders), int(n_temperatures), n_dim)
-    ).copy()
-    steps = jnp.asarray(steps_np, dtype=jnp.float64)
-
-    def _densities(pos):
-        """Evaluate lnL and log-prior on the whole ladder.
-
-        Parameters
-        ----------
-        pos : jax.Array, shape (n_ladders, n_temps, n_dim)
-            Replica positions.
-
-        Returns
-        -------
-        lnL, log_prior : jax.Array, shape (n_ladders, n_temps)
-            Densities, with non-finite lnL clipped.
-        """
-        flat = pos.reshape((-1, n_dim))
-        lnL = jax.vmap(lnL_fn)(flat).reshape(pos.shape[:-1])
-        log_prior = jax.vmap(log_prior_fn)(flat).reshape(pos.shape[:-1])
-        lnL = jnp.where(jnp.isfinite(lnL), lnL, -1.0e300)
-        return lnL, log_prior
-
-    lnL, log_prior = _densities(pos)
-    key = jax.random.PRNGKey(int(seed))
-    chunk_size = 20
-    cap = jnp.asarray(2.0 * width, dtype=jnp.float64)
-
-    def _run_phase(pos, lnL, log_prior, steps, key, n_steps, adapt):
-        """Run ``n_steps`` in fixed-size JIT chunks.
-
-        Parameters
-        ----------
-        pos, lnL, log_prior, steps, key
-            Replica state. ``steps`` has shape
-            ``(n_ladders, n_temps, n_dim)``.
-        n_steps : int
-            Total Metropolis steps in this phase.
-        adapt : bool
-            If True, rescale proposals from the chunk accept rate
-            and drop the cold-chain trace.
-
-        Returns
-        -------
-        pos, lnL, log_prior, steps, key, cold, lnL_sum, n_kept
-            ``cold`` is ``(n_kept_steps, n_ladders, n_dim)`` or None
-            when ``adapt`` is True. ``lnL_sum`` has shape
-            ``(n_temps,)`` and is zero during tuning.
-        """
-        left = int(n_steps)
-        cold_parts = []
-        lnL_sum = np.zeros(int(n_temperatures), dtype=np.float64)
-        n_kept = 0
-
-        while left > 0:
-            this = chunk_size if left >= chunk_size else left
-            key, subkey = jax.random.split(key)
-            pos, lnL, log_prior, key, n_accept, cold, lnL_hist = chunk(
-                pos, lnL, log_prior, steps, subkey, n_steps=this
-            )
-            if adapt:
-                rate = np.asarray(n_accept) / float(this)
-                factor = np.ones(rate.shape, dtype=np.float64)
-                factor = np.where(rate > 0.30, 1.2, factor)
-                factor = np.where(rate < 0.15, 0.8, factor)
-                steps = steps * jnp.asarray(factor[..., None])
-                steps = jnp.minimum(steps, cap)
-                steps = jnp.maximum(steps, 1.0e-8)
-            else:
-                cold_parts.append(np.asarray(cold))
-                lnL_sum += np.asarray(lnL_hist).sum(axis=(0, 1))
-                n_kept += int(this) * int(n_ladders)
-            left -= this
-
-            if verbose and adapt:
-                print(
-                    f'replica tune accept '
-                    f'{float(np.mean(np.asarray(n_accept)) / this):.2f}'
-                )
-
-        cold_out = None
-        if cold_parts:
-            cold_out = np.concatenate(cold_parts, axis=0)
-        return pos, lnL, log_prior, steps, key, cold_out, lnL_sum, n_kept
-
-    pos, lnL, log_prior, steps, key, _cold, _sum, _n = _run_phase(
-        pos, lnL, log_prior, steps, key, int(n_tune), adapt=True
-    )
-    pos, lnL, log_prior, steps, key, cold, lnL_sum, n_kept = _run_phase(
-        pos, lnL, log_prior, steps, key, int(n_draws), adapt=False
-    )
-
-    # cold is (n_draws, n_ladders, n_dim) -> stack chains.
-    samples = np.asarray(cold, dtype=float).reshape(-1, n_dim)
-
-    # Thermodynamic integral over the sampling phase.
-    if n_kept <= 0:
-        logz = np.nan
-    else:
-        # n_kept counts (steps * ladders), i.e. one average per rung.
-        mean_lnL = lnL_sum / float(n_kept)
-        order = np.argsort(betas)
-        # Trapezoid rule. NumPy 2.5 dropped np.trapz.
-        y = np.asarray(mean_lnL[order], dtype=float)
-        x = np.asarray(betas[order], dtype=float)
-        logz = float(np.sum(0.5 * (y[1:] + y[:-1]) * np.diff(x)))
-
-    if verbose:
-        print(f'replica exchange logZ ≈ {logz:.3f}')
-
-    return samples, logz
-
-
 class _IndependentPrior:
     """Independent BAGLE priors with the pocoMC ``logpdf`` / ``rvs`` API.
 
@@ -5696,6 +5385,29 @@ def _import_pocomc():
     return pocomc
 
 
+def _import_blackjax():
+    """Import BlackJAX or raise a message that names the extra.
+
+    Returns
+    -------
+    module
+        The ``blackjax`` module.
+
+    Raises
+    ------
+    ImportError
+        ``blackjax`` is not installed.
+    """
+    try:
+        import blackjax
+    except ImportError as error:
+        raise ImportError(
+            'BlackJAX nested sampling requires blackjax. Install with: '
+            'pip install "bagle[blackjax]" (or pip install "blackjax>=1.6,<1.7").'
+        ) from error
+    return blackjax
+
+
 def _spawn_pool(n_workers):
     """Open a spawn-context pool, or return None for one worker.
 
@@ -5719,45 +5431,6 @@ def _spawn_pool(n_workers):
     import multiprocessing
     ctx = multiprocessing.get_context('spawn')
     return ctx.Pool(int(n_workers))
-
-
-def _importance_loglike(fitter, theta):
-    """JAX log-likelihood at one point or a batch of points.
-
-    Parameters
-    ----------
-    fitter : MicrolensSolver
-        Solver passed to :func:`build_explicit_jax_loglik_fn`.
-    theta : array_like, shape (n_dim,) or (n_points, n_dim)
-        Physical parameters.
-
-    Returns
-    -------
-    loglike : float or ndarray, shape (n_points,)
-        Log-likelihood. A scalar is returned for a 1-D input.
-
-    Notes
-    -----
-    Falls back to :meth:`MicrolensSolver.log_likely` when the explicit
-    JAX likelihood is unavailable.
-    """
-    theta = np.asarray(theta, dtype=np.float64)
-    single = theta.ndim == 1
-    if single:
-        theta = theta.reshape(1, -1)
-
-    lnL, _ctx = build_explicit_jax_loglik_fn(fitter)
-    if lnL is None:
-        values = np.empty(theta.shape[0], dtype=float)
-        for i in range(theta.shape[0]):
-            values[i] = float(fitter.log_likely(theta[i]))
-    else:
-        values = np.asarray(jax.vmap(lnL)(jnp.asarray(theta)), dtype=float)
-        values = np.where(np.isfinite(values), values, -1.0e300)
-
-    if single:
-        return float(values[0])
-    return values
 
 
 def _equal_weight_resample(samples, weights, loglikes, n_out, rng):
@@ -5800,12 +5473,13 @@ def _equal_weight_resample(samples, weights, loglikes, n_out, rng):
 
 
 class MicrolensSolverImportance(MicrolensSolver):
-    """Unit-cube samplers: nautilus and pocoMC.
+    """nautilus, pocoMC, and BlackJAX nested sampling.
 
-    Both reuse the BAGLE inverse-CDF prior transform and the JAX
-    log-likelihood. ``n_workers`` is the process-pool size (1 vs many
-    cores). Results are written in the MultiNest ``.txt`` / ``.fits``
-    layout, with finite ``logZ``.
+    nautilus and pocoMC use the inverse-CDF prior transform.
+    BlackJAX nested sampling uses the JAX log-prior and log-likelihood.
+    ``n_workers`` is the process-pool size for nautilus and pocoMC.
+    Results are written in the MultiNest ``.txt`` / ``.fits`` layout,
+    with finite ``logZ``.
     """
 
     def __init__(
@@ -5834,10 +5508,15 @@ class MicrolensSolverImportance(MicrolensSolver):
         n_evidence=512,
         precondition=True,
         flow='nsf6',
+        ns_inner_steps=None,
+        ns_num_delete=1,
+        ns_max_iter=None,
+        ns_max_slice_steps=10,
+        ns_max_shrinkage=100,
         **kwargs,
     ):
         """
-        Initialize a nautilus or pocoMC microlensing solver.
+        Initialize a nautilus, pocoMC, or BlackJAX nested-sampling solver.
 
         Parameters
         ----------
@@ -5861,22 +5540,24 @@ class MicrolensSolverImportance(MicrolensSolver):
             Output files basename.
         verbose : bool, optional
             Verbose sampler output.
-        sampler : {'nautilus', 'pocomc'}, optional
+        sampler : {'nautilus', 'pocomc', 'blackjax_ns'}, optional
             ``'nautilus'`` is neural-network importance nested sampling.
             ``'pocomc'`` is preconditioned / flow-assisted SMC.
+            ``'blackjax_ns'`` is BlackJAX nested slice sampling.
         n_workers : int, optional
-            Process-pool size. ``1`` runs in-process. Larger values are
-            the 1-core vs many-core knob for both samplers.
+            Process-pool size for nautilus and pocoMC. ``1`` runs
+            in-process. ``blackjax_ns`` is a single JAX process.
         posterior_samples : int, optional
             Equal-weight rows written to the result table.
         random_seed : int, optional
             Seed for the sampler and the equal-weight resample.
         n_live : int, optional
-            Nautilus live points. Default 400.
+            Nautilus or BlackJAX live points. Default 400.
         n_networks : int, optional
             Nautilus networks per bound. Default 4.
         f_live : float, optional
-            Nautilus stopping fraction of evidence left in the live set.
+            Stopping fraction of evidence left in the live set.
+            Used by nautilus and BlackJAX nested sampling.
         n_eff : int, optional
             Nautilus effective-sample stopping size.
         n_effective : int, optional
@@ -5895,6 +5576,19 @@ class MicrolensSolverImportance(MicrolensSolver):
         flow : str, optional
             pocoMC flow architecture (``'nsf3'``, ``'nsf6'``, ...).
             Default ``'nsf6'``.
+        ns_inner_steps : int or None, optional
+            BlackJAX slice steps per new particle. ``None`` uses
+            ``max(5, n_dim)``.
+        ns_num_delete : int, optional
+            BlackJAX particles deleted per nested-sampling step.
+            Default 1.
+        ns_max_iter : int or None, optional
+            Maximum BlackJAX nested-sampling steps. ``None`` uses
+            ``30 * n_live / ns_num_delete``.
+        ns_max_slice_steps : int, optional
+            Cap on BlackJAX slice stepping-out expansions. Default 10.
+        ns_max_shrinkage : int, optional
+            Cap on BlackJAX slice shrinkage evaluations. Default 100.
         **kwargs : dict, optional
             Passed to :class:`MicrolensSolver`.
 
@@ -5919,10 +5613,10 @@ class MicrolensSolverImportance(MicrolensSolver):
         )
 
         sampler = str(sampler).lower()
-        if sampler not in ('nautilus', 'pocomc'):
+        if sampler not in ('nautilus', 'pocomc', 'blackjax_ns'):
             raise ValueError(
-                "sampler must be 'nautilus' or 'pocomc', "
-                f"got {sampler!r}"
+                "sampler must be 'nautilus', 'pocomc', or "
+                f"'blackjax_ns', got {sampler!r}"
             )
 
         self.sampler = sampler
@@ -5939,6 +5633,11 @@ class MicrolensSolverImportance(MicrolensSolver):
         self.n_evidence = int(n_evidence)
         self.precondition = bool(precondition)
         self.flow = str(flow)
+        self.ns_inner_steps = ns_inner_steps
+        self.ns_num_delete = max(1, int(ns_num_delete))
+        self.ns_max_iter = ns_max_iter
+        self.ns_max_slice_steps = max(1, int(ns_max_slice_steps))
+        self.ns_max_shrinkage = max(1, int(ns_max_shrinkage))
 
         self._samples_array = None
         self._loglikes = None
@@ -5949,7 +5648,7 @@ class MicrolensSolverImportance(MicrolensSolver):
         return None
 
     def solve(self):
-        """Run nautilus or pocoMC and write MultiNest-like outputs.
+        """Run nautilus, pocoMC, or BlackJAX nested sampling.
 
         Returns
         -------
@@ -5965,13 +5664,16 @@ class MicrolensSolverImportance(MicrolensSolver):
         print(f'*** Using {self.sampler} for sampling.           ***')
         print('*************************************************')
 
-        # Drop a cached JIT closure so a process pool can pickle self.
+        # Drop cached JIT closures so a process pool can pickle self.
         self._explicit_jax_loglik_cache = None
+        self._explicit_jax_loglik_vmap_cache = None
 
         if self.sampler == 'nautilus':
             self._run_nautilus()
-        else:
+        elif self.sampler == 'pocomc':
             self._run_pocomc()
+        else:
+            self._run_blackjax_ns()
 
         self._results_table = None
         self._summary_table = None
@@ -5979,21 +5681,6 @@ class MicrolensSolverImportance(MicrolensSolver):
         self.load_importance_results(remake_fits=True)
         self.load_importance_summary(remake_fits=True)
         return None
-
-    def _loglike_for_sampler(self, theta):
-        """Log-likelihood entry point used by nautilus and pocoMC.
-
-        Parameters
-        ----------
-        theta : array_like, shape (n_dim,) or (n_points, n_dim)
-            Physical parameters.
-
-        Returns
-        -------
-        loglike : float or ndarray
-            See :func:`_importance_loglike`.
-        """
-        return _importance_loglike(self, theta)
 
     def _prior_for_nautilus(self, unit):
         """Unit-cube prior transform for nautilus.
@@ -6023,7 +5710,7 @@ class MicrolensSolverImportance(MicrolensSolver):
         try:
             sampler = nautilus.Sampler(
                 self._prior_for_nautilus,
-                self._loglike_for_sampler,
+                self.evaluate_loglik_jax,
                 n_dim=len(self.fitter_param_names),
                 n_live=self.n_live,
                 n_networks=self.n_networks,
@@ -6079,7 +5766,7 @@ class MicrolensSolverImportance(MicrolensSolver):
             use_pool = pool is not None
             sampler = pocomc.Sampler(
                 _IndependentPrior(self),
-                self._loglike_for_sampler,
+                self.evaluate_loglik_jax,
                 n_effective=self.n_effective,
                 n_active=self.n_active,
                 vectorize=not use_pool,
@@ -6117,6 +5804,123 @@ class MicrolensSolverImportance(MicrolensSolver):
         self._logZ_err = float(logz_err)
         return None
 
+    def _run_blackjax_ns(self):
+        """Run BlackJAX nested slice sampling and store posterior rows.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        The live-set evidence fraction is compared with ``f_live``.
+        ``logZ`` is ``logaddexp(logZ_dead, logZ_live)``.
+        """
+        blackjax = _import_blackjax()
+        from blackjax.ns.utils import finalise
+        from blackjax.ns.utils import sample as ns_sample
+
+        lnL_fn, _ctx = build_explicit_jax_loglik_fn(self)
+        if lnL_fn is None:
+            raise RuntimeError(
+                'blackjax_ns requires the differentiable JAX likelihood.'
+            )
+        log_prior_fn = _build_jax_log_prior(self)
+
+        def loglikelihood_fn(theta):
+            """JAX log-likelihood of one particle.
+
+            Parameters
+            ----------
+            theta : jax.Array, shape (n_dim,)
+                Physical parameters.
+
+            Returns
+            -------
+            loglike : jax.Array
+                Scalar log-likelihood. Non-finite values are ``-1e300``.
+            """
+            val = lnL_fn(theta)
+            return jnp.where(jnp.isfinite(val), val, -1.0e300)
+
+        def logprior_fn(theta):
+            """JAX log-prior of one particle.
+
+            Parameters
+            ----------
+            theta : jax.Array, shape (n_dim,)
+                Physical parameters.
+
+            Returns
+            -------
+            logprior : jax.Array
+                Scalar log-prior. Non-finite values are ``-1e300``.
+            """
+            val = log_prior_fn(theta)
+            return jnp.where(jnp.isfinite(val), val, -1.0e300)
+
+        n_dim = len(self.fitter_param_names)
+        if self.ns_inner_steps is None:
+            n_inner = max(5, n_dim)
+        else:
+            n_inner = max(1, int(self.ns_inner_steps))
+
+        n_delete = int(self.ns_num_delete)
+        if self.ns_max_iter is None:
+            max_iter = max(1, (30 * int(self.n_live)) // n_delete)
+        else:
+            max_iter = max(1, int(self.ns_max_iter))
+
+        # Nested slice sampling. BlackJAX calls these inside JIT, so
+        # they are the raw JAX densities rather than evaluate_loglik_jax.
+        alg = blackjax.nss(
+            logprior_fn,
+            loglikelihood_fn,
+            num_inner_steps=int(n_inner),
+            num_delete=n_delete,
+            max_steps=int(self.ns_max_slice_steps),
+            max_shrinkage=int(self.ns_max_shrinkage),
+        )
+
+        rng = np.random.default_rng(int(self.random_seed))
+        init_pos = _draw_prior_samples(self, int(self.n_live), rng)
+        key = jax.random.PRNGKey(int(self.random_seed))
+        key, init_key = jax.random.split(key)
+        state = alg.init(jnp.asarray(init_pos, dtype=jnp.float64), init_key)
+        step = jax.jit(alg.step)
+
+        dead = []
+        log_floor = np.log(max(float(self.f_live), 1.0e-16))
+        for iteration in range(max_iter):
+            key, subkey = jax.random.split(key)
+            state, info = step(subkey, state)
+            dead.append(info)
+
+            log_z = float(state.integrator.logZ)
+            log_z_live = float(state.integrator.logZ_live)
+            log_z_tot = float(np.logaddexp(log_z, log_z_live))
+            remain = log_z_live - log_z_tot
+            if self.verbose and (iteration % 10 == 0):
+                print(
+                    f'blackjax_ns step {iteration}: logZ≈{log_z_tot:.3f}'
+                )
+            if np.isfinite(remain) and remain < log_floor:
+                break
+
+        final = finalise(state, dead, update_info=False)
+        key, sample_key = jax.random.split(key)
+        drawn = ns_sample(
+            sample_key, final, shape=int(self.posterior_samples)
+        )
+        self._samples_array = np.asarray(drawn.position, dtype=float)
+        self._loglikes = np.asarray(drawn.loglikelihood, dtype=float)
+        self._logZ = float(np.logaddexp(
+            np.asarray(state.integrator.logZ, dtype=float),
+            np.asarray(state.integrator.logZ_live, dtype=float),
+        ))
+        self._logZ_err = np.nan
+        return None
+
     def _build_results_table(self):
         """Build an Astropy table of posterior samples and derived params.
 
@@ -6133,11 +5937,9 @@ class MicrolensSolverImportance(MicrolensSolver):
         weights = np.ones(n_samples, dtype=float) / n_samples
 
         if self._loglikes is None:
-            self._loglikes = np.array(
-                [
-                    float(_importance_loglike(self, samples[i]))
-                    for i in range(n_samples)
-                ]
+            # One batched call instead of a Python loop over rows.
+            self._loglikes = np.asarray(
+                self.evaluate_loglik_jax(samples), dtype=float
             )
         loglikes = self._loglikes
 
