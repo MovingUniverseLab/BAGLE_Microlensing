@@ -669,7 +669,7 @@ def filt_scalar(value, filt_idx=0):
 
 
 def pack_constructor_params(sampled_names, sampled_values, class_fitter_names,
-                            filt_param_names, n_filters, fixed):
+                            filt_param_names, n_filters, fixed, tied=None):
     """Merge a sampled cube and fixed slots into constructor arguments.
 
     Parameters
@@ -687,6 +687,9 @@ def pack_constructor_params(sampled_names, sampled_values, class_fitter_names,
         Unified filter count.
     fixed : dict
         Suffixed name to fixed float.
+    tied : dict or None
+        Suffixed target to suffixed source. The target is not
+        sampled. It receives the source value.
 
     Returns
     -------
@@ -696,11 +699,13 @@ def pack_constructor_params(sampled_names, sampled_values, class_fitter_names,
 
     Notes
     -----
-    A missing suffix is taken from ``fixed``. A suffix that is in
-    neither place raises ``KeyError``.
+    A tied suffix is filled from its source. Otherwise a missing
+    suffix is taken from ``fixed``. A suffix that is in none of
+    those places raises ``KeyError``.
     """
     by_name = {name: sampled_values[i] for i, name in enumerate(sampled_names)}
     filt_set = set(filt_param_names)
+    links = dict(tied or {})
     arguments = []
 
     for name in class_fitter_names:
@@ -715,6 +720,11 @@ def pack_constructor_params(sampled_names, sampled_values, class_fitter_names,
             suffixed = f'{name}{filt}'
             if suffixed in by_name:
                 sequence.append(by_name[suffixed])
+            elif suffixed in links:
+                source = links[suffixed]
+                if source not in by_name:
+                    raise KeyError(source)
+                sequence.append(by_name[source])
             elif suffixed in fixed:
                 sequence.append(fixed[suffixed])
             else:

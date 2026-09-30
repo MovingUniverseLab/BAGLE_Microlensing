@@ -1018,6 +1018,7 @@ class MicrolensSolver(Solver):
         self.phot_series = phot_series
         self.ast_series = ast_series
         self.fixed_dataset_params = fixed
+        self.tied_params = {}
         self.map_phot_idx_to_ast_idx = filt_for_ast
         self.obs_locations = resolve_obs_locations(
             self.data.get('obsLocation', None), filt_names
@@ -1119,6 +1120,66 @@ class MicrolensSolver(Solver):
         names.remove(name)
         self.fitter_param_names = names
         self.fixed_dataset_params[str(name)] = held
+        if name in self.priors:
+            del self.priors[name]
+
+        self.all_param_names = (
+            list(self.fitter_param_names) + list(self.additional_param_names)
+        )
+        self.n_dims = len(self.fitter_param_names)
+        self.n_params = len(self.all_param_names)
+        self.n_clustering_params = self.n_dims
+        return None
+
+    def tie_sampled_param(self, name, source):
+        """Copy one sampled suffix from another on every model build.
+
+        Parameters
+        ----------
+        name : str
+            Suffix dropped from the cube, such as ``xS0_E3``.
+        source : str
+            Sampled suffix that supplies the value, such as
+            ``xS0_E1``. It stays in the cube.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        KeyError
+            ``name`` or ``source`` is not in the sampled cube.
+        ValueError
+            The names are not the same parameter on two filters.
+
+        Notes
+        -----
+        The target is not a fixed constant. ``get_model`` writes the
+        source slot into the target slot, so the two stay equal as
+        the source is sampled. Call this before ``solve``.
+        ``n_dims`` shrinks by one.
+        """
+        names = list(self.fitter_param_names)
+        if name not in names or source not in names:
+            raise KeyError(name if name not in names else source)
+
+        name_base, name_idx = split_param_filter_index1(str(name))
+        source_base, source_idx = split_param_filter_index1(str(source))
+        if (
+            name_base != source_base
+            or name_idx is None
+            or source_idx is None
+            or name == source
+        ):
+            raise ValueError(
+                f'Cannot tie {name} to {source}; '
+                'both must be different suffixes of one parameter'
+            )
+
+        names.remove(name)
+        self.fitter_param_names = names
+        self.tied_params[str(name)] = str(source)
         if name in self.priors:
             del self.priors[name]
 
@@ -1301,6 +1362,7 @@ class MicrolensSolver(Solver):
             self.model_class.filt_param_names,
             self.n_filters,
             self.fixed_dataset_params,
+            tied=self.tied_params,
         )
         # GP hyperparameters are sampled per filter but the constructor
         # takes one dictionary per name, keyed by the 0-based index.

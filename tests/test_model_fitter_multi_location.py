@@ -276,6 +276,45 @@ def test_fix_sampled_param_holds_second_origin():
     return None
 
 
+def test_tie_sampled_param_copies_filter1_origin():
+    """Suffix 3 takes whatever value suffix 1 has."""
+    data = make_data(['ogle', 'spitzer', 'keck'], ['ogle', 'keck'])
+    fitter = _solver(data, model.PSPL_PhotAstrom_noPar_Param1)
+    n_before = fitter.n_dims
+    fitter.tie_sampled_param('xS0_E3', 'xS0_E1')
+    fitter.tie_sampled_param('xS0_N3', 'xS0_N1')
+    assert fitter.n_dims == n_before - 2
+    assert 'xS0_E3' not in fitter.fitter_param_names
+    assert fitter.tied_params['xS0_E3'] == 'xS0_E1'
+
+    params = {}
+    for name in fitter.fitter_param_names:
+        if name.startswith('xS0_E'):
+            params[name] = 0.021
+        elif name.startswith('xS0_N'):
+            params[name] = -0.013
+        else:
+            median = fitter.priors[name].ppf(0.5)
+            params[name] = 0.0 if not np.isfinite(median) else float(median)
+    mod = fitter.get_model(params)
+    np.testing.assert_allclose(mod.xS0[0], [0.021, -0.013])
+    np.testing.assert_allclose(mod.xS0[2], [0.021, -0.013])
+    np.testing.assert_allclose(mod.xS0[1], 0.0)
+
+    from bagle import model_fitter_jax
+    jax_fit = model_fitter_jax.MicrolensSolver(
+        data,
+        model_fitter_jax.mmodel.PSPL_PhotAstrom_noPar_Param1,
+        outputfiles_basename='/tmp/bagle_tie_origin_',
+        verbose=False,
+    )
+    jax_fit.tie_sampled_param('xS0_E3', 'xS0_E1')
+    jax_fit.tie_sampled_param('xS0_N3', 'xS0_N1')
+    assert 'xS0_E3' not in jax_fit.fitter_param_names
+    assert jax_fit.tied_params['xS0_N3'] == 'xS0_N1'
+    return None
+
+
 def test_numpy_and_jax_likelihood_see_second_observer(monkeypatch):
     """Both fitters send each filter's observer into the parallax table."""
     seen = []
