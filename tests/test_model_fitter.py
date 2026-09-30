@@ -907,6 +907,12 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
     fitter.priors['b_sff4'] = model_fitter.make_gen(p_in['b_sff4']-0.01, np.minimum(p_in['b_sff4']+0.01, 1.0))
     fitter.priors['mag_src4'] = model_fitter.make_gen(p_in['mag_src4']-0.01, p_in['mag_src4']+0.01)
 
+    # sim3 is the second astrometric track (suffix 3). The cube
+    # cannot tie that origin to filter 1, so hold it at the
+    # simulated value both tracks were generated with.
+    fitter.fix_sampled_param('xS0_E3', p_in['xS0_E'])
+    fitter.fix_sampled_param('xS0_N3', p_in['xS0_N'])
+
     if plot:
         plt.figure(1)
         plt.clf()
@@ -977,7 +983,9 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
     np.testing.assert_array_almost_equal(imag_out, imag_in, 1)
     np.testing.assert_array_almost_equal(pos_out, pos_in, 4)
 
-    assert np.abs(lnL_out - lnL_in) < 150
+    dlnL = float(np.abs(lnL_out - lnL_in))
+    print('dlnL', dlnL)
+    assert dlnL < 150
 
     return
 

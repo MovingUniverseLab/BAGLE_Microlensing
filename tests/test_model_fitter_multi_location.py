@@ -233,6 +233,49 @@ def test_prior_writes_size1_ppf_into_ctypes_cube():
     return None
 
 
+def test_fix_sampled_param_holds_second_origin():
+    """A second astrometric origin can be held at one number."""
+    data = make_data(['ogle', 'spitzer', 'keck'], ['ogle', 'keck'])
+    fitter = _solver(data, model.PSPL_PhotAstrom_noPar_Param1)
+    assert fitter.map_phot_idx_to_ast_idx == [0, 2]
+    assert 'xS0_E3' in fitter.fitter_param_names
+    n_before = fitter.n_dims
+    fitter.fix_sampled_param('xS0_E3', np.array([0.012]))
+    fitter.fix_sampled_param('xS0_N3', -0.034)
+    assert 'xS0_E3' not in fitter.fitter_param_names
+    assert 'xS0_N3' not in fitter.fitter_param_names
+    assert 'xS0_E1' in fitter.fitter_param_names
+    assert fitter.n_dims == n_before - 2
+    assert fitter.fixed_dataset_params['xS0_E3'] == pytest.approx(0.012)
+    assert 'xS0_E3' not in fitter.priors
+
+    params = {}
+    for name in fitter.fitter_param_names:
+        if name.startswith('xS0_E'):
+            params[name] = 0.001
+        elif name.startswith('xS0_N'):
+            params[name] = -0.002
+        else:
+            median = fitter.priors[name].ppf(0.5)
+            params[name] = 0.0 if not np.isfinite(median) else float(median)
+    mod = fitter.get_model(params)
+    np.testing.assert_allclose(mod.xS0[0], [0.001, -0.002])
+    np.testing.assert_allclose(mod.xS0[2], [0.012, -0.034])
+
+    from bagle import model_fitter_jax
+    jax_fit = model_fitter_jax.MicrolensSolver(
+        data,
+        model_fitter_jax.mmodel.PSPL_PhotAstrom_noPar_Param1,
+        outputfiles_basename='/tmp/bagle_fix_origin_',
+        verbose=False,
+    )
+    jax_fit.fix_sampled_param('xS0_E3', 0.012)
+    jax_fit.fix_sampled_param('xS0_N3', -0.034)
+    assert 'xS0_E3' not in jax_fit.fitter_param_names
+    assert jax_fit.fixed_dataset_params['xS0_N3'] == pytest.approx(-0.034)
+    return None
+
+
 def test_numpy_and_jax_likelihood_see_second_observer(monkeypatch):
     """Both fitters send each filter's observer into the parallax table."""
     seen = []

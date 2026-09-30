@@ -1593,3 +1593,10 @@ on `convert_helio_geo_*`, and light-travel time.
     length-1 bound as a Python float. A per-filter origin vector,
     such as the length-3 `xS0_E` from the multi-location simulator,
     is not a legal bound for one sampled suffix.
+
+20. The cube cannot tie two suffixes to one entry.
+    `fix_sampled_param` moves a sampled name into
+    `fixed_dataset_params` and shrinks `n_dims`.
+    `test_lumlens_parallax_fit_4p2a` holds `xS0_E3` and `xS0_N3`
+    at the simulated origin shared with filter 1. Those slots are
+    not set equal to the sampled `xS0_E1` / `xS0_N1` on every draw.

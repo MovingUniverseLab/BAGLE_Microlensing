@@ -661,6 +661,57 @@ class MicrolensSolver(Solver):
         self.n_params = len(self.all_param_names)  # cube dimensions
         self.n_clustering_params = self.n_dims
 
+    def fix_sampled_param(self, name, value):
+        """Hold one sampled parameter at a constant.
+
+        Parameters
+        ----------
+        name : str
+            A name currently in ``fitter_param_names``.
+        value : float
+            Constant stored on ``fixed_dataset_params``. A length-1
+            array is accepted as that scalar.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        KeyError
+            ``name`` is not in the sampled cube.
+        ValueError
+            ``value`` is not a single number.
+
+        Notes
+        -----
+        Two suffixes cannot share one cube entry. To give a second
+        astrometric origin the simulated value used for filter 1,
+        fix that suffix and keep sampling filter 1. Call this before
+        ``solve``. ``n_dims`` shrinks by one.
+        """
+        names = list(self.fitter_param_names)
+        if name not in names:
+            raise KeyError(name)
+
+        held = scalar_bound(value)
+        if not isinstance(held, float):
+            raise ValueError(f'{name} fixed value must be one number')
+
+        names.remove(name)
+        self.fitter_param_names = names
+        self.fixed_dataset_params[str(name)] = held
+        if name in self.priors:
+            del self.priors[name]
+
+        self.all_param_names = (
+            list(self.fitter_param_names) + list(self.additional_param_names)
+        )
+        self.n_dims = len(self.fitter_param_names)
+        self.n_params = len(self.all_param_names)
+        self.n_clustering_params = self.n_dims
+        return None
+
     def make_default_priors(self):
         """
         Setup our prior distributions (i.e. random samplers). We will
