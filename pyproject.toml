@@ -43,6 +43,8 @@ classifiers = [
 
 [project.optional-dependencies]
 jaxns = ["jaxns>=2.5", "tensorflow-probability>=0.24"]
+nautilus = ["nautilus-sampler>=1.0"]
+pocomc = ["pocomc>=1.2"]
 
 [project.urls]
 Homepage = "https://github.com/MovingUniverseLab/BAGLE_Microlensing"

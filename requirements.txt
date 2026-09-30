@@ -22,6 +22,10 @@ numpydoc
 Pyerfa
 graphviz
 
+# Optional samplers (imported only when that engine is requested):
+# pip install nautilus-sampler pocomc
+# or: pip install "bagle[nautilus]" "bagle[pocomc]"
+
 # Required in the Tutorial notebooks:
 # conda install -c conda-forge ffmpeg
 # pyLIMA==1.9.8
