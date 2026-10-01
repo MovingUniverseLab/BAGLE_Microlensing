@@ -22,22 +22,20 @@ import scipy.stats
 import pymultinest
 import bagle.model_jax as mmodel 
 import bagle.frame_convert as fconv
-from bagle.filt_params import (
+from bagle.model_fitter import (
+    _one_draw,
+    _sampled_value,
+    adapt_legacy_filter_columns,
     build_filt_index,
-    dataset_names,
-    lookup_param,
     expand_fitter_names,
     fixed_slots,
     interleave_optional,
-    cube_as_floats,
-    cube_has_derived_room,
-    prior_draw_scalar,
-    scalar_bound,
     longest_ast_series,
     pack_constructor_params,
     pack_optional_param_dicts,
     resolve_obs_locations,
     warn_unmatched_suffixed_priors,
+    write_results_schema2,
 )
 from astropy.table import Table
 from astropy.table import Row
@@ -898,11 +896,31 @@ class MicrolensSolver(Solver):
         phot_labeled = isinstance(phot_raw, (list, tuple))
         ast_labeled = isinstance(ast_raw, (list, tuple))
         if use_phot:
-            phot_names = dataset_names(phot_raw, n_phot_sets, 'phot')
+            if isinstance(phot_raw, (str, bytes)) or phot_raw is None:
+                phot_names = [
+                    'phot%d' % (i + 1) for i in range(n_phot_sets)
+                ]
+            else:
+                phot_names = [str(item) for item in phot_raw]
+                if len(phot_names) != n_phot_sets:
+                    raise ValueError(
+                        'phot_data length does not match the number of '
+                        't_phot arrays'
+                    )
         else:
             phot_names = []
         if use_ast:
-            ast_names = dataset_names(ast_raw, n_ast_sets, 'ast')
+            if isinstance(ast_raw, (str, bytes)) or ast_raw is None:
+                ast_names = [
+                    'ast%d' % (i + 1) for i in range(n_ast_sets)
+                ]
+            else:
+                ast_names = [str(item) for item in ast_raw]
+                if len(ast_names) != n_ast_sets:
+                    raise ValueError(
+                        'ast_data length does not match the number of '
+                        't_ast arrays'
+                    )
         else:
             ast_names = []
 
@@ -1113,7 +1131,9 @@ class MicrolensSolver(Solver):
         if name not in names:
             raise KeyError(name)
 
-        held = scalar_bound(value)
+        held = np.asarray(value, dtype=float)
+        if held.size == 1:
+            held = float(held.reshape(-1)[0])
         if not isinstance(held, float):
             raise ValueError(f'{name} fixed value must be one number')
 
@@ -1351,7 +1371,7 @@ class MicrolensSolver(Solver):
         """
         names = list(self.fitter_param_names)
         if isinstance(params, (dict, Row)):
-            values = [lookup_param(params, name) for name in names]
+            values = [_sampled_value(params, name) for name in names]
         else:
             values = [params[i] for i in range(len(names))]
 
@@ -1383,10 +1403,14 @@ class MicrolensSolver(Solver):
 
         # Derived parameters are written back into a positional cube
         # that already has room for them. A sampled-only list is left
-        # alone. PyMultiNest passes a ctypes pointer of length n_params,
-        # which has no len(); that buffer does have room.
-        if (not isinstance(params, (dict, Row))
-                and cube_has_derived_room(params, self.n_params)):
+        # alone. A ctypes pointer has no len; that buffer does have room.
+        writable = False
+        if not isinstance(params, (dict, Row)):
+            try:
+                writable = len(params) >= self.n_params
+            except TypeError:
+                writable = True
+        if writable:
             for i, param_name in enumerate(self.additional_param_names):
                 filt_name, filt_idx = split_param_filter_index1(param_name)
                 if filt_idx is None:
@@ -1479,7 +1503,7 @@ class MicrolensSolver(Solver):
             # A length-1 ppf is one number wrapped in an array.
             # A longer draw cannot be stored in one ctypes slot.
             draw = self.priors[param_name].ppf(cube[i])
-            cube[i] = prior_draw_scalar(draw, param_name)
+            cube[i] = _one_draw(draw, param_name)
 
         return cube
 
@@ -1500,7 +1524,7 @@ class MicrolensSolver(Solver):
         cube_copy = cube.copy()
         for i, param_name in enumerate(self.fitter_param_names):
             draw = self.priors[param_name].ppf(cube[i])
-            cube_copy[i] = prior_draw_scalar(draw, param_name)
+            cube_copy[i] = _one_draw(draw, param_name)
 
         # Append on additional parameters.
         add_params = np.zeros(len(self.additional_param_names), dtype='float')
@@ -1529,7 +1553,7 @@ class MicrolensSolver(Solver):
                 draw = post_params[pdx]
             else:
                 draw = self.priors[param_name].ppf(cube[i])
-            cube[i] = prior_draw_scalar(draw, param_name)
+            cube[i] = _one_draw(draw, param_name)
 
         return cube
 
@@ -1591,7 +1615,7 @@ class MicrolensSolver(Solver):
         """
         for i, param_name in enumerate(self.fitter_param_names):
             draw = self.priors[param_name].ppf(cube[i])
-            cube[i] = prior_draw_scalar(draw, param_name)
+            cube[i] = _one_draw(draw, param_name)
 
         return cube
 
@@ -1720,12 +1744,16 @@ class MicrolensSolver(Solver):
             return float(self.log_likely(cube))
         if isinstance(cube, dict) or isinstance(cube, Row):
             vec = np.array(
-                [float(lookup_param(cube, n)) for n in self.fitter_param_names],
+                [float(_sampled_value(cube, n)) for n in self.fitter_param_names],
                 dtype=np.float64
             )
         else:
             # PyMultiNest passes a ctypes buffer that np.asarray cannot wrap.
-            vec = cube_as_floats(cube, len(self.fitter_param_names))
+            n_cube = len(self.fitter_param_names)
+            vec = np.array(
+                [float(cube[i]) for i in range(n_cube)],
+                dtype=np.float64,
+            )
         return float(fn(vec))
 
     def grad_loglik_jax(self, cube):
@@ -1756,11 +1784,15 @@ class MicrolensSolver(Solver):
             )
         if isinstance(cube, dict) or isinstance(cube, Row):
             vec = np.array(
-                [float(lookup_param(cube, n)) for n in self.fitter_param_names],
+                [float(_sampled_value(cube, n)) for n in self.fitter_param_names],
                 dtype=np.float64
             )
         else:
-            vec = cube_as_floats(cube, len(self.fitter_param_names))
+            n_cube = len(self.fitter_param_names)
+            vec = np.array(
+                [float(cube[i]) for i in range(n_cube)],
+                dtype=np.float64,
+            )
         return np.asarray(jax.grad(fn)(vec), dtype=np.float64)
 
     def callback_plotter(self, nSamples, nlive, nPar,
@@ -2163,8 +2195,6 @@ class MicrolensSolver(Solver):
         -------
         None
         """
-        from bagle.filt_params import write_results_schema2
-
         write_results_schema2(
             outroot,
             getattr(self, 'fitter_param_names', []),
@@ -2204,8 +2234,6 @@ class MicrolensSolver(Solver):
             tab = Table.read(outroot + '.fits')
 
         # Old chains store one xS0 / pi_ref_frame for every filter.
-        from bagle.filt_params import adapt_legacy_filter_columns
-
         n_filters = int(getattr(self, 'n_filters', 1) or 1)
         tab = adapt_legacy_filter_columns(tab, n_filters)
         return tab
@@ -4334,8 +4362,6 @@ class MicrolensSolverPyMC(MicrolensSolver):
         outroot = self.outputfiles_basename
         if os.path.exists(outroot + '.fits'):
             self._results_table = Table.read(outroot + '.fits')
-            from bagle.filt_params import adapt_legacy_filter_columns
-
             n_filters = int(getattr(self, 'n_filters', 1) or 1)
             self._results_table = adapt_legacy_filter_columns(
                 self._results_table, n_filters
@@ -5261,8 +5287,6 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         outroot = self.outputfiles_basename
         if os.path.exists(outroot + '.fits'):
             self._results_table = Table.read(outroot + '.fits')
-            from bagle.filt_params import adapt_legacy_filter_columns
-
             n_filters = int(getattr(self, 'n_filters', 1) or 1)
             self._results_table = adapt_legacy_filter_columns(
                 self._results_table, n_filters
@@ -5369,8 +5393,12 @@ def make_gen(param_name, min, max, stats_pkg='scipy'):
     """
     # A length-1 bound is one number. A longer array stays vectorized
     # on the scipy path; NumPyro and PyMC still need scalars.
-    lo = scalar_bound(min)
-    hi = scalar_bound(max)
+    lo = np.asarray(min, dtype=float)
+    hi = np.asarray(max, dtype=float)
+    if lo.size == 1:
+        lo = float(lo.reshape(-1)[0])
+    if hi.size == 1:
+        hi = float(hi.reshape(-1)[0])
     if stats_pkg == 'scipy':
         return scipy.stats.uniform(loc=lo, scale=hi - lo)
     elif stats_pkg == 'pymc':

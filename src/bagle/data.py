@@ -366,7 +366,7 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
 
     # None means the fitter default (Earth for every filter).
     if obs_location is not None:
-        from bagle.filt_params import build_filt_index
+        from bagle.model_fitter import build_filt_index
 
         filt_names, _, _, _, _ = build_filt_index(
             list(phot_data), list(ast_data)

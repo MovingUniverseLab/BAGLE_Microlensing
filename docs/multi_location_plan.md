@@ -1613,5 +1613,6 @@ on `convert_helio_geo_*`, and light-travel time.
     kernels take `jnp.asarray` of those same values.
     The second length check over `phot_param_names` is removed.
     Fixed phot parameters and the optional-parameter dicts use
-    this `n_filters`. `filt_params.py` still holds the cube
-    expansion both fitters call.
+    this `n_filters`. `filt_params.py` is gone. Cube expansion,
+    fixed slots, and the legacy FITS copy live in `model_fitter.py`.
+    `model.py` holds the filter-list declaration check.

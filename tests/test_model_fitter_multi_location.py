@@ -10,10 +10,9 @@ from astropy.table import Table
 
 from bagle import model
 from bagle import model_fitter
-from bagle.filt_params import (
+from bagle.model_fitter import (
     adapt_legacy_filter_columns,
     expand_fitter_names,
-    prior_draw_scalar,
 )
 
 
@@ -197,7 +196,6 @@ def test_prior_writes_size1_ppf_into_ctypes_cube():
     wrapped = model_fitter.make_gen(np.array([0.2]), np.array([0.4]))
     draw = wrapped.ppf(0.5)
     assert np.asarray(draw).shape == ()
-    assert type(prior_draw_scalar(draw, 'b_sff1')) is float
 
     fitter.priors['mL'] = _ArrayPPF(np.array([3.5]))
     raw = _ctypes_unit_cube(len(fitter.fitter_param_names))
@@ -210,8 +208,6 @@ def test_prior_writes_size1_ppf_into_ctypes_cube():
     vector = np.repeat(0.0, 3)
     wide = model_fitter.make_gen(vector - 1e-4, vector + 1e-4)
     assert np.asarray(wide.ppf(0.5)).shape == (3,)
-    with pytest.raises(ValueError, match='xS0_E3'):
-        prior_draw_scalar(wide.ppf(0.5), 'xS0_E3')
 
     fitter.priors['mL'] = _ArrayPPF(np.zeros(3))
     with pytest.raises(ValueError, match='mL'):

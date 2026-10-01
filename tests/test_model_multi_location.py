@@ -7,7 +7,7 @@ import pytest
 
 from bagle import model
 from bagle import model_jax
-from bagle.filt_params import validate_param_declaration
+from bagle.model import validate_param_declaration
 
 
 def _param_classes(module):

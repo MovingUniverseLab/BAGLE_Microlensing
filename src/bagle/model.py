@@ -508,13 +508,6 @@ import copy
 from bagle import frame_convert as fc
 from bagle import orbits as orbits
 from bagle import parallax
-from bagle.filt_params import (
-    astrom_param_view,
-    en_components,
-    phot_param_view,
-    stack_en,
-    validate_param_declaration,
-)
 from abc import ABC
 
 
@@ -1878,7 +1871,7 @@ class PSPL_Parallax(ParallaxClassABC):
         xS0 = self.xS0 if self.xS0.ndim == 1 else self.xS0[0]
         xS0E_g, xS0N_g, muSE_g, muSN_g = fc.convert_helio_geo_ast(
             self.raL, self.decL,
-            self.piS, *en_components(xS0),
+            self.piS, xS0[0], xS0[1],
             self.muS[0], self.muS[1],
             self.t0, self.u0_amp,
             self.tE, self.piE[0], self.piE[1],
@@ -2276,6 +2269,130 @@ class PSPL_GPnoJitter(ABC):
 #    This serves as a reminder for the class variables that
 #    MUST be set. 
 #
+_ALLOWED_USAGE = ('phot', 'astrom', 'both')
+
+
+class _UsageView:
+    """Read-only view of ``filt_param_names`` filtered by usage.
+
+    Parameters
+    ----------
+    usages : tuple of str
+        Usage strings to keep.
+    """
+
+    def __init__(self, usages):
+        self.usages = tuple(usages)
+        return None
+
+    def __get__(self, obj, owner):
+        names = list(getattr(owner, 'filt_param_names', []))
+        usage = list(getattr(owner, 'filt_param_usage', []))
+        kept = [
+            name for name, use in zip(names, usage) if use in self.usages
+        ]
+        return kept
+
+    def __set__(self, obj, value):
+        raise AttributeError(
+            'phot_param_names and astrom_param_names are derived from '
+            'filt_param_names and filt_param_usage'
+        )
+
+
+# Class-body descriptors. Subclasses must not assign these names.
+phot_param_view = _UsageView(('phot', 'both'))
+astrom_param_view = _UsageView(('astrom', 'both'))
+
+
+def split_param_filter_index1(name):
+    """Split a suffixed name into a base and a 1-based filter index.
+
+    Parameters
+    ----------
+    name : str
+        Parameter name, for example ``'xS0_E1'`` or ``'t0'``.
+
+    Returns
+    -------
+    base : str
+        Name with a trailing filter suffix removed.
+    filt_index : int or None
+        1-based filter index, or None when ``name`` has no suffix.
+    """
+    base = name.rstrip('123456789')
+    if len(base) == len(name):
+        return base, None
+    return base, int(name[len(base):])
+
+
+def validate_param_declaration(cls):
+    """Check one parameter class's parallel filter lists.
+
+    Parameters
+    ----------
+    cls : type
+        Class that may define ``filt_param_names``.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    TypeError
+        The class assigns ``phot_param_names`` or ``astrom_param_names``.
+    ValueError
+        The parallel lists disagree with ``fitter_param_names``.
+    """
+    has_filt = any(
+        'filt_param_names' in base.__dict__ for base in cls.__mro__
+    )
+    if not has_filt:
+        return None
+
+    for forbidden in ('phot_param_names', 'astrom_param_names'):
+        if forbidden not in cls.__dict__:
+            continue
+        if isinstance(cls.__dict__[forbidden], _UsageView):
+            continue
+        raise TypeError(
+            f'{cls.__name__} assigns {forbidden}. Declare filt_param_names '
+            'and filt_param_usage instead.'
+        )
+
+    names = list(cls.filt_param_names)
+    usage = list(cls.filt_param_usage)
+    if len(names) != len(usage):
+        raise ValueError(
+            f'{cls.__name__}: filt_param_names and filt_param_usage '
+            f'have lengths {len(names)} and {len(usage)}'
+        )
+    if len(names) != len(set(names)):
+        raise ValueError(f'{cls.__name__}: filt_param_names are not unique')
+    for use in usage:
+        if use not in _ALLOWED_USAGE:
+            raise ValueError(
+                f'{cls.__name__}: usage {use!r} is not phot, astrom, or both'
+            )
+
+    fitter = list(cls.fitter_param_names)
+    positions = []
+    for name in names:
+        if fitter.count(name) != 1:
+            raise ValueError(
+                f'{cls.__name__}: {name} must appear once in '
+                'fitter_param_names'
+            )
+        positions.append(fitter.index(name))
+    if positions != sorted(positions):
+        raise ValueError(
+            f'{cls.__name__}: filt_param_names are not in '
+            'fitter_param_names order'
+        )
+    return None
+
+
 class PSPL_Param(ABC):
     # Fit parameters: Shared fit parameters, plus filter-indexed names.
     fitter_param_names = []
@@ -2404,7 +2521,12 @@ class PSPL_Param(ABC):
         # More than one filter is shape (n_filters, 2). Later methods
         # index this array and do not reshape it.
         if hasattr(self, 'xS0_E') and hasattr(self, 'xS0_N'):
-            self.xS0 = stack_en(self.xS0_E, self.xS0_N)
+            if n_filters == 1:
+                self.xS0 = np.array(
+                    [self.xS0_E[0], self.xS0_N[0]], dtype=float
+                )
+            else:
+                self.xS0 = np.stack([self.xS0_E, self.xS0_N], axis=1)
 
         # A scalar fixed phot parameter is repeated to (n_filters,).
         for param in self.fixed_phot_param_names:
@@ -2535,7 +2657,9 @@ class PSPL_AstromParam3(PSPL_Param):
         self.thetaE_amp = 10 ** log10_thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -2704,7 +2828,9 @@ class PSPL_AstromParam4(PSPL_Param):
         self.thetaE_amp = thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -2774,7 +2900,12 @@ class PSPL_AstromParam4(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        self.xL0_E, self.xL0_N = en_components(self.xL0)
+        # xL0 matches xS0: shape (2,) or (n_filters, 2).
+        if np.shape(self.xL0) == (2,):
+            self.xL0_E, self.xL0_N = self.xL0[0], self.xL0[1]
+        else:
+            self.xL0_E = self.xL0[:, 0]
+            self.xL0_N = self.xL0[:, 1]
 
         return
 
@@ -3293,7 +3424,9 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         self.mL = mL
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -3473,7 +3606,9 @@ class PSPL_PhotAstromParam2(PSPL_Param):
         self.thetaE_amp = thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -3653,7 +3788,9 @@ class PSPL_PhotAstromParam3(PSPL_Param):
         self.thetaE_amp = 10 ** log10_thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -3941,7 +4078,9 @@ class PSPL_PhotAstromParam4(PSPL_Param):
         self.thetaE_amp = thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -4233,7 +4372,9 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
         self.thetaE_amp = thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -4368,7 +4509,9 @@ class PSPL_PhotAstromParam5(PSPL_Param):
         self.thetaE_amp = 10 ** log10_thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -4537,7 +4680,9 @@ class PSPL_PhotAstromParam6(PSPL_Param):
         self.phi_muRel = phi_muRel  # degrees
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -7588,7 +7733,9 @@ class PSBL_PhotAstromParam1(PSPL_Param):
         self.t0 = t0
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -8019,7 +8166,9 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.t0_com = t0_com
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.beta_com = beta_com
 
         self.muL = np.array([muL_E, muL_N])
@@ -8155,7 +8304,12 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        self.xL0_E, self.xL0_N = en_components(self.xL0)
+        # xL0 matches xS0: shape (2,) or (n_filters, 2).
+        if np.shape(self.xL0) == (2,):
+            self.xL0_E, self.xL0_N = self.xL0[0], self.xL0[1]
+        else:
+            self.xL0_E = self.xL0[:, 0]
+            self.xL0_N = self.xL0[:, 1]
 
         thetaS0_com = self.u0_com * self.thetaE_amp
         self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
@@ -8383,7 +8537,9 @@ class PSBL_PhotAstromParam2(PSPL_Param):
         self.thetaE_amp = thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -8830,7 +8986,9 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.thetaE_amp = thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -9187,7 +9345,9 @@ class PSBL_PhotAstromParam3(PSPL_Param):
         self.thetaE_amp = 10 ** log10_thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -9960,7 +10120,9 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         self.thetaE_amp = thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -10484,7 +10646,9 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         self.thetaE_amp = thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -10685,7 +10849,9 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         self.thetaE_amp = thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
 
         self.piS = piS
@@ -11108,7 +11274,9 @@ class PSBL_PhotAstromParam7(PSPL_Param):
         self.t0_p = t0_p
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muL_E, self.muL_N = self.muL
@@ -11552,7 +11720,9 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         self.t0_p = t0_p
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -11930,7 +12100,9 @@ class PSBL_PhotAstromParam8(PSPL_Param):
         self.thetaE_amp = 10 ** log10_thetaE
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -14155,7 +14327,9 @@ class BSPL_PhotAstromParam1(PSPL_Param):
         self.mL = mL
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -14386,7 +14560,9 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         self.piE = np.array([piE_E, piE_N])
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)
@@ -14604,7 +14780,9 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         self.piE = np.array([piE_E, piE_N])
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS = np.array([muS_E, muS_N])
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)
@@ -16187,7 +16365,9 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.mL = mL
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])  # mas
@@ -16495,7 +16675,9 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.piE = np.array([piE_E, piE_N])
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS_E = muS_E
         self.muS_N = muS_N
         self.muS = np.array([muS_E, muS_N])  # mas
@@ -16753,11 +16935,12 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.piE = np.array([piE_E, piE_N])
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muS_E = muS_E
         self.muS_N = muS_N
         self.muS = np.array([muS_E, muS_N])  # mas
-        self.x0_system = self.xS0
         self.muS_system = self.muS
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)
@@ -16809,6 +16992,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
         super().__init__()
+        self.x0_system = self.xS0
 
         # Derived quantities
         self.beta = self.u0_amp * self.thetaE_amp
@@ -17050,7 +17234,9 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         self.mL = mL
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])  # mas
@@ -19717,7 +19903,9 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         self.t0 = t0
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -20320,7 +20508,9 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         self.t0_p = t0_p
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -20617,7 +20807,9 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.t0_com = t0_com
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
         self.beta = beta
@@ -20799,7 +20991,12 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        self.xL0_E, self.xL0_N = en_components(self.xL0)
+        # xL0 matches xS0: shape (2,) or (n_filters, 2).
+        if np.shape(self.xL0) == (2,):
+            self.xL0_E, self.xL0_N = self.xL0[0], self.xL0[1]
+        else:
+            self.xL0_E = self.xL0[:, 0]
+            self.xL0_N = self.xL0[:, 1]
 
 
         com_vec = self.alephS * np.array((np.sin(self.alphaS_rad),
@@ -21132,7 +21329,9 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
 
@@ -21287,7 +21486,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0=t0_g (closest approach between geometric center of lens and primary source).
         #self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        #self.xL0_E, self.xL0_N = en_components(self.xL0)
+        #self.xL0_E, self.xL0_N = self.xL0[0], self.xL0[1]
 
         self.xL0_com = self.xS0  - self.thetaS0_com * 1e-3
         com_vec = self.alephS * np.array((np.sin(self.alphaS_rad),
@@ -21618,7 +21817,9 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.t0_p = t0_p
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -23575,7 +23776,9 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         self.dS = self.dL / self.dL_dS
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
         self.n_outline = n_outline
@@ -24874,7 +25077,9 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         self.dS = self.dL / self.dL_dS
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
-        self.xS0 = stack_en(xS0_E, xS0_N)
+        self.xS0 = np.squeeze(np.column_stack(
+            np.broadcast_arrays(np.ravel(xS0_E), np.ravel(xS0_N))
+        ))
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
         self.n_outline = n_outline_pri
