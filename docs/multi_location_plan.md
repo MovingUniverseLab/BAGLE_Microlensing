@@ -1601,3 +1601,17 @@ on `convert_helio_geo_*`, and light-travel time.
     astrometric origin equals filter 1 on every draw.
     `fix_sampled_param` still holds a suffix at a constant in
     `fixed_dataset_params`.
+
+21. `sky_origin`, `filt_scalar`, and the unused `lists_for_fitter`
+    are removed. `PSPL_Param.__init__` reshapes each filter
+    parameter to a 1-d float array of shape `(n_filters,)`, then
+    stacks `xS0` once. One filter keeps shape `(2,)` so `xS0[0]`
+    stays East. More than one filter is `(n_filters, 2)`. Later
+    methods index that stored array and do not reshape it.
+    `pi_ref_frame[filt_idx]` is that filter's scalar.
+    `_origin_for_jax` and `_pi_ref_for_jax` are removed. The JAX
+    kernels take `jnp.asarray` of those same values.
+    The second length check over `phot_param_names` is removed.
+    Fixed phot parameters and the optional-parameter dicts use
+    this `n_filters`. `filt_params.py` still holds the cube
+    expansion both fitters call.

@@ -1,4 +1,4 @@
-"""Filter-indexed parameter lists, cube expansion, and sky-origin helpers.
+"""Filter-indexed parameter lists and cube expansion.
 
 ``filt_param_names`` and ``filt_param_usage`` are the declaration.
 ``phot_param_names`` and ``astrom_param_names`` are derived views.
@@ -256,37 +256,6 @@ def validate_param_declaration(cls):
         )
 
     return None
-
-
-def lists_for_fitter(fitter_param_names):
-    """Build the parallel lists from a fitter-name sequence.
-
-    Parameters
-    ----------
-    fitter_param_names : sequence of str
-        Full base order, including filter-indexed names.
-
-    Returns
-    -------
-    filt_param_names : list of str
-        Filter-indexed names in the order they appear above.
-    filt_param_usage : list of str
-        Usage of each of those names.
-
-    Raises
-    ------
-    ValueError
-        A filter-indexed name is missing from ``FILT_USAGE``.
-    """
-    filt_param_names = []
-    filt_param_usage = []
-    for name in fitter_param_names:
-        if name not in FILT_USAGE:
-            continue
-        filt_param_names.append(name)
-        filt_param_usage.append(FILT_USAGE[name])
-
-    return filt_param_names, filt_param_usage
 
 
 def dataset_names(value, n_sets, kind):
@@ -611,61 +580,6 @@ def en_components(origin):
     if arr.shape[0] == 1:
         return arr[0, 0], arr[0, 1]
     return arr[:, 0].copy(), arr[:, 1].copy()
-
-
-def sky_origin(origin, filt_idx=0):
-    """Return one filter's East/North position as shape ``(2,)``.
-
-    Parameters
-    ----------
-    origin : array_like
-        Shape ``(2,)`` for one filter, or ``(n_filters, 2)``.
-    filt_idx : int
-        0-based filter index.
-
-    Returns
-    -------
-    position : ndarray, shape (2,)
-        East and North for that filter.
-
-    Notes
-    -----
-    A shape ``(2,)`` array is the single catalog position. It is
-    returned for filter 0. A later filter index on that array is an
-    error, because there is no second catalog frame stored.
-    """
-    arr = np.asarray(origin, dtype=float)
-    index = int(filt_idx)
-    if arr.shape == (2,):
-        if index != 0:
-            raise IndexError(
-                f'filt_idx={index} but the sky position has only one filter'
-            )
-        return arr
-    return np.asarray(arr[index], dtype=float)
-
-
-def filt_scalar(value, filt_idx=0):
-    """Return one filter's scalar, or the value itself if it is scalar.
-
-    Parameters
-    ----------
-    value : float or array_like
-        A scalar, or a 1-d array of length ``n_filters``.
-    filt_idx : int
-        0-based filter index.
-
-    Returns
-    -------
-    scalar : float
-        The value for that filter.
-    """
-    if isinstance(value, (list, tuple, np.ndarray)):
-        arr = np.asarray(value, dtype=float).ravel()
-        if arr.size == 1:
-            return float(arr[0])
-        return float(arr[int(filt_idx)])
-    return float(value)
 
 
 def pack_constructor_params(sampled_names, sampled_values, class_fitter_names,

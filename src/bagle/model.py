@@ -511,9 +511,7 @@ from bagle import parallax
 from bagle.filt_params import (
     astrom_param_view,
     en_components,
-    filt_scalar,
     phot_param_view,
-    sky_origin,
     stack_en,
     validate_param_declaration,
 )
@@ -549,7 +547,9 @@ class PSPL(ABC):
         """
         # Equation of motion for just the background source.
         dt_in_years = (t - self.t0) / days_per_year
-        xL = sky_origin(self.xL0, filt_idx) + np.outer(dt_in_years, self.muL) * 1e-3
+        xL = (
+            self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+        ) + np.outer(dt_in_years, self.muL) * 1e-3
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
@@ -562,7 +562,7 @@ class PSPL(ABC):
             # Get the parallax vector for each date.
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
                                                           obsLocation=self.obsLocation[filt_idx])
-            xL += (filt_scalar(self.pi_ref_frame, filt_idx) * parallax_vec) * 1e-3  # arcsec
+            xL += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
             
         return xL
 
@@ -587,7 +587,9 @@ class PSPL(ABC):
         """
         # Equation of motion for just the background source.
         dt_in_years = (t - self.t0) / days_per_year
-        xS_unlensed = sky_origin(self.xS0, filt_idx) + np.outer(dt_in_years, self.muS) * 1e-3
+        xS_unlensed = (
+            self.xS0 if self.xS0.ndim == 1 else self.xS0[filt_idx]
+        ) + np.outer(dt_in_years, self.muS) * 1e-3
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
@@ -601,7 +603,7 @@ class PSPL(ABC):
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
                                                           obsLocation=self.obsLocation[filt_idx])
 
-            xS_unlensed += (filt_scalar(self.pi_ref_frame, filt_idx) * parallax_vec) * 1e-3  # arcsec
+            xS_unlensed += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
 
         return xS_unlensed
 
@@ -775,8 +777,8 @@ class PSPL(ABC):
             # Get the parallax vector for each date.
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
                                                           obsLocation=self.obsLocation[filt_idx])
-            xS_plus += (filt_scalar(self.pi_ref_frame, filt_idx) * parallax_vec) * 1e-3  # arcsec
-            xS_minus += (filt_scalar(self.pi_ref_frame, filt_idx) * parallax_vec) * 1e-3  # arcsec
+            xS_plus += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
+            xS_minus += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
 
         return np.stack((xS_plus, xS_minus))
 
@@ -807,10 +809,14 @@ class PSPL(ABC):
         dt_in_years = (t - self.t0) / days_per_year
 
         # Equation of motion for just the background source.
-        xS_unlensed = sky_origin(self.xS0, filt_idx) + np.outer(dt_in_years, self.muS) * 1e-3
+        xS_unlensed = (
+            self.xS0 if self.xS0.ndim == 1 else self.xS0[filt_idx]
+        ) + np.outer(dt_in_years, self.muS) * 1e-3
 
         # Equation of motion for just the foreground lens.
-        xL_unlensed = sky_origin(self.xL0, filt_idx) + np.outer(dt_in_years, self.muL) * 1e-3
+        xL_unlensed = (
+            self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+        ) + np.outer(dt_in_years, self.muL) * 1e-3
 
         # Add parallax to both.
         if self.parallaxFlag:
@@ -823,8 +829,8 @@ class PSPL(ABC):
             # Get the parallax vector for each date.
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
                                                           obsLocation=self.obsLocation[filt_idx])
-            xS_unlensed += np.squeeze(filt_scalar(self.pi_ref_frame, filt_idx) * parallax_vec) * 1e-3  # arcsec
-            xL_unlensed += np.squeeze(filt_scalar(self.pi_ref_frame, filt_idx) * parallax_vec) * 1e-3  # arcsec
+            xS_unlensed += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
+            xL_unlensed += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
 
         # Equation of motion for the relative angular separation between the background source and lens.
         # Note, we don't just call get_centroid_shift() because parallax_vec calculation is repeated.
@@ -1868,16 +1874,19 @@ class PSPL_Parallax(ParallaxClassABC):
             in the geocentric-projected frame.
 
         """
-        xS0E_g, xS0N_g, muSE_g, muSN_g = fc.convert_helio_geo_ast(self.raL, self.decL,
-                                                                  self.piS, *en_components(sky_origin(self.xS0, 0)),
-                                                                  self.muS[0], self.muS[1],
-                                                                  self.t0, self.u0_amp,
-                                                                  self.tE, self.piE[0], self.piE[1],
-                                                                  t0par,
-                                                                  in_frame='helio',
-                                                                  murel_in='SL', murel_out='LS',
-                                                                  coord_in='EN', coord_out='tb',
-                                                                  plot=plot)
+        # Filter 0. One filter is already shape (2,).
+        xS0 = self.xS0 if self.xS0.ndim == 1 else self.xS0[0]
+        xS0E_g, xS0N_g, muSE_g, muSN_g = fc.convert_helio_geo_ast(
+            self.raL, self.decL,
+            self.piS, *en_components(xS0),
+            self.muS[0], self.muS[1],
+            self.t0, self.u0_amp,
+            self.tE, self.piE[0], self.piE[1],
+            t0par,
+            in_frame='helio',
+            murel_in='SL', murel_out='LS',
+            coord_in='EN', coord_out='tb',
+            plot=plot)
 
         return xS0E_g, xS0N_g, muSE_g, muSN_g
 
@@ -2328,7 +2337,7 @@ class PSPL_Param(ABC):
         return None
 
     def __init__(self, *args, **kwargs):
-        """Broadcast every filter-indexed parameter to one length.
+        """Reshape every filter-indexed parameter onto ``n_filters``.
 
         Parameters
         ----------
@@ -2343,15 +2352,21 @@ class PSPL_Param(ABC):
 
         Notes
         -----
-        A length-1 value is repeated to the length set by any longer
-        filter parameter. ``xS0`` is rebuilt afterwards. One filter is
-        stored as shape ``(2,)``. More than one filter is shape
-        ``(n_filters, 2)``. ``xS0`` is the catalog position at ``t0``
-        in that filter's frame. A constant Earth-spacecraft offset is
-        absorbed by a free ``xS0``; the time-variable parallax is not.
+        Each filter parameter the subclass set becomes a 1-d float
+        array of shape ``(n_filters,)``. A length-1 value is
+        repeated. A longer value sets ``n_filters``, and any other
+        length raises. ``xS0`` is then stacked from ``xS0_E`` and
+        ``xS0_N``. One filter stays shape ``(2,)`` so ``xS0[0]``
+        is East, which existing callers already assume. Two or
+        more filters are shape ``(n_filters, 2)``, and ``xS0[i]``
+        is that filter. ``xS0`` is the catalog position at ``t0``
+        in that filter's frame. A constant Earth-spacecraft offset
+        is absorbed by a free ``xS0``; the time-variable parallax
+        is not.
         """
-        # Normalize each declared filter parameter that the subclass set.
-        normalized = []
+        # Reshape each declared filter parameter to a 1-d float array.
+        # After the broadcast below, each one has shape (n_filters,).
+        reshaped = []
         for param in self.filt_param_names:
             if not hasattr(self, param):
                 continue
@@ -2363,18 +2378,21 @@ class PSPL_Param(ABC):
             else:
                 param_var = np.asarray(param_var, dtype=float).ravel()
             setattr(self, param, param_var)
-            normalized.append(param)
+            reshaped.append(param)
 
-        # Repeat scalars up to the longest filter parameter.
+        # Broadcast length-1 arrays up to the longest filter parameter.
         n_filters = 1
-        if normalized:
-            lengths = [int(np.size(getattr(self, name))) for name in normalized]
+        if reshaped:
+            lengths = [
+                int(np.size(getattr(self, name))) for name in reshaped
+            ]
             n_filters = max(lengths)
-            for name, length in zip(normalized, lengths):
+            for name, length in zip(reshaped, lengths):
                 if length == n_filters:
                     continue
                 if length == 1:
-                    setattr(self, name, np.repeat(getattr(self, name), n_filters))
+                    repeated = np.repeat(getattr(self, name), n_filters)
+                    setattr(self, name, repeated)
                     continue
                 msg = (
                     'Mis-matched length for filter parameter: {0:s}. '
@@ -2382,98 +2400,45 @@ class PSPL_Param(ABC):
                 )
                 raise RuntimeError(msg.format(name, n_filters, length))
 
-        # Catalog position follows the normalized components.
+        # Store xS0 once. One filter is shape (2,), so xS0[0] is East.
+        # More than one filter is shape (n_filters, 2). Later methods
+        # index this array and do not reshape it.
         if hasattr(self, 'xS0_E') and hasattr(self, 'xS0_N'):
             self.xS0 = stack_en(self.xS0_E, self.xS0_N)
 
-        # Check that required fixed_phot_params are proper arrays.
-        # If not, then make them arrays of the appropriate length.
+        # A scalar fixed phot parameter is repeated to (n_filters,).
         for param in self.fixed_phot_param_names:
             param_var = getattr(self, param)
-
-            # These fixed_phot params should have the same length
-            # as the phot_params. Use the first one as an example.
-            if len(self.phot_param_names) > 0:
-                ex_phot_param = getattr(self, self.phot_param_names[0])
-                N_filt = len(ex_phot_param)
-            else:
-                N_filt = 1
-
-            # Ensure our fixed_phot_params are list objects.
             if not isinstance(param_var, (list, np.ndarray)):
-                setattr(self, param, np.repeat(param_var, N_filt))
+                setattr(self, param, np.repeat(param_var, n_filters))
 
-        # Loop through again and check the lengths are the same
-        # and all have the same length.
-        phot_param_len = None
-        for param in self.phot_param_names:
+        # Optional phot and ast parameters are dicts keyed by filter.
+        # A scalar is stored on filter 0. A sequence must have length
+        # n_filters.
+        optional_names = list(self.phot_optional_param_names)
+        optional_names += list(self.ast_optional_param_names)
+        for param in optional_names:
             param_var = getattr(self, param)
+            if isinstance(param_var, dict):
+                continue
 
-            if phot_param_len is None:
-                phot_param_len = len(param_var)
-            else:
-                if len(param_var) != phot_param_len:
-                    msg = 'Mis-matched length for photometric parameter: {0:s}.'
-                    msg += 'Expected length = {1:d} and got {2:d}'
-                    raise RuntimeError(msg.format(param, phot_param_len, len(param_var)))
+            new_param_var = {}
+            if isinstance(param_var, (int, float)):
+                new_param_var[0] = param_var
+            elif isinstance(param_var, (list, np.ndarray)):
+                if len(param_var) != n_filters:
+                    msg = (
+                        'Mis-matched format for optional parameter: '
+                        '{0:s}. Should be a dictionary with keys '
+                        'matched to the filter indices.'
+                    )
+                    raise RuntimeError(msg.format(param))
+                for ii in range(len(param_var)):
+                    new_param_var[ii] = param_var[ii]
 
-        # Check that the optional paramaters are proper dictionaries.
-        # If not and they contain a single value, then make them
-        # a dictionary with the value set for the first photometric filter.
-        # Otherwise, set an empty dictionary.
-        for param in self.phot_optional_param_names:
-            param_var = getattr(self, param)
-            if not isinstance(param_var, dict):
-                new_param_var = {}
+            setattr(self, param, new_param_var)
 
-                # Case: single number passed in... assume first filter.
-                if isinstance(param_var, (int, float)):
-                    new_param_var[0] = param_var
-
-                # Case: array with length of all photometric filters passed in.
-                if isinstance(param_var, (list, np.ndarray)):
-                    if len(param_var) == phot_param_len:
-                        for ii in range(len(param_var)):
-                            new_param_var[ii] = param_var[ii]  # move entry to dictionary
-                    else:
-                        # Case: Too-short list or array.
-                        msg = 'Mis-matched fomat for optional photometric parameter: {0:s}.'
-                        msg += 'Should be a dictionary with keys matched to the filter indices.'
-
-                        raise RuntimeExcpetion(msg.format(param))
-
-                # Save the proerly formatted param dictionary.    
-                setattr(self, param, new_param_var)
-
-        # Check that the optional paramaters are proper dictionaries.
-        # If not and they contain a single value, then make them
-        # a dictionary with the value set for the first photometric filter.
-        # Otherwise, set an empty dictionary.
-        for param in self.ast_optional_param_names:
-            param_var = getattr(self, param)
-            if not isinstance(param_var, dict):
-                new_param_var = {}
-
-                # Case: single number passed in... assume first filter.
-                if isinstance(param_var, (int, float)):
-                    new_param_var[0] = param_var
-
-                # Case: array with length of all photometric filters passed in.
-                if isinstance(param_var, (list, np.ndarray)):
-                    if len(param_var) == phot_param_len:
-                        for ii in range(len(param_var)):
-                            new_param_var[ii] = param_var[ii]  # move entry to dictionary
-                    else:
-                        # Case: Too-short list or array.
-                        msg = 'Mis-matched fomat for optional photometric parameter: {0:s}.'
-                        msg += 'Should be a dictionary with keys matched to the filter indices.'
-
-                        raise RuntimeExcpetion(msg.format(param))
-
-                # Save the proerly formatted param dictionary.    
-                setattr(self, param, new_param_var)
-
-        return
+        return None
 
 
 class PSPL_AstromParam3(PSPL_Param):
@@ -7135,7 +7100,9 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
             Position of the lens system (geometric center) over time.
         """
         dt_in_years = (t - self.t0) / days_per_year
-        xL = sky_origin(self.xL0, filt_idx) + np.outer(dt_in_years, self.muL) * 1e-3
+        xL = (
+            self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+        ) + np.outer(dt_in_years, self.muL) * 1e-3
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
@@ -7191,7 +7158,11 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 xL1 = np.zeros((len(t), 2), dtype=float)
                 xL2 = np.zeros((len(t), 2), dtype=float)
 
-                xLCoM = sky_origin(self.xL0_com, filt_idx) + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
+                # Center of mass moving with muL system proper motion at different
+                # times. xL0_com is the initial position of lens system's CoM at t0_com
+                xLCoM = (
+                    self.xL0_com if self.xL0_com.ndim == 1 else self.xL0_com[filt_idx]
+                ) + np.outer(dt_in_years, self.muL) * 1e-3
 
                 orb = orbits.Orbit()
                 orb.w = self.omega_pri
@@ -13313,14 +13284,22 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
         # Calculate position vs. time in arcsec
         if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
-            xS1_unlens = sky_origin(self.xS0_pri, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = sky_origin(self.xS0_sec, filt_idx) + np.outer(dt1_in_years, self.muS_sec) * 1e-3
+            xS1_unlens = (
+                self.xS0_pri if self.xS0_pri.ndim == 1 else self.xS0_pri[filt_idx]
+            ) + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = (
+                self.xS0_sec if self.xS0_sec.ndim == 1 else self.xS0_sec[filt_idx]
+            ) + np.outer(dt1_in_years, self.muS_sec) * 1e-3
             if self.orbitFlag == 'accelerated':
                 xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.accS) * 1e-3
 
         elif self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
-            xCoM_unlens = sky_origin(self.xS0_com, filt_idx) + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass. xS0_com is the initial source CoM position at t0=t0_p.
+            # Motion of the Center of Mass. xS0_com is the initial source CoM position
+            # at t0=t0_p.
+            xCoM_unlens = (
+                self.xS0_com if self.xS0_com.ndim == 1 else self.xS0_com[filt_idx]
+            ) + np.outer(dt_in_years, self.muS_system) * 1e-3
 
             orb = orbits.Orbit()
             orb.w = self.omega_pri
@@ -13342,8 +13321,12 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             xS2_unlens[:,1] += xCoM_unlens[:, 1] + y2
 
         else:
-            xS1_unlens = sky_origin(self.xS0_pri, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = sky_origin(self.xS0_sec, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS1_unlens = (
+                self.xS0_pri if self.xS0_pri.ndim == 1 else self.xS0_pri[filt_idx]
+            ) + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = (
+                self.xS0_sec if self.xS0_sec.ndim == 1 else self.xS0_sec[filt_idx]
+            ) + np.outer(dt1_in_years, self.muS) * 1e-3
 
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
@@ -18480,7 +18463,11 @@ class BSBL(PSBL):
                 xL1 = np.zeros((len(t), 2), dtype=float)
                 xL2 = np.zeros((len(t), 2), dtype=float)
 
-                xLCoM = sky_origin(self.xL0_com, filt_idx) + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
+                # Center of mass moving with muL system proper motion at different
+                # times. xL0_com is the initial position of lens system's CoM at t0_com
+                xLCoM = (
+                    self.xL0_com if self.xL0_com.ndim == 1 else self.xL0_com[filt_idx]
+                ) + np.outer(dt_in_years, self.muL) * 1e-3
 
                 orb = orbits.Orbit()
                 orb.w = self.omegaL_pri
@@ -19218,14 +19205,20 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         dt1_in_years = (t - self.t0) / days_per_year
 
         if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
-            xS1_unlens = sky_origin(self.xS0_pri, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = sky_origin(self.xS0_sec, filt_idx) + np.outer(dt1_in_years, self.muS_sec) * 1e-3
+            xS1_unlens = (
+                self.xS0_pri if self.xS0_pri.ndim == 1 else self.xS0_pri[filt_idx]
+            ) + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = (
+                self.xS0_sec if self.xS0_sec.ndim == 1 else self.xS0_sec[filt_idx]
+            ) + np.outer(dt1_in_years, self.muS_sec) * 1e-3
             if self.orbitFlag == 'accelerated':
                 xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.accS) * 1e-3
 
         elif self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0_com) / days_per_year
-            xCoM_unlens = sky_origin(self.xS0_com, filt_idx) + np.outer(dt_in_years, self.muS_system) * 1e-3
+            xCoM_unlens = (
+                self.xS0_com if self.xS0_com.ndim == 1 else self.xS0_com[filt_idx]
+            ) + np.outer(dt_in_years, self.muS_system) * 1e-3
 
             orb = orbits.Orbit()
             orb.w = self.omegaS_pri
@@ -19247,8 +19240,12 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
             xS2_unlens[:,0] += xCoM_unlens[:, 0] + x2
             xS2_unlens[:,1] += xCoM_unlens[:, 1] + y2
         else:
-            xS1_unlens = sky_origin(self.xS0_pri, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = sky_origin(self.xS0_sec, filt_idx) + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS1_unlens = (
+                self.xS0_pri if self.xS0_pri.ndim == 1 else self.xS0_pri[filt_idx]
+            ) + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = (
+                self.xS0_sec if self.xS0_sec.ndim == 1 else self.xS0_sec[filt_idx]
+            ) + np.outer(dt1_in_years, self.muS) * 1e-3
 
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
@@ -22217,7 +22214,7 @@ class FSPL(PSPL):
         days_in_a_year = 365.25
 
         # Put this filter's origin in units of thetaE.
-        origin = sky_origin(self.xS0, filt_idx)
+        origin = (self.xS0 if self.xS0.ndim == 1 else self.xS0[filt_idx])
         radiusS = self.radiusS * 1e3 / self.thetaE_amp # unit = thetaE
 
         # Convert to imaginary numbers with East = real, North = imag.
@@ -23989,7 +23986,9 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
         self.thetas0 = self.u0 * self.thetaE_amp  # [RA,Dec] position of the source at peak
         # Filter 0's full East/North origin. xS0[0] was East-only
         # when xS0 has shape (2,).
-        self.xL0 = sky_origin(self.xS0, 0) - self.thetas0 * 1e-3
+        self.xL0 = (
+            self.xS0 if self.xS0.ndim == 1 else self.xS0[0]
+        ) - self.thetas0 * 1e-3
         self.tE = get_einstein_time(self.thetaE_amp, self.muRel,
                                     365.25)  # Einstein crossing time
 
@@ -28290,7 +28289,9 @@ def cluster(image, R):
 #         the lenses
 #         """
 #         t_yrs = (t - self.t0) / days_per_year
-#         xl = sky_origin(self.xL0, filt_idx) + np.outer(t_yrs, self.muL) * 1e-3
+#         xl = (
+#             self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+#         ) + np.outer(t_yrs, self.muL) * 1e-3
 #         return (xl, (xl + (1 - self.m1) * self.separation * np.array(
 #             [-np.cos(self.angle), np.sin(self.angle)]),
 #                      xl - self.m1 * self.separation * np.array(
@@ -28301,7 +28302,9 @@ def cluster(image, R):
 #         the centre of the source
 #         """
 #         dt_in_years = (t - self.t0) / days_per_year
-#         return sky_origin(self.xS0, filt_idx) + np.outer(dt_in_years, self.muS * 1e-3)
+#         return (
+#             self.xS0 if self.xS0.ndim == 1 else self.xS0[filt_idx]
+#         ) + np.outer(dt_in_years, self.muS * 1e-3)
 #
 #     def get_caustic(self, t):
 #         """ This functions finds the position of the caustics at a list of times """
@@ -28563,7 +28566,9 @@ def cluster(image, R):
 #         images = points[2]
 #         centroids = points[3]
 #
-#         srce_pos_model = sky_origin(self.xS0, filt_idx) + np.outer((t - self.t0) / days_per_year,
+#         srce_pos_model = (
+#             self.xS0 if self.xS0.ndim == 1 else self.xS0[filt_idx]
+#         ) + np.outer((t - self.t0) / days_per_year,
 #                                              self.muS) * 1e-3
 #         pos_model = srce_pos_model + centroids
 #
@@ -28844,7 +28849,9 @@ def cluster(image, R):
 #         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t)
 #         dt_in_years = (t - self.t0) / days_per_year
 #
-#         xS = sky_origin(self.xS0, filt_idx) + np.outer(dt_in_years, self.muS * 1e-3) + (
+#         xS = (
+#             self.xS0 if self.xS0.ndim == 1 else self.xS0[filt_idx]
+#         ) + np.outer(dt_in_years, self.muS * 1e-3) + (
 #                     self.piS * parallax_vec)
 #
 #         return xS
@@ -29019,7 +29026,9 @@ def cluster(image, R):
 #         return parallax.parallax_in_direction(self.raL, self.decL, t)
 #         t_yrs = (t - self.t0) / days_per_year
 #
-#         xL_sys = sky_origin(self.xL0, filt_idx) + np.outer(t_yrs, self.muL * 1e-3) + (
+#         xL_sys = (
+#             self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+#         ) + np.outer(t_yrs, self.muL * 1e-3) + (
 #                     self.piL * parallax_vec)
 #
 #         cosa = np.cos(self.angle)
@@ -29041,7 +29050,9 @@ def cluster(image, R):
 #         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t)
 #
 #         # Equation of motion for just the background source.
-#         xS_unlensed = sky_origin(self.xS0, filt_idx) + np.outer(dt_in_years, self.muS) * 1e-3
+#         xS_unlensed = (
+#             self.xS0 if self.xS0.ndim == 1 else self.xS0[filt_idx]
+#         ) + np.outer(dt_in_years, self.muS) * 1e-3
 #         xS_unlensed += (self.piS * parallax_vec) * 1e-3  # arcsec
 #
 #         # Equation of motion for the relative angular separation between the background source and lens.
@@ -29228,7 +29239,9 @@ def cluster(image, R):
 #
 #         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t)
 #         t_yrs = (t - self.t0) / 365.25
-#         xl = sky_origin(self.xL0, filt_idx) + np.outer(t_yrs, self.muL) * 1e-3
+#         xl = (
+#             self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+#         ) + np.outer(t_yrs, self.muL) * 1e-3
 #         xl += self.piL * parallax_vec
 #         return get_orbit(self.a, self.e, self.t_peri, self.P, self.m1,
 #                          1 - self.m1, xl, t, self.i, self.Omega, self.arg_peri,
@@ -29409,7 +29422,9 @@ def cluster(image, R):
 #         source = self.get_astrometry_unlensed(t)
 #         lens = self.get_lens_astrometry(t)
 #         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t)
-#         xl = sky_origin(self.xL0, filt_idx) + np.outer(t_yrs, self.muL) * 1e-3
+#         xl = (
+#             self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+#         ) + np.outer(t_yrs, self.muL) * 1e-3
 #         xl += self.piL * parallax_vec
 #         amplifications = []
 #         images = []
@@ -29471,7 +29486,9 @@ def cluster(image, R):
 #         ycentroids = centroids[:, 1]
 #         t_yrs = (t - self.t0) / 365.25
 #         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t)
-#         lens = sky_origin(self.xL0, filt_idx) + np.outer(t_yrs, self.muL) * 1e-3
+#         lens = (
+#             self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+#         ) + np.outer(t_yrs, self.muL) * 1e-3
 #         lens += self.piL * parallax_vec
 #         fig = plt.figure(figsize=[size[0], size[1]])
 #         matplotlib.rc('xtick', labelsize=25)
