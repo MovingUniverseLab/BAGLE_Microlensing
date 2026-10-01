@@ -24,14 +24,17 @@ def temperature_ladder(n_temperatures):
     Returns
     -------
     betas : ndarray, shape (n_temperatures,)
-        Log-spaced positive rungs from 1 down to ``1 / n``, then 0.
-        Index 0 is the cold chain.
+        Log-spaced positive rungs from 1 down to a hot beta, then 0.
+        Index 0 is the cold chain. The hot beta is ``1e-3``, or
+        warmer when there are only a few rungs.
 
     Notes
     -----
     Neighboring positive rungs keep a constant ratio. The quadratic
     ``linspace ** 2`` ladder leaves its widest gaps beside the cold
-    posterior, which is where replica swaps were failing.
+    posterior, which is where replica swaps were failing. The hot
+    rung stays near ``1e-3`` so the slice down to ``β=0`` does not
+    dominate the thermodynamic integral.
     """
     n_temperatures = int(n_temperatures)
     if n_temperatures < 2:
@@ -44,8 +47,12 @@ def temperature_ladder(n_temperatures):
         return np.ascontiguousarray(betas)
 
     # Hottest positive rung. β=0 stays so the TI integral covers [0, 1].
-    beta_min = 1.0 / float(n_temperatures)
-    positive = np.geomspace(1.0, beta_min, n_temperatures - 1)
+    # Half a decade per step until the ladder reaches 1e-3. A wider
+    # gap into β=0 lets the prior-averaged lnL dominate the trapezoid.
+    n_positive = n_temperatures - 1
+    decades = 0.5 * float(n_positive - 1)
+    beta_min = max(1.0e-3, 10.0 ** (-decades))
+    positive = np.geomspace(1.0, beta_min, n_positive)
     betas = np.concatenate([positive, np.array([0.0])])
     return np.ascontiguousarray(betas, dtype=np.float64)
 

@@ -1080,7 +1080,7 @@ def test_logz_near_nautilus():
         draws=100,
         tune=120,
         chains=2,
-        n_temperatures=6,
+        n_temperatures=8,
         n_leapfrog=4,
         random_seed=0,
         verbose=False,
@@ -1099,10 +1099,10 @@ def test_logz_near_nautilus():
     assert np.isfinite(logz_naut)
     assert np.isfinite(logz_ns)
     assert np.isfinite(logz_replica)
-    # Short ladders and small live sets. Loose, but far from a
-    # diverged thermodynamic integral.
+    # Short runs. Loose next to a diverged integral, tight enough
+    # to catch a hot rung that dominates the trapezoid.
     assert abs(logz_ns - logz_naut) < 30.0
-    assert abs(logz_replica - logz_naut) < 80.0
+    assert abs(logz_replica - logz_naut) < 40.0
     assert np.all((rates >= 0.0) & (rates <= 1.0))
     assert float(np.max(rates)) > 0.0
     return None
