@@ -199,6 +199,7 @@ class MicrolensSolver(Solver):
         'thetaE': ('make_lognorm_gen', 0, 1),
         'log10_thetaE': ('make_truncnorm_gen', 0.02, 0.35, -4, 4), #Updated prior from PopSyCLE runs in Abrams+ 2025
         'log_piE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
+        'log10_piE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
         'pi_ref_frame': ('make_norm_gen', 0.0, 1.0),
         'q': ('make_gen', 0.001, 1),
         'alpha': ('make_gen', 0, 360),
