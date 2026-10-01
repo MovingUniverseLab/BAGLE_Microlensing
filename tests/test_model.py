@@ -22,6 +22,7 @@ def test_default_priors():
     all_classes_pspl = [model.PSPL_PhotAstromParam1, model.PSPL_PhotAstromParam2, 
                         model.PSPL_PhotAstromParam1, model.PSPL_PhotAstromParam4, 
                         model.PSPL_PhotAstromParam5, model.PSPL_PhotAstromParam6,
+                        model.PSPL_PhotAstromParam7,
                         model.PSPL_GP_PhotAstromParam3, model.PSPL_GP_PhotAstromParam4]
 
     
@@ -1187,6 +1188,47 @@ def test_pspl_parallax2_bulge():
     np.testing.assert_almost_equal(shift_1, shift_2)
 
     return
+
+
+def test_pspl_photastrom_param7_matches_param3():
+    """Param7 (log10_piE, phi_muRel, log10_thetaE, mag_base) matches Param3."""
+    raL = 17.5 * 15.0
+    decL = -30.0
+    t0 = 57650.0
+    u0_amp = -0.3
+    tE = 80.0
+    log10_thetaE = np.log10(1.5)
+    piS = 0.125
+    piE_E = -0.08
+    piE_N = 0.03
+    xS0_E, xS0_N = 0.0, 0.0
+    muS_E, muS_N = -4.0, -4.0
+    b_sff = [1.0]
+    mag_base = [19.0]
+
+    piE_amp = np.hypot(piE_E, piE_N)
+    log10_piE = np.log10(piE_amp)
+    phi_muRel = np.rad2deg(np.arctan2(piE_E, piE_N))
+
+    p3 = model.PSPL_PhotAstrom_Par_Param3(
+        t0, u0_amp, tE, log10_thetaE, piS, piE_E, piE_N,
+        xS0_E, xS0_N, muS_E, muS_N, b_sff, mag_base,
+        raL=raL, decL=decL)
+    p7 = model.PSPL_PhotAstrom_Par_Param7(
+        t0, u0_amp, tE, log10_thetaE, piS, log10_piE, phi_muRel,
+        xS0_E, xS0_N, muS_E, muS_N, b_sff, mag_base,
+        raL=raL, decL=decL)
+
+    np.testing.assert_allclose(p7.piE, p3.piE, rtol=1e-12)
+    np.testing.assert_allclose(p7.mL, p3.mL, rtol=1e-12)
+    np.testing.assert_allclose(p7.muRel, p3.muRel, rtol=1e-12)
+    np.testing.assert_allclose(p7.thetaE_amp, p3.thetaE_amp, rtol=1e-12)
+
+    t = np.linspace(t0 - 400, t0 + 400, 200)
+    np.testing.assert_allclose(p7.get_photometry(t), p3.get_photometry(t),
+                               rtol=1e-12)
+    np.testing.assert_allclose(p7.get_astrometry(t), p3.get_astrometry(t),
+                               rtol=1e-12)
 
 
 def compare_lumlens_parallax_bulge():
