@@ -995,6 +995,51 @@ def test_jax_log_prior_is_neginf_outside_support():
     return None
 
 
+def test_vmapped_log_posterior_grad_finite_outside():
+    """``vmap``'d log-posterior gradients stay finite outside the box."""
+    pytest.importorskip('numpyro')
+    import jax
+    import jax.numpy as jnp
+    import scipy.stats
+
+    data, truth = _tiny_pspl_phot()
+    out = os.path.join(TEST_OUTPUT_DIR, 'vmap_grad_')
+    fitter = MicrolensSolverBlackJAX(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=out,
+        sampler='nuts',
+        verbose=False,
+    )
+    _apply_phot_priors(fitter, truth)
+    # A negative draw is outside this prior. Uniform boxes do not
+    # exercise that tangent.
+    fitter.priors['tE'] = scipy.stats.lognorm(s=0.3, scale=16.0)
+    logdensity, logprior, _loglike = fitter._jax_densities()
+
+    names = list(fitter.fitter_param_names)
+    theta = np.array(
+        [float(fitter.priors[name].ppf(0.5)) for name in names],
+        dtype=np.float64,
+    )
+    outside = theta.copy()
+    outside[names.index('b_sff1')] = 1.5
+    negative = theta.copy()
+    negative[names.index('tE')] = -1.0
+    batch = jnp.asarray(np.stack([theta, outside, negative]))
+
+    values = jax.vmap(logdensity)(batch)
+    grads = jax.vmap(jax.grad(logdensity))(batch)
+    assert np.isfinite(float(values[0]))
+    assert float(values[1]) == -np.inf
+    assert float(values[2]) == -np.inf
+    assert np.all(np.isfinite(np.asarray(grads)))
+    assert float(logprior(jnp.asarray(negative))) == -np.inf
+    inside = float(logdensity(jnp.asarray(theta)))
+    assert np.isfinite(inside)
+    return None
+
+
 def test_temperature_ladder_is_geometric():
     """Replica betas are log-spaced, and warmup can shrink a cold gap."""
     from bagle.jax.replica_exchange import _adapt_temperature_ladder

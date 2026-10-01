@@ -5122,41 +5122,28 @@ def _numpyro_log_prob_in_support(dist, value):
         One-dimensional prior. ``validate_args`` may be off, in
         which case ``log_prob`` itself stays finite outside a box.
     value : jax.Array
-        Scalar parameter.
+        Scalar parameter. Under ``jax.vmap`` this is one batch row.
 
     Returns
     -------
     logp : jax.Array
         ``dist.log_prob(value)`` when ``value`` is inside
-        ``dist.support``. ``-inf`` otherwise. The outside branch
-        is a constant, so its gradient is 0.
+        ``dist.support``. ``-inf`` otherwise. The gradient is
+        finite inside and outside the support, including under
+        ``jax.vmap``.
     """
-    def _inside():
-        """Log density on the support.
-
-        Returns
-        -------
-        logp : jax.Array
-            ``dist.log_prob(value)``.
-        """
-        return dist.log_prob(value)
-
-    def _outside():
-        """Constant ``-inf`` with a zero gradient.
-
-        Returns
-        -------
-        logp : jax.Array
-            Scalar ``-inf``.
-        """
-        return jnp.asarray(-jnp.inf, dtype=jnp.float64)
-
-    # ``lax.cond`` differentiates only the branch that runs.
-    # ``jnp.where(..., -inf)`` still builds a NaN tangent when the
-    # raw ``log_prob`` is already non-finite (for example LogNormal
-    # at a non-positive value).
     inside = dist.support.check(value)
-    return jax.lax.cond(inside, _inside, _outside)
+    # ``vmap`` implements ``lax.cond`` as a select, so both branches
+    # would run. ``log_prob`` is called on an in-support stand-in.
+    # The stand-in does not depend on an outside ``value``, and the
+    # following ``where`` keeps that tangent finite.
+    safe = jnp.where(
+        inside, value, dist.support.feasible_like(value)
+    )
+    logp = dist.log_prob(safe)
+    return jnp.where(
+        inside, logp, jnp.asarray(-jnp.inf, dtype=jnp.float64)
+    )
 
 
 def _build_jax_log_prior(fitter):
@@ -6234,9 +6221,10 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
             Each accepts ``theta`` of shape ``(n_dim,)``. A non-finite
             likelihood is replaced by ``-1e300``. The log prior keeps
             ``-inf`` outside the prior support. ``logdensity_fn`` is
-            log likelihood plus log prior, and is ``-inf`` with a zero
-            gradient outside that support. The likelihood is the
-            cached function that :meth:`evaluate_loglik_jax` vmaps.
+            log likelihood plus log prior inside that support, and
+            ``-inf`` outside it. Outside, the likelihood is evaluated
+            at a fixed in-support point so the ``vmap``'d gradient
+            stays finite.
         """
         lnL_fn, _ctx = build_explicit_jax_loglik_fn(self)
         if lnL_fn is None:
@@ -6245,6 +6233,20 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
                 'JAX likelihood.'
             )
         log_prior_fn = _build_jax_log_prior(self)
+        # Fixed in-support vector. Used when ``theta`` leaves the box
+        # so the likelihood Jacobian is not evaluated there.
+        safe_coords = []
+        for name in self.fitter_param_names:
+            prior = self.priors[name]
+            if _is_numpyro_dist(prior):
+                dist_i = prior
+            else:
+                dist_i = scipy_to_numpyro_dist(prior)
+            point = dist_i.support.feasible_like(
+                jnp.zeros((), dtype=jnp.float64)
+            )
+            safe_coords.append(jnp.asarray(point, dtype=jnp.float64))
+        theta_safe = jnp.stack(safe_coords)
 
         def loglikelihood_fn(theta):
             """Floored JAX log-likelihood of one point.
@@ -6291,35 +6293,19 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
             -------
             logposterior : jax.Array
                 Log likelihood plus log prior inside the support.
-                ``-inf`` outside it, without evaluating the likelihood
-                gradient.
+                ``-inf`` outside it. The likelihood and prior that
+                enter the ``where`` are evaluated at an in-support
+                point, so the gradient is finite under ``jax.vmap``.
             """
             logprior = logprior_fn(theta)
-
-            def _inside():
-                """Posterior density on the prior support.
-
-                Returns
-                -------
-                logposterior : jax.Array
-                    Log likelihood plus log prior.
-                """
-                return loglikelihood_fn(theta) + logprior
-
-            def _outside():
-                """Constant ``-inf`` so NUTS rejects the proposal.
-
-                Returns
-                -------
-                logposterior : jax.Array
-                    Scalar ``-inf``. Its gradient is 0, so adaptation
-                    does not see a NaN.
-                """
-                return jnp.asarray(-jnp.inf, dtype=jnp.float64)
-
-            # Skip the likelihood Jacobian outside the box. A zero
-            # gradient and an infinite potential is a clean reject.
-            return jax.lax.cond(jnp.isfinite(logprior), _inside, _outside)
+            inside = jnp.isfinite(logprior)
+            safe = jnp.where(inside, theta, theta_safe)
+            # Both densities at ``safe`` are finite. ``where`` then
+            # writes ``-inf`` outside the box.
+            logp = loglikelihood_fn(safe) + logprior_fn(safe)
+            return jnp.where(
+                inside, logp, jnp.asarray(-jnp.inf, dtype=jnp.float64)
+            )
 
         return logdensity_fn, logprior_fn, loglikelihood_fn
 
