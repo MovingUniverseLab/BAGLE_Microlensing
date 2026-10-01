@@ -5113,6 +5113,52 @@ def _draw_prior_samples(fitter, n_draw, rng):
     return _unit_cube_to_physical(fitter, unit)
 
 
+def _numpyro_log_prob_in_support(dist, value):
+    """Prior log density on the support, ``-inf`` outside it.
+
+    Parameters
+    ----------
+    dist : numpyro.distributions.Distribution
+        One-dimensional prior. ``validate_args`` may be off, in
+        which case ``log_prob`` itself stays finite outside a box.
+    value : jax.Array
+        Scalar parameter.
+
+    Returns
+    -------
+    logp : jax.Array
+        ``dist.log_prob(value)`` when ``value`` is inside
+        ``dist.support``. ``-inf`` otherwise. The outside branch
+        is a constant, so its gradient is 0.
+    """
+    def _inside():
+        """Log density on the support.
+
+        Returns
+        -------
+        logp : jax.Array
+            ``dist.log_prob(value)``.
+        """
+        return dist.log_prob(value)
+
+    def _outside():
+        """Constant ``-inf`` with a zero gradient.
+
+        Returns
+        -------
+        logp : jax.Array
+            Scalar ``-inf``.
+        """
+        return jnp.asarray(-jnp.inf, dtype=jnp.float64)
+
+    # ``lax.cond`` differentiates only the branch that runs.
+    # ``jnp.where(..., -inf)`` still builds a NaN tangent when the
+    # raw ``log_prob`` is already non-finite (for example LogNormal
+    # at a non-positive value).
+    inside = dist.support.check(value)
+    return jax.lax.cond(inside, _inside, _outside)
+
+
 def _build_jax_log_prior(fitter):
     """Build a JIT-friendly sum of independent prior log-densities.
 
@@ -5125,11 +5171,15 @@ def _build_jax_log_prior(fitter):
     -------
     log_prior : callable
         ``log_prior(theta)`` for ``theta`` of shape ``(n_dim,)``.
+        ``-inf`` when any coordinate is outside its prior support.
+        Inside the support the value matches ``dist.log_prob``.
 
     Notes
     -----
     SciPy frozen priors are converted with
     :func:`scipy_to_numpyro_dist` so the density traces under JAX.
+    Replica exchange and BlackJAX both call this function. NumPyro
+    ``sample`` sites do not: those draws already lie on the support.
     """
     dists = []
     for name in fitter.fitter_param_names:
@@ -5155,12 +5205,13 @@ def _build_jax_log_prior(fitter):
         Returns
         -------
         logp : jax.Array
-            Scalar log density.
+            Scalar log density. ``-inf`` if any coordinate is
+            outside its prior support.
         """
         theta = jnp.asarray(theta, dtype=jnp.float64)
         logp = jnp.asarray(0.0, dtype=jnp.float64)
-        for i, dist in enumerate(dists):
-            logp = logp + dist.log_prob(theta[i])
+        for i, dist_i in enumerate(dists):
+            logp = logp + _numpyro_log_prob_in_support(dist_i, theta[i])
         return logp
 
     return log_prior
@@ -6180,9 +6231,11 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
         Returns
         -------
         logdensity_fn, logprior_fn, loglikelihood_fn : callable
-            Each accepts ``theta`` of shape ``(n_dim,)``. Non-finite
-            densities are replaced by ``-1e300``. ``logdensity_fn`` is
-            log likelihood plus log prior. The likelihood is the
+            Each accepts ``theta`` of shape ``(n_dim,)``. A non-finite
+            likelihood is replaced by ``-1e300``. The log prior keeps
+            ``-inf`` outside the prior support. ``logdensity_fn`` is
+            log likelihood plus log prior, and is ``-inf`` with a zero
+            gradient outside that support. The likelihood is the
             cached function that :meth:`evaluate_loglik_jax` vmaps.
         """
         lnL_fn, _ctx = build_explicit_jax_loglik_fn(self)
@@ -6210,7 +6263,7 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
             return jnp.where(jnp.isfinite(val), val, -1.0e300)
 
         def logprior_fn(theta):
-            """Floored JAX log-prior of one point.
+            """JAX log-prior of one point.
 
             Parameters
             ----------
@@ -6220,13 +6273,14 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
             Returns
             -------
             logprior : jax.Array
-                Scalar log prior.
+                Scalar log prior. ``-inf`` outside the support is
+                kept, so the prior is zero there rather than a flat
+                finite floor.
             """
-            val = log_prior_fn(theta)
-            return jnp.where(jnp.isfinite(val), val, -1.0e300)
+            return log_prior_fn(theta)
 
         def logdensity_fn(theta):
-            """Floored JAX log posterior of one point.
+            """JAX log posterior of one point.
 
             Parameters
             ----------
@@ -6236,9 +6290,36 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
             Returns
             -------
             logposterior : jax.Array
-                Log likelihood plus log prior.
+                Log likelihood plus log prior inside the support.
+                ``-inf`` outside it, without evaluating the likelihood
+                gradient.
             """
-            return loglikelihood_fn(theta) + logprior_fn(theta)
+            logprior = logprior_fn(theta)
+
+            def _inside():
+                """Posterior density on the prior support.
+
+                Returns
+                -------
+                logposterior : jax.Array
+                    Log likelihood plus log prior.
+                """
+                return loglikelihood_fn(theta) + logprior
+
+            def _outside():
+                """Constant ``-inf`` so NUTS rejects the proposal.
+
+                Returns
+                -------
+                logposterior : jax.Array
+                    Scalar ``-inf``. Its gradient is 0, so adaptation
+                    does not see a NaN.
+                """
+                return jnp.asarray(-jnp.inf, dtype=jnp.float64)
+
+            # Skip the likelihood Jacobian outside the box. A zero
+            # gradient and an infinite potential is a clean reject.
+            return jax.lax.cond(jnp.isfinite(logprior), _inside, _outside)
 
         return logdensity_fn, logprior_fn, loglikelihood_fn
 

@@ -302,6 +302,32 @@ def _assert_replica_diagnostics(fitter):
     return None
 
 
+def _assert_inside_prior(fitter):
+    """Every posterior row lies inside each prior's support.
+
+    Parameters
+    ----------
+    fitter : MicrolensSolver
+        Solver that has already been solved.
+
+    Returns
+    -------
+    None
+    """
+    from bagle.model_fitter_jax import _prior_bounds
+
+    tab = fitter.load_mnest_results()
+    for name in fitter.fitter_param_names:
+        low, high = _prior_bounds(fitter.priors[name])
+        column = np.asarray(tab[name], dtype=float)
+        assert np.all(np.isfinite(column))
+        if np.isfinite(low):
+            assert np.all(column >= low - 1.0e-8), name
+        if np.isfinite(high):
+            assert np.all(column <= high + 1.0e-8), name
+    return None
+
+
 def test_unknown_pymc_sampler_rejected():
     """PyMC solver rejects sampler names it does not implement."""
     pytest.importorskip('pymc')
@@ -391,6 +417,7 @@ def test_replica_exchange_phot():
     )
     _apply_phot_priors(fitter, truth)
     fitter.solve()
+    _assert_inside_prior(fitter)
 
     tab = fitter.load_mnest_results()
     assert len(tab) == 100 * 2
@@ -512,6 +539,7 @@ def test_replica_exchange_phot_astrom():
     )
     _apply_joint_priors(fitter, truth)
     fitter.solve()
+    _assert_inside_prior(fitter)
     _assert_replica_diagnostics(fitter)
     _assert_samples(
         fitter,
@@ -742,6 +770,7 @@ def test_blackjax_nuts_phot():
     )
     _apply_phot_priors(fitter, truth)
     fitter.solve()
+    _assert_inside_prior(fitter)
 
     tab = fitter.load_mnest_results()
     assert len(tab) == 40 * 2
@@ -779,6 +808,7 @@ def test_blackjax_mclmc_phot():
     )
     _apply_phot_priors(fitter, truth)
     fitter.solve()
+    _assert_inside_prior(fitter)
 
     tab = fitter.load_mnest_results()
     assert len(tab) == 40 * 2
@@ -822,6 +852,7 @@ def test_blackjax_smc_phot():
     )
     _apply_phot_priors(fitter, truth)
     fitter.solve()
+    _assert_inside_prior(fitter)
 
     tab = fitter.load_mnest_results()
     assert len(tab) == 40
@@ -864,6 +895,7 @@ def test_blackjax_ns_phot():
     )
     _apply_phot_priors(fitter, truth)
     fitter.solve()
+    _assert_inside_prior(fitter)
 
     tab = fitter.load_mnest_results()
     assert len(tab) == 40
@@ -906,6 +938,7 @@ def test_blackjax_ns_phot_astrom():
     )
     _apply_joint_priors(fitter, truth)
     fitter.solve()
+    _assert_inside_prior(fitter)
     print('blackjax ns joint logZ', float(fitter._logZ))
     _assert_samples(
         fitter,
@@ -914,6 +947,164 @@ def test_blackjax_ns_phot_astrom():
         t0_atol=3.0,
         extra_atol={'beta': 0.2, 'mag_src1': 0.35},
     )
+    return None
+
+
+def test_jax_log_prior_is_neginf_outside_support():
+    """The JAX log prior matches ``log_prob`` inside and is ``-inf`` outside."""
+    pytest.importorskip('numpyro')
+    import jax
+    import jax.numpy as jnp
+
+    from bagle.model_fitter_jax import _build_jax_log_prior
+    from bagle.model_fitter_jax import _prior_bounds
+    from bagle.model_fitter_jax import scipy_to_numpyro_dist
+
+    data, truth = _tiny_pspl_phot()
+    out = os.path.join(TEST_OUTPUT_DIR, 'logprior_')
+    fitter = MicrolensSolver(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=out,
+    )
+    _apply_phot_priors(fitter, truth)
+    names = list(fitter.fitter_param_names)
+    mids = []
+    for name in names:
+        low, high = _prior_bounds(fitter.priors[name])
+        mids.append(0.5 * (low + high))
+    theta = jnp.asarray(mids, dtype=jnp.float64)
+    log_prior = _build_jax_log_prior(fitter)
+
+    expected = jnp.asarray(0.0, dtype=jnp.float64)
+    for i, name in enumerate(names):
+        dist = scipy_to_numpyro_dist(fitter.priors[name])
+        expected = expected + dist.log_prob(theta[i])
+    inside = log_prior(theta)
+    assert np.array_equal(np.asarray(inside), np.asarray(expected))
+
+    outside = theta.at[names.index('b_sff1')].set(1.5)
+    val, grad = jax.value_and_grad(log_prior)(outside)
+    assert float(val) == -np.inf
+    assert np.all(np.isfinite(np.asarray(grad)))
+
+    far = theta.at[names.index('t0')].set(float(truth['t0']) + 100.0)
+    val_far, grad_far = jax.value_and_grad(log_prior)(far)
+    assert float(val_far) == -np.inf
+    assert np.all(np.isfinite(np.asarray(grad_far)))
+    return None
+
+
+def test_temperature_ladder_is_geometric():
+    """Replica betas are log-spaced, and warmup can shrink a cold gap."""
+    from bagle.jax.replica_exchange import _adapt_temperature_ladder
+    from bagle.jax.replica_exchange import temperature_ladder
+
+    betas = temperature_ladder(4)
+    assert betas.shape == (4,)
+    assert betas[0] == 1.0
+    assert betas[-1] == 0.0
+    assert np.all(np.diff(betas) < 0.0)
+    positive = betas[:-1]
+    ratios = positive[:-1] / positive[1:]
+    assert np.allclose(ratios, ratios[0])
+    quadratic = np.linspace(0.0, 1.0, 4) ** 2
+    quadratic = quadratic[::-1]
+    assert not np.allclose(betas, quadratic)
+
+    # Cold gap rejects, hotter gaps swap. The interior rung moves up.
+    tuned = _adapt_temperature_ladder(
+        betas,
+        accept=np.array([0.0, 10.0, 10.0]),
+        attempt=np.array([10.0, 10.0, 10.0]),
+    )
+    assert tuned[0] == 1.0
+    assert tuned[-1] == 0.0
+    assert np.isclose(tuned[-2], betas[-2])
+    assert tuned[1] > betas[1]
+    assert np.all(np.diff(tuned) < 0.0)
+    return None
+
+
+def test_logz_near_nautilus():
+    """BlackJAX NS and replica-exchange logZ sit near the nautilus value."""
+    pytest.importorskip('nautilus')
+    pytest.importorskip('blackjax')
+    pytest.importorskip('numpyro')
+    data, truth = _tiny_pspl_phot()
+
+    naut = MicrolensSolverImportance(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=os.path.join(TEST_OUTPUT_DIR, 'logz_naut_'),
+        sampler='nautilus',
+        n_live=60,
+        n_networks=2,
+        f_live=0.05,
+        n_eff=200,
+        n_workers=1,
+        posterior_samples=80,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_phot_priors(naut, truth)
+    naut.solve()
+    logz_naut = float(naut._logZ)
+
+    ns = MicrolensSolverBlackJAX(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=os.path.join(TEST_OUTPUT_DIR, 'logz_ns_'),
+        sampler='ns',
+        n_live=20,
+        ns_inner_steps=2,
+        ns_num_delete=2,
+        ns_max_iter=60,
+        ns_max_slice_steps=4,
+        ns_max_shrinkage=20,
+        f_live=0.15,
+        posterior_samples=40,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_phot_priors(ns, truth)
+    ns.solve()
+    _assert_inside_prior(ns)
+    logz_ns = float(ns._logZ)
+
+    replica = MicrolensSolverNumPyro(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=os.path.join(TEST_OUTPUT_DIR, 'logz_replica_'),
+        sampler='parallel_tempering',
+        draws=100,
+        tune=120,
+        chains=2,
+        n_temperatures=6,
+        n_leapfrog=4,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_phot_priors(replica, truth)
+    replica.solve()
+    _assert_inside_prior(replica)
+    logz_replica = float(replica._logZ)
+    rates = np.asarray(replica._swap_accept_rate, dtype=float)
+    print(
+        'logZ nautilus', logz_naut,
+        'blackjax_ns', logz_ns,
+        'replica', logz_replica,
+        'swap_accept', rates,
+    )
+    assert np.isfinite(logz_naut)
+    assert np.isfinite(logz_ns)
+    assert np.isfinite(logz_replica)
+    # Short ladders and small live sets. Loose, but far from a
+    # diverged thermodynamic integral.
+    assert abs(logz_ns - logz_naut) < 30.0
+    assert abs(logz_replica - logz_naut) < 80.0
+    assert np.all((rates >= 0.0) & (rates <= 1.0))
+    assert float(np.max(rates)) > 0.0
     return None
 
 
