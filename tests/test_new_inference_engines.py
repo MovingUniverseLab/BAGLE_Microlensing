@@ -801,7 +801,9 @@ def test_blackjax_mclmc_phot():
         model.PSPL_Phot_noPar_Param1,
         outputfiles_basename=out,
         sampler='mclmc',
-        draws=40,
+        # Unconstrained MCLMC needs a longer trajectory than NUTS
+        # before the max-likelihood draw sits on the mode.
+        draws=200,
         chains=2,
         random_seed=0,
         verbose=False,
@@ -811,7 +813,7 @@ def test_blackjax_mclmc_phot():
     _assert_inside_prior(fitter)
 
     tab = fitter.load_mnest_results()
-    assert len(tab) == 40 * 2
+    assert len(tab) == 200 * 2
     _assert_blackjax_diagnostics(fitter, expect_rhat=True)
     _assert_samples(
         fitter,
@@ -825,6 +827,97 @@ def test_blackjax_mclmc_phot():
             'b_sff1': 0.2,
         },
     )
+    return None
+
+
+def test_unconstrained_log_jacobian():
+    """The NUTS/MCLMC log-Jacobian matches NumPyro and a finite difference."""
+    pytest.importorskip('numpyro')
+    import jax
+    import jax.numpy as jnp
+    from numpyro.distributions.transforms import biject_to
+
+    from bagle.model_fitter_jax import scipy_to_numpyro_dist
+
+    data, truth = _tiny_pspl_phot()
+    out = os.path.join(TEST_OUTPUT_DIR, 'jacobian_')
+    fitter = MicrolensSolverBlackJAX(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=out,
+        sampler='nuts',
+        verbose=False,
+    )
+    _apply_phot_priors(fitter, truth)
+    _logdensity, logprior, loglike = fitter._jax_densities()
+    target = fitter._unconstrained_target(logprior, loglike)
+
+    names = list(fitter.fitter_param_names)
+    z = jnp.linspace(-0.4, 0.6, len(names), dtype=jnp.float64)
+    got = float(target['log_abs_det'](z))
+    theta = target['to_physical'](z)
+
+    expected = 0.0
+    for i, name in enumerate(names):
+        dist_i = scipy_to_numpyro_dist(fitter.priors[name])
+        bij = biject_to(dist_i.support)
+        expected += float(bij.log_abs_det_jacobian(z[i], theta[i]))
+    assert np.isclose(got, expected, rtol=0.0, atol=1.0e-12)
+
+    # Central difference of T(z), summed in log space.
+    eps = 1.0e-5
+    numeric = 0.0
+    for i in range(len(names)):
+        zp = z.at[i].add(eps)
+        zm = z.at[i].add(-eps)
+        dtheta = target['to_physical'](zp)[i]
+        dtheta = dtheta - target['to_physical'](zm)[i]
+        numeric += float(jnp.log(jnp.abs(dtheta / (2.0 * eps))))
+    assert np.isclose(got, numeric, rtol=1.0e-5, atol=1.0e-4)
+
+    median = np.array(
+        [float(fitter.priors[name].ppf(0.5)) for name in names],
+        dtype=np.float64,
+    )
+    z_med = target['to_unconstrained'](jnp.asarray(median))
+    back = np.asarray(target['to_physical'](z_med), dtype=float)
+    assert np.allclose(back, median, rtol=1.0e-6, atol=1.0e-6)
+
+    val, grad = jax.value_and_grad(target['logdensity'])(z)
+    assert np.isfinite(float(val))
+    assert np.all(np.isfinite(np.asarray(grad)))
+    return None
+
+
+def test_blackjax_nuts_rhat():
+    """A longer unconstrained NUTS run reaches R-hat below 1.1."""
+    pytest.importorskip('blackjax')
+    data, truth = _tiny_pspl_phot()
+    out = os.path.join(TEST_OUTPUT_DIR, 'blackjax_nuts_rhat_')
+    fitter = MicrolensSolverBlackJAX(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=out,
+        sampler='nuts',
+        draws=200,
+        tune=300,
+        chains=4,
+        max_num_doublings=8,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_phot_priors(fitter, truth)
+    fitter.solve()
+    _assert_inside_prior(fitter)
+    summary = fitter.load_mnest_summary()
+    rhat = float(summary['rhat_max'][0])
+    print(
+        'blackjax nuts long rhat', rhat,
+        'ess', float(summary['ess_min'][0]),
+        'accept', float(summary['mean_accept'][0]),
+        'step', float(summary['step_size'][0]),
+    )
+    assert rhat < 1.1
     return None
 
 

@@ -5981,6 +5981,9 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
 
     The target density is the cached JAX log-likelihood from
     :func:`build_explicit_jax_loglik_fn` plus :func:`_build_jax_log_prior`.
+    NUTS and MCLMC sample unconstrained coordinates. Each parameter
+    uses ``biject_to`` on the same NumPyro prior, and the target adds
+    ``log|det J|``. SMC and nested sampling stay in the physical box.
     Posterior tables use the batch path of
     :meth:`evaluate_loglik_jax`. Initial positions use the same
     inverse-CDF prior transform as nautilus. Chains are mapped with
@@ -6193,13 +6196,13 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
         print(f'*** Using BlackJAX ({self.sampler}) for sampling. ***')
         print('*************************************************')
 
-        logdensity_fn, logprior_fn, loglikelihood_fn = (
+        _logdensity_fn, logprior_fn, loglikelihood_fn = (
             self._jax_densities()
         )
         if self.sampler == 'nuts':
-            self._run_nuts(logdensity_fn)
+            self._run_nuts(logprior_fn, loglikelihood_fn)
         elif self.sampler == 'mclmc':
-            self._run_mclmc(logdensity_fn)
+            self._run_mclmc(logprior_fn, loglikelihood_fn)
         elif self.sampler == 'smc':
             self._run_smc(logprior_fn, loglikelihood_fn)
         else:
@@ -6386,13 +6389,186 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
         }
         return None
 
-    def _run_nuts(self, logdensity_fn):
-        """Run window-adapted NUTS.
+    def _unconstrained_target(self, logprior_fn, loglikelihood_fn):
+        """Physical posterior pushed to unconstrained coordinates.
 
         Parameters
         ----------
-        logdensity_fn : callable
-            Scalar JAX log posterior.
+        logprior_fn, loglikelihood_fn : callable
+            Scalar JAX densities of one physical vector, shape
+            ``(n_dim,)``. The same priors as
+            :func:`_build_jax_log_prior`.
+
+        Returns
+        -------
+        target : dict
+            ``logdensity(z)`` is ``logL(T(z)) + log_prior(T(z)) +
+            log|det dT/dz|``. ``to_physical`` and ``to_unconstrained``
+            map one vector. ``log_abs_det`` is the summed Jacobian
+            term. ``inverse_mass`` has shape ``(n_dim,)``. It is the
+            squared prior width in z, the physical 68% width divided
+            by ``|dT/dz|`` at the prior median.
+
+        Notes
+        -----
+        ``T`` is ``numpyro.distributions.transforms.biject_to`` on
+        each prior support. No custom bijector is built here.
+        """
+        from numpyro.distributions.transforms import biject_to
+
+        bijs = []
+        for name in self.fitter_param_names:
+            prior = self.priors[name]
+            if _is_numpyro_dist(prior):
+                dist_i = prior
+            else:
+                dist_i = scipy_to_numpyro_dist(prior)
+            bijs.append(biject_to(dist_i.support))
+
+        def to_physical(z):
+            """Map one unconstrained vector into the prior support.
+
+            Parameters
+            ----------
+            z : jax.Array, shape (n_dim,)
+                Unconstrained coordinates.
+
+            Returns
+            -------
+            theta : jax.Array, shape (n_dim,)
+                Physical parameters ``T(z)``.
+            """
+            z = jnp.asarray(z, dtype=jnp.float64)
+            cols = [bij(z[i]) for i, bij in enumerate(bijs)]
+            return jnp.stack(cols)
+
+        def to_unconstrained(theta):
+            """Inverse of :func:`to_physical` for one vector.
+
+            Parameters
+            ----------
+            theta : jax.Array, shape (n_dim,)
+                Physical parameters.
+
+            Returns
+            -------
+            z : jax.Array, shape (n_dim,)
+                Unconstrained coordinates. A non-finite inverse
+                (a draw on the boundary) is replaced by 0.
+            """
+            theta = jnp.asarray(theta, dtype=jnp.float64)
+            cols = []
+            for i, bij in enumerate(bijs):
+                z_i = bij.inv(theta[i])
+                z_i = jnp.where(
+                    jnp.isfinite(z_i), z_i, jnp.asarray(0.0)
+                )
+                cols.append(z_i)
+            return jnp.stack(cols)
+
+        def log_abs_det(z):
+            """Sum of ``log|dT_i/dz_i|`` at one unconstrained vector.
+
+            Parameters
+            ----------
+            z : jax.Array, shape (n_dim,)
+                Unconstrained coordinates.
+
+            Returns
+            -------
+            logdet : jax.Array
+                Scalar ``log|det dT/dz|``.
+            """
+            z = jnp.asarray(z, dtype=jnp.float64)
+            theta = to_physical(z)
+            logdet = jnp.asarray(0.0, dtype=jnp.float64)
+            for i, bij in enumerate(bijs):
+                logdet = logdet + bij.log_abs_det_jacobian(
+                    z[i], theta[i]
+                )
+            return logdet
+
+        def logdensity(z):
+            """Unconstrained log posterior of one vector.
+
+            Parameters
+            ----------
+            z : jax.Array, shape (n_dim,)
+                Unconstrained coordinates.
+
+            Returns
+            -------
+            logp : jax.Array
+                ``logL(T(z)) + log_prior(T(z)) + log|det dT/dz|``.
+            """
+            theta = to_physical(z)
+            return (
+                loglikelihood_fn(theta)
+                + logprior_fn(theta)
+                + log_abs_det(z)
+            )
+
+        # Prior width in z: physical width / |dT/dz| at the median.
+        width = self._prior_width_vector()
+        inverse_mass = np.ones(len(bijs), dtype=np.float64)
+        for i, name in enumerate(self.fitter_param_names):
+            median = _prior_ppf(self.priors[name], 0.5)
+            theta_i = jnp.asarray(
+                float(np.asarray(median).reshape(-1)[0]),
+                dtype=jnp.float64,
+            )
+            z_i = bijs[i].inv(theta_i)
+            z_i = jnp.where(jnp.isfinite(z_i), z_i, jnp.asarray(0.0))
+            theta_hat = bijs[i](z_i)
+            scale = bijs[i].log_abs_det_jacobian(z_i, theta_hat)
+            scale_f = float(jnp.exp(scale))
+            if np.isfinite(scale_f) and scale_f > 0.0:
+                z_width = float(width[i]) / scale_f
+                inverse_mass[i] = max(z_width, 1.0e-3) ** 2
+
+        return {
+            'logdensity': logdensity,
+            'to_physical': to_physical,
+            'to_unconstrained': to_unconstrained,
+            'log_abs_det': log_abs_det,
+            'inverse_mass': inverse_mass,
+        }
+
+    def _samples_to_physical(self, samples_z, to_physical):
+        """Map unconstrained MCMC draws back to physical parameters.
+
+        Parameters
+        ----------
+        samples_z : array_like, shape (n_chains * n_draws, n_dim)
+            Draws in chain-major order, as returned by the BlackJAX
+            helpers.
+        to_physical : callable
+            ``to_physical(z)`` for one vector of shape ``(n_dim,)``.
+
+        Returns
+        -------
+        samples, rhat_max, ess_min
+            Physical draws, same shape as ``samples_z``, plus
+            rank-normalized diagnostics on those draws.
+        """
+        from bagle.jax.blackjax_samplers import _chain_diagnostics
+
+        samples_z = np.asarray(samples_z, dtype=np.float64)
+        n_chains = int(self.chains)
+        n_draws = int(samples_z.shape[0] // n_chains)
+        flat = jnp.asarray(samples_z, dtype=jnp.float64)
+        physical = np.asarray(jax.vmap(to_physical)(flat), dtype=float)
+        shaped = physical.reshape(n_chains, n_draws, -1)
+        rhat_max, ess_min = _chain_diagnostics(shaped)
+        return physical, rhat_max, ess_min
+
+    def _run_nuts(self, logprior_fn, loglikelihood_fn):
+        """Run window-adapted NUTS in unconstrained coordinates.
+
+        Parameters
+        ----------
+        logprior_fn, loglikelihood_fn : callable
+            Scalar JAX densities of one physical vector.
 
         Returns
         -------
@@ -6400,9 +6576,15 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
         """
         from bagle.jax.blackjax_samplers import sample_nuts
 
-        positions = self._init_positions(self.chains)
+        target = self._unconstrained_target(
+            logprior_fn, loglikelihood_fn
+        )
+        physical = jnp.asarray(
+            self._init_positions(self.chains), dtype=jnp.float64
+        )
+        positions = jax.vmap(target['to_unconstrained'])(physical)
         result = sample_nuts(
-            logdensity_fn,
+            target['logdensity'],
             positions,
             n_warmup=self.tune,
             n_draws=self.draws,
@@ -6410,18 +6592,24 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
             target_accept=self.target_accept,
             max_num_doublings=self.max_num_doublings,
             initial_step_size=self.initial_step_size,
-            inverse_mass_matrix=self._prior_width_vector() ** 2,
+            inverse_mass_matrix=target['inverse_mass'],
         )
+        samples, rhat, ess = self._samples_to_physical(
+            result['samples'], target['to_physical']
+        )
+        result['samples'] = samples
+        result['rhat_max'] = rhat
+        result['ess_min'] = ess
         self._store_result(result)
         return None
 
-    def _run_mclmc(self, logdensity_fn):
-        """Run tuned MCLMC.
+    def _run_mclmc(self, logprior_fn, loglikelihood_fn):
+        """Run tuned MCLMC in unconstrained coordinates.
 
         Parameters
         ----------
-        logdensity_fn : callable
-            Scalar JAX log posterior.
+        logprior_fn, loglikelihood_fn : callable
+            Scalar JAX densities of one physical vector.
 
         Returns
         -------
@@ -6429,17 +6617,29 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
         """
         from bagle.jax.blackjax_samplers import sample_mclmc
 
+        target = self._unconstrained_target(
+            logprior_fn, loglikelihood_fn
+        )
         n_ess = min(50, max(10, int(self.draws) // 2))
-        positions = self._init_positions(self.chains)
+        physical = jnp.asarray(
+            self._init_positions(self.chains), dtype=jnp.float64
+        )
+        positions = jax.vmap(target['to_unconstrained'])(physical)
         result = sample_mclmc(
-            logdensity_fn,
+            target['logdensity'],
             positions,
             n_draws=self.draws,
             seed=self.random_seed,
             num_effective_samples=n_ess,
-            inverse_mass_matrix=self._prior_width_vector() ** 2,
+            inverse_mass_matrix=target['inverse_mass'],
             initial_step_size=min(self.initial_step_size, 0.2),
         )
+        samples, rhat, ess = self._samples_to_physical(
+            result['samples'], target['to_physical']
+        )
+        result['samples'] = samples
+        result['rhat_max'] = rhat
+        result['ess_min'] = ess
         self._store_result(result)
         return None
 
