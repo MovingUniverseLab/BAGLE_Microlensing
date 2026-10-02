@@ -1605,8 +1605,10 @@ on `convert_helio_geo_*`, and light-travel time.
 21. `sky_origin`, `filt_scalar`, and the unused `lists_for_fitter`
     are removed. `PSPL_Param.__init__` reshapes each filter
     parameter to a 1-d float array of shape `(n_filters,)`, then
-    stacks `xS0` once. One filter keeps shape `(2,)` so `xS0[0]`
-    stays East. More than one filter is `(n_filters, 2)`. Later
+    stacks `xS0` once, after that length check. Parameterizations
+    set `xS0_E` and `xS0_N` only, then call `super()`. One filter
+    keeps shape `(2,)` so `xS0[0]` stays East. More than one
+    filter is `(n_filters, 2)`. Later
     methods index that stored array and do not reshape it.
     `pi_ref_frame[filt_idx]` is that filter's scalar.
     `_origin_for_jax` and `_pi_ref_for_jax` are removed. The JAX
