@@ -18,10 +18,14 @@ import dynesty
 import pdb
 import matplotlib
 import pytest
+from sampler_agreement import (
+    FIT_SEED,
+    assert_posteriors_agree,
+)
 
 
-# Always generate the same fake data.
-np.random.seed(0)
+# Stray np.random draws use the same seed as the fake-data helpers.
+np.random.seed(FIT_SEED)
 
 # All figures / fit outputs from this module go under tests/test_output/.
 _TESTS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -33,7 +37,7 @@ def test_pspl_parallax_fit_geoproj(verbose=False, resume=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data_parallax_lmc()
+    data, p_in = fake_data.fake_data_parallax_lmc(seed=FIT_SEED)
     t0par = p_in['t0'] + 50
 
     data['t0par'] = t0par
@@ -80,7 +84,8 @@ def test_pspl_parallax_fit_geoproj(verbose=False, resume=False):
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=outdir + '/jax_',
-                             resume=resume)
+                             resume=resume,
+                             seed=FIT_SEED)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-5, p_in['t0']+5)
@@ -117,7 +122,7 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data_parallax_lmc()
+    data, p_in = fake_data.fake_data_parallax_lmc(seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSPL_PhotAstrom_Par_Param1,
@@ -127,7 +132,8 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
                              evidence_tolerance=0.8,
                              max_iter=5000,
                              dump_callback=None,
-                             resume=resume, verbose=False)
+                             resume=resume, verbose=False,
+                             seed=FIT_SEED)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0'] - 1, p_in['t0'] + 1)
@@ -263,7 +269,7 @@ def plot_mnest_test(data, imag_in, imag_out, pos_in, pos_out, outroot):
 
 
 def test_make_t0_gen():
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
 
     t0_gen = model_fitter.make_t0_gen('t0', data['t_phot1'], data['mag1'])
 
@@ -289,7 +295,7 @@ def test_PSPL_Solver(plot=False, verbose=False, resume=False):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSPL_PhotAstrom_noPar_Param1,
@@ -299,7 +305,8 @@ def test_PSPL_Solver(plot=False, verbose=False, resume=False):
                              evidence_tolerance=0.8,
                              max_iter=5000,
                              dump_callback=None,
-                             resume=resume, verbose=False)
+                             resume=resume, verbose=False,
+                             seed=FIT_SEED)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['mL'] = model_fitter.make_gen('mL', 8.0, 12.0)
@@ -386,10 +393,11 @@ def test_PSPL_Solver(plot=False, verbose=False, resume=False):
 
 def test_pspl_dy_fit():
     # No parallax
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
 
     fitter = model_fitter.MicrolensSolver(data, model.PSPL_PhotAstrom_noPar_Param1,
-                                          custom_additional_param_names = [])
+                                          custom_additional_param_names = [],
+                                          seed=FIT_SEED)
     # Lets adjust some priors for faster solving.
     fitter.priors['mL'] = model_fitter.make_gen('mL', 9.9, 10.1)
     fitter.priors['t0'] = model_fitter.make_gen('t0', 56990, 57010)
@@ -498,11 +506,12 @@ def test_pspl_ultranest_fit():
     import ultranest
     
     # No parallax
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
 
     fitter = model_fitter.MicrolensSolver(data, model.PSPL_PhotAstrom_noPar_Param1,
                                           custom_additional_param_names = [],
-                                          outputfiles_basename=f'{TEST_OUTPUT_DIR}/test_fit_ultranest_pspl/jax_')
+                                          outputfiles_basename=f'{TEST_OUTPUT_DIR}/test_fit_ultranest_pspl/jax_',
+                                          seed=FIT_SEED)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['mL'] = model_fitter.make_gen('mL', 9.9, 10.1)
@@ -630,7 +639,7 @@ def test_lumlens_parallax_fit(verbose=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lumlens_bulge/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data_lumlens_parallax_bulge()
+    data, p_in = fake_data.fake_data_lumlens_parallax_bulge(seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSPL_PhotAstrom_Par_Param1,
@@ -639,7 +648,8 @@ def test_lumlens_parallax_fit(verbose=False):
                              evidence_tolerance=0.8,
                              max_iter=5000,
                              dump_callback=None,
-                             outputfiles_basename=outdir + 'jax_')
+                             outputfiles_basename=outdir + 'jax_',
+                             seed=FIT_SEED)
 
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-2, p_in['t0']+2)
     fitter.priors['xS0_E1'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
@@ -728,7 +738,8 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lumlens_bulge_DEBUG/'
     os.makedirs(outdir, exist_ok=True)
 
-    data1, data2, params1, params2 = fake_data.fake_data_lumlens_parallax_bulge2()
+    data1, data2, params1, params2 = (
+        fake_data.fake_data_lumlens_parallax_bulge2(seed=FIT_SEED))
 
     data = data1
     data['t_phot2'] = data2['t_phot1']
@@ -752,7 +763,8 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
                              evidence_tolerance=2.0,
                              max_iter=5000,
                              dump_callback=None,
-                             sampling_efficiency=3.0)
+                             sampling_efficiency=3.0,
+                             seed=FIT_SEED)
 
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-1, p_in['t0']+1)
     fitter.priors['xS0_E1'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
@@ -844,7 +856,7 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
     os.makedirs(outdir, exist_ok=True)
 
     data1, data2, data3, data4, params1, params2, params3, params4 = \
-        fake_data.fake_data_lumlens_parallax_bulge4(outdir=outdir)
+        fake_data.fake_data_lumlens_parallax_bulge4(outdir=outdir, seed=FIT_SEED)
     data = data1
     data['t_phot2'] = data2['t_phot1'][::3]
     data['mag2'] = data2['mag1'][::3]
@@ -888,7 +900,8 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
                              evidence_tolerance=5.0,
                              sampling_efficiency=0.9,
                              resume=resume,
-                             verbose=False)
+                             verbose=False,
+                             seed=FIT_SEED)
 
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-1, p_in['t0']+1)
     fitter.priors['xS0_E1'] = model_fitter.make_gen('xS0_E', p_in['xS0_E']-1e-4, p_in['xS0_E']+1e-4)
@@ -985,7 +998,7 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
     np.testing.assert_array_almost_equal(pos_out, pos_in, 4)
 
     dlnL = float(np.abs(lnL_out - lnL_in))
-    print('dlnL', dlnL)
+    print(f'4p2a |dlnL| = {dlnL}')
     assert dlnL < 150
 
     return
@@ -993,7 +1006,7 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
 
 # NOTE: some of plotting stuff is not functioning... 
 def test_correlated_data2(resume=False):
-    true_model, data, data_corr, params = fake_data.fake_correlated_data()
+    true_model, data, data_corr, params = fake_data.fake_correlated_data(seed=FIT_SEED)
     
     data['phot_files'] = 'fake'
     data_corr['phot_files'] = 'fake'
@@ -1013,7 +1026,8 @@ def test_correlated_data2(resume=False):
                                   evidence_tolerance=2.0,
                                   sampling_efficiency=3.0,
                                   outputfiles_basename=base,
-                                  resume=resume, verbose=False)
+                                  resume=resume, verbose=False,
+                                  seed=FIT_SEED)
 
     # Lets adjust some priors for faster solving.
     fitter_corr.priors['t0'] = model_fitter.make_gen('t0', 57000 - 1, 57000 + 1)
@@ -1038,7 +1052,8 @@ def test_correlated_data2(resume=False):
 
 
 def test_correlated_data_astrom(verbose=False, resume=False):
-    true_model, data, data_corr, params = fake_data.fake_correlated_data_with_astrom()
+    true_model, data, data_corr, params = (
+        fake_data.fake_correlated_data_with_astrom(seed=FIT_SEED))
 
     data['phot_files'] = 'fake'
     data_corr['phot_files'] = 'fake'
@@ -1058,7 +1073,8 @@ def test_correlated_data_astrom(verbose=False, resume=False):
                                   evidence_tolerance=2.0,
                                   sampling_efficiency=3.0,
                                   outputfiles_basename=base,
-                                  resume=resume, verbose=False)
+                                  resume=resume, verbose=False,
+                                  seed=FIT_SEED)
 
     fitter_corr.priors['t0'] = model_fitter.make_gen('t0', params['t0']-2, params['t0']+2)
     fitter_corr.priors['u0_amp'] = model_fitter.make_gen('u0_amp', params['u0_amp']-0.01, params['u0_amp']+0.01)
@@ -1092,7 +1108,7 @@ def test_correlated_data_astrom(verbose=False, resume=False):
 def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=False):
     base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param3_solver/jax_'
 
-    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
+    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True, seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSBL_PhotAstrom_Par_Param3,
@@ -1102,7 +1118,8 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=base,
-                             resume=resume)
+                             resume=resume,
+                             seed=FIT_SEED)
 
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'piE_E', 'piE_N',
@@ -1181,7 +1198,7 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
 def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=False):
     base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param2_solver/jax_'
 
-    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
+    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True, seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSBL_PhotAstrom_Par_Param2,
@@ -1191,7 +1208,8 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=base,
-                             resume=resume)
+                             resume=resume,
+                             seed=FIT_SEED)
 
     if prior == 'narrow':
         # Lets adjust some priors for faster solving.
@@ -1276,7 +1294,7 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
 def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
     base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param1_solver/jax_'
 
-    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True)
+    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True, seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSBL_PhotAstrom_Par_Param1,
@@ -1286,7 +1304,8 @@ def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=base,
-                             resume=resume, verbose=False)
+                             resume=resume, verbose=False,
+                             seed=FIT_SEED)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['mLp'] = model_fitter.make_gen('mLp', p_in['mLp']-0.01, p_in['mLp']+0.01)
@@ -1388,7 +1407,8 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', 
                                                                  alpha = -50,
                                                                  parallax=False, 
                                                                  animate=False,
-                                                                outdir=outdir, outroot=outroot)
+                                                                outdir=outdir, outroot=outroot,
+                                                                seed=FIT_SEED)
 
         # Save to pickle file.
         _data_pkl = open(pkl_file, 'wb')
@@ -1430,7 +1450,8 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', 
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=base,
-                             resume=resume, verbose=False)
+                             resume=resume, verbose=False,
+                             seed=FIT_SEED)
     
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0'] - 0.1, p_in['t0'] + 0.1)
@@ -1497,7 +1518,8 @@ def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', re
                                                                  alpha = -30,
                                                                  mag_src = 16, b_sff=1.0,
                                                                  parallax=True, 
-                                                                 animate=False)
+                                                                 animate=False,
+                                                                 seed=FIT_SEED)
 
         data['target'] = 'test'
         # Save to pickle file.
@@ -1538,7 +1560,8 @@ def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', re
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=base,
-                             resume=resume)
+                             resume=resume,
+                             seed=FIT_SEED)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0'] - 0.1, p_in['t0'] + 0.1)
@@ -1663,7 +1686,7 @@ def test_u0_sign_change(new_u0_sign=False, resume=False):
 
     if new_u0_sign:
         # Load up the data for the fitter object. 
-        data, p_in = fake_data.fake_data1(beta_sign = 1.0)
+        data, p_in = fake_data.fake_data1(beta_sign = 1.0, seed=FIT_SEED)
         
         multinest_utils.convert_pre_2020apr_u0_sign(old_base, new_base)
 
@@ -1672,7 +1695,7 @@ def test_u0_sign_change(new_u0_sign=False, resume=False):
         
     else:
         # Load up the data for the fitter object. 
-        data, p_in = fake_data.fake_data1(beta_sign = -1.0)
+        data, p_in = fake_data.fake_data1(beta_sign = -1.0, seed=FIT_SEED)
         
         base = old_base
         suffix = '_u0sign_old'
@@ -1685,7 +1708,8 @@ def test_u0_sign_change(new_u0_sign=False, resume=False):
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=base,
-                             resume=resume, verbose=False)
+                             resume=resume, verbose=False,
+                             seed=FIT_SEED)
 
 
     # Load them up from an old fit.
@@ -1725,7 +1749,8 @@ def test_pspl_solver_gp_params(resume=False):
                                                                        b_sff_in1, mag_src_in1,
                                                                        b_sff_in2, mag_src_in2,
                                                                        target='Unknown',
-                                                                       outdir=outdir)    
+                                                                       outdir=outdir,
+                                                                       seed=FIT_SEED)
     
     
     data['phot_files'] = ['fake', 'fake2']
@@ -1744,7 +1769,8 @@ def test_pspl_solver_gp_params(resume=False):
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=base,
-                             resume=resume, verbose=False)
+                             resume=resume, verbose=False,
+                             seed=FIT_SEED)
 
     # Check that the GP parameters will be used.
     # Their presence in the fitter_param_names instance variable means
@@ -1773,7 +1799,8 @@ def test_pspl_solver_gp_params(resume=False):
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=base,
-                             resume=resume, verbose=False)
+                             resume=resume, verbose=False,
+                             seed=FIT_SEED)
 
     # Check that the GP parameters will be used.
     # Their presence in the fitter_param_names instance variable means
@@ -1801,7 +1828,8 @@ def test_pspl_solver_gp_params(resume=False):
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=base,
-                             resume=resume, verbose=False)
+                             resume=resume, verbose=False,
+                             seed=FIT_SEED)
 
     # Check that the GP parameters will be used.
     # Their presence in the fitter_param_names instance variable means
@@ -1838,7 +1866,8 @@ def test_plot_model_and_data_GP_err():
                                           n_live_points = 1000,
                                           evidence_tolerance = 0.1,
                                           sampling_efficiency = 0.8,
-                                          outputfiles_basename=outdir + outbase)
+                                          outputfiles_basename=outdir + outbase,
+                                          seed=FIT_SEED)
 
     print('testing')
     best_mod = fitter.get_best_fit_model(def_best='maxl')
@@ -1976,7 +2005,7 @@ def test_cache_parallax_vector(verbose=False, resume=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data_parallax_lmc()
+    data, p_in = fake_data.fake_data_parallax_lmc(seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSPL_PhotAstrom_Par_Param1,
@@ -1986,7 +2015,8 @@ def test_cache_parallax_vector(verbose=False, resume=False):
                              evidence_tolerance=2.0,
                              sampling_efficiency=0.8,
                              outputfiles_basename=outdir + '/pvec_jax_',
-                             resume=resume, verbose=False)
+                             resume=resume, verbose=False,
+                             seed=FIT_SEED)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-2, p_in['t0']+2)
@@ -2079,7 +2109,7 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_hobson/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data_parallax_lmc()
+    data, p_in = fake_data.fake_data_parallax_lmc(seed=FIT_SEED)
 
     if hobson:
         fitter = MicrolensSolverHobsonWeighted(data,
@@ -2090,7 +2120,8 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
                                                evidence_tolerance=2.0,
                                                sampling_efficiency=3.0,
                                                outputfiles_basename=outdir + '/jax_',
-                                               resume=resume, verbose=False)
+                                               resume=resume, verbose=False,
+                                               seed=FIT_SEED)
 
     else:
         fitter = MicrolensSolver(data,
@@ -2101,7 +2132,8 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
                                  evidence_tolerance=2.0,
                                  sampling_efficiency=3.0,
                                  outputfiles_basename=outdir + '/jax_',
-                                 resume=resume, verbose=False)
+                                 resume=resume, verbose=False,
+                                 seed=FIT_SEED)
     
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0']-2, p_in['t0']+2)
@@ -2257,7 +2289,7 @@ def test_bspl_parallax_fit(verbose=False, resume=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_bspl_solver/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in, bspl_in, ani = fake_data.fake_data_BSPL()
+    data, p_in, bspl_in, ani = fake_data.fake_data_BSPL(seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.BSPL_PhotAstrom_Par_Param1,
@@ -2267,7 +2299,8 @@ def test_bspl_parallax_fit(verbose=False, resume=False):
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=outdir + '/jax_',
-                             resume=resume)
+                             resume=resume,
+                             seed=FIT_SEED)
 
     # Lets adjust some priors for faster solving.
     fitter.priors['t0'] = model_fitter.make_gen('t0', p_in['t0'] - 2, p_in['t0'] + 2)
@@ -2343,7 +2376,8 @@ def test_multi_obsLocation(resume=False, verbose=False):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    data, p_in = fake_data.fake_data_parallax_multi_location_bulge(outdir=outdir, outroot=outroot)
+    data, p_in = fake_data.fake_data_parallax_multi_location_bulge(
+        outdir=outdir, outroot=outroot, seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSPL_PhotAstrom_Par_Param1,
@@ -2353,7 +2387,8 @@ def test_multi_obsLocation(resume=False, verbose=False):
                              evidence_tolerance=0.5,
                              max_iter=15000,
                              #dump_callback=None,
-                             resume=resume, verbose=False)
+                             resume=resume, verbose=False,
+                             seed=FIT_SEED)
 
     # Lets adjust some priors for faster solving.
     # Astrometry is on the unified filter of ast_data, not suffix 1.
@@ -2791,12 +2826,12 @@ def test_old_data_priors_supported_in_pymc(prior_name, plot=False):
     pymc = pytest.importorskip('pymc')
     from bagle.model_fitter_jax import scipy_to_pymc
 
-    data, _p_in = fake_data.fake_data1()
+    data, _p_in = fake_data.fake_data1(seed=FIT_SEED)
     scipy_prior = _build_data_driven_prior(prior_name, data)
 
     with pymc.Model():
         scipy_to_pymc(scipy_prior, 'theta')
-        idata = pymc.sample_prior_predictive(draws=3000, random_seed=0)
+        idata = pymc.sample_prior_predictive(draws=3000, random_seed=FIT_SEED)
 
     samples = idata.prior['theta'].values.reshape(-1)
     _assert_scipy_pymc_prior_similar(scipy_prior, samples)
@@ -2827,7 +2862,7 @@ def test_scipy_to_pymc_priors(prior_fn, args, plot=False):
     scipy_prior = prior_fn(*args)
     with pymc.Model():
         scipy_to_pymc(scipy_prior, 'theta')
-        idata = pymc.sample_prior_predictive(draws=3000, random_seed=0)
+        idata = pymc.sample_prior_predictive(draws=3000, random_seed=FIT_SEED)
 
     samples = idata.prior['theta'].values.reshape(-1)
     for q in [0.16, 0.5, 0.84]:
@@ -2850,7 +2885,7 @@ def test_microlens_solver_pymc_vs_multinest(plot=False, resume_mnest=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_pymc_solver/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
     model_class = model.PSPL_PhotAstrom_noPar_Param1
 
     fitter_mn = MicrolensSolver(
@@ -2863,7 +2898,8 @@ def test_microlens_solver_pymc_vs_multinest(plot=False, resume_mnest=False):
         max_iter=5000,
         dump_callback=None,
         verbose=False,
-        resume=resume_mnest
+        resume=resume_mnest,
+        seed=FIT_SEED,
     )
     _apply_pspl_fake_data1_priors(fitter_mn, p_in)
 
@@ -2882,7 +2918,7 @@ def test_microlens_solver_pymc_vs_multinest(plot=False, resume_mnest=False):
         tune=400,
         chains=4,
         cores=1,
-        pymc_random_seed=0,
+        pymc_random_seed=FIT_SEED,
         verbose=False,
     )
     _apply_pspl_fake_data1_priors(fitter_pm, p_in)
@@ -2896,16 +2932,13 @@ def test_microlens_solver_pymc_vs_multinest(plot=False, resume_mnest=False):
     best_pm = fitter_pm.get_best_fit(def_best='median')[0]
     tab_pm = fitter_pm.load_mnest_results()
 
-    for key in fitter_mn.fitter_param_names:
-        assert _relative_param_diff(best_mn[key], best_pm[key]) < 0.3
-
-    for key in fitter_mn.fitter_param_names:
-        q_mn = model_fitter.weighted_quantile(
-            tab_mn[key], [0.16, 0.5, 0.84], sample_weight=tab_mn['weights'])
-        q_pm = np.quantile(tab_pm[key], [0.16, 0.5, 0.84])
-        for qmn, qpm in zip(q_mn, q_pm):
-            atol = max(1e-4, 0.15 * np.abs(qmn))
-            assert np.isclose(qmn, qpm, rtol=0.3, atol=atol)
+    # Median and the 16/84% points, scaled by the posterior width.
+    assert_posteriors_agree(
+        fitter_mn.fitter_param_names,
+        tab_mn,
+        tab_pm,
+        weights_a=tab_mn['weights'],
+    )
 
     lnL_mn = fitter_mn.log_likely(best_mn)
     lnL_pm = fitter_pm.log_likely(best_pm)
@@ -2959,7 +2992,7 @@ def test_make_gen_numpyro_priors(prior_fn, args):
         return None
 
     predictive = Predictive(model, num_samples=3000)
-    samples = predictive(jax.random.PRNGKey(0))['theta']
+    samples = predictive(jax.random.PRNGKey(FIT_SEED))['theta']
     samples = np.asarray(samples).reshape(-1)
 
     for q in [0.16, 0.5, 0.84]:
@@ -2995,7 +3028,7 @@ def test_scipy_to_numpyro_priors(prior_fn, args):
         return None
 
     predictive = Predictive(model, num_samples=3000)
-    samples = predictive(jax.random.PRNGKey(1))['theta']
+    samples = predictive(jax.random.PRNGKey(FIT_SEED + 1))['theta']
     samples = np.asarray(samples).reshape(-1)
 
     for q in [0.16, 0.5, 0.84]:
@@ -3013,7 +3046,7 @@ def test_microlens_solver_numpyro_grad_finite():
     import jax
     from bagle.model_fitter_jax import build_explicit_jax_loglik_fn
 
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
     model_class = model.PSPL_PhotAstrom_noPar_Param1
     fitter = MicrolensSolverNumPyro(
         data,
@@ -3046,7 +3079,7 @@ def test_microlens_solver_numpyro_nuts_vs_multinest(plot=True, resume_mnest=Fals
     outdir = f'{TEST_OUTPUT_DIR}/test_numpyro_solver/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
     model_class = model.PSPL_PhotAstrom_noPar_Param1
 
     fitter_mn = MicrolensSolver(
@@ -3060,6 +3093,7 @@ def test_microlens_solver_numpyro_nuts_vs_multinest(plot=True, resume_mnest=Fals
         dump_callback=None,
         verbose=False,
         resume=resume_mnest,
+        seed=FIT_SEED,
     )
     _apply_pspl_fake_data1_priors(fitter_mn, p_in)
 
@@ -3078,7 +3112,7 @@ def test_microlens_solver_numpyro_nuts_vs_multinest(plot=True, resume_mnest=Fals
         draws=1000,
         tune=400,
         chains=2,
-        random_seed=0,
+        random_seed=FIT_SEED,
         verbose=False,
     )
     _apply_pspl_fake_data1_priors(fitter_np, p_in)
@@ -3157,7 +3191,7 @@ def test_microlens_solver_numpyro_jaxns_vs_multinest(plot=True,
     outdir = f'{TEST_OUTPUT_DIR}/test_jaxns_solver/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
     model_class = model.PSPL_PhotAstrom_noPar_Param1
 
     # MultiNest baseline on the same narrow priors.
@@ -3172,6 +3206,7 @@ def test_microlens_solver_numpyro_jaxns_vs_multinest(plot=True,
         dump_callback=None,
         verbose=False,
         resume=resume_mnest,
+        seed=FIT_SEED,
     )
     _apply_pspl_fake_data1_priors(fitter_mn, p_in)
 
@@ -3193,7 +3228,7 @@ def test_microlens_solver_numpyro_jaxns_vs_multinest(plot=True,
         posterior_samples=1000,
         dlogz=0.5,
         gradient_guided=True,
-        random_seed=0,
+        random_seed=FIT_SEED,
         verbose=False,
     )
     _apply_pspl_fake_data1_priors(fitter_jn, p_in)
@@ -3225,19 +3260,13 @@ def test_microlens_solver_numpyro_jaxns_vs_multinest(plot=True,
             priors=fitter_mn.priors, map_mn=map_mn, map_other=map_jn,
             other_label='JAXNS')
 
-    for key in fitter_mn.fitter_param_names:
-        assert _relative_param_diff(best_mn[key], best_jn[key]) < 0.3
-
-    for key in fitter_mn.fitter_param_names:
-        q_mn = model_fitter.weighted_quantile(
-            tab_mn[key], [0.16, 0.5, 0.84],
-            sample_weight=tab_mn['weights'])
-        q_jn = np.quantile(tab_jn[key], [0.16, 0.5, 0.84])
-
-        for qmn, qjn in zip(q_mn, q_jn):
-            # Near-zero parameters need a floor on absolute tolerance.
-            atol = max(1e-2, 0.15 * np.abs(qmn))
-            assert np.isclose(qmn, qjn, rtol=0.3, atol=atol)
+    # Median and the 16/84% points, scaled by the posterior width.
+    assert_posteriors_agree(
+        fitter_mn.fitter_param_names,
+        tab_mn,
+        tab_jn,
+        weights_a=tab_mn['weights'],
+    )
 
     lnL_mn = fitter_mn.log_likely(best_mn)
     lnL_jn = fitter_jn.log_likely(best_jn)
@@ -3257,7 +3286,7 @@ def test_microlens_solver_numpyro_jaxns_smoke():
     outdir = f'{TEST_OUTPUT_DIR}/test_numpyro_solver/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
     model_class = model.PSPL_PhotAstrom_noPar_Param1
 
     fitter = MicrolensSolverNumPyro(
@@ -3270,7 +3299,7 @@ def test_microlens_solver_numpyro_jaxns_smoke():
         posterior_samples=200,
         dlogz=0.5,
         gradient_guided=True,
-        random_seed=0,
+        random_seed=FIT_SEED,
         verbose=False,
     )
     _apply_pspl_fake_data1_priors(fitter, p_in)
@@ -3294,7 +3323,7 @@ def test_microlens_solver_numpyro_smc_nuts_smoke():
     outdir = f'{TEST_OUTPUT_DIR}/test_numpyro_smc_nuts/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
     model_class = model.PSPL_PhotAstrom_noPar_Param1
 
     fitter = MicrolensSolverNumPyro(
@@ -3308,7 +3337,7 @@ def test_microlens_solver_numpyro_smc_nuts_smoke():
         smc_rejuvenate_steps=1,
         max_tree_depth=5,
         chain_method='sequential',
-        random_seed=0,
+        random_seed=FIT_SEED,
         verbose=False,
     )
     _apply_pspl_fake_data1_priors(fitter, p_in)
@@ -3334,7 +3363,7 @@ def test_microlens_solver_numpyro_smc_nuts_vs_multinest(plot=False,
     outdir = f'{TEST_OUTPUT_DIR}/test_numpyro_smc_nuts/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
     model_class = model.PSPL_PhotAstrom_noPar_Param1
 
     fitter_mn = MicrolensSolver(
@@ -3348,6 +3377,7 @@ def test_microlens_solver_numpyro_smc_nuts_vs_multinest(plot=False,
         dump_callback=None,
         verbose=False,
         resume=resume_mnest,
+        seed=FIT_SEED,
     )
     _apply_pspl_fake_data1_priors(fitter_mn, p_in)
 
@@ -3369,7 +3399,7 @@ def test_microlens_solver_numpyro_smc_nuts_vs_multinest(plot=False,
         smc_rejuvenate_steps=1,
         max_tree_depth=8,
         chain_method='sequential',
-        random_seed=0,
+        random_seed=FIT_SEED,
         verbose=False,
     )
     _apply_pspl_fake_data1_priors(fitter_smc, p_in)
@@ -3419,7 +3449,7 @@ def test_microlens_solver_pymc_smc_smoke():
     outdir = f'{TEST_OUTPUT_DIR}/test_pymc_smc/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
     model_class = model.PSPL_PhotAstrom_noPar_Param1
 
     fitter = MicrolensSolverPyMC(
@@ -3430,7 +3460,7 @@ def test_microlens_solver_pymc_smc_smoke():
         draws=100,
         chains=1,
         cores=1,
-        pymc_random_seed=0,
+        pymc_random_seed=FIT_SEED,
         verbose=False,
     )
     _apply_pspl_fake_data1_priors(fitter, p_in)
@@ -3455,7 +3485,7 @@ def test_microlens_solver_pymc_smc_vs_multinest(plot=False, resume_mnest=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_pymc_smc/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data1()
+    data, p_in = fake_data.fake_data1(seed=FIT_SEED)
     model_class = model.PSPL_PhotAstrom_noPar_Param1
 
     fitter_mn = MicrolensSolver(
@@ -3469,6 +3499,7 @@ def test_microlens_solver_pymc_smc_vs_multinest(plot=False, resume_mnest=False):
         dump_callback=None,
         verbose=False,
         resume=resume_mnest,
+        seed=FIT_SEED,
     )
     _apply_pspl_fake_data1_priors(fitter_mn, p_in)
 
@@ -3487,7 +3518,7 @@ def test_microlens_solver_pymc_smc_vs_multinest(plot=False, resume_mnest=False):
         draws=400,
         chains=2,
         cores=1,
-        pymc_random_seed=0,
+        pymc_random_seed=FIT_SEED,
         verbose=False,
     )
     _apply_pspl_fake_data1_priors(fitter_smc, p_in)

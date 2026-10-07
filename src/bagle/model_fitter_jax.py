@@ -748,7 +748,10 @@ class MicrolensSolver(Solver):
         Set as true if there are multiple datasets but only a single set
         of gp parameters.
 
-        
+        seed : int, optional
+            Passed to pymultinest.run. The default -1 seeds MultiNest
+            from the clock. Tests pass a fixed integer.
+
         """
         # This Solver uses MultiNest and scipy for statistcal distributions.
         self.stats_pkg = 'scipy'

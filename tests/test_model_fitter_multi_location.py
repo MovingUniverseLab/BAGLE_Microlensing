@@ -6,6 +6,7 @@ import warnings
 
 import numpy as np
 import pytest
+from sampler_agreement import FIT_SEED
 from astropy.table import Table
 
 from bagle import model
@@ -69,6 +70,7 @@ def _solver(data, cls):
         cls,
         outputfiles_basename=out,
         verbose=False,
+        seed=FIT_SEED,
     )
 
 
@@ -165,6 +167,7 @@ def test_unused_suffix_prior_warns():
         model_fitter_jax.mmodel.PSPL_PhotAstrom_Par_Param1,
         outputfiles_basename='/tmp/bagle_unused_prior_',
         verbose=False,
+        seed=FIT_SEED,
     )
     assert jax_fit.map_phot_idx_to_ast_idx == [2]
     jax_fit.priors['xS0_E1'] = model_fitter.make_gen(-1e-4, 1e-4)
@@ -219,6 +222,7 @@ def test_prior_writes_size1_ppf_into_ctypes_cube():
         model_fitter_jax.mmodel.PSPL_PhotAstrom_Par_Param1,
         outputfiles_basename='/tmp/bagle_prior_scalar_',
         verbose=False,
+        seed=FIT_SEED,
     )
     jax_fit.priors['mL'] = _ArrayPPF(np.array([4.5]))
     jax_raw = _ctypes_unit_cube(len(jax_fit.fitter_param_names))
@@ -264,6 +268,7 @@ def test_fix_sampled_param_holds_second_origin():
         model_fitter_jax.mmodel.PSPL_PhotAstrom_noPar_Param1,
         outputfiles_basename='/tmp/bagle_fix_origin_',
         verbose=False,
+        seed=FIT_SEED,
     )
     jax_fit.fix_sampled_param('xS0_E3', 0.012)
     jax_fit.fix_sampled_param('xS0_N3', -0.034)
@@ -303,6 +308,7 @@ def test_tie_sampled_param_copies_filter1_origin():
         model_fitter_jax.mmodel.PSPL_PhotAstrom_noPar_Param1,
         outputfiles_basename='/tmp/bagle_tie_origin_',
         verbose=False,
+        seed=FIT_SEED,
     )
     jax_fit.tie_sampled_param('xS0_E3', 'xS0_E1')
     jax_fit.tie_sampled_param('xS0_N3', 'xS0_N1')
@@ -357,6 +363,7 @@ def test_numpy_and_jax_likelihood_see_second_observer(monkeypatch):
         model_fitter_jax.mmodel.PSPL_PhotAstrom_Par_Param1,
         outputfiles_basename='/tmp/bagle_multi_loc_jax_',
         verbose=False,
+        seed=FIT_SEED,
     )
     assert list(jax_fit.fitter_param_names) == list(
         numpy_fit.fitter_param_names
@@ -400,6 +407,7 @@ def test_legacy_loader_on_fitter(tmp_path):
         model.PSPL_PhotAstrom_noPar_Param1,
         outputfiles_basename=outroot,
         verbose=False,
+        seed=FIT_SEED,
     )
     # A pre-written FITS file, so the loader does not rebuild from txt.
     table = Table()
@@ -559,6 +567,7 @@ def test_refpar_jax_likelihood_uses_per_filter_pi_ref(monkeypatch):
         model_fitter_jax.mmodel.PSPL_PhotAstrom_RefPar_Param3,
         outputfiles_basename='/tmp/bagle_refpar_jax_',
         verbose=False,
+        seed=FIT_SEED,
     )
     assert list(jax_fit.fitter_param_names) == names
     assert list(jax_fit.obs_locations) == ['earth', 'spitzer']
@@ -696,6 +705,7 @@ def test_get_model_accepts_ctypes_multinest_cube():
         model_fitter_jax.mmodel.PSPL_PhotAstrom_noPar_Param1,
         outputfiles_basename='/tmp/bagle_ctypes_jax_',
         verbose=False,
+        seed=FIT_SEED,
     )
     jax_pointer, _jax_buf = _ctypes_cube(
         _physical_cube(jax_fit), jax_fit.n_params
@@ -746,6 +756,7 @@ def test_gp_get_model_passes_optional_dicts():
             jax_cls,
             outputfiles_basename='/tmp/bagle_gp_jax_',
             verbose=False,
+            seed=FIT_SEED,
         )
         jax_pointer, _jax_buf = _ctypes_cube(
             _physical_cube(jax_fit), jax_fit.n_params

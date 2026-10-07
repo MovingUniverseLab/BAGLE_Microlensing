@@ -16,8 +16,26 @@ from astropy.coordinates import get_body
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 
-# Always generate the same fake data.
-np.random.seed(0)
+# Fixed seed for noise. Each generator reseeds on entry so the
+# draw does not depend on which function ran first. Pass seed=None
+# to keep drawing from the current stream (several filters in a row).
+FAKE_DATA_SEED = 42
+np.random.seed(FAKE_DATA_SEED)
+
+
+def reseed_noise(seed):
+    """Reset the global NumPy RNG used to draw fake-data noise.
+
+    Parameters
+    ----------
+    seed : int or None
+        Passed to ``np.random.seed``. ``None`` leaves the stream
+        where it is, so one caller can draw several datasets
+        in a row (photometry then astrometry, or four filters).
+    """
+    if seed is None:
+        return
+    np.random.seed(int(seed))
 
 
 def fake_lightcurve_parallax_bulge(outdir='./casey_testing_stuff/', target='unknown'):
@@ -130,7 +148,8 @@ def fake_lightcurve_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     return
 
 
-def fake_data_parallax_bulge(outdir='test_mnest_bulge/'):
+def fake_data_parallax_bulge(outdir='test_mnest_bulge/',
+                             seed=FAKE_DATA_SEED):
     raL_in = 17.30 * 15.  # Bulge R.A.
     decL_in = -29.0
     mL_in = 10.0  # msun
@@ -147,12 +166,14 @@ def fake_data_parallax_bulge(outdir='test_mnest_bulge/'):
     data, params = fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in,
                                       beta_in,
                                       muS_in, muL_in, dL_in, dS_in, b_sff,
-                                      imag_in, outdir=outdir, target='Bulge', noise=False)
+                                      imag_in, outdir=outdir, target='Bulge',
+                                      noise=False, seed=seed)
 
     return data, params
 
 
-def fake_data_parallax_lmc(outdir='test_mnest_lmc/'):
+def fake_data_parallax_lmc(outdir='test_mnest_lmc/',
+                           seed=FAKE_DATA_SEED):
     raL_in = 80.89375  # LMC R.A.
     decL_in = -29.0  # LMC Dec. This is the sin \beta = -0.99 where \beta = ecliptic lat
     mL_in = 10.0  # msun
@@ -171,7 +192,8 @@ def fake_data_parallax_lmc(outdir='test_mnest_lmc/'):
     data, params = fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in,
                                       beta_in,
                                       muS_in, muL_in, dL_in, dS_in, b_sff,
-                                      imag_in, outdir=outdir, target='LMC')
+                                      imag_in, outdir=outdir, target='LMC',
+                                      seed=seed)
 
     return data, params
 
@@ -179,7 +201,9 @@ def fake_data_parallax_lmc(outdir='test_mnest_lmc/'):
 def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
                        muS_in, muL_in, dL_in, dS_in, b_sff_in, mag_src_in,
                        outdir='', target='Unknown', noise=True,
-                       obsLocation='earth'):
+                       obsLocation='earth', seed=FAKE_DATA_SEED):
+    # An int reseeds. None keeps drawing on the current stream.
+    reseed_noise(seed)
     pspl_par_in = model.PSPL_PhotAstrom_Par_Param1(mL_in,
                                                    t0_in,
                                                    beta_in,
@@ -310,7 +334,11 @@ def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     return data, params
 
 
-def fake_data1(beta_sign=-1, plot=False, verbose=False, outdir='./', target='sim'):
+def fake_data1(beta_sign=-1, plot=False, verbose=False, outdir='./',
+               target='sim', seed=FAKE_DATA_SEED):
+    # An int reseeds. None keeps drawing on the current stream.
+    reseed_noise(seed)
+
     # Input parameters
     mL_in = 10.0  # msun
     t0_in = 57000.00
@@ -601,7 +629,8 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
                    muL_E=0, muL_N=0, muS_E=3, muS_N=0,
                    dL=3000, dS=8000, sep=10, alpha=90,
                    mag_src=14, b_sff=1, dmag_Lp_Ls=20, parallax=True,
-                   target='PSBL', animate=False):
+                   target='PSBL', animate=False,
+                   seed=FAKE_DATA_SEED):
     """
     Optional Inputs
     ---------------
@@ -657,8 +686,11 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
         Source flux fraction = fluxS / (fluxS + fluxL1 + fluxL2 + fluxN)
     dmag_Lp_Ls : float
         Magnitude difference between primary and secondary lens.
+    seed : int or None
+        Noise seed. None continues the current NumPy stream.
 
     """
+    reseed_noise(seed)
 
     start = time.time()
     if parallax:
@@ -1336,7 +1368,10 @@ def fake_data_PSBL_phot(outdir='', outroot='psbl',
 def fake_data_multiphot_parallax(raL_in, decL_in, t0_in, u0_amp_in, tE_in, piE_E_in, piE_N_in,
                                  b_sff_in1, mag_src_in1, b_sff_in2, mag_src_in2,
                                  target='Unknown',
-                                 outdir=''):
+                                 outdir='',
+                                 seed=FAKE_DATA_SEED):
+    # An int reseeds. None keeps drawing on the current stream.
+    reseed_noise(seed)
     pspl_par_in = model.PSPL_Phot_Par_Param1(t0_in, u0_amp_in, tE_in,
                                              piE_E_in, piE_N_in,
                                              np.array([b_sff_in1, b_sff_in2]),
@@ -1430,10 +1465,16 @@ def fake_data_multiphot_parallax(raL_in, decL_in, t0_in, u0_amp_in, tE_in, piE_E
     return data, params, pspl_par_in
 
 
-def fake_correlated_data_with_astrom():
+def fake_correlated_data_with_astrom(seed=FAKE_DATA_SEED):
     """
-    Only correlations in the photometry, not astrometry
+    Only correlations in the photometry, not astrometry.
+
+    Parameters
+    ----------
+    seed : int or None
+        Noise seed. None continues the current NumPy stream.
     """
+    reseed_noise(seed)
     t0 = 57000
     u0_amp = 0.1
     tE = 150
@@ -1583,7 +1624,10 @@ def fake_correlated_data_multiphot(t0=57000, u0_amp=0.1, tE=150,
                                    b_sff2=0.9, mag_src2=19.0,
                                    gp_log_sigma1=1, gp_log_rho1=0.1,
                                    gp_log_So1=1, gp_log_omegao1=1,
-                                   raL=17.30 * 15., decL=-29.0):
+                                   raL=17.30 * 15., decL=-29.0,
+                                   seed=FAKE_DATA_SEED):
+    # An int reseeds. None keeps drawing on the current stream.
+    reseed_noise(seed)
     our_model = model.PSPL_Phot_Par_Param1(t0, u0_amp, tE,
                                            piE_E, piE_N,
                                            np.array([b_sff1, b_sff2]),
@@ -1683,7 +1727,10 @@ def fake_correlated_data(t0=57000, u0_amp=0.1, tE=150,
                          b_sff=0.9, mag_src=19.0,
                          gp_log_sigma=1.0, gp_log_rho=0.1,
                          gp_log_So=1.0, gp_log_omegao=1.0,
-                         raL=17.30 * 15., decL=-29.0):
+                         raL=17.30 * 15., decL=-29.0,
+                         seed=FAKE_DATA_SEED):
+    # An int reseeds. None keeps drawing on the current stream.
+    reseed_noise(seed)
     # Does it make sense to "set" the GP params here?
     our_model = model.PSPL_Phot_Par_GP_Param1(t0, u0_amp, tE,
                                               piE_E, piE_N, b_sff, mag_src,
@@ -1776,7 +1823,9 @@ def fake_correlated_data(t0=57000, u0_amp=0.1, tE=150,
     return our_model, data, data_corr, params
 
 
-def fake_correlated_data_lunch_talk():
+def fake_correlated_data_lunch_talk(seed=FAKE_DATA_SEED):
+    # An int reseeds. None keeps drawing on the current stream.
+    reseed_noise(seed)
     t0 = 57000
     u0_amp = 0.1
     tE = 150
@@ -2031,7 +2080,8 @@ def fake_correlated_data_lunch_talk():
 
 #     return data, params
 
-def fake_data_lumlens_parallax_bulge(outdir='./test_mnest_lumlens_bulge/'):
+def fake_data_lumlens_parallax_bulge(outdir='./test_mnest_lumlens_bulge/',
+                                     seed=FAKE_DATA_SEED):
     raL_in = 17.30 * 15.  # Bulge R.A.
     decL_in = -29.0
     mL_in = 10.0  # msun
@@ -2048,12 +2098,14 @@ def fake_data_lumlens_parallax_bulge(outdir='./test_mnest_lumlens_bulge/'):
     data, params = fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in,
                                               beta_in,
                                               muS_in, muL_in, dL_in, dS_in, b_sff,
-                                              imag_in, outdir=outdir, target='Bulge')
+                                              imag_in, outdir=outdir, target='Bulge',
+                                              seed=seed)
 
     return data, params
 
 
-def fake_data_lumlens_parallax_bulge2(outdir='./test_mnest_lumlens_bulge/'):
+def fake_data_lumlens_parallax_bulge2(outdir='./test_mnest_lumlens_bulge/',
+                                      seed=FAKE_DATA_SEED):
     raL_in = 17.30 * 15.  # Bulge R.A.
     decL_in = -29.0
     mL_in = 10.0  # msun
@@ -2072,17 +2124,20 @@ def fake_data_lumlens_parallax_bulge2(outdir='./test_mnest_lumlens_bulge/'):
     data1, params1 = fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in,
                                                 beta_in,
                                                 muS_in, muL_in, dL_in, dS_in, b_sff1,
-                                                imag_in1, outdir=outdir, target='Bulge')
+                                                imag_in1, outdir=outdir, target='Bulge',
+                                                seed=seed)
 
     data2, params2 = fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in,
                                                 beta_in,
                                                 muS_in, muL_in, dL_in, dS_in, b_sff2,
-                                                imag_in2, outdir=outdir, target='Bulge')
+                                                imag_in2, outdir=outdir, target='Bulge',
+                                                seed=None)
 
     return data1, data2, params1, params2
 
 
-def fake_data_lumlens_parallax_bulge4(outdir='./test_mnest_lumlens_bulge4_DEBUG/'):
+def fake_data_lumlens_parallax_bulge4(outdir='./test_mnest_lumlens_bulge4_DEBUG/',
+                                      seed=FAKE_DATA_SEED):
     raL_in = 17.30 * 15.  # Bulge R.A.
     decL_in = -29.0
     mL_in = 10.0  # msun
@@ -2105,29 +2160,36 @@ def fake_data_lumlens_parallax_bulge4(outdir='./test_mnest_lumlens_bulge4_DEBUG/
     data1, params1 = fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in,
                                                 beta_in,
                                                 muS_in, muL_in, dL_in, dS_in, b_sff1,
-                                                imag_in1, outdir=outdir, target='sim1')
+                                                imag_in1, outdir=outdir, target='sim1',
+                                                seed=seed)
 
     data2, params2 = fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in,
                                                 beta_in,
                                                 muS_in, muL_in, dL_in, dS_in, b_sff2,
-                                                imag_in2, outdir=outdir, target='sim2')
+                                                imag_in2, outdir=outdir, target='sim2',
+                                                seed=None)
 
     data3, params3 = fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in,
                                                 beta_in,
                                                 muS_in, muL_in, dL_in, dS_in, b_sff3,
-                                                imag_in3, outdir=outdir, target='sim3')
+                                                imag_in3, outdir=outdir, target='sim3',
+                                                seed=None)
 
     data4, params4 = fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in,
                                                 beta_in,
                                                 muS_in, muL_in, dL_in, dS_in, b_sff4,
-                                                imag_in4, outdir=outdir, target='sim4')
+                                                imag_in4, outdir=outdir, target='sim4',
+                                                seed=None)
 
     return data1, data2, data3, data4, params1, params2, params3, params4
 
 
 def fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
                                muS_in, muL_in, dL_in, dS_in, b_sff_in, mag_src_in,
-                               outdir='', target='Unknwon'):
+                               outdir='', target='Unknwon',
+                               seed=FAKE_DATA_SEED):
+    # An int reseeds. None keeps drawing on the current stream.
+    reseed_noise(seed)
     pspl_par_in = model.PSPL_PhotAstrom_Par_Param1(mL=mL_in,
                                                    t0=t0_in,
                                                    beta=beta_in,
@@ -2258,7 +2320,8 @@ def fake_data_BSPL(outdir='', outroot='bspl',
                    sep=3, alpha=70,
                    mag_src_pri=16, mag_src_sec=17,
                    b_sff=1, parallax=True,
-                   target='BSPL', animate=False):
+                   target='BSPL', animate=False,
+                   seed=FAKE_DATA_SEED):
     """
     Optional Inputs
     ---------------
@@ -2312,8 +2375,11 @@ def fake_data_BSPL(outdir='', outroot='bspl',
         Brightness of the secondary source star.
     b_sff : float
         Source flux fraction = fluxS / (fluxS + fluxL1 + fluxL2 + fluxN)
+    seed : int or None
+        Noise seed. None continues the current NumPy stream.
 
     """
+    reseed_noise(seed)
 
     start = time.time()
     if parallax:
@@ -2498,7 +2564,10 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
                                       b_sff_in1, mag_src_in1, obsLocation1,
                                       b_sff_in2, mag_src_in2, obsLocation2,
                                       b_sff_in3, mag_src_in3, obsLocation3,
-                                      outdir='', target='Unknown', noise=True):
+                                      outdir='', target='Unknown', noise=True,
+                                      seed=FAKE_DATA_SEED):
+    # An int reseeds. None keeps drawing on the current stream.
+    reseed_noise(seed)
     # A length-2 origin is the same zero point in every filter.
     # A (n, 2) array is one East/North origin per filter.
     xS0_arr = np.asarray(xS0_in, dtype=float)
@@ -2676,7 +2745,9 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
     return data, params
 
 
-def fake_data_parallax_multi_location_bulge(outdir='test_mnest_bulge_multiLoc/', outroot='Bulge'):
+def fake_data_parallax_multi_location_bulge(
+        outdir='test_mnest_bulge_multiLoc/', outroot='Bulge',
+        seed=FAKE_DATA_SEED):
     raL_in = 17.30 * 15.  # Bulge R.A.
     decL_in = -29.0
     mL_in = 10.0  # msun
@@ -2706,7 +2777,8 @@ def fake_data_parallax_multi_location_bulge(outdir='test_mnest_bulge_multiLoc/',
                                                      b_sff1, imag_in1, obs_loc1,
                                                      b_sff2, imag_in2, obs_loc2,
                                                      b_sff3, imag_in3, obs_loc3,
-                                                     outdir=outdir, target=outroot, noise=True)
+                                                     outdir=outdir, target=outroot,
+                                                     noise=True, seed=seed)
 
     dm2 = imag_in2 - imag_in1
     dm3 = imag_in3 - imag_in1

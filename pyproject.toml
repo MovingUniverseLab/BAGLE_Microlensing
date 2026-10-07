@@ -58,6 +58,11 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.pytest.ini_options]
+markers = [
+    "slow: multi-seed sampler comparisons. Deselect with -m 'not slow'.",
+]
+
 [tool.basedpyright]
 include = ["src", "tests"]
 pythonVersion = "3.11"
