@@ -4078,29 +4078,6 @@ def _prior_period_any(prior):
     return 360.0, 0.0
 
 
-def _systematic_resample(weights, seed):
-    """Systematic resampling indices for SMC particles.
-
-    Parameters
-    ----------
-    weights : array_like, shape (N,)
-        Normalized particle weights (sum to 1).
-    seed : int
-        RNG seed for the uniform offset.
-
-    Returns
-    -------
-    indices : ndarray, dtype=int, shape (N,)
-        Parent indices into the particle array.
-    """
-    weights = np.asarray(weights, dtype=float)
-    n = weights.size
-    rng = np.random.default_rng(int(seed) % (2**31 - 1))
-    positions = (np.arange(n) + rng.random()) / n
-    cumsum = np.cumsum(weights)
-    return np.searchsorted(cumsum, positions)
-
-
 def scipy_to_numpyro_dist(prior):
     """Convert a scipy frozen distribution to a NumPyro distribution.
 
@@ -4695,9 +4672,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
             log_w = log_w - float(jax_logsumexp(log_w))
             weights = np.exp(log_w)
             rng_key, rs_key = jax.random.split(rng_key)
-            indices = _systematic_resample(
-                weights, int(jax.random.randint(rs_key, (), 0, 2**31 - 1))
-            )
+            indices = _systematic_resample(weights, rs_key)
             particles = particles[indices]
 
             # Rejuvenate on the tempered posterior at current β.

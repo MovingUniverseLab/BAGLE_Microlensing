@@ -43,7 +43,19 @@ WORKDIR /opt/BAGLE_Microlensing
 COPY pyproject.toml README.md /opt/BAGLE_Microlensing/
 COPY src /opt/BAGLE_Microlensing/src
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install . pytest jaxns
+    pip install torch==2.12.1 --index-url https://download.pytorch.org/whl/cpu && \
+    pip install ".[jaxns,nautilus,pocomc,blackjax]" pytest psutil
+# Preload the OpenMP runtimes bundled by PyTorch and scikit-learn before
+# JAX/PyTensor load other libraries. On Linux ARM, importing pocoMC or
+# nautilus after BAGLE otherwise exhausts glibc's static-TLS slots.
+RUN torch_gomp="$(find "/opt/conda/envs/${CONDA_ENV_NAME}/lib/python${PYTHON_VERSION}/site-packages/torch/lib" \
+    -maxdepth 1 -name 'libgomp*.so*' -print -quit)" && \
+    sklearn_gomp="$(find "/opt/conda/envs/${CONDA_ENV_NAME}/lib/python${PYTHON_VERSION}/site-packages/scikit_learn.libs" \
+    -maxdepth 1 -name 'libgomp*.so*' -print -quit)" && \
+    test -n "${torch_gomp}" && test -n "${sklearn_gomp}" && \
+    ln -s "${torch_gomp}" /opt/torch-libgomp-preload.so && \
+    ln -s "${sklearn_gomp}" /opt/sklearn-libgomp-preload.so
+ENV LD_PRELOAD=/opt/torch-libgomp-preload.so:/opt/sklearn-libgomp-preload.so
 # jaxns 2.6.x assigns documentation to typing.Union aliases during import.
 # Python 3.14 makes those aliases immutable; removing only the documentation
 # assignments preserves the runtime types used by jaxns.
@@ -65,6 +77,7 @@ ENV PYTHONPATH=/opt/BAGLE_Microlensing/src
 ENV MPLCONFIGDIR=/tmp/matplotlib
 
 RUN mkdir -p /data/input /data/output /data/test /opt/BAGLE_time_tests "${MPLCONFIGDIR}"
+RUN python /opt/test_imports.py
 
 WORKDIR /opt/BAGLE_time_tests
 

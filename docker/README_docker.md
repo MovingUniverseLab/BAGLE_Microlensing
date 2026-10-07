@@ -7,14 +7,20 @@ This directory provides a minimal Docker workflow for running BAGLE in an isolat
 - Builds a Python 3.14 environment from BAGLE's `pyproject.toml`
 - Builds MultiNest from source before installing `pymultinest`
 - Installs BLAS/LAPACK system libraries required by MultiNest
-- Installs BAGLE's JAX/PyMC dependencies from `pyproject.toml`, plus `jaxns`
-  and its compatible `tfp-nightly` dependency required by BAGLE_time_tests
+- Installs BAGLE's dependencies and sampler extras from `pyproject.toml`
+  (`jaxns==2.6.9`, `tfp-nightly`, BlackJAX, nautilus, and pocoMC), plus
+  `psutil` for BAGLE_time_tests
+- Installs the CPU-only PyTorch wheel needed by pocoMC, avoiding CUDA runtime
+  packages in this CPU image
+- Preloads the OpenMP runtimes bundled by PyTorch and scikit-learn so pocoMC
+  and nautilus can be imported after the other numerical libraries on Linux ARM
 - Installs the local BAGLE checkout into the container
 - Exposes writable `/data` and `/opt/BAGLE_time_tests` mounts for inputs,
   outputs, and the sibling BAGLE_time_tests checkout
 - Exposes port `8888` for optional Jupyter access
 - Starts an interactive shell by default
 - Uses the `bagle_env` Conda environment as the default runtime environment
+- Runs the import smoke test during the image build
 
 ## Files
 
@@ -110,8 +116,7 @@ Expected output:
 
 ```text
 Testing BAGLE Docker environment...
-Core and time-test dependencies imported successfully.
-BAGLE imported successfully.
+Core, optional sampler, and BAGLE imports passed.
 Environment test PASSED.
 ```
 
@@ -139,6 +144,51 @@ The time-test checkout is a bind mount, so benchmark reports written beneath
 inside the container, but their host-specific Conda activation lines should be
 removed or bypassed because this image already activates `bagle_env`.
 
+## First CPU-only trial on NERSC Perlmutter
+
+NERSC recommends `podman-hpc` for new container workflows. Once both branches
+are committed and pushed, clone them as sibling directories on Perlmutter and
+build there; this produces a native `linux/amd64` image (a default image built
+on an Apple Silicon Mac will not run on Perlmutter):
+
+```bash
+git clone --branch jax_pymc_hi --single-branch \
+  https://github.com/MovingUniverseLab/BAGLE_Microlensing.git
+git clone --branch dev_hti --single-branch \
+  https://github.com/MovingUniverseLab/BAGLE_time_tests.git
+cd BAGLE_Microlensing
+podman-hpc build -f docker/Dockerfile -t bagle-time-tests:py314 .
+podman-hpc run --rm bagle-time-tests:py314 python /opt/test_imports.py
+podman-hpc migrate bagle-time-tests:py314
+```
+
+NERSC requires migration of a locally built image before it can be used in a
+compute-node job. The build cache remains on the login node; the migrated
+image is the one the job can access.
+
+On an allocated CPU compute node, run one small test with outputs on writable
+NERSC scratch storage:
+
+```bash
+mkdir -p "$SCRATCH/bagle-time-tests-runs"
+podman-hpc run --rm \
+  -w /data/output \
+  -v "$(cd ../BAGLE_time_tests && pwd):/opt/BAGLE_time_tests:ro" \
+  -v "$SCRATCH/bagle-time-tests-runs:/data/output" \
+  bagle-time-tests:py314 \
+  python /opt/BAGLE_time_tests/scripts/run_comparison.py \
+    --outdir /data/output/smoke \
+    --model pspl --scenario fake_data1 --prior-mode narrow \
+    --only numpyro_nuts_grad --nuts-draws 10 --nuts-tune 10 --nuts-chains 1
+```
+
+The runner also writes some fake-data PNGs to its current working directory,
+so `-w /data/output` is required when the source checkout is mounted read-only.
+
+This verifies the CPU environment, not GPU or MPI scaling. The image includes
+serial MultiNest, but not an MPI-enabled MultiNest build. For batch jobs or
+shared use across nodes, follow NERSC's `podman-hpc` image-storage guidance.
+
 ## Notes
 
 - Docker support is optional and does not replace the native BAGLE workflow.
@@ -146,7 +196,7 @@ removed or bypassed because this image already activates `bagle_env`.
 - The container installs the code from the current checkout, so local repo changes are reflected when you rebuild the image.
 - Changes to `requirements.txt` and `pyproject.toml` are picked up when you rebuild the image.
 - MultiNest is built without MPI support in this MVP by design.
-- The Python 3.14 image uses `tfp-nightly`, which `jaxns` requires. It does not
+- The Python 3.14 image uses `jaxns==2.6.9` and `tfp-nightly`. It does not
   install the stable `tensorflow-probability` distribution because the two
   distributions share module paths and conflict.
 - Interactive shells still start in `bagle_env` via the root shell init files, while the default container command remains `/bin/bash`.
