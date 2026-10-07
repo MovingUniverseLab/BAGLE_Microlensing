@@ -2775,12 +2775,6 @@ def _apply_pspl_fake_data1_priors(fitter, p_in):
     fitter.priors['xS0_N1'] = model_fitter.make_gen('xS0_N', -1e-4, 1e-4)
 
 
-def _relative_param_diff(a, b):
-    """Relative difference; use absolute scale when ``b`` is near zero."""
-    scale = max(np.abs(b), 1e-2)
-    return np.abs(a - b) / scale
-
-
 def _build_data_driven_prior(prior_name, data):
     """Build a scipy prior from fake data using the old make_* generators."""
     if prior_name == 'make_piS':
@@ -3112,6 +3106,7 @@ def test_microlens_solver_numpyro_nuts_vs_multinest(plot=True, resume_mnest=Fals
         draws=1000,
         tune=400,
         chains=2,
+        # _run_nuts passes this to mcmc.run as PRNGKey(random_seed).
         random_seed=FIT_SEED,
         verbose=False,
     )
@@ -3142,19 +3137,13 @@ def test_microlens_solver_numpyro_nuts_vs_multinest(plot=True, resume_mnest=Fals
                                    priors=fitter_mn.priors, map_mn=map_mn, map_other=map_np,
                                    other_label='NumPyro')
 
-    for key in fitter_mn.fitter_param_names:
-        assert _relative_param_diff(best_mn[key], best_np[key]) < 0.3
-
-    for key in fitter_mn.fitter_param_names:
-        q_mn = model_fitter.weighted_quantile(tab_mn[key], [0.16, 0.5, 0.84], 
-                                              sample_weight=tab_mn['weights'])
-
-        q_np = np.quantile(tab_np[key], [0.16, 0.5, 0.84])
-
-        for qmn, qnp in zip(q_mn, q_np):
-            # Near-zero parameters need a floor on absolute tolerance.
-            atol = max(1e-2, 0.15 * np.abs(qmn))
-            assert np.isclose(qmn, qnp, rtol=0.3, atol=atol)
+    # Median and the 16/84% points, scaled by the posterior width.
+    assert_posteriors_agree(
+        fitter_mn.fitter_param_names,
+        tab_mn,
+        tab_np,
+        weights_a=tab_mn['weights'],
+    )
 
     lnL_mn = fitter_mn.log_likely(best_mn)
     lnL_np = fitter_np.log_likely(best_np)
@@ -3428,12 +3417,13 @@ def test_microlens_solver_numpyro_smc_nuts_vs_multinest(plot=False,
             priors=fitter_mn.priors, map_mn=map_mn, map_other=map_smc,
             other_label='SMC-NUTS')
 
-    for key in fitter_mn.fitter_param_names:
-        a = best_mn[key]
-        b = best_smc[key]
-        # Near-zero params (e.g. xS0) need an absolute floor with few particles.
-        atol = max(5e-2, 0.35 * np.abs(a))
-        assert np.isclose(a, b, rtol=0.35, atol=atol)
+    # Median and the 16/84% points, scaled by the posterior width.
+    assert_posteriors_agree(
+        fitter_mn.fitter_param_names,
+        tab_mn,
+        tab_smc,
+        weights_a=tab_mn['weights'],
+    )
 
     lnL_mn = fitter_mn.log_likely(best_mn)
     lnL_smc = fitter_smc.log_likely(best_smc)
@@ -3553,8 +3543,13 @@ def test_microlens_solver_pymc_smc_vs_multinest(plot=False, resume_mnest=False):
             priors=fitter_mn.priors, map_mn=map_mn, map_other=map_smc,
             other_label='PyMC-SMC')
 
-    for key in fitter_mn.fitter_param_names:
-        assert _relative_param_diff(best_mn[key], best_smc[key]) < 0.5
+    # Median and the 16/84% points, scaled by the posterior width.
+    assert_posteriors_agree(
+        fitter_mn.fitter_param_names,
+        tab_mn,
+        tab_smc,
+        weights_a=tab_mn['weights'],
+    )
 
     lnL_mn = fitter_mn.log_likely(best_mn)
     lnL_smc = fitter_smc.log_likely(best_smc)
