@@ -69,7 +69,7 @@ def test_default_priors():
     unmatched = []
 
     def check_lengths(carg):
-        fitter_params = carg.fitter_param_names + carg.phot_param_names
+        fitter_params = list(carg.fitter_param_names)
         #print("Fitter count :", len(fitter_params)) 
     
         missing_params = [i for i in fitter_params if i not in check_keys]
