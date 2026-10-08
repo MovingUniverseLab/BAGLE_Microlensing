@@ -440,7 +440,7 @@ def test_pspl_dy_fit():
 
     # TEST that output params match input within 20%
     for key in best:
-        # xS0_E1 is the sampled name; fake data still stores xS0_E.
+        # xS0_E1 is the fitted name; fake data still stores xS0_E.
         truth = p_in[key] if key in p_in else p_in[key.rstrip('123456789')]
         print(best[key], truth, best[key] - truth)
         if truth == 0:
@@ -922,9 +922,9 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
     fitter.priors['mag_src4'] = model_fitter.make_gen(p_in['mag_src4']-0.01, p_in['mag_src4']+0.01)
 
     # sim3 is the second astrometric track (suffix 3). Tie it to
-    # filter 1 so both tracks share one sampled origin.
-    fitter.tie_sampled_param('xS0_E3', 'xS0_E1')
-    fitter.tie_sampled_param('xS0_N3', 'xS0_N1')
+    # filter 1 so both tracks share one fitted origin.
+    fitter.tie_fit_param('xS0_E3', 'xS0_E1')
+    fitter.tie_fit_param('xS0_N3', 'xS0_N1')
 
     if plot:
         plt.figure(1)
@@ -2271,7 +2271,7 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
     lnL_in = fitter.log_likely(p_in, verbose=verbose)
 
     # TEST that output params match input within 20%.
-    # Sampled names are suffixed; fake data still stores xS0_E.
+    # Fitted names are suffixed; fake data still stores xS0_E.
     for key in fitter.fitter_param_names:
         truth = p_in[key] if key in p_in else p_in[key.rstrip('123456789')]
         if truth == 0:
@@ -2430,7 +2430,7 @@ def test_multi_obsLocation(resume=False, verbose=False):
 
     best = fitter.get_best_fit()
 
-    # Photometry-only filters keep the fixed origin. The sampled
+    # Photometry-only filters keep the fixed origin. The fitted
     # origin is the astrometric filter's cube column.
     xS0_E_fit = np.zeros(fitter.n_filters)
     xS0_N_fit = np.zeros(fitter.n_filters)

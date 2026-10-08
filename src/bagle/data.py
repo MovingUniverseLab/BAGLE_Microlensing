@@ -366,11 +366,13 @@ def getdata(target, phot_data=['I_OGLE'], ast_data=['Kp_Keck'],
 
     # None means the fitter default (Earth for every filter).
     if obs_location is not None:
-        from bagle.model_fitter import build_filt_index
+        # Unified filter order (as in the fitter): photometric names,
+        # then astrometry-only names.
+        filt_names = list(phot_data)
+        for name in ast_data:
+            if name not in filt_names:
+                filt_names.append(name)
 
-        filt_names, _, _, _, _ = build_filt_index(
-            list(phot_data), list(ast_data)
-        )
         if obs_location == 'auto':
             data_in['obsLocation'] = {
                 name: _auto_observer(name) for name in filt_names

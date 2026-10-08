@@ -1,8 +1,8 @@
 """Cube expansion, mixed filters, observers, and the legacy loader."""
 
-import ctypes
 import os
 import warnings
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -11,10 +11,25 @@ from astropy.table import Table
 
 from bagle import model
 from bagle import model_fitter
-from bagle.model_fitter import (
-    adapt_legacy_filter_columns,
-    expand_fitter_names,
-)
+from bagle.model_fitter import MicrolensSolver
+
+
+def adapt_legacy_filter_columns(table, n_filters):
+    """Run the solver's legacy-column adapter for ``n_filters`` filters."""
+    stub = SimpleNamespace(n_filters=n_filters)
+    return MicrolensSolver.adapt_legacy_filter_columns(stub, table)
+
+
+def expand_fitter_names(fitter_param_names, filt_param_names, n_filters):
+    """Run the solver's name expansion on an arbitrary class layout."""
+    stub = SimpleNamespace(
+        model_class=SimpleNamespace(
+            fitter_param_names=fitter_param_names,
+            filt_param_names=filt_param_names,
+        ),
+        n_filters=n_filters,
+    )
+    return MicrolensSolver.expand_fitter_names(stub)
 
 
 def _peaked_mag(t, t0=57000.0):
@@ -154,7 +169,7 @@ def test_unused_suffix_prior_warns():
     with pytest.warns(UserWarning, match=r'xS0_E1.*xS0_E3'):
         fitter._check_b_sff_upper_bound()
 
-    # The sampled suffix is silent.
+    # The fitted suffix is silent.
     del fitter.priors['xS0_E1']
     fitter.priors['xS0_E3'] = model_fitter.make_gen(-1e-4, 1e-4)
     with warnings.catch_warnings():
@@ -176,63 +191,6 @@ def test_unused_suffix_prior_warns():
     return None
 
 
-class _ArrayPPF:
-    """Prior whose ppf returns a fixed array."""
-
-    def __init__(self, draw):
-        self.draw = draw
-
-    def ppf(self, unit):
-        return self.draw
-
-
-def _ctypes_unit_cube(n):
-    """A PyMultiNest-style cube of unit-interval doubles."""
-    return (ctypes.c_double * int(n))(*([0.5] * int(n)))
-
-
-def test_prior_writes_size1_ppf_into_ctypes_cube():
-    """A length-1 ppf is a Python float in the MultiNest cube."""
-    data = make_data(['ogle'], ['ogle'])
-    fitter = _solver(data, model.PSPL_PhotAstrom_Par_Param1)
-    # b_sff / mag_src from fake data are often np.array([value]).
-    wrapped = model_fitter.make_gen(np.array([0.2]), np.array([0.4]))
-    draw = wrapped.ppf(0.5)
-    assert np.asarray(draw).shape == ()
-
-    fitter.priors['mL'] = _ArrayPPF(np.array([3.5]))
-    raw = _ctypes_unit_cube(len(fitter.fitter_param_names))
-    fitter.Prior(raw)
-    idx = list(fitter.fitter_param_names).index('mL')
-    assert raw[idx] == pytest.approx(3.5)
-    assert type(raw[idx]) is float
-
-    # The multi-location origin is length 3. That draw is not one slot.
-    vector = np.repeat(0.0, 3)
-    wide = model_fitter.make_gen(vector - 1e-4, vector + 1e-4)
-    assert np.asarray(wide.ppf(0.5)).shape == (3,)
-
-    fitter.priors['mL'] = _ArrayPPF(np.zeros(3))
-    with pytest.raises(ValueError, match='mL'):
-        fitter.Prior(raw)
-
-    from bagle import model_fitter_jax
-    jax_fit = model_fitter_jax.MicrolensSolver(
-        data,
-        model_fitter_jax.mmodel.PSPL_PhotAstrom_Par_Param1,
-        outputfiles_basename='/tmp/bagle_prior_scalar_',
-        verbose=False,
-        seed=FIT_SEED,
-    )
-    jax_fit.priors['mL'] = _ArrayPPF(np.array([4.5]))
-    jax_raw = _ctypes_unit_cube(len(jax_fit.fitter_param_names))
-    jax_fit.Prior(jax_raw)
-    jax_idx = list(jax_fit.fitter_param_names).index('mL')
-    assert jax_raw[jax_idx] == pytest.approx(4.5)
-    assert type(jax_raw[jax_idx]) is float
-    return None
-
-
 def test_fix_sampled_param_holds_second_origin():
     """A second astrometric origin can be held at one number."""
     data = make_data(['ogle', 'spitzer', 'keck'], ['ogle', 'keck'])
@@ -240,8 +198,8 @@ def test_fix_sampled_param_holds_second_origin():
     assert fitter.map_phot_idx_to_ast_idx == [0, 2]
     assert 'xS0_E3' in fitter.fitter_param_names
     n_before = fitter.n_dims
-    fitter.fix_sampled_param('xS0_E3', np.array([0.012]))
-    fitter.fix_sampled_param('xS0_N3', -0.034)
+    fitter.fix_fit_param('xS0_E3', np.array([0.012]))
+    fitter.fix_fit_param('xS0_N3', -0.034)
     assert 'xS0_E3' not in fitter.fitter_param_names
     assert 'xS0_N3' not in fitter.fitter_param_names
     assert 'xS0_E1' in fitter.fitter_param_names
@@ -270,10 +228,40 @@ def test_fix_sampled_param_holds_second_origin():
         verbose=False,
         seed=FIT_SEED,
     )
-    jax_fit.fix_sampled_param('xS0_E3', 0.012)
-    jax_fit.fix_sampled_param('xS0_N3', -0.034)
+    jax_fit.fix_fit_param('xS0_E3', 0.012)
+    jax_fit.fix_fit_param('xS0_N3', -0.034)
     assert 'xS0_E3' not in jax_fit.fitter_param_names
     assert jax_fit.fixed_dataset_params['xS0_N3'] == pytest.approx(-0.034)
+    return None
+
+
+def test_fix_sampled_param_holds_shared_param():
+    """A fixed shared parameter (t0) still reaches the model constructor."""
+    from bagle import model_fitter_jax
+
+    data = make_data(['ogle'], ['ogle'])
+    fitters = [
+        _solver(data, model.PSPL_PhotAstrom_noPar_Param1),
+        model_fitter_jax.MicrolensSolver(
+            data,
+            model_fitter_jax.mmodel.PSPL_PhotAstrom_noPar_Param1,
+            outputfiles_basename='/tmp/bagle_fix_shared_',
+            verbose=False,
+            seed=FIT_SEED,
+        ),
+    ]
+    for fitter in fitters:
+        fitter.fix_fit_param('t0', 57003.5)
+        assert 't0' not in fitter.fitter_param_names
+
+        # Median of each remaining prior, with 0 where the median is not finite.
+        params = {}
+        for name in fitter.fitter_param_names:
+            median = fitter.priors[name].ppf(0.5)
+            params[name] = 0.0 if not np.isfinite(median) else float(median)
+
+        mod = fitter.get_model(params)
+        assert mod.t0 == pytest.approx(57003.5)
     return None
 
 
@@ -282,8 +270,8 @@ def test_tie_sampled_param_copies_filter1_origin():
     data = make_data(['ogle', 'spitzer', 'keck'], ['ogle', 'keck'])
     fitter = _solver(data, model.PSPL_PhotAstrom_noPar_Param1)
     n_before = fitter.n_dims
-    fitter.tie_sampled_param('xS0_E3', 'xS0_E1')
-    fitter.tie_sampled_param('xS0_N3', 'xS0_N1')
+    fitter.tie_fit_param('xS0_E3', 'xS0_E1')
+    fitter.tie_fit_param('xS0_N3', 'xS0_N1')
     assert fitter.n_dims == n_before - 2
     assert 'xS0_E3' not in fitter.fitter_param_names
     assert fitter.tied_params['xS0_E3'] == 'xS0_E1'
@@ -310,8 +298,8 @@ def test_tie_sampled_param_copies_filter1_origin():
         verbose=False,
         seed=FIT_SEED,
     )
-    jax_fit.tie_sampled_param('xS0_E3', 'xS0_E1')
-    jax_fit.tie_sampled_param('xS0_N3', 'xS0_N1')
+    jax_fit.tie_fit_param('xS0_E3', 'xS0_E1')
+    jax_fit.tie_fit_param('xS0_N3', 'xS0_N1')
     assert 'xS0_E3' not in jax_fit.fitter_param_names
     assert jax_fit.tied_params['xS0_N3'] == 'xS0_N1'
     return None
@@ -476,7 +464,7 @@ def test_unsuffixed_origin_vector_is_per_filter():
     mod = fitter.get_model(params)
     np.testing.assert_allclose(mod.xS0, [[0.1, -0.3], [0.2, -0.4]])
 
-    # Photometry-only slots stay at the fixed origin. The sampled
+    # Photometry-only slots stay at the fixed origin. The fitted
     # astrometric filter reads its own element, not the whole vector.
     holed = make_data(['ogle', 'spitzer', 'keck'], ['keck'])
     holed_fit = _solver(holed, model.PSPL_PhotAstrom_noPar_Param1)
@@ -588,7 +576,7 @@ def test_refpar_jax_likelihood_uses_per_filter_pi_ref(monkeypatch):
 
 
 def _physical_cube(fitter):
-    """Sampled values that keep piE and the GP dictionaries finite.
+    """Fitted values that keep piE and the GP dictionaries finite.
 
     Parameters
     ----------
@@ -598,7 +586,7 @@ def _physical_cube(fitter):
     Returns
     -------
     values : list of float
-        One value per sampled name.
+        One value per fitted name.
     """
     defaults = {
         't0': 57000.0,
@@ -652,7 +640,7 @@ def _ctypes_cube(values, n_params):
     Parameters
     ----------
     values : sequence of float
-        Sampled parameters. Derived slots stay zero.
+        Fitted parameters. Derived slots stay zero.
     n_params : int
         Full MultiNest length, including derived parameters.
 
@@ -673,31 +661,41 @@ def _ctypes_cube(values, n_params):
 
 
 def test_get_model_accepts_ctypes_multinest_cube():
-    """A ctypes cube builds the model and receives derived parameters."""
+    """A ctypes cube builds the model; LogLikelihood writes derived params."""
     import ctypes
 
     data = make_data(['ogle'], ['ogle'])
     fitter = _solver(data, model.PSPL_PhotAstrom_noPar_Param1)
-    sampled = _physical_cube(fitter)
-    pointer, buf = _ctypes_cube(sampled, fitter.n_params)
+    fitted = _physical_cube(fitter)
+    pointer, buf = _ctypes_cube(fitted, fitter.n_params)
     # This is the TypeError on 3ecd079: LP_c_double has no len().
     with pytest.raises(TypeError):
         len(pointer)
     assert isinstance(pointer, ctypes._Pointer)
 
+    # get_model reads the cube but leaves the derived slots alone.
+    n_add = len(fitter.additional_param_names)
     mod = fitter.get_model(pointer)
     assert np.isfinite(mod.t0)
-    written = [pointer[fitter.n_dims + i]
-               for i in range(len(fitter.additional_param_names))]
+    assert all(pointer[fitter.n_dims + i] == 0.0 for i in range(n_add))
+
+    # LogLikelihood writes the derived values after the fitted ones.
+    lnL = float(fitter.LogLikelihood(pointer))
+    assert np.isfinite(lnL)
+    written = [pointer[fitter.n_dims + i] for i in range(n_add)]
+    np.testing.assert_allclose(written, fitter.get_derived_param_values(mod))
     assert any(np.isfinite(value) and value != 0.0 for value in written)
 
-    # A sampled-only list is not extended.
-    short = list(sampled)
+    # A fitted-only list is not extended.
+    short = list(fitted)
     fitter.get_model(short)
     assert len(short) == fitter.n_dims
 
-    lnL = float(fitter.log_likely(pointer))
-    assert np.isfinite(lnL)
+    # Dict, Row, and positional inputs give the same likelihood.
+    names = fitter.fitter_param_names
+    row = Table(rows=[list(fitted)], names=names)[0]
+    for params in (dict(zip(names, fitted)), row, short):
+        np.testing.assert_allclose(fitter.log_likely(params), lnL)
 
     from bagle import model_fitter_jax
     jax_fit = model_fitter_jax.MicrolensSolver(

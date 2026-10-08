@@ -3386,7 +3386,7 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
     base_names = tuple(fitter.model_class.fitter_param_names)
     filt_names = set(getattr(fitter.model_class, "filt_param_names", ()) or ())
     # One class-order vector. Per-filter names use filter 1 when that
-    # suffix is sampled. The explicit builder is the per-filter path.
+    # suffix is fitted. The explicit builder is the per-filter path.
     base_indices = []
     try:
         for name in base_names:

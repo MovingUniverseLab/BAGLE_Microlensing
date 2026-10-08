@@ -46,6 +46,7 @@ import warnings
 from bagle.dynesty.utils import resample_equal, unitcheck
 from bagle.dynesty.utils import quantile as _quantile
 import re
+from itertools import groupby
 
 from bagle import jax_physics
 import jax
@@ -74,7 +75,7 @@ multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
                      'add_err', 'mult_err']
 
 
-# Fixed value written into a filter slot that is not sampled.
+# Fixed value written into a filter slot that is not fitted.
 FIXED_VALUE = 0.0
 
 # One warning per legacy column name in this process.
@@ -84,635 +85,6 @@ _LEGACY_COLUMN_WARNED = set()
 RESULTS_SCHEMA = 2
 
 
-
-def _sampled_value(params, name):
-    """Return one cube entry, or one element of an unsuffixed value.
-
-    Parameters
-    ----------
-    params : mapping
-        Suffixed names, or an unsuffixed base such as ``xS0_E``.
-    name : str
-        Sampled name, for example ``xS0_E3``.
-
-    Returns
-    -------
-    value
-        ``params[name]`` when that key exists. A scalar unsuffixed
-        value is reused for every suffix. A 1-d array is one value
-        per filter.
-
-    Raises
-    ------
-    KeyError
-        Neither form is present.
-    """
-    if name in params:
-        return params[name]
-
-    base = name.rstrip('123456789')
-    if len(base) == len(name) or base not in params:
-        raise KeyError(name)
-
-    arr = np.asarray(params[base], dtype=float)
-    if arr.ndim == 0 or arr.size == 1:
-        return float(arr.reshape(-1)[0])
-    return float(arr[int(name[len(base):]) - 1])
-
-
-def _one_draw(draw, name):
-    """Return one prior draw as a Python float.
-
-    Parameters
-    ----------
-    draw : float or array_like
-        Result of ``prior.ppf``.
-    name : str
-        Cube parameter this draw belongs to.
-
-    Returns
-    -------
-    value : float
-        The single number. A length-1 array is unwrapped so a ctypes
-        ``c_double`` slot can store it.
-
-    Raises
-    ------
-    ValueError
-        ``draw`` has more than one element.
-    """
-    arr = np.asarray(draw, dtype=float).reshape(-1)
-    if arr.size != 1:
-        raise ValueError(
-            f"Prior for {name!r} returned {int(arr.size)} values; "
-            "each cube parameter needs one scalar."
-        )
-    return float(arr[0])
-
-
-def expand_fitter_names(fitter_param_names, filt_param_names, n_filters):
-    """Expand contiguous filter-indexed runs, index-major.
-
-    Parameters
-    ----------
-    fitter_param_names : sequence of str
-        Unsuffixed base order.
-    filt_param_names : sequence of str
-        Names that take one value per filter.
-    n_filters : int
-        Length of the unified filter list. Zero yields only shared names.
-
-    Returns
-    -------
-    expanded : list of str
-        Shared names once, and each filter run as ``name1`` .. ``nameN``
-        with the names of the run cycling inside a filter.
-
-    """
-    filt_set = set(filt_param_names)
-    expanded = []
-    index = 0
-    names = list(fitter_param_names)
-    n_filters = int(n_filters)
-
-    while index < len(names):
-        if names[index] not in filt_set:
-            expanded.append(names[index])
-            index += 1
-            continue
-
-        # One contiguous run. Do not merge across a shared name.
-        run = []
-        while index < len(names) and names[index] in filt_set:
-            run.append(names[index])
-            index += 1
-
-        for filt in range(1, n_filters + 1):
-            for name in run:
-                expanded.append(f'{name}{filt}')
-
-    return expanded
-
-
-def fixed_slots(expanded, filt_param_names, filt_param_usage, has_phot, has_ast):
-    """Drop suffixed names the filter's data do not use.
-
-    Parameters
-    ----------
-    expanded : sequence of str
-        Output of ``expand_fitter_names``.
-    filt_param_names : sequence of str
-        Base filter-indexed names.
-    filt_param_usage : sequence of str
-        Usage parallel to ``filt_param_names``.
-    has_phot : sequence of bool, shape (n_filters,)
-        True when that filter has a light curve.
-    has_ast : sequence of bool, shape (n_filters,)
-        True when that filter has a track.
-
-    Returns
-    -------
-    sampled : list of str
-        Names that remain in the cube. Suffixes are not renumbered.
-    fixed : dict
-        Suffixed name to the fixed value (0).
-
-    """
-    usage = dict(zip(filt_param_names, filt_param_usage))
-    sampled = []
-    fixed = {}
-
-    for name in expanded:
-        base, filt_index = split_param_filter_index1(name)
-        if filt_index is None or base not in usage:
-            sampled.append(name)
-            continue
-
-        k = filt_index - 1
-        use = usage[base]
-        drop = False
-        if use == 'astrom' and not bool(has_ast[k]):
-            drop = True
-        elif use == 'phot' and not bool(has_phot[k]):
-            drop = True
-
-        if drop:
-            fixed[name] = FIXED_VALUE
-        else:
-            sampled.append(name)
-
-    return sampled, fixed
-
-
-def build_filt_index(phot_data, ast_data):
-    """Join photometric and astrometric names into one filter list.
-
-    Parameters
-    ----------
-    phot_data : sequence of str
-        Names in ``t_phot`` order. May be empty.
-    ast_data : sequence of str
-        Names in ``t_ast`` order. May be empty.
-
-    Returns
-    -------
-    filt_names : list of str
-        Photometric names, then astrometry-only names.
-    has_phot : ndarray of bool, shape (n_filters,)
-        True where the filter has photometry.
-    has_ast : ndarray of bool, shape (n_filters,)
-        True where the filter has astrometry.
-    phot_series : list of int or None
-        Index into ``phot_data`` for each filter.
-    ast_series : list of int or None
-        Index into ``ast_data`` for each filter.
-
-    Raises
-    ------
-    ValueError
-        A name is repeated inside one list.
-    """
-    phot_data = list(phot_data)
-    ast_data = list(ast_data)
-
-    if len(phot_data) != len(set(phot_data)):
-        raise ValueError('phot_data has a repeated name')
-    if len(ast_data) != len(set(ast_data)):
-        raise ValueError('ast_data has a repeated name')
-
-    filt_names = list(phot_data)
-    for name in ast_data:
-        if name not in filt_names:
-            filt_names.append(name)
-
-    n_filters = len(filt_names)
-    has_phot = np.zeros(n_filters, dtype=bool)
-    has_ast = np.zeros(n_filters, dtype=bool)
-    phot_series = [None] * n_filters
-    ast_series = [None] * n_filters
-
-    for i, name in enumerate(phot_data):
-        k = filt_names.index(name)
-        has_phot[k] = True
-        phot_series[k] = i
-    for j, name in enumerate(ast_data):
-        k = filt_names.index(name)
-        has_ast[k] = True
-        ast_series[k] = j
-
-    return filt_names, has_phot, has_ast, phot_series, ast_series
-
-
-def resolve_obs_locations(obs_location, filt_names):
-    """Turn a string, list, or dict into one body name per filter.
-
-    Parameters
-    ----------
-    obs_location : str, sequence of str, dict, or None
-        ``None`` and a missing key both mean Earth for every filter.
-        A string is repeated. A dict is keyed by filter name. A list
-        is in unified filter order.
-    filt_names : sequence of str
-        Unified filter names.
-
-    Returns
-    -------
-    locations : list of str
-        Body name for each filter. Length is ``len(filt_names)``, or
-        ``['earth']`` when there are no filters.
-
-    Raises
-    ------
-    ValueError
-        The list length is wrong, or a dict is missing a filter.
-    """
-    n_filters = len(filt_names)
-    if n_filters == 0:
-        return ['earth']
-
-    if obs_location is None:
-        return ['earth'] * n_filters
-
-    if isinstance(obs_location, str):
-        return [obs_location] * n_filters
-
-    if isinstance(obs_location, dict):
-        missing = [name for name in filt_names if name not in obs_location]
-        if missing:
-            raise ValueError(
-                'obsLocation is missing filters: ' + ', '.join(missing)
-            )
-        return [str(obs_location[name]) for name in filt_names]
-
-    locations = list(obs_location)
-    if len(locations) != n_filters:
-        raise ValueError(
-            f'obsLocation has length {len(locations)}; expected {n_filters}'
-        )
-    return [str(item) for item in locations]
-
-
-def pack_constructor_params(sampled_names, sampled_values, class_fitter_names,
-                            filt_param_names, n_filters, fixed, tied=None):
-    """Merge a sampled cube and fixed slots into constructor arguments.
-
-    Parameters
-    ----------
-    sampled_names : sequence of str
-        Cube column names, including suffixes and holes.
-    sampled_values : sequence
-        One value per sampled name, in the same order.
-    class_fitter_names : sequence of str
-        Unsuffixed ``fitter_param_names`` on the parameter class.
-        This is the constructor order.
-    filt_param_names : sequence of str
-        Names that are sequences of length ``n_filters``.
-    n_filters : int
-        Unified filter count.
-    fixed : dict
-        Suffixed name to fixed float.
-    tied : dict or None
-        Suffixed target to suffixed source. The target is not
-        sampled. It receives the source value.
-
-    Returns
-    -------
-    arguments : list
-        Positional constructor values. Filter-indexed entries are
-        lists of length ``n_filters``.
-
-    """
-    by_name = {name: sampled_values[i] for i, name in enumerate(sampled_names)}
-    filt_set = set(filt_param_names)
-    links = dict(tied or {})
-    arguments = []
-
-    for name in class_fitter_names:
-        if name not in filt_set:
-            if name not in by_name:
-                raise KeyError(name)
-            arguments.append(by_name[name])
-            continue
-
-        sequence = []
-        for filt in range(1, int(n_filters) + 1):
-            suffixed = f'{name}{filt}'
-            if suffixed in by_name:
-                sequence.append(by_name[suffixed])
-            elif suffixed in links:
-                source = links[suffixed]
-                if source not in by_name:
-                    raise KeyError(source)
-                sequence.append(by_name[source])
-            elif suffixed in fixed:
-                sequence.append(fixed[suffixed])
-            else:
-                raise KeyError(suffixed)
-        arguments.append(sequence)
-
-    return arguments
-
-
-def pack_optional_param_dicts(sampled_names, sampled_values, optional_names):
-    """Group suffixed optional parameters into constructor dictionaries.
-
-    Parameters
-    ----------
-    sampled_names : sequence of str
-        Cube column names, including suffixes.
-    sampled_values : sequence
-        One value per sampled name, in the same order.
-    optional_names : sequence of str
-        Unsuffixed optional names, in constructor order. GP classes
-        declare these on ``phot_optional_param_names``.
-
-    Returns
-    -------
-    dicts : list of dict
-        One dictionary per optional name, keyed by the 0-based filter
-        index. Empty when none of those names were sampled. ``add_err``
-        and ``mult_err`` are not in this list; they stay on the cube
-        and are not constructor arguments.
-
-    """
-    optional = list(optional_names)
-    if not optional:
-        return []
-
-    grouped = {name: {} for name in optional}
-    present = False
-    allowed = set(optional)
-    for name, value in zip(sampled_names, sampled_values):
-        base, filt_index = split_param_filter_index1(name)
-        if filt_index is None or base not in allowed:
-            continue
-        present = True
-        grouped[base][int(filt_index) - 1] = float(value)
-
-    if not present:
-        return []
-    return [grouped[name] for name in optional]
-
-
-def warn_unmatched_suffixed_priors(priors, fitter_param_names):
-    """Warn when a suffixed prior is not a sampled cube name.
-
-    Parameters
-    ----------
-    priors : mapping or None
-        Name to prior. Keys the user assigned after the defaults.
-    fitter_param_names : sequence of str
-        Names MultiNest, PyMC, and NumPyro actually sample.
-
-    Returns
-    -------
-    None
-
-    """
-    if not priors:
-        return None
-
-    sampled = [str(name) for name in fitter_param_names]
-    sampled_set = set(sampled)
-    for name in priors:
-        base, filt_index = split_param_filter_index1(str(name))
-        if filt_index is None or name in sampled_set:
-            continue
-
-        # Same base, different suffix: that is the name the user meant.
-        matches = [
-            other for other in sampled
-            if split_param_filter_index1(other)[0] == base
-        ]
-        if matches:
-            have = ', '.join(matches)
-        else:
-            have = 'none'
-        warnings.warn(
-            f'Prior {name!r} is not in the sampled cube, so it is '
-            f'ignored and the default prior stays in effect. '
-            f'Sampled {base} names: {have}.',
-            UserWarning,
-            stacklevel=4,
-        )
-    return None
-
-
-def longest_ast_series(data, ast_series):
-    """Pick the astrometric series with the longest time baseline.
-
-    Parameters
-    ----------
-    data : dict
-        Data dictionary with ``t_ast{j+1}`` arrays.
-    ast_series : sequence of int or None
-        Astrometric-list index for each unified filter.
-
-    Returns
-    -------
-    series : int or None
-        Index into ``ast_data``. None when no astrometry is present.
-    """
-    best = None
-    best_span = -1.0
-    for series in ast_series:
-        if series is None:
-            continue
-        times = np.asarray(data['t_ast' + str(int(series) + 1)], dtype=float)
-        if times.size == 0:
-            span = 0.0
-        else:
-            span = float(np.nanmax(times) - np.nanmin(times))
-        if span > best_span:
-            best_span = span
-            best = int(series)
-    return best
-
-
-# Legacy columns already announced, so a second file does not repeat it.
-_LEGACY_COLUMN_WARNED = set()
-
-# Results files written by this layout.
-RESULTS_SCHEMA = 2
-
-
-def adapt_legacy_filter_columns(table, n_filters):
-    """Copy unsuffixed legacy columns onto every filter slot.
-
-    Parameters
-    ----------
-    table : astropy.table.Table
-        Chain table. May contain ``xS0_E``, ``xS0_N``, or
-        ``pi_ref_frame`` without a filter suffix.
-    n_filters : int
-        Number of filters in the model being loaded.
-
-    Returns
-    -------
-    table : astropy.table.Table
-        The same table. Each legacy column is duplicated as
-        ``name1`` .. ``name{n_filters}``.
-
-    """
-    n_filters = int(n_filters)
-    if n_filters < 1:
-        return table
-
-    for base in ('xS0_E', 'xS0_N', 'pi_ref_frame'):
-        suffixed = [f'{base}{k}' for k in range(1, n_filters + 1)]
-        has_plain = base in table.colnames
-        present = [name for name in suffixed if name in table.colnames]
-        if has_plain and present:
-            raise ValueError(
-                f'{base} is both unsuffixed and suffixed ({present[0]})'
-            )
-        if not has_plain or present:
-            continue
-
-        # Warn once per legacy name for this process.
-        if base not in _LEGACY_COLUMN_WARNED:
-            warnings.warn(
-                f'Copying legacy column {base} onto every filter slot',
-                stacklevel=2,
-            )
-            _LEGACY_COLUMN_WARNED.add(base)
-        for name in suffixed:
-            table[name] = np.array(table[base], copy=True)
-    return table
-
-
-def write_results_schema2(outroot, sampled_names, fixed_dataset_params,
-                          filt_names, has_phot, has_ast, obs_locations):
-    """Write schema-2 JSON and FITS extensions next to a results file.
-
-    Parameters
-    ----------
-    outroot : str
-        Results path without an extension. The JSON sidecar is
-        ``outroot + '.json'`` and the FITS file is ``outroot + '.fits'``.
-    sampled_names : sequence of str
-        Names stored as columns of the chain.
-    fixed_dataset_params : dict
-        Suffixed name to fixed value. These are not chain columns.
-    filt_names : sequence of str
-        Unified filter names.
-    has_phot, has_ast : sequence of bool
-        Whether each filter has photometry or astrometry.
-    obs_locations : sequence of str
-        Observer for each filter.
-
-    Returns
-    -------
-    None
-
-    """
-    from astropy.io import fits
-    from astropy.table import Table
-
-    payload = {
-        'schema': RESULTS_SCHEMA,
-        'sampled_names': list(sampled_names),
-        'fixed': {
-            str(key): float(val)
-            for key, val in dict(fixed_dataset_params or {}).items()
-        },
-        'filt_names': list(filt_names),
-        'has_phot': [bool(flag) for flag in has_phot],
-        'has_ast': [bool(flag) for flag in has_ast],
-        'obs_locations': [str(loc) for loc in obs_locations],
-    }
-    with open(outroot + '.json', 'w', encoding='utf-8') as handle:
-        json.dump(payload, handle, indent=2)
-        handle.write('\n')
-
-    fits_path = outroot + '.fits'
-    try:
-        hdul = fits.open(fits_path, mode='update')
-    except FileNotFoundError:
-        return None
-
-    # Drop a previous copy of these extensions before appending.
-    drop = [
-        idx for idx, hdu in enumerate(hdul)
-        if hdu.name in ('FIXED', 'FILTERS')
-    ]
-    for idx in reversed(drop):
-        del hdul[idx]
-
-    hdul[0].header['SCHEMA'] = RESULTS_SCHEMA
-    fixed_tab = Table(
-        names=('name', 'value'),
-        dtype=('U64', float),
-    )
-    for key, val in payload['fixed'].items():
-        fixed_tab.add_row((key, val))
-    filt_tab = Table()
-    filt_tab['name'] = payload['filt_names']
-    filt_tab['has_phot'] = payload['has_phot']
-    filt_tab['has_ast'] = payload['has_ast']
-    filt_tab['obs_location'] = payload['obs_locations']
-    hdul.append(fits.BinTableHDU(fixed_tab, name='FIXED'))
-    hdul.append(fits.BinTableHDU(filt_tab, name='FILTERS'))
-    hdul.close()
-    return None
-
-
-def interleave_optional(sampled, fitter_param_names, filt_param_names,
-                        n_filters, optional_by_filter, ast_optional):
-    """Insert per-filter optional names after the last filter run.
-
-    Parameters
-    ----------
-    sampled : sequence of str
-        Expanded names after fixed slots are removed.
-    fitter_param_names : sequence of str
-        Unsuffixed class order.
-    filt_param_names : sequence of str
-        Filter-indexed base names.
-    n_filters : int
-        Unified filter count.
-    optional_by_filter : sequence of sequence of str
-        Already-suffixed optional names for each filter. Empty for a
-        filter that has no photometry.
-    ast_optional : sequence of str
-        Already-suffixed astrometric optional names, appended at the end.
-
-    Returns
-    -------
-    names : list of str
-        Sampled cube order.
-    """
-    # The last contiguous filter run is where optional photometry sits.
-    filt_set = set(filt_param_names)
-    last_run = []
-    index = 0
-    base_names = list(fitter_param_names)
-    while index < len(base_names):
-        if base_names[index] not in filt_set:
-            index += 1
-            continue
-        run = []
-        while index < len(base_names) and base_names[index] in filt_set:
-            run.append(base_names[index])
-            index += 1
-        last_run = run
-    last = set(last_run)
-    prefix = []
-    groups = {}
-    for name in sampled:
-        base, filt_index = split_param_filter_index1(name)
-        if base in last and filt_index is not None:
-            groups.setdefault(filt_index, []).append(name)
-        else:
-            prefix.append(name)
-
-    names = list(prefix)
-    for filt in range(1, int(n_filters) + 1):
-        names.extend(groups.get(filt, []))
-        if filt - 1 < len(optional_by_filter):
-            names.extend(list(optional_by_filter[filt - 1]))
-    names.extend(list(ast_optional))
-    return names
 
 class MicrolensSolver(Solver):
     """
@@ -1043,6 +415,654 @@ class MicrolensSolver(Solver):
 
         return
 
+    def to_param_dict(self, params):
+        """Return the fitted parameters as a dict keyed by fitted name.
+
+        Parameters
+        ----------
+        params : dict, astropy.table.Row, or sequence
+            A mapping (or results-table row) keyed by fitted names, or
+            values in ``self.fitter_param_names`` order (list, array, or
+            the ctypes cube PyMultiNest passes). A sequence may be longer
+            than the cube (derived parameters appended); the extra
+            entries are ignored.
+
+        Returns
+        -------
+        param_dict : dict
+            Fitted name to value, in ``self.fitter_param_names`` order.
+
+        Raises
+        ------
+        KeyError
+            A mapping has neither the suffixed name nor its unsuffixed base.
+
+        Notes
+        -----
+        For a mapping, a missing suffixed name such as ``xS0_E3`` falls back
+        to the unsuffixed base ``xS0_E`` (older results). A scalar base value
+        is reused for every suffix; a 1-d array supplies one value per filter.
+        """
+        # Positional cube: the first n_dims entries, in fitter order.
+        if not isinstance(params, (dict, Row)):
+            return {name: params[i] for i, name in enumerate(self.fitter_param_names)}
+
+        # A Row's ``in`` tests values, not column names, so use a dict.
+        if isinstance(params, Row):
+            params = dict(zip(params.colnames, params))
+
+        param_dict = {}
+        for name in self.fitter_param_names:
+            # Suffixed (or shared) name present: use it directly.
+            if name in params:
+                param_dict[name] = params[name]
+                continue
+
+            # Otherwise fall back to the unsuffixed base, e.g. xS0_E3 -> xS0_E.
+            base, filt_index = split_param_filter_index1(name)
+            if filt_index is None or base not in params:
+                raise KeyError(name)
+
+            # A scalar is shared by every filter; a vector is one per filter.
+            value = np.asarray(params[base], dtype=float).reshape(-1)
+            param_dict[name] = float(value[0] if value.size == 1
+                                     else value[filt_index - 1])
+
+        return param_dict
+
+    def to_param_vector(self, param_dict):
+        """Return fitted values as a float vector in ``fitter_param_names`` order.
+
+        Parameters
+        ----------
+        param_dict : dict
+            Output of ``to_param_dict``.
+
+        Returns
+        -------
+        vec : numpy.ndarray, shape (n_dims,)
+            Fitted values as float64, the layout the JAX likelihood takes.
+        """
+        return np.array([param_dict[name] for name in self.fitter_param_names],
+                        dtype=np.float64)
+
+    def get_derived_param_values(self, model):
+        """Return the derived (additional) parameters of a model.
+
+        Parameters
+        ----------
+        model : object
+            Model instance from ``get_model``.
+
+        Returns
+        -------
+        values : list
+            One value per name in ``self.additional_param_names``. A name
+            with a filter suffix reads that filter's element of the model
+            attribute.
+        """
+        values = []
+        for name in self.additional_param_names:
+            base, filt_index = split_param_filter_index1(name)
+            value = getattr(model, base)
+            values.append(value if filt_index is None else value[filt_index - 1])
+        return values
+
+    def expand_fitter_names(self):
+        """Expand contiguous filter-indexed runs, index-major.
+
+        Uses ``self.model_class.fitter_param_names`` (unsuffixed class
+        order), ``self.model_class.filt_param_names`` (names that take
+        one value per filter), and ``self.n_filters`` (length of the
+        unified filter list; zero yields only shared names).
+
+        Returns
+        -------
+        expanded : list of str
+            Shared names once, and each filter run as ``name1`` .. ``nameN``
+            with the names of the run cycling inside a filter.
+        """
+        expanded = []
+
+        # Split the class order into contiguous runs of shared or
+        # filter-indexed names. Runs are never merged across a shared name.
+        for is_filt, run in groupby(
+                self.model_class.fitter_param_names,
+                key=lambda n: n in self.model_class.filt_param_names):
+            if is_filt:
+                # Index-major: the whole run for filter 1, then filter 2, ...
+                # e.g. [b_sff, mag_src] -> b_sff1, mag_src1, b_sff2, mag_src2.
+                run = list(run)
+                expanded += [f'{name}{k}' for k in range(1, self.n_filters + 1)
+                             for name in run]
+            else:
+                # Shared names appear once, unsuffixed.
+                expanded += run
+
+        return expanded
+
+    def fixed_slots(self):
+        """Drop suffixed names the filter's data do not use.
+
+        Starts from ``expand_fitter_names()`` and uses
+        ``self.model_class.filt_param_usage`` together with
+        ``self.has_phot`` and ``self.has_ast`` to decide which filter
+        slots have no data behind them.
+
+        Returns
+        -------
+        fit_names : list of str
+            Names that remain in the cube. Suffixes are not renumbered.
+        fixed : dict
+            Suffixed name to the fixed value (0).
+        """
+        # Map each base name to the data type it needs ('phot', 'astrom', ...).
+        usage = dict(zip(self.model_class.filt_param_names,
+                         self.model_class.filt_param_usage))
+        fit_names = []
+        fixed = {}
+
+        for name in self.expand_fitter_names():
+            # Shared names and names without a usage tag are always fitted.
+            base, filt_index = split_param_filter_index1(name)
+            if filt_index is None or base not in usage:
+                fit_names.append(name)
+                continue
+
+            # Suffixes are 1-based; has_phot / has_ast are 0-based.
+            k = filt_index - 1
+            use = usage[base]
+
+            # Drop astrometric slots for filters without a track, and
+            # photometric slots for filters without a light curve.
+            drop = False
+            if use == 'astrom' and not bool(self.has_ast[k]):
+                drop = True
+            elif use == 'phot' and not bool(self.has_phot[k]):
+                drop = True
+
+            # Dropped slots are held at FIXED_VALUE; the rest stay in the cube.
+            if drop:
+                fixed[name] = FIXED_VALUE
+            else:
+                fit_names.append(name)
+
+        return fit_names, fixed
+
+    def build_filt_index(self, phot_data, ast_data):
+        """Join photometric and astrometric names into one filter list.
+
+        Parameters
+        ----------
+        phot_data : sequence of str
+            Names in ``t_phot`` order. May be empty.
+        ast_data : sequence of str
+            Names in ``t_ast`` order. May be empty.
+
+        Returns
+        -------
+        None
+            Sets ``self.filt_names`` (photometric names, then
+            astrometry-only names), ``self.n_filters``, ``self.has_phot``
+            and ``self.has_ast`` (bool arrays, shape (n_filters,)), and
+            ``self.phot_series`` and ``self.ast_series`` (index into
+            ``phot_data`` / ``ast_data`` for each filter, or None).
+
+        Raises
+        ------
+        ValueError
+            A name is repeated inside one list.
+        """
+        phot_data = list(phot_data)
+        ast_data = list(ast_data)
+
+        # A name may appear once per list (it can appear in both lists).
+        if len(phot_data) != len(set(phot_data)):
+            raise ValueError('phot_data has a repeated name')
+        if len(ast_data) != len(set(ast_data)):
+            raise ValueError('ast_data has a repeated name')
+
+        # Unified order: all photometric names, then astrometry-only names.
+        filt_names = list(phot_data)
+        for name in ast_data:
+            if name not in filt_names:
+                filt_names.append(name)
+
+        # Per-filter flags and back-pointers into the original lists.
+        # Shapes: has_phot, has_ast, phot_series, ast_series: [n_filters]
+        n_filters = len(filt_names)
+        has_phot = np.zeros(n_filters, dtype=bool)
+        has_ast = np.zeros(n_filters, dtype=bool)
+        phot_series = [None] * n_filters
+        ast_series = [None] * n_filters
+
+        # Photometric data set i lives at unified slot k (t_phot{i+1}).
+        for i, name in enumerate(phot_data):
+            k = filt_names.index(name)
+            has_phot[k] = True
+            phot_series[k] = i
+
+        # Astrometric data set j lives at unified slot k (t_ast{j+1}).
+        for j, name in enumerate(ast_data):
+            k = filt_names.index(name)
+            has_ast[k] = True
+            ast_series[k] = j
+
+        # Store the unified layout on the solver.
+        self.filt_names = filt_names
+        self.n_filters = n_filters
+        self.has_phot = has_phot
+        self.has_ast = has_ast
+        self.phot_series = phot_series
+        self.ast_series = ast_series
+
+        return None
+
+    def resolve_obs_locations(self):
+        """Turn ``data['obsLocation']`` into one body name per filter.
+
+        ``data['obsLocation']`` may be a string, a sequence of str, a
+        dict, or missing / None. ``None`` and a missing key both mean
+        Earth for every filter. A string is repeated. A dict is keyed by
+        filter name. A list is in unified filter order
+        (``self.filt_names``).
+
+        Returns
+        -------
+        None
+            Sets ``self.obs_locations``: body name for each filter.
+            Length is ``self.n_filters``, or ``['earth']`` when there are
+            no filters.
+
+        Raises
+        ------
+        ValueError
+            The list length is wrong, or a dict is missing a filter.
+        """
+        obs_location = self.data.get('obsLocation', None)
+        filt_names = self.filt_names
+        n_filters = len(filt_names)
+
+        # No filters at all: keep a single Earth entry for the model.
+        if n_filters == 0:
+            self.obs_locations = ['earth']
+
+        # Default: every filter is observed from Earth.
+        elif obs_location is None:
+            self.obs_locations = ['earth'] * n_filters
+
+        # One body name shared by every filter.
+        elif isinstance(obs_location, str):
+            self.obs_locations = [obs_location] * n_filters
+
+        # Dict keyed by filter name; every filter must be present.
+        elif isinstance(obs_location, dict):
+            missing = [name for name in filt_names if name not in obs_location]
+            if missing:
+                raise ValueError(
+                    'obsLocation is missing filters: ' + ', '.join(missing)
+                )
+            self.obs_locations = [str(obs_location[name]) for name in filt_names]
+
+        # Otherwise a sequence in unified filter order; length must match.
+        else:
+            locations = list(obs_location)
+            if len(locations) != n_filters:
+                raise ValueError(
+                    f'obsLocation has length {len(locations)}; expected {n_filters}'
+                )
+            self.obs_locations = [str(item) for item in locations]
+
+        return None
+
+    def pack_constructor_params(self, params):
+        """Merge fitted values and fixed slots into constructor arguments.
+
+        Parameters
+        ----------
+        params : dict
+            Fitted name to value, from ``to_param_dict``.
+
+        Returns
+        -------
+        arguments : list
+            Positional constructor values, in
+            ``self.model_class.fitter_param_names`` order. Filter-indexed
+            entries are lists of length ``self.n_filters``.
+
+        Notes
+        -----
+        Each filter slot is taken from ``params``, then from
+        ``self.tied_params`` (suffixed target to suffixed source), then
+        from ``self.fixed_dataset_params``. A shared parameter is taken
+        from ``params``, or from ``self.fixed_dataset_params`` when
+        ``fix_fit_param`` removed it from the fit. A missing name raises
+        ``KeyError``.
+        """
+        fixed = self.fixed_dataset_params
+        arguments = []
+
+        # Build one constructor argument per class name, in constructor order.
+        for name in self.model_class.fitter_param_names:
+            # Shared parameter: fitted, or held by fix_fit_param.
+            if name not in self.model_class.filt_param_names:
+                arguments.append(params[name] if name in params else fixed[name])
+                continue
+
+            # Filter-indexed parameter: a list of length n_filters.
+            sequence = []
+            for filt in range(1, self.n_filters + 1):
+                suffixed = f'{name}{filt}'
+
+                # Priority: fitted, then tied to another fitted slot,
+                # then fixed. A slot with none of these is an error.
+                if suffixed in params:
+                    sequence.append(params[suffixed])
+                elif suffixed in self.tied_params:
+                    sequence.append(params[self.tied_params[suffixed]])
+                else:
+                    sequence.append(fixed[suffixed])
+            arguments.append(sequence)
+
+        return arguments
+
+    def pack_optional_param_dicts(self, params):
+        """Group suffixed optional parameters into constructor dictionaries.
+
+        Parameters
+        ----------
+        params : dict
+            Fitted name to value, from ``to_param_dict``.
+
+        Returns
+        -------
+        dicts : list of dict
+            One dictionary per name in
+            ``self.model_class.phot_optional_param_names``, keyed by the
+            0-based filter index. Empty when none of those names were
+            fitted. ``add_err`` and ``mult_err`` are not in this list;
+            they are not constructor arguments.
+        """
+        # One dict per optional name, e.g. {'gp_log_rho': {0: ..., 2: ...}}.
+        grouped = {name: {} for name in
+                   getattr(self.model_class, 'phot_optional_param_names', [])}
+
+        # Route each suffixed optional value into its dict. Dict keys are
+        # 0-based filter indices; suffixes are 1-based.
+        for name, value in params.items():
+            base, filt_index = split_param_filter_index1(name)
+            if filt_index is not None and base in grouped:
+                grouped[base][filt_index - 1] = float(value)
+
+        # Nothing fitted: pass no extra arguments rather than empty dicts.
+        if not any(grouped.values()):
+            return []
+        return list(grouped.values())
+
+
+
+
+    def warn_unmatched_suffixed_priors(self):
+        """Warn when a suffixed prior in ``self.priors`` is not fitted.
+
+        Compares the keys of ``self.priors`` (including ones the user
+        assigned after the defaults) with ``self.fitter_param_names``
+        (the names MultiNest, PyMC, and NumPyro actually sample).
+
+        Returns
+        -------
+        None
+        """
+        priors = getattr(self, 'priors', None)
+        if not priors:
+            return None
+
+        fit_names = [str(name) for name in self.fitter_param_names]
+        fit_names_set = set(fit_names)
+        for name in priors:
+            # Only suffixed names that are missing from the cube matter.
+            base, filt_index = split_param_filter_index1(str(name))
+            if filt_index is None or name in fit_names_set:
+                continue
+
+            # Same base, different suffix: that is the name the user meant.
+            matches = [
+                other for other in fit_names
+                if split_param_filter_index1(other)[0] == base
+            ]
+            if matches:
+                have = ', '.join(matches)
+            else:
+                have = 'none'
+
+            # Name the ignored prior and the fitted names it likely meant.
+            warnings.warn(
+                f'Prior {name!r} is not in the fitted cube, so it is '
+                f'ignored and the default prior stays in effect. '
+                f'Fitted {base} names: {have}.',
+                UserWarning,
+                stacklevel=4,
+            )
+        return None
+
+    def longest_ast_series(self):
+        """Pick the astrometric series with the longest time baseline.
+
+        Uses ``self.ast_series`` (astrometric-list index for each unified
+        filter) and the ``t_ast{j+1}`` arrays in ``self.data``.
+
+        Returns
+        -------
+        series : int or None
+            Index into ``ast_data``. None when no astrometry is present.
+        """
+        best = None
+        best_span = -1.0
+        for series in self.ast_series:
+            # Filters without astrometry have no series.
+            if series is None:
+                continue
+
+            # Time baseline (days) of this astrometric data set.
+            times = np.asarray(self.data['t_ast' + str(int(series) + 1)],
+                               dtype=float)
+            if times.size == 0:
+                span = 0.0
+            else:
+                span = float(np.nanmax(times) - np.nanmin(times))
+
+            # Keep the first series with the longest baseline.
+            if span > best_span:
+                best_span = span
+                best = int(series)
+        return best
+
+    def adapt_legacy_filter_columns(self, table):
+        """Copy unsuffixed legacy columns onto every filter slot.
+
+        Parameters
+        ----------
+        table : astropy.table.Table
+            Chain table. May contain ``xS0_E``, ``xS0_N``, or
+            ``pi_ref_frame`` without a filter suffix.
+
+        Returns
+        -------
+        table : astropy.table.Table
+            The same table. Each legacy column is duplicated as
+            ``name1`` .. ``name{n_filters}``, where ``n_filters`` is
+            ``self.n_filters`` (1 when unset).
+        """
+        # Old chains store one xS0 / pi_ref_frame for every filter.
+        n_filters = int(getattr(self, 'n_filters', 1) or 1)
+
+        # Only the per-filter origin and reference-frame columns changed names.
+        for base in ('xS0_E', 'xS0_N', 'pi_ref_frame'):
+            suffixed = [f'{base}{k}' for k in range(1, n_filters + 1)]
+            has_plain = base in table.colnames
+            present = [name for name in suffixed if name in table.colnames]
+
+            # Both forms in one table is ambiguous, so refuse it.
+            if has_plain and present:
+                raise ValueError(
+                    f'{base} is both unsuffixed and suffixed ({present[0]})'
+                )
+
+            # Skip when there is no legacy column, or the table is already new.
+            if not has_plain or present:
+                continue
+
+            # Warn once per legacy name for this process.
+            if base not in _LEGACY_COLUMN_WARNED:
+                warnings.warn(
+                    f'Copying legacy column {base} onto every filter slot',
+                    stacklevel=2,
+                )
+                _LEGACY_COLUMN_WARNED.add(base)
+
+            # Every filter slot gets its own copy of the legacy column.
+            for name in suffixed:
+                table[name] = np.array(table[base], copy=True)
+        return table
+
+    def write_results_schema2(self, outroot):
+        """Write schema-2 JSON and FITS extensions next to a results file.
+
+        Parameters
+        ----------
+        outroot : str
+            Results path without an extension. The JSON sidecar is
+            ``outroot + '.json'`` and the FITS file is ``outroot + '.fits'``.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        Records ``self.fitter_param_names`` (the chain columns),
+        ``self.fixed_dataset_params`` (held slots, not chain columns),
+        ``self.filt_names``, ``self.has_phot``, ``self.has_ast``, and
+        ``self.obs_locations``. Missing attributes are written as empty.
+        """
+        from astropy.io import fits
+        from astropy.table import Table
+
+        # Everything needed to rebuild the cube layout without the fitter.
+        fixed_dataset_params = getattr(self, 'fixed_dataset_params', {})
+        payload = {
+            'schema': RESULTS_SCHEMA,
+            'fit_param_names': list(getattr(self, 'fitter_param_names', [])),
+            'fixed': {
+                str(key): float(val)
+                for key, val in dict(fixed_dataset_params or {}).items()
+            },
+            'filt_names': list(getattr(self, 'filt_names', [])),
+            'has_phot': [bool(flag) for flag in getattr(self, 'has_phot', [])],
+            'has_ast': [bool(flag) for flag in getattr(self, 'has_ast', [])],
+            'obs_locations': [
+                str(loc) for loc in getattr(self, 'obs_locations', [])
+            ],
+        }
+
+        # JSON sidecar: always written.
+        with open(outroot + '.json', 'w', encoding='utf-8') as handle:
+            json.dump(payload, handle, indent=2)
+            handle.write('\n')
+
+        # FITS extensions: only when the results FITS file already exists.
+        fits_path = outroot + '.fits'
+        try:
+            hdul = fits.open(fits_path, mode='update')
+        except FileNotFoundError:
+            return None
+
+        # Drop a previous copy of these extensions before appending.
+        drop = [
+            idx for idx, hdu in enumerate(hdul)
+            if hdu.name in ('FIXED', 'FILTERS')
+        ]
+        for idx in reversed(drop):
+            del hdul[idx]
+
+        # Tag the primary header with the layout version.
+        hdul[0].header['SCHEMA'] = RESULTS_SCHEMA
+
+        # FIXED extension: one row per held filter slot.
+        fixed_tab = Table(
+            names=('name', 'value'),
+            dtype=('U64', float),
+        )
+        for key, val in payload['fixed'].items():
+            fixed_tab.add_row((key, val))
+
+        # FILTERS extension: one row per unified filter.
+        filt_tab = Table()
+        filt_tab['name'] = payload['filt_names']
+        filt_tab['has_phot'] = payload['has_phot']
+        filt_tab['has_ast'] = payload['has_ast']
+        filt_tab['obs_location'] = payload['obs_locations']
+
+        # Append both extensions and flush to disk.
+        hdul.append(fits.BinTableHDU(fixed_tab, name='FIXED'))
+        hdul.append(fits.BinTableHDU(filt_tab, name='FILTERS'))
+        hdul.close()
+        return None
+
+    def interleave_optional(self, fit_names, optional_by_filter, ast_optional):
+        """Insert per-filter optional names after the last filter run.
+
+        Parameters
+        ----------
+        fit_names : sequence of str
+            Expanded names after fixed slots are removed.
+        optional_by_filter : sequence of sequence of str
+            Already-suffixed optional names, one list per filter
+            (length ``self.n_filters``). Empty for a filter that has no
+            photometry.
+        ast_optional : sequence of str
+            Already-suffixed astrometric optional names, appended at the end.
+
+        Returns
+        -------
+        names : list of str
+            Fitted cube order.
+
+        Notes
+        -----
+        The last run is found in ``self.model_class.fitter_param_names``
+        using ``self.model_class.filt_param_names``; there are
+        ``self.n_filters`` filters.
+        """
+        # The last contiguous filter-indexed run (e.g. b_sff, mag_src) is
+        # where the optional photometry names sit.
+        last_run = []
+        for is_filt, run in groupby(
+                self.model_class.fitter_param_names,
+                key=lambda n: n in self.model_class.filt_param_names):
+            if is_filt:
+                last_run = list(run)
+
+        # Names outside the last run keep their order at the front;
+        # last-run names are grouped by filter index.
+        names = []
+        groups = {}
+        for name in fit_names:
+            base, filt_index = split_param_filter_index1(name)
+            if base in last_run and filt_index is not None:
+                groups.setdefault(filt_index, []).append(name)
+            else:
+                names.append(name)
+
+        # Per filter: its last-run names, then its optional names
+        # (e.g. b_sff1, mag_src1, add_err1, b_sff2, mag_src2, add_err2, ...).
+        for filt in range(1, self.n_filters + 1):
+            names += groups.get(filt, []) + list(optional_by_filter[filt - 1])
+
+        # Astrometric optional names go at the very end.
+        names += ast_optional
+        return names
+
     def check_data(self):
         if 't_ast1' in self.data.keys():
             if not self.model_class.paramAstromFlag or \
@@ -1067,7 +1087,7 @@ class MicrolensSolver(Solver):
                                    'run %s' % str(self.model_class))
 
     def setup_params(self):
-        """Build the sampled cube and the unified filter index.
+        """Build the fitted cube and the unified filter index.
 
         Returns
         -------
@@ -1143,22 +1163,21 @@ class MicrolensSolver(Solver):
             for i in range(min(n_phot_sets, n_ast_sets)):
                 ast_names[i] = phot_names[i]
 
-        (
-            filt_names, has_phot, has_ast, phot_series, ast_series,
-        ) = build_filt_index(phot_names, ast_names)
+        # Unified filter list and per-filter flags, stored on self.
+        self.build_filt_index(phot_names, ast_names)
 
         # Unified index of each astrometric series, in ast_data order.
         filt_for_ast = [None] * n_ast_sets
-        for k, series in enumerate(ast_series):
+        for k, series in enumerate(self.ast_series):
             if series is not None:
                 filt_for_ast[series] = k
 
         # Optional photometric names stay interleaved with the last
         # filter run. The suffix is the unified filter index.
-        optional_by_filter = [[] for _ in range(len(filt_names))]
+        optional_by_filter = [[] for _ in range(self.n_filters)]
         warned_phot = False
         for i, name in enumerate(phot_names):
-            k = filt_names.index(name)
+            k = self.filt_names.index(name)
             suffix = str(k + 1)
             for opt_phot_name in self.model_class.phot_optional_param_names:
                 use = self.use_phot_optional_params
@@ -1216,41 +1235,19 @@ class MicrolensSolver(Solver):
                     continue
                 ast_params.append(opt_ast_name + str(j + 1))
 
-        expanded = expand_fitter_names(
-            self.model_class.fitter_param_names,
-            self.model_class.filt_param_names,
-            len(filt_names),
-        )
-        sampled, fixed = fixed_slots(
-            expanded,
-            self.model_class.filt_param_names,
-            self.model_class.filt_param_usage,
-            has_phot,
-            has_ast,
-        )
-        self.fitter_param_names = interleave_optional(
-            sampled,
-            self.model_class.fitter_param_names,
-            self.model_class.filt_param_names,
-            len(filt_names),
-            optional_by_filter,
-            ast_params,
+        # Expand filter runs, drop slots without data, then place the
+        # optional names to get the fitted cube order.
+        fit_names, fixed = self.fixed_slots()
+        self.fitter_param_names = self.interleave_optional(
+            fit_names, optional_by_filter, ast_params
         )
 
         self.n_phot_sets = n_phot_sets
         self.n_ast_sets = n_ast_sets
-        self.n_filters = len(filt_names)
-        self.filt_names = list(filt_names)
-        self.has_phot = has_phot
-        self.has_ast = has_ast
-        self.phot_series = phot_series
-        self.ast_series = ast_series
         self.fixed_dataset_params = fixed
         self.tied_params = {}
         self.map_phot_idx_to_ast_idx = filt_for_ast
-        self.obs_locations = resolve_obs_locations(
-            self.data.get('obsLocation', None), filt_names
-        )
+        self.resolve_obs_locations()
 
 
         # Is this necessary?
@@ -1308,8 +1305,8 @@ class MicrolensSolver(Solver):
         self.n_params = len(self.all_param_names)  # cube dimensions
         self.n_clustering_params = self.n_dims
 
-    def fix_sampled_param(self, name, value):
-        """Hold one sampled parameter at a constant.
+    def fix_fit_param(self, name, value):
+        """Hold one fitted parameter at a constant.
 
         Parameters
         ----------
@@ -1326,7 +1323,7 @@ class MicrolensSolver(Solver):
         Raises
         ------
         KeyError
-            ``name`` is not in the sampled cube.
+            ``name`` is not in the fitted cube.
         ValueError
             ``value`` is not a single number.
 
@@ -1361,15 +1358,15 @@ class MicrolensSolver(Solver):
         self.n_clustering_params = self.n_dims
         return None
 
-    def tie_sampled_param(self, name, source):
-        """Copy one sampled suffix from another on every model build.
+    def tie_fit_param(self, name, source):
+        """Copy one fitted suffix from another on every model build.
 
         Parameters
         ----------
         name : str
             Suffix dropped from the cube, such as ``xS0_E3``.
         source : str
-            Sampled suffix that supplies the value, such as
+            Fitted suffix that supplies the value, such as
             ``xS0_E1``. It stays in the cube.
 
         Returns
@@ -1379,7 +1376,7 @@ class MicrolensSolver(Solver):
         Raises
         ------
         KeyError
-            ``name`` or ``source`` is not in the sampled cube.
+            ``name`` or ``source`` is not in the fitted cube.
         ValueError
             The names are not the same parameter on two filters.
 
@@ -1387,7 +1384,7 @@ class MicrolensSolver(Solver):
         -----
         The target is not a fixed constant. ``get_model`` writes the
         source slot into the target slot, so the two stay equal as
-        the source is sampled. Call this before ``solve``.
+        the source is fitted. Call this before ``solve``.
         ``n_dims`` shrinks by one.
         """
         names = list(self.fitter_param_names)
@@ -1513,7 +1510,7 @@ class MicrolensSolver(Solver):
             elif prior_type == 'make_muS_EN_gen':
                 # One shared proper motion. Use the longest astrometric
                 # time baseline, not always the first series.
-                series = longest_ast_series(self.data, self.ast_series)
+                series = self.longest_ast_series()
                 if series is None:
                     series = 0
                 if param_name == 'muS_E':
@@ -1556,69 +1553,34 @@ class MicrolensSolver(Solver):
         return
 
     def get_model(self, params):
-        """Build a model from sampled values plus fixed filter slots.
+        """Build a model from fitted values plus fixed filter slots.
 
         Parameters
         ----------
-        params : array_like or dict
-            Sampled values in ``fitter_param_names`` order, or a mapping
-            keyed by those names.
+        params : dict, astropy.table.Row, or sequence
+            Fitted parameters; see ``to_param_dict``. Not modified.
 
         Returns
         -------
         mod : object
             Model instance. Filter-indexed constructor arguments have
-            length ``n_filters``, including zeros that were not sampled.
+            length ``n_filters``, including zeros that were not fitted.
             ``obsLocation`` is the resolved body list.
         """
-        names = list(self.fitter_param_names)
-        if isinstance(params, (dict, Row)):
-            values = [_sampled_value(params, name) for name in names]
-        else:
-            values = [params[i] for i in range(len(names))]
+        # Fitted values keyed by name.
+        params = self.to_param_dict(params)
 
-        arguments = pack_constructor_params(
-            names,
-            values,
-            self.model_class.fitter_param_names,
-            self.model_class.filt_param_names,
-            self.n_filters,
-            self.fixed_dataset_params,
-            tied=self.tied_params,
-        )
-        # GP hyperparameters are sampled per filter but the constructor
+        arguments = self.pack_constructor_params(params)
+
+        # GP hyperparameters are fitted per filter but the constructor
         # takes one dictionary per name, keyed by the 0-based index.
-        arguments.extend(pack_optional_param_dicts(
-            names,
-            values,
-            getattr(self.model_class, 'phot_optional_param_names', []),
-        ))
-        fixed_params_dict = {}
-        if self.fixed_param_names:
-            fixed_params_dict = generate_fixed_params_dict(
-                self.data, self.fixed_param_names
-            )
-        fixed_params_dict = dict(fixed_params_dict)
+        arguments.extend(self.pack_optional_param_dicts(params))
+
+        # Fixed constructor keywords from the data, plus the resolved observers.
+        fixed_params_dict = generate_fixed_params_dict(self.data, self.fixed_param_names)
         fixed_params_dict['obsLocation'] = list(self.obs_locations)
 
         mod = self.model_class(*arguments, **fixed_params_dict)
-
-        # Derived parameters are written back into a positional cube
-        # that already has room for them. A sampled-only list is left
-        # alone. A ctypes pointer has no len; that buffer does have room.
-        writable = False
-        if not isinstance(params, (dict, Row)):
-            try:
-                writable = len(params) >= self.n_params
-            except TypeError:
-                writable = True
-        if writable:
-            for i, param_name in enumerate(self.additional_param_names):
-                filt_name, filt_idx = split_param_filter_index1(param_name)
-                if filt_idx is None:
-                    params[self.n_dims + i] = getattr(mod, param_name)
-                else:
-                    params[self.n_dims + i] = getattr(mod, filt_name)[filt_idx - 1]
 
         return mod
 
@@ -1647,9 +1609,7 @@ class MicrolensSolver(Solver):
         A suffixed prior that is not a cube name is reported here,
         after the caller has finished replacing defaults.
         """
-        warn_unmatched_suffixed_priors(
-            self.priors, self.fitter_param_names
-        )
+        self.warn_unmatched_suffixed_priors()
 
         n_ast = int(self.n_ast_sets or 0)
         if n_ast == 0:
@@ -1691,7 +1651,7 @@ class MicrolensSolver(Solver):
         Parameters
         ----------
         cube : array_like
-            Unit-interval values, one per sampled name. PyMultiNest
+            Unit-interval values, one per fitted name. PyMultiNest
             passes this as a ctypes pointer.
         ndim, nparams : int, optional
             Unused. PyMultiNest supplies them.
@@ -1702,41 +1662,32 @@ class MicrolensSolver(Solver):
             The same object, with one physical value written per slot.
         """
         for i, param_name in enumerate(self.fitter_param_names):
-            # A length-1 ppf is one number wrapped in an array.
-            # A longer draw cannot be stored in one ctypes slot.
-            draw = self.priors[param_name].ppf(cube[i])
-            cube[i] = _one_draw(draw, param_name)
+            cube[i] = self.priors[param_name].ppf(cube[i])
 
         return cube
 
 
     def Prior_copy(self, cube):
-        """Copy ``cube`` and write physical prior draws into the copy.
+        """Map a unit cube to physical values plus derived parameters.
 
         Parameters
         ----------
         cube : array_like
-            Unit-interval values with a ``copy`` method.
+            Unit-interval values, one per fitted name.
 
         Returns
         -------
-        cube_copy : ndarray
-            Physical values, with room for additional parameters.
+        physical : numpy.ndarray, shape (n_params,)
+            Fitted physical values followed by the derived parameters.
         """
-        cube_copy = cube.copy()
-        for i, param_name in enumerate(self.fitter_param_names):
-            draw = self.priors[param_name].ppf(cube[i])
-            cube_copy[i] = _one_draw(draw, param_name)
+        # Fitted physical values from each prior.
+        physical = [self.priors[name].ppf(cube[i])
+                    for i, name in enumerate(self.fitter_param_names)]
 
-        # Append on additional parameters.
-        add_params = np.zeros(len(self.additional_param_names), dtype='float')
-        cube_copy = np.append(cube_copy, add_params)
-        # Strangely, get_model does the parameter updating for the additional parameters.
-        # This should really be elsewhere FIXME.
-        model = self.get_model(cube_copy)  
-            
-        return cube_copy
-    
+        # Derived parameters come from the model built at those values.
+        model = self.get_model(physical)
+        return np.append(physical, self.get_derived_param_values(model))
+
     # FIXME: I pass in ndim and nparams since that's what's done in Prior, but I don't think they're necessary?
     def Prior_from_post(self, cube, ndim=None, nparams=None):
         """Get the bin midpoints
@@ -1752,10 +1703,9 @@ class MicrolensSolver(Solver):
         for i, param_name in enumerate(self.fitter_param_names):
             if param_name in self.post_param_names:
                 pdx = self.post_param_names.index(param_name)
-                draw = post_params[pdx]
+                cube[i] = post_params[pdx]
             else:
-                draw = self.priors[param_name].ppf(cube[i])
-            cube[i] = _one_draw(draw, param_name)
+                cube[i] = self.priors[param_name].ppf(cube[i])
 
         return cube
 
@@ -1795,21 +1745,42 @@ class MicrolensSolver(Solver):
         return pars 
 
     def LogLikelihood(self, cube, ndim=None, n_params=None):
-        """This is just a wrapper because PyMultinest requires passing in
-        the ndim and nparams.
+        """Log-likelihood callback for PyMultiNest.
+
+        Parameters
+        ----------
+        cube : ctypes pointer or array_like
+            Fitted physical values, with room for the derived parameters
+            after the first ``n_dims`` entries.
+        ndim, n_params : int, optional
+            Unused. PyMultiNest supplies them.
+
+        Returns
+        -------
+        lnL : float
+            Log-likelihood of the data for these parameters.
+
+        Notes
+        -----
+        The derived parameters are written into ``cube`` after the fitted
+        ones, which is where PyMultiNest reads them.
         """
-        lnL = self.log_likely(cube, verbose=self.verbose)
-#        lnL = self.log_likely0(cube, verbose=self.verbose)
+        # Build the model once; it gives both lnL and the derived parameters.
+        model = self.get_model(cube)
+        lnL = self.log_likely(cube, verbose=self.verbose, model=model)
+
+        for i, value in enumerate(self.get_derived_param_values(model)):
+            cube[self.n_dims + i] = value
 
         return lnL
-    
+
     def dyn_prior(self, cube):
         """Map a dynesty unit cube through each parameter's prior.
 
         Parameters
         ----------
         cube : array_like
-            Unit-interval values, one per sampled name.
+            Unit-interval values, one per fitted name.
 
         Returns
         -------
@@ -1817,8 +1788,7 @@ class MicrolensSolver(Solver):
             The same object, with one physical value per slot.
         """
         for i, param_name in enumerate(self.fitter_param_names):
-            draw = self.priors[param_name].ppf(cube[i])
-            cube[i] = _one_draw(draw, param_name)
+            cube[i] = self.priors[param_name].ppf(cube[i])
 
         return cube
 
@@ -1857,7 +1827,21 @@ class MicrolensSolver(Solver):
 
         return lnL_ast
 
-    def log_likely_photometry(self, model, cube):
+    def log_likely_photometry(self, model, params):
+        """Photometric log-likelihood summed over the photometric data sets.
+
+        Parameters
+        ----------
+        model : object
+            Model built from ``params``.
+        params : dict
+            Fitted parameters from ``to_param_dict`` (for the error terms).
+
+        Returns
+        -------
+        lnL_phot : float
+            Photometric log-likelihood, 0 for a model without photometry.
+        """
         if model.photometryFlag:
             lnL_phot = 0.0
 
@@ -1866,7 +1850,7 @@ class MicrolensSolver(Solver):
                 mag = self.data['mag' + str(i + 1)]
                 
                 # additive or multiplicative error
-                mag_err = self.get_modified_mag_err(cube, i)
+                mag_err = self.get_modified_mag_err(params, i)
 
                 lnL_phot += model.log_likely_photometry(t_phot, mag, mag_err, i)
         else:
@@ -1875,56 +1859,58 @@ class MicrolensSolver(Solver):
         return lnL_phot
         
 
-    def log_likely(self, cube, verbose=False):
-        """
+    def log_likely(self, cube, verbose=False, model=None):
+        """Log-likelihood of the photometry and astrometry.
+
         Parameters
         ----------
-        cube : list or dict
-            The dictionary or cube of the model parameters.
+        cube : dict, astropy.table.Row, or sequence
+            Fitted parameters; see ``to_param_dict``.
+        verbose : bool, optional
+            Plot the model and print each parameter and lnL term.
+        model : object, optional
+            Model already built from ``cube``. Built here when None.
+
+        Returns
+        -------
+        lnL : float
+            Photometric plus astrometric log-likelihood.
         """
-        model = self.get_model(cube)
+        params = self.to_param_dict(cube)
+        if model is None:
+            model = self.get_model(params)
 
-#        # Useful for debugging the parallax cache.
-#        def get_cache_size():
-#            """Print out the cache size"""
-#            cache_file = mmodel.cache_dir + '/joblib/microlens/jlu/model/parallax_in_direction/'
-#            
-#            size = 0
-#            for path, dirs, files in os.walk(cache_file):
-#                for f in files:
-#                    fp = os.path.join(path, f)
-#                    size += os.path.getsize(fp)
-#
-#            return size
-#        
-#        print(f'Cache size = {get_cache_size()}')
-
-        lnL_phot = self.log_likely_photometry(model, cube)
+        lnL_phot = self.log_likely_photometry(model, params)
         lnL_ast = self.log_likely_astrometry(model)
-
         lnL = lnL_phot + lnL_ast
-            
+
         if verbose:
             self.plot_model_and_data(model)
-
-            fmt = '{0:13s} = {1:f} '
-            for ff in range(self.n_params):
-                if isinstance(cube, dict) or isinstance(cube, Row):
-                    pname = self.all_param_names[ff]
-                    if ((isinstance(cube, dict) and pname in cube) or
-                        (isinstance(cube, Row)  and pname in cube.colnames)):
-                        print(fmt.format(pname, cube[pname])),
-                    else:
-                        print(fmt.format(pname, -999.0)),
-                else:
-                    print(fmt.format(self.all_param_names[ff], cube[ff])),
-            print(fmt.format('lnL_phot', lnL_phot)),
-            print(fmt.format('lnL_ast', lnL_ast)),
-            print(fmt.format('lnL', lnL))
-
-            # pdb.set_trace()
+            self.print_param_values(params, model, lnL_phot=lnL_phot,
+                                    lnL_ast=lnL_ast, lnL=lnL)
 
         return lnL
+
+    def print_param_values(self, params, model, **lnL_terms):
+        """Print fitted and derived parameters, then the lnL terms.
+
+        Parameters
+        ----------
+        params : dict
+            Fitted parameters from ``to_param_dict``.
+        model : object
+            Model built from ``params``; supplies the derived parameters.
+        **lnL_terms : float
+            Log-likelihood terms to print after the parameters.
+
+        Returns
+        -------
+        None
+        """
+        values = list(params.values()) + self.get_derived_param_values(model)
+        for name, value in [*zip(self.all_param_names, values), *lnL_terms.items()]:
+            print(f'{name:13s} = {value:f}')
+        return None
 
     def evaluate_loglik_jax(self, cube):
         """Evaluate log-likelihood via the JAX registry.
@@ -1932,7 +1918,7 @@ class MicrolensSolver(Solver):
         Parameters
         ----------
         cube : array_like or mapping
-            Sampled values in ``fitter_param_names`` order, or a mapping
+            Fitted values in ``fitter_param_names`` order, or a mapping
             keyed by those names. An unsuffixed ``xS0_E`` fills every
             suffixed slot that has no entry of its own.
 
@@ -1945,17 +1931,8 @@ class MicrolensSolver(Solver):
         fn, _ = jax_physics.build_jax_loglik_fn(self)
         if fn is None:
             return float(self.log_likely(cube))
-        if isinstance(cube, (dict, Row)):
-            vec = np.array(
-                [_sampled_value(cube, n) for n in self.fitter_param_names],
-                dtype=np.float64,
-            )
-        else:
-            n_cube = len(self.fitter_param_names)
-            vec = np.array(
-                [float(cube[i]) for i in range(n_cube)],
-                dtype=np.float64,
-            )
+        # Fitted values as the float vector the JAX likelihood takes.
+        vec = self.to_param_vector(self.to_param_dict(cube))
         return float(fn(vec))
 
     def grad_loglik_jax(self, cube):
@@ -1964,7 +1941,7 @@ class MicrolensSolver(Solver):
         Parameters
         ----------
         cube : array_like or mapping
-            Sampled values in ``fitter_param_names`` order, or a mapping
+            Fitted values in ``fitter_param_names`` order, or a mapping
             keyed by those names. An unsuffixed legacy name fills every
             suffixed slot that has no entry of its own.
 
@@ -1984,17 +1961,8 @@ class MicrolensSolver(Solver):
             raise NotImplementedError(
                 "No JAX log-likelihood for this fitter configuration."
             )
-        if isinstance(cube, (dict, Row)):
-            vec = np.array(
-                [_sampled_value(cube, n) for n in self.fitter_param_names],
-                dtype=np.float64,
-            )
-        else:
-            n_cube = len(self.fitter_param_names)
-            vec = np.array(
-                [float(cube[i]) for i in range(n_cube)],
-                dtype=np.float64,
-            )
+        # Fitted values as the float vector the JAX likelihood takes.
+        vec = self.to_param_vector(self.to_param_dict(cube))
         return np.asarray(jax.grad(fn)(vec), dtype=np.float64)
 
     def callback_plotter(self, nSamples, nlive, nPar,
@@ -2045,28 +2013,32 @@ class MicrolensSolver(Solver):
 #        return -1
 
 
-    def get_modified_mag_err(self, cube, filt_index):
-        mag_err = copy.deepcopy(self.data['mag_err' + str(filt_index + 1)])
+    def get_modified_mag_err(self, params, filt_index):
+        """Photometric errors with any fitted additive and multiplicative terms.
 
-        if self.add_error_on_photometry:
-            add_err_name = 'add_err' + str(filt_index + 1)
-            if isinstance(cube, dict) or isinstance(cube, Row):
-                add_err = cube[add_err_name]
-            else:
-                add_err_idx = self.all_param_names.index(add_err_name)
-                add_err = cube[add_err_idx]
-            mag_err = np.hypot(mag_err, add_err)
+        Parameters
+        ----------
+        params : dict
+            Fitted parameters from ``to_param_dict``.
+        filt_index : int
+            0-based photometric data set index.
 
-        if self.multiply_error_on_photometry:
-            mult_err_name = 'mult_err' + str(filt_index + 1)
-            if isinstance(cube, dict) or isinstance(cube, Row):
-                mult_err = cube[mult_err_name]
-            else:
-                mult_err_idx = self.all_param_names.index(mult_err_name)
-                mult_err = cube[mult_err_idx]
-            mag_err *= mult_err
+        Returns
+        -------
+        mag_err : numpy.ndarray
+            ``mag_err{k}`` combined in quadrature with ``add_err{k}`` and
+            then scaled by ``mult_err{k}``, for whichever of those is fitted.
+        """
+        suffix = str(filt_index + 1)
+        mag_err = self.data['mag_err' + suffix]
 
-        return mag_err        
+        if 'add_err' + suffix in params:
+            mag_err = np.hypot(mag_err, params['add_err' + suffix])
+
+        if 'mult_err' + suffix in params:
+            mag_err = mag_err * params['mult_err' + suffix]
+
+        return mag_err
 
 
     def write_params_yaml(self):
@@ -2378,29 +2350,6 @@ class MicrolensSolver(Solver):
 
         return pspl_mod_list
 
-    def _write_schema2(self, outroot):
-        """Write the schema-2 sidecar for this fitter.
-
-        Parameters
-        ----------
-        outroot : str
-            Results path without an extension.
-
-        Returns
-        -------
-        None
-        """
-        write_results_schema2(
-            outroot,
-            getattr(self, 'fitter_param_names', []),
-            getattr(self, 'fixed_dataset_params', {}),
-            getattr(self, 'filt_names', []),
-            getattr(self, 'has_phot', []),
-            getattr(self, 'has_ast', []),
-            getattr(self, 'obs_locations', []),
-        )
-        return None
-
     def load_mnest_results(self, remake_fits=False):
         """Load up the MultiNest results into an astropy table.
         """
@@ -2423,14 +2372,13 @@ class MicrolensSolver(Solver):
                 tab.rename_column('col{0:d}'.format(cc), self.all_param_names[ff])
 
             tab.write(outroot + '.fits', overwrite=True)
-            self._write_schema2(outroot)
+            self.write_results_schema2(outroot)
         else:
             # Load much faster from fits file.
             tab = Table.read(outroot + '.fits')
 
         # Old chains store one xS0 / pi_ref_frame for every filter.
-        n_filters = int(getattr(self, 'n_filters', 1) or 1)
-        tab = adapt_legacy_filter_columns(tab, n_filters)
+        tab = self.adapt_legacy_filter_columns(tab)
         return tab
 
     def load_mnest_summary(self, remake_fits=False):
@@ -3038,6 +2986,9 @@ class MicrolensSolver(Solver):
         if params == 'best':
             params = self.get_best_fit()
 
+        # Fitted parameters keyed by name.
+        params = self.to_param_dict(params)
+
         # Get likelihoods.
         pspl = self.get_model(params)
         lnL_phot = self.log_likely_photometry(pspl, params)
@@ -3153,6 +3104,9 @@ class MicrolensSolver(Solver):
         """
         if params == 'best':
             params = self.get_best_fit()
+
+        # Fitted parameters keyed by name.
+        params = self.to_param_dict(params)
 
         pspl = self.get_model(params)
 
@@ -3333,6 +3287,9 @@ class MicrolensSolver(Solver):
         """
         if params == 'best':
             params = self.get_best_fit()
+
+        # Fitted parameters keyed by name.
+        params = self.to_param_dict(params)
 
         # Get model.
         pspl = self.get_model(params)
@@ -3567,7 +3524,21 @@ class MicrolensSolverWeighted(MicrolensSolver):
         return lnL_ast
 
 
-    def log_likely_photometry(self, model, cube):
+    def log_likely_photometry(self, model, params):
+        """Photometric log-likelihood summed over the photometric data sets.
+
+        Parameters
+        ----------
+        model : object
+            Model built from ``params``.
+        params : dict
+            Fitted parameters from ``to_param_dict`` (for the error terms).
+
+        Returns
+        -------
+        lnL_phot : float
+            Photometric log-likelihood, 0 for a model without photometry.
+        """
         if model.photometryFlag:
             lnL_phot = 0.0
 
@@ -3576,7 +3547,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
                 mag = self.data['mag' + str(i + 1)]
                 
                 # additive or multiplicative error
-                mag_err = self.get_modified_mag_err(cube, i)
+                mag_err = self.get_modified_mag_err(params, i)
                 
                 weight = self.weights[i]
                 lnL_phot_unwgt = model.log_likely_photometry(t_phot, mag, mag_err, i)
@@ -3594,7 +3565,7 @@ class MicrolensSolverWeighted(MicrolensSolver):
 
 
 class MicrolensSolverHobsonWeighted(MicrolensSolver):
-    def log_likely(self, cube, verbose=False):
+    def log_likely(self, cube, verbose=False, model=None):
         """
         Compute a log-likelihood where there is a hyperparameter,
         alpha_k, that controls the weighting between each data k set. 
@@ -3604,11 +3575,17 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
 
         Parameters
         ----------
-        cube : list or dict
-            The dictionary or cube of the model parameters.
+        cube : dict, astropy.table.Row, or sequence
+            Fitted parameters; see ``to_param_dict``.
+        verbose : bool, optional
+            Print each parameter and lnL term.
+        model : object, optional
+            Model already built from ``cube``. Built here when None.
         """
         # Fetch the model for these parameters.
-        model = self.get_model(cube)
+        params = self.to_param_dict(cube)
+        if model is None:
+            model = self.get_model(params)
 
         # We are implementing the Hobson weighting scheme such that we
         # explore and then marginalize over the hyperparameter, alpha_k (ak),
@@ -3626,7 +3603,7 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
                 mag = self.data['mag' + str(i + 1)]
                 
                 # additive or multiplicative error
-                mag_err = self.get_modified_mag_err(cube, i)
+                mag_err = self.get_modified_mag_err(params, i)
 
                 nk = len(mag)
                 nk21 = (nk / 2.0) + 1.0
@@ -3682,20 +3659,8 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
             # self.plot_model_and_data(model)
             # pdb.set_trace()
             
-            fmt = '{0:13s} = {1:f} '
-            for ff in range(self.n_params):
-                if isinstance(cube, dict) or isinstance(cube, Row):
-                    pname = self.all_param_names[ff]
-                    if ((isinstance(cube, dict) and pname in cube) or
-                        (isinstance(cube, Row)  and pname in cube.colnames)):
-                        print(fmt.format(pname, cube[pname])),
-                    else:
-                        print(fmt.format(pname, -999.0)),
-                else:
-                    print(fmt.format(self.all_param_names[ff], cube[ff])),
-            print(fmt.format('lnL_phot', lnL_phot)),
-            print(fmt.format('lnL_ast', lnL_ast)),
-            print(fmt.format('lnL', lnL))
+            self.print_param_values(params, model, lnL_phot=lnL_phot,
+                                    lnL_ast=lnL_ast, lnL=lnL)
 
         return lnL
 
@@ -3757,7 +3722,8 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
         eff_weights = np.empty(0, dtype=float)
         
         # Fetch the model for these parameters.
-        model = self.get_model(cube)
+        params = self.to_param_dict(cube)
+        model = self.get_model(params)
 
         # We are implementing the Hobson weighting scheme such that we
         # explore and then marginalize over the hyperparameter, alpha_k (ak),
@@ -3773,7 +3739,7 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
                 mag = self.data['mag' + str(i + 1)]
                 
                 # additive or multiplicative error
-                mag_err = self.get_modified_mag_err(cube, i)
+                mag_err = self.get_modified_mag_err(params, i)
 
                 nk = len(mag)
 
@@ -3922,11 +3888,7 @@ class LogLikelihoodOp(Op):
         if self._jax_loglik is not None:
             logp = float(self._jax_loglik(param_vec))
         else:
-            cube = {
-                name: float(param_vec[i])
-                for i, name in enumerate(self.param_names)
-            }
-            logp = self.fitter.log_likely(cube)
+            logp = self.fitter.log_likely(dict(zip(self.param_names, param_vec)))
         output_storage[0][0] = np.array(logp, dtype=np.float64)
 
         return
@@ -4126,13 +4088,13 @@ class MicrolensSolverPyMC(MicrolensSolver):
         n_samples = samples.shape[0]
         weights = np.ones(n_samples, dtype=float) / n_samples
 
+        # One model per sample gives both lnL and the derived parameters.
         loglikes = np.zeros(n_samples, dtype=float)
+        derived = np.zeros((n_samples, len(self.additional_param_names)))
         for ii in range(n_samples):
-            cube = {
-                name: samples[ii, jj]
-                for jj, name in enumerate(self.fitter_param_names)
-            }
-            loglikes[ii] = self.log_likely(cube)
+            model = self.get_model(samples[ii])
+            loglikes[ii] = self.log_likely(samples[ii], model=model)
+            derived[ii] = self.get_derived_param_values(model)
 
         tab = Table()
         tab['weights'] = weights
@@ -4141,15 +4103,8 @@ class MicrolensSolverPyMC(MicrolensSolver):
         for jj, name in enumerate(self.fitter_param_names):
             tab[name] = samples[:, jj]
 
-        for add_idx, name in enumerate(self.additional_param_names):
-            col = np.zeros(n_samples, dtype=float)
-            for ii in range(n_samples):
-                cube = np.zeros(self.n_params, dtype=float)
-                for jj, pname in enumerate(self.fitter_param_names):
-                    cube[jj] = samples[ii, jj]
-                self.get_model(cube)
-                col[ii] = cube[self.n_dims + add_idx]
-            tab[name] = col
+        for jj, name in enumerate(self.additional_param_names):
+            tab[name] = derived[:, jj]
 
         return tab
 
@@ -4178,9 +4133,8 @@ class MicrolensSolverPyMC(MicrolensSolver):
         outroot = self.outputfiles_basename
         if os.path.exists(outroot + '.fits'):
             self._results_table = Table.read(outroot + '.fits')
-            n_filters = int(getattr(self, 'n_filters', 1) or 1)
-            self._results_table = adapt_legacy_filter_columns(
-                self._results_table, n_filters
+            self._results_table = self.adapt_legacy_filter_columns(
+                self._results_table
             )
             return self._results_table
 
@@ -4692,17 +4646,29 @@ def generate_params_dict(params, fitter_param_names):
                     
 
 def generate_fixed_params_dict(data, fixed_param_names):
-    param_dict = {}
-    if ('obsLocation' in fixed_param_names) and ('obsLocation' not in data.keys()):
-        # Catch the case where we need an obsLocation; but one hasn't been provided in the
-        # data object. Assume default parameter in model.py (earth).
-        use_fixed_param_names = [item for item in fixed_param_names if not item=='obsLocation']
-    else:
-        use_fixed_param_names = fixed_param_names
-    for param in use_fixed_param_names:
-        param_dict[param] = data[param]
+    """Collect the model's fixed (not fitted) constructor keywords from the data.
 
-    return param_dict
+    Parameters
+    ----------
+    data : dict
+        Data dictionary holding one entry per fixed parameter name.
+    fixed_param_names : sequence of str or None
+        Names of the model's fixed parameters. None or empty means the
+        model has none.
+
+    Returns
+    -------
+    param_dict : dict
+        Fixed parameter name to its value in ``data``. Empty when there
+        are no fixed parameters.
+
+    Notes
+    -----
+    A missing ``obsLocation`` is skipped so the model default (Earth)
+    applies.
+    """
+    return {name: data[name] for name in (fixed_param_names or [])
+            if name != 'obsLocation' or 'obsLocation' in data}
 
 ########################################
 ### GENERAL USE AND SHARED FUNCTIONS ###
