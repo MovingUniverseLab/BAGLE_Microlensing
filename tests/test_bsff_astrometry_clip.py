@@ -159,7 +159,7 @@ def test_host_jax_psbl_astrometry_and_lnl_agree():
 
         cube = {
             "mLp": 10.0, "mLs": 5.0, "t0": 57000.0,
-            "xS0_E": 0.0, "xS0_N": 0.0, "beta": 2.0,
+            "xS0_E1": 0.0, "xS0_N1": 0.0, "beta": 2.0,
             "muL_E": 0.0, "muL_N": 0.0, "muS_E": 3.0, "muS_N": 0.0,
             "dL": 3000.0, "dS": 8000.0, "sep": 10.0, "alpha": 90.0,
             "b_sff1": b_sff, "mag_src1": 14.0, "dmag_Lp_Ls1": 5.0,

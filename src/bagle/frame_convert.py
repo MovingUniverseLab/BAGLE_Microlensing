@@ -1033,19 +1033,15 @@ def convert_helio_geo_phot(ra, dec,
 
     # Transform from tb to EN as needed (so user gets back what they expect).
     if coord_out=='tb':
-        try:
-            # Handle conversion of single values.
-            x = np.sign(np.cross(np.array([tauhatE_out, tauhatN_out]), u0vec_out))
-            if x > 0:
-                u0_out = -np.hypot(u0vec_out[0], u0vec_out[1])
-            else:
-                u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
-        except:
-            # Handle conversions with array-like inputs.
-            x = np.sign(tauhatE_out * u0vec_out[1] - tauhatN_out * u0vec_out[0])
-            u0_out = np.zeros(len(t0_in))
-            _u0_out = np.hypot(u0vec_out[0], u0vec_out[1])
-            u0_out = np.where(x < 0, _u0_out, -_u0_out)
+        # 2D cross product. NumPy 2 rejects np.cross on length-2 vectors.
+        # Array events store East on axis 0 and North on axis 1.
+        u0_arr = np.asarray(u0vec_out)
+        x = np.sign(tauhatE_out * u0_arr[1] - tauhatN_out * u0_arr[0])
+        hyp = np.hypot(u0_arr[0], u0_arr[1])
+        if np.ndim(x) == 0:
+            u0_out = -hyp if x > 0 else hyp
+        else:
+            u0_out = np.where(x < 0, hyp, -hyp)
 
     # Flip from LS to SL as needed (so user gets back what they expect).
     if murel_out=='LS':

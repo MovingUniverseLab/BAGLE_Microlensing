@@ -1360,15 +1360,48 @@ class MicrolensSolver(Solver):
         Returns
         -------
         table : astropy.table.Table
-            The same table. Each legacy column is duplicated as
-            ``name1`` .. ``name{n_filters}``, where ``n_filters`` is
-            ``self.n_filters`` (1 when unset).
+            The same table. Each legacy origin column is duplicated
+            as ``name1`` .. ``name{n_filters}``. ``pi_ref_frame`` is
+            copied only when the destination class lists it in
+            ``filt_param_names``.
+
+        Raises
+        ------
+        ValueError
+            The largest photometric suffix is not ``n_filters``, or a
+            column is both unsuffixed and suffixed.
         """
         # Old chains store one xS0 / pi_ref_frame for every filter.
         n_filters = int(getattr(self, 'n_filters', 1) or 1)
 
+        # Largest 1-based suffix on the photometric columns. No such
+        # columns means there is nothing to check.
+        phot_bases = (
+            'b_sff', 'mag_src', 'mag_base', 'mag_src_pri',
+            'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
+        )
+        largest = 0
+        for col in table.colnames:
+            base, index = split_param_filter_index1(col)
+            if base in phot_bases and index is not None and index > largest:
+                largest = index
+        if largest and largest != n_filters:
+            raise ValueError(
+                f'photometric suffix {largest} does not match '
+                f'n_filters={n_filters}'
+            )
+
+        # pi_ref_frame is per-filter only on a RefPar class.
+        model_class = getattr(self, 'model_class', None)
+        filt_names = tuple(
+            getattr(model_class, 'filt_param_names', ()) or ()
+        )
+        bases = ['xS0_E', 'xS0_N']
+        if 'pi_ref_frame' in filt_names:
+            bases.append('pi_ref_frame')
+
         # Only the per-filter origin and reference-frame columns changed names.
-        for base in ('xS0_E', 'xS0_N', 'pi_ref_frame'):
+        for base in bases:
             suffixed = [f'{base}{k}' for k in range(1, n_filters + 1)]
             has_plain = base in table.colnames
             present = [name for name in suffixed if name in table.colnames]
@@ -1800,10 +1833,9 @@ class MicrolensSolver(Solver):
 
         Notes
         -----
-        Two suffixes cannot share one cube entry. To give a second
-        astrometric origin the simulated value used for filter 1,
-        fix that suffix and keep sampling filter 1. Call this before
-        ``solve``. ``n_dims`` shrinks by one.
+        Holding a suffix fixed is this method. Making two suffixes
+        share one sampled value is ``tie_fit_param``. Call this
+        before ``solve``. ``n_dims`` shrinks by one.
         """
         names = list(self.fitter_param_names)
         if name not in names:
@@ -8530,16 +8562,27 @@ def split_param_filter_index1(s):
     param_name : str
         The name of the parameter.
     filt_index : int (or None)
-        The 1-based filter index.
+        The 1-based filter index. A trailing integer of 1 or more
+        is the index, including 10 and 20. A trailing 0 is part of
+        the name (``t0``, ``u0``).
     
     """
-    param_name = s.rstrip('123456789')
-    if len(param_name) == len(s):
-        filt_index = None
-    else:
-        filt_index = int(s[len(param_name):])
-
-    return param_name, filt_index
+    end = len(s)
+    while end > 0 and s[end - 1].isdigit():
+        end -= 1
+    digits = s[end:]
+    if not digits:
+        return s, None
+    # A leading 0 in the digit run is part of the name (t0, gp_log_S0).
+    # The digits after that 0 are the filter (gp_log_S01 -> S0, filter 1).
+    # 10 and 20 have no leading 0, so the whole run is the filter.
+    rest = digits.lstrip('0')
+    if not rest:
+        return s, None
+    filt_index = int(rest)
+    if filt_index < 1:
+        return s, None
+    return s[:end + (len(digits) - len(rest))], filt_index
 
 def generate_params_dict(params, fitter_param_names):
     """

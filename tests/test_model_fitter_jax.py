@@ -2854,7 +2854,8 @@ def test_scipy_to_pymc_priors(prior_fn, args, plot=False):
     pymc = pytest.importorskip('pymc')
     from bagle.model_fitter_jax import scipy_to_pymc
 
-    scipy_prior = prior_fn(*args)
+    # JAX make_* takes the parameter name before the distribution args.
+    scipy_prior = prior_fn('theta', *args)
     with pymc.Model():
         scipy_to_pymc(scipy_prior, 'theta')
         idata = pymc.sample_prior_predictive(draws=3000, random_seed=FIT_SEED)

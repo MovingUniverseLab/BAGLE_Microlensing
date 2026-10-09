@@ -412,12 +412,19 @@ def test_numpy_and_jax_likelihood_see_second_observer(monkeypatch):
 
 
 def test_legacy_fits_copies_unsuffixed_origin():
-    """An old chain's single xS0 and pi_ref_frame fill every filter."""
+    """An old chain's single xS0 fills every filter.
+
+    ``pi_ref_frame`` is copied only for a RefPar destination. The
+    helper stub has no model class, so that column stays unsuffixed.
+    Copying it there was the old assertion, and it was wrong.
+    """
     table = Table()
     table['xS0_E'] = np.array([0.01, 0.02])
     table['xS0_N'] = np.array([-0.03, -0.04])
     table['pi_ref_frame'] = np.array([0.2, 0.3])
     table['t0'] = np.array([57000.0, 57001.0])
+    # Copy before the first adapt. That call adds the suffixed columns.
+    ref_table = table.copy()
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter('always')
         out = adapt_legacy_filter_columns(table, 3)
@@ -425,11 +432,46 @@ def test_legacy_fits_copies_unsuffixed_origin():
     for suffix in (1, 2, 3):
         np.testing.assert_array_equal(out[f'xS0_E{suffix}'], table['xS0_E'])
         np.testing.assert_array_equal(out[f'xS0_N{suffix}'], table['xS0_N'])
-        np.testing.assert_array_equal(
-            out[f'pi_ref_frame{suffix}'], table['pi_ref_frame']
-        )
+        assert f'pi_ref_frame{suffix}' not in out.colnames
     # The legacy column is kept, not overwritten with zero.
     np.testing.assert_array_equal(out['xS0_E'], np.array([0.01, 0.02]))
+    np.testing.assert_array_equal(out['pi_ref_frame'], np.array([0.2, 0.3]))
+
+    class _Ref:
+        filt_param_names = ('pi_ref_frame', 'b_sff', 'mag_src')
+
+    stub = SimpleNamespace(n_filters=3, model_class=_Ref)
+    out_ref = MicrolensSolver.adapt_legacy_filter_columns(stub, ref_table)
+    for suffix in (1, 2, 3):
+        np.testing.assert_array_equal(
+            out_ref[f'pi_ref_frame{suffix}'], table['pi_ref_frame']
+        )
+    return None
+
+
+def test_legacy_phot_suffix_must_match_n_filters():
+    """A chain whose largest photometric suffix is not n_filters raises."""
+    table = Table()
+    table['b_sff1'] = np.array([0.5])
+    table['b_sff2'] = np.array([0.6])
+    table['xS0_E'] = np.array([0.01])
+    with pytest.raises(ValueError, match='n_filters'):
+        adapt_legacy_filter_columns(table, 3)
+    return None
+
+
+def test_split_param_filter_index_keeps_trailing_zero():
+    """Filter 10 is a suffix. A trailing 0 stays in the name."""
+    split = model_fitter.split_param_filter_index1
+    assert split('b_sff10') == ('b_sff', 10)
+    assert split('xS0_E20') == ('xS0_E', 20)
+    assert split('t0') == ('t0', None)
+    assert split('u0') == ('u0', None)
+    assert split('piE_N2') == ('piE_N', 2)
+    assert split('mag_base10') == ('mag_base', 10)
+    # gp_log_S0 ends in 0. Filter 1 is gp_log_S01, not gp_log_S + 1.
+    assert split('gp_log_S0') == ('gp_log_S0', None)
+    assert split('gp_log_S01') == ('gp_log_S0', 1)
     return None
 
 

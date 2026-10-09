@@ -2910,6 +2910,10 @@ def test_u0_hat_thetaE_hat():
     E_hat = np.array([1.0, 0.0])
     N_hat = np.array([0.0, 1.0])
 
+    def cross2(a, b):
+        # NumPy 2 rejects np.cross on length-2 vectors.
+        return a[0] * b[1] - a[1] * b[0]
+
     ##########
     # Test 1:
     #   u0 sign:     +, +
@@ -2927,7 +2931,7 @@ def test_u0_hat_thetaE_hat():
 
     # Should be positive.
     # in units of thetaE, opposite sign as beta???? NOT SURE ANYMORE.
-    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * np.cross(u0_hat_in, N_hat) * 1.0
+    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * cross2(u0_hat_in, N_hat) * 1.0
 
     # Test
     u0_hat = model.u0_hat_from_thetaE_hat(muRel_hat_in, u0amp_in)
@@ -2955,7 +2959,7 @@ def test_u0_hat_thetaE_hat():
     muRel_hat_in = np.array([muRel_hatE_in, muRel_hatN_in])
 
     # Should be negative.
-    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * np.cross(u0_hat_in, N_hat) * 1.0
+    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * cross2(u0_hat_in, N_hat) * 1.0
 
     # Test
     u0_hat = model.u0_hat_from_thetaE_hat(muRel_hat_in, u0amp_in)
@@ -2982,7 +2986,7 @@ def test_u0_hat_thetaE_hat():
     muRel_hat_in = np.array([muRel_hatE_in, muRel_hatN_in])
 
     # Should be negative.
-    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * np.cross(u0_hat_in, N_hat) * 1.0
+    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * cross2(u0_hat_in, N_hat) * 1.0
 
     # Test
     u0_hat = model.u0_hat_from_thetaE_hat(muRel_hat_in, u0amp_in)
@@ -3009,7 +3013,7 @@ def test_u0_hat_thetaE_hat():
     muRel_hat_in = np.array([muRel_hatE_in, muRel_hatN_in])
 
     # Should be negative.
-    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * np.cross(u0_hat_in, N_hat) * 1.0
+    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * cross2(u0_hat_in, N_hat) * 1.0
 
     # Test
     u0_hat = model.u0_hat_from_thetaE_hat(muRel_hat_in, u0amp_in)
@@ -3042,8 +3046,8 @@ def test_u0_hat_thetaE_hat():
     muRel_hat_in2 = np.array([muRel_hatE_in2, muRel_hatN_in2])
 
     # Should be negative.
-    u0amp_in1 = np.hypot(u0_hatE_in1, u0_hatN_in1) * np.cross(u0_hat_in1, N_hat) * 1.0
-    u0amp_in2 = np.hypot(u0_hatE_in2, u0_hatN_in2) * np.cross(u0_hat_in2, N_hat) * 1.0
+    u0amp_in1 = np.hypot(u0_hatE_in1, u0_hatN_in1) * cross2(u0_hat_in1, N_hat) * 1.0
+    u0amp_in2 = np.hypot(u0_hatE_in2, u0_hatN_in2) * cross2(u0_hat_in2, N_hat) * 1.0
 
     # Test
     u0_hat1 = model.u0_hat_from_thetaE_hat(muRel_hat_in1, u0amp_in1)

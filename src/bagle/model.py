@@ -2313,11 +2313,25 @@ def split_param_filter_index1(name):
         Name with a trailing filter suffix removed.
     filt_index : int or None
         1-based filter index, or None when ``name`` has no suffix.
+        A trailing integer of 1 or more is the index, including 10
+        and 20. A trailing 0 is part of the name (``t0``, ``u0``).
     """
-    base = name.rstrip('123456789')
-    if len(base) == len(name):
-        return base, None
-    return base, int(name[len(base):])
+    end = len(name)
+    while end > 0 and name[end - 1].isdigit():
+        end -= 1
+    digits = name[end:]
+    if not digits:
+        return name, None
+    # A leading 0 in the digit run is part of the name (t0, gp_log_S0).
+    # The digits after that 0 are the filter (gp_log_S01 -> S0, filter 1).
+    # 10 and 20 have no leading 0, so the whole run is the filter.
+    rest = digits.lstrip('0')
+    if not rest:
+        return name, None
+    index = int(rest)
+    if index < 1:
+        return name, None
+    return name[:end + (len(digits) - len(rest))], index
 
 
 def validate_param_declaration(cls):
