@@ -206,9 +206,9 @@ Preferred constructor: ``xS0`` as arrays
 ----------------------------------------
 
 Pass ``xS0_E`` and ``xS0_N`` as arrays with one entry per filter, in
-unified order. That is how the model stores them. A scalar, or a
-length-1 array, is repeated onto every filter. ``b_sff`` and
-``mag_src`` are the same kind of sequence. There is no
+unified order, the same length as the source flux fraction ``b_sff``
+and ``mag_src``. ``xS0`` has shape ``(n_filters, 2)``.
+``xS0[filt_idx]`` is that filter's East/North origin. There is no
 ``phot_data`` argument on the model.
 
 .. code-block:: python
@@ -224,14 +224,10 @@ length-1 array, is repeated onto every filter. ``b_sff`` and
        raL=ra_deg, decL=dec_deg,
        obsLocation=['earth', 'spitzer', 'earth', 'gaia'],
    )
+   # Keck is filter 2.
+   xS_keck = event.xS0[2]
 
-``PSPL_Param.__init__`` broadcasts each filter parameter to shape
-``(n_filters,)`` and then stacks ``xS0``. One filter keeps
-``xS0.shape == (2,)``, so ``xS0[0]`` is East, which older callers
-already assume. Two or more filters use shape ``(n_filters, 2)``,
-and ``xS0[i]`` is that filter's East/North origin.
-``test_one_filter_xs0_stays_shape_2`` and
-``test_pspl_two_zero_points`` cover those two shapes. A mismatched
+``PSPL_Param.__init__`` stacks ``xS0`` from those arrays. A mismatched
 length raises ``RuntimeError``.
 
 The sampled cube still uses suffixed names (``xS0_E1``, ``xS0_E3``).
@@ -241,12 +237,7 @@ and ``fitter.priors['xS0_E3']`` separately. A prior whose suffix is
 not in the cube warns at the start of ``solve`` and does not replace
 the default on the name that is sampled.
 
-``get_model`` accepts either form. A scalar ``xS0_E`` fills every
-``xS0_E{k}`` slot that has no entry of its own. A 1-d sequence longer
-than one element is one value per filter, so element 2 is
-``xS0_E3``. A length-1 array is the scalar. This is
-``test_get_model_accepts_unsuffixed_origin`` and
-``test_unsuffixed_origin_vector_is_per_filter``.
+``get_model`` takes the same arrays. Element ``k`` is suffix ``k + 1``.
 
 .. code-block:: python
 
@@ -254,11 +245,12 @@ than one element is one value per filter, so element 2 is
    params['xS0_E'] = np.array([0.1, 0.2])
    params['xS0_N'] = np.array([-0.3, -0.4])
    mod = fitter.get_model(params)
-   # mod.xS0 == [[0.1, -0.3], [0.2, -0.4]]
+   # mod.xS0[0] == [0.1, -0.3]
+   # mod.xS0[1] == [0.2, -0.4]
 
 Photometry-only slots stay at the fixed origin. In a fit whose only
-astrometry is filter 3, the vector's third element is the one that
-is sampled. The first two stay 0.
+astrometry is filter 3, ``xS0[2]`` is the sampled origin. ``xS0[0]``
+and ``xS0[1]`` stay 0.
 
 Getters and ``filt_idx``
 ------------------------
@@ -322,37 +314,29 @@ After the tie, ``get_model`` writes the same East/North pair into
 ``xS0[0]`` and ``xS0[2]``. The JAX likelihood does the same copy
 inside the traced function.
 
-What stays backward compatible
-------------------------------
+Backward compatibility
+----------------------
 
-* Constructor keywords are unchanged. ``xS0_E=`` is still the
-  argument. A float still means "repeat this to every filter".
-* An old results table with unsuffixed ``xS0_E``, ``xS0_N``, and
-  ``pi_ref_frame`` is copied onto every filter by
-  ``adapt_legacy_filter_columns``. The legacy column is kept. A table
-  that has both the unsuffixed column and a suffixed one raises.
-* ``phot_data='sim'`` and ``ast_data='sim'`` still build a fitter.
-  One dataset of each stays one joint filter named ``phot1``.
-* One filter still stores ``xS0`` with shape ``(2,)``.
+A scalar ``xS0_E`` or ``xS0_N``, and an unsuffixed legacy name in an
+old results table, are still accepted. That path is kept so older
+scripts and chains run. It is not encouraged.
 
 Migration
 ---------
 
 1. Build the model with ``xS0_E`` and ``xS0_N`` as arrays, one entry
-   per filter. A one-filter script can pass ``np.array([x_east])``
-   and ``np.array([x_north])``. Positional floats still run.
-2. Set priors on the suffixed cube names (``xS0_E1``, ``xS0_N1``),
-   not on ``xS0_E``. An unsuffixed prior is not the sampled parameter.
+   per filter, the same length as ``b_sff`` and ``mag_src``. Read
+   each origin as ``xS0[filt_idx]``.
+2. Set priors on the suffixed cube names (``xS0_E1``, ``xS0_N1``).
 3. Put real dataset names in ``phot_data`` and ``ast_data`` when more
    than one catalog is present. Set ``obsLocation`` when any filter
    is not Earth. ``getdata(..., obs_location='auto')`` covers the
    usual OGLE / Keck / Spitzer names.
 4. Pass ``filt_idx`` into every getter. Do not assume ``t_ast1`` is
    filter 0 once the name lists differ.
-5. To rebuild a model from an old chain, pass the unsuffixed
-   ``xS0_E`` scalar. It fills every filter. To give each filter its
-   own origin, pass a length-``n_filters`` array, or the suffixed
-   keys.
+5. To rebuild a model, pass ``xS0_E`` and ``xS0_N`` as arrays of
+   length ``n_filters``, or the suffixed keys. ``xS0[filt_idx]``
+   is that filter's East/North origin.
 
 Known limitations
 -----------------
@@ -369,5 +353,3 @@ Known limitations
 * ``build_jax_joint_likelihood_context`` reads suffix ``1`` only.
 * ``'l2'`` is not special-cased, and Roman's Horizons id is not
   aliased. ``Earth`` and ``EARTH`` map to ``earth``.
-* The FITS loader copies one unsuffixed posterior column into every
-  filter. It does not treat that column as a vector of filters.

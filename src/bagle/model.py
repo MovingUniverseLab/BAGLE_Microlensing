@@ -2465,8 +2465,7 @@ class PSPL_Param(ABC):
         -----
         Each filter parameter the subclass set becomes a 1-d float
         array of shape ``(n_filters,)``, the same length as the
-        source flux fraction ``b_sff`` and ``mag_src``. A scalar
-        or length-1 value is repeated. Any other length raises.
+        source flux fraction ``b_sff`` and ``mag_src``.
         ``xS0`` is stacked from ``xS0_E`` and ``xS0_N`` with shape
         ``(n_filters, 2)`` for every ``n_filters``, including one
         filter. ``xS0[filt_idx]`` is that filter's East/North
@@ -2591,10 +2590,12 @@ class PSPL_AstromParam3(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -2757,10 +2758,12 @@ class PSPL_AstromParam4(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -3345,10 +3348,12 @@ class PSPL_PhotAstromParam1(PSPL_Param):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -3526,10 +3531,12 @@ class PSPL_PhotAstromParam2(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -3695,12 +3702,14 @@ class PSPL_PhotAstromParam3(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -3872,12 +3881,14 @@ class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -3984,12 +3995,14 @@ class PSPL_PhotAstromParam4(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -4160,12 +4173,14 @@ class PSPL_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -4297,12 +4312,14 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
         The microlensing parallax in the East direction in units of thetaE. In the geocentric-projected frame.
     piE_N_geotr : float
         The microlensing parallax in the North direction in units of thetaE. In the geocentric-projected frame.
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. In the Solar-System Barycentric frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. In the Solar-System Barycentric frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr). In the Solar-System Barycentric frame.
     muS_N : float
@@ -4405,12 +4422,14 @@ class PSPL_PhotAstromParam5(PSPL_Param):
         Ratio of piE_N to piE_E.
     piE_E : float
         The microlensing parallax in the East direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -4585,10 +4604,12 @@ class PSPL_PhotAstromParam6(PSPL_Param):
     phi_muRel : float
         The angle of the muRel vector, in degrees. Angle is measured in degrees
         East of North (counter-clockwise on the sky from North). 
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5108,10 +5129,12 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5213,10 +5236,12 @@ class PSPL_GP_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3_RefPar):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5321,10 +5346,12 @@ class PSPL_GP_PhotAstromParam3_1(PSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5425,10 +5452,12 @@ class PSPL_GP_PhotAstromParam3_1_RefPar(PSPL_PhotAstromParam3_RefPar):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5534,10 +5563,12 @@ class PSPL_GP_PhotAstromParam3_2(PSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5643,10 +5674,12 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5752,10 +5785,12 @@ class PSPL_GP_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4_RefPar):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5860,10 +5895,12 @@ class PSPL_GP_PhotAstromParam4_1(PSPL_PhotAstromParam4):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5968,10 +6005,12 @@ class PSPL_GP_PhotAstromParam4_1_RefPar(PSPL_PhotAstromParam4_RefPar):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -6077,10 +6116,12 @@ class PSPL_GP_PhotAstromParam4_2(PSPL_PhotAstromParam4):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -7609,12 +7650,14 @@ class PSBL_PhotAstromParam1(PSPL_Param):
         Masses of the lenses (Msun)
     t0 : float
         Time of photometric peak, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -7797,12 +7840,14 @@ class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
         Masses of the lenses (Msun)
     t0 : float
         Time of photometric peak, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -7908,12 +7953,14 @@ class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
         Masses of the lenses (Msun)
     t0 : float
         Time of photometric peak, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -8026,12 +8073,14 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between the source and binary lens system's COM
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_com: float
         Angular distance between the source and the CoM
         of the lenses on the plane of the sky (mas). Can be
@@ -8284,12 +8333,14 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between the source and binary lens system's COM
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_com: float
         Angular distance between the source and the CoM
         of the lenses on the plane of the sky (mas). Can be
@@ -8410,12 +8461,14 @@ class PSBL_PhotAstromParam2(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -8601,12 +8654,14 @@ class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -8719,12 +8774,14 @@ class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -8841,12 +8898,14 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -9085,12 +9144,14 @@ class PSBL_PhotAstrom_CircOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -9206,12 +9267,14 @@ class PSBL_PhotAstromParam3(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -9405,12 +9468,14 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -9528,12 +9593,14 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -9656,12 +9723,14 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
@@ -9853,12 +9922,14 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
@@ -9981,12 +10052,14 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -10184,12 +10257,14 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
 
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
 
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
@@ -10374,12 +10449,14 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
 
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
 
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
@@ -10501,12 +10578,14 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piEN_piEE : float
         The ratio of piE_E / piE_N.
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -10702,12 +10781,14 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -10891,12 +10972,14 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -11012,12 +11095,14 @@ class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on the sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on the sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -11124,12 +11209,14 @@ class PSBL_PhotAstromParam7(PSPL_Param):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source and the PRIMARY LENS
         of the lenses on the plane of the sky (mas) at t0. Can be
@@ -11327,12 +11414,14 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -11443,12 +11532,14 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on the sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on the sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -11548,12 +11639,14 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source and the PRIMARY LENS
         of the lenses on the plane of the sky (mas) at t0. Can be
@@ -11813,12 +11906,14 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source and the PRIMARY LENS
         of the lenses on the plane of the sky (mas) at t0. Can be
@@ -11945,12 +12040,14 @@ class PSBL_PhotAstromParam8(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -12146,12 +12243,14 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
@@ -12330,12 +12429,14 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
 
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
@@ -14162,12 +14263,14 @@ class BSPL_PhotAstromParam1(PSPL_Param):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -14392,12 +14495,14 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -14608,12 +14713,14 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -14927,12 +15034,14 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -15056,12 +15165,14 @@ class BSPL_GP_PhotAstromParam2(BSPL_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -15175,10 +15286,12 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -15299,12 +15412,14 @@ class BSPL_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstromParam1):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
 
     muL_E: float
         RA Lens proper motion (mas/yr)
@@ -15441,12 +15556,14 @@ class BSPL_PhotAstrom_AccOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
 
     muL_E: float
         RA Lens proper motion (mas/yr)
@@ -15592,12 +15709,14 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -15734,12 +15853,14 @@ class BSPL_PhotAstrom_AccOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -15880,12 +16001,14 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -16021,12 +16144,14 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -16200,10 +16325,12 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
 
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
@@ -16502,10 +16629,12 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     muS_N: float
         The Dec proper motion of the system in mas/yr.
 
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     fratio_bin: float
         Flux ratio of secondary flux / primary flux.
@@ -16761,10 +16890,12 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         The RA proper motion of the system in mas/yr.
     muS_N: float
         The Dec proper motion of the system in mas/yr.
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     fratio_bin: float
         Flux ratio of secondary flux / primary flux.
@@ -17029,10 +17160,12 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
     muS_N: float
         The Dec proper motion of the system in mas/yr.
 
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     muL_E: float
         RA Lens proper motion (mas/yr)
@@ -17382,10 +17515,12 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
 
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
@@ -17526,10 +17661,12 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
     muS_N: float
         The Dec proper motion of the system in mas/yr.
 
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     fratio_bin: float
         Flux ratio of secondary flux / primary flux.
@@ -17674,10 +17811,12 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
         The RA proper motion of the system in mas/yr.
     muS_N: float
         The Dec proper motion of the system in mas/yr.
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     fratio_bin: float
         Flux ratio of secondary flux / primary flux.
@@ -17790,12 +17929,14 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -17911,12 +18052,14 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -18040,12 +18183,14 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -18161,12 +18306,14 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -18284,10 +18431,12 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -18399,10 +18548,12 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -19684,12 +19835,14 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         Masses of the lenses (Msun)
     t0 : float
         Time of closest approach between the geometric center of source and geometric center of the lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta: float
         Angular distance between the source PRIMARY position
         and the GEOMETRIC center of the lenses on the plane of the sky (mas).
@@ -19936,12 +20089,14 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
         Masses of the lenses (Msun)
     t0 : float
         Time of closest approach between the geometric center of source and geometric center of the lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta: float
         Angular distance between the source PRIMARY position
         and the GEOMETRIC center of the lenses on the plane of the sky (mas).
@@ -20100,12 +20255,14 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
         Masses of the lenses (Msun)
     t0 : float
         Time of closest approach between the geometric center of source and geometric center of the lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta: float
         Angular distance between the source PRIMARY position
         and the GEOMETRIC center of the lenses on the plane of the sky (mas).
@@ -20286,12 +20443,14 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source PRIMARY position
         and the PRIMARY center of the lenses on the plane of the sky (mas). 
@@ -20558,12 +20717,14 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between source COM and Lens COM (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source COM position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source COM position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta: float
         Angular distance between the primary source
         and the lens geometric center on the plane of the sky (mas).
@@ -20903,12 +21064,14 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between source COM and Lens COM (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source COM position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source COM position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta: float
         Angular distance between the source PRIMARY position
         and the GEOMETRIC center of the lenses on the plane of the sky (mas).
@@ -21073,12 +21236,14 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     q : float
             Mass ratio (M2 / M1)
 
-    xS0_E : float
+    xS0_E : array
         R.A. of primary source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of primary source position on sky at t = to_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
 
     muS_E : float
         Source system proper motion in the RA direction (mas/yr)
@@ -21408,12 +21573,14 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     q : float
             Mass ratio (M2 / M1)
 
-    xS0_E : float
+    xS0_E : array
         R.A. of primary source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of primary source position on sky at t = to_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         Source system proper motion in the RA direction (mas/yr)
     muS_N : float
@@ -21549,12 +21716,14 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source PRIMARY position
         and the PRIMARY center of the lenses on the plane of the sky (mas). 
@@ -21950,12 +22119,14 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source PRIMARY position
         and the PRIMARY center of the lenses on the plane of the sky (mas). 
@@ -23572,10 +23743,12 @@ class FSPL_PhotAstromParam1(PSPL_Param):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -23762,10 +23935,12 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -24862,10 +25037,12 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float

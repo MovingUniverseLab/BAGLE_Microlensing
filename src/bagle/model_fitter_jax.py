@@ -876,13 +876,13 @@ class MicrolensSolver(Solver):
         Raises
         ------
         KeyError
-            A mapping has neither the suffixed name nor its unsuffixed base.
+            A mapping is missing a fitted parameter name.
 
         Notes
         -----
-        For a mapping, a missing suffixed name such as ``xS0_E3`` falls back
-        to the unsuffixed base ``xS0_E`` (older results). A scalar base value
-        is reused for every suffix; a 1-d array supplies one value per filter.
+        Pass ``xS0_E`` and ``xS0_N`` as arrays with one entry per
+        filter. Element ``k`` is suffix ``k + 1``. Suffixed names
+        such as ``xS0_E1`` are accepted directly.
         """
         # Positional cube: the first n_dims entries, in fitter order.
         if not isinstance(params, (dict, Row)):
@@ -2471,8 +2471,8 @@ class MicrolensSolver(Solver):
         ----------
         cube : array_like or mapping
             Fitted values in ``fitter_param_names`` order, or a mapping
-            keyed by those names. An unsuffixed legacy name fills every
-            suffixed slot that has no entry of its own.
+            keyed by those names. ``xS0_E`` and ``xS0_N`` are arrays
+            with one entry per filter.
 
         Returns
         -------

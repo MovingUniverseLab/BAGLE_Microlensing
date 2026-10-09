@@ -117,7 +117,7 @@ Again, all of the parameters are specified in heliocentric coordinates.
   dec = -28.6449444   # in decimal degrees
   mL = 10.0           # lens mass in Msun
   t0 = 55150.0        # closest apparent approach time in MJD  
-  # One entry per filter. A scalar is still accepted and repeated.
+  # One entry per filter.
   xS0_E = np.array([0.0])
   xS0_N = np.array([0.0])
   beta = -2.0         # source - lens separation in mas,
