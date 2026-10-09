@@ -5,6 +5,7 @@ import inspect
 import numpy as np
 import pytest
 
+from bagle import frame_convert as fc
 from bagle import model
 from bagle import model_jax
 from bagle.model import validate_param_declaration
@@ -336,4 +337,65 @@ def test_xs0_stored_shape_is_n_filters_by_2():
             _assert_stored_origin(psbl, expected)
             _assert_stored_origin(bspl, expected)
             _assert_stored_origin(jax_mod, expected)
+    return None
+
+
+def _geoproj_expected(inst, t0par, filt_idx):
+    """Earth-at-t0par conversion of one filter's origin."""
+    xS0 = inst.xS0[filt_idx]
+    converted = fc.convert_helio_geo_ast(
+        inst.raL, inst.decL, inst.piS,
+        xS0[0], xS0[1],
+        inst.muS[0], inst.muS[1],
+        inst.t0, inst.u0_amp, inst.tE,
+        inst.piE[0], inst.piE[1],
+        t0par, in_frame='helio',
+        murel_in='SL', murel_out='LS',
+        coord_in='EN', coord_out='tb', plot=False,
+    )
+    return converted
+
+
+def test_geoproj_ast_params_selects_filter_origin():
+    """filt_idx selects xS0. The default is filter 0.
+
+    The parallax offset is Earth at t0par, so the two geoproj
+    origins differ by the heliocentric East/North difference.
+    """
+    t0par = 57100.0
+    for mod in (model, model_jax):
+        cls = mod.PSPL_PhotAstrom_Par_Param2
+        one = cls(
+            57000.0, 0.2, 40.0, 1.5, 0.15, 0.08, -0.04,
+            np.array([0.010]), np.array([-0.020]),
+            3.0, -1.0,
+            np.array([1.0]), np.array([18.5]),
+            raL=270.0, decL=-29.0, obsLocation=['earth'],
+        )
+        expected = _geoproj_expected(one, t0par, 0)
+        np.testing.assert_allclose(
+            one.get_geoproj_ast_params(t0par), expected
+        )
+        np.testing.assert_allclose(
+            one.get_geoproj_ast_params(t0par, filt_idx=0), expected
+        )
+
+        two = cls(
+            57000.0, 0.2, 40.0, 1.5, 0.15, 0.08, -0.04,
+            np.array([0.010, 0.040]), np.array([-0.020, 0.015]),
+            3.0, -1.0,
+            np.array([1.0, 0.8]), np.array([18.5, 19.0]),
+            raL=270.0, decL=-29.0,
+            obsLocation=['earth', 'spitzer'],
+        )
+        g0 = two.get_geoproj_ast_params(t0par)
+        g1 = two.get_geoproj_ast_params(t0par, filt_idx=1)
+        np.testing.assert_allclose(g0, _geoproj_expected(two, t0par, 0))
+        np.testing.assert_allclose(g1, _geoproj_expected(two, t0par, 1))
+        np.testing.assert_allclose(
+            g1[0] - g0[0], two.xS0[1, 0] - two.xS0[0, 0]
+        )
+        np.testing.assert_allclose(
+            g1[1] - g0[1], two.xS0[1, 1] - two.xS0[0, 1]
+        )
     return None

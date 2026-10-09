@@ -3083,6 +3083,86 @@ def _fitter_weight(fitter, idx: int, default: float = 1.0) -> float:
     return weight
 
 
+def _joint_class_slots(names, base_names, filt_names, fixed, filt_idx,
+                       tied):
+    """Map one filter onto the unsuffixed class parameter order.
+
+    Parameters
+    ----------
+    names : sequence of str
+        Fitted cube names.
+    base_names : sequence of str
+        Unsuffixed class ``fitter_param_names``.
+    filt_names : set of str
+        Names that expand once per filter.
+    fixed : dict
+        Suffixed name -> fixed value for slots omitted from the cube.
+    filt_idx : int
+        0-based unified filter index.
+    tied : dict
+        Suffixed target -> suffixed source.
+
+    Returns
+    -------
+    slots : tuple or None
+        Each entry is ``('i', index)`` for a fitted or tied value,
+        or ``('v', float)`` for a fixed value. ``None`` when a
+        shared name or a tie source is missing from the cube.
+
+    Notes
+    -----
+    Shared event parameters are read once. A per-filter name uses
+    the 1-based suffix of ``filt_idx``. A tied suffix reads the
+    source column. Any other missing suffix uses the fixed value.
+    """
+    slots = []
+    for name in base_names:
+        if name not in filt_names:
+            if name not in names:
+                return None
+            slots.append(('i', names.index(name)))
+            continue
+
+        # 1-based suffix matches the expanded cube.
+        key = f'{name}{int(filt_idx) + 1}'
+        if key in names:
+            slots.append(('i', names.index(key)))
+        elif key in tied:
+            source = tied[key]
+            if source not in names:
+                return None
+            # Same cube column as the source, so the gradient
+            # follows that parameter.
+            slots.append(('i', names.index(source)))
+        else:
+            slots.append(('v', float(fixed.get(key, 0.0))))
+    return tuple(slots)
+
+
+def _assemble_class_vector(param_vec, slots):
+    """Stack one filter's class-order parameter vector.
+
+    Parameters
+    ----------
+    param_vec : array_like
+        Fitted parameter cube.
+    slots : tuple
+        Output of :func:`_joint_class_slots`.
+
+    Returns
+    -------
+    class_vec : jax.numpy.ndarray
+        Values in the unsuffixed class ``fitter_param_names`` order.
+    """
+    cols = []
+    for kind, payload in slots:
+        if kind == 'i':
+            cols.append(param_vec[payload])
+        else:
+            cols.append(jnp.asarray(payload, dtype=jnp.float64))
+    return jnp.stack(cols)
+
+
 def _param_index(names: Sequence[str], param_base: str, filt_idx: int | None) -> int:
     """
     _param_index.
@@ -3350,17 +3430,22 @@ class PhotAstromFilterLikelihoodData:
     """Joint phot+ast arrays for one mapped filter pair."""
 
     phot: PhotFilterLikelihoodData | None
-    ast: AstFilterLikelihoodData
+    ast: AstFilterLikelihoodData | None
+    class_slots: tuple
 
 
 @dataclass(frozen=True)
 class JaxJointLikelihoodContext:
-    """Host context for PSPL PhotAstrom Param1 joint likelihood."""
+    """Host context for a joint photometry and astrometry likelihood.
+
+    ``filters[k].class_slots`` rebuilds the unsuffixed class
+    parameter vector for that filter. A per-filter name uses
+    that filter's 1-based suffix.
+    """
 
     layout: str
     use_parallax: bool
     fitter_param_names: tuple[str, ...]
-    base_indices: tuple[int, ...]
     filters: tuple[PhotAstromFilterLikelihoodData, ...]
 
 
@@ -3385,21 +3470,8 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
     names = tuple(fitter.fitter_param_names)
     base_names = tuple(fitter.model_class.fitter_param_names)
     filt_names = set(getattr(fitter.model_class, "filt_param_names", ()) or ())
-    # One class-order vector. Per-filter names use filter 1 when that
-    # suffix is fitted. The explicit builder is the per-filter path.
-    base_indices = []
-    try:
-        for name in base_names:
-            if name in filt_names:
-                key = f"{name}1"
-                if key not in names:
-                    return None
-                base_indices.append(names.index(key))
-            else:
-                base_indices.append(names.index(name))
-    except ValueError:
-        return None
-    base_indices = tuple(base_indices)
+    fixed = dict(getattr(fitter, "fixed_dataset_params", {}) or {})
+    tied = dict(getattr(fitter, "tied_params", {}) or {})
     obs_list = getattr(fitter, "obs_locations", None)
 
     # Parallax tables need lens sky coordinates when raL/decL are present.
@@ -3435,6 +3507,12 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
         idx_b_ast = _param_index(
             names, "b_sff", phot_filt if f"b_sff{phot_filt}" in names else None
         )
+        # Class-order slots for this unified filter, including xS0.
+        slots = _joint_class_slots(
+            names, base_names, filt_names, fixed, phot_idx, tied
+        )
+        if slots is None:
+            return None
 
         phot_block = None
         if phot_idx < fitter.n_phot_sets:
@@ -3472,7 +3550,11 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
             idx_b_sff=idx_b_ast,
             phot_filt_idx=phot_idx,
         )
-        joint_filters.append(PhotAstromFilterLikelihoodData(phot=phot_block, ast=ast_block))
+        joint_filters.append(
+            PhotAstromFilterLikelihoodData(
+                phot=phot_block, ast=ast_block, class_slots=slots
+            )
+        )
 
     # Photometry-only sets (no astrometry counterpart).
     mapped_phot = set(map_phot) if map_phot else set(range(fitter.n_ast_sets))
@@ -3498,6 +3580,11 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
         idx_m = _param_index(
             names, "mag_src", phot_filt if f"mag_src{phot_filt}" in names else None
         )
+        slots = _joint_class_slots(
+            names, base_names, filt_names, fixed, phot_idx, tied
+        )
+        if slots is None:
+            return None
         phot_block = PhotFilterLikelihoodData(
             t=t_phot,
             mag_obs=mag_obs,
@@ -3507,16 +3594,99 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
             idx_b_sff=idx_b,
             idx_mag_src=idx_m,
         )
-        joint_filters.append(PhotAstromFilterLikelihoodData(phot=phot_block, ast=None))
+        joint_filters.append(
+            PhotAstromFilterLikelihoodData(
+                phot=phot_block, ast=None, class_slots=slots
+            )
+        )
 
     ctx = JaxJointLikelihoodContext(
         layout=layout,
         use_parallax=use_parallax,
         fitter_param_names=names,
-        base_indices=base_indices,
         filters=tuple(joint_filters),
     )
     return ctx
+
+
+def log_likelihood_from_joint_context(param_vec, ctx, model_class):
+    """Sum the joint log-likelihood using each filter's class vector.
+
+    Parameters
+    ----------
+    param_vec : array_like
+        Fitted cube, in ``ctx.fitter_param_names`` order.
+    ctx : JaxJointLikelihoodContext
+        Context from :func:`build_jax_joint_likelihood_context`.
+    model_class : type
+        Model class with the JAX likelihood methods.
+
+    Returns
+    -------
+    lnL : jax.numpy.ndarray
+        Photometric plus astrometric log-likelihood.
+    """
+    import inspect
+
+    param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
+    phot_method = getattr(model_class, "jax_log_likely_photometry", None)
+    ast_method = getattr(model_class, "jax_log_likely_astrometry", None)
+    ast_accepts_mag = False
+    if ast_method is not None:
+        ast_sig = inspect.signature(ast_method)
+        ast_accepts_mag = "mag_src" in ast_sig.parameters
+    phot_names = tuple(getattr(model_class, "phot_param_names", ()))
+    lnL = jnp.asarray(0.0, dtype=jnp.float64)
+
+    for block in ctx.filters:
+        # Rebuild the unsuffixed vector so xS0 matches this filter.
+        base_vec = _assemble_class_vector(param_vec, block.class_slots)
+        if block.phot is not None and phot_method is not None:
+            b_sff = param_vec[block.phot.idx_b_sff]
+            mag_src = param_vec[block.phot.idx_mag_src]
+            pvec = (
+                None
+                if block.phot.parallax_vectors is None
+                else jnp.asarray(
+                    block.phot.parallax_vectors, dtype=jnp.float64
+                )
+            )
+            lnL = lnL + block.phot.weight * phot_method(
+                base_vec,
+                jnp.asarray(block.phot.t, dtype=jnp.float64),
+                jnp.asarray(block.phot.mag_obs, dtype=jnp.float64),
+                jnp.asarray(block.phot.mag_err, dtype=jnp.float64),
+                b_sff,
+                mag_src,
+                parallax_vectors=pvec,
+            )
+        if block.ast is not None and ast_method is not None:
+            b_sff = param_vec[block.ast.idx_b_sff]
+            pvec = (
+                None
+                if block.ast.parallax_vectors is None
+                else jnp.asarray(
+                    block.ast.parallax_vectors, dtype=jnp.float64
+                )
+            )
+            kwargs = dict(b_sff=b_sff, parallax_vectors=pvec)
+            if ast_accepts_mag and block.phot is not None:
+                mag_value = param_vec[block.phot.idx_mag_src]
+                if "mag_base" in phot_names:
+                    mag_value = mag_value - 2.5 * jnp.log10(
+                        jnp.maximum(b_sff, 1e-12)
+                    )
+                kwargs["mag_src"] = mag_value
+            lnL = lnL + block.ast.weight * ast_method(
+                base_vec,
+                jnp.asarray(block.ast.t, dtype=jnp.float64),
+                jnp.asarray(block.ast.x_obs, dtype=jnp.float64),
+                jnp.asarray(block.ast.y_obs, dtype=jnp.float64),
+                jnp.asarray(block.ast.x_err, dtype=jnp.float64),
+                jnp.asarray(block.ast.y_err, dtype=jnp.float64),
+                **kwargs,
+            )
+    return lnL
 
 
 def build_jax_joint_loglik_fn(fitter):

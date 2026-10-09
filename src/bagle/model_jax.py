@@ -1906,7 +1906,7 @@ class PSPL_Parallax(ParallaxClassABC):
         return t0_g, u0_g, tE_g, piEE_g, piEN_g
 
     # Make sure this method fails for phot only parametrizations.
-    def get_geoproj_ast_params(self, t0par, plot=False):
+    def get_geoproj_ast_params(self, t0par, plot=False, filt_idx=0):
         """
         Get the astrometric microlensing model parameters in the geocentric-projected
         coordinate system, which just applies a rectalinear position and
@@ -1921,6 +1921,11 @@ class PSPL_Parallax(ParallaxClassABC):
         ----------
         t0par : float
             Time in MJD at which to convert into the geocentric frame.
+        plot : bool, optional
+            Draw the conversion diagnostic. Default False.
+        filt_idx : int, optional
+            0-based filter whose source origin is converted.
+            Default 0, so a one-filter model is unchanged.
 
         Returns
         -------
@@ -1937,9 +1942,15 @@ class PSPL_Parallax(ParallaxClassABC):
             The North-component of source proper motion vector,
             in the geocentric-projected frame.
 
+        Notes
+        -----
+        ``xS0`` has shape ``(n_filters, 2)``. ``xS0[filt_idx]`` is
+        that filter's East/North origin. The parallax offset is
+        Earth's at ``t0par``, because the output frame is
+        geocentric. The filter's observer does not enter.
         """
-        # Filter 0 East/North origin. Shape is (n_filters, 2).
-        xS0 = self.xS0[0]
+        # This filter's East/North origin. Shape is (n_filters, 2).
+        xS0 = np.asarray(self.xS0[filt_idx], dtype=float)
         xS0E_g, xS0N_g, muSE_g, muSN_g = fc.convert_helio_geo_ast(
             self.raL, self.decL,
             self.piS, xS0[0], xS0[1],

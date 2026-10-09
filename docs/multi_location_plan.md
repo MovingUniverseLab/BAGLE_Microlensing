@@ -1520,7 +1520,8 @@ on `convert_helio_geo_*`, and light-travel time.
 5. One filter stores `xS0` with shape `(2,)`, including when East and
    North are length-1 arrays. Two or more filters use `(n, 2)`.
 
-6. `get_geoproj_ast_params` reports filter 0's origin.
+6. `get_geoproj_ast_params(t0par, filt_idx=0)` converts
+   `xS0[filt_idx]`. The parallax offset stays Earth at `t0par`.
 
 7. Astrometric optional-parameter suffixes stay in `ast_data` order.
    Photometric optional parameters use the unified index, which
@@ -1543,9 +1544,9 @@ on `convert_helio_geo_*`, and light-travel time.
     dropped. That vector includes `pi_ref_frame` when the class
     lists it, and the astrometry kernel applies that filter's value.
     Parallax is precomputed with that filter's observer.
-    `build_jax_joint_likelihood_context` still packs a single base
-    vector and, for filter-indexed names, uses suffix `1` when that
-    suffix is sampled. It returns `None` when suffix `1` was fixed.
+    `build_jax_joint_likelihood_context` stores one class-order
+    slot list per filter. Suffix `k+1` is that filter. A missing
+    suffix is the fixed value, or the tied source column.
 
 11. The BFSPL assignment `xL0 = xS0[0] - thetas0` used only the East
     component when `xS0` has shape `(2,)`. It now uses filter 0's
