@@ -297,6 +297,10 @@ class MicrolensSolver(Solver):
         'gp_log_jit_sigma':('make_norm_gen', 0, 5)
     }
 
+    # LogLikelihood writes the derived parameters into the MultiNest cube.
+    # Solvers that skip this get them from add_derived_params on load.
+    derived_in_cube = True
+
     def __init__(self, data, model_class,
                  custom_additional_param_names=None,
                  add_error_on_photometry=False,
@@ -507,6 +511,36 @@ class MicrolensSolver(Solver):
             value = getattr(model, base)
             values.append(value if filt_index is None else value[filt_index - 1])
         return values
+
+    def add_derived_params(self, tab):
+        """Fill the derived (additional) parameter columns of a results table.
+
+        Parameters
+        ----------
+        tab : astropy.table.Table
+            Results table with one column per name in
+            ``self.fitter_param_names``.
+
+        Returns
+        -------
+        tab : astropy.table.Table
+            The same table, with one column per name in
+            ``self.additional_param_names`` computed from the model built
+            at each row. Rows whose model cannot be built get NaN.
+        """
+        derived = np.full((len(tab), len(self.additional_param_names)), np.nan)
+
+        # One model per sample; values in additional_param_names order.
+        for ii, row in enumerate(tab):
+            try:
+                derived[ii] = self.get_derived_param_values(self.get_model(row))
+            except Exception:
+                continue
+
+        for jj, name in enumerate(self.additional_param_names):
+            tab[name] = derived[:, jj]
+
+        return tab
 
     def expand_fitter_names(self):
         """Expand contiguous filter-indexed runs, index-major.
@@ -1428,14 +1462,6 @@ class MicrolensSolver(Solver):
         To make your own custom priors, use the make_gen() functions
         with different limits.
         """
-#        if os.path.exists("u0.txt"):
-#            os.remove("u0.txt")
-#
-#        if os.path.exists("piEE.txt"):
-#            os.remove("piEE.txt")
-#
-#        if os.path.exists("piEN.txt"):
-#            os.remove("piEN.txt")
         
         self.priors = {}
         for param_name in self.fitter_param_names:
@@ -2371,6 +2397,10 @@ class MicrolensSolver(Solver):
                 cc = 3 + ff
                 tab.rename_column('col{0:d}'.format(cc), self.all_param_names[ff])
 
+            # Derived parameters missing from the chains are computed here.
+            if not self.derived_in_cube:
+                tab = self.add_derived_params(tab)
+
             tab.write(outroot + '.fits', overwrite=True)
             self.write_results_schema2(outroot)
         else:
@@ -2449,6 +2479,10 @@ class MicrolensSolver(Solver):
                 for ff in range(len(self.all_param_names)):
                     cc = 3 + ff
                     tab.rename_column('col{0:d}'.format(cc), self.all_param_names[ff])
+
+                # Derived parameters missing from the chains are computed here.
+                if not self.derived_in_cube:
+                    tab = self.add_derived_params(tab)
 
                 tab.write(mode_root + '.fits', overwrite=True)
             else:

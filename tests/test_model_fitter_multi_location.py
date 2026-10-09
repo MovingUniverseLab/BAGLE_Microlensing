@@ -716,6 +716,37 @@ def test_get_model_accepts_ctypes_multinest_cube():
     return None
 
 
+def test_jaxlike_results_get_derived_params_on_load(tmp_path):
+    """JaxLike chains have zero derived columns; loading fills them."""
+    from bagle import model_fitter_jax
+
+    data = make_data(['ogle'], ['ogle'])
+    fitter = model_fitter_jax.MicrolensSolverJaxLike(
+        data, model_fitter_jax.mmodel.PSPL_PhotAstrom_noPar_Param1,
+        outputfiles_basename=str(tmp_path / 'jaxlike_'), verbose=False,
+        seed=FIT_SEED)
+    assert not fitter.derived_in_cube
+
+    # MultiNest .txt rows: weight, -2 lnL, fitted values, zero derived values.
+    fitted = np.array(_physical_cube(fitter))
+    rows = [fitted, fitted * 1.001]
+    n_add = len(fitter.additional_param_names)
+    np.savetxt(fitter.outputfiles_basename + '.txt',
+               [[0.5, 10.0, *row, *np.zeros(n_add)] for row in rows])
+
+    tab = fitter.load_mnest_results(remake_fits=True)
+    for row, tab_row in zip(rows, tab):
+        expected = fitter.get_derived_param_values(fitter.get_model(row))
+        np.testing.assert_allclose(
+            [tab_row[name] for name in fitter.additional_param_names], expected)
+
+    # The .fits cache keeps the derived values.
+    cached = fitter.load_mnest_results()
+    for name in fitter.additional_param_names:
+        np.testing.assert_allclose(cached[name], tab[name])
+    return None
+
+
 def test_gp_get_model_passes_optional_dicts():
     """GP hyperparameters reach the constructor as per-filter dicts."""
     cases = [

@@ -712,6 +712,10 @@ class MicrolensSolver(Solver):
         'gp_log_jit_sigma':('make_norm_gen', 0, 5)
     }
 
+    # LogLikelihood writes the derived parameters into the MultiNest cube.
+    # Solvers that skip this get them from add_derived_params on load.
+    derived_in_cube = True
+
     def __init__(self, data, model_class,
                  custom_additional_param_names=None,
                  add_error_on_photometry=False,
@@ -924,6 +928,36 @@ class MicrolensSolver(Solver):
             value = getattr(model, base)
             values.append(value if filt_index is None else value[filt_index - 1])
         return values
+
+    def add_derived_params(self, tab):
+        """Fill the derived (additional) parameter columns of a results table.
+
+        Parameters
+        ----------
+        tab : astropy.table.Table
+            Results table with one column per name in
+            ``self.fitter_param_names``.
+
+        Returns
+        -------
+        tab : astropy.table.Table
+            The same table, with one column per name in
+            ``self.additional_param_names`` computed from the model built
+            at each row. Rows whose model cannot be built get NaN.
+        """
+        derived = np.full((len(tab), len(self.additional_param_names)), np.nan)
+
+        # One model per sample; values in additional_param_names order.
+        for ii, row in enumerate(tab):
+            try:
+                derived[ii] = self.get_derived_param_values(self.get_model(row))
+            except Exception:
+                continue
+
+        for jj, name in enumerate(self.additional_param_names):
+            tab[name] = derived[:, jj]
+
+        return tab
 
     def expand_fitter_names(self):
         """Expand contiguous filter-indexed runs, index-major.
@@ -1915,7 +1949,8 @@ class MicrolensSolver(Solver):
                 else:
                     times = np.asarray(self.data['t_ast1'], dtype=float)
                     self.priors[param_name] = make_gen(
-                        float(np.min(times)), float(np.max(times))
+                        param_name, float(np.min(times)), float(np.max(times)),
+                        stats_pkg=stats_pkg
                     )
 
             elif prior_type == 'make_xS0_gen':
@@ -2803,6 +2838,10 @@ class MicrolensSolver(Solver):
                 cc = 3 + ff
                 tab.rename_column('col{0:d}'.format(cc), self.all_param_names[ff])
 
+            # Derived parameters missing from the chains are computed here.
+            if not self.derived_in_cube:
+                tab = self.add_derived_params(tab)
+
             tab.write(outroot + '.fits', overwrite=True)
             self.write_results_schema2(outroot)
         else:
@@ -2881,6 +2920,10 @@ class MicrolensSolver(Solver):
                 for ff in range(len(self.all_param_names)):
                     cc = 3 + ff
                     tab.rename_column('col{0:d}'.format(cc), self.all_param_names[ff])
+
+                # Derived parameters missing from the chains are computed here.
+                if not self.derived_in_cube:
+                    tab = self.add_derived_params(tab)
 
                 tab.write(mode_root + '.fits', overwrite=True)
             else:
@@ -3796,6 +3839,9 @@ class MicrolensSolverJaxLike(MicrolensSolver):
 
     # MultiNest aborts on NaN/Inf; keep a finite floor for bad draws.
     _LN_L_FLOOR = -1.0e300
+
+    # LogLikelihood skips the derived parameters; they are added on load.
+    derived_in_cube = False
 
     def _unphysical_distances(self, cube):
         """Return True if free ``dL``/``dS`` violate ``dS > dL > 0``.
@@ -5807,12 +5853,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
             tab[name] = samples[:, jj]
 
         # Derived parameters from the model built at each sample.
-        derived = np.array([self.get_derived_param_values(self.get_model(row))
-                            for row in samples]).reshape(n_samples, -1)
-        for jj, name in enumerate(self.additional_param_names):
-            tab[name] = derived[:, jj]
-
-        return tab
+        return self.add_derived_params(tab)
 
     def _write_numpyro_results(self):
         """Write MultiNest-like ``.txt`` and ``.fits`` result files.
