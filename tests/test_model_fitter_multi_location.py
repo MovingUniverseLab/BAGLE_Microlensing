@@ -305,6 +305,53 @@ def test_tie_sampled_param_copies_filter1_origin():
     return None
 
 
+def test_tied_origin_numpy_and_jax_likelihood_agree():
+    """A tied origin uses the source value inside the JAX likelihood.
+
+    Filter 3 is tied to filter 1, the 4p2a ``tie_fit_param`` setup on
+    a smaller cube. NumPy and JAX log-likelihoods must agree, and the
+    gradient with respect to each tied-to parameter must be finite and
+    nonzero.
+    """
+    from bagle import model_fitter_jax
+
+    data = make_data(['ogle', 'spitzer', 'keck'], ['ogle', 'keck'])
+    numpy_fit = _solver(data, model.PSPL_PhotAstrom_noPar_Param1)
+    numpy_fit.tie_fit_param('xS0_E3', 'xS0_E1')
+    numpy_fit.tie_fit_param('xS0_N3', 'xS0_N1')
+
+    jax_fit = model_fitter_jax.MicrolensSolver(
+        data,
+        model_fitter_jax.mmodel.PSPL_PhotAstrom_noPar_Param1,
+        outputfiles_basename='/tmp/bagle_tie_lnl_',
+        verbose=False,
+        seed=FIT_SEED,
+    )
+    jax_fit.tie_fit_param('xS0_E3', 'xS0_E1')
+    jax_fit.tie_fit_param('xS0_N3', 'xS0_N1')
+    names = list(jax_fit.fitter_param_names)
+    assert names == list(numpy_fit.fitter_param_names)
+    assert 'xS0_E3' not in names and 'xS0_N3' not in names
+
+    # An origin away from the astrometric track, so both tied filters
+    # contribute a residual that depends on the source slot.
+    cube = np.asarray(_physical_cube(jax_fit), dtype=float)
+    cube[names.index('xS0_E1')] = 0.021
+    cube[names.index('xS0_N1')] = -0.013
+
+    ln_numpy = float(numpy_fit.log_likely(cube))
+    ln_jax = float(jax_fit.evaluate_loglik_jax(cube))
+    assert np.isfinite(ln_numpy) and np.isfinite(ln_jax)
+    np.testing.assert_allclose(ln_jax, ln_numpy, rtol=1e-8, atol=1e-8)
+
+    grad = np.asarray(jax_fit.grad_loglik_jax(cube), dtype=float)
+    for name in ('xS0_E1', 'xS0_N1'):
+        component = float(grad[names.index(name)])
+        assert np.isfinite(component)
+        assert component != 0.0
+    return None
+
+
 def test_numpy_and_jax_likelihood_see_second_observer(monkeypatch):
     """Both fitters send each filter's observer into the parallax table."""
     seen = []

@@ -115,7 +115,8 @@ def _jax_param_index(names, base, filt_idx=None):
     return None
 
 
-def _class_vector_slots(names, base_names, filt_names, fixed, filt_idx):
+def _class_vector_slots(names, base_names, filt_names, fixed, filt_idx,
+                        tied=None):
     """Map one filter onto the class ``fitter_param_names`` order.
 
     Parameters
@@ -130,20 +131,27 @@ def _class_vector_slots(names, base_names, filt_names, fixed, filt_idx):
         Suffixed name -> fixed value for slots omitted from the cube.
     filt_idx : int
         0-based unified filter index.
+    tied : dict or None
+        Suffixed target -> suffixed source, from ``fitter.tied_params``.
+        A tied slot reads the source cube entry, so the value and its
+        gradient follow the parameter it is tied to.
 
     Returns
     -------
     slots : tuple
-        Each entry is ``('i', index)`` for a fitted value or
+        Each entry is ``('i', index)`` for a fitted or tied value, or
         ``('v', float)`` for a fixed value. The tuple follows
         ``base_names``.
 
     Notes
     -----
     Shared event parameters are read once. Per-filter parameters use
-    the 1-based suffix of ``filt_idx``, or the fixed value when that
-    suffix was deleted from the cube.
+    the 1-based suffix of ``filt_idx``. A suffix dropped by
+    ``tie_fit_param`` reads the source column. Any other missing
+    suffix uses the fixed value.
     """
+    if tied is None:
+        tied = {}
     slots = []
     for name in base_names:
         if name not in filt_names:
@@ -154,6 +162,15 @@ def _class_vector_slots(names, base_names, filt_names, fixed, filt_idx):
         key = f'{name}{int(filt_idx) + 1}'
         if key in names:
             slots.append(('i', names.index(key)))
+        elif key in tied:
+            source = tied[key]
+            if source not in names:
+                raise ValueError(
+                    f'{key} is tied to {source}, which is not fitted.'
+                )
+            # Same cube column as the source. The gradient flows
+            # through that parameter inside the traced function.
+            slots.append(('i', names.index(source)))
         else:
             slots.append(('v', float(fixed.get(key, 0.0))))
     return tuple(slots)
@@ -210,6 +227,7 @@ def build_explicit_jax_loglik_fn(fitter):
     """
 
     names = tuple(fitter.fitter_param_names)
+    tied = dict(getattr(fitter, 'tied_params', {}) or {})
     # Do not use ``or`` on these: a NumPy array has no single truth value.
     obs_raw = getattr(fitter, 'obs_locations', None)
     phot_raw = getattr(fitter, 'has_phot', None)
@@ -220,10 +238,11 @@ def build_explicit_jax_loglik_fn(fitter):
     n_phot = int(getattr(fitter, 'n_phot_sets', 0) or 0)
     n_ast = int(getattr(fitter, 'n_ast_sets', 0) or 0)
 
-    # Recompile when the observer list, the fitted names, or the
-    # time-array identity changes. The cache lives on this fitter.
+    # Recompile when the observer list, the fitted names, the ties,
+    # or the time-array identity changes. The cache lives on this fitter.
     cache_key = (
         names,
+        tuple(sorted((str(key), str(val)) for key, val in tied.items())),
         obs_locations,
         has_phot,
         has_ast,
@@ -320,10 +339,11 @@ def build_explicit_jax_loglik_fn(fitter):
         else:
             idx_mag = _jax_param_index(names, 'mag_src', filt_idx)
 
-        # Class-order vector for this filter, including fixed zeros.
+        # Class-order vector for this filter. A tied suffix reads
+        # the source column; any other missing suffix is fixed.
         try:
             slots = _class_vector_slots(
-                names, base_names, filt_names, fixed, filt_idx
+                names, base_names, filt_names, fixed, filt_idx, tied
             )
         except ValueError:
             return None, None
@@ -387,7 +407,7 @@ def build_explicit_jax_loglik_fn(fitter):
 
         try:
             slots = _class_vector_slots(
-                names, base_names, filt_names, fixed, phot_idx
+                names, base_names, filt_names, fixed, phot_idx, tied
             )
         except ValueError:
             return None, None
