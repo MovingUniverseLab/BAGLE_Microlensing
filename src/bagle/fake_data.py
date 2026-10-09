@@ -45,9 +45,9 @@ def origin_components(xS0_in, n_filters):
     Parameters
     ----------
     xS0_in : array_like
-        Preferred shape is ``(n_filters, 2)``: one East/North
-        pair per filter, in arcsec. A single pair of shape
-        ``(2,)`` is repeated for every filter.
+        Shape ``(n_filters, 2)``: one East/North pair per
+        filter, in arcsec. Column 0 is East and column 1 is
+        North.
     n_filters : int
         Number of photometric filters.
 
@@ -75,10 +75,9 @@ def as_filter_origin(value, n_filters):
 
     Parameters
     ----------
-    value : float or array_like
-        Preferred form is a float array of length ``n_filters``,
-        one entry per filter. A scalar or length-1 value is
-        repeated.
+    value : array_like
+        Float array of length ``n_filters``, one entry per
+        filter.
     n_filters : int
         Number of photometric filters.
 
@@ -718,11 +717,11 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
         and the geometric center of the lens system in heliocentric
         coordinates.
     xS0_E : array_like
-        East origin of the source at t0 (arcsec). One entry
-        per filter is preferred. A scalar is repeated.
+        East origin of the source at t0 (arcsec). An array
+        of length ``n_filters``, one entry per filter.
     xS0_N : array_like
-        North origin of the source at t0 (arcsec). One entry
-        per filter is preferred. A scalar is repeated.
+        North origin of the source at t0 (arcsec). An array
+        of length ``n_filters``, one entry per filter.
     beta : float (mas)
         The closest projected approach between the source
         and the geometric center of the lens system in heliocentric
@@ -758,7 +757,7 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
 
     """
     reseed_noise(seed)
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
 
@@ -937,11 +936,11 @@ def fake_data_FSBL(outdir='', outroot='fsbl_',
         and the geometric center of the lens system in heliocentric
         coordinates.
     xS0_E : array_like
-        East origin of the source at t0 (arcsec). One entry
-        per filter is preferred. A scalar is repeated.
+        East origin of the source at t0 (arcsec). An array
+        of length ``n_filters``, one entry per filter.
     xS0_N : array_like
-        North origin of the source at t0 (arcsec). One entry
-        per filter is preferred. A scalar is repeated.
+        North origin of the source at t0 (arcsec). An array
+        of length ``n_filters``, one entry per filter.
     beta : float (mas)
         The closest projected approach between the source
         and the geometric center of the lens system in heliocentric
@@ -975,7 +974,7 @@ def fake_data_FSBL(outdir='', outroot='fsbl_',
 
     """
 
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
@@ -1149,11 +1148,11 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
         and the geometric center of the lens system in heliocentric
         coordinates.
     xS0_E : array_like
-        East origin of the source at t0 (arcsec). One entry
-        per filter is preferred. A scalar is repeated.
+        East origin of the source at t0 (arcsec). An array
+        of length ``n_filters``, one entry per filter.
     xS0_N : array_like
-        North origin of the source at t0 (arcsec). One entry
-        per filter is preferred. A scalar is repeated.
+        North origin of the source at t0 (arcsec). An array
+        of length ``n_filters``, one entry per filter.
     beta : float (mas)
         The closest projected approach between the source
         and the geometric center of the lens system in heliocentric
@@ -1185,7 +1184,7 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
 
     """
 
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
@@ -1558,7 +1557,7 @@ def fake_correlated_data_with_astrom(seed=FAKE_DATA_SEED):
     piS = 0.125
     piE_E = 0.05
     piE_N = 0.05
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(0.0, 1)
     xS0_N = as_filter_origin(0.08E-3, 1)
     muS_E = -4.18
@@ -2423,11 +2422,11 @@ def fake_data_BSPL(outdir='', outroot='bspl',
         and the geometric center of the lens system in heliocentric
         coordinates.
     xS0_E : array_like
-        East origin of the source at t0 (arcsec). One entry
-        per filter is preferred. A scalar is repeated.
+        East origin of the source at t0 (arcsec). An array
+        of length ``n_filters``, one entry per filter.
     xS0_N : array_like
-        North origin of the source at t0 (arcsec). One entry
-        per filter is preferred. A scalar is repeated.
+        North origin of the source at t0 (arcsec). An array
+        of length ``n_filters``, one entry per filter.
     muL_E : float (mas/yr)
         Proper motion of the lens system in RA direction
     muL_N : float (mas/yr)
@@ -2459,7 +2458,7 @@ def fake_data_BSPL(outdir='', outroot='bspl',
 
     """
     reseed_noise(seed)
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
 
@@ -3073,7 +3072,7 @@ def fake_data_noPar_BSPL_6(outdir='', outroot='bspl',
                                raL=259.5, decL=-29.0, fratio_bin=1, mag_base=20,
                                b_sff=1,
                                target='BSPL', animate=False):
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
@@ -3255,7 +3254,7 @@ def fake_data_noPar_BSPL_2(outdir='', outroot='bspl',
                                raL=259.5, decL=-29.0, fratio_bin=0.158, mag_base=17.8,
                                b_sff=1,
                                target='BSPL', animate=False):
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
@@ -3438,7 +3437,7 @@ def fake_data_noPar_BSPL_3(outdir='', outroot='bspl',
                                p=450, tp=30, aleph=2,
                                aleph_sec=2.5, mag_src_pri=18, mag_src_sec=20, b_sff=1, raL=259.5, decL=-29.0,
                                target='BSPL', animate=False):
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
@@ -3618,7 +3617,7 @@ def fake_data_noPar_BSPL_3_5(outdir='', outroot='bspl',
                                p=450, tp=30, aleph=2,
                                aleph_sec=2.5, mag_src_pri=18, mag_src_sec=20, b_sff=1, raL=259.5, decL=-29.0,
                                target='BSPL', animate=False):
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
@@ -3798,7 +3797,7 @@ def fake_data_noPar_BSPL_4(outdir='', outroot='bspl',
                                e=0, p=400, tp=30, aleph=3.79,
                                aleph_sec=4.71,
                                target='BSPL', animate=False):
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
@@ -3975,7 +3974,7 @@ def fake_data_noPar_PSBL_1(outdir='', outroot='psbl',
                                alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls1=20,
                                raL=None, decL=None, root_tol=1e-8,
                                target='PSBL', animate=False):
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
@@ -4157,7 +4156,7 @@ def fake_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
                                   alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls=20,
                                   raL=None, decL=None, root_tol=1e-8,
                                   target='PSBL', animate=False):
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
@@ -4340,7 +4339,7 @@ def fake_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
                                    alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls1=20,
                                    raL=None, decL=None, root_tol=1e-8,
                                    target='PSBL', animate=False):
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
@@ -4525,7 +4524,7 @@ def fake_data_noPar_PSBL_4(outdir='', outroot='psbl',
                                b_sff=1, mag_src=20, dmag_Lp_Ls=20,
                                raL=None, decL=None, root_tol=1e-8,
                                target='PSBL', animate=False):
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
@@ -4709,7 +4708,7 @@ def fake_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
                                aleph_secS=7, mag_src_pri=16, mag_src_sec=20, b_sff=1, raL=30,
                                decL=20, root_tol=1e-8,
                                target='BSBL', animate=False):
-    # One entry per filter. A scalar is repeated.
+    # One entry per filter.
     xS0_E = as_filter_origin(xS0_E, 1)
     xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
