@@ -58,7 +58,7 @@ def _jax_psbl_astrometry(mod, t, b_sff):
         East / North centroid in arcsec.
     """
     geom = derive_psbl_photastrom_param1(
-        mod.mLp, mod.mLs, mod.t0, mod.xS0[0], mod.xS0[1],
+        mod.mLp, mod.mLs, mod.t0, mod.xS0[0, 0], mod.xS0[0, 1],
         mod.beta, mod.muL[0], mod.muL[1], mod.muS[0], mod.muS[1],
         mod.dL, mod.dS, mod.sep, mod.alpha,
     )
@@ -190,7 +190,7 @@ def test_photometry_keeps_unclipped_blend():
 
         # JAX photometry kernel must stay on the unclipped blend too.
         geom = derive_psbl_photastrom_param1(
-            mod.mLp, mod.mLs, mod.t0, mod.xS0[0], mod.xS0[1],
+            mod.mLp, mod.mLs, mod.t0, mod.xS0[0, 0], mod.xS0[0, 1],
             mod.beta, mod.muL[0], mod.muL[1], mod.muS[0], mod.muS[1],
             mod.dL, mod.dS, mod.sep, mod.alpha,
         )

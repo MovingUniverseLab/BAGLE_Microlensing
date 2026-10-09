@@ -160,15 +160,17 @@ def test_bsbl_filt_idx_reaches_astrometry():
     return None
 
 
-def test_one_filter_xs0_stays_shape_2():
-    """A single filter keeps the historical xS0 shape (2,)."""
+def test_one_filter_xs0_is_shape_1_2():
+    """One filter stores xS0 with shape (1, 2)."""
     instance = model.PSPL_PhotAstrom_noPar_Param1(
         5.0, 57000.0, 0.2, 2000.0, 0.5,
         0.01, -0.02,
         1.0, -1.0, 2.0, 3.0,
         [1.0], [18.0],
     )
-    assert instance.xS0.shape == (2,)
+    assert instance.xS0.shape == (1, 2)
+    assert instance.xS0_E.shape == (1,)
+    np.testing.assert_allclose(instance.xS0[0], [0.01, -0.02])
     pos = instance.get_astrometry(np.array([57000.0, 57010.0]))
     assert pos.shape == (2, 2)
     return None
@@ -227,4 +229,111 @@ def test_refpar_pi_ref_frame_is_per_filter():
         np.testing.assert_allclose(pos1 - pos0, expected, atol=1e-8)
     finally:
         parallax.parallax_in_direction = original
+    return None
+
+
+def _origin_inputs(n_filters, kind, east, north):
+    """Scalar, list, or array origin components."""
+    if kind == 'scalar':
+        # A scalar is repeated onto every filter.
+        return east[0], north[0]
+    if n_filters == 1:
+        values_e = [east[0]]
+        values_n = [north[0]]
+    else:
+        values_e = list(east[:n_filters])
+        values_n = list(north[:n_filters])
+    if kind == 'list':
+        return values_e, values_n
+    return (
+        np.asarray(values_e, dtype=float),
+        np.asarray(values_n, dtype=float),
+    )
+
+
+def _expected_origin(n_filters, kind, east, north):
+    """Stored (n_filters, 2) origin for one input kind."""
+    if kind == 'scalar':
+        row = [east[0], north[0]]
+        return np.array([row] * n_filters, dtype=float)
+    if n_filters == 1:
+        return np.array([[east[0], north[0]]], dtype=float)
+    return np.column_stack([
+        np.asarray(east[:n_filters], dtype=float),
+        np.asarray(north[:n_filters], dtype=float),
+    ])
+
+
+def _assert_stored_origin(inst, expected):
+    """xS0, xL0, and unlensed source position share filt_idx."""
+    n_filters = expected.shape[0]
+    assert inst.xS0.shape == (n_filters, 2)
+    assert inst.xS0_E.shape == (n_filters,)
+    assert inst.xS0_N.shape == (n_filters,)
+    np.testing.assert_allclose(inst.xS0, expected)
+    assert inst.xL0.shape == (n_filters, 2)
+    if hasattr(inst, 'xL0_E'):
+        assert inst.xL0_E.shape == (n_filters,)
+        assert inst.xL0_N.shape == (n_filters,)
+    t0 = np.array([inst.t0])
+    for filt_idx in range(n_filters):
+        # A source binary's unlensed centroid is not the primary origin.
+        if hasattr(inst, 'get_resolved_source_astrometry_unlensed'):
+            both = inst.get_resolved_source_astrometry_unlensed(
+                t0, filt_idx=filt_idx)
+            np.testing.assert_allclose(
+                both[0, 0], inst.xS0[filt_idx], atol=1e-12)
+        else:
+            pos = inst.get_source_astrometry_unlensed(
+                t0, filt_idx=filt_idx)
+            np.testing.assert_allclose(
+                pos[0], inst.xS0[filt_idx], atol=1e-12)
+    if hasattr(inst, 'xS0_pri'):
+        assert inst.xS0_pri.shape == (n_filters, 2)
+        np.testing.assert_allclose(inst.xS0_pri, inst.xS0)
+    if hasattr(inst, 'xS0_sec'):
+        assert inst.xS0_sec.shape == (n_filters, 2)
+    if hasattr(inst, 'xS0_com'):
+        assert inst.xS0_com.shape == (n_filters, 2)
+    return None
+
+
+def test_xs0_stored_shape_is_n_filters_by_2():
+    """xS0 is (n_filters, 2) for scalar, list, and array input.
+
+    Phot-only models have no astrometric origin. Phot+astrom,
+    a source binary, and the JAX PSPL model all store arrays.
+    """
+    phot = model.PSPL_Phot_noPar_Param1(
+        57000.0, 0.1, 30.0, 0.01, 0.02, [1.0], [18.0])
+    assert not hasattr(phot, 'xS0')
+    assert not hasattr(phot, 'xS0_E')
+
+    east = [0.01, -0.02]
+    north = [0.03, 0.04]
+    for n_filters in (1, 2):
+        b_sff = np.ones(n_filters)
+        mag = np.full(n_filters, 18.0)
+        dmag = np.full(n_filters, 20.0)
+        for kind in ('scalar', 'list', 'array'):
+            xE, xN = _origin_inputs(n_filters, kind, east, north)
+            expected = _expected_origin(n_filters, kind, east, north)
+            pspl = model.PSPL_PhotAstrom_noPar_Param1(
+                5.0, 57000.0, 0.2, 2000.0, 0.5,
+                xE, xN, 1.0, -1.0, 2.0, 3.0, b_sff, mag)
+            psbl = model.PSBL_PhotAstrom_noPar_Param1(
+                10.0, 5.0, 57000.0, xE, xN, 0.4,
+                0.0, 0.0, 4.0, -3.0, 2000.0, 4000.0,
+                10.0, 90.0, b_sff, mag, dmag)
+            bspl = model.BSPL_PhotAstrom_noPar_Param1(
+                5.0, 57000.0, 0.2, 2000.0, 0.5,
+                xE, xN, 1.0, -1.0, 2.0, 3.0,
+                5.0, 40.0, mag, mag + 1.0, b_sff)
+            jax_mod = model_jax.PSPL_PhotAstrom_noPar_Param1(
+                5.0, 57000.0, 0.2, 2000.0, 0.5,
+                xE, xN, 1.0, -1.0, 2.0, 3.0, b_sff, mag)
+            _assert_stored_origin(pspl, expected)
+            _assert_stored_origin(psbl, expected)
+            _assert_stored_origin(bspl, expected)
+            _assert_stored_origin(jax_mod, expected)
     return None

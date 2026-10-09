@@ -235,7 +235,9 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie'):
     plt.figtext(0.805, 0.75-2*dy, fmt2.format(psbl.sep), fontsize=12)
     plt.figtext(0.805, 0.75-3*dy, fmt3.format(psbl.alpha), fontsize=12)
     plt.figtext(0.805, 0.75-4*dy, fmt4.format(psbl.beta), fontsize=12)
-    plt.figtext(0.805, 0.75-5*dy, fmt5.format(psbl.xS0[0], psbl.xS0[1]), fontsize=12)
+    plt.figtext(
+        0.805, 0.75-5*dy,
+        fmt5.format(psbl.xS0[0, 0], psbl.xS0[0, 1]), fontsize=12)
     plt.figtext(0.805, 0.75-6*dy, fmt6.format(psbl.muL[0], psbl.muL[1]), fontsize=12)
     plt.figtext(0.805, 0.75-7*dy, fmt7.format(psbl.muS[0], psbl.muS[1]), fontsize=12)
     plt.figtext(0.805, 0.75-8*dy, fmt8.format(psbl.dL), fontsize=12)
@@ -384,7 +386,9 @@ def animate_PSPL(pspl, duration=10, time_steps=300, outfile='pspl_movie.gif'):
     # plt.figtext(0.805, 0.75-1*dy, fmt1.format(pspl.raL), fontsize=12)
     # plt.figtext(0.805, 0.75-2*dy, fmt2.format(pspl.decL), fontsize=12)
     plt.figtext(0.805, 0.75-3*dy, fmt3.format(pspl.beta), fontsize=12)
-    plt.figtext(0.805, 0.75-4*dy, fmt4.format(pspl.xS0[0], pspl.xS0[1]), fontsize=12)
+    plt.figtext(
+        0.805, 0.75-4*dy,
+        fmt4.format(pspl.xS0[0, 0], pspl.xS0[0, 1]), fontsize=12)
     plt.figtext(0.805, 0.75-5*dy, fmt5.format(pspl.muL[0], pspl.muL[1]), fontsize=12)
     plt.figtext(0.805, 0.75-6*dy, fmt6.format(pspl.muS[0], pspl.muS[1]), fontsize=12)
     plt.figtext(0.805, 0.75-7*dy, fmt7.format(pspl.dL), fontsize=12)

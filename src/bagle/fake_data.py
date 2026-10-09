@@ -38,6 +38,65 @@ def reseed_noise(seed):
     np.random.seed(int(seed))
 
 
+
+def origin_components(xS0_in, n_filters):
+    """Split a source origin into per-filter East and North.
+
+    Parameters
+    ----------
+    xS0_in : array_like
+        Preferred shape is ``(n_filters, 2)``: one East/North
+        pair per filter, in arcsec. A single pair of shape
+        ``(2,)`` is repeated for every filter.
+    n_filters : int
+        Number of photometric filters.
+
+    Returns
+    -------
+    xS0_E, xS0_N : ndarray
+        Float arrays of shape ``(n_filters,)``.
+    """
+    arr = np.asarray(xS0_in, dtype=float)
+    if arr.shape == (2,):
+        xS0_E = np.repeat(float(arr[0]), n_filters)
+        xS0_N = np.repeat(float(arr[1]), n_filters)
+        return xS0_E, xS0_N
+    if arr.ndim == 2 and arr.shape == (n_filters, 2):
+        xS0_E = np.asarray(arr[:, 0], dtype=float)
+        xS0_N = np.asarray(arr[:, 1], dtype=float)
+        return xS0_E, xS0_N
+    raise ValueError(
+        'xS0_in must have shape (2,) or ({0:d}, 2); got {1}'.format(
+            n_filters, arr.shape))
+
+
+def as_filter_origin(value, n_filters):
+    """Broadcast one origin component to one entry per filter.
+
+    Parameters
+    ----------
+    value : float or array_like
+        Preferred form is a float array of length ``n_filters``,
+        one entry per filter. A scalar or length-1 value is
+        repeated.
+    n_filters : int
+        Number of photometric filters.
+
+    Returns
+    -------
+    arr : ndarray
+        Float array of shape ``(n_filters,)``.
+    """
+    arr = np.asarray(value, dtype=float).reshape(-1)
+    if arr.size == 1:
+        return np.repeat(float(arr[0]), n_filters)
+    if arr.size == n_filters:
+        return np.asarray(arr, dtype=float)
+    raise ValueError(
+        'origin length {0:d} != n_filters {1:d}'.format(
+            int(arr.size), n_filters))
+
+
 def fake_lightcurve_parallax_bulge(outdir='./casey_testing_stuff/', target='unknown'):
     raL_in = 17.30 * 15.  # Bulge R.A.
     decL_in = -29.0
@@ -64,6 +123,8 @@ def fake_lightcurve_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
                              muS_in, muL_in, dL_in, dS_in, b_sff_in,
                              mag_src_in,
                              outdir=''):
+    # Preferred shape is (n_filters, 2). A single pair is repeated.
+    xS0_E, xS0_N = origin_components(xS0_in, 1)
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
 
@@ -72,8 +133,8 @@ def fake_lightcurve_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
                                                    beta_in,
                                                    dL_in,
                                                    dL_in / dS_in,
-                                                   xS0_in[0],
-                                                   xS0_in[1],
+                                                   xS0_E,
+                                                   xS0_N,
                                                    muL_in[0],
                                                    muL_in[1],
                                                    muS_in[0],
@@ -88,8 +149,8 @@ def fake_lightcurve_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
                                                  beta_in,
                                                  dL_in,
                                                  dL_in / dS_in,
-                                                 xS0_in[0],
-                                                 xS0_in[1],
+                                                 xS0_E,
+                                                 xS0_N,
                                                  muL_in[0],
                                                  muL_in[1],
                                                  muS_in[0],
@@ -204,13 +265,15 @@ def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
                        obsLocation='earth', seed=FAKE_DATA_SEED):
     # An int reseeds. None keeps drawing on the current stream.
     reseed_noise(seed)
+    # Preferred shape is (n_filters, 2). A single pair is repeated.
+    xS0_E, xS0_N = origin_components(xS0_in, 1)
     pspl_par_in = model.PSPL_PhotAstrom_Par_Param1(mL_in,
                                                    t0_in,
                                                    beta_in,
                                                    dL_in,
                                                    dL_in / dS_in,
-                                                   xS0_in[0],
-                                                   xS0_in[1],
+                                                   xS0_E,
+                                                   xS0_N,
                                                    muL_in[0],
                                                    muL_in[1],
                                                    muS_in[0],
@@ -289,8 +352,8 @@ def fake_data_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     params['obsLocation'] = obsLocation
     params['mL'] = mL_in
     params['t0'] = t0_in
-    params['xS0_E'] = xS0_in[0]
-    params['xS0_N'] = xS0_in[1]
+    params['xS0_E'] = xS0_E
+    params['xS0_N'] = xS0_N
     params['beta'] = beta_in
     params['muS_E'] = muS_in[0]
     params['muS_N'] = muS_in[1]
@@ -343,6 +406,8 @@ def fake_data1(beta_sign=-1, plot=False, verbose=False, outdir='./',
     mL_in = 10.0  # msun
     t0_in = 57000.00
     xS0_in = np.array([0.000, 0.000])
+    # Preferred shape is (n_filters, 2). A single pair is repeated.
+    xS0_E, xS0_N = origin_components(xS0_in, 1)
     beta_in = beta_sign * 0.4  # Einstein radii
     muL_in = np.array([0.0, -7.0])  # Strong
     # muL_in = np.array([-7.0, 0.0])  # Weak
@@ -357,8 +422,8 @@ def fake_data1(beta_sign=-1, plot=False, verbose=False, outdir='./',
                                                  beta_in,
                                                  dL_in,
                                                  dL_in / dS_in,
-                                                 xS0_in[0],
-                                                 xS0_in[1],
+                                                 xS0_E,
+                                                 xS0_N,
                                                  muL_in[0],
                                                  muL_in[1],
                                                  muS_in[0],
@@ -381,8 +446,8 @@ def fake_data1(beta_sign=-1, plot=False, verbose=False, outdir='./',
         print('beta = ', pspl_in.u0_amp)
         print('dL = ', pspl_in.tE)
         print('dS = ', pspl_in.piE[0])
-        print('xS0_E = ', pspl_in.xS0[0])
-        print('xS0_N = ', pspl_in.xS0[1])
+        print('xS0_E = ', pspl_in.xS0[0, 0])
+        print('xS0_N = ', pspl_in.xS0[0, 1])
         print('muL_E = ', pspl_in.muL[0])
         print('muL_N = ', pspl_in.muL[1])
         print('muS_E = ', pspl_in.muS[0])
@@ -459,8 +524,8 @@ def fake_data1(beta_sign=-1, plot=False, verbose=False, outdir='./',
     params = {}
     params['mL'] = mL_in
     params['t0'] = t0_in
-    params['xS0_E'] = xS0_in[0]
-    params['xS0_N'] = xS0_in[1]
+    params['xS0_E'] = xS0_E
+    params['xS0_N'] = xS0_N
     params['beta'] = beta_in
     params['muS_E'] = muS_in[0]
     params['muS_N'] = muS_in[1]
@@ -494,6 +559,8 @@ def fake_data2(raL, decL, t0_in, u0_in, tE_in, thetaE_in, piS_in, piE_in, xS0_in
                muS_in, b_sff_in, mag_src_in, obsLocation='earth',
                outdir='', target='Unknown', noise=True, plot=False):
 
+    # Preferred shape is (n_filters, 2). A single pair is repeated.
+    xS0_E, xS0_N = origin_components(xS0_in, 1)
     pspl_par_in = model.PSPL_PhotAstrom_Par_Param2(t0_in,
                                                    u0_in,
                                                    tE_in,
@@ -501,8 +568,8 @@ def fake_data2(raL, decL, t0_in, u0_in, tE_in, thetaE_in, piS_in, piE_in, xS0_in
                                                    piS_in,
                                                    piE_in[0],
                                                    piE_in[1],
-                                                   xS0_in[0],
-                                                   xS0_in[1],
+                                                   xS0_E,
+                                                   xS0_N,
                                                    muS_in[0],
                                                    muS_in[1],
                                                    b_sff=[b_sff_in],
@@ -585,8 +652,8 @@ def fake_data2(raL, decL, t0_in, u0_in, tE_in, thetaE_in, piS_in, piE_in, xS0_in
     params['piS'] = piS_in
     params['piE_E'] = piE_in[0]
     params['piE_N'] = piE_in[1]
-    params['xS0_E'] = xS0_in[0]
-    params['xS0_N'] = xS0_in[1]
+    params['xS0_E'] = xS0_E
+    params['xS0_N'] = xS0_N
     params['muS_E'] = muS_in[0]
     params['muS_N'] = muS_in[1]
     params['b_sff'] = np.array([b_sff_in])
@@ -650,12 +717,12 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
         The time of closest projected approach between the source
         and the geometric center of the lens system in heliocentric
         coordinates.
-    xS0_E : float (arcsec)
-        Position of the source in RA relative to the
-        geometric center of the lens system at time t0.
-    xS0_N : float (arcsec)
-        Position of the source in Dec relative to the
-        geometric center of the lens system at time t0.
+    xS0_E : array_like
+        East origin of the source at t0 (arcsec). One entry
+        per filter is preferred. A scalar is repeated.
+    xS0_N : array_like
+        North origin of the source at t0 (arcsec). One entry
+        per filter is preferred. A scalar is repeated.
     beta : float (mas)
         The closest projected approach between the source
         and the geometric center of the lens system in heliocentric
@@ -691,6 +758,9 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
 
     """
     reseed_noise(seed)
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
 
     start = time.time()
     if parallax:
@@ -866,12 +936,12 @@ def fake_data_FSBL(outdir='', outroot='fsbl_',
         The time of closest projected approach between the source
         and the geometric center of the lens system in heliocentric
         coordinates.
-    xS0_E : float (arcsec)
-        Position of the source in RA relative to the
-        geometric center of the lens system at time t0.
-    xS0_N : float (arcsec)
-        Position of the source in Dec relative to the
-        geometric center of the lens system at time t0.
+    xS0_E : array_like
+        East origin of the source at t0 (arcsec). One entry
+        per filter is preferred. A scalar is repeated.
+    xS0_N : array_like
+        North origin of the source at t0 (arcsec). One entry
+        per filter is preferred. A scalar is repeated.
     beta : float (mas)
         The closest projected approach between the source
         and the geometric center of the lens system in heliocentric
@@ -905,6 +975,9 @@ def fake_data_FSBL(outdir='', outroot='fsbl_',
 
     """
 
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     if parallax:
         fsbl = model.FSBL_caustics_PhotAstrom_Par_Param1(mLp, mLs, t0, radiusS, xS0_E, xS0_N,
@@ -1075,12 +1148,12 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
         The time of closest projected approach between the source
         and the geometric center of the lens system in heliocentric
         coordinates.
-    xS0_E : float (arcsec)
-        Position of the source in RA relative to the
-        geometric center of the lens system at time t0.
-    xS0_N : float (arcsec)
-        Position of the source in Dec relative to the
-        geometric center of the lens system at time t0.
+    xS0_E : array_like
+        East origin of the source at t0 (arcsec). One entry
+        per filter is preferred. A scalar is repeated.
+    xS0_N : array_like
+        North origin of the source at t0 (arcsec). One entry
+        per filter is preferred. A scalar is repeated.
     beta : float (mas)
         The closest projected approach between the source
         and the geometric center of the lens system in heliocentric
@@ -1112,6 +1185,9 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
 
     """
 
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     if parallax:
         psbl = model.PSBL_PhotAstrom_Par_Param1(mL1, mL2, t0, xS0_E, xS0_N,
@@ -1482,8 +1558,9 @@ def fake_correlated_data_with_astrom(seed=FAKE_DATA_SEED):
     piS = 0.125
     piE_E = 0.05
     piE_N = 0.05
-    xS0_E = 0.0
-    xS0_N = 0.08E-3
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(0.0, 1)
+    xS0_N = as_filter_origin(0.08E-3, 1)
     muS_E = -4.18
     muS_N = -0.28
     b_sff = 0.9
@@ -2190,13 +2267,15 @@ def fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
                                seed=FAKE_DATA_SEED):
     # An int reseeds. None keeps drawing on the current stream.
     reseed_noise(seed)
+    # Preferred shape is (n_filters, 2). A single pair is repeated.
+    xS0_E, xS0_N = origin_components(xS0_in, 1)
     pspl_par_in = model.PSPL_PhotAstrom_Par_Param1(mL=mL_in,
                                                    t0=t0_in,
                                                    beta=beta_in,
                                                    dL=dL_in,
                                                    dL_dS=dL_in / dS_in,
-                                                   xS0_E=xS0_in[0],
-                                                   xS0_N=xS0_in[1],
+                                                   xS0_E=xS0_E,
+                                                   xS0_N=xS0_N,
                                                    muL_E=muL_in[0],
                                                    muL_N=muL_in[1],
                                                    muS_E=muS_in[0],
@@ -2266,8 +2345,8 @@ def fake_data_lumlens_parallax(raL_in, decL_in, mL_in, t0_in, xS0_in, beta_in,
     params['decL'] = decL_in
     params['mL'] = mL_in
     params['t0'] = t0_in
-    params['xS0_E'] = xS0_in[0]
-    params['xS0_N'] = xS0_in[1]
+    params['xS0_E'] = xS0_E
+    params['xS0_N'] = xS0_N
     params['beta'] = beta_in
     params['muS_E'] = muS_in[0]
     params['muS_N'] = muS_in[1]
@@ -2343,12 +2422,12 @@ def fake_data_BSPL(outdir='', outroot='bspl',
         The closest projected approach between the source
         and the geometric center of the lens system in heliocentric
         coordinates.
-    xS0_E : float (arcsec)
-        Position of the source in RA relative to the
-        geometric center of the lens system at time t0.
-    xS0_N : float (arcsec)
-        Position of the source in Dec relative to the
-        geometric center of the lens system at time t0.
+    xS0_E : array_like
+        East origin of the source at t0 (arcsec). One entry
+        per filter is preferred. A scalar is repeated.
+    xS0_N : array_like
+        North origin of the source at t0 (arcsec). One entry
+        per filter is preferred. A scalar is repeated.
     muL_E : float (mas/yr)
         Proper motion of the lens system in RA direction
     muL_N : float (mas/yr)
@@ -2380,6 +2459,9 @@ def fake_data_BSPL(outdir='', outroot='bspl',
 
     """
     reseed_noise(seed)
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
 
     start = time.time()
     if parallax:
@@ -2568,15 +2650,8 @@ def fake_data_parallax_multi_location(raL_in, decL_in, mL_in, t0_in,
                                       seed=FAKE_DATA_SEED):
     # An int reseeds. None keeps drawing on the current stream.
     reseed_noise(seed)
-    # A length-2 origin is the same zero point in every filter.
-    # A (n, 2) array is one East/North origin per filter.
-    xS0_arr = np.asarray(xS0_in, dtype=float)
-    if xS0_arr.shape == (2,):
-        xS0_E = np.repeat(float(xS0_arr[0]), 3)
-        xS0_N = np.repeat(float(xS0_arr[1]), 3)
-    else:
-        xS0_E = np.asarray(xS0_arr[:, 0], dtype=float)
-        xS0_N = np.asarray(xS0_arr[:, 1], dtype=float)
+    # Preferred shape is (n_filters, 2). A single pair is repeated.
+    xS0_E, xS0_N = origin_components(xS0_in, 3)
 
     pspl_par_in = model.PSPL_PhotAstrom_Par_Param1(mL_in,
                                                    t0_in,
@@ -2998,6 +3073,9 @@ def fake_data_noPar_BSPL_6(outdir='', outroot='bspl',
                                raL=259.5, decL=-29.0, fratio_bin=1, mag_base=20,
                                b_sff=1,
                                target='BSPL', animate=False):
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     bspl = model.BSPL_PhotAstrom_noPar_CircOrbs_Param3(t0, u0_amp, tE, log10_thetaE, piS, piE_E, piE_N,
                                                        omega, big_omega,
@@ -3177,6 +3255,9 @@ def fake_data_noPar_BSPL_2(outdir='', outroot='bspl',
                                raL=259.5, decL=-29.0, fratio_bin=0.158, mag_base=17.8,
                                b_sff=1,
                                target='BSPL', animate=False):
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     bspl = model.BSPL_PhotAstrom_noPar_CircOrbs_Param2(t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, alpha, omega,
                                                        big_omega,
@@ -3357,6 +3438,9 @@ def fake_data_noPar_BSPL_3(outdir='', outroot='bspl',
                                p=450, tp=30, aleph=2,
                                aleph_sec=2.5, mag_src_pri=18, mag_src_sec=20, b_sff=1, raL=259.5, decL=-29.0,
                                target='BSPL', animate=False):
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     bspl = model.BSPL_PhotAstrom_noPar_EllOrbs_Param1(mL, t0_com, beta, dL, dL_dS, xS0_E, xS0_N, muL_E,
                                                        muL_N, muS_E, muS_N,
@@ -3534,6 +3618,9 @@ def fake_data_noPar_BSPL_3_5(outdir='', outroot='bspl',
                                p=450, tp=30, aleph=2,
                                aleph_sec=2.5, mag_src_pri=18, mag_src_sec=20, b_sff=1, raL=259.5, decL=-29.0,
                                target='BSPL', animate=False):
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     bspl = model.BSPL_PhotAstrom_noPar_EllOrbs_Param1(mL, t0_com, beta, dL, dL_dS, xS0_E, xS0_N, muL_E,
                                                        muL_N, muS_E, muS_N,
@@ -3711,6 +3798,9 @@ def fake_data_noPar_BSPL_4(outdir='', outroot='bspl',
                                e=0, p=400, tp=30, aleph=3.79,
                                aleph_sec=4.71,
                                target='BSPL', animate=False):
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     bspl = model.BSPL_PhotAstrom_noPar_CircOrbs_Param1(mL, t0_com, beta, dL, dL_dS, xS0_E, xS0_N, muL_E,
                                                        muL_N, muS_E, muS_N,
@@ -3885,6 +3975,9 @@ def fake_data_noPar_PSBL_1(outdir='', outroot='psbl',
                                alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls1=20,
                                raL=None, decL=None, root_tol=1e-8,
                                target='PSBL', animate=False):
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     psbl = model.PSBL_PhotAstrom_noPar_CircOrbs_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
@@ -4064,6 +4157,9 @@ def fake_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
                                   alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls=20,
                                   raL=None, decL=None, root_tol=1e-8,
                                   target='PSBL', animate=False):
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     psbl = model.PSBL_PhotAstrom_noPar_CircOrbs_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
@@ -4244,6 +4340,9 @@ def fake_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
                                    alpha=90, b_sff=1, mag_src1=15, dmag_Lp_Ls1=20,
                                    raL=None, decL=None, root_tol=1e-8,
                                    target='PSBL', animate=False):
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     psbl = model.PSBL_PhotAstrom_noPar_EllOrbs_Param1(
         mLp, mLs, t0, xS0_E, xS0_N,
@@ -4426,6 +4525,9 @@ def fake_data_noPar_PSBL_4(outdir='', outroot='psbl',
                                b_sff=1, mag_src=20, dmag_Lp_Ls=20,
                                raL=None, decL=None, root_tol=1e-8,
                                target='PSBL', animate=False):
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     psbl = model.PSBL_PhotAstrom_noPar_CircOrbs_Param4(t0, u0_amp, tE, thetaE, piS,
                                                        piE_E, piE_N, xS0_E, xS0_N, omega, big_omega, i, tp, sep, muS_E, muS_N,
@@ -4607,6 +4709,9 @@ def fake_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
                                aleph_secS=7, mag_src_pri=16, mag_src_sec=20, b_sff=1, raL=30,
                                decL=20, root_tol=1e-8,
                                target='BSBL', animate=False):
+    # One entry per filter. A scalar is repeated.
+    xS0_E = as_filter_origin(xS0_E, 1)
+    xS0_N = as_filter_origin(xS0_N, 1)
     start = time.time()
     bsbl = model.BSBL_PhotAstrom_noPar_CircOrbs_Param1(mLp, mLs, t0_com, xS0_E, xS0_N,
                                                        beta_com, muL_E, muL_N, muS_E, muS_N, dL, dS,

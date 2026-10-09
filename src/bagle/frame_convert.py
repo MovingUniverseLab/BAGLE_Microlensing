@@ -223,8 +223,9 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
         piS_pylima = bagle_model.piS
         muSE_pylima = bagle_model.muS[0]
         muSN_pylima = bagle_model.muS[1]
-        xS0N_pylima = bagle_model.xS0[1] / 3600.  # degrees
-        xS0E_pylima = bagle_model.xS0[0] / 3600.  # degrees
+        # Filter 0. xS0 is (n_filters, 2).
+        xS0E_pylima = bagle_model.xS0[0, 0] / 3600.  # degrees
+        xS0N_pylima = bagle_model.xS0[0, 1] / 3600.  # degrees
 
         # Check for PSBL, which isn't supported with astrometry in BAGLE.
         if 'PSBL' in bagle_class_name:

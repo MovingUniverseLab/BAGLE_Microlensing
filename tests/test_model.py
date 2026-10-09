@@ -157,8 +157,8 @@ def run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
     assert pspl.t0 == t0
     assert pspl.beta == beta
     assert pspl.dL == dL
-    assert pspl.xS0[0] == xS0[0]
-    assert pspl.xS0[1] == xS0[1]
+    assert pspl.xS0[0, 0] == xS0[0]
+    assert pspl.xS0[0, 1] == xS0[1]
     assert pspl.muL[0] == muL[0]
     assert pspl.muL[1] == muL[1]
     assert pspl.muS[0] == muS[0]
@@ -1076,8 +1076,8 @@ def test_pspl_parallax2_bulge():
                                                  pspl_par1.piS,
                                                  pspl_par1.piE_E,
                                                  pspl_par1.piE_N,
-                                                 pspl_par1.xS0[0],
-                                                 pspl_par1.xS0[1],
+                                                 pspl_par1.xS0[0, 0],
+                                                 pspl_par1.xS0[0, 1],
                                                  pspl_par1.muS[0],
                                                  pspl_par1.muS[1],
                                                  [b_sff],
@@ -1352,8 +1352,8 @@ def test_parallax(plot=False, verbose=False):
 
     #### SOURCE
     # Define the source coordinates (with the correct proper motion and distance).
-    raS0 = (raL_in * u.deg) + (pspl.xS0[0] * u.deg / 3600)
-    decS0 = (decL_in * u.deg) + (pspl.xS0[1] * u.deg / 3600)
+    raS0 = (raL_in * u.deg) + (pspl.xS0[0, 0] * u.deg / 3600)
+    decS0 = (decL_in * u.deg) + (pspl.xS0[0, 1] * u.deg / 3600)
     if verbose: print(f'S0 coords = {raS0:.10f}, {decS0:.10f}')
     cS = SkyCoord(raS0, decS0,
                   pm_ra_cosdec=muS_in[0] * u.mas / u.yr,
@@ -1373,8 +1373,9 @@ def test_parallax(plot=False, verbose=False):
     xS_astropy = np.vstack([dxS_apy.value, dyS_apy.value]).T * u.mas
 
     #### LENS
-    raL0 = (raL_in * u.deg) + (pspl.xL0[0] * u.deg / 3600)
-    decL0 = (decL_in * u.deg) + (pspl.xL0[1] * u.deg / 3600)
+    # Filter 0. xL0 is (n_filters, 2).
+    raL0 = (raL_in * u.deg) + (pspl.xL0[0, 0] * u.deg / 3600)
+    decL0 = (decL_in * u.deg) + (pspl.xL0[0, 1] * u.deg / 3600)
     if verbose: print(f'L0 coords = {raL0:.10f}, {decL0:.10f}')
     
     cL = SkyCoord(raL0, decL0,
