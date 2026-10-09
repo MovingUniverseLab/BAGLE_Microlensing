@@ -367,9 +367,7 @@ are sent to Horizons as typed.
 
 The constructor stays close to today's. `b_sff`, `mag_src`, `xS0_E`,
 `xS0_N`, and `obsLocation` are sequences of length `n_filters`, in
-the same order. A scalar still means "repeat this to every filter",
-which is how a one-zero-point call works today and how a hand-built
-model can share one `xS0`. There is no `phot_data`, `ast_data`,
+the same order. `xS0` is always `(n_filters, 2)`. There is no `phot_data`, `ast_data`,
 `ast_idx`, or `b_sff_astonly` argument. Names are a fitter concern:
 the model is a function of parameters and `filt_idx`, and it will
 evaluate any index it is given. The fitter decides which of those
@@ -435,7 +433,7 @@ arrays.
 
 Even a one-filter fit writes `xS0_E1` and `xS0_N1`, not `xS0_E` and
 `xS0_N`. The same is true of `pi_ref_frame1`. The constructor argument
-stays `xS0_E=` (a float or a sequence). Renaming that argument would
+stays the array `xS0_E` of length `n_filters`. Renaming that argument would
 break every notebook, and the suffix is a property of the cube, not of
 the Python signature. `b_sff1` and `mag_src1` were already suffixed
 for one filter; `xS0` joins them.
@@ -816,11 +814,11 @@ GP mixins add no rows. Their optional hyperparameters stay
 `phot_optional_param_names` and are created only for filters with
 photometry.
 
-`PSPL_Param.__init__` normalizes every name in `filt_param_names` to
-one length, `n_filters`. A scalar is repeated to that length once any
-list has set it. That includes `xS0`. The fitter does not rely on this
-broadcast for mixed fits; it passes an explicit list with the fixed
-zeros filled in, so a photometry-only slot cannot inherit a sampled
+`PSPL_Param.__init__` stores every name in `filt_param_names` as a
+1-d array of length `n_filters`. `xS0_E` and `xS0_N` have that
+length, and `xS0` is stacked to `(n_filters, 2)`, including one
+filter. The fitter passes an explicit list with the fixed zeros
+filled in, so a photometry-only slot cannot inherit a sampled
 neighbor's zero point. Store
 
 ```python
@@ -1517,8 +1515,10 @@ on `convert_helio_geo_*`, and light-travel time.
    photometric datasets and astrometry on the first of those names
    stays a rename of `xS0_E` / `xS0_N` to `xS0_E1` / `xS0_N1`.
 
-5. One filter stores `xS0` with shape `(2,)`, including when East and
-   North are length-1 arrays. Two or more filters use `(n, 2)`.
+5. `xS0` is always `(n_filters, 2)`, including one filter. `xS0[0]`
+   is that filter's East/North pair. `xS0[0, 0]` is East and
+   `xS0[0, 1]` is North. `xS0_E` and `xS0_N` have length
+   `n_filters`.
 
 6. `get_geoproj_ast_params` reports filter 0's origin.
 
@@ -1548,8 +1548,8 @@ on `convert_helio_geo_*`, and light-travel time.
     suffix is sampled. It returns `None` when suffix `1` was fixed.
 
 11. The BFSPL assignment `xL0 = xS0[0] - thetas0` used only the East
-    component when `xS0` has shape `(2,)`. It now uses filter 0's
-    full East/North origin.
+    component of filter 0. It now subtracts from that filter's
+    East/North pair, `xS0[0]`.
 
 12. `split_param_filter_index1` still does not strip a trailing `0`,
     so `b_sff10` is unchanged.
@@ -1606,9 +1606,10 @@ on `convert_helio_geo_*`, and light-travel time.
     are removed. `PSPL_Param.__init__` reshapes each filter
     parameter to a 1-d float array of shape `(n_filters,)`, then
     stacks `xS0` once, after that length check. Parameterizations
-    set `xS0_E` and `xS0_N` only, then call `super()`. One filter
-    keeps shape `(2,)` so `xS0[0]` stays East. More than one
-    filter is `(n_filters, 2)`. Later
+    set `xS0_E` and `xS0_N` only, then call `super()`. `xS0` is
+    always `(n_filters, 2)`, including one filter. `xS0[0]` is
+    that filter's East/North pair, `xS0[0, 0]` is East, and
+    `xS0[0, 1]` is North. Later
     methods index that stored array and do not reshape it.
     `pi_ref_frame[filt_idx]` is that filter's scalar.
     `_origin_for_jax` and `_pi_ref_for_jax` are removed. The JAX

@@ -434,6 +434,10 @@ Some examples of the parameters for different parameterization are:
             | (ra, dec)
 
 `(ra, dec)` are only required if the model is created with a parallax class.
+``xS0`` is always ``(n_filters, 2)``, including one filter. ``xS0_E``
+and ``xS0_N`` are arrays of length ``n_filters``. ``xS0[filt_idx]``
+is that filter's East/North pair. ``xS0[0, 0]`` is East and
+``xS0[0, 1]`` is North for filter 0.
 More details about each parameterization can be found in the Parameterization
 Class docstring.
 

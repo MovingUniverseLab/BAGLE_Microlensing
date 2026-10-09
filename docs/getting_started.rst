@@ -179,9 +179,10 @@ apparent shifted source position over time::
   shift = belukurov.get_centroid_shift(t) 
   shift_amp = np.linalg.norm(shift, axis=1)
 
-  # Positions for lens, source, and observed image
-  lens_pos = belukurov.xL0 + np.outer(dt / model.days_per_year, belukurov.muL) * 1e-3
-  srce_pos = belukurov.xS0 + np.outer(dt / model.days_per_year, belukurov.muS) * 1e-3
+  # Positions for lens, source, and observed image.
+  # xS0 and xL0 are (n_filters, 2). Index 0 is the East/North pair.
+  lens_pos = belukurov.xL0[0] + np.outer(dt / model.days_per_year, belukurov.muL) * 1e-3
+  srce_pos = belukurov.xS0[0] + np.outer(dt / model.days_per_year, belukurov.muS) * 1e-3
   imag_pos = srce_pos + (shift * 1e-3)
 
 Note that the returned quantities (e.g. ``lens_pos``) have dimensions

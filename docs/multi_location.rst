@@ -205,11 +205,12 @@ present because the source flux fraction is ``'both'``.
 Preferred constructor: ``xS0`` as arrays
 ----------------------------------------
 
-Pass ``xS0_E`` and ``xS0_N`` as arrays with one entry per filter, in
+Pass ``xS0_E`` and ``xS0_N`` as arrays of length ``n_filters``, in
 unified order, the same length as the source flux fraction ``b_sff``
-and ``mag_src``. ``xS0`` has shape ``(n_filters, 2)``.
-``xS0[filt_idx]`` is that filter's East/North origin. There is no
-``phot_data`` argument on the model.
+and ``mag_src``. ``xS0`` is always ``(n_filters, 2)``, including one
+filter. ``xS0[filt_idx]`` is that filter's East/North pair.
+``xS0[0, 0]`` is East and ``xS0[0, 1]`` is North for filter 0.
+There is no ``phot_data`` argument on the model.
 
 .. code-block:: python
 
