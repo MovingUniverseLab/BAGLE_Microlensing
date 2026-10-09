@@ -32,7 +32,9 @@ First, define a microlensing event with a set of parameters:
 
   mL = 10.0                       # lens mass in Msun
   t0 = 57000.00                   # closest approach time in MJD (days)
-  xS0 = np.array([0.000, 0.000])  # arcsec, arbitrary
+  # East and North origin, one entry per filter (arcsec).
+  xS0_E = np.array([0.000])
+  xS0_N = np.array([0.000])
   beta = 1.4                      # source-lens separation in mas
   muS = np.array([8.0, 0.0])      # source proper motion in mas/yr
   muL = np.array([0.00, 0.00])    # lens proper motion in mas/yr
@@ -45,7 +47,7 @@ First, define a microlensing event with a set of parameters:
                                   # one for each filter
 
   event1 = model.PSPL_PhotAstrom_noPar_Param1(mL, t0, beta, dL,
-                                              dL / dS, xS0[0], xS0[1],
+                                              dL / dS, xS0_E, xS0_N,
                                               muL[0], muL[1], muS[0],
                                               muS[1],
                                               b_sff, mag_src)
@@ -115,7 +117,9 @@ Again, all of the parameters are specified in heliocentric coordinates.
   dec = -28.6449444   # in decimal degrees
   mL = 10.0           # lens mass in Msun
   t0 = 55150.0        # closest apparent approach time in MJD  
-  xS0 = [0, 0]        # position of source at t0, arbitrary (arcsec)
+  # One entry per filter. A scalar is still accepted and repeated.
+  xS0_E = np.array([0.0])
+  xS0_N = np.array([0.0])
   beta = -2.0         # source - lens separation in mas,
                       # sign follows Gould convention.
   muS = [5, 0]        # source proper motion in mas/yr
@@ -128,10 +132,10 @@ Again, all of the parameters are specified in heliocentric coordinates.
   mag_src = [19.0]    # list of source baseline magnitude
                       # one for each filter
 
-  event2 = model.PSPL_PhotAstrom_Par_Param1(mL, t0, beta, dL, dL/dS, 
-                                            xS0[0], xS0[1], 
-                                            muL[0], muL[1], 
-                                            muS[0], muS[1], 
+  event2 = model.PSPL_PhotAstrom_Par_Param1(mL, t0, beta, dL, dL/dS,
+                                            xS0_E, xS0_N,
+                                            muL[0], muL[1],
+                                            muS[0], muS[1],
                                             b_sff, mag_src,
                                             raL=ra, decL=dec)
                                             
@@ -147,7 +151,8 @@ event from Belokurov and Evans 2002. First, define the event::
 
   mL = 0.5  # msun
   t0 = 57160.00
-  xS0 = np.array([0.000, 0.000])
+  xS0_E = np.array([0.000])  # arcsec, one entry per filter
+  xS0_N = np.array([0.000])
   beta = -7.41  # mas
   muS = np.array([-2.0, 7.0])
   muL = np.array([90.00, -24.71])
@@ -158,7 +163,7 @@ event from Belokurov and Evans 2002. First, define the event::
 
   belukurov = model.PSPL_PhotAstrom_noPar_Param1(mL, t0, beta,
                                                  dL, dL / dS,
-                                                 xS0[0], xS0[1],
+                                                 xS0_E, xS0_N,
                                                  muL[0], muL[1],
                                                  muS[0], muS[1],
                                                  b_sff, mag_src)

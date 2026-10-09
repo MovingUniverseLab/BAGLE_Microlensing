@@ -164,6 +164,11 @@ are described below.
             | (ra, dec)
 
 `(ra, dec)` are only required if the model is created with a parallax class.
+``xS0_E``, ``xS0_N``, the source flux fraction ``b_sff``, and the
+magnitudes are arrays with one entry per filter. A scalar is repeated.
+Declare those names on ``filt_param_names`` with a matching
+``filt_param_usage`` (``'phot'``, ``'astrom'``, or ``'both'``). See
+:doc:`multi_location`.
 More details about each parameterization can be found in the Parameterization
 Class docstring.
 
