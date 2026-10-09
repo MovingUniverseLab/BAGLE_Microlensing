@@ -1,12 +1,11 @@
 Multi-location observers
 ========================
 
-One microlensing event is one lens and one source. Photometry and
-astrometry of that event can come from more than one place: a ground
-telescope and a spacecraft, or two catalogs that do not share a sky
-zero point. BAGLE keeps a single model for the event. Each filter
-carries its own observer, and therefore its own parallax vector, and
-each filter that has astrometry carries its own origin ``xS0``.
+For a microlensing event, the photometry and astrometry can come from 
+more than one place: a ground-based telescope and a spacecraft, or two 
+catalogs that do not share a sky zero point. BAGLE keeps a single model 
+for the event. Each filter has its own observer, and therefore its own parallax vector,
+and each filter that has astrometry carries its own origin ``xS0``. 
 
 The numbers in the snippets below are the ones used by
 ``tests/test_model_multi_location.py`` and
@@ -18,21 +17,16 @@ Motivation and physics
 
 The lens and the source are the same objects in every dataset. What
 changes with the observer is the line of sight. ``parallax_in_direction``
-returns the East/North parallax vector of that body at the observation
+returns the East/North parallax vector of that observer 
+(or body/spacecraft they reside on) at the observation 
 times (barycentric, in AU). Photometry, the lens track, the unlensed
 source, and the unresolved centroid all read
 ``obsLocation[filt_idx]`` and pass it to that function. Annual parallax
 and satellite parallax are the same ephemeris call with a different
 body name.
 
-``xS0`` is the catalog position of the source at ``t0``, in arcseconds,
-in whatever frame that filter's astrometry was measured. It is not a
-second lens or a second source. A constant offset between Earth and a
-spacecraft, or between two reductions of the same field, is absorbed
-by a free ``xS0`` on that filter. The time-variable part of the
-parallax is not. ``xL0`` on that filter is computed from that
-filter's ``xS0`` and the shared source-lens separation. It is not
-sampled.
+``xS0`` is the relative catalog position of the source in the 
+Solar System Barycentric frame at ``t0``, in arcseconds. 
 
 Shared across the event: ``t0``, ``u0`` / ``beta``, ``tE``, ``piE``,
 ``thetaE``, masses, distances, proper motions, binary separation, and
@@ -41,33 +35,29 @@ fraction ``b_sff``, magnitudes, ``xS0_E``, ``xS0_N``, ``pi_ref_frame``
 on a reference-frame parallax model, and GP or error hyperparameters.
 ``obsLocation`` is fixed, not sampled.
 
-One list of filters
--------------------
+Joint Photometry and Astrometry Data Sets
+-----------------------------------------
 
-The join key is the dataset name. The fitter builds the list. The
-model never sees the names.
-
-Order, which keeps existing photometric indices stable:
+Datasets are defined by a dataset name. The model_fitter.Fitter class determins 
+how to join the photometry and astrometry data sets together. 
+The order of the datasets and their associated filter indices is as follows:
 
 1. Every name in ``phot_data``, in that order.
 2. Then every name in ``ast_data`` that is not already in ``phot_data``.
-
-A name in both lists is one joint filter. A repeated name inside one
+A name in both lists is one joint filter/dataset. A repeated name inside one
 list is a ``ValueError``. ``'Keck'`` and ``'keck_Kp'`` are two filters.
-
-Before, a fit was one photometric series plus an astrometric series
-that had to be the same object, and ``phot_data`` was often the label
-``'sim'``:
-
+The example below shows a single data set.
 .. code-block:: python
 
    data['phot_data'] = 'sim'
    data['ast_data'] = 'sim'
 
-After, the names are a catalog list. This is the layout in
+An example of a joint photometry and astrometry data set is shown below. 
+This is the layout in
 ``test_mixed_four_filter_cube`` (that test uses ``mars`` and
-``jupiter`` so the ephemeris stays local; ``spitzer`` and ``gaia``
-are the same API and go to Horizons):
+``jupiter`` so the ephemeris is drawn from astropy's local ephemeris).
+We show ``earth``, ``spitzer`` and ``gaia`` observer locations for different 
+data sets. 
 
 .. code-block:: python
 
@@ -80,7 +70,8 @@ are the same API and go to Horizons):
        'gaia': 'gaia',
    }
 
-The unified list is ``ogle``, ``spitzer``, ``keck``, ``gaia``.
+The unified list is ``ogle``, ``spitzer``, ``keck``, ``gaia`` and filter 
+indices onto a model object would be as follows:
 
 * 0, OGLE, photometry only. ``xS0`` fixed at 0. Source flux fraction
   and ``mag_src`` sampled.
@@ -90,24 +81,20 @@ The unified list is ``ogle``, ``spitzer``, ``keck``, ``gaia``.
 * 3, Gaia, astrometry only. ``xS0`` and the source flux fraction
   sampled. ``mag_src`` fixed at 0.
 
-On-disk array numbers do not change. ``t_phot1`` is still
+Array indices for your data objects do not change. ``t_phot1`` is still
 ``phot_data[0]``. ``t_ast1`` is still ``ast_data[0]``. In the example,
 Keck astrometry is ``t_ast1`` and model ``filt_idx=2``. Gaia is
-``t_ast2`` and ``filt_idx=3``. ``map_phot_idx_to_ast_idx`` is
+``t_ast2`` and ``filt_idx=3``. ``map_phot_idx_to_ast_idx`` maps back and 
+forth between the photometry and astrometry data sets and is
 ``[2, 3]``: each entry is the unified filter index of that
 astrometric series.
 
-A missing ``phot_data`` or ``ast_data`` key synthesizes ``phot1`` and
-``ast1``. The historical string ``'sim'`` is not a list of catalog
-names. The fitter synthesizes ``phot1``, ``phot2``, and so on. When
-both sides are unlabeled, astrometry series ``i`` reuses photometric
-name ``i``, so a one-dataset ``'sim'`` fit stays one joint filter.
 
 Observers
 ---------
 
 ``data['obsLocation']`` accepts three forms, all aligned with the
-unified list. ``resolve_obs_locations`` writes ``fitter.obs_locations``.
+unified list. 
 
 * Missing, or ``None``. Every filter is ``'earth'``.
 * A string. Every filter uses that body.
@@ -117,7 +104,11 @@ unified list. ``resolve_obs_locations`` writes ``fitter.obs_locations``.
 * A list of length ``n_filters``, in unified order (photometric
   names, then astrometry-only names).
 
-``getdata`` takes the same idea as ``obs_location``:
+The model_fitter ``resolve_obs_locations`` function handles
+the mapping between dataset names and observer locations and 
+writes ``fitter.obs_locations``.
+
+The ``getdata`` function takes the same idea as ``obs_location``:
 
 .. code-block:: python
 
@@ -144,9 +135,8 @@ network.
 Per-filter parameters
 ---------------------
 
-Filter-indexed parameters are two parallel lists on the parameter
-class. ``phot_param_names`` is no longer the list the cube is built
-from.
+Filter-indexed parameters are specified in each model using 
+two parallel lists on the parameter class. 
 
 .. code-block:: python
 
@@ -270,8 +260,8 @@ filter that has no data of that kind is allowed. It is just not part
 of the likelihood. ``get_geoproj_ast_params`` reports filter 0's
 origin.
 
-JAX
----
+JAX Support
+------------
 
 ``build_explicit_jax_loglik_fn`` builds one class-order vector per
 filter inside the traced likelihood. Shared names are read from the
@@ -284,7 +274,7 @@ observer, not a default Earth. ``evaluate_loglik_jax``,
 ``grad_loglik_jax``, the JaxLike solver, PyMC with JAX gradients, and
 NumPyro all use this function.
 
-``build_jax_joint_likelihood_context`` is the older helper. It still
+``build_jax_joint_likelihood_context`` is an older helper. It still
 packs one base vector and, for a filter-indexed name, uses suffix
 ``1``. It returns ``None`` when suffix ``1`` was fixed.
 
@@ -294,10 +284,10 @@ packs one base vector and, for a filter-indexed name, uses suffix
 ``fix_fit_param`` removes a name from the cube and holds it at a
 constant. ``tie_fit_param`` removes a suffix and, on every model
 build, copies another suffix of the same parameter into that slot.
-The two names must be different suffixes of one parameter. ``n_dims``
-shrinks by one. Call either method before ``solve``.
+``n_dims`` shrinks by one. Call either method before ``solve``.
 
-The 4p2a fit has two astrometric tracks. The second is filter 3.
+In ``test_model_fitter_multi_location.py``, the 4p2a fit has two 
+astrometric tracks. The second is filter 3.
 Tying it to filter 1 makes both tracks share one fitted origin, which
 is what ``test_lumlens_parallax_fit_4p2a`` does:
 
@@ -347,10 +337,5 @@ Known limitations
   astrometric series, not necessarily unified filter 1. Photometric
   optional parameters use the unified filter index, which matches
   the photometric index because photometric names are a prefix.
-* ``split_param_filter_index1`` strips a trailing run of the digits
-  1-9. A suffix that contains ``0``, such as filter 10, is left
-  unchanged. Filter indices in the cube are single digits.
 * ``get_geoproj_ast_params`` reports filter 0's origin.
 * ``build_jax_joint_likelihood_context`` reads suffix ``1`` only.
-* ``'l2'`` is not special-cased, and Roman's Horizons id is not
-  aliased. ``Earth`` and ``EARTH`` map to ``earth``.
