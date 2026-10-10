@@ -3711,6 +3711,133 @@ def test_FSPL_boundary(plot=False):
     
 
 
+def test_FSPL_host_amg_mixed_u_dispatch():
+    """
+    Mixed-|u| host dispatch: far epochs use CI, close epochs use AMG.
+
+    Plan rows A-04 / A-05 (host self-consistency). The
+    ``tests/data/jax_dex_finite_source/`` fixtures from ``e1bc6ec`` are not
+    in this tree yet, so compare the mixed path to pure AMG / pure CI on
+    the same epochs instead of an external light-curve fixture.
+    """
+    mL = 10.0
+    t0 = 57000.0
+    beta = 0.5
+    dL = 4000.0
+    dS = 8000.0
+    xS0_E = 0.0
+    xS0_N = 0.0
+    muL_E = 0.0
+    muL_N = 0.0
+    muS_E = 3.0
+    muS_N = 0.0
+    radiusS = 0.0004  # arcsec
+    b_sff = 1.0
+    mag_src = 18.0
+    n_outline = 100
+    raL = 259.0
+    decL = -29.0
+
+    fspl = model.FSPL_PhotAstrom_noPar_Param1(
+        mL, t0, beta, dL, dL / dS,
+        xS0_E, xS0_N, muL_E, muL_N, muS_E, muS_N,
+        radiusS, b_sff, mag_src, n_outline, raL=raL, decL=decL,
+    )
+
+    # Span well outside and inside 2*rho around peak.
+    t = np.linspace(t0 - 2.0 * fspl.tE, t0 + 2.0 * fspl.tE, 81)
+    u_amp = np.linalg.norm(fspl.get_u(t), axis=1)
+    rho = fspl.source_radius_thetaE_units()
+    close = u_amp < (2.0 * rho)
+    far = ~close
+    assert np.any(close) and np.any(far)
+
+    images, amps = fspl.get_all_arrays(t)
+    assert images.shape == (len(t), 2, 2)
+    assert amps.shape == (len(t), 2)
+
+    # Far epochs match uniform CI; close epochs match AMG.
+    img_ci, amp_ci = fspl.get_all_arrays_CI(t[far])
+    img_amg, amp_amg = fspl.get_all_arrays_amg(t[close])
+    np.testing.assert_allclose(images[far], img_ci, rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(amps[far], amp_ci, rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(images[close], img_amg, rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(amps[close], amp_amg, rtol=1e-10, atol=1e-12)
+
+    # Total magnification stays physical.
+    amp_tot = np.sum(amps, axis=1)
+    assert np.min(amp_tot) >= 0.99
+
+    return None
+
+
+def test_FSPL_host_amg_vectorized_matches_boundary():
+    """
+    Vectorized AMG keeps amplifications >= 1 when the limb crosses the lens.
+
+    Complements ``test_FSPL_boundary`` with an explicit
+    ``get_all_arrays_amg`` call (plan A-04 host path).
+    """
+    mL = 10.0
+    t0 = 57755.0
+    dL = 8000.0
+    dL_dS = 0.1
+    radiusS = 0.0004
+    b_sff = np.array([1.0])
+    mag_src = np.array([18.0])
+    n_outline = 200
+    beta = 0.38
+
+    fspl = model.FSPL_PhotAstrom_noPar_Param1(
+        mL, t0, beta, dL, dL_dS,
+        0.0, 0.0, 0.0, 0.0, 2.0, 0.0,
+        radiusS, b_sff, mag_src, n_outline, raL=259.0, decL=30.0,
+    )
+    t = np.arange(fspl.t0 - fspl.tE, fspl.t0 + fspl.tE)
+    images, amps = fspl.get_all_arrays_amg(t)
+    amp_tot = np.sum(amps, axis=1)
+    np.testing.assert_equal(np.min(amp_tot) >= 1.0, True)
+    assert images.shape[0] == len(t)
+    return None
+
+
+def test_FSPL_host_amg_speedup_smoke():
+    """
+    Record host AMG wall time on a PhotAstrom setup (plan S-05).
+
+    Does not fail on wall time; prints a one-line timing note.
+    """
+    mL = 10.0
+    t0 = 57000.0
+    beta = 0.2
+    dL = 4000.0
+    dS = 8000.0
+    radiusS = 0.0002
+    n_outline = 100
+    fspl = model.FSPL_PhotAstrom_noPar_Param1(
+        mL, t0, beta, dL, dL / dS,
+        0.0, 0.0, 0.0, 0.0, 3.0, 0.0,
+        radiusS, 1.0, 18.0, n_outline, raL=259.0, decL=-29.0,
+    )
+    t = np.linspace(t0 - fspl.tE, t0 + fspl.tE, 200)
+
+    t0_wall = time.time()
+    _ = fspl.get_all_arrays_amg(t)
+    dt_amg = time.time() - t0_wall
+
+    t0_wall = time.time()
+    _ = fspl.get_all_arrays(t)
+    dt_dispatch = time.time() - t0_wall
+
+    print(
+        f"FSPL host AMG: {dt_amg:.4f}s; mixed dispatch: {dt_dispatch:.4f}s "
+        f"(n_t={len(t)}, n_outline={n_outline})"
+    )
+    assert dt_amg > 0.0 and dt_dispatch > 0.0
+    return None
+
+
+
 def test_FSPL_PhotAstrom_lens_astrometry(plot=False):
     """
     Test FSPL lens astrometry with a really really small source.
