@@ -24262,8 +24262,8 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
         self.u0 = get_u0(self.thetaE_hat, self.beta,
                          self.thetaE_amp)  # closest approach vector
         self.thetas0 = self.u0 * self.thetaE_amp  # [RA,Dec] position of the source at peak
-        # Filter 0 East/North origin. Shape is (n_filters, 2).
-        self.xL0 = self.xS0[0] - self.thetas0 * 1e-3
+        # Per-filter lens origin; xS0 is always (n_filters, 2).
+        self.xL0 = self.xS0 - (self.thetas0 * 1e-3)
         self.tE = get_einstein_time(self.thetaE_amp, self.muRel,
                                     365.25)  # Einstein crossing time
 
@@ -25115,14 +25115,18 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         'xS0_N',
         'muL_E',
         'muL_N',
+        'alpha',
         'muS_E',
         'muS_N',
-        'radiusS',
+        'radiusS_pri',
+        'radiusS_sec',
+        'sep',
         'b_sff',
-        'mag_src',
+        'mag_src_pri',
+        'mag_src_sec',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
-    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src_pri', 'mag_src_sec']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'phot']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -25136,9 +25140,9 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
                  xS0_E, xS0_N,
                  muL_E, muL_N, alpha,
                  muS_E, muS_N,
-                 radiusS_pri,radiusS_sec, sep,
-                 b_sff, mag_src_pri,mag_src_sec,
-                 n_outline_pri=False,n_outline_sec=False,
+                 radiusS_pri, radiusS_sec, sep,
+                 b_sff, mag_src_pri, mag_src_sec,
+                 n_outline_pri=False, n_outline_sec=False,
                  raL=None, decL=None, obsLocation='earth'):
         # Initialised variables
         self.t0 = t0

@@ -23143,7 +23143,8 @@ class FSPL(PSPL):
     
     def im_pos_all(self, w, z1):
         z_major = self.im_pos1(w, z1)
-        z_minor = -1 / jnp.conjugate(z_major - z1) + z1
+        # Host NumPy AMG path: keep conjugate on numpy arrays (not jnp).
+        z_minor = -1 / np.conjugate(z_major - z1) + z1
         return z_major, z_minor
     
     def detJac(self, z, z1):
@@ -23338,10 +23339,24 @@ class FSPL(PSPL):
         
         Aplus = np.array(Aplus)
         Aminus = np.array(Aminus)
-        Cplus_x, Cplus_y = np.array(Cplus_x), np.array(Cplus_y) 
+        Cplus_x, Cplus_y = np.array(Cplus_x), np.array(Cplus_y)
         Cminus_x, Cminus_y = np.array(Cminus_x), np.array(Cminus_y)
 
-        return Aplus, Aminus, Cplus_x, Cplus_y, Cminus_x, Cminus_y
+        # Same return shape as model.py get_all_arrays_amg: (images, amps).
+        interim_plus = Aplus / (np.pi * self.radiusS ** 2)
+        interim_minus = Aminus / (np.pi * self.radiusS ** 2)
+        img_pos_plus = np.array(
+            [Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)]
+        )
+        img_pos_minus = np.array(
+            [Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)]
+        )
+        images = np.zeros((len(t), 2, 2), dtype=float)
+        images[:, 0, :] = img_pos_plus.T
+        images[:, 1, :] = img_pos_minus.T
+        amps = np.array((interim_plus, interim_minus)).T
+
+        return images, amps
 
     
     def get_all_arrays_amg_only(self, t, filt_idx=0):
@@ -23392,7 +23407,7 @@ class FSPL(PSPL):
         
         def im_pos_all(w, z1):
             z_major = self.im_pos1(w, z1)
-            z_minor = -1 / jnp.conjugate(z_major - z1) + z1
+            z_minor = -1 / np.conjugate(z_major - z1) + z1
             return z_major, z_minor
         
         def detJac(z, z1):
@@ -23680,24 +23695,7 @@ class FSPL(PSPL):
         Cminus_y +=  (1. / 24.) * np.sum(d_angles3 * ((d1_minus[:, :-1, 1]**2 * d1_minus[:, :-1, 0] + d1_minus[:, :-1, 1] * wp_d1_d2_i_minus) +
                                                       (d1_minus[:, 1: , 1]**2 * d1_minus[:, 1: , 0] + d1_minus[:, 1: , 1] * wp_d1_d2_ip1_minus)), axis=1)
         
-        # AMG refinement needs physical xS0/muS/thetaE_amp (see get_all_arrays_amg).
-        if hasattr(self, "xS0") and hasattr(self, "muS") and hasattr(self, "thetaE_amp"):
-            adaptive_time = jnp.where(
-                jnp.linalg.norm(
-                    self.get_u(t, filt_idx=filt_idx), axis=1
-                ) <= 2 * radiusS
-            )
-            if len(adaptive_time) > 0:
-                (
-                    Aplus[adaptive_time],
-                    Aminus[adaptive_time],
-                    Cplus_x[adaptive_time],
-                    Cplus_y[adaptive_time],
-                    Cminus_x[adaptive_time],
-                    Cminus_y[adaptive_time],
-                ) = self.get_all_arrays_amg(
-                    t[adaptive_time], filt_idx=filt_idx
-                )
+        # Mixed-|u| AMG refinement lands in milestone (b1). Keep CI uniform.
 
         Aplus = np.array(Aplus)
         Aminus = np.array(Aminus)
@@ -23724,44 +23722,17 @@ class FSPL(PSPL):
         return images, amps
 
     def get_all_arrays(self, t, filt_idx=0):
-        u_vectors = np.linalg.norm(self.get_u(t, filt_idx=filt_idx), axis=1)
+        """Dispatch FSPL arrays: AMG for astrometry, uniform CI for photometry.
+
+        Matches ``bagle.model.FSPL.get_all_arrays``.
+        """
         if self.astrometryFlag == True:
             self.amgFlag = True
-            images, amps = self.get_all_arrays_amg_only(t, filt_idx)
+            images, amps = self.get_all_arrays_amg(t, filt_idx)
         else:
             self.amgFlag = False
             images, amps = self.get_all_arrays_CI(t, filt_idx)
         return images, amps
-  
-    def get_u(self, t, filt_idx=0):
-        """
-        Get the separation vector, \\vec{u}(t), which is the unlensed
-        source - lens separation vector on the  plane of the sky
-        in units of \\theta_E.
-
-        Parameters
-        ----------
-        t : array, float
-            Times in MJD at which to evaluate the separation.
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        Returns
-        -------
-        u : array, float, shape = [len(t), 2]
-            Separation vector in East, North on the sky in units of \\theta_E.
-        """
-        tau = (t - self.t0) / self.tE
-
-        u_vec = self.u0[np.newaxis, :] + tau[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
-
-        if self.parallaxFlag:
-            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
-                                                          obsLocation=self.obsLocation[filt_idx])
-            u_vec -= self.piE_amp * parallax_vec
-
-        return u_vec
-
 
     def get_amplification(self, t, filt_idx=0, amp_arr=None):
         """
@@ -25299,8 +25270,8 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
         self.u0 = get_u0(self.thetaE_hat, self.beta,
                          self.thetaE_amp)  # closest approach vector
         self.thetas0 = self.u0 * self.thetaE_amp  # [RA,Dec] position of the source at peak
-        # Filter 0 East/North origin. Shape is (n_filters, 2).
-        self.xL0 = self.xS0[0] - self.thetas0 * 1e-3
+        # Per-filter lens origin; xS0 is always (n_filters, 2).
+        self.xL0 = self.xS0 - (self.thetas0 * 1e-3)
         self.tE = get_einstein_time(self.thetaE_amp, self.muRel,
                                     365.25)  # Einstein crossing time
 
@@ -30765,231 +30736,6 @@ root_tol : float
         self.radiusS = radiusS
 
 
-#
-# IN PROGRESS
-#
-class FSPL_Limb(FSPL):
-    def F(self, r):
-        return 2 / (1 - self.utilde / 3) * (
-                (1 / 2) * (1 - self.utilde) * r ** 2 - (
-                self.utilde / 3) * (1 - r ** 2) ** (
-                        3 / 2) + self.utilde / 3)
-
-    def get_photometry(self, t, filt_idx=0, amp_arr=None):
-        '''
-        Get the photometry for each of the lensed source images.
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times to model.
-        filt_idx : int, optional
-            Index of the photometric filter or data set.
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like
-            Amplifications of each individual image at each time,
-            i.e. amp_arr.shape = (len(t), number of images at each t).
-
-            This will over-ride t; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t.
-
-        Returns
-        -------
-        mag_model : array_like
-            Magnitude of the unresolved microlensing event at t.
-            
-        '''
-        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
-        flux_zp = 1.0
-
-        if amp_arr is None:
-            amp_arr, img_arr = self.get_centroids(t, self.radiusS)
-            amp = self.get_amplification(t)
-
-            # CHECK
-        #        # Do we need this masked stuff?
-        #        # Mask invalid values from the amplification array.
-        #        amp_arr_msk = np.ma.masked_invalid(amp_arr)
-        #
-        #        # Sum up all the amplifications b/c surface brightness is conserved.
-        #        amp = np.sum(amp_arr_msk, axis=1)
-
-        flux_src = mag2flux(self.mag_src[filt_idx])
-        flux_model = flux_src * amp
-
-        # Account for blending, if necessary.
-        try:
-            # Adding flux of neighbors and lenses
-            # b_sff = fS / (fS + fN + fL)
-            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-        except AttributeError:
-            pass
-
-        mag_model = flux2mag(flux_model)
-
-        return mag_model
-
-    def get_amplification(self, t, filt_idx=0):
-        radii = np.array(range(1, self.nr + 1, 1)) / self.nr
-        amplifications = []
-        centroids = []
-        Fs = []
-        for i in range(len(radii)):
-            Ci = self.get_centroids(t, self.radiusS * radii[i], filt_idx=filt_idx)
-            # If this is fixed length, can speed up by making it an array
-            #    and overwriting.
-            amplifications.append(Ci[0])
-            centroids.append(Ci[1])
-            Fs.append(self.F(radii[i]))
-        amplification = []
-        for j in range(len(t)):
-            M = 0
-            for k in range(len(radii)):
-                if k == 0:
-                    Mk = Fs[k] * amplifications[k][j]
-                else:
-                    fk = (Fs[k] - Fs[k - 1]) / (
-                            radii[k] ** 2 - radii[k - 1] ** 2)
-                    Mk = fk * (amplifications[k][j] * (radii[k] ** 2) -
-                               amplifications[k - 1][j] * (radii[k - 1]) ** 2)
-                M += Mk
-            amplification.append(M)
-        return amplification
-
-    def animate(self, crossings, time_steps, frame_time, name, size, zoom, filt_idx=0):
-        # creates the animation html, given an instance of the Uniformly_bright class and a list of times
-
-        times = np.array(range(-time_steps, time_steps + 1, 1))
-        tau = crossings * times / (-times[0])
-        t = tau * self.tE
-
-        rs = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)  # position of source
-        rl = self.get_lens_astrometry(t, filt_idx=filt_idx)  # position of lens
-        images = self.get_resolved_astrometry(t, filt_idx=filt_idx)  # positions of images
-        plus = images[0]  # plus image
-        minus = images[1]  # minus image
-        C = self.get_amplification(t, filt_idx=filt_idx)
-        A = C
-
-        fig = plt.figure(
-            figsize=[size[0], size[1] + 0.5])  # sets up the figure
-        ax1 = fig.add_subplot(2, 1, 1)
-        ax2 = fig.add_subplot(2, 1, 2)
-        fig.subplots_adjust(hspace=.5)
-        # creates 5 different plts (source, lens, image1, image2, magnification)
-        line1, = ax1.plot(rl[:, 0], rl[:, 1], 'b.', markersize=20.,
-                          label="Lens")
-        line2, = ax1.plot([], 'g.', markersize=5, label="Source")
-        line3, = ax1.plot([], 'r.', markersize=5, label="Images")
-        line4, = ax1.plot([], 'r.', markersize=5)
-        ax1.set_xlabel("RA")
-        ax1.set_ylabel("Dec")
-        ax1.set_xlim(
-            (rl[0][0] + rl[-1][0]) / 2 - 2 * (size[0]) / (2 * size[1]) * (
-                    rl[-1][1] - rl[0][
-                1] + 2 * zoom * self.thetaE_amp * 1e-3),
-            (rl[0][0] + rl[-1][0]) / 2 + 2 * (size[0]) / (2 * size[1]) * (
-                    rl[-1][1] - rl[0][
-                1] + 2 * zoom * self.thetaE_amp * 1e-3))
-        ax1.set_ylim(rl[0, 1] - zoom * self.thetaE_amp * 0.001,
-                     rl[-1, 1] + zoom * self.thetaE_amp * 0.001)
-        a = self.get_centroids(t, self.radiusS)[1]
-        xcent = a[:, 0]
-        ycent = a[:, 1]
-        line5, = ax1.plot([], 'm', markersize=5, label="Image Centroid")
-        line6, = ax2.plot(t, A)
-        ax1.legend(fontsize=25, markerscale=3)
-        ax2.set_xlabel("Time (days)", fontsize=40)
-        ax2.set_ylabel("Magnification", fontsize=40)
-
-        line = [line1, line2, line3, line4, line5, line6]
-
-        # this function is called at every frame, with i being the number of the frame that it's currently on
-        def update(i, rs, rl, line, plus, minus, xcent, ycent, tau, A):
-            line[0].set_data(rl[i, 0], rl[i, 1])
-            line[1].set_data(rs[i, :, 0], rs[i, :, 1])
-            line[2].set_data(plus[i, :, 0], plus[i, :, 1])
-            line[3].set_data(minus[i, :, 0], minus[i, :, 1])
-            line[4].set_data(xcent[:i], ycent[:i])
-            line[5].set_data(tau[:i], A[:i])
-            return line
-
-        ani = animation.FuncAnimation(fig, update, len(tau),
-                                      fargs=[rs, rl, line, plus, minus, xcent,
-                                             ycent, t, A], blit=True,
-                                      interval=frame_time)
-        ani.save("%s.mp4" % name, writer="ffmpeg", dpi=600)
-
-        return ani
-
-
-class FSPL_Limb_noParallax(FSPL_noParallax):
-    parallaxFlag = False
-
-
-class FSPL_Limb_Parallax(FSPL_Parallax):
-    parallaxFlag = True
-
-
-# FIXME: Use super here
-class FSPL_Limb_PhotAstromParam1(PSPL_Param):
-    def __init__(self, lens_mass, t0, xS0, beta, muL, muS, dL, dS, n, radiusS,
-                 utilde, nr, mag_src, raL=None, decL=None, obsLocation='earth'):
-        """
-        DO NOT USE -- in progress
-
-        """
-        # Initialised variables
-        """
-        The only new parameters here that aren't in the uniformly birhgt source is:
-            mu = a parameter that determined how uniform the star is and 0 =< mu =< 1
-            n_int = number of points in each direction to approximate the flux integral (see below)
-        """
-        self.utilde = utilde  # tells you how limbdarkended the source is
-        self.lens_mass = lens_mass  # Mass of the lens in solar masses
-        self.xS0 = np.array(
-            xS0)  # Position of centroid at peak [[Ra, Dec],flux]
-        self.beta = beta  # Angular distance between lens and centroid (mas)
-        self.muL = np.array(muL)  # Lens proper motion (mas/yr) [Ra, Dec]
-        self.muS = np.array(muS)  # Source proper motion "   "   "   "   "
-        self.dL = dL  # Distance from observer to lens (pc)
-        self.dS = dS  # Distance from observer to source (pc)
-        self.n = n  # No. of boundary points approximating the source
-        self.radiusS = (radiusS * 6.96e8 / 1.496e11) / dS  # Radius of star on the sky (as)
-        self.source = self.get_source(self.radiusS, n, xS0)  # Positions of the centroid + points on the boundary
-        self.nr = nr  # sets the precision on the integrals
-        self.t0 = t0
-        self.mag_src = mag_src
-        self.raL = raL
-        self.decL = decL
-        self.obsLocation = obsLocation
-
-        # Check variable formatting.
-        super().__init__()
-
-        # Variables that need to be calculated
-        self.muRel = self.muS - self.muL  # Source-lens relative proper motion
-        self.thetaE_hat = get_unit_vector(
-            self.muRel)  # unit vector in direction of thetaE
-        self.muRel_hat = self.thetaE_hat
-        self.thetaE_amp = get_angular_einstein_radius(self.lens_mass, self.dL,
-                                                      self.dS)
-        self.thetaE = self.thetaE_amp * self.thetaE_hat  # vector version of the einstein radius
-        self.u0 = get_u0(self.thetaE_hat, self.beta,
-                         self.thetaE_amp)  # closest approach vector
-        self.thetas0 = self.u0 * self.thetaE_amp  # [RA,Dec] position of the source at peak
-        # Filter 0 East/North origin. Shape is (n_filters, 2).
-        self.xL0 = self.xS0[0] - self.thetas0 * 1e-3
-        self.tE = get_einstein_time(self.thetaE_amp, self.muRel,
-                                    365.25)  # Einstein crossing time
-
-
-
-
-
-
 # ==================================================
 #
 # BFSPL Models
@@ -31843,14 +31589,18 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         'xS0_N',
         'muL_E',
         'muL_N',
+        'alpha',
         'muS_E',
         'muS_N',
-        'radiusS',
+        'radiusS_pri',
+        'radiusS_sec',
+        'sep',
         'b_sff',
-        'mag_src',
+        'mag_src_pri',
+        'mag_src_sec',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
-    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src_pri', 'mag_src_sec']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'phot']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -31864,9 +31614,9 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
                  xS0_E, xS0_N,
                  muL_E, muL_N, alpha,
                  muS_E, muS_N,
-                 radiusS_pri,radiusS_sec, sep,
-                 b_sff, mag_src_pri,mag_src_sec,
-                 n_outline_pri=False,n_outline_sec=False,
+                 radiusS_pri, radiusS_sec, sep,
+                 b_sff, mag_src_pri, mag_src_sec,
+                 n_outline_pri=False, n_outline_sec=False,
                  raL=None, decL=None, obsLocation='earth'):
         # Initialised variables
         self.t0 = t0

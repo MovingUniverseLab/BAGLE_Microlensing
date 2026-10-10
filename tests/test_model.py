@@ -6907,3 +6907,100 @@ def test_pspl_phot_get_astrometry_matches_evaluate_jax(class_name):
     jax_out = np.asarray(jax_inst.get_astrometry(t), dtype=np.float64)
     np.testing.assert_allclose(jax_out, ref, rtol=1e-10, atol=1e-12)
 
+
+def test_bfspl_photastrom_param1_fitter_names_construct():
+    """A-03: BFSPL_PhotAstromParam1 constructs from fitter_param_names order."""
+    import inspect
+
+    cls = model.BFSPL_PhotAstromParam1
+    names = list(cls.fitter_param_names)
+    sig = inspect.signature(cls.__init__)
+    params = [p for p in sig.parameters if p != "self"]
+    # Fitter names must appear in the constructor in the same order.
+    for name in names:
+        assert name in params, f"{name!r} missing from __init__"
+    name_pos = {n: i for i, n in enumerate(params)}
+    fitter_pos = [name_pos[n] for n in names]
+    assert fitter_pos == sorted(fitter_pos), (
+        "fitter_param_names must follow __init__ argument order"
+    )
+
+    # Build kwargs for required constructor args (constructor extras get defaults).
+    kwargs = {
+        "mL": 1.0,
+        "t0": 57000.0,
+        "beta": 0.5,
+        "dL": 4000.0,
+        "dL_dS": 0.5,
+        "xS0_E": [0.0],
+        "xS0_N": [0.0],
+        "muL_E": 0.0,
+        "muL_N": 0.0,
+        "alpha": 45.0,
+        "muS_E": 3.0,
+        "muS_N": 0.0,
+        "radiusS_pri": 1e-4,
+        "radiusS_sec": 8e-5,
+        "sep": 2e-3,
+        "b_sff": [1.0],
+        "mag_src_pri": [18.0],
+        "mag_src_sec": [19.0],
+    }
+    inst = cls(**kwargs)
+    assert hasattr(inst, "radiusS_pri")
+    assert hasattr(inst, "mag_src_sec")
+    return None
+
+
+def test_fspl_limb_xl0_uses_per_filter_xs0():
+    """A-02: FSPL_Limb PhotAstrom xL0 tracks each filter's xS0."""
+    xS0 = np.array([[0.0, 0.0], [0.05, -0.02]], dtype=float)
+    # Param mixin is unfinished; get_source lives on FSPL_Limb, not Param1.
+    cls = model.FSPL_Limb_PhotAstromParam1
+    original = getattr(cls, "get_source", None)
+    cls.get_source = lambda self, *a, **k: None
+    try:
+        limb = cls(
+            lens_mass=1.0,
+            t0=57000.0,
+            xS0=xS0,
+            beta=0.5,
+            muL=[0.0, 0.0],
+            muS=[3.0, 0.0],
+            dL=4000.0,
+            dS=8000.0,
+            n=20,
+            radiusS=1.0,
+            utilde=0.0,
+            nr=10,
+            mag_src=[18.0, 18.0],
+        )
+        assert limb.xL0.shape == (2, 2)
+        # Same thetas0 offset for every filter; lens origins follow xS0.
+        np.testing.assert_allclose(
+            limb.xL0[1] - limb.xL0[0], xS0[1] - xS0[0], rtol=0.0, atol=1e-15
+        )
+        # One-filter slice matches constructing with that filter alone.
+        limb0 = cls(
+            lens_mass=1.0,
+            t0=57000.0,
+            xS0=xS0[0:1],
+            beta=0.5,
+            muL=[0.0, 0.0],
+            muS=[3.0, 0.0],
+            dL=4000.0,
+            dS=8000.0,
+            n=20,
+            radiusS=1.0,
+            utilde=0.0,
+            nr=10,
+            mag_src=[18.0],
+        )
+        np.testing.assert_allclose(limb.xL0[0], limb0.xL0[0], rtol=0.0, atol=1e-15)
+    finally:
+        if original is None:
+            delattr(cls, "get_source")
+        else:
+            cls.get_source = original
+    return None
+
