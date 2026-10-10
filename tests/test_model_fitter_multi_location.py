@@ -411,6 +411,71 @@ def test_numpy_and_jax_likelihood_see_second_observer(monkeypatch):
     return None
 
 
+def test_joint_context_reads_each_filter_origin():
+    """Each filter's class vector reads that filter's xS0 suffix.
+
+    OGLE and Keck are joint. Spitzer is photometry only, so its
+    origin is the fixed value. The context likelihood matches
+    the NumPy likelihood.
+    """
+    from bagle import jax_physics
+    from bagle import model_fitter_jax
+
+    data = make_data(
+        ['ogle', 'keck', 'spitzer'],
+        ['ogle', 'keck'],
+    )
+    numpy_fit = _solver(data, model.PSPL_PhotAstrom_Par_Param1)
+    jax_fit = model_fitter_jax.MicrolensSolver(
+        data,
+        model_fitter_jax.mmodel.PSPL_PhotAstrom_Par_Param1,
+        outputfiles_basename='/tmp/bagle_multi_loc_joint_',
+        verbose=False,
+        seed=FIT_SEED,
+    )
+    ctx = jax_physics.build_jax_joint_likelihood_context(jax_fit)
+    assert ctx is not None
+    names = list(jax_fit.fitter_param_names)
+    base = list(jax_fit.model_class.fitter_param_names)
+    i_e = base.index('xS0_E')
+    i_n = base.index('xS0_N')
+    assert ctx.filters[0].class_slots[i_e] == (
+        'i', names.index('xS0_E1')
+    )
+    assert ctx.filters[1].class_slots[i_e] == (
+        'i', names.index('xS0_E2')
+    )
+    assert ctx.filters[0].class_slots[i_n] == (
+        'i', names.index('xS0_N1')
+    )
+    assert ctx.filters[1].class_slots[i_n] == (
+        'i', names.index('xS0_N2')
+    )
+    # Spitzer has no astrometry, so the origin is held fixed.
+    assert ctx.filters[2].class_slots[i_e][0] == 'v'
+    assert ctx.filters[2].class_slots[i_n][0] == 'v'
+    assert 'xS0_E3' not in names
+
+    cube = []
+    for name in numpy_fit.fitter_param_names:
+        raw = numpy_fit.priors[name].ppf(0.5)
+        value = float(np.asarray(raw).ravel()[0])
+        if not np.isfinite(value):
+            value = 57000.0 if name == 't0' else 0.1
+        cube.append(value)
+    cube = np.asarray(cube, dtype=float)
+    cube[names.index('xS0_E1')] = 0.001
+    cube[names.index('xS0_N1')] = -0.002
+    cube[names.index('xS0_E2')] = 0.012
+    cube[names.index('xS0_N2')] = 0.004
+    ln_numpy = float(numpy_fit.log_likely(cube))
+    ln_jax = float(jax_physics.log_likelihood_from_joint_context(
+        cube, ctx, jax_fit.model_class
+    ))
+    np.testing.assert_allclose(ln_jax, ln_numpy, rtol=1e-5, atol=1e-4)
+    return None
+
+
 def test_legacy_fits_copies_unsuffixed_origin():
     """An old chain's single xS0 fills every filter.
 
