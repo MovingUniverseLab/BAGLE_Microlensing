@@ -136,8 +136,8 @@ Leaves: `PSTL_PhotAstrom_{noPar,Par}_Param{1,2,3}` and
 `PSBL_PhotAstrom_EllOrbs_Param{1,2}`.
 
 - **Parameters.** The PSBL parent's parameters plus the third lens:
-  Param1 adds `mLt`, `sep_12`, `sep_23`, `psi`. Param2 and Param3 sample
-  `q_12`, `q_13`, `sep_12`, `sep_23`, `psi` (Param3 with `log10_thetaE`
+  Param1 adds `mLt`, `sep12`, `sep13`, `alpha12`, `alpha13`. Param2 and Param3 sample
+  `q_12`, `q_13`, `sep12`, `sep13`, `alpha12`, `alpha13` (Param3 with `log10_thetaE`
   and `mag_base`). EllOrbs adds a second Keplerian pair (`omega_sec`,
   `big_omega_ter`, `i_23`, `e_23`, `tp_23`, `a_23`). Separations are mas.
   Per-filter slots are `xS0_E`, `xS0_N`, `b_sff`, `mag_src`,
@@ -1500,8 +1500,8 @@ terms (`get_amp_arr`, line 28596). There is no `radiusS` and no limb.
 
 `get_resolved_lens_astrometry` (line 30564) returns a stack of three
 lens positions. With `orbitFlag == False`, lens 1 and lens 2 sit at
-`±sep_12/2` along `alpha`, and lens 3 sits at lens 2 plus `sep_23`
-along `psi`. With Keplerian motion, two `orbits.Orbit` objects are
+`±sep12/2` along `alpha12`, and lens 3 sits at lens 1 plus `sep13`
+along `alpha13`. With Keplerian motion, two `orbits.Orbit` objects are
 integrated: pair 1–2 (`omega_pri`, `big_omega_sec`, `i_12`, `e_12`,
 `tp_12`, `a_12`) and pair 2–3 (`omega_sec`, `big_omega_ter`, `i_23`,
 `e_23`, `tp_23`, `a_23`). The orbit path calls `oal2xy`, which needs a
@@ -1512,8 +1512,8 @@ the third mass:
 
 | Class | Sampled geometry beyond the PSBL parent |
 | --- | --- |
-| `PSTL_PhotAstromParam1` (31207) | `mLt`, `sep_12`, `sep_23`, `psi`. `q_12 = mLs/mLp`, `q_13 = mLt/mLp`. `m3` from `mLt` and the distance difference |
-| `PSTL_PhotAstromParam2` (31302) | `q_12`, `q_13`, `sep_12`, `sep_23`, `psi` |
+| `PSTL_PhotAstromParam1` (31207) | `mLt`, `sep12`, `sep13`, `alpha12`, `alpha13`. `q_12 = mLs/mLp`, `q_13 = mLt/mLp`. `m3` from `mLt` and the distance difference |
+| `PSTL_PhotAstromParam2` (31302) | `q_12`, `q_13`, `sep12`, `sep13`, `alpha12`, `alpha13` |
 | `PSTL_PhotAstromParam3` (31422) | same ratios and separations, with `log10_thetaE` and `mag_base` |
 | `PSTL_PhotAstrom_EllOrbs_Param1` (30868) | `mLt` and a second Keplerian (`i_23`, `e_23`, `tp_23`, `a_23`, `omega_sec`, `big_omega_ter`) |
 | `PSTL_PhotAstrom_EllOrbs_Param2` (31044) | `q_12`, `q_13` and the same second Keplerian |
@@ -1547,8 +1547,8 @@ both missing every one of these keys:
 mLt          make_gen          0, 100
 beta_com     make_gen          -2, 2
 q_12, q_13   make_gen          0.001, 1
-psi          make_gen          0, 360
-sep_12, sep_23  make_gen       1e-4, 2e-2
+alpha12, alpha13  make_gen     0, 360
+sep12, sep13    make_gen       1e-4, 2e-2
 omega_sec    make_gen          -180, 180
 big_omega_ter  make_gen        -180, 180
 i_12, i_23   make_gen          -90, 90

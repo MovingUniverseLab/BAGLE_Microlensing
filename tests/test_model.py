@@ -7154,3 +7154,116 @@ def test_fspl_limb_xl0_uses_per_filter_xs0():
             cls.get_source = original
     return None
 
+
+def _pstl_noPar_param1_args(mLt=2.0):
+    """Shared constructor kwargs for PSTL_PhotAstrom_noPar_Param1 tests."""
+    return dict(
+        mLp=10.0,
+        mLs=5.0,
+        mLt=mLt,
+        t0=57000.0,
+        xS0_E=np.array([0.0]),
+        xS0_N=np.array([0.01]),
+        beta=0.4,
+        muL_E=0.0,
+        muL_N=0.0,
+        sep12=3.0,
+        sep13=2.0,
+        muS_E=4.0,
+        muS_N=-3.0,
+        dL=2000.0,
+        dS=4000.0,
+        alpha12=90.0,
+        alpha13=45.0,
+        b_sff=np.array([1.0]),
+        mag_src=np.array([18.0]),
+        dmag_Lp_Ls=np.array([20.0]),
+        root_tol=1e-4,
+    )
+
+
+def test_PSTL_PhotAstrom_noPar_Param1():
+    """A-22: construct PSTL Param1; photometry and three-lens astrometry."""
+    args = _pstl_noPar_param1_args()
+    pstl = model.PSTL_PhotAstrom_noPar_Param1(
+        args['mLp'], args['mLs'], args['mLt'], args['t0'],
+        args['xS0_E'], args['xS0_N'], args['beta'],
+        args['muL_E'], args['muL_N'], args['sep12'], args['sep13'],
+        args['muS_E'], args['muS_N'], args['dL'], args['dS'],
+        args['alpha12'], args['alpha13'], args['b_sff'], args['mag_src'],
+        args['dmag_Lp_Ls'], root_tol=args['root_tol'])
+
+    assert pstl.xS0.shape == (1, 2)
+    assert pstl.mLt == args['mLt']
+    assert pstl.m3 > 0
+
+    t = np.array([56000.0, 57000.0, 57500.0, 58000.0])
+    phot = np.asarray(pstl.get_photometry(t), dtype=float)
+    assert phot.shape == (len(t),)
+    assert np.all(np.isfinite(phot))
+
+    # Three resolved lenses: shape [3, N_times, 2].
+    xL = np.asarray(pstl.get_resolved_lens_astrometry(t), dtype=float)
+    assert xL.shape == (3, len(t), 2)
+    assert np.all(np.isfinite(xL))
+
+    # Primary/secondary sit at +/- sep12/2 along alpha12 about the origin.
+    offset12 = 0.5 * args['sep12'] * 1e-3 * np.array(
+        [np.sin(np.deg2rad(args['alpha12'])),
+         np.cos(np.deg2rad(args['alpha12']))])
+    xL_origin = 0.5 * (xL[0] + xL[1])
+    np.testing.assert_allclose(
+        xL[0] - xL_origin, np.broadcast_to(offset12, xL[0].shape),
+        rtol=0, atol=1e-12)
+    np.testing.assert_allclose(
+        xL[1] - xL_origin, np.broadcast_to(-offset12, xL[1].shape),
+        rtol=0, atol=1e-12)
+
+    # Tertiary is sep13 from the primary along alpha13.
+    offset13 = args['sep13'] * 1e-3 * np.array(
+        [np.sin(np.deg2rad(args['alpha13'])),
+         np.cos(np.deg2rad(args['alpha13']))])
+    np.testing.assert_allclose(
+        xL[2] - xL[0], np.broadcast_to(offset13, xL[2].shape),
+        rtol=0, atol=1e-12)
+
+    images, amps = pstl.get_all_arrays(t)
+    images = np.asarray(images)
+    amps = np.asarray(amps)
+    assert images.shape[0] == len(t)
+    assert amps.shape == images.shape
+    assert np.isfinite(amps).sum() >= len(t)
+
+    xS = np.asarray(pstl.get_astrometry(t, image_arr=images, amp_arr=amps))
+    assert xS.shape == (len(t), 2)
+    assert np.all(np.isfinite(xS))
+
+    return None
+
+
+def test_PSTL_mLt_zero_recovers_PSBL():
+    """A-24: mLt -> 0 recovers PSBL_PhotAstrom_noPar_Param1 photometry."""
+    args = _pstl_noPar_param1_args(mLt=0.0)
+    pstl = model.PSTL_PhotAstrom_noPar_Param1(
+        args['mLp'], args['mLs'], args['mLt'], args['t0'],
+        args['xS0_E'], args['xS0_N'], args['beta'],
+        args['muL_E'], args['muL_N'], args['sep12'], args['sep13'],
+        args['muS_E'], args['muS_N'], args['dL'], args['dS'],
+        args['alpha12'], args['alpha13'], args['b_sff'], args['mag_src'],
+        args['dmag_Lp_Ls'], root_tol=args['root_tol'])
+
+    psbl = model.PSBL_PhotAstrom_noPar_Param1(
+        args['mLp'], args['mLs'], args['t0'],
+        args['xS0_E'], args['xS0_N'], args['beta'],
+        args['muL_E'], args['muL_N'], args['muS_E'], args['muS_N'],
+        args['dL'], args['dS'], args['sep12'], args['alpha12'],
+        args['b_sff'], args['mag_src'], args['dmag_Lp_Ls'],
+        root_tol=args['root_tol'])
+
+    # Avoid epochs near caustics where root masking can differ.
+    t = np.array([56000.0, 56500.0, 57500.0, 58000.0])
+    phot_t = np.asarray(pstl.get_photometry(t), dtype=float)
+    phot_b = np.asarray(psbl.get_photometry(t), dtype=float)
+    np.testing.assert_allclose(phot_t, phot_b, rtol=1e-6, atol=1e-6)
+
+    return None

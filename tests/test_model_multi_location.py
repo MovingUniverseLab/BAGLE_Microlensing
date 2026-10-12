@@ -399,3 +399,46 @@ def test_geoproj_ast_params_selects_filter_origin():
             g1[1] - g0[1], two.xS0[1, 1] - two.xS0[0, 1]
         )
     return None
+
+
+def test_PSTL_two_filter_parallax_reaches_xL3():
+    """A-23: two filters; parallax reaches all three lenses including xL3."""
+    for mod in (model, model_jax):
+        cls = mod.PSTL_PhotAstrom_Par_Param1
+        # Same xS0 so the filter-to-filter shift is pure parallax.
+        pstl = cls(
+            10.0, 5.0, 2.0, 57000.0,
+            np.array([0.0, 0.0]), np.array([0.01, 0.01]),
+            0.4, 0.0, 0.0, 3.0, 2.0, 4.0, -3.0, 2000.0, 4000.0,
+            90.0, 45.0,
+            np.array([1.0, 0.9]), np.array([18.0, 18.5]),
+            np.array([20.0, 20.0]),
+            raL=259.5, decL=-29.0,
+            obsLocation=['earth', 'spitzer'],
+            root_tol=1e-4,
+        )
+        assert pstl.xS0.shape == (2, 2)
+
+        t = np.array([56800.0, 57000.0, 57200.0])
+        xL0 = np.asarray(pstl.get_resolved_lens_astrometry(t, filt_idx=0))
+        xL1 = np.asarray(pstl.get_resolved_lens_astrometry(t, filt_idx=1))
+        assert xL0.shape == (3, len(t), 2)
+        assert xL1.shape == (3, len(t), 2)
+
+        # Same relative geometry: tertiary offset from secondary unchanged.
+        d23_0 = xL0[2] - xL0[1]
+        d23_1 = xL1[2] - xL1[1]
+        np.testing.assert_allclose(d23_0, d23_1, rtol=0, atol=1e-12)
+
+        # Absolute positions differ by the observer-dependent parallax.
+        # All three lenses must share that same filter-to-filter shift.
+        shift_L1 = xL1[0] - xL0[0]
+        shift_L2 = xL1[1] - xL0[1]
+        shift_L3 = xL1[2] - xL0[2]
+        np.testing.assert_allclose(shift_L2, shift_L1, rtol=0, atol=1e-12)
+        np.testing.assert_allclose(shift_L3, shift_L1, rtol=0, atol=1e-12)
+
+        # Filters differ: earth vs spitzer parallax is not identical.
+        assert np.max(np.abs(shift_L3)) > 1e-8
+
+    return None
