@@ -30484,7 +30484,7 @@ class FSBL_PhotParam1(PSBL_PhotParam1):
         Angular separation of the two lenses in units of thetaE where
         thetaE is defined with the total binary mass.
     radiusS: float
-        Projected radius of the source star in arcsec on the sky plane.
+        Projected radius of the source star in Einstein radii.
     n_outline: int
         Number of outline points used on the boundary of this source. 
     phi: float
@@ -30521,11 +30521,58 @@ class FSBL_PhotParam1(PSBL_PhotParam1):
     ]
     filt_param_names = ['b_sff', 'mag_src']
     filt_param_usage = ['both', 'phot']
+    jax_loglik_mode = 'phot'
 
     paramAstromFlag = False
     paramPhotFlag = True
     orbitFlag=False
 
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True,
+                                  n_outline=200):
+        """
+        Traced FSBL photometry log-likelihood (``radiusS`` in Einstein radii).
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector.
+        t, mag_obs, mag_err : array_like
+            Times and photometry.
+        b_sff, mag_src : float
+            Filter-local blend and source magnitude.
+        parallax_vectors, gp_params, fixed_jitter : optional
+            Parallax table and optional GP path.
+        n_outline : int, optional
+            Static limb count for the d1 kernel (not sampled).
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        from bagle.jax.fsbl import fsbl_log_likely_photometry
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = jax_physics.derive_psbl_static_geometry(
+            p['u0_amp'], p['piE_E'], p['piE_N'], p['q'], p['sep'],
+            p['phi']
+        )
+        m1, m2, u0, thetaE_hat, xL1, xL2, _ = geom
+
+        # Lens positions in the Einstein-radius COM frame (complex).
+        z1 = xL1[0] + 1j * xL1[1]
+        z2 = xL2[0] + 1j * xL2[1]
+
+        return fsbl_log_likely_photometry(
+            t, p['t0'], p['tE'], u0, thetaE_hat, z1, z2, m1, m2,
+            p['radiusS'], n_outline, mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors,
+            piE_E=p['piE_E'], piE_N=p['piE_N'],
+            gp_params=gp_params, fixed_jitter=fixed_jitter,
+        )
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS,
                  b_sff, mag_src, n_outline=50,
@@ -30540,7 +30587,7 @@ class FSBL_PhotParam1(PSBL_PhotParam1):
         self.radiusS = radiusS
         self.n_outline = n_outline
 
-        return
+        return None
 
 
 class FSBL_PhotAstromParam1(PSPL_Param):
@@ -30628,10 +30675,62 @@ class FSBL_PhotAstromParam1(PSPL_Param):
     ]
     filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
     filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
+    jax_loglik_mode = 'phot'
 
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = False
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True,
+                                  n_outline=200):
+        """
+        Traced FSBL PhotAstrom photometry (``radiusS`` in arcsec).
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector.
+        t, mag_obs, mag_err : array_like
+            Times and photometry.
+        b_sff, mag_src : float
+            Filter-local blend and source magnitude.
+        parallax_vectors, gp_params, fixed_jitter : optional
+            Parallax table and optional GP path.
+        n_outline : int, optional
+            Static limb count for the d1 kernel.
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        from bagle.jax.fsbl import fsbl_log_likely_photometry
+        from bagle.jax.geometry import derive_psbl_photastrom_param1
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_psbl_photastrom_param1(
+            p['mLp'], p['mLs'], p['t0'], p['xS0_E'], p['xS0_N'],
+            p['beta'], p['muL_E'], p['muL_N'], p['muS_E'],
+            p['muS_N'], p['dL'], p['dS'], p['sep'], p['alpha']
+        )
+        (u0, thetaE_hat, tE, piE_E, piE_N, _, _, _, _, thetaE_amp,
+         _, _, m1, m2, xL1, xL2, _, _) = geom
+
+        # Phot+astrom ``radiusS`` is arcsec; convert to Einstein radii.
+        rho = p['radiusS'] * 1e3 / thetaE_amp
+        z1 = xL1[0] + 1j * xL1[1]
+        z2 = xL2[0] + 1j * xL2[1]
+
+        return fsbl_log_likely_photometry(
+            t, p['t0'], tE, u0, thetaE_hat, z1, z2, m1, m2,
+            rho, n_outline, mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors,
+            piE_E=piE_E, piE_N=piE_N,
+            gp_params=gp_params, fixed_jitter=fixed_jitter,
+        )
 
     def __init__(self, mLp, mLs, t0, radiusS, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
