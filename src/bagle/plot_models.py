@@ -1168,7 +1168,7 @@ def compare_model_pkg_phot_amp(bagle_mod, time_arr, amp_pylima=None, amp_vbmicr=
     amp_bagle = bagle_mod.get_amplification(time_arr)
 
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########
@@ -1217,7 +1217,7 @@ def compare_model_pkg_phot_astrom_amp(time_arr, amp_bagle, amp_pylima=None, amp_
     This function supports all BAGLE photometry + astrometry models.
     """
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########
@@ -1253,7 +1253,7 @@ def compare_model_pkg_phot_astrom_uamp(time_arr, uamp_bagle, uamp_pylima=None, u
     photometry + astrometry models from BAGLE, pyLIMA, and VBM.
     """
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########
@@ -1288,7 +1288,7 @@ def compare_model_pkg_phot_astrom_uvec(time_arr, uvec_bagle, uvec_pylima=None, u
     photometry + astrometry models from BAGLE, pyLIMA, and VBM.
     """
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########
@@ -1356,7 +1356,7 @@ def compare_model_pkg_phot_astrom_xSxL(time_mjd, xS_bagle, xL_bagle,
     photometry + astrometry models from BAGLE, pyLIMA, and VBM.
     """
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########
@@ -1468,7 +1468,7 @@ def compare_model_pkg_phot_astrom_cent(time_mjd, ast_lensed_bagle,
     photometry + astrometry models from BAGLE, pyLIMA, and VBM.
     """
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########

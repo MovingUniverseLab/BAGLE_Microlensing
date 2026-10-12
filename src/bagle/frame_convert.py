@@ -27,7 +27,8 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
     Input
     -----
     bagle_model : BAGLE model instance
-        An instance of a BAGLE model. All PSPL models are supported.
+        An instance of a BAGLE model. PSPL and photometry-only FSPL
+        models are supported.
 
     Optional
     --------
@@ -116,7 +117,11 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
         parallax_model = ['None', t0_par_pylima]
 
     bagle_class_name = str(bagle_model.__class__)
-    if 'PSPL' in bagle_class_name:
+    if 'FSPL' in bagle_class_name:
+        # Finite-source point-lens (photometry); rho follows Paczynski params.
+        pylima_mod = generate_model.create_model(
+            'FSPL', pylima_ev, parallax=parallax_model, fancy_parameters=None)
+    elif 'PSPL' in bagle_class_name:
         pylima_mod = generate_model.create_model('PSPL', pylima_ev, parallax=parallax_model, fancy_parameters=None)
     elif 'PSBL' in bagle_class_name:
         pylima_mod = generate_model.create_model('PSBL', pylima_ev, parallax=parallax_model, fancy_parameters=None)
@@ -132,14 +137,18 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
     #####
     ### Photometry-Only and No Parallax
     if not bagle_model.astrometryFlag and not bagle_model.parallaxFlag:
-        if verbose: print('PyLIMA: PSPL with Photometry-only, no parallax')
+        if verbose: print('PyLIMA: Photometry-only, no parallax')
 
         u0_pylima = bagle_model.u0_amp
         t0_pylima = bagle_model.t0 + 2400000.5
         tE_pylima = bagle_model.tE
 
-        # Singles
-        if 'PSPL' in bagle_class_name:
+        # Finite-source single (rho in Einstein radii).
+        if 'FSPL' in bagle_class_name:
+            rho_pylima = float(bagle_model.radiusS)
+            tmp_params = [t0_pylima, u0_pylima, tE_pylima, rho_pylima]
+        # Point-source singles
+        elif 'PSPL' in bagle_class_name:
             tmp_params = [t0_pylima, u0_pylima, tE_pylima]
         # Binary Lens
         elif 'PSBL' in bagle_class_name:
@@ -156,12 +165,12 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
 
     ### Photometry-Only and With Parallax
     elif not bagle_model.astrometryFlag and bagle_model.parallaxFlag:
-        if verbose: print('PyLIMA: PSPL with Photometry-only, with parallax')
+        if verbose: print('PyLIMA: Photometry-only, with parallax')
         # Add the RA and Dec to the model
         pylima_mod.ra = bagle_model.raL
         pylima_mod.dec = bagle_model.decL
 
-        if 'PSPL' in bagle_class_name:
+        if 'FSPL' in bagle_class_name or 'PSPL' in bagle_class_name:
 
             # Convert from helio to geo-tr coordinates.
             geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
@@ -175,7 +184,13 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
             piEE_pylima = geo_params[3]
             piEN_pylima = geo_params[4]
 
-            tmp_params = [t0_pylima, u0_pylima, tE_pylima, piEN_pylima, piEE_pylima]
+            # FSPL: [t0, u0, tE, rho, piEN, piEE]; PSPL omits rho.
+            if 'FSPL' in bagle_class_name:
+                rho_pylima = float(bagle_model.radiusS)
+                tmp_params = [t0_pylima, u0_pylima, tE_pylima, rho_pylima,
+                              piEN_pylima, piEE_pylima]
+            else:
+                tmp_params = [t0_pylima, u0_pylima, tE_pylima, piEN_pylima, piEE_pylima]
 
         # Binary Lens
         elif 'PSBL' in bagle_class_name:
@@ -207,6 +222,10 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
     ### Photometry and Astrometry
     else:
         if verbose: print('PyLIMA: PSPL with Astrometry and Photometry')
+        # FSPL / PSBL phot+astrom conversion is not wired for pyLIMA here.
+        if 'FSPL' in bagle_class_name or 'PSBL' in bagle_class_name:
+            raise Exception('pyLIMA does not support models with BAGLE type: ' + bagle_class_name)
+
         # Convert from helio to geo-tr coordinates.
         geo_params = convert_helio_geo_phot(bagle_model.raL, bagle_model.decL,
                                             bagle_model.t0, bagle_model.u0_amp, bagle_model.tE,
@@ -227,10 +246,6 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
         xS0E_pylima = bagle_model.xS0[0, 0] / 3600.  # degrees
         xS0N_pylima = bagle_model.xS0[0, 1] / 3600.  # degrees
 
-        # Check for PSBL, which isn't supported with astrometry in BAGLE.
-        if 'PSBL' in bagle_class_name:
-            raise Exception('pyLIMA does not support models with BAGLE type: ' + bagle_class_name)
-
         tmp_params = [t0_pylima, u0_pylima, tE_pylima, thetaE_pylima, piS_pylima, muSN_pylima, muSE_pylima,
                       xS0N_pylima, xS0E_pylima, piEN_pylima, piEE_pylima]
         pylima_par = pylima_mod.compute_pyLIMA_parameters(tmp_params)
@@ -245,7 +260,8 @@ def get_mulens_model(bagle_model):
     """
     Return a MuLensModel matched to the input BAGLE model.
 
-    No astrometry supported.
+    No astrometry supported. Photometry-only FSPL models set ``rho``
+    from BAGLE ``radiusS`` (Einstein radii) and use Gould94 uniform FS.
 
     Parameters
     ----------
@@ -265,6 +281,11 @@ def get_mulens_model(bagle_model):
                                         murel_in='SL', murel_out='LS',
                                         coord_in='EN', coord_out='EN', plot=False)
 
+    # Phot-only FSPL stores source radius in Einstein radii.
+    bagle_class_name = str(bagle_model.__class__)
+    is_fspl = 'FSPL' in bagle_class_name
+    rho_mulens = float(bagle_model.radiusS) if is_fspl else None
+
     if bagle_model.parallaxFlag:
         t0_mulens = geo_params[0] + 2400000.5
         u0_mulens = geo_params[1]
@@ -275,19 +296,32 @@ def get_mulens_model(bagle_model):
         # Set up the reference time
         t0_par_mulens = bagle_model.t0 + 2400000.5  # t0_par in JD
 
-        mulens_mod = MulensModel.Model({'t_0': t0_mulens, 'u_0': u0_mulens, 't_E': tE_mulens,
-                                        'pi_E_N': piEN_mulens, 'pi_E_E': piEE_mulens,
-                                        't_0_par': t0_par_mulens}, coords=c)
+        mulens_params = {'t_0': t0_mulens, 'u_0': u0_mulens, 't_E': tE_mulens,
+                         'pi_E_N': piEN_mulens, 'pi_E_E': piEE_mulens,
+                         't_0_par': t0_par_mulens}
+        if is_fspl:
+            mulens_params['rho'] = rho_mulens
+
+        mulens_mod = MulensModel.Model(mulens_params, coords=c)
     else:
         t0_mulens = bagle_model.t0 + 2400000.5
         u0_mulens = bagle_model.u0_amp
         tE_mulens = bagle_model.tE
 
-        mulens_mod = MulensModel.Model({'t_0': t0_mulens, 'u_0': u0_mulens, 't_E': tE_mulens})
+        mulens_params = {'t_0': t0_mulens, 'u_0': u0_mulens, 't_E': tE_mulens}
+        if is_fspl:
+            mulens_params['rho'] = rho_mulens
+
+        mulens_mod = MulensModel.Model(mulens_params)
 
     mulens_mod.parallax(satellite=False,
                         earth_orbital=bagle_model.parallaxFlag,
                         topocentric=bagle_model.parallaxFlag)
+
+    # Enable finite-source magnification when rho is present.
+    if is_fspl:
+        mulens_mod.set_magnification_methods(
+            [0.0, 'finite_source_uniform_Gould94', 1.0e20])
 
     return mulens_mod
 
@@ -296,15 +330,22 @@ def get_vbm_model(bagle_model, verbose=False):
     """
     Return a VBMicrolensing matched to the input BAGLE model.
 
-    No astrometry supported.
+    Photometry-only FSPL uses ESPL parameter lists with ``log_rho``
+    from BAGLE ``radiusS``. Call ``ESPLLightCurve`` /
+    ``ESPLLightCurveParallax`` (not PSPL) for those models.
 
     Parameters
     ----------
     bagle_model : BAGLE model instance
+    verbose : bool, optional
+        Print which VBM parameter path was used.
 
     Returns
     -------
-    vbm_mod : VBM model
+    vbm_mod : VBMicrolensing.VBMicrolensing
+        Configured VBM instance (coords / parallax flags as needed).
+    vbm_par : list of float
+        Parameter vector for the matching VBM light-curve method.
     """
     import VBMicrolensing
 
@@ -312,6 +353,10 @@ def get_vbm_model(bagle_model, verbose=False):
     # Setup VBM model
     #####
     vbm_mod = VBMicrolensing.VBMicrolensing()
+
+    bagle_class_name = str(bagle_model.__class__)
+    is_fspl = 'FSPL' in bagle_class_name
+    rho_vbm = float(bagle_model.radiusS) if is_fspl else None
 
     if bagle_model.parallaxFlag:
         c = SkyCoord(ra=bagle_model.raL * u.deg, dec=bagle_model.decL * u.deg, frame='icrs')
@@ -332,8 +377,13 @@ def get_vbm_model(bagle_model, verbose=False):
         t0_vbm = float(bagle_model.t0)
         tE_vbm = float(bagle_model.tE)
 
-        # Params - PSPLLightCurve
-        vbm_par = [math.log(u0_vbm), math.log(tE_vbm), t0_vbm]
+        # PSPLLightCurve: [log_u0, log_tE, t0]
+        # ESPLLightCurve: [log_u0, log_tE, t0, log_rho]
+        if is_fspl:
+            vbm_par = [math.log(abs(u0_vbm)), math.log(tE_vbm), t0_vbm,
+                       math.log(rho_vbm)]
+        else:
+            vbm_par = [math.log(u0_vbm), math.log(tE_vbm), t0_vbm]
 
     ### Photometry-Only and With Parallax
     elif not bagle_model.astrometryFlag and bagle_model.parallaxFlag:
@@ -357,8 +407,13 @@ def get_vbm_model(bagle_model, verbose=False):
         vbm_mod.t0_par_fixed = 1
         vbm_mod.t0_par = t0_par_vbm
 
-        # Params - PSPLLightCurveParallax
-        vbm_par = [u0_vbm, math.log(tE_vbm), t0_vbm, piEN_vbm, piEE_vbm]
+        # PSPLLightCurveParallax: [u0, log_tE, t0, piEN, piEE]
+        # ESPLLightCurveParallax: [u0, log_tE, t0, log_rho, piEN, piEE]
+        if is_fspl:
+            vbm_par = [u0_vbm, math.log(tE_vbm), t0_vbm, math.log(rho_vbm),
+                       piEN_vbm, piEE_vbm]
+        else:
+            vbm_par = [u0_vbm, math.log(tE_vbm), t0_vbm, piEN_vbm, piEE_vbm]
 
     # Astrometry
     else:
@@ -387,7 +442,12 @@ def get_vbm_model(bagle_model, verbose=False):
         vbm_mod.t0_par_fixed = 1
         vbm_mod.t0_par = t0_par_vbm
 
-        # Params - PSPLAstroLightCurve
+        # Params - PSPLAstroLightCurve (ESPL astrometry not wired here)
+        if is_fspl:
+            raise Exception(
+                'get_vbm_model does not yet support FSPL with astrometry: '
+                + bagle_class_name)
+
         vbm_par = [u0_vbm, math.log(tE_vbm), t0_vbm, piEN_vbm, piEE_vbm,
                    muSN_vbm, muSE_vbm, piS_vbm, thetaE_vbm]
 
