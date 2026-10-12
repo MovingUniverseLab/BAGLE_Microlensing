@@ -15152,20 +15152,22 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         t_obs = np.atleast_1d(np.asarray(t_obs, dtype=float))
 
         # Static offsets for the non-orbit geometry (mas -> arcsec).
-        offset = 0.5 * self.sep_12 * np.array(
-            [np.sin(self.alpha_rad), np.cos(self.alpha_rad)])
-        offset *= 1e-3
-        offset_2 = self.sep_23 * np.array(
-            [np.sin(self.psi_rad), np.cos(self.psi_rad)])
-        offset_2 *= 1e-3
+        # Pair 1-2 is centered on the PSBL geometric origin; lens 3 is
+        # offset from the primary along alpha13 (not from the secondary).
+        offset12 = 0.5 * self.sep12 * np.array(
+            [np.sin(self.alpha12_rad), np.cos(self.alpha12_rad)])
+        offset12 *= 1e-3
+        offset13 = self.sep13 * np.array(
+            [np.sin(self.alpha13_rad), np.cos(self.alpha13_rad)])
+        offset13 *= 1e-3
 
         if self.orbitFlag == False:
             # Origin already includes parallax for this filter.
             xL = np.asarray(
                 self.get_lens_origin_astrometry(t_obs, filt_idx=filt_idx))
-            xL1 = xL + offset
-            xL2 = xL - offset
-            xL3 = xL2 + offset_2
+            xL1 = xL + offset12
+            xL2 = xL - offset12
+            xL3 = xL1 + offset13
         else:
             # Keplerian pair 1-2 and pair 2-3 about the system CoM.
             dt_in_years = (t_obs - self.t0_com) / days_per_year
@@ -15523,8 +15525,8 @@ class PSTL_PhotAstrom_EllOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         # Calculate period, and semi-major axes
         self.a_12 = a_12
         self.a_23 = a_23
-        self.sep_12 = self.a_12
-        self.sep_23 = self.a_23
+        self.sep12 = self.a_12
+        self.sep13 = self.a_23
         self.aleph_sec_12 = self.aleph_sec
         self.aleph_12 = self.aleph
         self.aleph_sec_23 = (self.mLs / (self.mLs + self.mLt)) * self.a_23  # mas
@@ -15561,8 +15563,11 @@ class PSTL_PhotAstrom_EllOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         orb.p = self.p_23
         (x, y, x2, y2) = orb.oal2xy(np.array([tp_23]))
         
-        self.psi_rad = np.arctan2(x-x2, y-y2)[0]
-        self.psi = np.rad2deg(self.psi_rad)
+        # Snapshot PA used as alpha13 until dedicated 1-3 orbits land.
+        self.alpha13_rad = np.arctan2(x - x2, y - y2)[0]
+        self.alpha13 = np.rad2deg(self.alpha13_rad)
+        self.alpha12 = self.alpha
+        self.alpha12_rad = self.alpha_rad
         m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
         m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
         self.m3 = m3.to(units.arcsec ** 2).value
@@ -15692,8 +15697,8 @@ class PSTL_PhotAstrom_EllOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
         # Calculate period, and semi-major axes
         self.a_12 = a_12
         self.a_23 = a_23
-        self.sep_12 = self.a_12
-        self.sep_23 = self.a_23
+        self.sep12 = self.a_12
+        self.sep13 = self.a_23
         self.aleph_sec_12 = self.aleph_sec
         self.aleph_12 = self.aleph
         self.aleph_sec_23 = (self.mLs / (self.mLs + self.mLt)) * self.a_23  # mas
@@ -15729,8 +15734,11 @@ class PSTL_PhotAstrom_EllOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
         orb.p = self.p_23
         (x, y, x2, y2) = orb.oal2xy(np.array([tp_23]))
         
-        self.psi_rad = np.arctan2(x-x2, y-y2)[0]
-        self.psi = np.rad2deg(self.psi_rad)
+        # Snapshot PA used as alpha13 until dedicated 1-3 orbits land.
+        self.alpha13_rad = np.arctan2(x - x2, y - y2)[0]
+        self.alpha13 = np.rad2deg(self.alpha13_rad)
+        self.alpha12 = self.alpha
+        self.alpha12_rad = self.alpha_rad
         m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
         m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
         self.m3 = m3.to(units.arcsec ** 2).value
@@ -15765,10 +15773,15 @@ class PSTL_PhotAstromParam1(PSBL_PhotAstromParam1):
     muL_N : float
         Lens System proper motion in the Dec. direction (mas/yr)
 
-        
-    sep: float
-        The semi-major axis of the lenses (mas)
 
+    sep12 : float
+        Angular separation between lenses 1 and 2 (mas).
+    sep13 : float
+        Angular separation between lenses 1 and 3 (mas).
+    alpha12 : float
+        Angle of the lens-1 to lens-2 axis East of North (deg).
+    alpha13 : float
+        Angle of the lens-1 to lens-3 axis East of North (deg).
 
     muS_E : float
         Source proper motion in the RA direction (mas/yr)
@@ -15779,10 +15792,6 @@ class PSTL_PhotAstromParam1(PSBL_PhotAstromParam1):
         Distance from the observer to the lens system (pc)
     dS : float
         Distance from the observer to the source's CoM (pc)
-
-    alpha : float
-        Angle made between the binary axis and North;
-        measured in degrees East of North.
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
         for each filter.
@@ -15794,8 +15803,8 @@ class PSTL_PhotAstromParam1(PSBL_PhotAstromParam1):
     """
     fitter_param_names = [
         'mLp', 'mLs', 'mLt', 't0', 'xS0_E', 'xS0_N',
-        'beta', 'muL_E', 'muL_N', 'sep_12', 'sep_23',
-        'muS_E', 'muS_N', 'dL', 'dS', 'alpha', 'psi',
+        'beta', 'muL_E', 'muL_N', 'sep12', 'sep13',
+        'muS_E', 'muS_N', 'dL', 'dS', 'alpha12', 'alpha13',
         'b_sff', 'mag_src', 'dmag_Lp_Ls',
     ]
     filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
@@ -15807,25 +15816,31 @@ class PSTL_PhotAstromParam1(PSBL_PhotAstromParam1):
     orbitFlag = False
 
     def __init__(self, mLp, mLs, mLt,
-                t0, xS0_E, xS0_N, 
-                beta, muL_E, muL_N, sep_12, sep_23,  
+                t0, xS0_E, xS0_N,
+                beta, muL_E, muL_N, sep12, sep13,
                 muS_E, muS_N, dL, dS,
-                alpha, psi, b_sff, mag_src, dmag_Lp_Ls,
+                alpha12, alpha13, b_sff, mag_src, dmag_Lp_Ls,
                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(mLp, mLs, t0, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                 sep_12, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                 sep12, alpha12, b_sff, mag_src, dmag_Lp_Ls,
                  raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         self.mLt = mLt
-        self.psi = psi
-        self.psi_rad = self.psi * np.pi / 180.0
+        self.sep12 = sep12
+        self.sep13 = sep13
+        self.alpha12 = alpha12
+        self.alpha12_rad = float(alpha12) * np.pi / 180.0
+        self.alpha13 = alpha13
+        self.alpha13_rad = float(alpha13) * np.pi / 180.0
+        # Keep PSBL parent aliases in sync with the 1-2 pair.
+        self.sep = self.sep12
+        self.alpha = self.alpha12
+        self.alpha_rad = self.alpha12_rad
         # Calculate the relative parallax
         inv_dist_diff = (1.0 / (dL * units.pc)) - (1.0 / (dS * units.pc))
         self.mL = self.mLp + self.mLs + self.mLt  # Total lens mass
-        self.sep_12 = sep_12
-        self.sep_23 = sep_23
         self.q_12 = self.mLs / self.mLp
         self.q_13 = self.mLt / self.mLp
         m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
@@ -15874,16 +15889,14 @@ class PSTL_PhotAstromParam2(PSBL_PhotAstromParam2):
         Mass ratio (M2 / M1)
     q_13: float
         Mass ratio (M3 / M1)
-    sep_12 : float
-        Angular separation of the primary and secondary lenses (mas)
-    sep_23 : float
-        Angular separation of the secondary and tertiary lenses (mas)
-    alpha : float
-        Angle made between the binary axis of the first two lenses and North;
-        measured in degrees East of North.
-    psi : float
-        Angle made between the binary axis of the second and third lenses and North;
-        measured in degrees East of North. 
+    sep12 : float
+        Angular separation between lenses 1 and 2 (mas).
+    sep13 : float
+        Angular separation between lenses 1 and 3 (mas).
+    alpha12 : float
+        Angle of the lens-1 to lens-2 axis East of North (deg).
+    alpha13 : float
+        Angle of the lens-1 to lens-3 axis East of North (deg).
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
         for each filter.
@@ -15912,7 +15925,7 @@ class PSTL_PhotAstromParam2(PSBL_PhotAstromParam2):
     fitter_param_names = [
         't0', 'u0_amp', 'tE', 'thetaE', 'piS',
         'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-        'q_12', 'q_13', 'sep_12', 'sep_23', 'alpha', 'psi',
+        'q_12', 'q_13', 'sep12', 'sep13', 'alpha12', 'alpha13',
         'b_sff', 'mag_src', 'dmag_Lp_Ls',
     ]
     filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
@@ -15927,13 +15940,13 @@ class PSTL_PhotAstromParam2(PSBL_PhotAstromParam2):
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                 q_12, q_13, sep_12, sep_23, alpha, psi,
+                 q_12, q_13, sep12, sep13, alpha12, alpha13,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                 q_12, sep_12, alpha,
+                 q_12, sep12, alpha12,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
         # Calculate the distance to source and lens.
@@ -15943,16 +15956,20 @@ class PSTL_PhotAstromParam2(PSBL_PhotAstromParam2):
                                        equivalencies=units.parallax())
         self.dL = dL.to('pc').value
         self.dS = dS.to('pc').value
-        self.sep_23 = sep_23
-        self.sep_12 = sep_12
+        self.sep12 = sep12
+        self.sep13 = sep13
+        self.alpha12 = alpha12
+        self.alpha12_rad = float(alpha12) * np.pi / 180.0
+        self.alpha13 = alpha13
+        self.alpha13_rad = float(alpha13) * np.pi / 180.0
+        # Keep PSBL parent aliases in sync with the 1-2 pair.
+        self.sep = self.sep12
+        self.alpha = self.alpha12
+        self.alpha_rad = self.alpha12_rad
         self.q_12 = q_12
         self.q_13 = q_13
         self.mLt = self.mLp * self.q_13
         self.mL = self.mLp + self.mLs + self.mLt
-       # self.t0_com = self.t0
-       # self.xL0_com = self.xL0
-        self.psi = psi
-        self.psi_rad = self.psi * np.pi / 180.0
         inv_dist_diff = (1.0 / dL) - (1.0 / dS)
         m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
         self.m3 = m3.to(units.arcsec ** 2).value
@@ -15999,16 +16016,14 @@ class PSTL_PhotAstromParam3(PSBL_PhotAstromParam3):
         Mass ratio (M2 / M1)
     q_13: float
         Mass ratio (M3 / M1)
-    sep_12 : float
-        Angular separation of the primary and secondary lenses (mas)
-    sep_23 : float
-        Angular separation of the secondary and tertiary lenses (mas)
-    alpha : float
-        Angle made between the binary axis of the first two lenses and North;
-        measured in degrees East of North.
-    psi : float
-        Angle made between the binary axis of the second and third lenses and North;
-        measured in degrees East of North. 
+    sep12 : float
+        Angular separation between lenses 1 and 2 (mas).
+    sep13 : float
+        Angular separation between lenses 1 and 3 (mas).
+    alpha12 : float
+        Angle of the lens-1 to lens-2 axis East of North (deg).
+    alpha13 : float
+        Angle of the lens-1 to lens-3 axis East of North (deg).
     b_sff : numpy array or list
         The ratio of the source flux to the total (source + neighbors + lenses). One
         for each filter.
@@ -16036,7 +16051,7 @@ class PSTL_PhotAstromParam3(PSBL_PhotAstromParam3):
     fitter_param_names = [
         't0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
         'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-        'q_12', 'q_13', 'sep_12', 'sep_23', 'alpha', 'psi',
+        'q_12', 'q_13', 'sep12', 'sep13', 'alpha12', 'alpha13',
         'b_sff', 'mag_base', 'dmag_Lp_Ls',
     ]
     filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
@@ -16052,13 +16067,13 @@ class PSTL_PhotAstromParam3(PSBL_PhotAstromParam3):
 
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                 q_12, q_13, sep_12, sep_23, alpha, psi,
+                 q_12, q_13, sep12, sep13, alpha12, alpha13,
                  b_sff, mag_base, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
-                 q_12, sep_12, alpha,
+                 q_12, sep12, alpha12,
                  b_sff, mag_base, dmag_Lp_Ls,
                  raL, decL, obsLocation, root_tol)
 
@@ -16068,16 +16083,20 @@ class PSTL_PhotAstromParam3(PSBL_PhotAstromParam3):
                                        equivalencies=units.parallax())
         self.dL = dL.to('pc').value
         self.dS = dS.to('pc').value
-        self.sep_23 = sep_23
-        self.sep_12 = sep_12
+        self.sep12 = sep12
+        self.sep13 = sep13
+        self.alpha12 = alpha12
+        self.alpha12_rad = float(alpha12) * np.pi / 180.0
+        self.alpha13 = alpha13
+        self.alpha13_rad = float(alpha13) * np.pi / 180.0
+        # Keep PSBL parent aliases in sync with the 1-2 pair.
+        self.sep = self.sep12
+        self.alpha = self.alpha12
+        self.alpha_rad = self.alpha12_rad
         self.q_12 = q_12
         self.q_13 = q_13
         self.mLt = self.mLp * self.q_13
         self.mL = self.mLp + self.mLs + self.mLt
-       # self.t0_com = self.t0
-       # self.xL0_com = self.xL0
-        self.psi = psi
-        self.psi_rad = self.psi * np.pi / 180.0
         inv_dist_diff = (1.0 / dL) - (1.0 / dS)
         m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
         self.m3 = m3.to(units.arcsec ** 2).value

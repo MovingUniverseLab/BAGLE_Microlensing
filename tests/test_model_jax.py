@@ -7183,14 +7183,14 @@ def _pstl_noPar_param1_args(mLt=2.0):
         beta=0.4,
         muL_E=0.0,
         muL_N=0.0,
-        sep_12=3.0,
-        sep_23=2.0,
+        sep12=3.0,
+        sep13=2.0,
         muS_E=4.0,
         muS_N=-3.0,
         dL=2000.0,
         dS=4000.0,
-        alpha=90.0,
-        psi=45.0,
+        alpha12=90.0,
+        alpha13=45.0,
         b_sff=np.array([1.0]),
         mag_src=np.array([18.0]),
         dmag_Lp_Ls=np.array([20.0]),
@@ -7204,9 +7204,9 @@ def test_PSTL_PhotAstrom_noPar_Param1():
     pstl = model.PSTL_PhotAstrom_noPar_Param1(
         args['mLp'], args['mLs'], args['mLt'], args['t0'],
         args['xS0_E'], args['xS0_N'], args['beta'],
-        args['muL_E'], args['muL_N'], args['sep_12'], args['sep_23'],
+        args['muL_E'], args['muL_N'], args['sep12'], args['sep13'],
         args['muS_E'], args['muS_N'], args['dL'], args['dS'],
-        args['alpha'], args['psi'], args['b_sff'], args['mag_src'],
+        args['alpha12'], args['alpha13'], args['b_sff'], args['mag_src'],
         args['dmag_Lp_Ls'], root_tol=args['root_tol'])
 
     assert pstl.xS0.shape == (1, 2)
@@ -7223,24 +7223,24 @@ def test_PSTL_PhotAstrom_noPar_Param1():
     assert xL.shape == (3, len(t), 2)
     assert np.all(np.isfinite(xL))
 
-    # Primary/secondary sit at +/- sep_12/2 along alpha about the origin.
-    offset = 0.5 * args['sep_12'] * 1e-3 * np.array(
-        [np.sin(np.deg2rad(args['alpha'])),
-         np.cos(np.deg2rad(args['alpha']))])
+    # Primary/secondary sit at +/- sep12/2 along alpha12 about the origin.
+    offset12 = 0.5 * args['sep12'] * 1e-3 * np.array(
+        [np.sin(np.deg2rad(args['alpha12'])),
+         np.cos(np.deg2rad(args['alpha12']))])
     xL_origin = 0.5 * (xL[0] + xL[1])
     np.testing.assert_allclose(
-        xL[0] - xL_origin, np.broadcast_to(offset, xL[0].shape),
+        xL[0] - xL_origin, np.broadcast_to(offset12, xL[0].shape),
         rtol=0, atol=1e-12)
     np.testing.assert_allclose(
-        xL[1] - xL_origin, np.broadcast_to(-offset, xL[1].shape),
+        xL[1] - xL_origin, np.broadcast_to(-offset12, xL[1].shape),
         rtol=0, atol=1e-12)
 
-    # Tertiary is sep_23 from secondary along psi.
-    offset_2 = args['sep_23'] * 1e-3 * np.array(
-        [np.sin(np.deg2rad(args['psi'])),
-         np.cos(np.deg2rad(args['psi']))])
+    # Tertiary is sep13 from the primary along alpha13.
+    offset13 = args['sep13'] * 1e-3 * np.array(
+        [np.sin(np.deg2rad(args['alpha13'])),
+         np.cos(np.deg2rad(args['alpha13']))])
     np.testing.assert_allclose(
-        xL[2] - xL[1], np.broadcast_to(offset_2, xL[2].shape),
+        xL[2] - xL[0], np.broadcast_to(offset13, xL[2].shape),
         rtol=0, atol=1e-12)
 
     images, amps = pstl.get_all_arrays(t)
@@ -7263,16 +7263,16 @@ def test_PSTL_mLt_zero_recovers_PSBL():
     pstl = model.PSTL_PhotAstrom_noPar_Param1(
         args['mLp'], args['mLs'], args['mLt'], args['t0'],
         args['xS0_E'], args['xS0_N'], args['beta'],
-        args['muL_E'], args['muL_N'], args['sep_12'], args['sep_23'],
+        args['muL_E'], args['muL_N'], args['sep12'], args['sep13'],
         args['muS_E'], args['muS_N'], args['dL'], args['dS'],
-        args['alpha'], args['psi'], args['b_sff'], args['mag_src'],
+        args['alpha12'], args['alpha13'], args['b_sff'], args['mag_src'],
         args['dmag_Lp_Ls'], root_tol=args['root_tol'])
 
     psbl = model.PSBL_PhotAstrom_noPar_Param1(
         args['mLp'], args['mLs'], args['t0'],
         args['xS0_E'], args['xS0_N'], args['beta'],
         args['muL_E'], args['muL_N'], args['muS_E'], args['muS_N'],
-        args['dL'], args['dS'], args['sep_12'], args['alpha'],
+        args['dL'], args['dS'], args['sep12'], args['alpha12'],
         args['b_sff'], args['mag_src'], args['dmag_Lp_Ls'],
         root_tol=args['root_tol'])
 
