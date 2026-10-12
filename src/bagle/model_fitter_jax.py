@@ -669,6 +669,8 @@ class MicrolensSolver(Solver):
         'piS': ('make_piS', None, None),
         'add_err': ('make_gen', 0, 0.3),
         'mult_err': ('make_gen', 1.0, 3.0),
+        # Phot-only FSPL: Einstein radii. Phot+astrom (arcsec) uses a
+        # tighter range in ``make_default_priors`` when ``paramAstromFlag``.
         'radiusS': ('make_gen', 1E-4, 1E-2),
         'fratio_bin': ('make_gen', 0, 1),
         # We really need to make some normal distributions. All these are junk right now.
@@ -1973,6 +1975,12 @@ class MicrolensSolver(Solver):
             if prior_type == 'make_gen':
                 prior_min = foo[1]
                 prior_max = foo[2]
+                # Phot+astrom ``radiusS`` is arcsec; phot-only is Einstein radii.
+                if (
+                    priors_name == 'radiusS'
+                    and getattr(self.model_class, 'paramAstromFlag', False)
+                ):
+                    prior_min, prior_max = 1e-7, 1e-4
                 self.priors[param_name] = make_gen(
                     param_name, prior_min, prior_max, stats_pkg=stats_pkg
                 )

@@ -2,9 +2,9 @@
 
 The JAX kernel uses a static ``n_outline`` limb, closed-form point-lens
 images, and Bozza et al. (2021) contour integrals (area, centroid, parabolic
-correction) as ``jnp`` reductions, ``vmap``-friendly over epochs. Host
-NumPy wrappers remain for model objects until traced likelihoods land in
-milestone (c).
+correction) as ``jnp`` reductions, ``vmap``-friendly over epochs. Traced
+``fspl_log_likely_*`` helpers support milestone (c) parameter-class wiring;
+host NumPy wrappers remain for parity and notebooks.
 """
 from __future__ import annotations
 
@@ -14,7 +14,15 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from bagle.jax_physics import pspl_amplification_from_u, pspl_u
+from bagle.jax_physics import (
+    gaussian_astrometry_log_likelihood_sum,
+    gaussian_log_likelihood_sum,
+    lens_flux_for_astrometry_jax,
+    mag2flux_jax,
+    pspl_amplification_from_u,
+    pspl_photometry_from_amp,
+    pspl_u,
+)
 
 # Singularity floor when a limb point sits on the lens (contour-artifact
 # fix from host AMG ``c913b38`` / ``e1bc6ec``).
@@ -625,3 +633,203 @@ def fspl_centroid_shift_from_model(model, t, filt_idx, pvec):
     )
 
     return (ast - unl) * 1e3
+
+
+# ---------------------------------------------------------------------------
+# Traced photometry / astrometry (milestone c)
+# ---------------------------------------------------------------------------
+
+
+def fspl_photometry(
+    t, t0, tE, u0, thetaE_hat, rho, n_outline, mag_src, b_sff=None,
+    parallax_vectors=None, piE_E=None, piE_N=None,
+):
+    """
+    Unresolved FSPL magnitudes along a PSPL trajectory.
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Time of closest approach (MJD).
+    tE : float
+        Einstein crossing time (days).
+    u0 : array_like
+        Closest-approach separation, shape ``(2,)``.
+    thetaE_hat : array_like
+        Unit vector along relative proper motion, shape ``(2,)``.
+    rho : float
+        Source radius in Einstein radii.
+    n_outline : int
+        Static limb sample count (JIT-static).
+    mag_src : float
+        Unlensed source magnitude.
+    b_sff : float or None, optional
+        Source flux fraction.
+    parallax_vectors, piE_E, piE_N : optional
+        Passed through to :func:`fspl_magnification_from_trajectory`.
+
+    Returns
+    -------
+    mag : jnp.ndarray, shape (N_times,)
+        Unresolved model magnitudes.
+    """
+    # Finite-source magnification along the Einstein-frame trajectory.
+    amp, _centroid = fspl_magnification_from_trajectory(
+        t, t0, tE, u0, thetaE_hat, rho, n_outline,
+        parallax_vectors=parallax_vectors,
+        piE_E=piE_E,
+        piE_N=piE_N,
+    )
+
+    return pspl_photometry_from_amp(amp, mag_src, b_sff=b_sff)
+
+
+def fspl_log_likely_photometry(
+    t, t0, tE, u0, thetaE_hat, rho, n_outline, mag_src, b_sff,
+    mag_obs, mag_err, parallax_vectors=None, piE_E=None, piE_N=None,
+    gp_params=None, fixed_jitter=True,
+):
+    """
+    FSPL photometric Gaussian log-likelihood (traced).
+
+    Parameters
+    ----------
+    t, t0, tE, u0, thetaE_hat, rho, n_outline, mag_src, b_sff
+        Forward-model arguments for :func:`fspl_photometry`.
+    mag_obs, mag_err : array_like
+        Observed magnitudes and uncertainties.
+    parallax_vectors, piE_E, piE_N : optional
+        Parallax inputs for the trajectory.
+    gp_params : optional
+        If set, use the GP photometric likelihood instead of i.i.d. Gaussian.
+    fixed_jitter : bool, optional
+        Passed to the GP path when ``gp_params`` is not None.
+
+    Returns
+    -------
+    lnL : float
+        Summed log-likelihood.
+    """
+    mag_model = fspl_photometry(
+        t, t0, tE, u0, thetaE_hat, rho, n_outline, mag_src, b_sff=b_sff,
+        parallax_vectors=parallax_vectors, piE_E=piE_E, piE_N=piE_N,
+    )
+
+    if gp_params is None:
+        lnL = gaussian_log_likelihood_sum(mag_model, mag_obs, mag_err)
+    else:
+        from bagle.jax.gp import gp_log_likely_photometry
+
+        lnL = gp_log_likely_photometry(
+            t, mag_obs, mag_err, mag_model, gp_params,
+            fixed_jitter=fixed_jitter,
+        )
+
+    return lnL
+
+
+def fspl_astrometry(
+    t, t0, xS0, xL0, muS, muL, thetaE_amp, rho, n_outline, mag_src, b_sff,
+    parallax_vectors=None, piS=None, piL=None, pi_ref=None,
+):
+    """
+    FSPL flux-weighted unresolved sky centroid (arcsec).
+
+    Parameters
+    ----------
+    t : array_like
+        Observation times in MJD.
+    t0 : float
+        Reference time (MJD).
+    xS0, xL0 : array_like
+        Source and lens sky positions at ``t0`` (arcsec), shape ``(2,)``.
+    muS, muL : array_like
+        Proper motions (mas/yr), shape ``(2,)``.
+    thetaE_amp : float
+        Einstein radius (mas).
+    rho : float
+        Source radius in Einstein radii.
+    n_outline : int
+        Static limb sample count.
+    mag_src : float
+        Unlensed source magnitude (sets the source flux scale).
+    b_sff : float
+        Source flux fraction; lens flux is clipped at zero for astrometry.
+    parallax_vectors, piS, piL, pi_ref : optional
+        Parallax table and amplitudes (mas), matching PSPL astrometry.
+
+    Returns
+    -------
+    pos : jnp.ndarray, shape (N_times, 2)
+        Unresolved East/North centroid (arcsec).
+    """
+    t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+    dt = ((t - t0) / 365.25).reshape(-1, 1)
+
+    # Unlensed source and lens tracks (arcsec); mu in mas/yr.
+    xS = xS0.reshape(1, 2) + dt * muS.reshape(1, 2) * 1e-3
+    xL = xL0.reshape(1, 2) + dt * muL.reshape(1, 2) * 1e-3
+
+    if parallax_vectors is not None:
+        pvec = jnp.asarray(parallax_vectors, dtype=jnp.float64)
+        xS = xS + piS * pvec * 1e-3
+        xL = xL + piL * pvec * 1e-3
+        if pi_ref is not None:
+            shift = jnp.asarray(pi_ref, dtype=jnp.float64) * pvec * 1e-3
+            xS = xS + shift
+            xL = xL + shift
+
+    # Einstein-frame separation and finite-source images / amps.
+    thetaE_as = thetaE_amp * 1e-3
+    u_vec = (xS - xL) / thetaE_as
+    images, amps = fspl_images_amps(u_vec, rho, n_outline)
+
+    # Absolute image positions on the sky (arcsec).
+    img_sky = xL[:, None, :] + images * thetaE_as
+
+    # Lens flux clipped at zero; photometry keeps the unclipped blend.
+    fS = mag2flux_jax(mag_src)
+    fL = lens_flux_for_astrometry_jax(fS, b_sff)
+    abs_amps = jnp.abs(amps)
+    ftot = fL + jnp.sum(fS * abs_amps, axis=1)
+
+    # Flux-weighted centroid of lensed images plus luminous lens.
+    pos = jnp.sum(img_sky * (fS * abs_amps)[:, :, None], axis=1)
+    pos = pos + fL * xL
+    pos = pos / ftot[:, None]
+
+    return pos
+
+
+def fspl_log_likely_astrometry(
+    t, t0, xS0, xL0, muS, muL, thetaE_amp, rho, n_outline, mag_src, b_sff,
+    x_obs, y_obs, x_err, y_err, parallax_vectors=None, piS=None, piL=None,
+    pi_ref=None,
+):
+    """
+    FSPL absolute-astrometry Gaussian log-likelihood (traced).
+
+    Parameters
+    ----------
+    t, t0, xS0, xL0, muS, muL, thetaE_amp, rho, n_outline, mag_src, b_sff
+        Forward-model arguments for :func:`fspl_astrometry`.
+    x_obs, y_obs, x_err, y_err : array_like
+        Observed East/North positions and uncertainties (arcsec).
+    parallax_vectors, piS, piL, pi_ref : optional
+        Parallax inputs for the sky tracks.
+
+    Returns
+    -------
+    lnL : float
+        Summed Gaussian log-likelihood.
+    """
+    pos_model = fspl_astrometry(
+        t, t0, xS0, xL0, muS, muL, thetaE_amp, rho, n_outline, mag_src, b_sff,
+        parallax_vectors=parallax_vectors, piS=piS, piL=piL, pi_ref=pi_ref,
+    )
+
+    return gaussian_astrometry_log_likelihood_sum(
+        pos_model, x_obs, y_obs, x_err, y_err
+    )

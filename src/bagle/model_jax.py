@@ -27740,9 +27740,53 @@ class FSPL_PhotParam1(PSPL_Param):
     filt_param_names = ['b_sff', 'mag_src']
     filt_param_usage = ['both', 'phot']
     additional_param_names = ['mag_base']
+    jax_loglik_mode = 'phot'
     paramAstromFlag = False
     paramPhotFlag = True
     LeeFlag = False
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True,
+                                  n_outline=400):
+        """Traced FSPL photometric log-likelihood (``radiusS`` in Einstein radii).
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector.
+        t, mag_obs, mag_err : array_like
+            Times and photometry.
+        b_sff, mag_src : float
+            Filter-local blend and source magnitude.
+        parallax_vectors, gp_params, fixed_jitter : optional
+            Parallax table and optional GP path.
+        n_outline : int, optional
+            Static limb count (not sampled). Default 400 matches A-09
+            host/JAX magnitude parity away from the limb.
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        from bagle.jax.fspl import fspl_log_likely_photometry
+        from bagle.jax.geometry import derive_pspl_static_geometry
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        u0, thetaE_hat, _ = derive_pspl_static_geometry(
+            p['u0_amp'], p['piE_E'], p['piE_N']
+        )
+
+        # Phot-only ``radiusS`` is already in Einstein radii.
+        return fspl_log_likely_photometry(
+            t, p['t0'], p['tE'], u0, thetaE_hat, p['radiusS'], n_outline,
+            mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors,
+            piE_E=p['piE_E'], piE_N=p['piE_N'],
+            gp_params=gp_params, fixed_jitter=fixed_jitter,
+        )
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_src,
                  n_outline=50,
@@ -27838,10 +27882,54 @@ class FSPL_PhotParam2(PSPL_Param):
     filt_param_names = ['b_sff', 'mag_base']
     filt_param_usage = ['both', 'phot']
     additional_param_names = ['mag_src']
+    jax_loglik_mode = 'phot'
+    mag_fitter = 'mag_base'
 
     paramAstromFlag = False
     paramPhotFlag = True
     LeeFlag = False 
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_base, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True,
+                                  n_outline=400):
+        """Traced FSPL photometry likelihood with ``mag_base`` parameterization.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector.
+        t, mag_obs, mag_err : array_like
+            Times and photometry.
+        b_sff, mag_base : float
+            Filter-local blend and base magnitude.
+        parallax_vectors, gp_params, fixed_jitter : optional
+            Parallax table and optional GP path.
+        n_outline : int, optional
+            Static limb count (not sampled).
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        from bagle.jax.fspl import fspl_log_likely_photometry
+        from bagle.jax.geometry import derive_pspl_static_geometry
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        u0, thetaE_hat, _ = derive_pspl_static_geometry(
+            p['u0_amp'], p['piE_E'], p['piE_N']
+        )
+        mag_src = mag_base - 2.5 * jnp.log10(b_sff)
+
+        return fspl_log_likely_photometry(
+            t, p['t0'], p['tE'], u0, thetaE_hat, p['radiusS'], n_outline,
+            mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors,
+            piE_E=p['piE_E'], piE_N=p['piE_N'],
+            gp_params=gp_params, fixed_jitter=fixed_jitter,
+        )
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_base,
                  n_outline=50,
@@ -27979,10 +28067,114 @@ class FSPL_PhotAstromParam1(PSPL_Param):
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
                               'muRel_E', 'muRel_N']
+    jax_loglik_mode = 'joint'
 
     paramAstromFlag = True
     paramPhotFlag = True
     LeeFlag = False
+
+    @classmethod
+    def _jax_geometry(cls, vec):
+        """Derive PSPL geometry from the physical Param1 fitter vector.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector (includes ``radiusS``).
+
+        Returns
+        -------
+        p : dict
+            Named fitter parameters.
+        geom : tuple
+            Output of ``derive_pspl_photastrom_param1_geometry``.
+        """
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = jax_physics.derive_pspl_photastrom_param1_geometry(
+            p['mL'], p['t0'], p['beta'], p['dL'], p['dL_dS'],
+            p['xS0_E'], p['xS0_N'], p['muL_E'], p['muL_N'],
+            p['muS_E'], p['muS_N']
+        )
+        return p, geom
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True,
+                                  n_outline=400):
+        """Traced FSPL photometry; ``radiusS`` in arcsec converted via ``thetaE``.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed physical Param1 vector including ``radiusS`` (arcsec).
+        t, mag_obs, mag_err : array_like
+            Times and photometry.
+        b_sff, mag_src : float
+            Filter-local blend and source magnitude.
+        parallax_vectors, gp_params, fixed_jitter : optional
+            Parallax / GP path.
+        n_outline : int, optional
+            Static limb count (not sampled).
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        from bagle.jax.fspl import fspl_log_likely_photometry
+
+        p, geom = cls._jax_geometry(vec)
+        (u0, thetaE_hat, tE, piE_E, piE_N, _, _, _, _, thetaE, _,
+         _) = geom
+
+        # Phot+astrom stores ``radiusS`` in arcsec; rho needs Einstein radii.
+        rho = p['radiusS'] * 1e3 / thetaE
+
+        return fspl_log_likely_photometry(
+            t, p['t0'], tE, u0, thetaE_hat, rho, n_outline,
+            mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors,
+            piE_E=piE_E, piE_N=piE_N,
+            gp_params=gp_params, fixed_jitter=fixed_jitter,
+        )
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0, mag_src=18.0,
+                                  parallax_vectors=None, n_outline=400):
+        """Traced FSPL absolute-astrometry log-likelihood.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed physical Param1 vector including ``radiusS`` (arcsec).
+        t, x_obs, y_obs, x_err, y_err : array_like
+            Times and East/North astrometry (arcsec).
+        b_sff, mag_src : float, optional
+            Filter-local blend and source magnitude (flux scale).
+        parallax_vectors : optional
+            Precomputed parallax table.
+        n_outline : int, optional
+            Static limb count (not sampled).
+
+        Returns
+        -------
+        lnL : float
+            Summed astrometric log-likelihood.
+        """
+        from bagle.jax.fspl import fspl_log_likely_astrometry
+
+        p, geom = cls._jax_geometry(vec)
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE, piS,
+         piL) = geom
+        rho = p['radiusS'] * 1e3 / thetaE
+
+        return fspl_log_likely_astrometry(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE, rho, n_outline,
+            mag_src, b_sff, x_obs, y_obs, x_err, y_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL,
+        )
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
@@ -28167,10 +28359,115 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
+    jax_loglik_mode = 'joint'
 
     paramAstromFlag = True
     paramPhotFlag = True
     LeeFlag = False
+
+    @classmethod
+    def _jax_geometry(cls, vec):
+        """Derive reduced PSPL geometry; ``radiusS`` stays in ``p``.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed FSPL Param2 fitter vector (includes ``radiusS``).
+
+        Returns
+        -------
+        p : dict
+            Named fitter parameters including ``radiusS`` (arcsec).
+        geom : tuple
+            Output of ``derive_pspl_photastrom_reduced``.
+        """
+        from bagle.jax.geometry import derive_pspl_photastrom_reduced
+
+        # Parent Param2 geometry ignores radiusS; unpack it separately.
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_pspl_photastrom_reduced(
+            p['t0'], p['u0_amp'], p['tE'], p['thetaE'], p['piS'],
+            p['piE_E'], p['piE_N'], p['xS0_E'], p['xS0_N'],
+            p['muS_E'], p['muS_N']
+        )
+        return p, geom
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True,
+                                  n_outline=400):
+        """Traced FSPL photometry for reduced Param2 (``radiusS`` in arcsec).
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed FSPL Param2 fitter vector.
+        t, mag_obs, mag_err : array_like
+            Times and photometry.
+        b_sff, mag_src : float
+            Filter-local blend and source magnitude.
+        parallax_vectors, gp_params, fixed_jitter : optional
+            Parallax / GP path.
+        n_outline : int, optional
+            Static limb count (not sampled).
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        from bagle.jax.fspl import fspl_log_likely_photometry
+
+        p, geom = cls._jax_geometry(vec)
+        (u0, thetaE_hat, tE, piE_E, piE_N, _, _, _, _, thetaE, _,
+         _) = geom
+        rho = p['radiusS'] * 1e3 / thetaE
+
+        return fspl_log_likely_photometry(
+            t, p['t0'], tE, u0, thetaE_hat, rho, n_outline,
+            mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors,
+            piE_E=piE_E, piE_N=piE_N,
+            gp_params=gp_params, fixed_jitter=fixed_jitter,
+        )
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0, mag_src=18.0,
+                                  parallax_vectors=None, n_outline=400):
+        """Traced FSPL absolute-astrometry log-likelihood (Param2).
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed FSPL Param2 fitter vector.
+        t, x_obs, y_obs, x_err, y_err : array_like
+            Times and East/North astrometry (arcsec).
+        b_sff, mag_src : float, optional
+            Filter-local blend and source magnitude.
+        parallax_vectors : optional
+            Precomputed parallax table.
+        n_outline : int, optional
+            Static limb count (not sampled).
+
+        Returns
+        -------
+        lnL : float
+            Summed astrometric log-likelihood.
+        """
+        from bagle.jax.fspl import fspl_log_likely_astrometry
+
+        p, geom = cls._jax_geometry(vec)
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE, piS,
+         piL) = geom
+        rho = p['radiusS'] * 1e3 / thetaE
+
+        return fspl_log_likely_astrometry(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE, rho, n_outline,
+            mag_src, b_sff, x_obs, y_obs, x_err, y_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL,
+        )
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N,
@@ -28191,7 +28488,6 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
         self.radiusS = radiusS
                       
         return 
-        
                      
 
 #
