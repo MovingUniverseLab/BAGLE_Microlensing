@@ -3545,12 +3545,12 @@ def test_FSPL_PhotAstrom_source_astrometry(plot=False):
             plt.plot(fspl_xyS_lensed[tt, 0], fspl_xyS_lensed[tt, 1],
                      ls='None', marker='o', color=colors[tt], ms=5, label=lab_src_lensed)
 
-            # lensed image, resolved plus
-            plt.plot(fspl_xyS_lensed_res[tt, 0, 0], fspl_xyS_lensed_res[tt, 0, 1],
+            # lensed image, resolved plus (shape is [n_images, N_t, 2])
+            plt.plot(fspl_xyS_lensed_res[0, tt, 0], fspl_xyS_lensed_res[0, tt, 1],
                      ls='None', marker='x', color=colors[tt], ms=5, label=lab_src_p)
 
             # lensed image, resolved minus
-            plt.plot(fspl_xyS_lensed_res[tt, 1, 0], fspl_xyS_lensed_res[tt, 1, 1],
+            plt.plot(fspl_xyS_lensed_res[1, tt, 0], fspl_xyS_lensed_res[1, tt, 1],
                      ls='None', marker='+', color=colors[tt], ms=5, label=lab_src_m)
 
 
@@ -7033,6 +7033,29 @@ def test_pspl_phot_get_astrometry_matches_evaluate_jax(class_name):
     ref = np.asarray(ref_inst.get_astrometry(t), dtype=np.float64)
     jax_out = np.asarray(jax_inst.get_astrometry(t), dtype=np.float64)
     np.testing.assert_allclose(jax_out, ref, rtol=1e-10, atol=1e-12)
+
+
+def test_fspl_resolved_astrometry_shape_matches_pspl():
+    """FSPL get_resolved_astrometry uses PSPL image-first layout (2, N_t, 2)."""
+    t0 = 57000.0
+    kw = dict(
+        mL=10.0, t0=t0, beta=0.5, dL=4000.0, dL_dS=0.5,
+        xS0_E=0.0, xS0_N=0.0, muL_E=0.0, muL_N=0.0, muS_E=3.0, muS_N=0.0,
+        b_sff=[1.0], mag_src=[18.0],
+    )
+    pspl = model.PSPL_PhotAstrom_noPar_Param1(**kw)
+    fspl = model.FSPL_PhotAstrom_noPar_Param1(
+        **kw, radiusS=1e-4, n_outline=40
+    )
+    t = np.linspace(t0 - 20.0, t0 + 20.0, 9)
+    r_p = np.asarray(pspl.get_resolved_astrometry(t))
+    r_f = np.asarray(fspl.get_resolved_astrometry(t))
+    assert r_p.shape == (2, len(t), 2)
+    assert r_f.shape == (2, len(t), 2)
+    # Internal AMG array stays time-major.
+    img, _amp = fspl.get_all_arrays(t)
+    assert np.asarray(img).shape == (len(t), 2, 2)
+    return None
 
 
 def test_bfspl_photastrom_param1_fitter_names_construct():

@@ -550,8 +550,9 @@ def fspl_resolved_astrometry_from_model(model, t, filt_idx, pvec):
 
     Returns
     -------
-    img : ndarray
-        Resolved image positions.
+    img : ndarray, shape (2, N_t, 2)
+        Plus/minus image positions (image axis first), matching
+        ``PSPL.get_resolved_astrometry``.
     """
     out = model.get_all_arrays(t, filt_idx=filt_idx)
     if isinstance(out, tuple) and len(out) == 4:
@@ -559,7 +560,8 @@ def fspl_resolved_astrometry_from_model(model, t, filt_idx, pvec):
     else:
         img_arr, _amp_arr = out
 
-    return finite_source_image_positions(img_arr)
+    # AMG stores (N_t, 2, 2); public resolved API is (2, N_t, 2).
+    return np.swapaxes(finite_source_image_positions(img_arr), 0, 1)
 
 
 def fspl_resolved_amplification_from_model(model, t, filt_idx, pvec):

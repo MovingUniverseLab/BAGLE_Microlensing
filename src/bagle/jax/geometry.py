@@ -239,8 +239,34 @@ def unpack_base_params(names: tuple[str, ...], vec):
 
 
 def derive_geometry_from_layout(layout_id: str, eval_kind: str, base_vec, names: tuple[str, ...]):
-    """Dispatch geometry derivation from a base fitter parameter vector."""
+    """Dispatch geometry derivation from a base fitter parameter vector.
+
+    Parameters
+    ----------
+    layout_id : str
+        Unused layout identifier (kept for call-site compatibility).
+    eval_kind : str
+        Geometry family key (e.g. ``pspl_photastrom_physical``).
+    base_vec : array_like
+        Packed base-fitter parameter vector.
+    names : tuple of str
+        Parameter names parallel to ``base_vec``.
+
+    Returns
+    -------
+    tuple
+        Derived geometry fields for the requested ``eval_kind``.
+    """
     p = unpack_base_params(names, base_vec)
+
+    # BSPL CircOrbs Param1 samples t0_com but physical geometry uses t0.
+    if "t0" not in p and "t0_com" in p:
+        p["t0"] = p["t0_com"]
+    if "t0" not in p and "t0_p" in p:
+        p["t0"] = p["t0_p"]
+    if "t0" not in p and "t0_prim" in p:
+        p["t0"] = p["t0_prim"]
+
     if eval_kind == "pspl_photastrom_physical":
         return derive_pspl_photastrom_param1_geometry(
             p["mL"],

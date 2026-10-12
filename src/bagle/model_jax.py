@@ -24162,7 +24162,7 @@ decL - if parallax model
 
     def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
         """
-        Position of the observed (lensed) source position on the sky.
+        Position of the observed (lensed) source images on the sky.
 
         Parameters
         ----------
@@ -24174,18 +24174,17 @@ decL - if parallax model
         Other Parameters
         ----------------
         image_arr : array_like
-            Array of complex image positions at each t,
-            i.e. image_arr.shape = (len(t), number of images at each t, [E,N]).
-
+            Image positions from ``get_all_arrays``, shape
+            ``(len(t), n_images=2, 2)`` with last axis ``[E, N]``.
         amp_arr : array_like
-            Array of magnifications of each images.
-            Same shape as image_arr.
+            Magnifications of each image, shape ``(len(t), n_images=2)``.
 
         Returns
         -------
-        model_pos : array_like. shape = [N_times, N_images=2, 2]
-            Array of vector positions of the centroid at each t.
-            Last axis contains East/North positions.
+        model_pos : array_like, shape = [n_images=2, N_times, 2]
+            Plus/minus image positions in arcsec. Image axis first, matching
+            :meth:`bagle.model.PSPL.get_resolved_astrometry`. Internal AMG
+            arrays stay time-major; this method reorders for the public API.
         """
         if (image_arr is None) and (amp_arr is None):
             try:
@@ -24193,14 +24192,21 @@ decL - if parallax model
 
                 pos_jax = try_get_resolved_astrometry(self, t, filt_idx=filt_idx)
                 if pos_jax is not None:
-                    return pos_jax
+                    pos = np.asarray(pos_jax)
+                    # Host AMG layout is (N_t, 2, 2); public API is (2, N_t, 2).
+                    n_t = int(np.size(t))
+                    if pos.shape == (n_t, 2, 2):
+                        pos = np.swapaxes(pos, 0, 1)
+                    return pos
             except ImportError:
                 pass
         if (image_arr is None) or (amp_arr is None):
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-        xS_lensed_pos = img_arr
+        else:
+            img_arr = image_arr
 
-        return xS_lensed_pos
+        # AMG stores (N_t, 2, 2); public API matches PSPL (2, N_t, 2).
+        return np.swapaxes(np.asarray(img_arr), 0, 1)
 
     def get_resolved_amplification(self, t, filt_idx=0, amp_arr=None):
         """Get the photometric amplification term at a set of times, t for both the
@@ -24559,7 +24565,7 @@ class FSPL_Phot(FSPL):
     astrometryFlag = False
 
     def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
-        """Resolved finite-source image positions from AMG (phot-only Param2)."""
+        """Resolved finite-source image positions; shape ``(2, N_t, 2)`` like PSPL."""
         if (image_arr is None) or (amp_arr is None):
             out = self.get_all_arrays(t, filt_idx=filt_idx)
             if isinstance(out, tuple) and len(out) == 4:
@@ -24568,7 +24574,8 @@ class FSPL_Phot(FSPL):
                 image_arr, amp_arr = out
         from bagle.jax.fspl import finite_source_image_positions
 
-        return finite_source_image_positions(image_arr)
+        # AMG stores (N_t, 2, 2); public API matches PSPL (2, N_t, 2).
+        return np.swapaxes(finite_source_image_positions(image_arr), 0, 1)
 
     def get_u_outline(self, t, filt_idx=0):
         """

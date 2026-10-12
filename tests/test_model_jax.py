@@ -3548,11 +3548,12 @@ def test_FSPL_PhotAstrom_source_astrometry(plot=False):
                      ls='None', marker='o', color=colors[tt], ms=5, label=lab_src_lensed)
 
             # lensed image, resolved plus
-            plt.plot(fspl_xyS_lensed_res[tt, 0, 0], fspl_xyS_lensed_res[tt, 0, 1],
+            # lensed image, resolved plus (shape is [n_images, N_t, 2])
+            plt.plot(fspl_xyS_lensed_res[0, tt, 0], fspl_xyS_lensed_res[0, tt, 1],
                      ls='None', marker='x', color=colors[tt], ms=5, label=lab_src_p)
 
             # lensed image, resolved minus
-            plt.plot(fspl_xyS_lensed_res[tt, 1, 0], fspl_xyS_lensed_res[tt, 1, 1],
+            plt.plot(fspl_xyS_lensed_res[1, tt, 0], fspl_xyS_lensed_res[1, tt, 1],
                      ls='None', marker='+', color=colors[tt], ms=5, label=lab_src_m)
 
 
