@@ -485,7 +485,6 @@ All times must be reported in MJD.
 
 """
 
-from tkinter import W
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import inspect
@@ -36008,4 +36007,3 @@ def cluster(image, R):
             loops += 1
             total += 1
     return (np.array(clusters), np.array(centres))
-

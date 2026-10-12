@@ -1,0 +1,14 @@
+services:
+  bagle:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: bagle-in-docker:py314
+    container_name: bagle_container
+    stdin_open: true
+    tty: true
+    ports:
+      - "8888:8888"
+    volumes:
+      - ../data:/data
+      - ${BAGLE_TIME_TESTS_PATH:-../../BAGLE_time_tests}:/opt/BAGLE_time_tests

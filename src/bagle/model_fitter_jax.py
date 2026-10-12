@@ -488,7 +488,7 @@ def build_explicit_jax_loglik_fn(fitter):
             assert ast_method is not None
             base_vec = _assemble_class_vector(param_vec, slots)
             b_sff = param_vec[idx_b] if idx_b is not None else 1.0
-            # Optional luminous-lens / mag args for PSBL-style methods.
+            # Optional luminous-lens / mag args for methods that declare them.
             kwargs = dict(b_sff=b_sff, parallax_vectors=pvec)
             if ast_accepts_mag:
                 if idx_mag_src is None:
@@ -4759,7 +4759,7 @@ class MicrolensSolverPyMC2(MicrolensSolver):
         self.write_params_yaml()
 
         print('*************************************************')
-        print(f'*** Using PyMC ({sampler}) for sampling.     ***')
+        print(f'*** Using PyMC ({self.sampler}) for sampling.     ***')
         print('*************************************************')
 
         self.pymc_model = MicrolensPyMCModel(
@@ -4771,10 +4771,13 @@ class MicrolensSolverPyMC2(MicrolensSolver):
         for name in self.fitter_param_names:
             initvals[name] = float(self.priors[name].ppf(0.5))
 
-        # Generate samples.
+        # NUTS requests a gradient. Gradient-free runs use Metropolis so
+        # LogLikelihoodOp.pullback is not called.
         with self.pymc_model:
-            #step = pm.Metropolis()
-            step = pm.NUTS()
+            if self.use_jax_grad:
+                step = pm.NUTS()
+            else:
+                step = pm.Metropolis()
 
             self.idata = pm.sample(
                 draws=self.draws,
@@ -5252,29 +5255,6 @@ def _prior_period_any(prior):
     return 360.0, 0.0
 
 
-def _systematic_resample(weights, seed):
-    """Systematic resampling indices for SMC particles.
-
-    Parameters
-    ----------
-    weights : array_like, shape (N,)
-        Normalized particle weights (sum to 1).
-    seed : int
-        RNG seed for the uniform offset.
-
-    Returns
-    -------
-    indices : ndarray, dtype=int, shape (N,)
-        Parent indices into the particle array.
-    """
-    weights = np.asarray(weights, dtype=float)
-    n = weights.size
-    rng = np.random.default_rng(int(seed) % (2**31 - 1))
-    positions = (np.arange(n) + rng.random()) / n
-    cumsum = np.cumsum(weights)
-    return np.searchsorted(cumsum, positions)
-
-
 def scipy_to_numpyro_dist(prior):
     """Convert a scipy frozen distribution to a NumPyro distribution.
 
@@ -5402,6 +5382,37 @@ def _sample_numpyro_prior(prior, name, wrapped=False):
     return numpyro.deterministic(
         name, jnp.mod(raw - origin, period) + origin
     )
+
+
+def _systematic_resample(weights, rng_key):
+    """Systematic resample indices for one SMC weight vector.
+
+    Parameters
+    ----------
+    weights : array-like, shape (n,)
+        Normalized or unnormalized non-negative weights.
+    rng_key : jax.Array
+        PRNG key for the single uniform offset.
+
+    Returns
+    -------
+    index : ndarray, shape (n,)
+        Integer particle indices, with replacement.
+    """
+    weights = np.asarray(weights, dtype=np.float64)
+    weights = np.where(np.isfinite(weights) & (weights > 0.0), weights, 0.0)
+    total = float(weights.sum())
+    if total <= 0.0:
+        weights = np.full(weights.shape, 1.0 / weights.size)
+    else:
+        weights = weights / total
+    n_particles = weights.size
+    offset = float(jax.random.uniform(rng_key))
+    positions = (np.arange(n_particles) + offset) / n_particles
+    cumulative = np.cumsum(weights)
+    cumulative[-1] = 1.0
+    index = np.searchsorted(cumulative, positions, side='left')
+    return np.clip(index, 0, n_particles - 1).astype(np.int64)
 
 
 class MicrolensNumPyroModel:
@@ -5590,6 +5601,10 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         MicrolensSolverNumPyro
             Configured solver instance.
         """
+        # SMC knobs are not MicrolensSolver arguments.
+        n_temperatures = kwargs.pop('n_temperatures', 5)
+        smc_rejuvenate_steps = kwargs.pop('smc_rejuvenate_steps', 1)
+
         # Parent sets up data, params, and scipy default priors.
         super().__init__(
             data,
@@ -5834,9 +5849,7 @@ class MicrolensSolverNumPyro(MicrolensSolver):
             log_w = log_w - float(jax_logsumexp(log_w))
             weights = np.exp(log_w)
             rng_key, rs_key = jax.random.split(rng_key)
-            indices = _systematic_resample(
-                weights, int(jax.random.randint(rs_key, (), 0, 2**31 - 1))
-            )
+            indices = _systematic_resample(weights, rs_key)
             particles = particles[indices]
 
             # Rejuvenate on the tempered posterior at current β.

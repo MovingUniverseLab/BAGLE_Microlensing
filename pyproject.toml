@@ -42,7 +42,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-jaxns = ["jaxns>=2.5", "tensorflow-probability>=0.24"]
+jaxns = ["jaxns==2.6.9", "tfp-nightly"]
 nautilus = ["nautilus-sampler>=1.0"]
 pocomc = ["pocomc>=1.2"]
 blackjax = ["blackjax>=1.6,<1.7"]
