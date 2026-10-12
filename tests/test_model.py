@@ -69,7 +69,7 @@ def test_default_priors():
     unmatched = []
 
     def check_lengths(carg):
-        fitter_params = carg.fitter_param_names + carg.phot_param_names
+        fitter_params = list(carg.fitter_param_names)
         #print("Fitter count :", len(fitter_params)) 
     
         missing_params = [i for i in fitter_params if i not in check_keys]
@@ -157,8 +157,8 @@ def run_test_PSPL(mL, t0, xS0, beta, muS, muL, dL, dS, b_sff, mag_src,
     assert pspl.t0 == t0
     assert pspl.beta == beta
     assert pspl.dL == dL
-    assert pspl.xS0[0] == xS0[0]
-    assert pspl.xS0[1] == xS0[1]
+    assert pspl.xS0[0, 0] == xS0[0]
+    assert pspl.xS0[0, 1] == xS0[1]
     assert pspl.muL[0] == muL[0]
     assert pspl.muL[1] == muL[1]
     assert pspl.muS[0] == muS[0]
@@ -1076,8 +1076,8 @@ def test_pspl_parallax2_bulge():
                                                  pspl_par1.piS,
                                                  pspl_par1.piE_E,
                                                  pspl_par1.piE_N,
-                                                 pspl_par1.xS0[0],
-                                                 pspl_par1.xS0[1],
+                                                 pspl_par1.xS0[0, 0],
+                                                 pspl_par1.xS0[0, 1],
                                                  pspl_par1.muS[0],
                                                  pspl_par1.muS[1],
                                                  [b_sff],
@@ -1352,8 +1352,8 @@ def test_parallax(plot=False, verbose=False):
 
     #### SOURCE
     # Define the source coordinates (with the correct proper motion and distance).
-    raS0 = (raL_in * u.deg) + (pspl.xS0[0] * u.deg / 3600)
-    decS0 = (decL_in * u.deg) + (pspl.xS0[1] * u.deg / 3600)
+    raS0 = (raL_in * u.deg) + (pspl.xS0[0, 0] * u.deg / 3600)
+    decS0 = (decL_in * u.deg) + (pspl.xS0[0, 1] * u.deg / 3600)
     if verbose: print(f'S0 coords = {raS0:.10f}, {decS0:.10f}')
     cS = SkyCoord(raS0, decS0,
                   pm_ra_cosdec=muS_in[0] * u.mas / u.yr,
@@ -1373,8 +1373,9 @@ def test_parallax(plot=False, verbose=False):
     xS_astropy = np.vstack([dxS_apy.value, dyS_apy.value]).T * u.mas
 
     #### LENS
-    raL0 = (raL_in * u.deg) + (pspl.xL0[0] * u.deg / 3600)
-    decL0 = (decL_in * u.deg) + (pspl.xL0[1] * u.deg / 3600)
+    # Filter 0. xL0 is (n_filters, 2).
+    raL0 = (raL_in * u.deg) + (pspl.xL0[0, 0] * u.deg / 3600)
+    decL0 = (decL_in * u.deg) + (pspl.xL0[0, 1] * u.deg / 3600)
     if verbose: print(f'L0 coords = {raL0:.10f}, {decL0:.10f}')
     
     cL = SkyCoord(raL0, decL0,
@@ -2390,6 +2391,7 @@ def test_PSBL_Phot_Par_Param1(plot=False, verbose=False):
 
 
 def test_PSBL_phot_vs_pyLIMA(plot=False):
+    pytest.importorskip('pyLIMA')
     # Parameters -- common to ours and pyLIMA
     t0 = 55775.0
     u0_amp = 0.5
@@ -2622,6 +2624,7 @@ def test_PSPL_phot_vs_pyLIMA_parallax(plot=False):
     return
 
 def test_PSPL_phot_vs_pyLIMA_noparallax(plot=False):
+    pytest.importorskip('pyLIMA')
     # Parameters: BAGLE style (conversion down later)
     ra = 267.4640833333333
     dec = -34.62555555555556
@@ -2905,6 +2908,10 @@ def test_u0_hat_thetaE_hat():
     E_hat = np.array([1.0, 0.0])
     N_hat = np.array([0.0, 1.0])
 
+    def cross2(a, b):
+        # NumPy 2 rejects np.cross on length-2 vectors.
+        return a[0] * b[1] - a[1] * b[0]
+
     ##########
     # Test 1:
     #   u0 sign:     +, +
@@ -2922,7 +2929,7 @@ def test_u0_hat_thetaE_hat():
 
     # Should be positive.
     # in units of thetaE, opposite sign as beta???? NOT SURE ANYMORE.
-    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * np.cross(u0_hat_in, N_hat) * 1.0
+    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * cross2(u0_hat_in, N_hat) * 1.0
 
     # Test
     u0_hat = model.u0_hat_from_thetaE_hat(muRel_hat_in, u0amp_in)
@@ -2950,7 +2957,7 @@ def test_u0_hat_thetaE_hat():
     muRel_hat_in = np.array([muRel_hatE_in, muRel_hatN_in])
 
     # Should be negative.
-    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * np.cross(u0_hat_in, N_hat) * 1.0
+    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * cross2(u0_hat_in, N_hat) * 1.0
 
     # Test
     u0_hat = model.u0_hat_from_thetaE_hat(muRel_hat_in, u0amp_in)
@@ -2977,7 +2984,7 @@ def test_u0_hat_thetaE_hat():
     muRel_hat_in = np.array([muRel_hatE_in, muRel_hatN_in])
 
     # Should be negative.
-    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * np.cross(u0_hat_in, N_hat) * 1.0
+    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * cross2(u0_hat_in, N_hat) * 1.0
 
     # Test
     u0_hat = model.u0_hat_from_thetaE_hat(muRel_hat_in, u0amp_in)
@@ -3004,7 +3011,7 @@ def test_u0_hat_thetaE_hat():
     muRel_hat_in = np.array([muRel_hatE_in, muRel_hatN_in])
 
     # Should be negative.
-    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * np.cross(u0_hat_in, N_hat) * 1.0
+    u0amp_in = np.hypot(u0_hatE_in, u0_hatN_in) * cross2(u0_hat_in, N_hat) * 1.0
 
     # Test
     u0_hat = model.u0_hat_from_thetaE_hat(muRel_hat_in, u0amp_in)
@@ -3037,8 +3044,8 @@ def test_u0_hat_thetaE_hat():
     muRel_hat_in2 = np.array([muRel_hatE_in2, muRel_hatN_in2])
 
     # Should be negative.
-    u0amp_in1 = np.hypot(u0_hatE_in1, u0_hatN_in1) * np.cross(u0_hat_in1, N_hat) * 1.0
-    u0amp_in2 = np.hypot(u0_hatE_in2, u0_hatN_in2) * np.cross(u0_hat_in2, N_hat) * 1.0
+    u0amp_in1 = np.hypot(u0_hatE_in1, u0_hatN_in1) * cross2(u0_hat_in1, N_hat) * 1.0
+    u0amp_in2 = np.hypot(u0_hatE_in2, u0_hatN_in2) * cross2(u0_hat_in2, N_hat) * 1.0
 
     # Test
     u0_hat1 = model.u0_hat_from_thetaE_hat(muRel_hat_in1, u0amp_in1)

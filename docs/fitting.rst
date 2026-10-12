@@ -50,8 +50,11 @@ problem. Below, we provide a very small prior range for each parameter
 to speed up the fitting process just for a quick-running example::
                        
   fitter.priors['t0'] = model_fitter.make_gen(p_in['t0']-5, p_in['t0']+5)
-  fitter.priors['xS0_E'] = model_fitter.make_gen(p_in['xS0_E']-1e-3, p_in['xS0_E']+1e-3)
-  fitter.priors['xS0_N'] = model_fitter.make_gen(p_in['xS0_N']-1e-3, p_in['xS0_N']+1e-3)
+  # The cube name is suffixed. The constructor argument is the array.
+  fitter.priors['xS0_E1'] = model_fitter.make_gen(
+      p_in['xS0_E'] - 1e-3, p_in['xS0_E'] + 1e-3)
+  fitter.priors['xS0_N1'] = model_fitter.make_gen(
+      p_in['xS0_N'] - 1e-3, p_in['xS0_N'] + 1e-3)
   fitter.priors['beta'] = model_fitter.make_gen(p_in['beta']-0.1, p_in['beta']+0.1)
   fitter.priors['muL_E'] = model_fitter.make_gen(p_in['muL_E']-0.1, p_in['muL_E']+0.1)
   fitter.priors['muL_N'] = model_fitter.make_gen(p_in['muL_N']-0.1, p_in['muL_N']+0.1)
@@ -80,14 +83,14 @@ and generate the best-fit output model::
                                               best['beta'],
                                               best['dL'],
                                               best['dL_dS'],
-                                              best['xS0_E'],
-                                              best['xS0_N'],
-                                              best['muL_E'],
-                                              best['muL_N'],
-                                              best['muS_E'],
-                                              best['muS_N'],
-                                              [best['b_sff1']],
-                                              [best['mag_src1']],
+                                              xS0_E=[best['xS0_E1']],
+                                              xS0_N=[best['xS0_N1']],
+                                              muL_E=best['muL_E'],
+                                              muL_N=best['muL_N'],
+                                              muS_E=best['muS_E'],
+                                              muS_N=best['muS_N'],
+                                              b_sff=[best['b_sff1']],
+                                              mag_src=[best['mag_src1']],
                                               raL=p_in['raL'],
                                               decL=p_in['decL'])
 
@@ -98,14 +101,14 @@ For comparison, we will also make a model with the input parameters::
                                              p_in['beta'],
                                              p_in['dL'],
                                              p_in['dL'] / p_in['dS'],
-                                             p_in['xS0_E'],
-                                             p_in['xS0_N'],
-                                             p_in['muL_E'],
-                                             p_in['muL_N'],
-                                             p_in['muS_E'],
-                                             p_in['muS_N'],
-                                             p_in['b_sff'],
-                                             p_in['mag_src'],
+                                             xS0_E=[p_in['xS0_E']],
+                                             xS0_N=[p_in['xS0_N']],
+                                             muL_E=p_in['muL_E'],
+                                             muL_N=p_in['muL_N'],
+                                             muS_E=p_in['muS_E'],
+                                             muS_N=p_in['muS_N'],
+                                             b_sff=p_in['b_sff'],
+                                             mag_src=p_in['mag_src'],
                                              raL=p_in['raL'],
                                              decL=p_in['decL'])
 

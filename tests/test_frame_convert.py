@@ -1,4 +1,5 @@
 import pdb
+import pytest
 from bagle import model
 import numpy as np
 import matplotlib.pyplot as plt
@@ -968,6 +969,8 @@ def get_phot_bagle_geoproj(ra, dec, t0_h, u0_h, tE_h,
 
 
 def test_bagle_mulens_psbl_phot_set(plot_lc=False, plot_conv=False, verbose=False):
+    pytest.importorskip('MulensModel')
+    pytest.importorskip('pyLIMA')
 
     kwargs = {'plot_lc': plot_lc, 'plot_conv': plot_conv, 'verbose': verbose}
 
@@ -996,6 +999,8 @@ def test_bagle_mulens_set(plot_lc=False, plot_conv=False, verbose=False):
     conversions for all combos of u0/piEE/piEN sign,
     as well as three sets of t0par (<, =, and > t0).
     """
+    pytest.importorskip('MulensModel')
+    pytest.importorskip('pyLIMA')
     t_mjd = np.arange(57000 - 500, 57000 + 500, 1)
 
     kwargs = {'plot_lc' : plot_lc, 'plot_conv' : plot_lc, 'verbose' : verbose}

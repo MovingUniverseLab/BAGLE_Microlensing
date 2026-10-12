@@ -18,6 +18,7 @@ from bagle.jax_physics import (
     einstein_source_position,
     derive_pspl_static_geometry,
     build_jax_joint_likelihood_context,
+    _assemble_class_vector,
 )
 
 
@@ -206,7 +207,10 @@ def build_bspl_joint_loglik(fitter, param_cls=None):
 
     def _loglik(param_vec):
         param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
-        base = param_vec[jnp.array(ctx.base_indices, dtype=jnp.int32)]
+        # Shared geometry. This photometric term does not read xS0.
+        base = _assemble_class_vector(
+            param_vec, ctx.filters[0].class_slots
+        )
         # BSPL PhotAstromParam1: t0_pri, u0_amp_pri, t0_sec, u0_amp_sec, tE, piE_E, piE_N, ...
         names = param_cls.fitter_param_names
         p = {names[i]: base[i] for i in range(len(names))}

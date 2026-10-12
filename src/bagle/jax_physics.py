@@ -1278,7 +1278,8 @@ def pspl_phot_astrometry_unlensed(t, t0, tE, u0, thetaE_hat, b_sff,
     return u_cent
 
 
-def pspl_linear_astrometry(t, t0, x0, mu, parallax_vectors=None, pi=None):
+def pspl_linear_astrometry(t, t0, x0, mu, parallax_vectors=None, pi=None,
+                           pi_ref=None):
     """
     Linear sky motion in arcsec (PSPL source or lens).
 
@@ -1296,6 +1297,10 @@ def pspl_linear_astrometry(t, t0, x0, mu, parallax_vectors=None, pi=None):
         Precomputed parallax table, shape ``(N_times, 2)``.
     pi : float or None
         Parallax amplitude applied to ``parallax_vectors`` (mas).
+    pi_ref : float or None
+        Reference-frame parallax for this filter (mas). Added on top
+        of ``pi`` and does not change source-minus-lens separation
+        when the same value is applied to the lens and the source.
 
     Returns
     -------
@@ -1316,11 +1321,18 @@ def pspl_linear_astrometry(t, t0, x0, mu, parallax_vectors=None, pi=None):
             parallax_vectors, dtype=jnp.float64
         ) * 1e-3
 
+    # Reference-frame offset, same units as the annual parallax term.
+    if parallax_vectors is not None and pi_ref is not None:
+        pos = pos + jnp.asarray(pi_ref, dtype=jnp.float64) * jnp.asarray(
+            parallax_vectors, dtype=jnp.float64
+        ) * 1e-3
+
     return pos
 
 
-def pspl_source_astrometry_unlensed(t, t0, xS0, muS, 
-                                    parallax_vectors=None, piS=None):
+def pspl_source_astrometry_unlensed(t, t0, xS0, muS,
+                                    parallax_vectors=None, piS=None,
+                                    pi_ref=None):
     """
     Unlensed source astrometry in arcsec.
 
@@ -1338,6 +1350,8 @@ def pspl_source_astrometry_unlensed(t, t0, xS0, muS,
         Precomputed parallax table, shape ``(N_times, 2)``.
     piS : float or None
         Source parallax (mas).
+    pi_ref : float or None
+        Reference-frame parallax for this filter (mas).
 
     Returns
     -------
@@ -1345,7 +1359,9 @@ def pspl_source_astrometry_unlensed(t, t0, xS0, muS,
         See summary above.
     """
     # Thin wrapper around the shared linear sky-motion kernel.
-    pos = pspl_linear_astrometry(t, t0, xS0, muS, parallax_vectors, piS)
+    pos = pspl_linear_astrometry(
+        t, t0, xS0, muS, parallax_vectors, piS, pi_ref=pi_ref
+    )
     return pos
 
 
@@ -1402,7 +1418,7 @@ def pspl_resolved_amplification(t, t0, tE, u0, thetaE_hat,
 
 def pspl_resolved_astrometry(t, t0, tE, u0, thetaE_hat, xL0, muL, thetaE_amp,
     parallax_vectors=None, piE_E=None, piE_N=None, piL=None,
-    parallax_correction=None):
+    parallax_correction=None, pi_ref=None):
     """
     Plus/minus PSPL image astrometry in arcsec; shape ``(2, N_times, 2)``.
 
@@ -1434,6 +1450,8 @@ def pspl_resolved_astrometry(t, t0, tE, u0, thetaE_hat, xL0, muL, thetaE_amp,
         Lens parallax (mas).
     parallax_correction : array_like or None
         Legacy pre-multiplied ``piE_amp * parallax_vectors``.
+    pi_ref : float or None
+        Reference-frame parallax for this filter (mas).
 
     Returns
     -------
@@ -1456,7 +1474,10 @@ def pspl_resolved_astrometry(t, t0, tE, u0, thetaE_hat, xL0, muL, thetaE_amp,
     u_plus, u_minus = pspl_resolved_astrometry_from_u(u)
 
     # Lens sky track and Einstein radius in arcsec.
-    xL = pspl_linear_astrometry(t, t0, xL0, muL, parallax_vectors, piL)
+    # pi_ref shifts both images together because they share the lens.
+    xL = pspl_linear_astrometry(
+        t, t0, xL0, muL, parallax_vectors, piL, pi_ref=pi_ref
+    )
     scale = jnp.asarray(thetaE_amp, dtype=jnp.float64) * 1e-3
 
     # Absolute image positions on the sky; shape (2, N_times, 2).
@@ -2401,7 +2422,7 @@ def derive_pspl_photastrom_param1_geometry(mL, t0, beta, dL, dL_dS, xS0_E, xS0_N
 
 
 def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
-    parallax_vectors=None, piS=None, piL=None):
+    parallax_vectors=None, piS=None, piL=None, pi_ref=None):
     """
     PSPL flux-weighted centroid astrometry (arcsec), matching
 
@@ -2429,6 +2450,10 @@ def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
         Source parallax (mas).
     piL : float or None
         Lens parallax (mas).
+    pi_ref : float or None
+        Reference-frame parallax for this filter (mas). The same
+        offset is added to the source and the lens, so it shifts the
+        centroid and cancels in their separation.
 
     Returns
     -------
@@ -2453,6 +2478,11 @@ def pspl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
         pvec = jnp.asarray(parallax_vectors, dtype=jnp.float64)
         xS = xS + piS * pvec * 1e-3
         xL = xL + piL * pvec * 1e-3
+        # Same reference-frame offset on both, so u is unchanged.
+        if pi_ref is not None:
+            shift = jnp.asarray(pi_ref, dtype=jnp.float64) * pvec * 1e-3
+            xS = xS + shift
+            xL = xL + shift
 
     # Angular separation and Einstein-normalized u vector.
     thetaS = xS - xL
@@ -2766,7 +2796,8 @@ def gaussian_astrometry_log_likelihood_sum(pos_model, x_obs, y_obs, x_err, y_err
 
 def pspl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
                                b_sff, x_obs, y_obs, x_err, y_err,
-                               parallax_vectors=None, piS=None, piL=None):
+                               parallax_vectors=None, piS=None, piL=None,
+                               pi_ref=None):
     """Evaluate a PSPL absolute-astrometry Gaussian log-likelihood.
 
     Parameters
@@ -2789,6 +2820,8 @@ def pspl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
         Parallax table, shape ``(N_times, 2)``.
     piS, piL : float or None
         Source and lens parallax (mas).
+    pi_ref : float or None
+        Reference-frame parallax for this filter (mas).
 
     Returns
     -------
@@ -2802,7 +2835,8 @@ def pspl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
     """
     pos_model = pspl_astrometry_param1(
         t, t0, xS0, xL0, muS, muL, thetaE_amp, b_sff,
-        parallax_vectors=parallax_vectors, piS=piS, piL=piL
+        parallax_vectors=parallax_vectors, piS=piS, piL=piL,
+        pi_ref=pi_ref,
     )
     lnL = gaussian_astrometry_log_likelihood_sum(
         pos_model, x_obs, y_obs, x_err, y_err
@@ -3049,6 +3083,86 @@ def _fitter_weight(fitter, idx: int, default: float = 1.0) -> float:
     return weight
 
 
+def _joint_class_slots(names, base_names, filt_names, fixed, filt_idx,
+                       tied):
+    """Map one filter onto the unsuffixed class parameter order.
+
+    Parameters
+    ----------
+    names : sequence of str
+        Fitted cube names.
+    base_names : sequence of str
+        Unsuffixed class ``fitter_param_names``.
+    filt_names : set of str
+        Names that expand once per filter.
+    fixed : dict
+        Suffixed name -> fixed value for slots omitted from the cube.
+    filt_idx : int
+        0-based unified filter index.
+    tied : dict
+        Suffixed target -> suffixed source.
+
+    Returns
+    -------
+    slots : tuple or None
+        Each entry is ``('i', index)`` for a fitted or tied value,
+        or ``('v', float)`` for a fixed value. ``None`` when a
+        shared name or a tie source is missing from the cube.
+
+    Notes
+    -----
+    Shared event parameters are read once. A per-filter name uses
+    the 1-based suffix of ``filt_idx``. A tied suffix reads the
+    source column. Any other missing suffix uses the fixed value.
+    """
+    slots = []
+    for name in base_names:
+        if name not in filt_names:
+            if name not in names:
+                return None
+            slots.append(('i', names.index(name)))
+            continue
+
+        # 1-based suffix matches the expanded cube.
+        key = f'{name}{int(filt_idx) + 1}'
+        if key in names:
+            slots.append(('i', names.index(key)))
+        elif key in tied:
+            source = tied[key]
+            if source not in names:
+                return None
+            # Same cube column as the source, so the gradient
+            # follows that parameter.
+            slots.append(('i', names.index(source)))
+        else:
+            slots.append(('v', float(fixed.get(key, 0.0))))
+    return tuple(slots)
+
+
+def _assemble_class_vector(param_vec, slots):
+    """Stack one filter's class-order parameter vector.
+
+    Parameters
+    ----------
+    param_vec : array_like
+        Fitted parameter cube.
+    slots : tuple
+        Output of :func:`_joint_class_slots`.
+
+    Returns
+    -------
+    class_vec : jax.numpy.ndarray
+        Values in the unsuffixed class ``fitter_param_names`` order.
+    """
+    cols = []
+    for kind, payload in slots:
+        if kind == 'i':
+            cols.append(param_vec[payload])
+        else:
+            cols.append(jnp.asarray(payload, dtype=jnp.float64))
+    return jnp.stack(cols)
+
+
 def _param_index(names: Sequence[str], param_base: str, filt_idx: int | None) -> int:
     """
     _param_index.
@@ -3103,11 +3217,12 @@ def build_jax_phot_likelihood_context(fitter) -> JaxPhotLikelihoodContext | None
     else:
         base_names = PSBL_PHOT_PARAM1_FITTER_NAMES
 
-    # Reject fitters whose leading parameter order does not match.
-    if names[: len(base_names)] != base_names:
+    # Shared geometric names stay unsuffixed. Look them up by name so
+    # the expanded photometric tail does not have to be a prefix.
+    try:
+        base_param_indices = tuple(names.index(name) for name in base_names)
+    except ValueError:
         return None
-
-    base_param_indices = tuple(range(len(base_names)))
 
     # Parallax tables need lens sky coordinates on the host.
     use_parallax = "raL" in fitter.data and "decL" in fitter.data
@@ -3124,10 +3239,16 @@ def build_jax_phot_likelihood_context(fitter) -> JaxPhotLikelihoodContext | None
         mag_err = np.asarray(fitter.data[f"mag_err{filt_1}"], dtype=np.float64)
         weight = float(getattr(fitter, "weights", [1.0] * fitter.n_phot_sets)[i])
 
-        # Optional host-side parallax direction table.
+        # Optional host-side parallax direction table for this observer.
         pvec = None
         if use_parallax:
-            pvec = precompute_parallax_vectors(ra_l, dec_l, t)
+            obs_list = getattr(fitter, "obs_locations", None)
+            loc = "earth"
+            if obs_list is not None and i < len(obs_list):
+                loc = obs_list[i]
+            pvec = precompute_parallax_vectors(
+                ra_l, dec_l, t, obs_location=loc
+            )
 
         # Indices into the full fitter vector for blend and mag_src.
         idx_b = _param_index(names, "b_sff", filt_1 if f"b_sff{filt_1}" in names else None)
@@ -3309,17 +3430,22 @@ class PhotAstromFilterLikelihoodData:
     """Joint phot+ast arrays for one mapped filter pair."""
 
     phot: PhotFilterLikelihoodData | None
-    ast: AstFilterLikelihoodData
+    ast: AstFilterLikelihoodData | None
+    class_slots: tuple
 
 
 @dataclass(frozen=True)
 class JaxJointLikelihoodContext:
-    """Host context for PSPL PhotAstrom Param1 joint likelihood."""
+    """Host context for a joint photometry and astrometry likelihood.
+
+    ``filters[k].class_slots`` rebuilds the unsuffixed class
+    parameter vector for that filter. A per-filter name uses
+    that filter's 1-based suffix.
+    """
 
     layout: str
     use_parallax: bool
     fitter_param_names: tuple[str, ...]
-    base_indices: tuple[int, ...]
     filters: tuple[PhotAstromFilterLikelihoodData, ...]
 
 
@@ -3343,10 +3469,10 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
 
     names = tuple(fitter.fitter_param_names)
     base_names = tuple(fitter.model_class.fitter_param_names)
-    try:
-        base_indices = tuple(names.index(name) for name in base_names)
-    except ValueError:
-        return None
+    filt_names = set(getattr(fitter.model_class, "filt_param_names", ()) or ())
+    fixed = dict(getattr(fitter, "fixed_dataset_params", {}) or {})
+    tied = dict(getattr(fitter, "tied_params", {}) or {})
+    obs_list = getattr(fitter, "obs_locations", None)
 
     # Parallax tables need lens sky coordinates when raL/decL are present.
     use_parallax = "raL" in fitter.data and "decL" in fitter.data
@@ -3368,14 +3494,25 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
         x_err = np.asarray(fitter.data[f"xpos_err{ast_filt}"], dtype=np.float64)
         y_err = np.asarray(fitter.data[f"ypos_err{ast_filt}"], dtype=np.float64)
         ast_weight = _fitter_weight(fitter, fitter.n_phot_sets + i)
+        loc = "earth"
+        if obs_list is not None and phot_idx < len(obs_list):
+            loc = obs_list[phot_idx]
         pvec_ast = None
         if use_parallax:
-            pvec_ast = precompute_parallax_vectors(ra_l, dec_l, t_ast)
+            pvec_ast = precompute_parallax_vectors(
+                ra_l, dec_l, t_ast, obs_location=loc
+            )
 
         # Blend index comes from the paired photometry filter.
         idx_b_ast = _param_index(
             names, "b_sff", phot_filt if f"b_sff{phot_filt}" in names else None
         )
+        # Class-order slots for this unified filter, including xS0.
+        slots = _joint_class_slots(
+            names, base_names, filt_names, fixed, phot_idx, tied
+        )
+        if slots is None:
+            return None
 
         phot_block = None
         if phot_idx < fitter.n_phot_sets:
@@ -3386,7 +3523,9 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
             phot_weight = _fitter_weight(fitter, phot_idx)
             pvec_phot = None
             if use_parallax:
-                pvec_phot = precompute_parallax_vectors(ra_l, dec_l, t_phot)
+                pvec_phot = precompute_parallax_vectors(
+                    ra_l, dec_l, t_phot, obs_location=loc
+                )
             idx_m = _param_index(
                 names, "mag_src", phot_filt if f"mag_src{phot_filt}" in names else None
             )
@@ -3411,7 +3550,11 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
             idx_b_sff=idx_b_ast,
             phot_filt_idx=phot_idx,
         )
-        joint_filters.append(PhotAstromFilterLikelihoodData(phot=phot_block, ast=ast_block))
+        joint_filters.append(
+            PhotAstromFilterLikelihoodData(
+                phot=phot_block, ast=ast_block, class_slots=slots
+            )
+        )
 
     # Photometry-only sets (no astrometry counterpart).
     mapped_phot = set(map_phot) if map_phot else set(range(fitter.n_ast_sets))
@@ -3423,15 +3566,25 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
         mag_obs = np.asarray(fitter.data[f"mag{phot_filt}"], dtype=np.float64)
         mag_err = np.asarray(fitter.data[f"mag_err{phot_filt}"], dtype=np.float64)
         phot_weight = _fitter_weight(fitter, phot_idx)
+        loc = "earth"
+        if obs_list is not None and phot_idx < len(obs_list):
+            loc = obs_list[phot_idx]
         pvec_phot = None
         if use_parallax:
-            pvec_phot = precompute_parallax_vectors(ra_l, dec_l, t_phot)
+            pvec_phot = precompute_parallax_vectors(
+                ra_l, dec_l, t_phot, obs_location=loc
+            )
         idx_b = _param_index(
             names, "b_sff", phot_filt if f"b_sff{phot_filt}" in names else None
         )
         idx_m = _param_index(
             names, "mag_src", phot_filt if f"mag_src{phot_filt}" in names else None
         )
+        slots = _joint_class_slots(
+            names, base_names, filt_names, fixed, phot_idx, tied
+        )
+        if slots is None:
+            return None
         phot_block = PhotFilterLikelihoodData(
             t=t_phot,
             mag_obs=mag_obs,
@@ -3441,16 +3594,99 @@ def build_jax_joint_likelihood_context(fitter) -> JaxJointLikelihoodContext | No
             idx_b_sff=idx_b,
             idx_mag_src=idx_m,
         )
-        joint_filters.append(PhotAstromFilterLikelihoodData(phot=phot_block, ast=None))
+        joint_filters.append(
+            PhotAstromFilterLikelihoodData(
+                phot=phot_block, ast=None, class_slots=slots
+            )
+        )
 
     ctx = JaxJointLikelihoodContext(
         layout=layout,
         use_parallax=use_parallax,
         fitter_param_names=names,
-        base_indices=base_indices,
         filters=tuple(joint_filters),
     )
     return ctx
+
+
+def log_likelihood_from_joint_context(param_vec, ctx, model_class):
+    """Sum the joint log-likelihood using each filter's class vector.
+
+    Parameters
+    ----------
+    param_vec : array_like
+        Fitted cube, in ``ctx.fitter_param_names`` order.
+    ctx : JaxJointLikelihoodContext
+        Context from :func:`build_jax_joint_likelihood_context`.
+    model_class : type
+        Model class with the JAX likelihood methods.
+
+    Returns
+    -------
+    lnL : jax.numpy.ndarray
+        Photometric plus astrometric log-likelihood.
+    """
+    import inspect
+
+    param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
+    phot_method = getattr(model_class, "jax_log_likely_photometry", None)
+    ast_method = getattr(model_class, "jax_log_likely_astrometry", None)
+    ast_accepts_mag = False
+    if ast_method is not None:
+        ast_sig = inspect.signature(ast_method)
+        ast_accepts_mag = "mag_src" in ast_sig.parameters
+    phot_names = tuple(getattr(model_class, "phot_param_names", ()))
+    lnL = jnp.asarray(0.0, dtype=jnp.float64)
+
+    for block in ctx.filters:
+        # Rebuild the unsuffixed vector so xS0 matches this filter.
+        base_vec = _assemble_class_vector(param_vec, block.class_slots)
+        if block.phot is not None and phot_method is not None:
+            b_sff = param_vec[block.phot.idx_b_sff]
+            mag_src = param_vec[block.phot.idx_mag_src]
+            pvec = (
+                None
+                if block.phot.parallax_vectors is None
+                else jnp.asarray(
+                    block.phot.parallax_vectors, dtype=jnp.float64
+                )
+            )
+            lnL = lnL + block.phot.weight * phot_method(
+                base_vec,
+                jnp.asarray(block.phot.t, dtype=jnp.float64),
+                jnp.asarray(block.phot.mag_obs, dtype=jnp.float64),
+                jnp.asarray(block.phot.mag_err, dtype=jnp.float64),
+                b_sff,
+                mag_src,
+                parallax_vectors=pvec,
+            )
+        if block.ast is not None and ast_method is not None:
+            b_sff = param_vec[block.ast.idx_b_sff]
+            pvec = (
+                None
+                if block.ast.parallax_vectors is None
+                else jnp.asarray(
+                    block.ast.parallax_vectors, dtype=jnp.float64
+                )
+            )
+            kwargs = dict(b_sff=b_sff, parallax_vectors=pvec)
+            if ast_accepts_mag and block.phot is not None:
+                mag_value = param_vec[block.phot.idx_mag_src]
+                if "mag_base" in phot_names:
+                    mag_value = mag_value - 2.5 * jnp.log10(
+                        jnp.maximum(b_sff, 1e-12)
+                    )
+                kwargs["mag_src"] = mag_value
+            lnL = lnL + block.ast.weight * ast_method(
+                base_vec,
+                jnp.asarray(block.ast.t, dtype=jnp.float64),
+                jnp.asarray(block.ast.x_obs, dtype=jnp.float64),
+                jnp.asarray(block.ast.y_obs, dtype=jnp.float64),
+                jnp.asarray(block.ast.x_err, dtype=jnp.float64),
+                jnp.asarray(block.ast.y_err, dtype=jnp.float64),
+                **kwargs,
+            )
+    return lnL
 
 
 def build_jax_joint_loglik_fn(fitter):

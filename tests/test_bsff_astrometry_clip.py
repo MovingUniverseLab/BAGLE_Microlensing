@@ -58,7 +58,7 @@ def _jax_psbl_astrometry(mod, t, b_sff):
         East / North centroid in arcsec.
     """
     geom = derive_psbl_photastrom_param1(
-        mod.mLp, mod.mLs, mod.t0, mod.xS0[0], mod.xS0[1],
+        mod.mLp, mod.mLs, mod.t0, mod.xS0[0, 0], mod.xS0[0, 1],
         mod.beta, mod.muL[0], mod.muL[1], mod.muS[0], mod.muS[1],
         mod.dL, mod.dS, mod.sep, mod.alpha,
     )
@@ -159,7 +159,7 @@ def test_host_jax_psbl_astrometry_and_lnl_agree():
 
         cube = {
             "mLp": 10.0, "mLs": 5.0, "t0": 57000.0,
-            "xS0_E": 0.0, "xS0_N": 0.0, "beta": 2.0,
+            "xS0_E1": 0.0, "xS0_N1": 0.0, "beta": 2.0,
             "muL_E": 0.0, "muL_N": 0.0, "muS_E": 3.0, "muS_N": 0.0,
             "dL": 3000.0, "dS": 8000.0, "sep": 10.0, "alpha": 90.0,
             "b_sff1": b_sff, "mag_src1": 14.0, "dmag_Lp_Ls1": 5.0,
@@ -190,7 +190,7 @@ def test_photometry_keeps_unclipped_blend():
 
         # JAX photometry kernel must stay on the unclipped blend too.
         geom = derive_psbl_photastrom_param1(
-            mod.mLp, mod.mLs, mod.t0, mod.xS0[0], mod.xS0[1],
+            mod.mLp, mod.mLs, mod.t0, mod.xS0[0, 0], mod.xS0[0, 1],
             mod.beta, mod.muL[0], mod.muL[1], mod.muS[0], mod.muS[1],
             mod.dL, mod.dS, mod.sep, mod.alpha,
         )

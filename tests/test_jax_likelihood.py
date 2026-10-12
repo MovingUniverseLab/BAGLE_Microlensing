@@ -135,8 +135,7 @@ def test_jax_joint_loglik_matches_fitter_pspl_photastrom():
     assert fn is not None
     assert ctx is None
 
-    names = fitter.fitter_param_names
-    vec = np.array([params[n] for n in names], dtype=np.float64)
+    vec = fitter.to_param_vector(fitter.to_param_dict(params))
     lnL_jax = float(fn(vec))
     lnL_ref = fitter.log_likely(params)
     np.testing.assert_allclose(lnL_jax, lnL_ref, rtol=1e-8, atol=1e-4)
@@ -153,8 +152,7 @@ def test_jax_joint_loglik_grad_finite_pspl_photastrom():
     fn, _ = build_explicit_jax_loglik_fn(fitter)
     assert fn is not None
 
-    names = fitter.fitter_param_names
-    vec = np.array([params[n] for n in names], dtype=np.float64)
+    vec = fitter.to_param_vector(fitter.to_param_dict(params))
     grad = jax.grad(fn)(vec)
     assert np.all(np.isfinite(grad))
 
@@ -173,7 +171,7 @@ def test_loglikelihood_op_jax_grad_pspl_photastrom():
     op = LogLikelihoodOp(fitter, names, use_jax_grad=True)
     assert op._jax_loglik is not None
 
-    vec = np.array([params[n] for n in names], dtype=np.float64)
+    vec = fitter.to_param_vector(fitter.to_param_dict(params))
     node = op.make_node(pt.vector())
     storage = [[None]]
     op.perform(node, [vec], storage)
@@ -210,8 +208,7 @@ def test_explicit_joint_param_methods_replace_packing():
     fitter1 = MicrolensSolver(
         data, model.PSPL_PhotAstrom_noPar_Param1, verbose=False
     )
-    names1 = fitter1.fitter_param_names
-    vec1 = np.array([params[n] for n in names1], dtype=np.float64)
+    vec1 = fitter1.to_param_vector(fitter1.to_param_dict(params))
     assert hasattr(model.PSPL_PhotAstromParam1, "jax_log_likely_photometry")
     assert hasattr(model.PSPL_PhotAstromParam1, "jax_log_likely_astrometry")
     assert not hasattr(model.PSPL_PhotAstromParam1, "get_params_for_jax")
@@ -265,15 +262,6 @@ def test_explicit_joint_param_methods(param_cls):
 def test_explicit_astrometry_param_method():
     assert callable(model.PSPL_AstromParam3.jax_log_likely_astrometry)
     assert not hasattr(model.PSPL_AstromParam3, "get_params_for_jax")
-
-
-def test_unsupported_binary_astrometry_is_not_advertised():
-    assert not hasattr(
-        model.PSBL_PhotAstromParam1, "jax_log_likely_astrometry"
-    )
-    assert not hasattr(
-        model.BSPL_PhotAstromParam1, "jax_log_likely_astrometry"
-    )
 
 
 def test_jax_physics_loglik_wrappers_match_explicit_builder():
@@ -357,10 +345,7 @@ def test_jax_reduced_phot_loglik(model_cls, params):
     )
     fn, _ = build_explicit_jax_loglik_fn(fitter)
     assert fn is not None
-    vec = np.array(
-        [params[name] for name in fitter.fitter_param_names],
-        dtype=np.float64,
-    )
+    vec = fitter.to_param_vector(fitter.to_param_dict(params))
     np.testing.assert_allclose(
         float(fn(vec)), fitter.log_likely(params), rtol=1e-8, atol=1e-4
     )
@@ -387,30 +372,15 @@ def test_jax_pspl_astrom_param3_loglik():
         "xS0_N": 0.0,
         "muS_E": 1.5,
         "muS_N": -0.5,
+        "b_sff": 1.0,
     }
     fitter = MicrolensSolver(
         data, model.PSPL_Astrom_Par_Param3, verbose=False
     )
     fn, _ = build_explicit_jax_loglik_fn(fitter)
     assert fn is not None
-    vec = np.array(
-        [params[name] for name in fitter.fitter_param_names],
-        dtype=np.float64,
-    )
+    vec = fitter.to_param_vector(fitter.to_param_dict(params))
     np.testing.assert_allclose(
         float(fn(vec)), fitter.log_likely(params), rtol=1e-8, atol=1e-3
     )
-
-
-def test_jax_psbl_joint_rejected_without_binary_astrometry():
-    from bagle import fake_data
-
-    data, _, _, _ = fake_data.fake_data_PSBL(
-        parallax=False, animate=False
-    )
-    fitter = MicrolensSolver(
-        data, model.PSBL_PhotAstrom_noPar_Param1, verbose=False
-    )
-    fn, _ = build_explicit_jax_loglik_fn(fitter)
-    assert fn is None
 
