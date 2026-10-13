@@ -4,12 +4,16 @@ Milestone (d1): fixed ``n_outline`` limb, Witt (1995) quintic roots via the
 companion matrix (shared with :mod:`bagle.jax_physics`), and Bozza-style
 parity-weighted polygonal areas. No ``jnp.insert`` and no ``jax.random``.
 
-Milestone (d2): microlux-style adaptive contour with ``custom_jvp`` roots
-and assignment matching lands on top of the same area driver.
+Milestone (d2): microlux-style adaptive contour with fixed buffers,
+linear-sum-assignment image matching, and ``stop_gradient`` on the adaptive
+step. Full analytic ``custom_jvp`` / derivative-aware estimator (G-04) can
+land on top of this driver.
 
 Attribution: Witt (1995) quintic; contour / segment ideas after Bartolić
 ``caustics`` (inspiration only; no vendored code); host FSBL in
-``model_jax.py``; d2 after Ren and Zhu (2025) microlux once licensed.
+``model_jax.py``; d2 adaptive strategy and LSA after Ren and Zhu (2025)
+microlux (MIT License, Copyright (c) 2024 Haibin Ren; see
+:mod:`bagle.jax.linear_sum_assignment`).
 """
 from __future__ import annotations
 
@@ -18,6 +22,7 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 
+from bagle.jax.linear_sum_assignment import find_nearest
 from bagle.jax_physics import (
     gaussian_log_likelihood_sum,
     psbl_image_positions,
@@ -485,16 +490,347 @@ def fsbl_magnification_from_u(u_vec, z1, z2, m1, m2, rho, n_outline,
 
 
 # ---------------------------------------------------------------------------
-# Milestone (d2) adaptive contour (stubs; filled after microlux license check)
+# Milestone (d2) adaptive contour (microlux-style fixed buffers)
 # ---------------------------------------------------------------------------
 
 # Fixed buffers matching microlux defaults (Ren and Zhu 2025).
 _D2_N_START = 30
 _D2_N_BUFFER = 480
+# Gap-based refinement: add up to N_PER midpoints per iteration.
+_D2_N_PER = 4
+_D2_N_ITER = 40
+
+
+def match_points_lsa(a, b, parity_a, parity_b):
+    """
+    Linear-sum-assignment match from ``a`` onto ``b`` (d2).
+
+    Parameters
+    ----------
+    a, b : jnp.ndarray, complex, shape = (N_images,)
+        Previous and current limb image positions.
+    parity_a, parity_b : jnp.ndarray, float, shape = (N_images,)
+        Image parities at those samples.
+
+    Returns
+    -------
+    idcs : jnp.ndarray, int, shape = (N_images,)
+        Indices into ``b`` that align with ``a``.
+    """
+    return find_nearest(a, parity_a, b, parity_b)
+
+
+def permute_images_lsa(z, z_mask, z_parity):
+    """
+    Track images across the limb by linear-sum assignment (d2).
+
+    Parameters
+    ----------
+    z : jnp.ndarray, complex, shape = (N_images, N_limb)
+        Image positions at each limb sample.
+    z_mask : jnp.ndarray, bool, shape = (N_images, N_limb)
+        Validity mask.
+    z_parity : jnp.ndarray, float, shape = (N_images, N_limb)
+        Image parity at each sample.
+
+    Returns
+    -------
+    z_o : jnp.ndarray, complex, shape = (N_images, N_limb)
+        Continuously ordered image tracks.
+    z_mask_o : jnp.ndarray, bool, shape = (N_images, N_limb)
+        Permuted validity mask.
+    z_parity_o : jnp.ndarray, float, shape = (N_images, N_limb)
+        Permuted parity.
+    """
+    # Pack channels: shape (3, N_images, N_limb).
+    xs = jnp.stack([z, z_mask.astype(z.dtype), z_parity.astype(z.dtype)])
+
+    def apply_match(carry, xs_slice):
+        # carry: (z_prev, parity_prev); xs_slice: (3, N_images).
+        z_prev, parity_prev = carry
+        z_slice, z_mask_slice, z_parity_slice = xs_slice
+
+        idcs = match_points_lsa(z_prev, z_slice, parity_prev, z_parity_slice)
+
+        z_perm = z_slice[idcs]
+        p_perm = z_parity_slice[idcs]
+        out = jnp.stack([z_perm, z_mask_slice[idcs], p_perm])
+        return (z_perm, p_perm), out
+
+    init = (xs[0, :, 0], xs[2, :, 0])
+    xs_scan = jnp.moveaxis(xs, -1, 0)
+    _, xs_out = jax.lax.scan(apply_match, init, xs_scan)
+
+    z_o, z_mask_o, z_parity_o = jnp.moveaxis(xs_out, 1, 0)
+
+    return (
+        z_o.T,
+        z_mask_o.real.astype(bool).T,
+        z_parity_o.real.T,
+    )
+
+
+def _solve_limb_buffer(w0, z1, z2, m1, m2, rho, theta, n_valid, root_tol):
+    """
+    Solve Witt roots on a packed limb buffer (first ``n_valid`` angles).
+
+    Parameters
+    ----------
+    w0, z1, z2, m1, m2, rho, root_tol
+        Same as :func:`images_on_source_limb_static`.
+    theta : jnp.ndarray, float, shape = (N_buffer,)
+        Limb angles; only ``theta[:n_valid]`` are used.
+    n_valid : int
+        Number of active limb samples (concrete or traced).
+
+    Returns
+    -------
+    z : jnp.ndarray, complex, shape = (N_images, N_buffer)
+        Image positions; inactive columns are NaN.
+    z_mask : jnp.ndarray, bool, shape = (N_images, N_buffer)
+        Validity mask (False for inactive columns).
+    z_parity : jnp.ndarray, float, shape = (N_images, N_buffer)
+        Parity; inactive columns are 0.
+    """
+    n_buffer = theta.shape[0]
+    active = jnp.arange(n_buffer) < n_valid
+
+    # Inactive slots get a dummy source; their roots are masked out.
+    th = jnp.where(active, theta, 0.0)
+    w_limb = w0 + rho * jnp.exp(1j * th)
+
+    z1_b = jnp.broadcast_to(jnp.asarray(z1, dtype=jnp.complex128), (n_buffer,))
+    z2_b = jnp.broadcast_to(jnp.asarray(z2, dtype=jnp.complex128), (n_buffer,))
+    m1_b = jnp.broadcast_to(jnp.asarray(m1, dtype=jnp.float64), (n_buffer,))
+    m2_b = jnp.broadcast_to(jnp.asarray(m2, dtype=jnp.float64), (n_buffer,))
+    tol_b = jnp.broadcast_to(
+        jnp.asarray(root_tol, dtype=jnp.float64), (n_buffer,)
+    )
+
+    z_all = psbl_image_positions(
+        w_limb, z1_b, z2_b, m1_b, m2_b, tol_b, check_sols=True
+    )
+    # Shape (N_images, N_buffer).
+    z = z_all.T
+    z_mask = (~jnp.isnan(z_all.real)).T & active[None, :]
+    z = jnp.where(z_mask, z, jnp.nan + 1j * jnp.nan)
+
+    _J, parity = det_and_jac(z_all, z1, z2, m1, m2)
+    z_parity = jnp.where(z_mask, parity.T, 0.0)
+
+    return z, z_mask, z_parity
+
+
+def _mag_from_limb(z, z_mask, z_parity, theta, n_valid, rho, n_fill,
+                   use_lsa=True):
+    """
+    Parity-weighted polygonal magnification on a packed limb buffer.
+
+    Parameters
+    ----------
+    z, z_mask, z_parity : jnp.ndarray
+        Shapes (N_images, N_buffer).
+    theta : jnp.ndarray, float, shape = (N_buffer,)
+        Limb angles (active samples packed at the front).
+    n_valid : int
+        Active sample count (may be traced).
+    rho : float
+        Source radius in Einstein radii.
+    n_fill : int
+        Concrete upper bound on active samples
+        (``min(n_start + n_iter * n_per, n_buffer)``).
+    use_lsa : bool, optional
+        If True, match tracks with linear-sum assignment; else greedy.
+
+    Returns
+    -------
+    mag : float, shape = ()
+        Total finite-source magnification.
+    """
+    # Concrete slice so permute/area see a fixed limb length.
+    n_fill = int(n_fill)
+    z_f = z[:, :n_fill]
+    mask_f = z_mask[:, :n_fill]
+    parity_f = z_parity[:, :n_fill]
+    th_f = theta[:n_fill]
+
+    # Drop slots beyond the traced n_valid; zero-fill for safe arithmetic.
+    active = jnp.arange(n_fill) < n_valid
+    mask_f = mask_f & active[None, :]
+    z_f = jnp.where(mask_f, z_f, 0.0 + 0.0j)
+    parity_f = jnp.where(mask_f, parity_f, 0.0)
+    th_f = jnp.where(active, th_f, th_f[0])
+
+    # stop_gradient on limb spacing (adaptive step size / parabolic scale).
+    dth_mean = jax.lax.stop_gradient(
+        jnp.mean(jnp.diff(th_f, append=th_f[0] + 2.0 * jnp.pi))
+    )
+    th_area = th_f[0] + dth_mean * jnp.arange(n_fill, dtype=jnp.float64)
+
+    if use_lsa:
+        z_perm, z_mask_perm, z_parity_perm = permute_images_lsa(
+            z_f, mask_f, parity_f
+        )
+    else:
+        z_perm, z_mask_perm, z_parity_perm = permute_images(
+            z_f, mask_f, parity_f
+        )
+
+    inv_src = 1.0 / (jnp.pi * rho ** 2)
+
+    def area_k(k):
+        n_ok = jnp.sum(z_mask_perm[k, :])
+        area = jax.lax.cond(
+            n_ok > 0,
+            lambda: polygonal_area_with_parity(
+                z_perm[k],
+                z_mask_perm[k, :],
+                th_area,
+                z_parity_perm[k, :],
+            ),
+            lambda: jnp.array(0.0, dtype=jnp.float64),
+        )
+        return area
+
+    areas = jax.vmap(area_k)(jnp.arange(_N_IMAGES))
+    mag = jnp.abs(jnp.sum(areas)) * inv_src
+
+    return mag
+
+
+def images_on_source_limb_adaptive(w0, z1, z2, m1, m2, rho, n_start=_D2_N_START,
+                                   n_buffer=_D2_N_BUFFER, n_iter=_D2_N_ITER,
+                                   n_per=_D2_N_PER, root_tol=1e-10):
+    """
+    Adaptive limb samples in a fixed buffer (gap-based refinement).
+
+    Starts with ``n_start`` uniform angles and, for ``n_iter`` passes, inserts
+    up to ``n_per`` midpoints in the largest image-plane gaps. Decisions use
+    ``stop_gradient`` so the adaptive schedule does not pollute derivatives.
+    No ``jnp.insert`` and no ``jax.random``.
+
+    Parameters
+    ----------
+    w0 : complex, shape = ()
+        Source center in Einstein radii (East + i North).
+    z1, z2 : complex, shape = ()
+        Lens positions relative to the binary center of mass.
+    m1, m2 : float, shape = ()
+        Mass fractions (sum to 1).
+    rho : float, shape = ()
+        Source radius in Einstein radii.
+    n_start : int, optional
+        Initial limb samples.
+    n_buffer : int, optional
+        Static buffer capacity.
+    n_iter : int, optional
+        Number of refinement passes.
+    n_per : int, optional
+        Midpoints added per pass (microlux ``N_max``-style cap).
+    root_tol : float, optional, shape = ()
+        Root mask tolerance.
+
+    Returns
+    -------
+    z : jnp.ndarray, complex, shape = (N_images, N_buffer)
+        Image positions on the refined limb.
+    z_mask : jnp.ndarray, bool, shape = (N_images, N_buffer)
+        Validity mask.
+    z_parity : jnp.ndarray, float, shape = (N_images, N_buffer)
+        Image parity.
+    theta : jnp.ndarray, float, shape = (N_buffer,)
+        Limb angles (inactive slots are ``+inf``).
+    n_valid : int
+        Number of active limb samples.
+    """
+    n_start = int(n_start)
+    n_buffer = int(n_buffer)
+    n_iter = int(n_iter)
+    n_per = int(n_per)
+
+    # Packed buffer: finite angles in front, +inf padding at the end.
+    theta0 = jnp.full((n_buffer,), jnp.inf, dtype=jnp.float64)
+    theta0 = theta0.at[:n_start].set(
+        jnp.linspace(-jnp.pi, jnp.pi, n_start, endpoint=False)
+    )
+    n_valid0 = n_start
+
+    def refine_body(carry, _unused):
+        theta, n_valid = carry
+
+        z, z_mask, z_parity = _solve_limb_buffer(
+            w0, z1, z2, m1, m2, rho, theta, n_valid, root_tol
+        )
+
+        # Match tracks before measuring image gaps (roots are unordered).
+        z_pack = jnp.where(z_mask, z, 0.0 + 0.0j)
+        z_perm, z_mask_perm, _z_parity_perm = permute_images_lsa(
+            z_pack, z_mask, z_parity
+        )
+
+        # Interval scores: matched image-plane gap and source-angle gap.
+        # Shape of delta_z: (N_images, N_buffer-1).
+        delta_z = jnp.abs(z_perm[:, 1:] - z_perm[:, :-1])
+        pair_ok = z_mask_perm[:, 1:] & z_mask_perm[:, :-1]
+        delta_z = jnp.where(pair_ok, delta_z, 0.0)
+        gap_active = jnp.arange(n_buffer - 1) < (n_valid - 1)
+        delta_z_max = jnp.max(delta_z, axis=0)
+
+        # Source-angle spacing on the packed active samples.
+        dth = theta[1:] - theta[:-1]
+        last = jnp.maximum(n_valid - 1, 0)
+        dth_wrap = (theta[0] + 2.0 * jnp.pi) - theta[last]
+
+        # Combine scores; angle term prevents pathological clustering.
+        score = jnp.maximum(delta_z_max, dth)
+        score = jnp.where(gap_active, score, -1.0)
+        score = score.at[last - 1].set(
+            jnp.maximum(score[last - 1], dth_wrap)
+        )
+
+        # Indices of the largest gaps (stop_gradient: adaptive schedule).
+        idcs = jax.lax.stop_gradient(jnp.argsort(score)[::-1][:n_per])
+
+        # Midpoints; wrap picks use theta[0]+2pi as the right endpoint.
+        th_a = theta[idcs]
+        th_b = jnp.where(
+            idcs == last - 1,
+            theta[0] + 2.0 * jnp.pi,
+            theta[idcs + 1],
+        )
+        th_new = 0.5 * (th_a + th_b)
+        th_new = jnp.where(th_new > jnp.pi, th_new - 2.0 * jnp.pi, th_new)
+
+        # Room left in the buffer.
+        n_add = jnp.minimum(n_per, n_buffer - n_valid)
+        th_new = jnp.where(jnp.arange(n_per) < n_add, th_new, jnp.inf)
+
+        # Scatter midpoints at dynamic indices (slices must be static in JAX).
+        write_at = n_valid + jnp.arange(n_per)
+        write_at = jnp.minimum(write_at, n_buffer - 1)
+        theta2 = theta.at[write_at].set(th_new)
+
+        # Re-sort so finite angles pack to the front.
+        order = jnp.argsort(theta2)
+        theta_out = theta2[order]
+        n_valid_out = jnp.minimum(n_valid + n_add, n_buffer)
+
+        return (theta_out, n_valid_out), None
+
+    (theta, n_valid), _ = jax.lax.scan(
+        refine_body, (theta0, n_valid0), None, length=n_iter
+    )
+
+    z, z_mask, z_parity = _solve_limb_buffer(
+        w0, z1, z2, m1, m2, rho, theta, n_valid, root_tol
+    )
+
+    return z, z_mask, z_parity, theta, n_valid
 
 
 def magnification_one_adaptive(w0, z1, z2, m1, m2, rho, n_start=_D2_N_START,
-                               n_buffer=_D2_N_BUFFER, root_tol=1e-10):
+                               n_buffer=_D2_N_BUFFER, n_iter=_D2_N_ITER,
+                               n_per=_D2_N_PER, root_tol=1e-10):
     """
     Extended-source magnification with microlux-style adaptive limb (d2).
 
@@ -513,6 +849,10 @@ def magnification_one_adaptive(w0, z1, z2, m1, m2, rho, n_start=_D2_N_START,
     n_buffer : int, optional
         Static buffer capacity for refined samples
         (padded limb length ``N_limb <= n_buffer``).
+    n_iter : int, optional
+        Gap-based refinement passes.
+    n_per : int, optional
+        Midpoints added per pass.
     root_tol : float, optional, shape = ()
         Root mask tolerance.
 
@@ -523,21 +863,30 @@ def magnification_one_adaptive(w0, z1, z2, m1, m2, rho, n_start=_D2_N_START,
 
     Notes
     -----
-    Not implemented yet. Plan (d2): implicit-differentiation roots
-    (``custom_jvp``), ``stop_gradient`` on the adaptive step, a
-    derivative-aware error estimate, and linear-sum-assignment image
-    matching. Until then callers should use
-    :func:`magnification_one_static`.
+    Uses fixed buffers and LSA image matching after Ren and Zhu (2025)
+    microlux (MIT). Analytic ``custom_jvp`` / derivative-aware error control
+    for caustic crossings (plan G-04) is not yet wired.
     """
-    # Stub until d2 adaptive contour lands (microlux license check).
-    raise NotImplementedError(
-        "FSBL d2 adaptive contour is not implemented yet; "
-        "use magnification_one_static (d1)."
+    n_start_i = int(n_start)
+    n_buffer_i = int(n_buffer)
+    n_iter_i = int(n_iter)
+    n_per_i = int(n_per)
+    n_fill = min(n_start_i + n_iter_i * n_per_i, n_buffer_i)
+
+    z, z_mask, z_parity, theta, n_valid = images_on_source_limb_adaptive(
+        w0, z1, z2, m1, m2, rho,
+        n_start=n_start_i, n_buffer=n_buffer_i, n_iter=n_iter_i,
+        n_per=n_per_i, root_tol=root_tol,
+    )
+
+    return _mag_from_limb(
+        z, z_mask, z_parity, theta, n_valid, rho, n_fill
     )
 
 
 def fsbl_magnification_adaptive(w0, z1, z2, m1, m2, rho, n_start=_D2_N_START,
-                                n_buffer=_D2_N_BUFFER, root_tol=1e-10):
+                                n_buffer=_D2_N_BUFFER, n_iter=_D2_N_ITER,
+                                n_per=_D2_N_PER, root_tol=1e-10):
     """
     Vectorized adaptive-limb FSBL magnification (d2).
 
@@ -551,8 +900,8 @@ def fsbl_magnification_adaptive(w0, z1, z2, m1, m2, rho, n_start=_D2_N_START,
         Mass fractions, broadcast to ``N_times``.
     rho : float, shape = ()
         Source radius in Einstein radii.
-    n_start, n_buffer : int, optional
-        Adaptive limb start count and static buffer capacity.
+    n_start, n_buffer, n_iter, n_per : int, optional
+        Adaptive limb controls (see :func:`magnification_one_adaptive`).
     root_tol : float, optional, shape = ()
         Root mask tolerance.
 
@@ -561,11 +910,41 @@ def fsbl_magnification_adaptive(w0, z1, z2, m1, m2, rho, n_start=_D2_N_START,
     mag : jnp.ndarray, float, shape = (N_times,)
         Total magnification at each epoch.
     """
-    # Stub: will vmap magnification_one_adaptive once d2 is implemented.
-    raise NotImplementedError(
-        "FSBL d2 adaptive contour is not implemented yet; "
-        "use fsbl_magnification (d1)."
+    # Shape of w0: (N_times,).
+    w0 = jnp.atleast_1d(jnp.asarray(w0, dtype=jnp.complex128))
+    n = w0.shape[0]
+
+    z1 = jnp.broadcast_to(
+        jnp.atleast_1d(jnp.asarray(z1, dtype=jnp.complex128)).ravel()[:n]
+        if jnp.size(z1) > 1
+        else jnp.atleast_1d(jnp.asarray(z1, dtype=jnp.complex128)),
+        (n,),
     )
+    z2 = jnp.broadcast_to(
+        jnp.atleast_1d(jnp.asarray(z2, dtype=jnp.complex128)).ravel()[:n]
+        if jnp.size(z2) > 1
+        else jnp.atleast_1d(jnp.asarray(z2, dtype=jnp.complex128)),
+        (n,),
+    )
+    m1 = jnp.broadcast_to(
+        jnp.atleast_1d(jnp.asarray(m1, dtype=jnp.float64)), (n,)
+    )
+    m2 = jnp.broadcast_to(
+        jnp.atleast_1d(jnp.asarray(m2, dtype=jnp.float64)), (n,)
+    )
+
+    # Freeze adaptive controls as Python scalars for the static jit path.
+    mag_one = partial(
+        magnification_one_adaptive,
+        rho=float(rho),
+        n_start=int(n_start),
+        n_buffer=int(n_buffer),
+        n_iter=int(n_iter),
+        n_per=int(n_per),
+        root_tol=float(root_tol),
+    )
+
+    return jax.vmap(mag_one)(w0, z1, z2, m1, m2)
 
 
 def fsbl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, z1, z2, m1, m2,

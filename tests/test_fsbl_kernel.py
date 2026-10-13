@@ -178,7 +178,6 @@ def test_fsbl_phot_param1_loglik_finite():
     return None
 
 
-@pytest.mark.skip(reason="FSBL d2 adaptive contour not implemented yet")
 def test_A14_d1_vs_d2_non_caustic():
     """A-14: d1 static limb and d2 adaptive agree on a wide trajectory."""
     fsbl, _ = _wide_fsbl_setup(radiusS=2e-4, n_outline=120, beta=2.0)
@@ -194,13 +193,15 @@ def test_A14_d1_vs_d2_non_caustic():
     z1_abs = lens1[:, 0] + 1j * lens1[:, 1]
     z2_abs = lens2[:, 0] + 1j * lens2[:, 1]
     z_cm = 0.5 * (z1_abs + z2_abs)
+    # Smaller buffer for a cheap A-14 check; still densifies past n=120.
     A_d2 = np.asarray(
         fsbl_jax.fsbl_magnification_adaptive(
-            w, z1_abs - z_cm, z2_abs - z_cm, 0.5, 0.5, rho
+            w, z1_abs - z_cm, z2_abs - z_cm, 0.5, 0.5, rho,
+            n_start=30, n_buffer=200, n_iter=30, n_per=4,
         )
     )
     rel = np.max(np.abs(A_d1 - A_d2) / np.maximum(A_d1, 1e-30))
 
-    assert rel < 1e-4
+    assert rel < 1e-4, f"A-14 fail max rel={rel}"
 
     return None
