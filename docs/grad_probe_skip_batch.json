@@ -1,0 +1,324 @@
+{
+  "skip_probe": [
+    {
+      "class": "BSPL_PhotAstrom_Par_GP_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "BSPL_PhotAstrom_Par_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "BSPL_Phot_noPar_GP_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "BSPL_Phot_noPar_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_AccOrbs_Param7",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "ok(3.483e-03)",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_AccOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_CircOrbs_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_CircOrbs_Param4",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_CircOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_CircOrbs_Param8",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_EllOrbs_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_EllOrbs_Param4",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_EllOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_EllOrbs_Param8",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_LinOrbs_Param7",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "ok(3.483e-03)",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_LinOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_Param4",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_Param7",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "ok(3.483e-03)",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_Param8",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_AccOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_CircOrbs_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_CircOrbs_Param4",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_CircOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_CircOrbs_Param8",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_EllOrbs_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_EllOrbs_Param4",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_EllOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_EllOrbs_Param8",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_LinOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_Param4",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_Param8",
+      "method": "get_lens_astrometry",
+      "smoke": "zero",
+      "host_fd": "zero",
+      "host_fd_sq": "zero",
+      "jax_eval_fd": "zero"
+    },
+    {
+      "class": "FSPL_PhotAstrom_Par_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_AccOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_CircOrbs_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_CircOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_EllOrbs_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_EllOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_LinOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_AccOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_CircOrbs_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_CircOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_EllOrbs_Param1",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_EllOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_LinOrbs_Param7",
+      "method": "get_u",
+      "smoke": "zero",
+      "host_fd": "zero"
+    }
+  ],
+  "recoverable_count": 3
+}

@@ -1,0 +1,350 @@
+{
+  "reprobe": [
+    {
+      "class": "BSPL_PhotAstrom_Par_GP_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 1434.6820427076086,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 1434.6820427076086,
+      "smoke": "ok",
+      "smoke_norm": 1434.6820427076086,
+      "pass": true
+    },
+    {
+      "class": "BSPL_PhotAstrom_Par_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 1434.6820427076086,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 1434.6820427076086,
+      "smoke": "ok",
+      "smoke_norm": 1434.6820427076086,
+      "pass": true
+    },
+    {
+      "class": "BSPL_Phot_noPar_GP_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 138.0032653093304,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 138.0032653093304,
+      "smoke": "ok",
+      "smoke_norm": 138.0032653093304,
+      "pass": true
+    },
+    {
+      "class": "BSPL_Phot_noPar_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 138.0032653093304,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 138.0032653093304,
+      "smoke": "ok",
+      "smoke_norm": 138.0032653093304,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_AccOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 373.0622703801055,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 373.0622703801055,
+      "smoke": "ok",
+      "smoke_norm": 373.0622703801055,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_CircOrbs_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.73923570321404,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.73923570321404,
+      "smoke": "ok",
+      "smoke_norm": 372.73923570321404,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_CircOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.9140091128431,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.9140091128431,
+      "smoke": "ok",
+      "smoke_norm": 372.9140091128431,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_EllOrbs_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.73923570321404,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.73923570321404,
+      "smoke": "ok",
+      "smoke_norm": 372.73923570321404,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_EllOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.9140091128431,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.9140091128431,
+      "smoke": "ok",
+      "smoke_norm": 372.9140091128431,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_LinOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 373.0622703801055,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 373.0622703801055,
+      "smoke": "ok",
+      "smoke_norm": 373.0622703801055,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_Par_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 373.0622703801055,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 373.0622703801055,
+      "smoke": "ok",
+      "smoke_norm": 373.0622703801055,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_AccOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 373.0539113185169,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 373.0539113185169,
+      "smoke": "ok",
+      "smoke_norm": 373.0539113185169,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_CircOrbs_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.8249720196785,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.8249720196785,
+      "smoke": "ok",
+      "smoke_norm": 372.8249720196785,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_CircOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.7755644212739,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.7755644212739,
+      "smoke": "ok",
+      "smoke_norm": 372.7755644212739,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_EllOrbs_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.8249720196785,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.8249720196785,
+      "smoke": "ok",
+      "smoke_norm": 372.8249720196785,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_EllOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.7755644212739,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.7755644212739,
+      "smoke": "ok",
+      "smoke_norm": 372.7755644212739,
+      "pass": true
+    },
+    {
+      "class": "FSBL_PhotAstrom_noPar_LinOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 373.0539113185169,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 373.0539113185169,
+      "smoke": "ok",
+      "smoke_norm": 373.0539113185169,
+      "pass": true
+    },
+    {
+      "class": "FSPL_PhotAstrom_Par_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 575.5081434671416,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 575.5081434671416,
+      "smoke": "ok",
+      "smoke_norm": 575.5081434671416,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_AccOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 373.0622703801055,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 373.0622703801055,
+      "smoke": "ok",
+      "smoke_norm": 373.0622703801055,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_CircOrbs_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.73923570321404,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.73923570321404,
+      "smoke": "ok",
+      "smoke_norm": 372.73923570321404,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_CircOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.91400911284313,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.91400911284313,
+      "smoke": "ok",
+      "smoke_norm": 372.91400911284313,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_EllOrbs_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.73923570321404,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.73923570321404,
+      "smoke": "ok",
+      "smoke_norm": 372.73923570321404,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_EllOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.91400911284313,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.91400911284313,
+      "smoke": "ok",
+      "smoke_norm": 372.91400911284313,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_LinOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 373.0622703801055,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 373.0622703801055,
+      "smoke": "ok",
+      "smoke_norm": 373.0622703801055,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_Par_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 373.0622703801055,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 373.0622703801055,
+      "smoke": "ok",
+      "smoke_norm": 373.0622703801055,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_AccOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 373.0539113185169,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 373.0539113185169,
+      "smoke": "ok",
+      "smoke_norm": 373.0539113185169,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_CircOrbs_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.8249720196785,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.8249720196785,
+      "smoke": "ok",
+      "smoke_norm": 372.8249720196785,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_CircOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.7755644212739,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.7755644212739,
+      "smoke": "ok",
+      "smoke_norm": 372.7755644212739,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_EllOrbs_Param1",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.8249720196785,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.8249720196785,
+      "smoke": "ok",
+      "smoke_norm": 372.8249720196785,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_EllOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 372.77556442127394,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 372.77556442127394,
+      "smoke": "ok",
+      "smoke_norm": 372.77556442127394,
+      "pass": true
+    },
+    {
+      "class": "PSBL_PhotAstrom_noPar_LinOrbs_Param7",
+      "method": "get_u",
+      "host_fd": "ok",
+      "host_fd_norm": 373.0539113185169,
+      "jax_eval_fd": "ok",
+      "jax_eval_fd_norm": 373.0539113185169,
+      "smoke": "ok",
+      "smoke_norm": 373.0539113185169,
+      "pass": true
+    }
+  ],
+  "summary": {
+    "total": 31,
+    "pass": 31,
+    "fail": 0
+  }
+}
