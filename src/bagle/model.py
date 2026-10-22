@@ -483,6 +483,7 @@ from tkinter import W
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import inspect
+import itertools
 import warnings
 import numpy as np
 import math
@@ -5785,7 +5786,7 @@ class PSBL(PSPL):
         return z_arr
 
 
-    def _quintic_roots(a5, a4, a3, a2, a1, a0):
+    def quintic_roots(a5, a4, a3, a2, a1, a0):
         """
         Solve via companion matrix.
         All inputs are scalars (complex).
@@ -6024,7 +6025,7 @@ class PSBL(PSPL):
         assert (len(w) == len(z1)) & (len(w) == len(z2))
 
         # Use companion-matrix eigenvalues (vmap) instead of per-step np.roots.
-        vmap_roots = jax.vmap(PSBL._quintic_roots, in_axes=(0, 0, 0, 0, 0, 0))
+        vmap_roots = jax.vmap(PSBL.quintic_roots, in_axes=(0, 0, 0, 0, 0, 0))
 
         wbar   = jnp.conj(w)
         z1bar  = jnp.conj(z1)
@@ -6128,9 +6129,9 @@ class PSBL(PSPL):
         """
         fn = getattr(PSBL.get_image_pos_arr_fast, "_jit_fn", None)
         if fn is None:
-            vmap_roots = jax.vmap(PSBL._quintic_roots, in_axes=(0, 0, 0, 0, 0, 0))
+            vmap_roots = jax.vmap(PSBL.quintic_roots, in_axes=(0, 0, 0, 0, 0, 0))
 
-            def _impl(w, z1, z2, m1, m2, root_tol, check_sols):
+            def impl(w, z1, z2, m1, m2, root_tol, check_sols):
                 wbar = jnp.conj(w)
                 z1bar = jnp.conj(z1)
                 z2bar = jnp.conj(z2)
@@ -6171,7 +6172,7 @@ class PSBL(PSPL):
 
                 z_arr = jnp.asarray(vmap_roots(a5, a4, a3, a2, a1, a0))
 
-                def _mask(z_arr):
+                def mask(z_arr):
                     n = w.shape[0]
                     m1_arr = m1 if jnp.ndim(m1) else jnp.full((n,), m1)
                     m2_arr = m2 if jnp.ndim(m2) else jnp.full((n,), m2)
@@ -6184,9 +6185,9 @@ class PSBL(PSPL):
                     bad = jnp.abs(diff) > tol[:, jnp.newaxis]
                     return jnp.where(bad, jnp.nan + 0j, z_arr)
 
-                return jax.lax.cond(check_sols, _mask, lambda x: x, z_arr)
+                return jax.lax.cond(check_sols, mask, lambda x: x, z_arr)
 
-            fn = jax.jit(_impl, static_argnames=("check_sols",))
+            fn = jax.jit(impl, static_argnames=("check_sols",))
             PSBL.get_image_pos_arr_fast._jit_fn = fn
 
         rt = getattr(self, "root_tol", 1e-8)
@@ -22391,8 +22392,6 @@ class FSBL(PSBL):
     https://github.com/fbartolic/caustics
     """
 
-    fsbl_niter = 10
-
     def im_pos1(self, w, z1):
         u = w - z1                
         z_major = u * (1 + jnp.sqrt(1 + 4 / jnp.abs(u)**2)) / 2
@@ -22642,26 +22641,50 @@ class FSBL(PSBL):
         )
 
     def sparse_argsort(self, a):
-        return jnp.where(a != 0, a, jnp.nan).argsort()
+        # Longest first. Empty segments (length 0) sort last so a two-point
+        # fragment is not used as the seed and the real image arc is dropped.
+        score = jnp.where(a > 0, a, -jnp.inf)
+        return jnp.argsort(score)[::-1]
 
-    def match_points(self, a, b):
-        """caustics ``utils.match_points``"""
-        vals = jnp.argsort(jnp.abs(b - a[:, None]), axis=1)
-        idcs = []
-        for i in range(vals.shape[0]):
-            row = vals[i]
-            used = jnp.array(idcs, dtype=jnp.int32) if idcs else jnp.array([], dtype=jnp.int32)
-            mask = ~jnp.isin(row, used)
-            j = self.first_nonzero(mask)
-            idx = row[j]
-            idcs.append(idx)
-        return jnp.array(idcs, dtype=jnp.int32)
+    def match_points(self, a, b, parity_a=None, parity_b=None):
+        """Assign each root in ``a`` to a distinct root in ``b``.
+        Same-parity images only. 
+        This function picks the pairing of five roots whose total distance is minimized.
+        A root may be matched only to a root of the same parity.
+        The chosen pairing is the one perumation, out of 120, with the lowest sum. 
+
+        """
+        dist = jnp.abs(b - a[:, None])
+        dist = jnp.where(jnp.isfinite(dist), dist, jnp.inf)
+        if parity_a is not None:
+            same = jnp.sign(parity_a.real)[:, None] == jnp.sign(parity_b.real)[None, :]
+            finite_both = jnp.isfinite(a.real)[:, None] & jnp.isfinite(b.real)[None, :]
+            dist = jnp.where(same | ~finite_both, dist, jnp.inf)
+        n = dist.shape[0]
+        #itertools.permutations builds every ordering of the five image indices. 
+        # For five images that is 5! = 120 pairings.
+        # Each row of perms is a way to match the roots at this limb point to the roots at next.
+        perms = jnp.stack([jnp.array(p, dtype=jnp.int32) for p in itertools.permutations(range(int(n)))])
+        dist_b = jnp.broadcast_to(dist, (perms.shape[0], n, n))
+        gathered = dist_b[jnp.arange(perms.shape[0])[:, None], jnp.arange(n)[None, :], perms]
+        # inf sums must not become nan
+        gathered = jnp.where(jnp.isfinite(gathered), gathered, 1.0e6)
+        best = perms[jnp.argmin(jnp.sum(gathered, axis=1))]
+        return best.astype(jnp.int32)
 
     def split_segment(self, segment, n_parts=5):
         z, z_parity, z_mask = segment
         npts = len(z)
         z_diff = z[1:] - z[:-1]
-        diff_dist_mask = z_diff.real**2 + z_diff.imag**2 > 0.1**2
+        # An isolated jump much longer than its neighbors is two images
+        # glued together. A run of long steps is the image moving quickly
+        # and must stay one arc.
+        step = jnp.abs(z_diff)
+        neigh = jnp.maximum(jnp.roll(step, 1), jnp.roll(step, -1))
+        # Relative to the neighboring steps. An absolute length (Einstein
+        # radii) splits a small source and misses a large one.
+        diff_dist_mask = step > 4.0 * jnp.maximum(neigh, 1.0e-16)
+        diff_dist_mask = diff_dist_mask & (jnp.real(z_mask[1:]) != 0) & (jnp.real(z_mask[:-1]) != 0)
         diff_parity = z_parity[1:].real - z_parity[:-1].real
         diff_mask = z_mask[1:].real - z_mask[:-1].real
         chngept = (diff_dist_mask != False) | (diff_parity != 0) | (diff_mask != False)
@@ -22704,7 +22727,19 @@ class FSBL(PSBL):
         z_parity = z_parity * z_mask
         segments = jnp.stack([z, z_parity, z_mask])
         segments = jnp.moveaxis(segments, 0, 1)
-        mask_closed = (jnp.abs((z[:, 0] - z[:, -1])) < 1e-5) & jnp.all(z_mask, axis=1)
+        # Closed = image of the repeated limb point matches, and every sample
+        # on that image is real. An image that is absent for the whole limb
+        # is closed too, so the open-segment merge runs only at a caustic.
+        steps = jnp.abs(z[:, 1:] - z[:, :-1])
+        neigh = jnp.maximum(jnp.roll(steps, 1, axis=1), jnp.roll(steps, -1, axis=1))
+        jumpy = jnp.any(
+            (steps > 4.0 * jnp.maximum(neigh, 1.0e-16)) & (z_mask[:, 1:]) & (z_mask[:, :-1]),
+            axis=1,
+        )
+        med = jnp.median(steps, axis=1)
+        geom_closed = (jnp.abs(z[:, 0] - z[:, -1]) < 1.0e-3 * jnp.maximum(med, 1.0e-16)) & jnp.all(z_mask, axis=1) & ~jumpy
+        fully_off = ~jnp.any(z_mask, axis=1)
+        mask_closed = geom_closed | fully_off
         segments_closed = segments * mask_closed[:, None, None]
         segments_open = segments * (~mask_closed[:, None, None])
         all_closed = jnp.all(mask_closed)
@@ -22746,6 +22781,14 @@ class FSBL(PSBL):
         same_parity = seg1[1, 0].real * seg2[1, 0].real > 0.0
         conds_parity = jnp.stack([same_parity, same_parity, ~same_parity, ~same_parity])
         cond_parity = conds_parity[ctype]
+        # A magnified image takes steps longer than the fixed 0.1 gate, so a
+        # real caustic join was being rejected and the arc was closed with a
+        # chord (the remaining peak error). Allow a few local steps.
+        edge1 = jnp.abs(seg1[0, tidx1] - seg1[0, jnp.maximum(tidx1 - 1, 0)])
+        edge2 = jnp.abs(seg2[0, tidx2] - seg2[0, jnp.maximum(tidx2 - 1, 0)])
+        # A few local steps. The fixed 0.1 Einstein-radius gate joins
+        # unrelated images once the source is smaller than that.
+        max_dist = 4.0 * jnp.maximum(jnp.maximum(edge1, edge2), 1.0e-16)
         line1, line2 = lax.switch(
             ctype,
             [lambda s1, s2, t1, t2: (get_segment_tail(s1, t1), get_segment_head(s2, t2)),
@@ -22761,7 +22804,7 @@ class FSBL(PSBL):
         alpha = jnp.arccos(jnp.real(vec1) * jnp.real(vec2) + jnp.imag(vec1) * jnp.imag(vec2))
         cond2 = (180.0 - jnp.rad2deg(alpha)) < max_ang
         cond3 = jnp.abs(line1[1] - line2[1]) < jnp.abs(line1[0] - line2[0])
-        cond_geom = jnp.logical_or(cond1 & cond2 & cond3, dist < min_dist)
+        cond_geom = cond1 & cond2 & cond3
         return cond_parity & cond_geom
 
     def merge_two_segments(self, seg1, seg2, tidx1, tidx2, ctype):
@@ -22807,7 +22850,11 @@ class FSBL(PSBL):
         p_edge = jnp.where(p_edge == 0.0, 1.0, p_edge)
 
         # Discard contributions across discontinuous jumps near caustics.
-        big_jump = (delta.real**2 + delta.imag**2) > (0.1**2)
+        # Same neighbor test as split_segment: a fixed 0.1 flags every
+        # edge of a large source and the area collapses.
+        step = jnp.abs(delta)
+        local = jnp.maximum(jnp.maximum(jnp.roll(step, 1), jnp.roll(step, -1)), 1e-8)
+        big_jump = (step > 5.0 * local) & (step > 1e-3)
 
         arc_valid = valid & jnp.roll(valid, -1) & (~big_jump)
         term_t = jnp.imag(jnp.conj(pts) * delta) * p_edge
@@ -22873,7 +22920,8 @@ class FSBL(PSBL):
                 lambda: merge_with_another(seg_active, tidx_active, segs, tidcs))
             return (seg_active, tidx_active, segs, tidcs), 0.0
 
-        tail_idcs = vmap(self.last_nonzero)(segments[:, 0, :].real)
+        # |z|, not Re(z). A real image sitting on the imaginary axis is not padding.
+        tail_idcs = vmap(self.last_nonzero)(jnp.abs(segments[:, 0, :]))
         segments = jnp.pad(segments,
             ((0, 0), (0, 0), (0, 3 * segments.shape[-1])),
             constant_values=0.0)
@@ -22901,7 +22949,7 @@ class FSBL(PSBL):
         seg_merged = self.merge_open_segments(segments, max_nr_of_contours=max_nr_of_contours, max_nr_of_segments_in_contour=max_nr_of_segments_in_contour)
         contours_p = seg_merged[:, 1, 0].real
         contours = seg_merged[:, 0]
-        tail_idcs = vmap(self.last_nonzero)(contours.real)
+        tail_idcs = vmap(self.last_nonzero)(jnp.abs(contours))
         contours = vmap(lambda idx, c: c.at[idx + 1].set(c[0]))(tail_idcs, contours)
         return contours, contours_p
 
@@ -22912,11 +22960,18 @@ class FSBL(PSBL):
         xs = jnp.stack([z, z_mask, z_parity])
 
         def apply_match_points(carry, xs_slice):
+            z_prev, z_prev2, p_prev, k = carry
             z_slice, z_mask_slice, z_parity_slice = xs_slice
-            idcs = self.match_points(carry, z_slice)
-            return z_slice[idcs], jnp.stack([z_slice[idcs], z_mask_slice[idcs], z_parity_slice[idcs]])
+            # Match to the extrapolated position so two images that pass near
+            # each other keep their identity. Matching the previous point
+            # swaps the tracks, the limb never closes, and the chord spikes.
+            pred = jnp.where(k > 0, z_prev + (z_prev - z_prev2), z_prev)
+            idcs = self.match_points(pred, z_slice, p_prev, z_parity_slice)
+            z_new = z_slice[idcs]
+            p_new = z_parity_slice[idcs]
+            return (z_new, z_prev, p_new, k + 1), jnp.stack([z_new, z_mask_slice[idcs], p_new])
 
-        init = xs[0, :, 0]
+        init = (xs[0, :, 0], xs[0, :, 0], xs[2, :, 0], jnp.array(0, dtype=jnp.int32))
         _, xs_out = lax.scan(apply_match_points, init, jnp.moveaxis(xs, -1, 0))
         z_o, z_mask_o, z_parity_o = jnp.moveaxis(xs_out, 1, 0)
         return z_o.T, z_mask_o.real.astype(bool).T, z_parity_o.T
@@ -22939,74 +22994,42 @@ class FSBL(PSBL):
 
     def images_on_source_limb(self, w0, z1, z2, m1, m2, rho, npts_limb, niter):
         """
+        Limb images on a static ``npts_limb`` grid.
+
+        ``endpoint=True`` repeats the first source point at the end of the
+        limb (``-π`` and ``+π``). A continuous image then satisfies
+        ``z[0] ≈ z[-1]`` and is integrated as a closed contour. Leaving the
+        gap (``endpoint=False``) forces every epoch through the open-segment
+        merge, which both spikes the area and dominates the runtime.
+
+        Caustics refines this grid with ``jnp.insert`` (``niter`` unrolls a new
+        XLA shape every iteration). That compile is what made FSBL take many
+        minutes. A fixed grid is the same contour pipeline with one shape.
         """
         w0 = jnp.asarray(w0, dtype=jnp.complex128).reshape(())
         z1 = jnp.asarray(z1, dtype=jnp.complex128).reshape(())
         z2 = jnp.asarray(z2, dtype=jnp.complex128).reshape(())
         npts_limb = int(npts_limb)
-        npts_init = max(2, int(0.5 * npts_limb))
-        theta = jnp.linspace(-jnp.pi, jnp.pi, npts_init - 1, endpoint=False)
-        theta = jnp.pad(theta, (0, 1), constant_values=jnp.pi - 1e-8)
-
+        theta = jnp.linspace(-jnp.pi, jnp.pi, npts_limb, endpoint=True)
         w_limb = w0 + rho * jnp.exp(1j * theta)
         z_all = self.get_image_pos_arr(w_limb, z1, z2, m1, m2)
         z = z_all.T
         z_mask = (~jnp.isnan(z_all.real)).T
         _J, parity = self.det_and_jac(z_all, z1, z2, m1, m2)
         z_parity = parity.T
-
-        npts_additional = int(0.5 * npts_limb)
-        n_per = max(1, int(npts_additional / niter)) if niter > 0 else 0
-
-        for _ in range(niter):
-            if n_per == 0:
-                break
-            delta_z = jnp.abs(z[:, 1:] - z[:, :-1])
-            delta_z = jnp.where(jnp.logical_or(z_mask[:, 1:], z_mask[:, :-1]), delta_z, jnp.zeros_like(delta_z.real))
-            delta_z_max = jnp.max(delta_z, axis=0)
-            idcs_theta = jnp.argsort(delta_z_max)[::-1][:n_per]
-            theta_new = 0.5 * (theta[idcs_theta] + theta[idcs_theta + 1])
-            w_new = w0 + rho * jnp.exp(1j * theta_new)
-            z_new_all = self.get_image_pos_arr(w_new, z1, z2, m1, m2)
-            z_new = z_new_all.T
-            z_mask_new = (~jnp.isnan(z_new_all.real)).T
-            _Jn, pn = self.det_and_jac(z_new_all, z1, z2, m1, m2)
-            z_parity_new = pn.T
-
-            theta = jnp.insert(theta, idcs_theta + 1, theta_new, axis=0)
-            z = jnp.insert(z, idcs_theta + 1, z_new, axis=1)
-            z_mask = jnp.insert(z_mask, idcs_theta + 1, z_mask_new, axis=1)
-            z_parity = jnp.insert(z_parity, idcs_theta + 1, z_parity_new, axis=1)
-
-        key = jax.random.PRNGKey(0)
-        z_flat = z.reshape(-1)
-        _uniq, ix = jnp.unique(z_flat, return_index=True, size=len(z_flat))
-        mask_dup = jnp.full(z_flat.shape, True)
-        mask_dup = mask_dup.at[ix].set(False).reshape(z.shape)
-        z = jnp.where(mask_dup, z + jax.random.uniform(key, shape=z.shape, minval=-1e-9, maxval=1e-9), z)
         return z, z_mask, z_parity, theta
 
-    def magnification_one(self, w0, z1, z2, m1, m2, rho):
-        """
-        Extended-source magnification for one time step. Follows Brolic's caustics code.
-        Returns
-        -------
-        z_out, z_p_out, mag, individual_area
-            ``mag`` and ``individual_area`` both have shape ``(n_theta, 5)`` where
-            ``n_theta`` is the number of source-limb samples (adaptive). ``mag`` is
-            the total magnification, broadcast to that grid; ``individual_area`` is
-            the per image-track signed area / (πρ²), broadcast along axis 0.
-        """
+    _mag_one_jit = {}
+
+    def magnification_one_kernel(self, w0, z1, z2, m1, m2, rho, npts_limb):
+        """JAX-traceable contour kernel (static ``npts_limb``)."""
         w0 = jnp.asarray(w0, dtype=jnp.complex128).reshape(())
         z1 = jnp.asarray(z1, dtype=jnp.complex128).reshape(())
         z2 = jnp.asarray(z2, dtype=jnp.complex128).reshape(())
-        npts_limb = int(self.n_outline)
-        niter = int(self.fsbl_niter)
-
         z_raw, z_mask, z_parity, theta = self.images_on_source_limb(
-            w0, z1, z2, m1, m2, rho, npts_limb, niter
+            w0, z1, z2, m1, m2, rho, npts_limb, 0
         )
-        z_perm, z_mask_perm, z_parity_perm = (self.permute_images(z_raw, z_mask, z_parity))
+        z_perm, z_mask_perm, z_parity_perm = self.permute_images(z_raw, z_mask, z_parity)
 
         seg_closed, seg_open, all_closed = self.get_segments(z_perm, z_mask_perm, z_parity_perm, n_images=5)
         contours1, contours_p1 = self.contours_from_closed_segments(seg_closed)
@@ -23015,13 +23038,12 @@ class FSBL(PSBL):
         mags1 = I1 * contours_p1
         max_nr_of_contours = 3
 
-        def branch_all_closed(_):
-            # Must match dtype of ``I2 * p2`` for ``lax.cond`` (typically float64).
+        def branch_all_closed(segments):
             return jnp.zeros(max_nr_of_contours, dtype=mags1.dtype)
 
         def branch_has_open(segments):
             contours2, p2 = self.contours_from_open_segments(segments, max_nr_of_contours, 20)
-            tail_o = vmap(self.last_nonzero)(contours2.real)
+            tail_o = vmap(self.last_nonzero)(jnp.abs(contours2))
             I2 = vmap(self.integrate_unif)(contours2, tail_o)
             return I2 * p2
 
@@ -23031,7 +23053,6 @@ class FSBL(PSBL):
         z_out = z_perm.T
         z_p_out = z_parity_perm.T
         ntheta = theta.shape[0]
-        # Same shape (ntheta, 5): total magnification broadcast; per-track signed area / (πρ²).
         inv_src = 1.0 / (jnp.pi * rho**2)
         indiv = []
         for k in range(5):
@@ -23051,6 +23072,43 @@ class FSBL(PSBL):
         individual_area = jnp.broadcast_to(ind_stack[None, :], (ntheta, 5))
         mag = jnp.broadcast_to(mag_total, (ntheta, 5))
         return z_out, z_p_out, mag, individual_area
+
+    def magnification_one(self, w0, z1, z2, m1, m2, rho):
+        """
+        Extended-source magnification for one time step. Follows Brolic's caustics code.
+
+        JIT-cached per ``n_outline`` so the contour graph compiles once.
+        """
+        npts_limb = int(self.n_outline)
+        fn = FSBL._mag_one_jit.get(npts_limb)
+        if fn is None:
+            kernel = self.magnification_one_kernel
+            def fn(w0, z1, z2, m1, m2, rho, kernel=kernel, npts=npts_limb):
+                return kernel(w0, z1, z2, m1, m2, rho, npts)
+            fn = jax.jit(fn)
+            FSBL._mag_one_jit[npts_limb] = fn
+        return fn(w0, z1, z2, m1, m2, rho)
+
+    contour_map_jit = {}
+
+    def contour_batch(self, w, z1, z2, m1, m2, rho):
+        """All contour epochs in one ``lax.map`` (compiled once per ``n_outline``)."""
+        npts = int(self.n_outline)
+        fn = FSBL.contour_map_jit.get(npts)
+        if fn is None:
+            kernel = self.magnification_one_kernel
+
+            def one(args, kernel=kernel, npts=npts):
+                wi, z1i, z2i, m1i, m2i, rho_i = args
+                return kernel(wi, z1i, z2i, m1i, m2i, rho_i, npts)
+
+            def many(w, z1, z2, m1, m2, rho, one=one):
+                rho_b = jnp.broadcast_to(jnp.asarray(rho, dtype=jnp.float64), w.shape[:1])
+                return lax.map(one, (w, z1, z2, m1, m2, rho_b))
+
+            fn = jax.jit(many)
+            FSBL.contour_map_jit[npts] = fn
+        return fn(w, z1, z2, m1, m2, rho)
 
     def jacobian_cq(self, z, a, m1, m2, yc, mode='quad'):
         """VBM ``_Jacobians3`` / ``_Jacobians4`` (for BinaryMag2 tests)."""
@@ -23147,7 +23205,7 @@ class FSBL(PSBL):
         use_ps = (corrquad < Tol) & (corrquad2 < 1.0) & (safedist > 4.0 * rho2)
         return ~use_ps
 
-    def _magnification_point(self, w0, z1, z2, m1, m2):
+    def magnification_point(self, w0, z1, z2, m1, m2):
         """Point-source magnification at one source position."""
         w_arr = jnp.atleast_1d(jnp.asarray(w0, dtype=jnp.complex128))
         z1_a = jnp.broadcast_to(jnp.asarray(z1, dtype=jnp.complex128), w_arr.shape)
@@ -23191,13 +23249,30 @@ class FSBL(PSBL):
 
         rho_f = float(np.asarray(rho).reshape(()))
         q = float(self.q)
-        s = float(self.sep)
+        # Photometry-only ``sep`` is already in Einstein radii. Astrometry
+        # stores it in mas.
+        if self.astrometryFlag:
+            s = float(np.asarray(self.sep).reshape(())) / float(np.asarray(self.thetaE_amp).reshape(()))
+        else:
+            s = float(self.sep)
         n = len(t)
             
+        # ``root_tol`` is an Einstein-radius residual. The point-source
+        # solver compares residuals in the units of ``get_complex_pos``
+        # (arcsec when this model has astrometry). Using the raw number
+        # there accepts roots that miss by ~thetaE and one of them carries
+        # a divergent magnification.
+        orig_root_tol = self.root_tol
         if self.astrometryFlag:
-            images_ps, amp_arr_ps = PSBL_PhotAstrom.get_all_arrays(self, t, filt_idx=filt_idx, check_sols=True, rescale=True)
-        else:
-            images_ps, amp_arr_ps = PSBL.get_all_arrays(self, t, filt_idx=filt_idx, check_sols=True, rescale=True)
+            te = float(np.asarray(self.thetaE_amp).reshape(()))
+            self.root_tol = float(np.asarray(orig_root_tol).reshape(-1)[0]) * te * 1e-3
+        try:
+            if self.astrometryFlag:
+                images_ps, amp_arr_ps = PSBL_PhotAstrom.get_all_arrays(self, t, filt_idx=filt_idx, check_sols=True, rescale=True)
+            else:
+                images_ps, amp_arr_ps = PSBL.get_all_arrays(self, t, filt_idx=filt_idx, check_sols=True, rescale=True)
+        finally:
+            self.root_tol = orig_root_tol
 
         # PSBL returns (n, 5); reshape to FSBL layout (n, n_outline, 5).
         n_outline = int(getattr(self, 'n_outline', 1))
@@ -23236,39 +23311,37 @@ class FSBL(PSBL):
             z_parity = jnp.zeros((n, n_outline, 5), dtype=jnp.complex128)
             return images_ps, z_parity, jnp.asarray(amps), jnp.asarray(amp_arr_ps)
 
-        # Computed when at least one epoch fails the gate. 
+        # Computed when at least one epoch fails the gate.
         w, z1, z2, m1, m2 = self.fsbl_ci_geometry(t, filt_idx=filt_idx)
 
-        # If all epochs fail, then compute the magnification for all epochs. 
-        if need_np.all():
-            z_rel, z_parity, mag, individual_area = vmap(
-                lambda w_i, z1_i, z2_i, m1_i, m2_i: self.magnification_one(w_i, z1_i, z2_i, m1_i, m2_i, rho),
-                in_axes=(0, 0, 0, 0, 0),
-            )(w, z1, z2, m1, m2)
-            amps = np.asarray(mag[:, 0, 0], dtype=np.float64)
-            return z_rel, z_parity, jnp.asarray(amps), individual_area
-
-        # Run CI on failed epochs only. PSBL values in amps[~idx] are ignored. 
+        # lax.map, not vmap: vmap compiles the open-contour branch into
+        # every epoch. One map compiles the kernel once and loops in XLA.
         idx = np.where(need_np)[0]
-        z_rel, z_parity, mag, individual_area = vmap(
-            lambda w_i, z1_i, z2_i, m1_i, m2_i: self.magnification_one(
-                w_i, z1_i, z2_i, m1_i, m2_i, rho
-            ),
-            in_axes=(0, 0, 0, 0, 0),
-        )(w[idx], z1[idx], z2[idx], m1[idx], m2[idx])
-        amps[idx] = np.asarray(mag[:, 0, 0], dtype=np.float64)
+        z_rel, z_parity, mag, individual_area = self.contour_batch(
+            jnp.asarray(w)[idx], jnp.asarray(z1)[idx], jnp.asarray(z2)[idx],
+            jnp.asarray(m1)[idx], jnp.asarray(m2)[idx], rho_f,
+        )
+        z_rel_np = np.asarray(z_rel)
+        zp_np = np.asarray(z_parity)
+        mag_np = np.asarray(mag)
+        ind_np = np.asarray(individual_area)
+        amps[idx] = mag_np[:, 0, 0]
 
-        # Build everything again. 
-        n_pad = z_rel.shape[1]
+        if need_np.all():
+            return (jnp.asarray(z_rel_np), jnp.asarray(zp_np),
+                    jnp.asarray(amps), jnp.asarray(ind_np))
+
+        n_ci = int(z_rel_np.shape[1])
+        n_ps = int(images_ps.shape[1])
+        n_pad = max(n_ci, n_ps)
         z_out = np.zeros((n, n_pad, 5), dtype=np.complex128)
         z_p_out = np.zeros((n, n_pad, 5), dtype=np.complex128)
         ind_out = np.zeros((n, n_pad, 5), dtype=np.float64)
-        z_out[idx] = np.asarray(z_rel)
-        z_p_out[idx] = np.asarray(z_parity)
-        ind_out[idx] = np.asarray(individual_area)
-        # images_ps / amp_arr_ps already (n, n_outline, 5); copy PS epochs.
-        z_out[ps_mask] = images_ps[ps_mask]
-        ind_out[ps_mask] = amp_arr_ps[ps_mask]
+        z_out[idx, :n_ci] = z_rel_np
+        z_p_out[idx, :n_ci] = zp_np
+        ind_out[idx, :n_ci] = ind_np
+        z_out[ps_mask, :n_ps] = images_ps[ps_mask]
+        ind_out[ps_mask, :n_ps] = amp_arr_ps[ps_mask]
         return (jnp.asarray(z_out), jnp.asarray(z_p_out), jnp.asarray(amps), jnp.asarray(ind_out))
 
  
@@ -28686,7 +28759,7 @@ class PSTL(PSPL):
         return z_arr
 
     @staticmethod
-    def _decic_roots(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10):
+    def decic_roots(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10):
         """Solve degree-10 polynomial via companion matrix (scalar coeffs)."""
         C = jnp.complex128([
             [-p1 / p0, -p2 / p0, -p3 / p0, -p4 / p0, -p5 / p0,
@@ -28704,7 +28777,7 @@ class PSTL(PSPL):
         return jnp.linalg.eigvals(C)
 
     @staticmethod
-    def _triple_lens_poly_coeffs(w, wbar, a, r3, r3bar, e1, e2):
+    def triple_lens_poly_coeffs(w, wbar, a, r3, r3bar, e1, e2):
         """Degree-10 lens equation coefficients (caustics frame)."""
         p_0 = -(a**2) * wbar + a**2 * r3bar + wbar**3 - wbar**2 * r3bar
 
@@ -30078,7 +30151,7 @@ class PSTL(PSPL):
         return p_0, p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8, p_9, p_10
 
     @staticmethod
-    def _triple_lens_solve(w, z1, z2, z3, m1, m2, m3, check_sols, root_tol):
+    def triple_lens_solve(w, z1, z2, z3, m1, m2, m3, check_sols, root_tol):
         """Frame transform, degree-10 roots, optional solution masking."""
         w_src = jnp.asarray(w, dtype=jnp.complex128)
         z1 = jnp.asarray(z1, dtype=jnp.complex128)
@@ -30113,17 +30186,17 @@ class PSTL(PSPL):
         wbar = jnp.conj(w)
         r3bar = jnp.conj(r3)
 
-        p_0, p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8, p_9, p_10 = PSTL._triple_lens_poly_coeffs(
+        p_0, p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8, p_9, p_10 = PSTL.triple_lens_poly_coeffs(
             w, wbar, a, r3, r3bar, e1, e2)
 
         n = w_src.shape[0]
-        vmap_roots = jax.vmap(PSTL._decic_roots, in_axes=(0,) * 11)
+        vmap_roots = jax.vmap(PSTL.decic_roots, in_axes=(0,) * 11)
         roots_dim = vmap_roots(p_0, p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8, p_9, p_10)
         thetaE_arr = jnp.broadcast_to(jnp.asarray(thetaE, dtype=jnp.float64), (n,))
         z_arr = roots_dim * thetaE_arr[:, jnp.newaxis] * rot[:, jnp.newaxis] + z_cm[:, jnp.newaxis]
         z_arr = jnp.where(thetaE_arr[:, jnp.newaxis] > 0, z_arr, jnp.nan + 0j)
 
-        def _mask(z_arr):
+        def mask(z_arr):
             m1_arr = m1 if jnp.ndim(m1) else jnp.full((n,), m1)
             m2_arr = m2 if jnp.ndim(m2) else jnp.full((n,), m2)
             m3_arr = m3 if jnp.ndim(m3) else jnp.full((n,), m3)
@@ -30142,10 +30215,10 @@ class PSTL(PSPL):
             )
             return jnp.where(bad, jnp.nan + 0j, z_arr)
 
-        return jax.lax.cond(check_sols, _mask, lambda x: x, z_arr)
+        return jax.lax.cond(check_sols, mask, lambda x: x, z_arr)
 
     @staticmethod
-    def _complex_to_xy(image_arr):
+    def complex_to_xy(image_arr):
         image_arr = jnp.asarray(image_arr)
         return jnp.stack([jnp.real(image_arr), jnp.imag(image_arr)], axis=-1)
 
@@ -30165,13 +30238,13 @@ class PSTL(PSPL):
         """
         assert (len(w) == len(z1)) & (len(w) == len(z2)) & (len(w) == len(z3))
         rt = self.root_tol
-        return PSTL._triple_lens_solve(w, z1, z2, z3, m1, m2, m3, check_sols, rt)
+        return PSTL.triple_lens_solve(w, z1, z2, z3, m1, m2, m3, check_sols, rt)
 
     def get_image_pos_arr_fast(self, w, z1, z2, z3, m1, m2, m3, check_sols=False):
         """Fast PSTL image positions (cached ``jax.jit`` companion-matrix solve)."""
         fn = getattr(PSTL.get_image_pos_arr_fast, "_jit_fn", None)
         if fn is None:
-            fn = jax.jit(PSTL._triple_lens_solve, static_argnames=("check_sols",))
+            fn = jax.jit(PSTL.triple_lens_solve, static_argnames=("check_sols",))
             PSTL.get_image_pos_arr_fast._jit_fn = fn
         rt = getattr(self, "root_tol", 1e-8)
         return fn(w, z1, z2, z3, m1, m2, m3, check_sols, rt)
@@ -30469,7 +30542,7 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
 
-        return PSTL._complex_to_xy(image_arr)
+        return PSTL.complex_to_xy(image_arr)
 
     def get_astrometry(self, t_obs, image_arr=None, amp_arr=None, filt_idx=0):
         """
@@ -30505,7 +30578,7 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
 
         image_arr = jnp.asarray(image_arr)
         amp_arr = jnp.asarray(amp_arr)
-        xS_lensed_res = PSTL._complex_to_xy(image_arr)
+        xS_lensed_res = PSTL.complex_to_xy(image_arr)
 
         amp_f = jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0)
         amp_arr_mskd2 = amp_f.reshape((amp_f.shape[0], amp_f.shape[1], 1))
@@ -30715,7 +30788,7 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         zoom:
             # of einstein radii plotted in vertical direction
         """
-        def _anim_set_point(pt_line, tr_line, xy, frame):
+        def anim_set_point(pt_line, tr_line, xy, frame):
             x, y = xy[frame, 0], xy[frame, 1]
             if np.isfinite(x) and np.isfinite(y):
                 pt_line.set_data([x], [y])
@@ -30790,12 +30863,12 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
             artists.append(mag_line)
 
         def update(frame):
-            _anim_set_point(l1_pt, l1_tr, xL1, frame)
-            _anim_set_point(l2_pt, l2_tr, xL2, frame)
-            _anim_set_point(l3_pt, l3_tr, xL3, frame)
-            _anim_set_point(s_pt, s_tr, source, frame)
+            anim_set_point(l1_pt, l1_tr, xL1, frame)
+            anim_set_point(l2_pt, l2_tr, xL2, frame)
+            anim_set_point(l3_pt, l3_tr, xL3, frame)
+            anim_set_point(s_pt, s_tr, source, frame)
             for k, (pt, tr) in enumerate(img_lines):
-                _anim_set_point(pt, tr, images_xy[k], frame)
+                anim_set_point(pt, tr, images_xy[k], frame)
             if mag_line is not None:
                 mag_line.set_data(t_rel[: frame + 1], phot[: frame + 1])
             return artists
