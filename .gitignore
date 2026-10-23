@@ -4,6 +4,7 @@ research-notebook/
 ._*
 __pycache__/
 test_pspl_*/
+test_mnest_lumlens_bulge*/
 .idea/
 src/BAGLE/parallax_cache
 src/bagle/parallax_cache

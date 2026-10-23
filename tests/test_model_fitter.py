@@ -633,7 +633,8 @@ def test_lumlens_parallax_fit(verbose=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lumlens_bulge/'
     os.makedirs(outdir, exist_ok=True)
 
-    data, p_in = fake_data.fake_data_lumlens_parallax_bulge(seed=FIT_SEED)
+    data, p_in = fake_data.fake_data_lumlens_parallax_bulge(outdir=outdir,
+                                                            seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSPL_PhotAstrom_Par_Param1,
@@ -734,7 +735,8 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
     os.makedirs(outdir, exist_ok=True)
 
     data1, data2, params1, params2 = (
-        fake_data.fake_data_lumlens_parallax_bulge2(seed=FIT_SEED))
+        fake_data.fake_data_lumlens_parallax_bulge2(outdir=outdir,
+                                                    seed=FIT_SEED))
 
     data = data1
     data['t_phot2'] = data2['t_phot1']
@@ -1105,7 +1107,10 @@ def test_correlated_data_astrom(verbose=False, resume=False):
 def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=False):
     base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param3_solver/aa_'
 
-    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True, seed=FIT_SEED)
+    os.makedirs(os.path.dirname(base), exist_ok=True)
+    data, p_in, psbl, ani = fake_data.fake_data_PSBL(
+        parallax=True, outdir=os.path.dirname(base) + '/',
+        outroot=os.path.basename(base), seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSBL_PhotAstrom_Par_Param3,
@@ -1195,7 +1200,10 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
 def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=False):
     base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param2_solver/aa_'
 
-    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True, seed=FIT_SEED)
+    os.makedirs(os.path.dirname(base), exist_ok=True)
+    data, p_in, psbl, ani = fake_data.fake_data_PSBL(
+        parallax=True, outdir=os.path.dirname(base) + '/',
+        outroot=os.path.basename(base), seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSBL_PhotAstrom_Par_Param2,
@@ -1291,7 +1299,10 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
 def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
     base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param1_solver/aa_'
 
-    data, p_in, psbl, ani = fake_data.fake_data_PSBL(parallax=True, seed=FIT_SEED)
+    os.makedirs(os.path.dirname(base), exist_ok=True)
+    data, p_in, psbl, ani = fake_data.fake_data_PSBL(
+        parallax=True, outdir=os.path.dirname(base) + '/',
+        outroot=os.path.basename(base), seed=FIT_SEED)
 
     fitter = MicrolensSolver(data,
                              model.PSBL_PhotAstrom_Par_Param1,
@@ -1516,6 +1527,8 @@ def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', re
                                                                  mag_src = 16, b_sff=1.0,
                                                                  parallax=True, 
                                                                  animate=False,
+                                                                 outdir=os.path.dirname(base) + '/',
+                                                                 outroot=os.path.basename(base),
                                                                  seed=FIT_SEED)
 
         data['target'] = 'test'
