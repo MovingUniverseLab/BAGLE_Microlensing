@@ -514,6 +514,7 @@ import erfa
 import copy
 
 from bagle import frame_convert as fc
+from bagle import fspl_contour
 from bagle import orbits as orbits
 from bagle import parallax
 from abc import ABC
@@ -25550,6 +25551,12 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
 class FSPL(PSPL):
     """Finite-Source, Point-Lens models."""
 
+    # Adaptive limb sampling (used when |u| < 2 rho); see
+    # bagle.fspl_contour.adaptive_limb_images_amps.
+    amg_tol = 1e-4
+    amg_n_init = 64
+    amg_max_pts = 2048
+
     def get_all_arrays_CI(self, t, filt_idx=0):
         """
         Obtain the image and amplitude arrays for each t. These arrays
@@ -25576,278 +25583,77 @@ class FSPL(PSPL):
 
         Notes
         -----
-        The algorithm uses Green's theorem to change an area integral of the
-        image of the source into a path integral around the outline.
-        For the amplification, we perform a first-order contour integral to
-        approximate the area, and include a second-order parabolic correction.
-        For the centroid calculation, we perform only the first-order contour
-        integral with no second-order parabolic correction.
-        Equations for the contour integrals come from Bozza et al. (2021).
+        The source limb is sampled at ``n_outline`` equally spaced angles and
+        each point is mapped to its plus and minus images. Green's theorem
+        turns the image areas and centroid moments into contour sums
+        (Bozza et al. 2021, Eqs. 9 and 19). The parabolic corrections
+        (Eqs. 10 and 21-22) use the analytic first and second derivatives of
+        each image along the limb, as in VBMicrolensing. See
+        :mod:`bagle.fspl_contour`.
         """
-        # Lensed positions of each outline point for both plus/minus images.
-        # Note these are positions on the sky. in arcsec
+        t = np.atleast_1d(np.asarray(t, dtype=float))
 
-        # Shape = [len(t), N_outline, [+,-], [E,N]]
-        images = self.get_resolved_astrometry_outline(t, filt_idx=filt_idx)
+        # Source centre relative to the lens (Einstein radii, complex E + iN).
+        zeta_c = self.get_fspl_source_center(t, filt_idx=filt_idx)
 
-        angles = (np.arange(self.n_outline) / self.n_outline) * 2 * np.pi  # radians
-        d_angles = np.diff(angles)
+        # Uniform limb angles for every epoch.
+        n_pts = int(self.n_outline)
+        theta = np.broadcast_to(2.0 * np.pi * np.arange(n_pts) / n_pts,
+                                (t.size, n_pts))
+        counts = np.full(t.size, n_pts)
 
-        # Shape of plus array:  [len(times), self.n_outline, [E,N]] where
-        # the last dimension is E and N on the sky.
-        plus = images[:, :, 0, :]
-        minus = images[:, :, 1, :]
+        # Lens-relative images (Einstein radii) and signed magnifications.
+        images, amps = fspl_contour.limb_images_amps(
+            zeta_c, self.source_radius_thetaE_units(), theta, counts)
 
-        # Temporarily duplicate the first point as the last point
-        # to speed up our contour integrals.
-        # Shape of plus array: [len(times), self.n_outline + 1, 2] where
-        plus = np.append(plus, plus[:, 0:1, :], axis=1)
-        minus = np.append(minus, minus[:, 0:1, :], axis=1)
+        return self.fspl_images_to_sky(images, t, filt_idx=filt_idx), amps
 
-        # The centroid integrand is not translation-invariant at finite
-        # outline resolution. Subtract one sky point and add it back so a
-        # shared xS0 offset shifts the image by that offset exactly.
-        origin = np.array(plus[:, 0, :], dtype=float, copy=True)
-        plus = plus - origin[:, None, :]
-        minus = minus - origin[:, None, :]
+    def get_fspl_source_center(self, t, filt_idx=0):
+        """
+        Source centre relative to the lens for the FSPL contour integrals.
 
-        # Pre-calculate squared versions...
-        # we use these a lot in the calculations below.
-        plus2 = plus ** 2
-        minus2 = minus ** 2
+        Parameters
+        ----------
+        t : array_like, shape (N_times,)
+            Times in MJD.
+        filt_idx : int, optional
+            Index of the filter or data set (sets the observer location).
 
-        # First derivatives (len = n_outline)
-        d1_plus = np.diff(plus, axis=1)
-        d1_minus = np.diff(minus, axis=1)
+        Returns
+        -------
+        zeta_c : ndarray, complex, shape (N_times,)
+            ``u_E + i u_N`` in Einstein radii, including parallax.
+        """
+        u_vec = self.get_u(t, filt_idx=filt_idx)
 
-        # Second derivatives (len = n_outline)
-        d2_plus = np.diff(np.append(d1_plus, d1_plus[:, 0:1, :], axis=1), axis=1)
-        d2_minus = np.diff(np.append(d1_minus, d1_minus[:, 0:1, :], axis=1), axis=1)
+        return u_vec[:, 0] + 1j * u_vec[:, 1]
 
-        # 2 element box addition
-        b2_plus = plus[:, :-1, :] + plus[:, 1:, :]
-        b2_minus = minus[:, :-1, :] + minus[:, 1:, :]
+    def fspl_images_to_sky(self, images, t, filt_idx=0):
+        """
+        Convert lens-relative FSPL image centroids to model image coordinates.
 
-        def wedge_product(aa, bb):
-            foo = aa[:, :, 0] * bb[:, :, 1] - aa[:, :, 1] * bb[:, :, 0]
+        Parameters
+        ----------
+        images : ndarray, shape (N_times, 2, 2)
+            Plus / minus image centroids relative to the lens (Einstein radii).
+        t : array_like, shape (N_times,)
+            Times in MJD.
+        filt_idx : int, optional
+            Index of the filter or data set.
 
-            return foo
+        Returns
+        -------
+        images : ndarray, shape (N_times, 2, 2)
+            Sky positions in arcsec for astrometric models (lens position
+            added); unchanged (lens-relative Einstein radii) otherwise.
+        """
+        if not self.astrometryFlag:
+            return images
 
-        # wedge products for parabolic corrections. i and i+1 terms
-        # see Eq 10 of Bozza+ 2021
-        wp_d1_d2_i_plus = wedge_product(d1_plus[:, :-1, :], d2_plus[:, :-1, :])
-        wp_d1_d2_ip1_plus = wedge_product(d1_plus[:, 1:, :], d2_plus[:, 1:, :])
-        wp_d1_d2_i_minus = wedge_product(d1_minus[:, :-1, :], d2_minus[:, :-1, :])
-        wp_d1_d2_ip1_minus = wedge_product(d1_minus[:, 1:, :], d2_minus[:, 1:, :])
-        d_angles3 = d_angles ** 3
+        # Lens position on the sky plus the image offset in arcsec.
+        xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
-        # Do the contour integrals.
-        # Equations from Bozza+ 2021 (Eq 9). EQ38 in BAGLE paper (big omega)
-        Aplus = -(1. / 2) * np.sum(b2_plus[:, :, 1] * d1_plus[:, :, 0], axis=1)
-        Aminus = (1. / 2) * np.sum(b2_minus[:, :, 1] * d1_minus[:, :, 0], axis=1)
-
-        # Parabolic correction (Eq 10). EQ39 in BAGLE paper (d-Big Omega)
-        Aplus += (1. / 24) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus), axis=1)
-        Aminus += -(1. / 24) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus), axis=1)
-
-        # Centroid equations (Eq. 19). EQ42 in BAGLE paper
-        Cplus_x = (1. / 8.0) * np.sum(b2_plus[:, :, 0] ** 2 * d1_plus[:, :, 1], axis=1)
-        Cplus_y = -(1. / 8.0) * np.sum(b2_plus[:, :, 1] ** 2 * d1_plus[:, :, 0], axis=1)
-
-        # Centroid equations (Eq. 19). EQ43 in BAGLE paper
-        Cminus_x = -(1. / 8.0) * np.sum(b2_minus[:, :, 0] ** 2 * d1_minus[:, :, 1], axis=1)
-        Cminus_y = (1. / 8.0) * np.sum(b2_minus[:, :, 1] ** 2 * d1_minus[:, :, 0], axis=1)
-
-        # Parabolic Correction
-        # Eq 21 and 22 Bozza 2021. Parabolic corrections
-        Cplus_x += (1. / 24.) * np.sum(
-            d_angles3 * ((d1_plus[:, :-1, 0] ** 2 * d1_plus[:, :-1, 1] + plus[:, :-2, 0] * wp_d1_d2_i_plus) +
-                         (d1_plus[:, 1:, 0] ** 2 * d1_plus[:, 1:, 1] + plus[:, 1:-1, 0] * wp_d1_d2_ip1_plus)), axis=1)
-        Cplus_y += -(1. / 24.) * np.sum(
-            d_angles3 * ((d1_plus[:, :-1, 1] ** 2 * d1_plus[:, :-1, 0] + plus[:, :-2, 1] * wp_d1_d2_i_plus) +
-                         (d1_plus[:, 1:, 1] ** 2 * d1_plus[:, 1:, 0] + plus[:, 1:-1, 1] * wp_d1_d2_ip1_plus)), axis=1)
-        Cminus_x += -(1. / 24.) * np.sum(
-            d_angles3 * ((d1_minus[:, :-1, 0] ** 2 * d1_minus[:, :-1, 1] + minus[:, :-2, 0] * wp_d1_d2_i_minus) +
-                         (d1_minus[:, 1:, 0] ** 2 * d1_minus[:, 1:, 1] + minus[:, 1:-1, 0] * wp_d1_d2_ip1_minus)),
-            axis=1)
-        Cminus_y += (1. / 24.) * np.sum(
-            d_angles3 * ((d1_minus[:, :-1, 1] ** 2 * d1_minus[:, :-1, 0] + minus[:, :-2, 1] * wp_d1_d2_i_minus) +
-                         (d1_minus[:, 1:, 1] ** 2 * d1_minus[:, 1:, 0] + minus[:, 1:-1, 1] * wp_d1_d2_ip1_minus)),
-            axis=1)
-
-        amp_plus = np.abs(Aplus) / (np.pi * self.radiusS ** 2)
-        amp_minus = np.abs(Aminus) / (np.pi * self.radiusS ** 2)
-        img_pos_plus = np.array([Cplus_x / np.abs(Aplus), Cplus_y / np.abs(Aplus)])
-        img_pos_minus = np.array([Cminus_x / np.abs(Aminus), Cminus_y / np.abs(Aminus)])
-
-        # Final shape = [N_times, [+, -], [E, N]]
-        images = np.zeros((len(t), 2, 2), dtype=float)
-        images[:, 0, :] = img_pos_plus.T + origin
-        images[:, 1, :] = img_pos_minus.T + origin
-
-        # Final shape = [N_times, [+, -]]
-        amps = np.array((amp_plus, amp_minus)).T  # amplifications
-
-        return images, amps
-
-    def amg_im_pos_all(self, w, z1):
-        """Major and minor image positions for a source point relative to the lens."""
-        u = w - z1
-        # A source-boundary point sitting on the lens has no unique image.
-        # Nudge it off the origin so 1/|u|^2 stays finite.
-        u = np.where(np.abs(u) < 1e-15, 1e-15 + 0j, u)
-        z_major = u * (1.0 + np.sqrt(1.0 + 4.0 / np.abs(u) ** 2)) / 2.0 + z1
-        z_minor = -1.0 / np.conjugate(z_major - z1) + z1
-        return z_major, z_minor
-
-    def amg_detJac(self, z, z1):
-        dz = np.abs(z - z1)
-        dz = np.where(dz < 1e-15, 1e-15, dz)
-        return 1.0 - 1.0 / dz ** 4
-
-    def amg_wrap_d2(self, d1, counts):
-        """Second derivatives wrap at the last valid segment, not the pad edge."""
-        n_times = d1.shape[0]
-        d2 = np.diff(np.concatenate([d1, d1[:, :1]], axis=1), axis=1)
-        rows = np.arange(n_times)
-        close = np.maximum(counts - 1, 0)
-        d2[rows, close] = d1[rows, 0] - d1[rows, close]
-        return d2
-
-    def amg_contour_integrals(self, wIms, counts):
-        """Green's theorem area and centroid on padded, closed image contours."""
-        n_times = wIms.shape[0]
-        n_pts = wIms.shape[1]
-        if n_times == 0 or n_pts == 0:
-            return (np.zeros((n_times, 2, 2), dtype=float),
-                    np.zeros((n_times, 2), dtype=float))
-
-        samp = np.arange(n_pts)
-        valid_pts = samp[None, :] < counts[:, None]
-        plus = np.where(valid_pts, wIms[:, :, 0], wIms[:, 0:1, 0])
-        minus = np.where(valid_pts, wIms[:, :, 1], wIms[:, 0:1, 1])
-        plus = np.concatenate([plus, plus[:, 0:1]], axis=1)
-        minus = np.concatenate([minus, minus[:, 0:1]], axis=1)
-
-        px = plus.real
-        py = plus.imag
-        qx = minus.real
-        qy = minus.imag
-
-        d1_px = np.diff(px, axis=1)
-        d1_py = np.diff(py, axis=1)
-        d1_qx = np.diff(qx, axis=1)
-        d1_qy = np.diff(qy, axis=1)
-
-        d2_px = self.amg_wrap_d2(d1_px, counts)
-        d2_py = self.amg_wrap_d2(d1_py, counts)
-        d2_qx = self.amg_wrap_d2(d1_qx, counts)
-        d2_qy = self.amg_wrap_d2(d1_qy, counts)
-
-        Aplus = -0.5 * np.sum((px[:, :-1] + px[:, 1:]) * d1_py, axis=1)
-        Aminus = 0.5 * np.sum((qx[:, :-1] + qx[:, 1:]) * d1_qy, axis=1)
-
-        n_parab = n_pts - 1
-        n_pts_f = np.maximum(counts, 1).astype(float)
-        two_pi = 2.0 * np.pi
-        if n_parab > 0:
-            parab_valid = np.arange(n_parab)[None, :] < (counts[:, None] - 1)
-            d_angles = np.where(parab_valid, two_pi / n_pts_f[:, None], 0.0)
-        else:
-            d_angles = np.zeros((n_times, 0), dtype=float)
-        d_angles3 = d_angles ** 3
-
-        wp_d1_d2_i_plus = d1_px[:, :-1] * d2_py[:, :-1] - d1_py[:, :-1] * d2_px[:, :-1]
-        wp_d1_d2_ip1_plus = d1_px[:, 1:] * d2_py[:, 1:] - d1_py[:, 1:] * d2_px[:, 1:]
-        wp_d1_d2_i_minus = d1_qx[:, :-1] * d2_qy[:, :-1] - d1_qy[:, :-1] * d2_qx[:, :-1]
-        wp_d1_d2_ip1_minus = d1_qx[:, 1:] * d2_qy[:, 1:] - d1_qy[:, 1:] * d2_qx[:, 1:]
-
-        Aplus += (1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus), axis=1)
-        Aminus += -(1.0 / 24.0) * np.sum(d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus), axis=1)
-
-        Cplus_x = 0.125 * np.sum((px[:, :-1] + px[:, 1:]) ** 2 * d1_py, axis=1)
-        Cplus_y = -0.125 * np.sum((py[:, :-1] + py[:, 1:]) ** 2 * d1_px, axis=1)
-        Cminus_x = -0.125 * np.sum((qx[:, :-1] + qx[:, 1:]) ** 2 * d1_qy, axis=1)
-        Cminus_y = 0.125 * np.sum((qy[:, :-1] + qy[:, 1:]) ** 2 * d1_qx, axis=1)
-
-        Cplus_x += (1.0 / 24.0) * np.sum(
-            d_angles3 * ((d1_px[:, :-1] ** 2 * d1_py[:, :-1] + px[:, :-2] * wp_d1_d2_i_plus)
-                         + (d1_px[:, 1:] ** 2 * d1_py[:, 1:] + px[:, 1:-1] * wp_d1_d2_ip1_plus)),
-            axis=1)
-        Cplus_y += -(1.0 / 24.0) * np.sum(
-            d_angles3 * ((d1_py[:, :-1] ** 2 * d1_px[:, :-1] + py[:, :-2] * wp_d1_d2_i_plus)
-                         + (d1_py[:, 1:] ** 2 * d1_px[:, 1:] + py[:, 1:-1] * wp_d1_d2_ip1_plus)),
-            axis=1)
-        Cminus_x += -(1.0 / 24.0) * np.sum(
-            d_angles3 * ((d1_qx[:, :-1] ** 2 * d1_qy[:, :-1] + qx[:, :-2] * wp_d1_d2_i_minus)
-                         + (d1_qx[:, 1:] ** 2 * d1_qy[:, 1:] + qx[:, 1:-1] * wp_d1_d2_ip1_minus)),
-            axis=1)
-        Cminus_y += (1.0 / 24.0) * np.sum(
-            d_angles3 * ((d1_qy[:, :-1] ** 2 * d1_qx[:, :-1] + qy[:, :-2] * wp_d1_d2_i_minus)
-                         + (d1_qy[:, 1:] ** 2 * d1_qx[:, 1:] + qy[:, 1:-1] * wp_d1_d2_ip1_minus)),
-            axis=1)
-
-        abs_Aplus = np.abs(Aplus)
-        abs_Aminus = np.abs(Aminus)
-        img_pos_plus = np.array([Cplus_x / abs_Aplus, Cplus_y / abs_Aplus])
-        img_pos_minus = np.array([Cminus_x / abs_Aminus, Cminus_y / abs_Aminus])
-
-        images = np.zeros((n_times, 2, 2), dtype=float)
-        images[:, 0, :] = img_pos_plus.T
-        images[:, 1, :] = img_pos_minus.T
-
-        inv_area = 1.0 / (np.pi * self.radiusS ** 2)
-        # Signed image areas (minus-image orientation can be negative). The
-        # physical magnification is their sum; a per-epoch flip keeps that
-        # sum positive so AMG can mix with CI without a global sign flip.
-        amps = np.stack((Aplus * inv_area, Aminus * inv_area), axis=1)
-        tot = amps.sum(axis=1, keepdims=True)
-        amps = np.where(tot < 0.0, -amps, amps)
-        return images, amps
-
-    def amg_numpy(self, w_center, z1, radiusS, dtheta, maxsamps):
-        """Vectorized AMG in numpy itself. Faster than Jax on CPUs"""
-        w_center = np.asarray(w_center, dtype=complex)
-        z1 = np.asarray(z1, dtype=complex)
-        n_times = w_center.size
-        if n_times == 0:
-            return np.zeros((0, 2, 2), dtype=float), np.zeros((0, 2), dtype=float)
-
-        wIms = np.empty((n_times, maxsamps, 2), dtype=complex)
-        counts = np.zeros(n_times, dtype=int)
-        theta = np.zeros(n_times, dtype=float)
-        active = np.ones(n_times, dtype=bool)
-        two_pi = 2.0 * np.pi
-
-        for k in range(maxsamps):
-            idx = np.flatnonzero(active)
-            if idx.size == 0:
-                break
-
-            w_now = w_center[idx] + radiusS * np.exp(1j * theta[idx])
-            zp, zm = self.amg_im_pos_all(w_now, z1[idx])
-            wIms[idx, k, 0] = zp
-            wIms[idx, k, 1] = zm
-            counts[idx] = k + 1
-
-            n_steps_left = maxsamps - k - 1
-            if n_steps_left <= 0:
-                break
-
-            detp = np.abs(self.amg_detJac(zp, z1[idx]))
-            detm = np.abs(self.amg_detJac(zm, z1[idx]))
-            natural_step = dtheta * np.minimum(detp, detm)
-            remaining = np.maximum(two_pi - theta[idx], 0.0)
-            min_step = remaining / n_steps_left
-            theta[idx] += np.maximum(natural_step, min_step)
-            active[idx] = theta[idx] < two_pi
-
-        max_n = int(np.max(counts)) if n_times else 0
-        if max_n == 0:
-            return np.zeros((n_times, 2, 2), dtype=float), np.zeros((n_times, 2), dtype=float)
-
-        wIms = (wIms[:, :max_n, :] * self.thetaE_amp) * 1e-3
-        return self.amg_contour_integrals(wIms, counts)
+        return xL[:, None, :] + images * self.thetaE_amp * 1e-3
 
     def source_radius_thetaE_units(self):
         """
@@ -25866,331 +25672,42 @@ class FSPL(PSPL):
             return self.radiusS * 1e3 / self.thetaE_amp
         return self.radiusS
 
-    def amg_im_pos_all(self, w, z1):
+    def amg_numpy(self, zeta_c, radiusS):
         """
-        Major and minor image positions for a source point relative to the lens.
+        Adaptive-mesh FSPL images and magnifications (NumPy host path).
+
+        Error-controlled limb sampling (``amg_tol``, ``amg_n_init``,
+        ``amg_max_pts``): segments are bisected where the parabolic contour
+        approximation is poor, which concentrates samples where the limb
+        passes near the lens. See
+        :func:`bagle.fspl_contour.adaptive_limb_images_amps`.
 
         Parameters
         ----------
-        w : complex or array of complex
-            Source position(s) in complex sky coordinates (thetaE units).
-        z1 : complex or array of complex
-            Lens position(s) in the same units.
-
-        Returns
-        -------
-        z_major, z_minor : complex or array of complex
-            Plus and minus image positions.
-        """
-        u = w - z1
-        # Contour-artifact fix (c913b38): a source-boundary point sitting on
-        # the lens has no unique image; 1/|u|^2 diverges and the contour
-        # spikes. Nudge u off the origin so the map stays finite.
-        u = np.where(np.abs(u) < 1e-15, 1e-15 + 0j, u)
-        z_major = u * (1.0 + np.sqrt(1.0 + 4.0 / np.abs(u) ** 2)) / 2.0 + z1
-        # Host NumPy AMG path: keep conjugate on numpy arrays (not jnp).
-        z_minor = -1.0 / np.conjugate(z_major - z1) + z1
-        return z_major, z_minor
-
-    def amg_detJac(self, z, z1):
-        """
-        Point-lens Jacobian determinant at image position ``z``.
-
-        Parameters
-        ----------
-        z : complex or array of complex
-            Image position(s).
-        z1 : complex or array of complex
-            Lens position(s).
-
-        Returns
-        -------
-        detJ : float or array of float
-            ``1 - 1/|z - z1|^4``, with a floor on ``|z - z1|``.
-        """
-        dz = np.abs(z - z1)
-        # Same singularity floor as amg_im_pos_all (c913b38).
-        dz = np.where(dz < 1e-15, 1e-15, dz)
-        return 1.0 - 1.0 / dz ** 4
-
-    def amg_wrap_d2(self, d1, counts):
-        """
-        Second differences that wrap at the last *valid* segment.
-
-        Contour-artifact fix (c913b38): unused limb slots are padded by
-        repeating the first contour point (zero-length edges). Wrapping the
-        second difference at the padded array edge made the closing segment
-        see a jump onto that pad, which produced a sharp fake magnification
-        dip when adaptive stepping truncated near the limb. Wrap at index
-        ``counts - 1`` instead.
-
-        Parameters
-        ----------
-        d1 : ndarray, shape (N_times, N_pts)
-            First differences along the closed contour (including pad).
-        counts : ndarray, shape (N_times,)
-            Number of valid limb samples per epoch.
-
-        Returns
-        -------
-        d2 : ndarray, shape (N_times, N_pts)
-            Corrected second differences.
-        """
-        n_times = d1.shape[0]
-        d2 = np.diff(np.concatenate([d1, d1[:, :1]], axis=1), axis=1)
-        rows = np.arange(n_times)
-        close = np.maximum(counts - 1, 0)
-        d2[rows, close] = d1[rows, 0] - d1[rows, close]
-        return d2
-
-    def amg_contour_integrals(self, wIms, counts):
-        """
-        Green's theorem area and centroid on padded, closed image contours.
-
-        Vectorized across epochs: unused slots repeat each epoch's first
-        contour point so padded edges are zero-length and do not contribute.
-
-        Parameters
-        ----------
-        wIms : ndarray, dtype=complex, shape (N_times, N_pts, 2)
-            Plus/minus image contours in arcsec (complex East + i North).
-        counts : ndarray, dtype=int, shape (N_times,)
-            Valid sample count per epoch (``<= N_pts``).
-
-        Returns
-        -------
-        images : ndarray, shape (N_times, 2, 2)
-            Image centroids ``[+, -]`` x ``[E, N]`` in arcsec.
-        amps : ndarray, shape (N_times, 2)
-            Signed image amplifications ``[+, -]``.
-        """
-        n_times = wIms.shape[0]
-        n_pts = wIms.shape[1]
-        if n_times == 0 or n_pts == 0:
-            return (np.zeros((n_times, 2, 2), dtype=float),
-                    np.zeros((n_times, 2), dtype=float))
-
-        # Pad unused samples by repeating the first contour point.
-        samp = np.arange(n_pts)
-        valid_pts = samp[None, :] < counts[:, None]
-        plus = np.where(valid_pts, wIms[:, :, 0], wIms[:, 0:1, 0])
-        minus = np.where(valid_pts, wIms[:, :, 1], wIms[:, 0:1, 1])
-        # Close each contour by appending the same first point.
-        plus = np.concatenate([plus, plus[:, 0:1]], axis=1)
-        minus = np.concatenate([minus, minus[:, 0:1]], axis=1)
-
-        px = plus.real
-        py = plus.imag
-        qx = minus.real
-        qy = minus.imag
-
-        d1_px = np.diff(px, axis=1)
-        d1_py = np.diff(py, axis=1)
-        d1_qx = np.diff(qx, axis=1)
-        d1_qy = np.diff(qy, axis=1)
-
-        d2_px = self.amg_wrap_d2(d1_px, counts)
-        d2_py = self.amg_wrap_d2(d1_py, counts)
-        d2_qx = self.amg_wrap_d2(d1_qx, counts)
-        d2_qy = self.amg_wrap_d2(d1_qy, counts)
-
-        # Eq 9 areas Bozza 2021.
-        Aplus = -0.5 * np.sum((px[:, :-1] + px[:, 1:]) * d1_py, axis=1)
-        Aminus = 0.5 * np.sum((qx[:, :-1] + qx[:, 1:]) * d1_qy, axis=1)
-
-        # Parabolic terms use n-1 angle spacings of 2π/n; zero unused slots.
-        n_parab = n_pts - 1
-        n_pts_f = np.maximum(counts, 1).astype(float)
-        two_pi = 2.0 * np.pi
-        if n_parab > 0:
-            parab_valid = np.arange(n_parab)[None, :] < (counts[:, None] - 1)
-            d_angles = np.where(parab_valid, two_pi / n_pts_f[:, None], 0.0)
-        else:
-            d_angles = np.zeros((n_times, 0), dtype=float)
-        d_angles3 = d_angles ** 3
-
-        wp_d1_d2_i_plus = (
-            d1_px[:, :-1] * d2_py[:, :-1] - d1_py[:, :-1] * d2_px[:, :-1]
-        )
-        wp_d1_d2_ip1_plus = (
-            d1_px[:, 1:] * d2_py[:, 1:] - d1_py[:, 1:] * d2_px[:, 1:]
-        )
-        wp_d1_d2_i_minus = (
-            d1_qx[:, :-1] * d2_qy[:, :-1] - d1_qy[:, :-1] * d2_qx[:, :-1]
-        )
-        wp_d1_d2_ip1_minus = (
-            d1_qx[:, 1:] * d2_qy[:, 1:] - d1_qy[:, 1:] * d2_qx[:, 1:]
-        )
-
-        # Eq 10 areas Bozza 2021.
-        Aplus += (1.0 / 24.0) * np.sum(
-            d_angles3 * (wp_d1_d2_i_plus + wp_d1_d2_ip1_plus), axis=1
-        )
-        Aminus += -(1.0 / 24.0) * np.sum(
-            d_angles3 * (wp_d1_d2_i_minus + wp_d1_d2_ip1_minus), axis=1
-        )
-
-        # Eq 19 Bozza centroids.
-        Cplus_x = 0.125 * np.sum((px[:, :-1] + px[:, 1:]) ** 2 * d1_py, axis=1)
-        Cplus_y = -0.125 * np.sum((py[:, :-1] + py[:, 1:]) ** 2 * d1_px, axis=1)
-        Cminus_x = -0.125 * np.sum((qx[:, :-1] + qx[:, 1:]) ** 2 * d1_qy, axis=1)
-        Cminus_y = 0.125 * np.sum((qy[:, :-1] + qy[:, 1:]) ** 2 * d1_qx, axis=1)
-
-        # Eq 21 and 22 Bozza 2021. Parabolic corrections.
-        Cplus_x += (1.0 / 24.0) * np.sum(
-            d_angles3 * (
-                (d1_px[:, :-1] ** 2 * d1_py[:, :-1]
-                 + px[:, :-2] * wp_d1_d2_i_plus)
-                + (d1_px[:, 1:] ** 2 * d1_py[:, 1:]
-                   + px[:, 1:-1] * wp_d1_d2_ip1_plus)
-            ),
-            axis=1,
-        )
-        Cplus_y += -(1.0 / 24.0) * np.sum(
-            d_angles3 * (
-                (d1_py[:, :-1] ** 2 * d1_px[:, :-1]
-                 + py[:, :-2] * wp_d1_d2_i_plus)
-                + (d1_py[:, 1:] ** 2 * d1_px[:, 1:]
-                   + py[:, 1:-1] * wp_d1_d2_ip1_plus)
-            ),
-            axis=1,
-        )
-        Cminus_x += -(1.0 / 24.0) * np.sum(
-            d_angles3 * (
-                (d1_qx[:, :-1] ** 2 * d1_qy[:, :-1]
-                 + qx[:, :-2] * wp_d1_d2_i_minus)
-                + (d1_qx[:, 1:] ** 2 * d1_qy[:, 1:]
-                   + qx[:, 1:-1] * wp_d1_d2_ip1_minus)
-            ),
-            axis=1,
-        )
-        Cminus_y += (1.0 / 24.0) * np.sum(
-            d_angles3 * (
-                (d1_qy[:, :-1] ** 2 * d1_qx[:, :-1]
-                 + qy[:, :-2] * wp_d1_d2_i_minus)
-                + (d1_qy[:, 1:] ** 2 * d1_qx[:, 1:]
-                   + qy[:, 1:-1] * wp_d1_d2_ip1_minus)
-            ),
-            axis=1,
-        )
-
-        abs_Aplus = np.abs(Aplus)
-        abs_Aminus = np.abs(Aminus)
-        img_pos_plus = np.array([Cplus_x / abs_Aplus, Cplus_y / abs_Aplus])
-        img_pos_minus = np.array(
-            [Cminus_x / abs_Aminus, Cminus_y / abs_Aminus]
-        )
-
-        images = np.zeros((n_times, 2, 2), dtype=float)
-        images[:, 0, :] = img_pos_plus.T
-        images[:, 1, :] = img_pos_minus.T
-
-        inv_area = 1.0 / (np.pi * self.radiusS ** 2)
-        # Signed image areas (minus-image orientation can be negative). The
-        # physical magnification is their sum; a per-epoch flip keeps that
-        # sum positive so AMG can mix with CI without a global sign flip.
-        amps = np.stack((Aplus * inv_area, Aminus * inv_area), axis=1)
-        tot = amps.sum(axis=1, keepdims=True)
-        amps = np.where(tot < 0.0, -amps, amps)
-        return images, amps
-
-    def amg_numpy(self, w_center, z1, radiusS, dtheta, maxsamps):
-        """
-        Vectorized adaptive-mesh AMG contour over epochs (NumPy host path).
-
-        Adaptive stepping is sequential in angle but independent across
-        times. Unused slots stay empty until filled; padding repeats the
-        first contour point (not 0 or NaN — those create spikes to the
-        origin or poison the contour sums). Contour-artifact fix from
-        ``c913b38`` / ``e1bc6ec``: when the lens crosses the source limb,
-        ``|det J| -> 0`` and a purely adaptive step can burn ``maxsamps``
-        before theta reaches ``2π``. Closing that truncated path made a
-        sharp fake dip in magnification. Floor the step so the remaining
-        angle always fits in the remaining samples.
-
-        Parameters
-        ----------
-        w_center : array_like, complex, shape (N_times,)
-            Source centers in thetaE units (complex East + i North).
-        z1 : array_like, complex, shape (N_times,)
-            Lens positions in the same units.
+        zeta_c : array_like, complex, shape (N_times,)
+            Source centres relative to the lens in Einstein radii
+            (complex East + i North).
         radiusS : float
             Source radius in Einstein radii.
-        dtheta : float
-            Base angular step ``2π / n_outline``.
-        maxsamps : int
-            Fixed limb buffer length (unused slots padded later).
 
         Returns
         -------
         images : ndarray, shape (N_times, 2, 2)
-            Image centroids in arcsec.
+            Image centroids relative to the lens (Einstein radii).
         amps : ndarray, shape (N_times, 2)
-            Image amplifications.
+            Signed image amplifications.
         """
-        w_center = np.asarray(w_center, dtype=complex)
-        z1 = np.asarray(z1, dtype=complex)
-        n_times = w_center.size
-        if n_times == 0:
-            return (
-                np.zeros((0, 2, 2), dtype=float),
-                np.zeros((0, 2), dtype=float),
-            )
-
-        # Shape = N_times, maxsamps, [+/-]
-        # Zeros (not empty): unused slots before max_n must not hold
-        # garbage that overflows when converting thetaE -> arcsec.
-        wIms = np.zeros((n_times, maxsamps, 2), dtype=complex)
-        counts = np.zeros(n_times, dtype=int)
-        theta = np.zeros(n_times, dtype=float)
-        active = np.ones(n_times, dtype=bool)
-        two_pi = 2.0 * np.pi
-
-        for k in range(maxsamps):
-            idx = np.flatnonzero(active)
-            if idx.size == 0:
-                break
-
-            w_now = w_center[idx] + radiusS * np.exp(1j * theta[idx])
-            zp, zm = self.amg_im_pos_all(w_now, z1[idx])
-            wIms[idx, k, 0] = zp
-            wIms[idx, k, 1] = zm
-            counts[idx] = k + 1
-
-            n_steps_left = maxsamps - k - 1
-            if n_steps_left <= 0:
-                break
-
-            detp = np.abs(self.amg_detJac(zp, z1[idx]))
-            detm = np.abs(self.amg_detJac(zm, z1[idx]))
-            natural_step = dtheta * np.minimum(detp, detm)
-            remaining = np.maximum(two_pi - theta[idx], 0.0)
-            min_step = remaining / n_steps_left
-            theta[idx] += np.maximum(natural_step, min_step)
-            active[idx] = theta[idx] < two_pi
-
-        max_n = int(np.max(counts)) if n_times else 0
-        if max_n == 0:
-            return (
-                np.zeros((n_times, 2, 2), dtype=float),
-                np.zeros((n_times, 2), dtype=float),
-            )
-
-        # Convert thetaE units back to arcsec when thetaE_amp is present.
-        if hasattr(self, "thetaE_amp"):
-            wIms = (wIms[:, :max_n, :] * self.thetaE_amp) * 1e-3
-        else:
-            wIms = wIms[:, :max_n, :]
-
-        return self.amg_contour_integrals(wIms, counts)
+        return fspl_contour.adaptive_limb_images_amps(
+            zeta_c, radiusS, n_init=self.amg_n_init, tol=self.amg_tol,
+            max_pts=self.amg_max_pts)
 
     def get_all_arrays_amg(self, t, filt_idx=0):
         """
         Obtain the image and amplitude arrays for each t via adaptive mesh.
 
-        Adaptive mesh grid creates more boundary points around the source only
-        when it enters the Einstein ring. Ported host speedup from
-        ``origin/fspl_speedup`` ``c913b38`` / ``origin/jax_dex`` ``e1bc6ec``.
+        The limb sampling is refined where the parabolic contour
+        approximation is poor, i.e. where the source limb passes close to
+        the lens.
 
         Parameters
         ----------
@@ -26210,49 +25727,20 @@ class FSPL(PSPL):
 
         Notes
         -----
-        Uses Green's theorem (Bozza et al. 2021) with parabolic corrections.
-        Adaptive sampling is sequential in angle but independent across times.
-        Unused contour slots repeat that epoch's first point (zero-length
-        padded edges). Source/lens astrometry include parallax via
-        ``filt_idx`` / ``obsLocation[filt_idx]``.
+        Uses Green's theorem (Bozza et al. 2021) with parabolic corrections
+        from the analytic limb derivatives and error-controlled limb
+        refinement (:mod:`bagle.fspl_contour`). The source centre includes
+        parallax via ``filt_idx`` / ``obsLocation[filt_idx]``.
         """
         t = np.atleast_1d(np.asarray(t, dtype=float))
-        n_times = t.size
-        if n_times == 0:
-            return (
-                np.zeros((0, 2, 2), dtype=float),
-                np.zeros((0, 2), dtype=float),
-            )
 
-        radiusS = self.source_radius_thetaE_units()
-        maxsamps = 1000
-        if self.n_outline >= maxsamps / 4:
-            maxsamps = maxsamps * 5
-        dtheta = 2.0 * np.pi / self.n_outline
+        # Source centre relative to the lens (Einstein radii).
+        zeta_c = self.get_fspl_source_center(t, filt_idx=filt_idx)
 
-        # Include parallax (and the same reference frame) as the rest of
-        # the model. Linear muS*(t-t0) omitted source parallax and put the
-        # limb crossing at the wrong time (c913b38).
-        if hasattr(self, "thetaE_amp"):
-            scale = 1e3 / self.thetaE_amp
-            lens_asts = (
-                self.get_lens_astrometry(t, filt_idx=filt_idx) * scale
-            )
-            xS_unl = (
-                self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
-                * scale
-            )
-        else:
-            lens_asts = self.get_lens_astrometry(t, filt_idx=filt_idx)
-            xS_unl = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
+        images, amps = self.amg_numpy(zeta_c,
+                                      self.source_radius_thetaE_units())
 
-        lens_asts = np.atleast_2d(np.asarray(lens_asts, dtype=float))
-        xS_unl = np.atleast_2d(np.asarray(xS_unl, dtype=float))
-
-        z1 = lens_asts[:, 0] + 1j * lens_asts[:, 1]
-        w_center = xS_unl[:, 0] + 1j * xS_unl[:, 1]
-
-        return self.amg_numpy(w_center, z1, radiusS, dtheta, maxsamps)
+        return self.fspl_images_to_sky(images, t, filt_idx=filt_idx), amps
 
     def im_pos1(self, w, z1):
         z1 = z1[0] + 1j * z1[1]
@@ -26273,8 +25761,8 @@ class FSPL(PSPL):
         Dispatch FSPL image/amplification arrays with mixed-|u| host path.
 
         Uniform contour integration when ``|u| >= 2 rho``; adaptive mesh
-        only near the Einstein ring. Photometry-only models always use CI.
-        One preallocated output when a light curve mixes both regimes.
+        when the source limb can pass close to the lens. One preallocated
+        output when a light curve mixes both regimes.
 
         Parameters
         ----------
@@ -26292,29 +25780,27 @@ class FSPL(PSPL):
         """
         t = np.atleast_1d(np.asarray(t, dtype=float))
         u_amp = np.linalg.norm(self.get_u(t, filt_idx=filt_idx), axis=1)
-        if self.astrometryFlag == True:
-            # Adaptive mesh is only needed when a source-boundary point can
-            # sit on the lens (|u| ~ rho). Uniform CI is enough farther away
-            # and is fully vectorized over times.
-            rho = self.source_radius_thetaE_units()
-            close = u_amp < (2.0 * rho)
-            if not np.any(close):
-                self.amgFlag = False
-                return self.get_all_arrays_CI(t, filt_idx)
-            if np.all(close):
-                self.amgFlag = True
-                return self.get_all_arrays_amg(t, filt_idx)
-            far = ~close
-            images = np.empty((t.size, 2, 2), dtype=float)
-            amps = np.empty((t.size, 2), dtype=float)
-            images[far], amps[far] = self.get_all_arrays_CI(t[far], filt_idx)
-            images[close], amps[close] = self.get_all_arrays_amg(
-                t[close], filt_idx
-            )
+
+        # Adaptive mesh is only needed when a source-boundary point can sit
+        # near the lens (|u| ~ rho). Uniform CI is enough farther away.
+        rho = self.source_radius_thetaE_units()
+        close = u_amp < (2.0 * rho)
+        if not np.any(close):
+            self.amgFlag = False
+            return self.get_all_arrays_CI(t, filt_idx)
+        if np.all(close):
             self.amgFlag = True
-            return images, amps
-        self.amgFlag = False
-        return self.get_all_arrays_CI(t, filt_idx)
+            return self.get_all_arrays_amg(t, filt_idx)
+
+        far = ~close
+        images = np.empty((t.size, 2, 2), dtype=float)
+        amps = np.empty((t.size, 2), dtype=float)
+        images[far], amps[far] = self.get_all_arrays_CI(t[far], filt_idx)
+        images[close], amps[close] = self.get_all_arrays_amg(
+            t[close], filt_idx
+        )
+        self.amgFlag = True
+        return images, amps
 
     def get_u(self, t, filt_idx=0):
         """
@@ -26864,7 +26350,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         fL = fS * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
 
         # Calculate the total flux from all lensed source images and the lens itself.
-        amp_arr = np.abs(amp_arr)
+        # Signed amps: with the lens inside the source the minus "image" is
+        # the hole of the ring image and must be subtracted.
         ftot = fL + np.sum(fS * amp_arr, axis=1)
         pos = np.sum(image_arr * amp_arr[:, :, np.newaxis] * fS, axis=1)
 

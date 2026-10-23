@@ -2,7 +2,9 @@
 
 The JAX kernel uses a static ``n_outline`` limb, closed-form point-lens
 images, and Bozza et al. (2021) contour integrals (area, centroid, parabolic
-correction) as ``jnp`` reductions, ``vmap``-friendly over epochs. Traced
+corrections from the analytic limb derivatives, as in VBMicrolensing and
+:mod:`bagle.fspl_contour`) as ``jnp`` reductions, ``vmap``-friendly over
+epochs. Traced
 ``fspl_log_likely_*`` helpers support milestone (c) parameter-class wiring;
 host NumPy wrappers remain for parity and notebooks.
 """
@@ -29,250 +31,130 @@ from bagle.jax_physics import (
 _U_EPS = 1e-15
 
 
-def point_lens_images_from_u(u_vec, eps=_U_EPS):
+def _point_lens_images(zeta, eps=_U_EPS):
     """
-    Closed-form plus/minus point-lens image positions from separation ``u``.
+    Plus and minus images of complex source points (point lens at origin).
 
     Parameters
     ----------
-    u_vec : array_like
-        Source-lens separation in Einstein radii. Trailing axis length 2
-        (East, North). Leading batch dims are arbitrary.
+    zeta : jnp.ndarray, complex
+        Source positions relative to the lens (Einstein radii).
     eps : float, optional
-        Floor on ``|u|`` so the lens map stays finite on the limb.
+        Floor on ``|zeta|`` so the lens map stays finite on the limb.
 
     Returns
     -------
-    u_plus, u_minus : jnp.ndarray
-        Image positions relative to the lens, same shape as ``u_vec``.
+    z_plus, z_minus : jnp.ndarray, complex
+        Image positions, same shape as ``zeta``.
     """
-    u_vec = jnp.asarray(u_vec, dtype=jnp.float64)
+    # Floor |zeta| at the lens singularity (keep the direction).
+    abs_zeta = jnp.abs(zeta)
+    zeta = jnp.where(abs_zeta < eps, eps + 0j, zeta)
+    abs_zeta = jnp.maximum(abs_zeta, eps)
 
-    # Separation amplitude with a floor at the lens singularity.
-    u_amp = jnp.linalg.norm(u_vec, axis=-1, keepdims=True)
-    u_safe = jnp.maximum(u_amp, eps)
-    u_hat = u_vec / u_safe
+    # Lens equation zeta = z - 1 / conj(z).
+    z_plus = zeta * (1.0 + jnp.sqrt(1.0 + 4.0 / abs_zeta ** 2)) / 2.0
+    z_minus = -1.0 / jnp.conj(z_plus)
 
-    # Standard point-lens image radii along ``u_hat``.
-    sqrt_term = jnp.sqrt(u_safe ** 2 + 4.0)
-    u_plus = 0.5 * (u_safe + sqrt_term) * u_hat
-    u_minus = 0.5 * (u_safe - sqrt_term) * u_hat
-
-    return u_plus, u_minus
+    return z_plus, z_minus
 
 
-def _wedge_product(aa, bb):
+def _image_derivative_wedge(z, dzeta, rho, eps=_U_EPS):
     """
-    2-D wedge product ``a_x b_y - a_y b_x`` on the last axis.
+    Image derivative and curvature wedge along a circular source limb.
+
+    JAX port of :func:`bagle.fspl_contour.point_lens_image_derivatives`.
 
     Parameters
     ----------
-    aa, bb : jnp.ndarray
-        Arrays with trailing shape ``(..., 2)``.
-
-    Returns
-    -------
-    wp : jnp.ndarray
-        Wedge product with the last axis removed.
-    """
-    return aa[..., 0] * bb[..., 1] - aa[..., 1] * bb[..., 0]
-
-
-def bozza_contour_integrals(plus, minus, n_outline):
-    """
-    Bozza area and centroid integrals on closed plus/minus image contours.
-
-    Matches host ``get_all_arrays_CI`` geometry (Green + parabolic terms)
-    but keeps signed image areas like host ``amg_contour_integrals`` so the
-    total magnification stays physical when ``|u| < rho``.
-
-    Parameters
-    ----------
-    plus, minus : jnp.ndarray
-        Image contour points in Einstein radii, shape
-        ``(N_times, n_outline, 2)``.
-    n_outline : int
-        Static limb sample count (must match the contour axis).
-
-    Returns
-    -------
-    images : jnp.ndarray, shape (N_times, 2, 2)
-        Image centroids ``[+, -]`` x ``[E, N]`` in Einstein radii.
-    amps : jnp.ndarray, shape (N_times, 2)
-        Signed image amplifications ``[+, -]`` before source-area
-        normalization (raw contour areas). Caller divides by
-        ``pi * rho**2``.
-    """
-    # Close each contour by appending the first point.
-    plus_c = jnp.concatenate([plus, plus[:, :1, :]], axis=1)
-    minus_c = jnp.concatenate([minus, minus[:, :1, :]], axis=1)
-
-    # First and second differences along the closed path.
-    d1_plus = jnp.diff(plus_c, axis=1)
-    d1_minus = jnp.diff(minus_c, axis=1)
-    d2_plus = jnp.diff(
-        jnp.concatenate([d1_plus, d1_plus[:, :1, :]], axis=1), axis=1
-    )
-    d2_minus = jnp.diff(
-        jnp.concatenate([d1_minus, d1_minus[:, :1, :]], axis=1), axis=1
-    )
-
-    # Pairwise sums for trapezoidal Green terms (n_outline closed edges).
-    b2_plus = plus_c[:, :-1, :] + plus_c[:, 1:, :]
-    b2_minus = minus_c[:, :-1, :] + minus_c[:, 1:, :]
-
-    # Uniform source-limb angle step. Bozza parabolic terms use contour
-    # derivatives w.r.t. theta; convert raw diffs with /d_theta and /d_theta^2.
-    # Using bare diffs (host CI) leaves an n-gon area bias that fails A-08
-    # at rho <= 1e-8.
-    d_theta = 2.0 * jnp.pi / float(n_outline)
-    d_angles3 = jnp.full((n_outline,), d_theta ** 3, dtype=jnp.float64)
-
-    z1_plus = d1_plus / d_theta
-    z2_plus = d2_plus / (d_theta ** 2)
-    z1_minus = d1_minus / d_theta
-    z2_minus = d2_minus / (d_theta ** 2)
-
-    # Wrap i+1 so every closed edge gets a parabolic contribution.
-    z1_plus_ip1 = jnp.concatenate(
-        [z1_plus[:, 1:, :], z1_plus[:, :1, :]], axis=1
-    )
-    z2_plus_ip1 = jnp.concatenate(
-        [z2_plus[:, 1:, :], z2_plus[:, :1, :]], axis=1
-    )
-    z1_minus_ip1 = jnp.concatenate(
-        [z1_minus[:, 1:, :], z1_minus[:, :1, :]], axis=1
-    )
-    z2_minus_ip1 = jnp.concatenate(
-        [z2_minus[:, 1:, :], z2_minus[:, :1, :]], axis=1
-    )
-
-    # Parabolic wedge products (Eq. 10 Bozza 2021) on all n edges.
-    wp_i_plus = _wedge_product(z1_plus, z2_plus)
-    wp_ip1_plus = _wedge_product(z1_plus_ip1, z2_plus_ip1)
-    wp_i_minus = _wedge_product(z1_minus, z2_minus)
-    wp_ip1_minus = _wedge_product(z1_minus_ip1, z2_minus_ip1)
-
-    # Contour start points for centroid parabolic terms (length n).
-    pos_plus_i = plus_c[:, :-1, :]
-    pos_plus_ip1 = plus_c[:, 1:, :]
-    pos_minus_i = minus_c[:, :-1, :]
-    pos_minus_ip1 = minus_c[:, 1:, :]
-
-    # Eq. 9 areas (CI y*dx form).
-    a_plus = -0.5 * jnp.sum(b2_plus[:, :, 1] * d1_plus[:, :, 0], axis=1)
-    a_minus = 0.5 * jnp.sum(b2_minus[:, :, 1] * d1_minus[:, :, 0], axis=1)
-
-    # Eq. 10 parabolic area corrections.
-    a_plus = a_plus + (1.0 / 24.0) * jnp.sum(
-        d_angles3 * (wp_i_plus + wp_ip1_plus), axis=1
-    )
-    a_minus = a_minus - (1.0 / 24.0) * jnp.sum(
-        d_angles3 * (wp_i_minus + wp_ip1_minus), axis=1
-    )
-
-    # Eq. 19 centroids.
-    c_plus_x = 0.125 * jnp.sum(b2_plus[:, :, 0] ** 2 * d1_plus[:, :, 1], axis=1)
-    c_plus_y = -0.125 * jnp.sum(
-        b2_plus[:, :, 1] ** 2 * d1_plus[:, :, 0], axis=1
-    )
-    c_minus_x = -0.125 * jnp.sum(
-        b2_minus[:, :, 0] ** 2 * d1_minus[:, :, 1], axis=1
-    )
-    c_minus_y = 0.125 * jnp.sum(
-        b2_minus[:, :, 1] ** 2 * d1_minus[:, :, 0], axis=1
-    )
-
-    # Eqs. 21–22 parabolic centroid corrections (theta-derivative form).
-    c_plus_x = c_plus_x + (1.0 / 24.0) * jnp.sum(
-        d_angles3 * (
-            (z1_plus[:, :, 0] ** 2 * z1_plus[:, :, 1]
-             + pos_plus_i[:, :, 0] * wp_i_plus)
-            + (z1_plus_ip1[:, :, 0] ** 2 * z1_plus_ip1[:, :, 1]
-               + pos_plus_ip1[:, :, 0] * wp_ip1_plus)
-        ),
-        axis=1,
-    )
-    c_plus_y = c_plus_y - (1.0 / 24.0) * jnp.sum(
-        d_angles3 * (
-            (z1_plus[:, :, 1] ** 2 * z1_plus[:, :, 0]
-             + pos_plus_i[:, :, 1] * wp_i_plus)
-            + (z1_plus_ip1[:, :, 1] ** 2 * z1_plus_ip1[:, :, 0]
-               + pos_plus_ip1[:, :, 1] * wp_ip1_plus)
-        ),
-        axis=1,
-    )
-    c_minus_x = c_minus_x - (1.0 / 24.0) * jnp.sum(
-        d_angles3 * (
-            (z1_minus[:, :, 0] ** 2 * z1_minus[:, :, 1]
-             + pos_minus_i[:, :, 0] * wp_i_minus)
-            + (z1_minus_ip1[:, :, 0] ** 2 * z1_minus_ip1[:, :, 1]
-               + pos_minus_ip1[:, :, 0] * wp_ip1_minus)
-        ),
-        axis=1,
-    )
-    c_minus_y = c_minus_y + (1.0 / 24.0) * jnp.sum(
-        d_angles3 * (
-            (z1_minus[:, :, 1] ** 2 * z1_minus[:, :, 0]
-             + pos_minus_i[:, :, 1] * wp_i_minus)
-            + (z1_minus_ip1[:, :, 1] ** 2 * z1_minus_ip1[:, :, 0]
-               + pos_minus_ip1[:, :, 1] * wp_ip1_minus)
-        ),
-        axis=1,
-    )
-
-    # Image centroids; area magnitude in the denominator (host convention).
-    abs_plus = jnp.abs(a_plus)
-    abs_minus = jnp.abs(a_minus)
-    img_plus = jnp.stack([c_plus_x / abs_plus, c_plus_y / abs_plus], axis=-1)
-    img_minus = jnp.stack(
-        [c_minus_x / abs_minus, c_minus_y / abs_minus], axis=-1
-    )
-    images = jnp.stack([img_plus, img_minus], axis=1)
-    areas = jnp.stack([a_plus, a_minus], axis=1)
-
-    return images, areas
-
-
-def fspl_source_outline(u, rho, n_outline):
-    """
-    Static circular source limb in Einstein radii.
-
-    Parameters
-    ----------
-    u : array_like
-        Source-center separations, shape ``(N_times, 2)``.
+    z : jnp.ndarray, complex
+        Image positions relative to the lens.
+    dzeta : jnp.ndarray, complex
+        Limb derivative ``i rho e^{i theta}``.
     rho : float
         Source radius in Einstein radii.
-    n_outline : int
-        Number of equally spaced limb samples.
+    eps : float, optional
+        Floor on ``|J|`` at the critical curve.
 
     Returns
     -------
-    u_outline : jnp.ndarray, shape (N_times, n_outline, 2)
-        Limb separations relative to the lens.
+    dz : jnp.ndarray, complex
+        ``dz/dtheta``.
+    wedge : jnp.ndarray
+        ``x' ^ x''`` (Bozza et al. 2021 Eq. 14 with d2 = -2/z^3).
     """
-    u = jnp.asarray(u, dtype=jnp.float64)
-    u = jnp.atleast_2d(u)
+    inv_zb = 1.0 / jnp.conj(z)
+    abs2 = z.real * z.real + z.imag * z.imag
 
-    # Equally spaced angles on the source circumference.
-    angles = (jnp.arange(n_outline, dtype=jnp.float64) / n_outline) * (
-        2.0 * jnp.pi
-    )
-    dux = rho * jnp.cos(angles)
-    duy = rho * jnp.sin(angles)
-    outline = jnp.stack([dux, duy], axis=1)
+    # Jacobian determinant with a floor at the critical curve.
+    jac = 1.0 - 1.0 / (abs2 * abs2)
+    jac = jnp.where(jnp.abs(jac) < eps, eps, jac)
 
-    # Broadcast center + limb offset.
-    u_outline = u[:, None, :] + outline[None, :, :]
+    # zeta' = z' + conj(z')/zb^2 solved for z'.
+    dz = (dzeta - jnp.conj(dzeta) * inv_zb * inv_zb) / jac
 
-    return u_outline
+    # Eq. 14: x' ^ x'' = [rho^2 + Im(z'^2 zeta' (-2/z^3))] / J.
+    wedge = (rho * rho + (dz * dz * dzeta * (-2.0 / (z * z * z))).imag) / jac
+
+    return dz, wedge
+
+
+def _contour_area_moments(z, dz, wedge, step, parabolic):
+    """
+    Area and centroid moments of closed, uniformly sampled contours.
+
+    JAX port of :func:`bagle.fspl_contour.contour_area_moments` for a static
+    limb (no padding). Trapezoid sums (Bozza et al. 2021 Eqs. 9, 19) plus
+    parabolic corrections from the analytic derivatives (Eqs. 10, 21-22 with
+    1/2 on the ``x'^2 y'`` terms).
+
+    Parameters
+    ----------
+    z, dz : jnp.ndarray, complex, shape (N_times, n_outline)
+        Contour samples and their limb-angle derivatives.
+    wedge : jnp.ndarray, shape (N_times, n_outline)
+        ``x' ^ x''`` at each sample.
+    step : float
+        Uniform limb-angle step ``2 pi / n_outline``.
+    parabolic : jnp.ndarray of bool, shape (N_times,)
+        Epochs that get the parabolic corrections; the rest use the
+        trapezoid sums only.
+
+    Returns
+    -------
+    area, mom_x, mom_y : jnp.ndarray, shape (N_times,)
+        ``oint x dy``, ``1/2 oint x^2 dy`` and ``-1/2 oint y^2 dx``.
+    """
+    x, y = z.real, z.imag
+    xd, yd = dz.real, dz.imag
+
+    # Next sample on the closed contour.
+    xn = jnp.roll(x, -1, axis=1)
+    yn = jnp.roll(y, -1, axis=1)
+
+    # Trapezoid terms.
+    sx, sy = x + xn, y + yn
+    area = 0.5 * jnp.sum(sx * (yn - y), axis=1)
+    mom_x = jnp.sum(sx * sx * (yn - y), axis=1) / 8.0
+    mom_y = -jnp.sum(sy * sy * (xn - x), axis=1) / 8.0
+
+    # Parabolic integrands at each sample; every segment uses both ends.
+    f_a = wedge
+    f_x = 0.5 * xd * xd * yd + x * wedge
+    f_y = 0.5 * yd * yd * xd - y * wedge
+    h3 = jnp.where(parabolic, step ** 3 / 24.0, 0.0)
+
+    area = area + h3 * jnp.sum(f_a + jnp.roll(f_a, -1, axis=1), axis=1)
+    mom_x = mom_x + h3 * jnp.sum(f_x + jnp.roll(f_x, -1, axis=1), axis=1)
+    mom_y = mom_y - h3 * jnp.sum(f_y + jnp.roll(f_y, -1, axis=1), axis=1)
+
+    return area, mom_x, mom_y
 
 
 @partial(jax.jit, static_argnames=("n_outline",))
 def fspl_images_amps(u, rho, n_outline):
     """
-    FSPL image centroids and signed amplifications (static Bozza limb).
+    FSPL image centroids and signed amplifications (static limb).
 
     Parameters
     ----------
@@ -289,29 +171,37 @@ def fspl_images_amps(u, rho, n_outline):
     images : jnp.ndarray, shape (N_times, 2, 2)
         Image centroids ``[+, -]`` x ``[E, N]`` relative to the lens.
     amps : jnp.ndarray, shape (N_times, 2)
-        Signed image amplifications; total mag is their sum (flipped if
-        needed so the sum is non-negative).
+        Signed image amplifications. The minus entry is negative when the
+        lens is inside the source (hole of the ring image); total
+        magnification is their sum.
     """
-    u = jnp.asarray(u, dtype=jnp.float64)
-    u = jnp.atleast_2d(u)
+    u = jnp.atleast_2d(jnp.asarray(u, dtype=jnp.float64))
     rho = jnp.asarray(rho, dtype=jnp.float64)
 
-    # Limb in the source plane, then closed-form point-lens images.
-    u_outline = fspl_source_outline(u, rho, n_outline)
-    plus, minus = point_lens_images_from_u(u_outline)
+    # Source limb (complex E + iN) and its limb-angle derivative.
+    step = 2.0 * jnp.pi / n_outline
+    theta = jnp.arange(n_outline, dtype=jnp.float64) * step
+    e_it = jnp.exp(1j * theta)[None, :]
+    zeta = (u[:, 0] + 1j * u[:, 1])[:, None] + rho * e_it
+    dzeta = 1j * rho * e_it
 
-    # Bozza Green + parabolic integrals on the image contours.
-    images, areas = bozza_contour_integrals(plus, minus, n_outline)
+    # The parabolic expansion fails when a limb sample lies within one step
+    # of the lens (|J| -> 0 there); those epochs use the trapezoid sums.
+    parabolic = ~jnp.any(jnp.abs(zeta) < rho * step, axis=1)
 
-    # Normalize by source area; keep signs (AMG convention).
-    inv_area = 1.0 / (jnp.pi * rho ** 2)
-    amps = areas * inv_area
+    images = []
+    amps = []
+    src_area = jnp.pi * rho ** 2
 
-    # Flip both images if the epoch total is negative.
-    tot = jnp.sum(amps, axis=1, keepdims=True)
-    amps = jnp.where(tot < 0.0, -amps, amps)
+    # Plus image has parity +1, minus image parity -1.
+    for z, parity in zip(_point_lens_images(zeta), (1.0, -1.0)):
+        dz, wedge = _image_derivative_wedge(z, dzeta, rho)
+        area, mom_x, mom_y = _contour_area_moments(z, dz, wedge, step,
+                                                   parabolic)
+        images.append(jnp.stack([mom_x / area, mom_y / area], axis=-1))
+        amps.append(parity * area / src_area)
 
-    return images, amps
+    return jnp.stack(images, axis=1), jnp.stack(amps, axis=1)
 
 
 @partial(jax.jit, static_argnames=("n_outline",))
@@ -335,19 +225,16 @@ def fspl_magnification_centroid(u, rho, n_outline):
         Total finite-source magnification.
     centroid : jnp.ndarray, shape (N_times, 2)
         Flux-weighted image centroid relative to the lens (Einstein radii).
-        Uses ``|amp|`` weights, matching host unresolved astrometry.
+        Uses signed image weights, matching host unresolved astrometry.
     """
     images, amps = fspl_images_amps(u, rho, n_outline)
 
     # Total magnification is the signed image sum.
     mag = jnp.sum(amps, axis=1)
 
-    # Unresolved centroid with absolute image weights.
-    abs_amps = jnp.abs(amps)
-    weight = jnp.sum(abs_amps, axis=1)
-    centroid = jnp.sum(
-        images * abs_amps[:, :, None], axis=1
-    ) / weight[:, None]
+    # Unresolved centroid with signed image weights (the ring's hole is
+    # subtracted when the lens is inside the source).
+    centroid = jnp.sum(images * amps[:, :, None], axis=1) / mag[:, None]
 
     return mag, centroid
 
@@ -792,11 +679,12 @@ def fspl_astrometry(
     # Lens flux clipped at zero; photometry keeps the unclipped blend.
     fS = mag2flux_jax(mag_src)
     fL = lens_flux_for_astrometry_jax(fS, b_sff)
-    abs_amps = jnp.abs(amps)
-    ftot = fL + jnp.sum(fS * abs_amps, axis=1)
+    # Signed image weights (the ring's hole is subtracted when the lens is
+    # inside the source).
+    ftot = fL + jnp.sum(fS * amps, axis=1)
 
     # Flux-weighted centroid of lensed images plus luminous lens.
-    pos = jnp.sum(img_sky * (fS * abs_amps)[:, :, None], axis=1)
+    pos = jnp.sum(img_sky * (fS * amps)[:, :, None], axis=1)
     pos = pos + fL * xL
     pos = pos / ftot[:, None]
 

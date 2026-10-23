@@ -19,6 +19,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from tensorflow_probability.substrates.jax.distributions.beta import Beta
 
 pytest.importorskip("VBMicrolensing")
 pytest.importorskip("jax")
@@ -31,8 +32,10 @@ from astropy.coordinates import SkyCoord
 import astropy.units as u
 
 from bagle import frame_convert as fc
+from bagle import fspl_contour
 from bagle import model
-from bagle.jax.fspl import fspl_magnification, fspl_magnification_centroid
+from bagle.jax.fspl import (fspl_images_amps, fspl_magnification,
+                            fspl_magnification_centroid)
 
 # ---------------------------------------------------------------------------
 # Paths and tolerances
@@ -103,17 +106,12 @@ def _kernel_model(u0, rho, t0=0.0, tE=10.0):
     Returns
     -------
     mod_njx : model.FSPL_Phot_noPar_Param1
-        ``piE`` only sets the sky orientation of ``u`` (no parallax).
-
-    Notes
-    -----
-    ``piE`` points East so the trajectory lies along the JAX kernel's
-    first limb-sample axis. Other orientations currently give up to ~10x
-    larger centroid residuals vs VBM (static limb sampling is not
-    rotation invariant).
+        ``piE`` only sets the sky orientation of ``u`` (no parallax); it is
+        deliberately off-axis so the comparisons exercise rotation
+        invariance.
     """
     mod_njx = model.FSPL_Phot_noPar_Param1(
-        t0, u0, tE, 1.0, 0.0, rho, [1.0], [18.0], n_outline=N_OUTLINE)
+        t0, u0, tE, 0.6, 0.8, rho, [1.0], [18.0], n_outline=N_OUTLINE)
 
     return mod_njx
 
@@ -137,11 +135,11 @@ def _vbm_shift_uhat(vbm, u_amp, rho):
         ``astrox1 - u`` (Einstein radii).
     """
     out = []
-    for ui in np.atleast_1d(u_amp):
-        vbm.ESPLMag2(max(float(ui), 1e-9), float(rho))
+    for ui in u_amp:
+        vbm.ESPLMag2(max(ui, 1e-9), rho)
         out.append(vbm.astrox1 - ui)
 
-    return np.asarray(out, dtype=float)
+    return np.array(out)
 
 
 def _jax_shift_uhat(u_vec, rho, n_outline=N_OUTLINE):
@@ -164,8 +162,9 @@ def _jax_shift_uhat(u_vec, rho, n_outline=N_OUTLINE):
     shift_vec : ndarray, shape (N, 2)
         Full 2D shift relative to the source.
     """
-    u_vec = np.asarray(u_vec, dtype=float)
     _mag, cen = fspl_magnification_centroid(u_vec, rho, n_outline)
+
+    # JAX array -> NumPy.
     shift_vec = np.asarray(cen) - u_vec
     u_amp = np.linalg.norm(u_vec, axis=1)
     u_hat = u_vec / np.maximum(u_amp[:, None], 1e-15)
@@ -191,7 +190,6 @@ def _limb_masks(u_amp, rho, band=LIMB_BAND):
     -------
     outside, near_limb, inside : ndarray of bool
     """
-    u_amp = np.asarray(u_amp, dtype=float)
     outside = u_amp > (1.0 + band) * rho
     inside = u_amp < (1.0 - band) * rho
     near_limb = ~(outside | inside)
@@ -201,15 +199,12 @@ def _limb_masks(u_amp, rho, band=LIMB_BAND):
 
 def _max_frac_diff(a, ref):
     """Maximum |a/ref - 1|."""
-    a = np.asarray(a, dtype=float)
-    ref = np.asarray(ref, dtype=float)
-
-    return float(np.max(np.abs(a / ref - 1.0)))
+    return np.max(np.abs(a / ref - 1.0))
 
 
 def _max_abs_diff(a, ref):
     """Maximum |a - ref|."""
-    return float(np.max(np.abs(np.asarray(a) - np.asarray(ref))))
+    return np.max(np.abs(a - ref))
 
 
 def _save_phot_compare(t, a_bagle, a_vbm, title, outfile, t0=None):
@@ -229,7 +224,6 @@ def _save_phot_compare(t, a_bagle, a_vbm, title, outfile, t0=None):
     t0 : float, optional
         Reference time for the x-axis.
     """
-    t = np.asarray(t, dtype=float)
     x = t - t0 if t0 is not None else t
     xlab = r"$t - t_0$" if t0 is not None else r"$t$"
     dA = a_bagle - a_vbm
@@ -277,7 +271,6 @@ def _save_astrom_compare(t, shift_bagle, shift_vbm, u_amp, rho, title, outfile,
     t0 : float, optional
         Reference time.
     """
-    t = np.asarray(t, dtype=float)
     x = t - t0 if t0 is not None else t
     xlab = r"$t - t_0$" if t0 is not None else r"$t$"
     outside, near_limb, inside = _limb_masks(u_amp, rho)
@@ -311,7 +304,7 @@ def _save_astrom_compare(t, shift_bagle, shift_vbm, u_amp, rho, title, outfile,
     return None
 
 
-def _njx_photastrom_nopar(u0, rho):
+def _get_model_Lee2010(u0, rho, jax=False):
     """
     njx ``FSPL_PhotAstrom_noPar_Param1`` with chosen ``u0`` and ``rho``.
 
@@ -328,21 +321,31 @@ def _njx_photastrom_nopar(u0, rho):
     -------
     mod_njx : model.FSPL_PhotAstrom_noPar_Param1
     """
-    mL, t0, dL, dL_dS = 10.0, 57000.0, 4000.0, 0.5
-    xS0 = np.array([0.0])
-    b_sff, mag_src = np.array([1.0]), np.array([18.0])
+    t0 = 10.0 # days
+    tE = 100.0 # days
+    thetaE = 3.0 # mas
+    piS = 0.1 # mas
+    piE_E = 0.1 
+    piE_N = 0.0
+    xS0_E = np.array([0.0])
+    xS0_N = np.array([0.0])
+    muS_E = 3.0
+    muS_N = 0.0
+    radiusS = rho * thetaE * 1e-3 # arcsec
+    b_sff = np.array([1.0])
+    mag_src = np.array([18.0])
 
-    # thetaE (mas) from the PSPL twin.
-    pspl = model.PSPL_PhotAstrom_noPar_Param1(
-        mL, t0, 0.1, dL, dL_dS, xS0, xS0, 0.0, 0.0, 3.0, 0.0, b_sff, mag_src)
-    theta_e = pspl.thetaE_amp
+    if jax:
+        mod = model.FSPL_PhotAstrom_noPar_Param2(
+            t0, u0, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+            radiusS, b_sff, mag_src, n_outline=N_OUTLINE)
+    else:
+        mod = model.FSPL_PhotAstrom_noPar_Param2(
+            t0, u0, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+            radiusS, b_sff, mag_src, n_outline=N_OUTLINE)
 
-    # beta (mas) and radiusS (arcsec) for the requested u0 and rho.
-    mod_njx = model.FSPL_PhotAstrom_noPar_Param1(
-        mL, t0, -u0 * theta_e, dL, dL_dS, xS0, xS0, 0.0, 0.0, 3.0, 0.0,
-        rho * theta_e * 1e-3, b_sff, mag_src, n_outline=N_OUTLINE)
 
-    return mod_njx
+    return mod
 
 
 def _contour_area_centroid(x, y):
@@ -360,8 +363,6 @@ def _contour_area_centroid(x, y):
         Signed area (positive for counter-clockwise).
     centroid : ndarray, shape (2,)
     """
-    x = np.asarray(x, dtype=float)
-    y = np.asarray(y, dtype=float)
     x_next = np.roll(x, -1)
     y_next = np.roll(y, -1)
 
@@ -400,7 +401,6 @@ def _vbm_resolved_images(vbm, u_vec, rho):
     contours : list of list of (int, ndarray, ndarray)
         Per epoch, ``(parity, x, y)`` for each returned contour.
     """
-    u_vec = np.asarray(u_vec, dtype=float)
     n_t = len(u_vec)
     src_area = np.pi * rho ** 2
 
@@ -409,15 +409,15 @@ def _vbm_resolved_images(vbm, u_vec, rho):
     contours = []
 
     for i in range(n_t):
-        cs = vbm.MultiImageContours(float(u_vec[i, 0]), float(u_vec[i, 1]),
-                                    float(rho))
+        cs = vbm.MultiImageContours(u_vec[i, 0], u_vec[i, 1], rho)
         epoch = []
         # Accumulate weight and first moment per image: [plus, minus].
         w_sum = np.zeros(2)
         mom_sum = np.zeros((2, 2))
         for c in cs:
-            x = np.asarray(c[0], dtype=float)
-            y = np.asarray(c[1], dtype=float)
+            # VBM returns Python lists.
+            x = np.array(c[0])
+            y = np.array(c[1])
             parity = 1 if np.median(np.hypot(x, y)) > 1.0 else -1
             area, cen = _contour_area_centroid(x, y)
             w = parity * area / src_area
@@ -448,10 +448,9 @@ def _along_uhat(vec, u_vec):
     -------
     along : ndarray, shape (..., N_times)
     """
-    u_vec = np.asarray(u_vec, dtype=float)
     u_hat = u_vec / np.linalg.norm(u_vec, axis=1)[:, None]
 
-    return np.sum(np.asarray(vec) * u_hat, axis=-1)
+    return np.sum(vec * u_hat, axis=-1)
 
 
 def _shade_source_crossing(ax, x, u_amp, rho):
@@ -587,9 +586,11 @@ def _save_image_snapshots(u_vec, rho, idx, outline_b, pos_b, pos_v, contours_v,
     outfile : path-like
     """
     phi = np.linspace(0.0, 2.0 * np.pi, 200)
-    fig, axes = plt.subplots(1, len(idx), figsize=(4.2 * len(idx), 4.4))
+    fig, axes = plt.subplots(1, len(idx), figsize=(4.2 * len(idx), 4.4),
+                             squeeze=False)
+    axes = axes[0]
 
-    for ax, i in zip(np.atleast_1d(axes), idx):
+    for ax, i in zip(axes, idx):
         # Einstein ring, lens and unlensed source outline.
         ax.plot(np.cos(phi), np.sin(phi), color="0.7", lw=0.8)
         ax.plot(0.0, 0.0, "k+", ms=8)
@@ -616,11 +617,160 @@ def _save_image_snapshots(u_vec, rho, idx, outline_b, pos_b, pos_v, contours_v,
                      fontsize=9)
         ax.set_aspect("equal")
         ax.set_xlabel(r"$x_E$ ($\theta_E$)")
-    np.atleast_1d(axes)[0].set_ylabel(r"$x_N$ ($\theta_E$)")
+    axes[0].set_ylabel(r"$x_N$ ($\theta_E$)")
 
     fig.suptitle(title + "\nsolid = VBM contours, dashed = BAGLE outline; "
                  "o = VBM centroid, x = BAGLE centroid; blue = plus, red = minus",
                  fontsize=9)
+    fig.tight_layout()
+    fig.savefig(outfile, dpi=120)
+    plt.close(fig)
+
+    return None
+
+
+def _trajectory_frame(u_vec):
+    """
+    Unit vectors along the lens motion (x) and toward the u0 side (y).
+
+    Matches the Lee et al. (2010) Figs. 4-5 frame: the lens moves in +x
+    relative to the source (so ``delta theta_x > 0`` before ``t0``), and y is
+    along ``u`` at closest approach (lens at ``y = -u0``, so a positive
+    ``u0`` gives a positive ``delta theta_y``).
+
+    Parameters
+    ----------
+    u_vec : array_like, shape (N_times, 2)
+        Rectilinear source - lens separation (Einstein radii, E/N).
+
+    Returns
+    -------
+    x_hat, y_hat : ndarray, shape (2,)
+    """
+    # u = source - lens, so the lens moves along -du/dt.
+    x_hat = u_vec[0] - u_vec[-1]
+    x_hat = x_hat / np.linalg.norm(x_hat)
+
+    # Component of u at closest approach perpendicular to the motion.
+    u_min = u_vec[np.argmin(np.linalg.norm(u_vec, axis=1))]
+    y_hat = u_min - np.dot(u_min, x_hat) * x_hat
+    y_hat = y_hat / np.linalg.norm(y_hat)
+
+    return x_hat, y_hat
+
+
+def _save_lee10_compare(tau, u_vec, rho, a_njx, a_vbm, shift_njx, shift_vbm,
+                        title, outfile, xlim=None, ylim=None):
+    """
+    Plot the 2D centroid shift and the light curve in the Lee et al. layout.
+
+    Left: centroid-shift trajectory (Lee et al. 2010 Fig. 4). Right:
+    ``delta theta_x``, ``delta theta_y`` and ``m - m_base`` vs time (Fig. 5).
+    PSPL is yellow and FSPL green as in Lee et al.; VBM FSPL is the wide gray
+    line under the njx FSPL. Dashed vertical lines mark ``|u| = rho``.
+    Markers on the VBM trajectory (every 0.1 tE) and the lens (every 0.2 tE)
+    are open before ``t0`` and filled after, as in Lee et al. Fig. 4.
+
+    Parameters
+    ----------
+    tau : array_like, shape (N_times,)
+        ``(t - t0) / tE``.
+    u_vec : array_like, shape (N_times, 2)
+        Source - lens separation (Einstein radii, E/N).
+    rho : float
+        Source radius in Einstein radii.
+    a_njx, a_vbm : array_like, shape (N_times,)
+        FSPL magnifications.
+    shift_njx, shift_vbm : array_like, shape (N_times, 2)
+        FSPL centroid shifts relative to the source (Einstein radii, E/N).
+    title : str
+    outfile : path-like
+    xlim, ylim : tuple of float, optional
+        Limits of the 2D panel; default is set from the PSPL shift.
+    """
+    x_hat, y_hat = _trajectory_frame(u_vec)
+    u_amp = np.linalg.norm(u_vec, axis=1)
+
+    # Point-source references (Lee et al. 2010 Eq. 5).
+    a_pspl = (u_amp ** 2 + 2) / (u_amp * np.sqrt(u_amp ** 2 + 4))
+    shift_pspl = u_vec / (u_amp ** 2 + 2)[:, None]
+
+    # Epochs where the lens crosses the source limb (rectilinear motion).
+    b = abs(np.dot(u_vec[np.argmin(u_amp)], y_hat))
+    tau_limb = [-np.sqrt(rho ** 2 - b ** 2), np.sqrt(rho ** 2 - b ** 2)] \
+        if rho > b else []
+
+    # (label, shift [N, 2], magnification, plot style)
+    curves = [
+        ("PSPL", shift_pspl, a_pspl,
+         dict(color="goldenrod", ls="-", lw=1.5)),
+        ("FSPL VBM", shift_vbm, a_vbm,
+         dict(color="k", ls="-", lw=3.5, alpha=0.3)),
+        ("FSPL BAGLE njx", shift_njx, a_njx,
+         dict(color="g", ls="--", lw=1.3)),
+    ]
+
+    fig = plt.figure(figsize=(13.0, 7.5))
+    gs = fig.add_gridspec(3, 2, width_ratios=[1.15, 1.0])
+    ax2d = fig.add_subplot(gs[:, 0])
+    ax_x = fig.add_subplot(gs[0, 1])
+    ax_y = fig.add_subplot(gs[1, 1], sharex=ax_x)
+    ax_m = fig.add_subplot(gs[2, 1], sharex=ax_x)
+
+    for name, shift, amp, style in curves:
+        sx = shift @ x_hat
+        sy = shift @ y_hat
+        ax2d.plot(sx, sy, label=name, **style)
+        ax_x.plot(tau, sx, **style)
+        ax_y.plot(tau, sy, **style)
+        ax_m.plot(tau, -2.5 * np.log10(amp), **style)
+
+    # Lens relative to the source, clipped to the shift range.
+    lens_x = -u_vec @ x_hat
+    lens_y = -u_vec @ y_hat
+    ax2d.plot(lens_x, lens_y, color="0.5", lw=1.0, label="Lens")
+
+    # Equal-time markers: open before t0, filled after.
+    for step, xs, ys, col in [
+        (0.1, shift_vbm @ x_hat, shift_vbm @ y_hat, "0.35"),
+        (0.2, lens_x, lens_y, "k"),
+    ]:
+        tau_mk = np.arange(-2.0, 2.0 + 1e-9, step)
+        mx = np.interp(tau_mk, tau, xs)
+        my = np.interp(tau_mk, tau, ys)
+        before = tau_mk < 0
+        ax2d.plot(mx[before], my[before], "o", mfc="none", mec=col, ms=5)
+        ax2d.plot(mx[~before], my[~before], "o", color=col, ms=5)
+
+    if xlim is None:
+        x_lim = 1.15 * np.max(np.abs(shift_pspl @ x_hat))
+        xlim = (-x_lim, x_lim)
+    if ylim is None:
+        sy_p = shift_pspl @ y_hat
+        ylim = (min(-b, np.min(sy_p)) - 0.1 * np.max(sy_p),
+                1.25 * np.max(sy_p))
+    ax2d.set_xlim(*xlim)
+    ax2d.set_ylim(*ylim)
+    ax2d.set_xlabel(r"$\delta\theta_{c,x}$ [$\theta_E$]")
+    ax2d.set_ylabel(r"$\delta\theta_{c,y}$ [$\theta_E$]")
+    ax2d.set_title("cf. Lee et al. (2010) Fig. 4", fontsize=10)
+    ax2d.legend(fontsize=8, loc="lower right")
+
+    for ax in (ax_x, ax_y, ax_m):
+        for tl in tau_limb:
+            ax.axvline(tl, color="0.4", ls="--", lw=0.8)
+    ax_x.set_ylabel(r"$\delta\theta_{c,x}$ [$\theta_E$]")
+    ax_y.set_ylabel(r"$\delta\theta_{c,y}$ [$\theta_E$]")
+    ax_m.set_ylabel(r"$m - m_{\rm base}$ [mag]")
+    ax_m.invert_yaxis()
+    ax_m.set_xlabel(r"$(t - t_0) / t_E$")
+    ax_x.set_xlim(tau[0], tau[-1])
+    ax_x.set_title(r"cf. Lee et al. (2010) Fig. 5 ($\pm 50$ d at $t_E$ = 10 d)",
+                   fontsize=10)
+    plt.setp(ax_x.get_xticklabels(), visible=False)
+    plt.setp(ax_y.get_xticklabels(), visible=False)
+
+    fig.suptitle(title, fontsize=10)
     fig.tight_layout()
     fig.savefig(outfile, dpi=120)
     plt.close(fig)
@@ -654,20 +804,20 @@ def _vbm_espl_astro_to_en(tmp, bagle_mod, u0_vbm, piEE_vbm, piEN_vbm):
     uvec : ndarray, shape (N, 2)
         Source-lens separation in Einstein radii, East-North.
     """
-    amp = np.asarray(tmp[0], dtype=float)
+    # VBM returns Python lists.
+    amp = np.array(tmp[0])
 
     # VBM sky positions are North, East in mas.
-    ast_lensed = np.array([tmp[2], tmp[1]], dtype=float).T * 1e-3
-    xL = np.array([tmp[4], tmp[3]], dtype=float).T * 1e-3
+    ast_lensed = np.array([tmp[2], tmp[1]]).T * 1e-3
+    xL = np.array([tmp[4], tmp[3]]).T * 1e-3
 
     # ESPLAstro: indices 5,6 are tau-beta style separations (same as PSPLAstro).
-    u_tb = np.array([tmp[6], tmp[5]], dtype=float).T  # columns: beta, tau
+    u_tb = np.array([tmp[6], tmp[5]]).T  # columns: beta, tau
 
     # Rotate tau-beta into East-North using geo-tr piE / u0 hats.
-    muRel_hat = np.array([piEE_vbm, piEN_vbm], dtype=float)
+    muRel_hat = np.array([piEE_vbm, piEN_vbm])
     muRel_hat /= np.hypot(muRel_hat[0], muRel_hat[1])
     u0_hat = model.u0_hat_from_thetaE_hat(muRel_hat, u0_vbm)
-    u0_hat = np.asarray(u0_hat, dtype=float).copy()
     u0_hat[1] *= -1
 
     uvec = (u_tb[:, 1, np.newaxis] * muRel_hat[np.newaxis, :]
@@ -710,23 +860,31 @@ def test_fspl_kernel_phot_vs_vbm(u0, rho, label):
     mod_njx = _kernel_model(u0, rho, t0=t0, tE=tE)
 
     # Shape of u_vec: [N_times, 2]
-    u_vec = np.asarray(mod_njx.get_u(t))
+    u_vec = mod_njx.get_u(t)
     a_jax = np.asarray(fspl_magnification(u_vec, rho, N_OUTLINE))
 
     vbm, par = _get_vbm(mod_njx)
     a_vbm = np.asarray(vbm.ESPLLightCurve(par, list(t))[0])
 
-    frac = _max_frac_diff(a_jax, a_vbm)
+    # The static JAX limb does not resolve the lens crossing the limb, so
+    # the limb band is reported but only off-limb epochs are asserted.
+    u_amp = np.linalg.norm(u_vec, axis=1)
+    outside, near_limb, inside = _limb_masks(u_amp, rho)
+    off_limb = outside | inside
+    frac = _max_frac_diff(a_jax[off_limb], a_vbm[off_limb])
+    frac_limb = (_max_frac_diff(a_jax[near_limb], a_vbm[near_limb])
+                 if np.any(near_limb) else np.nan)
+
     outfile = PLOT_DIR / f"phot_kernel_{label}.png"
     _save_phot_compare(
         t, a_jax, a_vbm,
         title=(f"FSPL jax kernel vs VBM ESPLLightCurve  u0={u0}, rho={rho}\n"
-               f"max |dA/A| = {frac:.2e}"),
+               f"max |dA/A| off-limb = {frac:.2e}, limb = {frac_limb:.2e}"),
         outfile=outfile, t0=t0)
 
-    # Large-rho contour integration is slightly looser than 1e-4.
-    tol = TOL_PHOT_FRAC if rho >= 0.3 else TOL_PHOT_FRAC_TIGHT
-    assert frac < tol, f"max |dA/A|={frac:.3e} exceeds {tol:.1e} ({label})"
+    assert frac < TOL_PHOT_FRAC_TIGHT, (
+        f"off-limb max |dA/A|={frac:.3e} exceeds {TOL_PHOT_FRAC_TIGHT:.1e} "
+        f"({label})")
 
     return None
 
@@ -745,9 +903,9 @@ def test_fspl_kernel_astrom_uhat_vs_vbm(u0, rho, label):
     """
     BAGLE JAX centroid along ``u-hat`` vs VBM ``astrox1`` (uniform).
 
-    Outside the limb (beyond ``LIMB_BAND``) agreement should be at the
-    ``1e-3``--``1e-4`` level. Inside / near the limb residuals are known to
-    be large (contour-weight formula); they are plotted but not asserted.
+    Away from the limb (beyond ``LIMB_BAND``), both outside and inside the
+    source, agreement is at the ``1e-4`` level. The static JAX limb does not
+    resolve the limb band itself; it is plotted but not asserted.
 
     Parameters
     ----------
@@ -761,7 +919,7 @@ def test_fspl_kernel_astrom_uhat_vs_vbm(u0, rho, label):
     mod_njx = _kernel_model(u0, rho, t0=t0, tE=tE)
 
     # Shape of u_vec: [N_times, 2]
-    u_vec = np.asarray(mod_njx.get_u(t))
+    u_vec = mod_njx.get_u(t)
     u_amp = np.linalg.norm(u_vec, axis=1)
 
     shift_jax, _ = _jax_shift_uhat(u_vec, rho)
@@ -783,11 +941,13 @@ def test_fspl_kernel_astrom_uhat_vs_vbm(u0, rho, label):
                f"inside={d_in:.2e}, limb={d_limb:.2e}"),
         outfile=outfile, t0=t0)
 
-    # Small-rho off-limb is ~1e-4; large-rho needs the wider 1e-3 band
-    # because the contour jump contaminates out to ~1.1 rho.
-    tol = 2.0e-4 if rho < 0.05 else TOL_AST_THETAE
+    # Large rho at 1.1 rho is only ~1.5e-4 with a 200-point static limb.
+    tol = TOL_AST_THETAE_TIGHT if rho < 0.05 else 2.0e-4
     assert d_out < tol, (
-        f"off-limb max |d shift|={d_out:.3e} exceeds {tol:.1e} ({label})")
+        f"outside max |d shift|={d_out:.3e} exceeds {tol:.1e} ({label})")
+    if np.any(inside):
+        assert d_in < tol, (
+            f"inside max |d shift|={d_in:.3e} exceeds {tol:.1e} ({label})")
 
     return None
 
@@ -808,7 +968,7 @@ def test_fspl_phot_nopar_njx_vs_vbm():
         t0, u0, tE, 0.3, 0.4, rho, [1.0], [18.0], n_outline=N_OUTLINE)
     t = np.linspace(t0 - 2.0 * tE, t0 + 2.0 * tE, 401)
 
-    a_njx = np.asarray(mod_njx.get_amplification(t))
+    a_njx = mod_njx.get_amplification(t)
     vbm, par = _get_vbm(mod_njx)
     a_vbm = np.asarray(vbm.ESPLLightCurve(par, list(t))[0])
 
@@ -834,7 +994,7 @@ def test_fspl_phot_par_njx_vs_vbm():
     geo-tr at ``t0_par = t0`` (Lu et al.) before calling VBM.
     """
     c = SkyCoord("17:57:05 -30:22:59", unit=(u.hourangle, u.deg))
-    ra, dec = float(c.ra.value), float(c.dec.value)
+    ra, dec = c.ra.value, c.dec.value
     t0, u0, tE = 55775.0, 0.02, 100.0
     piEE, piEN, rho = 0.9, 0.7, 0.05
 
@@ -844,7 +1004,7 @@ def test_fspl_phot_par_njx_vs_vbm():
 
     # Dense cadence over +-1 tE (finite-source peak is narrow).
     t = np.arange(t0 - 1.0 * tE, t0 + 1.0 * tE + 1e-9, 0.5)
-    a_njx = np.asarray(mod_njx.get_amplification(t))
+    a_njx = mod_njx.get_amplification(t)
 
     vbm, par = _get_vbm(mod_njx)
     t_vbm = fc.mjd_prime_to_vbm_time(t, c)
@@ -876,7 +1036,7 @@ def test_fspl_photastrom_par_njx_vs_vbm():
     source centroid physics is isolated.
     """
     c = SkyCoord("17:57:05 -30:22:59", unit=(u.hourangle, u.deg))
-    ra, dec = float(c.ra.value), float(c.dec.value)
+    ra, dec = c.ra.value, c.dec.value
 
     # Physical Param1 with |u0| ~ rho/2 so finite-source matters near peak.
     mL, t0, dL, dL_dS = 0.5, 55775.0, 4000.0, 0.8
@@ -892,16 +1052,16 @@ def test_fspl_photastrom_par_njx_vs_vbm():
         radius_s, np.array([1.0]), np.array([18.0]),
         n_outline=N_OUTLINE, raL=ra, decL=dec)
 
-    theta_e = float(mod_njx.thetaE_amp)
-    rho = float(mod_njx.source_radius_thetaE_units())
-    tE = float(mod_njx.tE)
+    theta_e = mod_njx.thetaE_amp
+    rho = mod_njx.source_radius_thetaE_units()
+    tE = mod_njx.tE
     t = np.arange(t0 - 1.0 * tE, t0 + 1.0 * tE + 1e-9, 0.5)
 
-    a_njx = np.asarray(mod_njx.get_amplification(t))
-    u_njx = np.asarray(mod_njx.get_u(t))
+    a_njx = mod_njx.get_amplification(t)
+    u_njx = mod_njx.get_u(t)
     u_amp = np.linalg.norm(u_njx, axis=1)
     # Centroid shift in Einstein radii (njx AMG).
-    shift_njx = np.asarray(mod_njx.get_centroid_shift(t)) / theta_e
+    shift_njx = mod_njx.get_centroid_shift(t) / theta_e
 
     vbm, par = _get_vbm(mod_njx)
     t_vbm = fc.mjd_prime_to_vbm_time(t, c)
@@ -916,10 +1076,10 @@ def test_fspl_photastrom_par_njx_vs_vbm():
     shift_vbm = (ast_vbm - xS_vbm) * 1e3 / theta_e
 
     frac = _max_frac_diff(a_njx, a_vbm)
-    d_u = float(np.max(np.linalg.norm(u_njx - uvec_vbm, axis=1)))
+    d_u = np.max(np.linalg.norm(u_njx - uvec_vbm, axis=1))
     outside, _near, _inside = _limb_masks(u_amp, rho)
     d_shift = np.linalg.norm(shift_njx - shift_vbm, axis=1)
-    d_out = float(np.max(d_shift[outside])) if np.any(outside) else np.nan
+    d_out = np.max(d_shift[outside]) if np.any(outside) else np.nan
 
     _save_phot_compare(
         t, a_njx, a_vbm,
@@ -1010,28 +1170,27 @@ def test_fspl_resolved_images_njx_vs_vbm(u0, rho, span, label):
     label : str
         Plot filename tag.
     """
-    mod_njx = _njx_photastrom_nopar(u0, rho)
-    theta_e = float(mod_njx.thetaE_amp)
-    rho = float(mod_njx.source_radius_thetaE_units())
-    t0, tE = float(mod_njx.t0), float(mod_njx.tE)
+    mod_njx = _get_model_Lee2010(u0, rho, jax=False)
+    theta_e = mod_njx.thetaE_amp
+    rho = mod_njx.source_radius_thetaE_units()
+    t0 = mod_njx.t0
+    tE = mod_njx.tE
     t = t0 + tE * np.linspace(-span, span, 301)
-    tt = (t - t0) / tE
+    tau = (t - t0) / tE
 
     # Shape of u_vec: [N_times, 2] (source - lens, Einstein radii, E/N).
-    u_vec = np.asarray(mod_njx.get_u(t))
+    u_vec = mod_njx.get_u(t)
     u_amp = np.linalg.norm(u_vec, axis=1)
 
     # njx per-image values, lens-relative in Einstein radii.
     # Shapes: xL [N_times, 2]; mag_njx [2, N_times]; pos_njx [2, N_times, 2].
-    xL = np.asarray(mod_njx.get_lens_astrometry(t))
-    mag_njx = np.asarray(mod_njx.get_resolved_amplification(t))
-    pos_njx = (np.asarray(mod_njx.get_resolved_astrometry(t)) - xL[None]) \
-        * 1e3 / theta_e
-    shift_njx = _along_uhat(
-        np.asarray(mod_njx.get_centroid_shift(t)) / theta_e, u_vec)
+    xL = mod_njx.get_lens_astrometry(t)
+    mag_njx = mod_njx.get_resolved_amplification(t)
+    pos_njx = (mod_njx.get_resolved_astrometry(t) - xL[None]) * 1e3 / theta_e
+    shift_njx = _along_uhat(mod_njx.get_centroid_shift(t) / theta_e, u_vec)
 
     # Shape of outline_njx: [N_times, n_outline, 2, 2].
-    outline_njx = (np.asarray(mod_njx.get_resolved_astrometry_outline(t))
+    outline_njx = (mod_njx.get_resolved_astrometry_outline(t)
                    - xL[:, None, None, :]) * 1e3 / theta_e
 
     # VBM instance from the matching no-parallax photometry model.
@@ -1039,6 +1198,31 @@ def test_fspl_resolved_images_njx_vs_vbm(u0, rho, span, label):
     vbm, par = _get_vbm(mod_njx_phot, tol=1e-6, rel_tol=1e-7, astrometry=True)
     a_vbm = np.asarray(vbm.ESPLLightCurve(par, list(t))[0])
     shift_v_astrox = _vbm_shift_uhat(vbm, u_amp, rho)
+
+    # Lee et al. (2010) Figs. 4-5 window: +-5 tE, densely sampled where the
+    # lens crosses the source.
+    tau_lee = np.unique(np.concatenate([np.linspace(-5.0, 5.0, 401),
+                                        np.linspace(-2 * rho, 2 * rho, 401)]))
+    t_lee = t0 + tE * tau_lee
+    u_lee = mod_njx.get_u(t_lee)
+    u_amp_lee = np.linalg.norm(u_lee, axis=1)
+
+    # VBM 2D shift: astrox1 is along u-hat.
+    a_vbm_lee = np.asarray(vbm.ESPLLightCurve(par, list(t_lee))[0])
+    shift_vbm_lee = (_vbm_shift_uhat(vbm, u_amp_lee, rho)[:, None]
+                     * u_lee / u_amp_lee[:, None])
+
+    # Lee et al. Fig. 4 axis limits for the matching case.
+    is_lee = "lee10" in label
+    lee_note = "  (Lee et al. 2010: u0 = 0.1, rho = 0.5)" if is_lee else ""
+    _save_lee10_compare(
+        tau_lee, u_lee, rho, mod_njx.get_amplification(t_lee), a_vbm_lee,
+        mod_njx.get_centroid_shift(t_lee) / theta_e, shift_vbm_lee,
+        title=f"FSPL centroid shift and light curve  u0={u0:g}, "
+              f"rho={rho:g}{lee_note}",
+        outfile=PLOT_DIR / f"lee10_fig4_fig5_{label}.png",
+        xlim=(-0.6, 0.6) if is_lee else None,
+        ylim=(-0.105, 0.06) if is_lee else None)
 
     # Single lens at the origin for the image contours.
     vbm.SetLensGeometry([0.0, 0.0, 1.0])
@@ -1065,7 +1249,7 @@ def test_fspl_resolved_images_njx_vs_vbm(u0, rho, span, label):
              f" minus {d_out[1]:.1e};  inside: plus {d_in[0]:.1e},"
              f" minus {d_in[1]:.1e}")
     _save_resolved_images_compare(
-        tt, u_vec, rho, mag_njx, pos_njx, mag_v, pos_v,
+        tau, u_vec, rho, mag_njx, pos_njx, mag_v, pos_v,
         shift_njx, shift_v_contour, shift_v_astrox,
         title=title, outfile=PLOT_DIR / f"resolved_images_{label}.png")
 
@@ -1080,7 +1264,7 @@ def test_fspl_resolved_images_njx_vs_vbm(u0, rho, span, label):
             idx.append(j)
     idx.append(int(np.argmin(u_amp)))
     _save_image_snapshots(
-        u_vec, rho, idx, outline_njx, pos_njx, pos_v, contours_v, tt,
+        u_vec, rho, idx, outline_njx, pos_njx, pos_v, contours_v, tau,
         title=f"Image outlines  u0={u0:g}, rho={rho:g}",
         outfile=PLOT_DIR / f"resolved_images_snapshots_{label}.png")
 
@@ -1099,7 +1283,283 @@ def test_fspl_resolved_images_njx_vs_vbm(u0, rho, span, label):
 
 
 # ---------------------------------------------------------------------------
-# 7. Summary table written next to the plots
+# 7. PSPL centroid ellipses vs Lee et al. (2010) Fig. 1 (lower panel)
+# ---------------------------------------------------------------------------
+def test_pspl_lee10_fig1_njx_vs_vbm():
+    """
+    njx PSPL centroid-shift ellipses for several ``u0`` vs VBM and Eq. 5.
+
+    Reproduces the lower panel of Lee et al. (2010) Fig. 1 in the same frame
+    as Figs. 4-5 (lens moving in +x, ``u0`` along +y). VBM uses ESPL with a
+    negligible ``rho`` (point-source limit of ``astrox1``).
+    """
+    u0_list = [0.05, 0.10, 0.30, 0.50, 0.70, 0.90]
+    colors = {0.05: "tab:red", 0.10: "gold", 0.30: "yellowgreen",
+              0.50: "navy", 0.70: "mediumturquoise", 0.90: "purple"}
+    rho_ps = 1e-4
+
+    # Same event geometry as _get_model_Lee2010.
+    t0, tE, thetaE, piS = 10.0, 100.0, 3.0, 0.1
+    xS0 = np.array([0.0])
+    b_sff, mag_src = np.array([1.0]), np.array([18.0])
+
+    # Wide window so the ellipses close near the origin; dense near t0.
+    tau = np.unique(np.concatenate([np.linspace(-100.0, 100.0, 2001),
+                                    np.linspace(-3.0, 3.0, 1201)]))
+    t = t0 + tE * tau
+
+    fig, ax = plt.subplots(figsize=(6.0, 6.0))
+    d_ana, d_vbm = [], []
+    for u0 in u0_list:
+        mod_njx = model.PSPL_PhotAstrom_noPar_Param2(
+            t0, u0, tE, thetaE, piS, 0.1, 0.0, xS0, xS0, 3.0, 0.0,
+            b_sff, mag_src)
+
+        # Shape of u_vec / shift_njx: [N_times, 2] (E/N, Einstein radii).
+        u_vec = mod_njx.get_u(t)
+        u_amp = np.linalg.norm(u_vec, axis=1)
+        shift_njx = mod_njx.get_centroid_shift(t) / thetaE
+
+        # Lee et al. Eq. 5 and the VBM point-source limit (along u-hat).
+        shift_ana = u_vec / (u_amp ** 2 + 2)[:, None]
+        vbm, _par = _get_vbm(_kernel_model(u0, rho_ps, t0=t0, tE=tE),
+                             tol=1e-6, rel_tol=1e-7, astrometry=True)
+        shift_vbm = (_vbm_shift_uhat(vbm, u_amp, rho_ps)[:, None]
+                     * u_vec / u_amp[:, None])
+
+        d_ana.append(np.max(np.linalg.norm(shift_njx - shift_ana, axis=1)))
+        d_vbm.append(np.max(np.linalg.norm(shift_njx - shift_vbm, axis=1)))
+
+        # Project into the Lee frame.
+        x_hat, y_hat = _trajectory_frame(u_vec)
+        col = colors[u0]
+        ax.plot(shift_njx @ x_hat, shift_njx @ y_hat, "-", color=col, lw=1.5)
+        ax.plot(shift_vbm @ x_hat, shift_vbm @ y_hat, "k:", lw=0.8)
+        ax.text(0.0, np.max(shift_njx @ y_hat) + 0.004, f"u0={u0:.2f}",
+                color=col, ha="center", va="bottom", fontsize=9)
+
+    ax.plot([], [], "-", color="0.4", label="BAGLE njx PSPL")
+    ax.plot([], [], "k:", label="VBM (rho = 1e-4)")
+    ax.set_xlim(-0.4, 0.4)
+    ax.set_ylim(-0.05, 0.35)
+    ax.set_xlabel(r"$\delta\theta_{c,x}$ [$\theta_E$]")
+    ax.set_ylabel(r"$\delta\theta_{c,y}$ [$\theta_E$]")
+    ax.set_title("PSPL centroid shift, cf. Lee et al. (2010) Fig. 1 (lower)\n"
+                 f"max |njx - Eq.5| = {max(d_ana):.1e},  "
+                 f"max |njx - VBM| = {max(d_vbm):.1e} ($\\theta_E$)",
+                 fontsize=9)
+    ax.legend(fontsize=8, loc="upper right")
+    fig.tight_layout()
+    fig.savefig(PLOT_DIR / "lee10_fig1_pspl.png", dpi=120)
+    plt.close(fig)
+
+    assert max(d_ana) < 1.0e-6, f"njx vs Eq. 5 max |d|={max(d_ana):.2e}"
+    assert max(d_vbm) < TOL_AST_THETAE_TIGHT, (
+        f"njx vs VBM max |d|={max(d_vbm):.2e}")
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# 8. Analytic contour derivatives and rotation invariance
+# ---------------------------------------------------------------------------
+def test_fspl_contour_derivatives_match_finite_differences():
+    """
+    Analytic image derivative and Eq. 14 wedge vs finite differences.
+
+    Checks :func:`bagle.fspl_contour.point_lens_image_derivatives` for both
+    images along an off-centre source limb.
+    """
+    zeta_c, rho, h = 0.3 - 0.2j, 0.5, 1e-4
+    theta = np.linspace(0.1, 6.0, 9)
+
+    def limb_images(th):
+        return fspl_contour.point_lens_images(zeta_c + rho * np.exp(1j * th))
+
+    for k in range(2):
+        z0 = limb_images(theta)[k]
+        z_p = limb_images(theta + h)[k]
+        z_m = limb_images(theta - h)[k]
+
+        # Central differences for z' and z''.
+        fd1 = (z_p - z_m) / (2 * h)
+        fd2 = (z_p - 2 * z0 + z_m) / h ** 2
+        fd_wedge = (np.conjugate(fd1) * fd2).imag
+
+        dz, wedge = fspl_contour.point_lens_image_derivatives(
+            z0, 1j * rho * np.exp(1j * theta), rho)
+
+        assert np.max(np.abs(dz / fd1 - 1)) < 1e-6
+        assert np.max(np.abs(wedge / fd_wedge - 1)) < 1e-5
+
+    return None
+
+
+@pytest.mark.parametrize("rho", [0.05, 0.5])
+def test_fspl_centroid_rotation_invariant(rho):
+    """
+    njx and JAX FSPL centroid shifts do not depend on trajectory orientation.
+
+    The same rectilinear event is rotated on the sky; away from the limb the
+    shift along ``u-hat`` matches VBM ``astrox1`` at every angle, the
+    perpendicular component vanishes, and njx and JAX agree. A uniform
+    ``n_outline`` limb does not resolve ``0.8 < |u|/rho < 1.25`` (the
+    adaptive mesh covers that regime in njx).
+
+    Parameters
+    ----------
+    rho : float
+        Source radius in Einstein radii.
+    """
+    u0, n_pts = 0.4 * rho, N_OUTLINE
+    tau = np.linspace(-3.0 * rho, 3.0 * rho, 121)
+    u_amp = np.hypot(tau, u0)
+    off_limb = (u_amp < 0.8 * rho) | (u_amp > 1.25 * rho)
+
+    vbm = _make_vbm_astro()
+    shift_v = _vbm_shift_uhat(vbm, u_amp, rho)
+
+    theta = np.broadcast_to(2 * np.pi * np.arange(n_pts) / n_pts,
+                            (tau.size, n_pts))
+    for ang in [0.0, 37.0, 90.0, 211.0]:
+        # Rotated source track (complex E + iN, lens at origin).
+        zeta_c = (tau + 1j * u0) * np.exp(1j * np.deg2rad(ang))
+        u_vec = np.stack([zeta_c.real, zeta_c.imag], axis=1)
+
+        along_by_code = {}
+        for name, (img, amp) in [
+            ("njx", fspl_contour.limb_images_amps(
+                zeta_c, rho, theta, np.full(tau.size, n_pts))),
+            ("jax", fspl_images_amps(u_vec, rho, n_pts)),
+        ]:
+            img, amp = np.asarray(img), np.asarray(amp)
+
+            # Total centroid shift relative to the source.
+            mag = np.sum(amp, axis=1)
+            shift = np.sum(amp[:, :, None] * img, axis=1) / mag[:, None] - u_vec
+            along = _along_uhat(shift, u_vec)
+            u_hat = u_vec / u_amp[:, None]
+            perp = u_hat[:, 0] * shift[:, 1] - u_hat[:, 1] * shift[:, 0]
+            along_by_code[name] = along
+
+            d_along = np.max(np.abs(along - shift_v)[off_limb])
+            d_perp = np.max(np.abs(perp[off_limb]))
+            assert d_along < TOL_AST_THETAE_TIGHT, (
+                f"{name} angle={ang}: |d along|={d_along:.2e}")
+            assert d_perp < 1.0e-5, f"{name} angle={ang}: perp={d_perp:.2e}"
+
+        # Same algorithm in NumPy and JAX.
+        assert np.max(np.abs(along_by_code["njx"] - along_by_code["jax"])) < 1e-8
+
+    return None
+
+
+def _lee10_quad_reference(u, rho):
+    """
+    Uniform-disk magnification and centroid shift by adaptive quadrature.
+
+    Lee et al. (2010) Eq. 10 in lens-centred coordinates; accurate to
+    ~1e-12, unlike VBM ESPL (~1e-3 in magnification near the limb).
+
+    Parameters
+    ----------
+    u : float
+        Source-lens separation (Einstein radii).
+    rho : float
+        Source radius (Einstein radii).
+
+    Returns
+    -------
+    amp : float
+        Magnification.
+    shift : float
+        Centroid shift along u-hat relative to the source (Einstein radii).
+    """
+    from scipy.integrate import quad
+
+    def big_p(x):
+        return (x ** 2 + 1.0) * np.sqrt(x ** 2 + 4.0) / 3.0
+
+    def big_q(x):
+        return 0.5 * x * np.sqrt(x ** 2 + 4.0)
+
+    def bounds(th):
+        root = np.sqrt(max(rho ** 2 - (u * np.sin(th)) ** 2, 0.0))
+        u_hi = u * np.cos(th) + root
+        u_lo = 0.0 if u <= rho else u * np.cos(th) - root
+        return u_lo, u_hi
+
+    # Full circle with the lens inside the source, else the subtended wedge.
+    th_max = np.pi if u <= rho else np.arcsin(min(rho / u, 1.0))
+    opts = dict(epsabs=1e-14, epsrel=1e-12, limit=500)
+    den = quad(lambda th: big_q(bounds(th)[1]) - big_q(bounds(th)[0]),
+               -th_max, th_max, **opts)[0]
+    num = quad(lambda th: (big_p(bounds(th)[1]) - big_p(bounds(th)[0]))
+               * np.cos(th), -th_max, th_max, **opts)[0]
+
+    return den / (np.pi * rho ** 2), num / den - u
+
+
+@pytest.mark.parametrize("u0,rho", [(0.1, 0.5), (0.02, 0.05)])
+def test_fspl_njx_limb_crossing_vs_quad(u0, rho):
+    """
+    njx FSPL magnification and centroid across the limb vs exact quadrature.
+
+    The adaptive mesh (``amg_tol``) refines where the limb passes the lens,
+    so the lens crossing the source limb is resolved; VBM ESPL is not used
+    as the reference here because it is only ~1e-3 accurate at the limb.
+
+    Parameters
+    ----------
+    u0, rho : float
+        Impact parameter and source radius in Einstein radii.
+    """
+    mod_njx = _get_model_Lee2010(u0, rho, jax=False)
+    theta_e = mod_njx.thetaE_amp
+    rho = mod_njx.source_radius_thetaE_units()
+
+    # Dense across the limb crossings, plus the full |u| < 2 rho range.
+    tau = np.unique(np.concatenate([
+        np.linspace(-2.0 * rho, 2.0 * rho, 41),
+        np.sqrt(rho ** 2 - u0 ** 2) * (1.0 + np.linspace(-0.02, 0.02, 21)),
+    ]))
+    t = mod_njx.t0 + mod_njx.tE * tau
+    u_vec = mod_njx.get_u(t)
+    u_amp = np.linalg.norm(u_vec, axis=1)
+
+    ref = np.array([_lee10_quad_reference(x, rho) for x in u_amp])
+    a_njx = mod_njx.get_amplification(t)
+    shift_njx = _along_uhat(mod_njx.get_centroid_shift(t) / theta_e, u_vec)
+
+    d_amp = np.max(np.abs(a_njx / ref[:, 0] - 1))
+    d_shift = np.max(np.abs(shift_njx - ref[:, 1]))
+    assert d_amp < 1e-5, f"max |dA/A|={d_amp:.2e}"
+    assert d_shift < 5e-5, f"max |d shift|={d_shift:.2e} theta_E"
+
+    return None
+
+
+def _make_vbm_astro():
+    """
+    Bare VBM instance for ``astrox1`` comparisons (uniform source).
+
+    Returns
+    -------
+    vbm : VBMicrolensing.VBMicrolensing
+    """
+    import VBMicrolensing
+
+    vbm = VBMicrolensing.VBMicrolensing()
+    vbm.Tol = 1e-7
+    vbm.RelTol = 1e-8
+    vbm.a1 = 0.0
+    vbm.astrometry = True
+
+    return vbm
+
+
+# ---------------------------------------------------------------------------
+# 9. Summary table written next to the plots
 # ---------------------------------------------------------------------------
 def test_fspl_vs_vbm_write_summary(tmp_path=None):
     """
@@ -1120,7 +1580,7 @@ def test_fspl_vs_vbm_write_summary(tmp_path=None):
 
     for u0, rho in cases:
         mod_njx = _kernel_model(u0, rho, t0=t0, tE=tE)
-        u_vec = np.asarray(mod_njx.get_u(t))
+        u_vec = mod_njx.get_u(t)
         u_amp = np.linalg.norm(u_vec, axis=1)
 
         # Photometry: JAX kernel vs ESPLLightCurve.
@@ -1137,7 +1597,7 @@ def test_fspl_vs_vbm_write_summary(tmp_path=None):
         outside, near_limb, inside = _limb_masks(u_amp, rho)
         d_out = _max_abs_diff(sh_jax[outside], sh_v[outside])
         d_in = (_max_abs_diff(sh_jax[inside], sh_v[inside])
-                if np.any(inside) else float("nan"))
+                if np.any(inside) else np.nan)
         rows.append(
             f"u0={u0:4.2f} rho={rho:4.2f}  "
             f"phot|dA/A|={frac:.2e}  "
