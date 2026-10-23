@@ -5,6 +5,11 @@ photometric or astrometric plots, we have created an `Intro Jupyter Notebook
 <https://github.com/MovingUniverseLab/BAGLE_Microlensing/blob/main/BAGLE_TUTORIAL.ipynb>`_
 tutorial. A subset of the content is reproduced below.
 
+Static geometry plots of PSBL, BSPL, and BSBL events, including
+Keplerian orbits and parallax-only (no orbits) examples, are shown in
+`example_plot_PSBL_BSBL.ipynb
+<https://github.com/MovingUniverseLab/BAGLE_Microlensing/blob/dev/docs/notebooks/example_plot_PSBL_BSBL.ipynb>`_.
+
 Using BAGLE
 -----------
 To make microlensing models::
@@ -57,7 +62,7 @@ Note that BAGLE mas many different parameterizations that all
 specify the same event. We have chosen ``Param1``.
 
 Once you have created the event, you can see numerous event
-properties. BAGLE defines event parameteres in heliocentric
+properties. BAGLE defines event parameteres in Solar System barycentric
 coordinates unless otherwise specified. To see properties,
 use::
 
@@ -109,7 +114,7 @@ Making a PSPL Model with Parallax
 ---------------------------------
 The second step is to generate a PSPL model with parallax adding the
 *ra* (right ascention of lens) and *dec* (declination of lens).
-Again, all of the parameters are specified in heliocentric coordinates.
+Again, all of the parameters are specified in Solar System barycentric coordinates.
 
 .. code-block:: python3
 
