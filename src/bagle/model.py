@@ -6474,6 +6474,10 @@ class PSBL(PSPL):
     be instantiated.
     """
 
+    # 'companion' keeps the global quintic solve. 'hc' tracks roots
+    # with the hyper-Catalan step (get_image_pos_arr_HC).
+    root_solver = "companion"
+
     def get_resolved_lens_photometry(self, filt_idx=0):
         """
         Get the resolved lens photometry, assuming that all the non-source
@@ -6822,6 +6826,180 @@ class PSBL(PSPL):
 
         return z_arr
 
+    def get_image_pos_arr_HC(
+        self, w, z1, z2, m1, m2, check_sols=True, hc_order=2, n_newton=2
+    ):
+        """Image positions by hyper-Catalan root tracking.
+
+        Drop-in for :meth:`get_image_pos_arr`. The first epoch is
+        seeded with ``numpy.roots``. Every later epoch continues
+        those five roots (spurious ones included) with the shifted
+        hyper-Catalan series and a local quadratic or cubic when a
+        pair or triple has clustered. There is no global solve on
+        later epochs.
+
+        Parameters
+        ----------
+        w : array_like
+            Complex source position(s). Shape ``(N_times,)`` or
+            ``(N_times, 1)``.
+        z1, z2 : array_like
+            Complex lens positions, same length as ``w``.
+        m1, m2 : float or array_like
+            Mass fractions. A scalar is shared by every epoch.
+        check_sols : bool, optional
+            Mask roots that miss the lens equation by more than
+            ``self.root_tol``. Default True.
+        hc_order : int, optional
+            Series truncation weight ``K``. Default 2.
+        n_newton : int, optional
+            Newton updates on the quintic after each predictor.
+            Default 2.
+
+        Returns
+        -------
+        z_arr : ndarray, complex, shape (N_times, 5)
+            All five polynomial roots. Invalid images are NaN when
+            ``check_sols`` is True.
+
+        Notes
+        -----
+        Internal substeps linearly interpolate the quintic
+        coefficients between the two epochs. They turn on only when
+        a single step glues two slots or leaves a large residual,
+        which is what a fold crossing needs. A source that lands on
+        a lens sends one root through infinity; that sample is not
+        a caustic and is not recovered by a global solve.
+        """
+        from bagle.hyper_catalan import advance_roots, initial_roots
+
+        assert (len(w) == len(z1)) & (len(w) == len(z2))
+
+        def _coeffs(ww, zz1, zz2, mm1, mm2):
+            # Duplicated Witt / Nijaid quintic. Kept inside this
+            # method so the companion solver can change on its own.
+            # Low-to-high (a0 ... a5) for the tracker.
+            wbar = np.conj(ww)
+            z1bar = np.conj(zz1)
+            z2bar = np.conj(zz2)
+            a5 = (wbar - z1bar) * (wbar - z2bar)
+            a4 = -((ww + 2 * (zz1 + zz2)) * wbar ** 2) - mm2 * z2bar - \
+                 z1bar * (mm1 + (ww + 2 * (zz1 + zz2)) * z2bar) + \
+                 wbar * (mm1 + mm2 + (ww + 2 * (zz1 + zz2)) * (z1bar + z2bar))
+            a3 = (zz1 ** 2 + 4 * zz1 * zz2 + zz2 ** 2 + 2 * ww * (
+                    zz1 + zz2)) * wbar ** 2 + \
+                 (mm1 * (ww - zz1) + mm2 * (ww + 2 * zz1 + zz2)) * z2bar + \
+                 z1bar * (mm2 * (ww - zz2) + mm1 * (ww + zz1 + 2 * zz2) + \
+                          (zz1 ** 2 + 4 * zz1 * zz2 + zz2 ** 2 + 2 * ww * (
+                                  zz1 + zz2)) * z2bar) - \
+                 wbar * (2 * (mm2 * (ww + zz1) + mm1 * (ww + zz2)) + \
+                         (zz1 ** 2 + 4 * zz1 * zz2 + zz2 ** 2 + 2 * ww * (
+                             zz1 + zz2)) * (z1bar + z2bar))
+            a2 = -((mm1 + mm2) * (
+                    mm1 * (ww - zz1) + mm2 * (ww - zz2))) - \
+                 (2 * zz1 * zz2 * (zz1 + zz2) + ww * (
+                         zz1 ** 2 + 4 * zz1 * zz2 + zz2 ** 2)) * wbar ** 2 - \
+                 (mm2 * (ww - zz2) * (2 * zz1 + zz2) + mm1 * (
+                         ww * zz1 + 2 * (ww + zz1) * zz2 + zz2 ** 2)) * z1bar - \
+                 (mm2 * ww * (2 * zz1 + zz2) + mm1 * (ww - zz1) * (
+                         zz1 + 2 * zz2) + mm2 * zz1 * (zz1 + 2 * zz2) + \
+                  2 * zz1 * zz2 * (zz1 + zz2) * z1bar + ww * (
+                          zz1 ** 2 + 4 * zz1 * zz2 + zz2 ** 2) * z1bar) * \
+                 z2bar + wbar * (zz1 * (
+                    2 * mm1 * ww + 4 * mm2 * ww - mm1 * zz1 + mm2 * zz1) + \
+                                 2 * (2 * mm1 + mm2) * ww * zz2 + (
+                                         mm1 - mm2) * zz2 ** 2 + \
+                                 (2 * zz1 * zz2 * (zz1 + zz2) + ww * (
+                                         zz1 ** 2 + 4 * zz1 * zz2 + zz2 ** 2)) * (
+                                         z1bar + z2bar))
+            a1 = 2 * mm1 ** 2 * ww * zz2 + 2 * mm1 * mm2 * ww * zz2 - mm1 * mm2 * zz2 ** 2 - 2 * mm1 * ww * zz2 ** 2 * wbar + \
+                 mm1 * ww * zz2 ** 2 * z1bar + mm1 * ww * zz2 ** 2 * z2bar + \
+                 zz1 ** 2 * (-(
+                    mm1 * mm2) - 2 * mm2 * ww * wbar + 2 * mm1 * zz2 * wbar + \
+                            2 * ww * zz2 * wbar ** 2 + zz2 ** 2 * wbar ** 2 + mm2 * (
+                                    ww - zz2) * z1bar - \
+                            2 * ww * zz2 * wbar * z1bar - zz2 ** 2 * wbar * z1bar + \
+                            mm2 * ww * z2bar - 2 * mm1 * zz2 * z2bar + mm2 * zz2 * z2bar - \
+                            2 * ww * zz2 * wbar * z2bar - zz2 ** 2 * wbar * z2bar + \
+                            2 * ww * zz2 * z1bar * z2bar + zz2 ** 2 * z1bar * z2bar) + \
+                 zz1 * (2 * mm1 * mm2 * ww + 2 * mm2 ** 2 * (
+                    ww - zz2) - 2 * mm1 ** 2 * zz2 - 2 * mm1 * mm2 * zz2 - \
+                       4 * mm1 * ww * zz2 * wbar - 4 * mm2 * ww * zz2 * wbar + 2 * mm2 * zz2 ** 2 * wbar + \
+                       2 * ww * zz2 ** 2 * wbar ** 2 + 2 * mm1 * ww * zz2 * z1bar + \
+                       2 * mm2 * (
+                               ww - zz2) * zz2 * z1bar + mm1 * zz2 ** 2 * z1bar - \
+                       2 * ww * zz2 ** 2 * wbar * z1bar + 2 * mm1 * ww * zz2 * z2bar + \
+                       2 * mm2 * ww * zz2 * z2bar - mm1 * zz2 ** 2 * z2bar - \
+                       2 * ww * zz2 ** 2 * wbar * z2bar + 2 * ww * zz2 ** 2 * z1bar * z2bar)
+            a0 = (mm2 * zz1 + mm1 * zz2) * (
+                    mm1 * (-ww + zz1) * zz2 + mm2 * zz1 * (-ww + zz2)) + \
+                 zz1 * zz2 * (-(ww * zz1 * zz2 * wbar ** 2) - (
+                    mm2 * zz1 * (ww - zz2) + mm1 * ww * zz2) * z1bar - \
+                            (mm2 * ww * zz1 + mm1 * (
+                                    ww - zz1) * zz2 + ww * zz1 * zz2 * z1bar) * z2bar + \
+                            wbar * (2 * mm2 * ww * zz1 + 2 * mm1 * ww * zz2 - (
+                            mm1 + mm2) * zz1 * zz2 + \
+                                    ww * zz1 * zz2 * (z1bar + z2bar)))
+
+            stacked = np.array(
+                [a0, a1, a2, a3, a4, a5], dtype=np.complex128
+            )
+
+            return np.reshape(stacked, (6,))
+
+        def _mass_at(mass, index):
+            if type(mass) == np.ndarray:
+                return mass[index]
+
+            return mass
+
+        n_times = len(w)
+        z_arr = np.zeros((n_times, 5), dtype=np.complex128)
+        coeffs_prev = _coeffs(
+            w[0], z1[0], z2[0], _mass_at(m1, 0), _mass_at(m2, 0)
+        )
+        z_arr[0] = initial_roots(coeffs_prev, n_newton=n_newton)
+
+        for i in range(1, n_times):
+            coeffs_new = _coeffs(
+                w[i],
+                z1[i],
+                z2[i],
+                _mass_at(m1, i),
+                _mass_at(m2, i),
+            )
+            # Coefficient homotopy, not a straight source segment.
+            # A fast spurious root swings by order unity when the
+            # source passes a lens, and the individual Newton basins
+            # swap before the pair is close enough to call a fold.
+            z_arr[i] = advance_roots(
+                coeffs_prev,
+                coeffs_new,
+                z_arr[i - 1],
+                hc_order=hc_order,
+                n_newton=n_newton,
+            )
+            coeffs_prev = coeffs_new
+
+        if check_sols:
+            for i in range(n_times):
+                m1_i = _mass_at(m1, i)
+                m2_i = _mass_at(m2, i)
+
+                if type(self.root_tol) == np.ndarray:
+                    root_tol = self.root_tol[i]
+                else:
+                    root_tol = self.root_tol
+
+                z = z_arr[i, :]
+                c1 = m1_i / np.conj(z - z1[i])
+                c2 = m2_i / np.conj(z - z2[i])
+                diff = w[i] - (z - c1 - c2)
+                bad_solutions = np.absolute(diff) > root_tol
+                z_arr[i][bad_solutions] = np.nan + np.nan * 0j
+
+        return z_arr
+
     def get_image_pos_arr_mpsolve(self, w, z1, z2, m1, m2, check_sols=False):
         """Reference quintic roots via :func:`numpy.roots` (same as production path)."""
         return self.get_image_pos_arr(w, z1, z2, m1, m2, check_sols=check_sols)
@@ -6862,7 +7040,12 @@ class PSBL(PSPL):
             self.root_tol *= rcomp[5]
 
             # Image positions derived from rescale complex positions.
-            rimages = self.get_image_pos_arr(*rcomp[0:5], **kwargs)
+            # root_solver selects the hyper-Catalan tracker. The
+            # non-rescale branch below stays on get_image_pos_arr_old.
+            if getattr(self, "root_solver", "companion") == "hc":
+                rimages = self.get_image_pos_arr_HC(*rcomp[0:5], **kwargs)
+            else:
+                rimages = self.get_image_pos_arr(*rcomp[0:5], **kwargs)
 
             self.root_tol = orig_root_tol
 

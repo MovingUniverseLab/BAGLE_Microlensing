@@ -6464,6 +6464,9 @@ class PSBL(PSPL):
     be instantiated.
     """
 
+    # 'companion' is the eigendecomposition solve. 'hc' tracks roots.
+    root_solver = "companion"
+
     def get_resolved_lens_photometry(self, filt_idx=0):
         """
         Get the resolved lens photometry, assuming that all the non-source
@@ -7245,6 +7248,38 @@ class PSBL(PSPL):
 
         return images
 
+    def get_image_pos_arr_HC(
+        self, w, z1, z2, m1, m2, check_sols=True, hc_order=2, n_newton=2
+    ):
+        """
+        Hyper-Catalan image positions (JAX tracker).
+
+        Parameters
+        ----------
+        w, z1, z2 : array_like
+            Complex source and lens positions.
+        m1, m2 : float
+            Lens mass fractions.
+        check_sols : bool, optional
+            Mask roots that fail the lens equation.
+        hc_order : int, optional
+            Series truncation weight ``K``. Static under jit.
+        n_newton : int, optional
+            Newton updates after each predictor.
+
+        Returns
+        -------
+        images : complex ndarray
+            Shape ``(N_times, 5)``.
+        """
+        from bagle.jax.jax_physics import psbl_image_positions_hc
+
+        rt = getattr(self, "root_tol", 1e-8)
+
+        return psbl_image_positions_hc(
+            w, z1, z2, m1, m2, rt, check_sols, hc_order, n_newton
+        )
+
     def get_all_arrays(self, t, filt_idx=0, check_sols=True, rescale=True):
         '''
         Obtain the lensed image and amplitude arrays for each t.
@@ -7281,7 +7316,10 @@ class PSBL(PSPL):
             self.root_tol *= rcomp[5]
 
             # Image positions derived from rescale complex positions.
-            rimages = self.get_image_pos_arr(*rcomp[0:5], **kwargs)
+            if getattr(self, "root_solver", "companion") == "hc":
+                rimages = self.get_image_pos_arr_HC(*rcomp[0:5], **kwargs)
+            else:
+                rimages = self.get_image_pos_arr(*rcomp[0:5], **kwargs)
             self.root_tol = orig_root_tol
 
             # Take the image positions derived from the rescaled complex positions
@@ -7293,7 +7331,12 @@ class PSBL(PSPL):
 
         else:
             comp = self.get_complex_pos(t, filt_idx=filt_idx)
-            images = self.get_image_pos_arr(*comp)
+            if getattr(self, "root_solver", "companion") == "hc":
+                images = self.get_image_pos_arr_HC(
+                    *comp, check_sols=check_sols
+                )
+            else:
+                images = self.get_image_pos_arr(*comp)
             amps = self.get_amp_arr(images, *comp[1:])
 
         return images, amps

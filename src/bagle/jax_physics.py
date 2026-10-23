@@ -2036,7 +2036,10 @@ def psbl_amp_arr(z_arr, z1, z2, m1, m2):
     return amp_arr
 
 
-def psbl_all_arrays(w, z1, z2, m1, m2, root_tol, check_sols: bool = True, rescale: bool = True):
+def psbl_all_arrays(
+    w, z1, z2, m1, m2, root_tol, check_sols: bool = True, rescale: bool = True,
+    root_solver: str = "companion",
+):
     """
     Image positions and per-image amplifications.
 
@@ -2070,17 +2073,29 @@ def psbl_all_arrays(w, z1, z2, m1, m2, root_tol, check_sols: bool = True, rescal
     m1_phys = jnp.asarray(m1, dtype=jnp.float64)
     m2_phys = jnp.asarray(m2, dtype=jnp.float64)
 
-    # Keep raw companion-matrix roots (no NaN masking) so amplifications stay
+    # Keep raw roots (no NaN masking) so amplifications stay
     # autodiff-safe. Invalid roots are zeroed via the lens-equation residual.
+    # root_solver is a Python string: this function is not jitted whole.
+    if root_solver == "hc":
+        from bagle.jax.jax_physics import psbl_image_positions_hc
+
+        def _images(ww, uu, vv, aa, bb, tol):
+            return psbl_image_positions_hc(
+                ww, uu, vv, aa, bb, tol, False, 2, 2
+            )
+    else:
+        def _images(ww, uu, vv, aa, bb, tol):
+            return psbl_image_positions_jit(
+                ww, uu, vv, aa, bb, tol, False
+            )
+
     if rescale:
         # Solve in a scaled frame, then map images back to physical units.
         rw, rz1, rz2, rm1, rm2, scale, shift = rescale_complex_pos(
             w, z1, z2, m1_phys, m2_phys
         )
         rt = root_tol * scale if jnp.ndim(root_tol) else root_tol * scale
-        rimages = psbl_image_positions_jit(
-            rw, rz1, rz2, rm1, rm2, rt, False
-        )
+        rimages = _images(rw, rz1, rz2, rm1, rm2, rt)
         images = (rimages / scale.reshape(-1, 1)) + shift.reshape(-1, 1)
         amps = psbl_amp_arr(images, z1, z2, m1_phys, m2_phys)
         if check_sols:
@@ -2089,9 +2104,7 @@ def psbl_all_arrays(w, z1, z2, m1, m2, root_tol, check_sols: bool = True, rescal
             )
             amps = jnp.where(bad, 0.0, amps)
     else:
-        images = psbl_image_positions_jit(
-            w, z1, z2, m1_phys, m2_phys, root_tol, False
-        )
+        images = _images(w, z1, z2, m1_phys, m2_phys, root_tol)
         amps = psbl_amp_arr(images, z1, z2, m1_phys, m2_phys)
         if check_sols:
             bad = _psbl_invalid_root_mask(

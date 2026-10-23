@@ -272,7 +272,7 @@ def permute_images(z, z_mask, z_parity):
 
 
 def images_on_source_limb_static(w0, z1, z2, m1, m2, rho, n_outline,
-                                 root_tol=1e-10):
+                                 root_tol=1e-10, root_solver="companion"):
     """
     Solve the Witt quintic on a fixed source-limb outline (d1).
 
@@ -319,9 +319,17 @@ def images_on_source_limb_static(w0, z1, z2, m1, m2, rho, n_outline,
     )
 
     # Witt roots: shape (N_limb, N_images); NaN marks non-physical roots.
-    z_all = psbl_image_positions(
-        w_limb, z1_b, z2_b, m1_b, m2_b, tol_b, check_sols=True
-    )
+    # 'hc' continues slot order around the limb from one global seed.
+    if root_solver == "hc":
+        from bagle.jax.jax_physics import psbl_image_positions_hc
+
+        z_all = psbl_image_positions_hc(
+            w_limb, z1_b, z2_b, m1_b, m2_b, tol_b, True, 2, 2
+        )
+    else:
+        z_all = psbl_image_positions(
+            w_limb, z1_b, z2_b, m1_b, m2_b, tol_b, check_sols=True
+        )
 
     # Contour code expects (N_images, N_limb).
     z = z_all.T
@@ -394,7 +402,82 @@ def magnification_one_static(w0, z1, z2, m1, m2, rho, n_outline,
     return mag
 
 
-def fsbl_magnification(w0, z1, z2, m1, m2, rho, n_outline, root_tol=1e-10):
+def _fsbl_magnification_hc(w0, z1, z2, m1, m2, rho, n_outline, root_tol):
+    """
+    Finite-source magnification with limb-ordered hyper-Catalan roots.
+
+    Parameters
+    ----------
+    w0, z1, z2, m1, m2, rho, n_outline, root_tol
+        Same as :func:`fsbl_magnification`.
+
+    Returns
+    -------
+    mag : array, float, shape (n_epochs,)
+        Total magnification. Image slots are already ordered, so
+        this path does not call :func:`permute_images`.
+    """
+    from bagle.jax.jax_physics import fsbl_limb_positions_hc
+    from bagle.jax_physics import _psbl_invalid_root_mask
+
+    w0 = jnp.asarray(w0, dtype=jnp.complex128).reshape(-1)
+    n = w0.shape[0]
+    z1 = jnp.broadcast_to(jnp.asarray(z1, dtype=jnp.complex128).reshape(-1), (n,))
+    z2 = jnp.broadcast_to(jnp.asarray(z2, dtype=jnp.complex128).reshape(-1), (n,))
+    m1 = jnp.broadcast_to(jnp.asarray(m1, dtype=jnp.float64).reshape(-1), (n,))
+    m2 = jnp.broadcast_to(jnp.asarray(m2, dtype=jnp.float64).reshape(-1), (n,))
+    theta = jnp.linspace(-jnp.pi, jnp.pi, int(n_outline), endpoint=False)
+    phase = jnp.exp(1j * theta)
+    z = fsbl_limb_positions_hc(
+        w0, z1, z2, m1, m2, rho, int(n_outline), 2, 2
+    )
+    # z: (n_epochs, n_limb, 5). Mask is not differentiated.
+    w_limb = w0[:, None] + rho * phase[None, :]
+    z_flat = z.reshape(n * int(n_outline), 5)
+    w_flat = w_limb.reshape(n * int(n_outline))
+    z1_flat = jnp.repeat(z1, int(n_outline))
+    z2_flat = jnp.repeat(z2, int(n_outline))
+    m1_flat = jnp.repeat(m1, int(n_outline))
+    m2_flat = jnp.repeat(m2, int(n_outline))
+    bad = _psbl_invalid_root_mask(
+        z_flat, w_flat, z1_flat, z2_flat, m1_flat, m2_flat, root_tol
+    ).reshape(z.shape)
+    valid = jax.lax.stop_gradient(~bad)
+    # Parity is the sign of the Jacobian. It is constant between
+    # caustics, so it is not a differentiable path.
+    _J, parity = det_and_jac(
+        jax.lax.stop_gradient(z),
+        jax.lax.stop_gradient(z1[:, None, None]),
+        jax.lax.stop_gradient(z2[:, None, None]),
+        jax.lax.stop_gradient(m1[:, None, None]),
+        jax.lax.stop_gradient(m2[:, None, None]),
+    )
+    parity = jax.lax.stop_gradient(parity)
+    inv_src = 1.0 / (jnp.pi * rho ** 2)
+
+    def _one_epoch(z_e, valid_e, parity_e):
+        def _one_image(k):
+            n_valid = jnp.sum(valid_e[:, k])
+            area = jax.lax.cond(
+                n_valid > 0,
+                lambda: polygonal_area_with_parity(
+                    z_e[:, k], valid_e[:, k], theta, parity_e[:, k]
+                ),
+                lambda: jnp.array(0.0, dtype=jnp.float64),
+            )
+
+            return area
+
+        areas = jax.vmap(_one_image)(jnp.arange(_N_IMAGES))
+
+        return jnp.abs(jnp.sum(areas)) * inv_src
+
+    return jax.vmap(_one_epoch)(z, valid, parity)
+
+
+def fsbl_magnification(
+    w0, z1, z2, m1, m2, rho, n_outline, root_tol=1e-10, root_solver="companion"
+):
     """
     Vectorized static-limb FSBL magnification over epochs.
 
@@ -412,12 +495,19 @@ def fsbl_magnification(w0, z1, z2, m1, m2, rho, n_outline, root_tol=1e-10):
         Static limb count ``N_limb`` (concrete int).
     root_tol : float, optional, shape = ()
         Root mask tolerance.
+    root_solver : {'companion', 'hc'}, optional
+        ``hc`` continues roots around the limb and across epochs.
 
     Returns
     -------
     mag : jnp.ndarray, float, shape = (N_times,)
         Total magnification at each epoch.
     """
+    if root_solver == "hc":
+        return _fsbl_magnification_hc(
+            w0, z1, z2, m1, m2, rho, n_outline, root_tol
+        )
+
     # Shape of w0: (N_times,).
     w0 = jnp.atleast_1d(jnp.asarray(w0, dtype=jnp.complex128))
     n = w0.shape[0]
@@ -570,7 +660,9 @@ def permute_images_lsa(z, z_mask, z_parity):
     )
 
 
-def _solve_limb_buffer(w0, z1, z2, m1, m2, rho, theta, n_valid, root_tol):
+def _solve_limb_buffer(
+    w0, z1, z2, m1, m2, rho, theta, n_valid, root_tol, root_solver="companion"
+):
     """
     Solve Witt roots on a packed limb buffer (first ``n_valid`` angles).
 
@@ -607,9 +699,18 @@ def _solve_limb_buffer(w0, z1, z2, m1, m2, rho, theta, n_valid, root_tol):
         jnp.asarray(root_tol, dtype=jnp.float64), (n_buffer,)
     )
 
-    z_all = psbl_image_positions(
-        w_limb, z1_b, z2_b, m1_b, m2_b, tol_b, check_sols=True
-    )
+    if root_solver == "hc":
+        from bagle.jax.jax_physics import psbl_image_positions_hc
+
+        # Active angles are packed at the front, so the continuation
+        # along ``w_limb`` is the physical limb until ``n_valid``.
+        z_all = psbl_image_positions_hc(
+            w_limb, z1_b, z2_b, m1_b, m2_b, tol_b, True, 2, 2
+        )
+    else:
+        z_all = psbl_image_positions(
+            w_limb, z1_b, z2_b, m1_b, m2_b, tol_b, check_sols=True
+        )
     # Shape (N_images, N_buffer).
     z = z_all.T
     z_mask = (~jnp.isnan(z_all.real)).T & active[None, :]
@@ -951,7 +1052,7 @@ def fsbl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, z1, z2, m1, m2,
                                rho, n_outline, mag_src, b_sff, mag_obs,
                                mag_err, parallax_vectors=None, piE_E=0.0,
                                piE_N=0.0, gp_params=None, fixed_jitter=True,
-                               root_tol=1e-10):
+                               root_tol=1e-10, root_solver="companion"):
     """
     Traced photometric log-likelihood with static-limb FSBL magnification.
 
@@ -1008,7 +1109,8 @@ def fsbl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, z1, z2, m1, m2,
 
     # Static-limb FSBL magnification, then blended model magnitudes.
     amp = fsbl_magnification(
-        w0, z1, z2, m1, m2, rho, n_outline, root_tol=root_tol
+        w0, z1, z2, m1, m2, rho, n_outline, root_tol=root_tol,
+        root_solver=root_solver,
     )
     mag_model = pspl_photometry_from_amp(amp, mag_src, b_sff)
 
