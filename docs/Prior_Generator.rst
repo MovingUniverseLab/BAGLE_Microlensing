@@ -36,7 +36,9 @@ Prior Generators
 
 .. autofunction:: compute_invgamma_params
 
-.. autofunction:: make_piS 
+.. autofunction:: make_piS
+
+.. autofunction:: make_sed_distance_gen
 
 .. autofunction:: make_fdfdt 
 

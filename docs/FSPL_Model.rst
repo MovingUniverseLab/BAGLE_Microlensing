@@ -34,3 +34,14 @@ FSPL Photometry Only
     :members:
     :inherited-members:
     :show-inheritance:
+
+.. autoclass:: model.FSPL_Phot_Par_Param2
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
+.. autoclass:: model.FSPL_Phot_noPar_Param2
+    :members:
+    :inherited-members:
+    :show-inheritance:
+       
