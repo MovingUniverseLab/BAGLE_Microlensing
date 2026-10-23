@@ -333,6 +333,8 @@ def get_vbm_model(bagle_model, verbose=False):
     Photometry-only FSPL uses ESPL parameter lists with ``log_rho``
     from BAGLE ``radiusS``. Call ``ESPLLightCurve`` /
     ``ESPLLightCurveParallax`` (not PSPL) for those models.
+    FSPL with astrometry uses ``ESPLAstroLightCurve`` (``log_rho`` inserted
+    after ``t0`` in the PSPLAstro parameter list).
 
     Parameters
     ----------
@@ -356,7 +358,19 @@ def get_vbm_model(bagle_model, verbose=False):
 
     bagle_class_name = str(bagle_model.__class__)
     is_fspl = 'FSPL' in bagle_class_name
-    rho_vbm = float(bagle_model.radiusS) if is_fspl else None
+
+    # Phot-only FSPL stores radiusS in Einstein radii; PhotAstrom stores
+    # radiusS in arcsec. Prefer source_radius_thetaE_units() when present.
+    rho_vbm = None
+    if is_fspl:
+        if hasattr(bagle_model, 'source_radius_thetaE_units'):
+            rho_vbm = float(bagle_model.source_radius_thetaE_units())
+        elif (getattr(bagle_model, 'astrometryFlag', False)
+              and hasattr(bagle_model, 'thetaE_amp')):
+            rho_vbm = (float(bagle_model.radiusS) * 1e3
+                       / float(bagle_model.thetaE_amp))
+        else:
+            rho_vbm = float(bagle_model.radiusS)
 
     if bagle_model.parallaxFlag:
         c = SkyCoord(ra=bagle_model.raL * u.deg, dec=bagle_model.decL * u.deg, frame='icrs')
@@ -442,14 +456,16 @@ def get_vbm_model(bagle_model, verbose=False):
         vbm_mod.t0_par_fixed = 1
         vbm_mod.t0_par = t0_par_vbm
 
-        # Params - PSPLAstroLightCurve (ESPL astrometry not wired here)
+        # PSPLAstroLightCurve: [u0, log_tE, t0, piEN, piEE, muSN, muSE, piS, thetaE]
+        # ESPLAstroLightCurve: [u0, log_tE, t0, log_rho, piEN, piEE, muSN, muSE,
+        #                       piS, thetaE]
         if is_fspl:
-            raise Exception(
-                'get_vbm_model does not yet support FSPL with astrometry: '
-                + bagle_class_name)
-
-        vbm_par = [u0_vbm, math.log(tE_vbm), t0_vbm, piEN_vbm, piEE_vbm,
-                   muSN_vbm, muSE_vbm, piS_vbm, thetaE_vbm]
+            vbm_par = [u0_vbm, math.log(tE_vbm), t0_vbm, math.log(rho_vbm),
+                       piEN_vbm, piEE_vbm, muSN_vbm, muSE_vbm, piS_vbm,
+                       thetaE_vbm]
+        else:
+            vbm_par = [u0_vbm, math.log(tE_vbm), t0_vbm, piEN_vbm, piEE_vbm,
+                       muSN_vbm, muSE_vbm, piS_vbm, thetaE_vbm]
 
     return vbm_mod, vbm_par
 
