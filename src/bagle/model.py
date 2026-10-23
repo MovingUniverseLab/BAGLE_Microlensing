@@ -22583,6 +22583,13 @@ class FSPL(PSPL):
         plus = np.append(plus, plus[:, 0:1, :], axis=1)
         minus = np.append(minus, minus[:, 0:1, :], axis=1)
 
+        # The centroid integrand is not translation-invariant at finite
+        # outline resolution. Subtract one sky point and add it back so a
+        # shared xS0 offset shifts the image by that offset exactly.
+        origin = np.array(plus[:, 0, :], dtype=float, copy=True)
+        plus = plus - origin[:, None, :]
+        minus = minus - origin[:, None, :]
+
         # Pre-calculate squared versions...
         # we use these a lot in the calculations below.
         plus2 = plus ** 2
@@ -22654,8 +22661,8 @@ class FSPL(PSPL):
 
         # Final shape = [N_times, [+, -], [E, N]]
         images = np.zeros((len(t), 2, 2), dtype=float)
-        images[:, 0, :] = img_pos_plus.T
-        images[:, 1, :] = img_pos_minus.T
+        images[:, 0, :] = img_pos_plus.T + origin
+        images[:, 1, :] = img_pos_minus.T + origin
 
         # Final shape = [N_times, [+, -]]
         amps = np.array((amp_plus, amp_minus)).T  # amplifications

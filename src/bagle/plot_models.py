@@ -476,6 +476,38 @@ def _draw_model_class_title(model_obj, x=0.802, y=0.84):
 
     return None
 
+
+def _param_panel_lines(fmt, val):
+    """Format one model parameter for the geometry side panel.
+
+    Parameters
+    ----------
+    fmt : str
+        Format string. A two-component vector uses ``{0}`` and ``{1}``.
+    val : float or array_like
+        Parameter value. ``xS0`` may have shape ``(n_filters, 2)``.
+
+    Returns
+    -------
+    lines : list of str
+        One string per panel row.
+    """
+    arr = np.asarray(val)
+
+    # Per-filter East/North pairs. A shape (2,) vector is one pair.
+    if arr.ndim == 2 and arr.shape[-1] == 2:
+        lines = [
+            fmt.format(float(row[0]), float(row[1])) for row in arr
+        ]
+        return lines
+
+    if isinstance(val, (list, np.ndarray)):
+        flat = [float(item) for item in arr.astype(float).ravel()]
+        return [fmt.format(*flat)]
+
+    return [fmt.format(val)]
+
+
 def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     """
     Make an animated GIF of a point-source binary-lens event. Animate the photometry
@@ -614,13 +646,9 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
             val = np.atleast_1d(val)
             fmt += '[' + '{:.2f} ' * len(val) + ']'
 
-        if isinstance(val, (list,np.ndarray)):
-            txt = fmt.format(*val)
-        else:
-            txt = fmt.format(val)
-            
-        plt.figtext(0.805, 0.75-row*dy, txt, fontsize=12)
-        row += 1
+        for txt in _param_panel_lines(fmt, val):
+            plt.figtext(0.805, 0.75 - row * dy, txt, fontsize=12)
+            row += 1
         
     plt.show()
     plt.savefig(outfile)
@@ -862,13 +890,9 @@ def plot_PSBL_static(psbl, duration=10, time_steps=300,
             val = np.atleast_1d(val)
             fmt += '[' + '{:.2f} ' * len(val) + ']'
 
-        if isinstance(val, (list, np.ndarray)):
-            txt = fmt.format(*val)
-        else:
-            txt = fmt.format(val)
-
-        plt.figtext(0.805, 0.75 - row * dy, txt, fontsize=12)
-        row += 1
+        for txt in _param_panel_lines(fmt, val):
+            plt.figtext(0.805, 0.75 - row * dy, txt, fontsize=12)
+            row += 1
 
     # Save first so the file is written even if show() closes the fig.
     plt.savefig(outfile)
