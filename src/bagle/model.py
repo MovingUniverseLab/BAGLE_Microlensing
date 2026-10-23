@@ -4889,16 +4889,16 @@ class PSPL_PhotAstromParam7(PSPL_Param):
         log10 of the microlensing parallax amplitude.
     phi_muRel : float
         Angle of the muRel (and piE) vector in degrees East of North.
-    xS0_E : float
+    xS0_E : array_like
         R.A. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    xS0_N : float
+        arbitrary ref. frame. One entry per filter.
+    xS0_N : array_like
         Dec. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+        arbitrary ref. frame. One entry per filter.
     muS_E : float
-        RA source proper motion (mas/yr)
+        RA source proper motion (mas/yr).
     muS_N : float
-        Dec source proper motion (mas/yr)
+        Dec source proper motion (mas/yr).
     b_sff : numpy array or list
         Source flux fraction for each filter,
         :math:`b_\\mathrm{sff} = f_S / (f_S + f_L + f_N)`.
@@ -4918,8 +4918,11 @@ class PSPL_PhotAstromParam7(PSPL_Param):
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'log10_piE', 'phi_muRel',
                           'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_base']
+                          'muS_E', 'muS_N',
+                          'b_sff', 'mag_base']
+    # muS is shared. xS0 is per astrometric filter.
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['thetaE_amp', 'piE_E', 'piE_N',
                               'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -4942,7 +4945,8 @@ class PSPL_PhotAstromParam7(PSPL_Param):
         self.thetaE_amp = 10 ** log10_thetaE
         self.log10_piE = log10_piE
         self.phi_muRel = phi_muRel
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -23782,8 +23786,10 @@ class FSPL_PhotParam1(PSPL_Param):
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE',
-                          'piE_E', 'piE_N', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_src']
+                          'piE_E', 'piE_N', 'radiusS',
+                          'b_sff', 'mag_src']
+    filt_param_names = ['b_sff', 'mag_src']
+    filt_param_usage = ['both', 'phot']
     additional_param_names = ['mag_base']
 
     paramAstromFlag = False

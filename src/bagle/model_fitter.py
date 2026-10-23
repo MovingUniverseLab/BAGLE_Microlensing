@@ -1615,18 +1615,25 @@ class MicrolensSolver(Solver):
         return
 
     def get_model(self, params):
-        params_dict = generate_params_dict(params,
-                                           self.fitter_param_names)
-        if self.fixed_param_names is not None:
-            fixed_params_dict = generate_fixed_params_dict(self.data, 
-                                                           self.fixed_param_names)        
+        """Build a model from fitted values plus fixed filter slots.
 
-            mod = self.model_class(*params_dict.values(), **fixed_params_dict)
+        Parameters
+        ----------
+        params : dict, astropy.table.Row, or sequence
+            Fitted parameters; see ``to_param_dict``. Not modified.
 
-        else:
-            #print(self.fitter_param_names)
-            #print(*params_dict.values())
-            mod = self.model_class(*params_dict.values())
+        Returns
+        -------
+        mod : object
+            Model instance. Filter-indexed constructor arguments have
+            length ``n_filters``, including zeros that were not fitted.
+            ``obsLocation`` is the resolved body list.
+        """
+        # Fitted values keyed by name. A ctypes cube is indexed in
+        # fitter_param_names order; extra derived slots are ignored.
+        params = self.to_param_dict(params)
+
+        arguments = self.pack_constructor_params(params)
 
         # GP hyperparameters are fitted per filter but the constructor
         # takes one dictionary per name, keyed by the 0-based index.
@@ -1639,6 +1646,65 @@ class MicrolensSolver(Solver):
         mod = self.model_class(*arguments, **fixed_params_dict)
 
         return mod
+
+    def _check_b_sff_upper_bound(self):
+        """Raise if a phot+astrom ``b_sff`` prior exceeds 1.
+
+        Parameters
+        ----------
+        self : MicrolensSolver
+            Solver with ``priors`` and ``map_phot_idx_to_ast_idx`` set.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            ``b_sffN`` for a photometry dataset paired with astrometry
+            has an upper bound above 1, or no finite upper bound.
+
+        Notes
+        -----
+        Called once at the start of ``solve``. The default prior is
+        already uniform on [0, 1]. Photometry-only fits are skipped.
+        A suffixed prior that is not a cube name is reported here,
+        after the caller has finished replacing defaults.
+        """
+        self.warn_unmatched_suffixed_priors()
+
+        n_ast = int(self.n_ast_sets or 0)
+        if n_ast == 0:
+            return None
+
+        # One photometry partner per astrometry dataset. A string-style
+        # map can run past n_ast_sets; those extra entries are ignored.
+        mapping = list(self.map_phot_idx_to_ast_idx or [])
+        n_check = min(n_ast, len(mapping))
+        for ast_i in range(n_check):
+            name = f"b_sff{int(mapping[ast_i]) + 1}"
+            if name not in self.priors:
+                continue
+
+            prior = self.priors[name]
+            # scipy make_gen: ppf(1) is the upper edge. NumPyro Uniform
+            # stores it on .high. Anything else is treated as unbounded.
+            if callable(getattr(prior, "ppf", None)):
+                upper = float(np.asarray(prior.ppf(1.0)).ravel()[0])
+            elif getattr(prior, "high", None) is not None:
+                upper = float(np.asarray(prior.high).ravel()[0])
+            else:
+                upper = np.inf
+
+            if (not np.isfinite(upper)) or upper > 1.0:
+                raise ValueError(
+                    f"{name} prior upper bound is {upper}; photometry "
+                    "paired with astrometry requires an upper bound "
+                    "of 1 or less."
+                )
+
+        return None
 
     # FIXME: Is there a reason Prior takes ndim and nparams when those aren't used?
     # Is it the same reason as LogLikelihood?
