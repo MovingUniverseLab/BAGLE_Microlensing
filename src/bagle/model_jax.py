@@ -34275,13 +34275,6 @@ root_tol : float
         self.radiusS = radiusS
 
 
-# ==================================================
-#
-# BFSPL Models
-#
-# ==================================================
-
-
 class FSBL_Limb(FSBL):
     """
     Linear limb-darkened FSBL mixin (Gamma law, one coefficient per filter).
@@ -34328,510 +34321,1367 @@ class FSBL_Limb_Parallax(FSBL_Parallax):
     parallaxFlag = True
     ref_frame_parallax_flag = False
 
+
 class FSBL_Limb_GP_PhotAstromParam1(FSBL_GP_PhotAstromParam1):
-    """Limb-darkened variant of :class:`FSBL_GP_PhotAstromParam1` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with Gaussian-process
+    correlated noise.
+
+    Same as :class:`FSBL_GP_PhotAstromParam1` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_GP_PhotAstromParam1`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_GP_PhotAstromParam1.fitter_param_names + ['gamma']
     filt_param_names = FSBL_GP_PhotAstromParam1.filt_param_names + ['gamma']
     filt_param_usage = FSBL_GP_PhotAstromParam1.filt_param_usage + ['both']
-    def __init__(self,                  mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
-                 dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gp_log_sigma,
+
+    def __init__(self, mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E,
+                 muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gp_log_sigma,
                  gp_log_rho, gp_log_S0, gp_log_omega0, gamma, n_outline=50, raL=None,
                  decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_GP_PhotAstromParam2(FSBL_GP_PhotAstromParam2):
-    """Limb-darkened variant of :class:`FSBL_GP_PhotAstromParam2` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with Gaussian-process
+    correlated noise.
+
+    Same as :class:`FSBL_GP_PhotAstromParam2` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_GP_PhotAstromParam2`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_GP_PhotAstromParam2.fitter_param_names + ['gamma']
     filt_param_names = FSBL_GP_PhotAstromParam2.filt_param_names + ['gamma']
     filt_param_usage = FSBL_GP_PhotAstromParam2.filt_param_usage + ['both']
-    def __init__(self,                  t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
                  muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gp_log_sigma,
                  gp_log_rho, gp_log_S0, gp_log_omega0, gamma, n_outline=50, raL=None,
                  decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                         xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_GP_PhotParam1(FSBL_GP_PhotParam1):
-    """Limb-darkened variant of :class:`FSBL_GP_PhotParam1` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry only, with Gaussian-process correlated
+    noise.
+
+    Same as :class:`FSBL_GP_PhotParam1` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_GP_PhotParam1`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_GP_PhotParam1.fitter_param_names + ['gamma']
     filt_param_names = FSBL_GP_PhotParam1.filt_param_names + ['gamma']
     filt_param_usage = FSBL_GP_PhotParam1.filt_param_usage + ['both']
-    def __init__(self,                  t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff, mag_src,
-                 gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0, gamma,
-                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff,
+                 mag_src, gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff, mag_src, gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff,
+                         mag_src, gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstromParam1(FSBL_PhotAstromParam1):
-    """Limb-darkened variant of :class:`FSBL_PhotAstromParam1` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry.
+
+    Same as :class:`FSBL_PhotAstromParam1` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstromParam1`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstromParam1.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstromParam1.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstromParam1.filt_param_usage + ['both']
-    def __init__(self,                  mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
-                 dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50,
-                 raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+
+    def __init__(self, mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E,
+                 muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstromParam2(FSBL_PhotAstromParam2):
-    """Limb-darkened variant of :class:`FSBL_PhotAstromParam2` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry.
+
+    Same as :class:`FSBL_PhotAstromParam2` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstromParam2`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstromParam2.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstromParam2.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstromParam2.filt_param_usage + ['both']
-    def __init__(self,                  t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
                  muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
-                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+                 n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                         xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstromParam3(FSBL_PhotAstromParam3):
-    """Limb-darkened variant of :class:`FSBL_PhotAstromParam3` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry.
+
+    Same as :class:`FSBL_PhotAstromParam3` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstromParam3`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstromParam3.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstromParam3.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstromParam3.filt_param_usage + ['both']
-    def __init__(self,                  t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
-                 xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls,
-                 gamma, n_outline=50, raL=None, decL=None, obsLocation='earth',
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                 xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth',
                  root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+                         xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_base,
+                         dmag_Lp_Ls, n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstromParam4(FSBL_PhotAstromParam4):
-    """Limb-darkened variant of :class:`FSBL_PhotAstromParam4` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry.
+
+    Same as :class:`FSBL_PhotAstromParam4` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstromParam4`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstromParam4.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstromParam4.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstromParam4.filt_param_usage + ['both']
-    def __init__(self,                  t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
-                 xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
-                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        # Set gamma first so PSPL_Param broadcasts it per filter.
-        self.gamma = gamma
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        return None
-
-class FSBL_Limb_PhotAstromParam5(FSBL_PhotAstromParam5):
-    """Limb-darkened variant of :class:`FSBL_PhotAstromParam5` (adds per-filter ``gamma``)."""
-    fitter_param_names = FSBL_PhotAstromParam5.fitter_param_names + ['gamma']
-    filt_param_names = FSBL_PhotAstromParam5.filt_param_names + ['gamma']
-    filt_param_usage = FSBL_PhotAstromParam5.filt_param_usage + ['both']
-    def __init__(self,                  t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E, piEN_piEE,
-                 xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_base,
-                 dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
-                 obsLocation='earth', root_tol=1e-08):
-        # Set gamma first so PSPL_Param broadcasts it per filter.
-        self.gamma = gamma
-        super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E, piEN_piEE, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-
-        return None
-
-class FSBL_Limb_PhotAstromParam6(FSBL_PhotAstromParam6):
-    """Limb-darkened variant of :class:`FSBL_PhotAstromParam6` (adds per-filter ``gamma``)."""
-    fitter_param_names = FSBL_PhotAstromParam6.fitter_param_names + ['gamma']
-    filt_param_names = FSBL_PhotAstromParam6.filt_param_names + ['gamma']
-    filt_param_usage = FSBL_PhotAstromParam6.filt_param_usage + ['both']
-    def __init__(self,                  t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
-                 muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
-                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        # Set gamma first so PSPL_Param broadcasts it per filter.
-        self.gamma = gamma
-        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-
-        return None
-
-class FSBL_Limb_PhotAstromParam7(FSBL_PhotAstromParam7):
-    """Limb-darkened variant of :class:`FSBL_PhotAstromParam7` (adds per-filter ``gamma``)."""
-    fitter_param_names = FSBL_PhotAstromParam7.fitter_param_names + ['gamma']
-    filt_param_names = FSBL_PhotAstromParam7.filt_param_names + ['gamma']
-    filt_param_usage = FSBL_PhotAstromParam7.filt_param_usage + ['both']
-    def __init__(self,                  mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N, muS_E,
-                 muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
-                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        # Set gamma first so PSPL_Param broadcasts it per filter.
-        self.gamma = gamma
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-
-        return None
-
-class FSBL_Limb_PhotAstromParam8(FSBL_PhotAstromParam8):
-    """Limb-darkened variant of :class:`FSBL_PhotAstromParam8` (adds per-filter ``gamma``)."""
-    fitter_param_names = FSBL_PhotAstromParam8.fitter_param_names + ['gamma']
-    filt_param_names = FSBL_PhotAstromParam8.filt_param_names + ['gamma']
-    filt_param_usage = FSBL_PhotAstromParam8.filt_param_usage + ['both']
-    def __init__(self,                  t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N,
                  xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  gamma, n_outline=50, raL=None, decL=None, obsLocation='earth',
                  root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N,
+                         xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src,
+                         dmag_Lp_Ls, n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
+class FSBL_Limb_PhotAstromParam5(FSBL_PhotAstromParam5):
+    """
+    Limb-darkened FSBL model for photometry and astrometry.
+
+    Same as :class:`FSBL_PhotAstromParam5` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstromParam5`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
+    fitter_param_names = FSBL_PhotAstromParam5.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam5.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam5.filt_param_usage + ['both']
+
+    def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E, piEN_piEE,
+                 xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls,
+                 gamma, n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+
+        super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E,
+                         piEN_piEE, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff,
+                         mag_base, dmag_Lp_Ls, n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class FSBL_Limb_PhotAstromParam6(FSBL_PhotAstromParam6):
+    """
+    Limb-darkened FSBL model for photometry and astrometry.
+
+    Same as :class:`FSBL_PhotAstromParam6` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstromParam6`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
+    fitter_param_names = FSBL_PhotAstromParam6.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam6.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam6.filt_param_usage + ['both']
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
+                 muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                         xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class FSBL_Limb_PhotAstromParam7(FSBL_PhotAstromParam7):
+    """
+    Limb-darkened FSBL model for photometry and astrometry.
+
+    Same as :class:`FSBL_PhotAstromParam7` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstromParam7`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
+    fitter_param_names = FSBL_PhotAstromParam7.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam7.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam7.filt_param_usage + ['both']
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
+                 muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
+                         muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class FSBL_Limb_PhotAstromParam8(FSBL_PhotAstromParam8):
+    """
+    Limb-darkened FSBL model for photometry and astrometry.
+
+    Same as :class:`FSBL_PhotAstromParam8` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstromParam8`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
+    fitter_param_names = FSBL_PhotAstromParam8.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam8.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam8.filt_param_usage + ['both']
+
+    def __init__(self, t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+                 xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                 gamma, n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+
+        super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E,
+                         piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff,
+                         mag_src, dmag_Lp_Ls, n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
 class FSBL_Limb_PhotAstrom_AccOrbs_Param1(FSBL_PhotAstrom_AccOrbs_Param1):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_AccOrbs_Param1` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with accelerating orbital
+    motion.
+
+    Same as :class:`FSBL_PhotAstrom_AccOrbs_Param1` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_AccOrbs_Param1`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_AccOrbs_Param1.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_AccOrbs_Param1.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_AccOrbs_Param1.filt_param_usage + ['both']
-    def __init__(self,                  mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N,
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N,
                  delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N,
                  dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N,
+                         delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E,
+                         muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstrom_AccOrbs_Param3(FSBL_PhotAstrom_AccOrbs_Param3):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_AccOrbs_Param3` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with accelerating orbital
+    motion.
+
+    Same as :class:`FSBL_PhotAstrom_AccOrbs_Param3` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_AccOrbs_Param3`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_AccOrbs_Param3.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_AccOrbs_Param3.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_AccOrbs_Param3.filt_param_usage + ['both']
-    def __init__(self,                  t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
                  xS0_N, muS_E, muS_N, q, sep, alpha, delta_muL_sec_E, delta_muL_sec_N,
-                 accLsec_E, accLsec_N, b_sff, mag_base, dmag_Lp_Ls, gamma,
-                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+                 accLsec_E, accLsec_N, b_sff, mag_base, dmag_Lp_Ls, gamma, n_outline=50,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, b_sff, mag_base, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+                         xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, delta_muL_sec_E,
+                         delta_muL_sec_N, accLsec_E, accLsec_N, b_sff, mag_base,
+                         dmag_Lp_Ls, n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstrom_AccOrbs_Param6(FSBL_PhotAstrom_AccOrbs_Param6):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_AccOrbs_Param6` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with accelerating orbital
+    motion.
+
+    Same as :class:`FSBL_PhotAstrom_AccOrbs_Param6` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_AccOrbs_Param6`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_AccOrbs_Param6.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_AccOrbs_Param6.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_AccOrbs_Param6.filt_param_usage + ['both']
-    def __init__(self,                  t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
-                 xS0_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E,
-                 muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50,
-                 raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+
+    def __init__(self, t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E, piE_N,
+                 xS0_E, xS0_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N,
+                 muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E, piE_N,
+                         xS0_E, xS0_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E,
+                         accLsec_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src,
+                         dmag_Lp_Ls, n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstrom_AccOrbs_Param7(FSBL_PhotAstrom_AccOrbs_Param7):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_AccOrbs_Param7` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with accelerating orbital
+    motion.
+
+    Same as :class:`FSBL_PhotAstrom_AccOrbs_Param7` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_AccOrbs_Param7`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_AccOrbs_Param7.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_AccOrbs_Param7.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_AccOrbs_Param7.filt_param_usage + ['both']
-    def __init__(self,                  mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, radiusS, muL_E, muL_N,
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, radiusS, muL_E, muL_N,
                  delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N,
                  dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, radiusS, muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, radiusS, muL_E, muL_N,
+                         delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E,
+                         muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstrom_CircOrbs_Param1(FSBL_PhotAstrom_CircOrbs_Param1):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_CircOrbs_Param1` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with circular binary orbits.
+
+    Same as :class:`FSBL_PhotAstrom_CircOrbs_Param1` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_CircOrbs_Param1`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param1.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_CircOrbs_Param1.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param1.filt_param_usage + ['both']
-    def __init__(self,                  mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N, radiusS,
+
+    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N, radiusS,
                  omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS, b_sff,
                  mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
                  obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N, radiusS, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N,
+                         radiusS, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL,
+                         dS, b_sff, mag_src, dmag_Lp_Ls, n_outline=n_outline, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstrom_CircOrbs_Param3(FSBL_PhotAstrom_CircOrbs_Param3):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_CircOrbs_Param3` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with circular binary orbits.
+
+    Same as :class:`FSBL_PhotAstrom_CircOrbs_Param3` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_CircOrbs_Param3`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param3.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_CircOrbs_Param3.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param3.filt_param_usage + ['both']
-    def __init__(self,                  t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
                  xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q, b_sff,
                  mag_base, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
                  obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q, b_sff, mag_base, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+                         xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N,
+                         q, b_sff, mag_base, dmag_Lp_Ls, n_outline=n_outline, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstrom_CircOrbs_Param4(FSBL_PhotAstrom_CircOrbs_Param4):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_CircOrbs_Param4` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with circular binary orbits.
+
+    Same as :class:`FSBL_PhotAstrom_CircOrbs_Param4` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_CircOrbs_Param4`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param4.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_CircOrbs_Param4.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param4.filt_param_usage + ['both']
-    def __init__(self,                  t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
-                 xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q, b_sff,
-                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
-                 obsLocation='earth', root_tol=1e-08):
-        # Set gamma first so PSPL_Param broadcasts it per filter.
-        self.gamma = gamma
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        return None
-
-class FSBL_Limb_PhotAstrom_CircOrbs_Param7(FSBL_PhotAstrom_CircOrbs_Param7):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_CircOrbs_Param7` (adds per-filter ``gamma``)."""
-    fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param7.fitter_param_names + ['gamma']
-    filt_param_names = FSBL_PhotAstrom_CircOrbs_Param7.filt_param_names + ['gamma']
-    filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param7.filt_param_usage + ['both']
-    def __init__(self,                  mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
-                 omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS, b_sff,
-                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
-                 obsLocation='earth', root_tol=1e-08):
-        # Set gamma first so PSPL_Param broadcasts it per filter.
-        self.gamma = gamma
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-
-        return None
-
-class FSBL_Limb_PhotAstrom_CircOrbs_Param8(FSBL_PhotAstrom_CircOrbs_Param8):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_CircOrbs_Param8` (adds per-filter ``gamma``)."""
-    fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param8.fitter_param_names + ['gamma']
-    filt_param_names = FSBL_PhotAstrom_CircOrbs_Param8.filt_param_names + ['gamma']
-    filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param8.filt_param_usage + ['both']
-    def __init__(self,                  t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N,
                  xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q,
                  b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
                  obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N,
+                         xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N,
+                         q, b_sff, mag_src, dmag_Lp_Ls, n_outline=n_outline, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
+class FSBL_Limb_PhotAstrom_CircOrbs_Param7(FSBL_PhotAstrom_CircOrbs_Param7):
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with circular binary orbits.
+
+    Same as :class:`FSBL_PhotAstrom_CircOrbs_Param7` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_CircOrbs_Param7`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
+    fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param7.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_CircOrbs_Param7.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param7.filt_param_usage + ['both']
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
+                 omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS, b_sff,
+                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
+                         omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS,
+                         b_sff, mag_src, dmag_Lp_Ls, n_outline=n_outline, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class FSBL_Limb_PhotAstrom_CircOrbs_Param8(FSBL_PhotAstrom_CircOrbs_Param8):
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with circular binary orbits.
+
+    Same as :class:`FSBL_PhotAstrom_CircOrbs_Param8` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_CircOrbs_Param8`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
+    fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param8.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_CircOrbs_Param8.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param8.filt_param_usage + ['both']
+
+    def __init__(self, t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+                 xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q,
+                 b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+
+        super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E,
+                         piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E,
+                         muS_N, q, b_sff, mag_src, dmag_Lp_Ls, n_outline=n_outline,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
 class FSBL_Limb_PhotAstrom_EllOrbs_Param1(FSBL_PhotAstrom_EllOrbs_Param1):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_EllOrbs_Param1` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with elliptical binary
+    orbits.
+
+    Same as :class:`FSBL_PhotAstrom_EllOrbs_Param1` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_EllOrbs_Param1`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param1.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_EllOrbs_Param1.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param1.filt_param_usage + ['both']
-    def __init__(self,                  mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N, radiusS,
+
+    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N, radiusS,
                  omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS, b_sff,
                  mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
                  obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N, radiusS, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N,
+                         radiusS, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,
+                         dL, dS, b_sff, mag_src, dmag_Lp_Ls, n_outline=n_outline,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstrom_EllOrbs_Param3(FSBL_PhotAstrom_EllOrbs_Param3):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_EllOrbs_Param3` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with elliptical binary
+    orbits.
+
+    Same as :class:`FSBL_PhotAstrom_EllOrbs_Param3` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_EllOrbs_Param3`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param3.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_EllOrbs_Param3.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param3.filt_param_usage + ['both']
-    def __init__(self,                  t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
                  xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q, b_sff,
                  mag_base, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
                  obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q, b_sff, mag_base, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+                         xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E,
+                         muS_N, q, b_sff, mag_base, dmag_Lp_Ls, n_outline=n_outline,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstrom_EllOrbs_Param4(FSBL_PhotAstrom_EllOrbs_Param4):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_EllOrbs_Param4` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with elliptical binary
+    orbits.
+
+    Same as :class:`FSBL_PhotAstrom_EllOrbs_Param4` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_EllOrbs_Param4`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param4.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_EllOrbs_Param4.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param4.filt_param_usage + ['both']
-    def __init__(self,                  t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
-                 xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q, b_sff,
-                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
-                 obsLocation='earth', root_tol=1e-08):
-        # Set gamma first so PSPL_Param broadcasts it per filter.
-        self.gamma = gamma
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        return None
-
-class FSBL_Limb_PhotAstrom_EllOrbs_Param7(FSBL_PhotAstrom_EllOrbs_Param7):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_EllOrbs_Param7` (adds per-filter ``gamma``)."""
-    fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param7.fitter_param_names + ['gamma']
-    filt_param_names = FSBL_PhotAstrom_EllOrbs_Param7.filt_param_names + ['gamma']
-    filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param7.filt_param_usage + ['both']
-    def __init__(self,                  mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
-                 omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS, b_sff,
-                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
-                 obsLocation='earth', root_tol=1e-08):
-        # Set gamma first so PSPL_Param broadcasts it per filter.
-        self.gamma = gamma
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
-
-        return None
-
-class FSBL_Limb_PhotAstrom_EllOrbs_Param8(FSBL_PhotAstrom_EllOrbs_Param8):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_EllOrbs_Param8` (adds per-filter ``gamma``)."""
-    fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param8.fitter_param_names + ['gamma']
-    filt_param_names = FSBL_PhotAstrom_EllOrbs_Param8.filt_param_names + ['gamma']
-    filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param8.filt_param_usage + ['both']
-    def __init__(self,                  t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N,
                  xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q,
                  b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
                  obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N,
+                         xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E,
+                         muS_N, q, b_sff, mag_src, dmag_Lp_Ls, n_outline=n_outline,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
+class FSBL_Limb_PhotAstrom_EllOrbs_Param7(FSBL_PhotAstrom_EllOrbs_Param7):
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with elliptical binary
+    orbits.
+
+    Same as :class:`FSBL_PhotAstrom_EllOrbs_Param7` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_EllOrbs_Param7`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
+    fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param7.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_EllOrbs_Param7.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param7.filt_param_usage + ['both']
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
+                 omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS, b_sff,
+                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
+                         omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
+                         b_sff, mag_src, dmag_Lp_Ls, n_outline=n_outline, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class FSBL_Limb_PhotAstrom_EllOrbs_Param8(FSBL_PhotAstrom_EllOrbs_Param8):
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with elliptical binary
+    orbits.
+
+    Same as :class:`FSBL_PhotAstrom_EllOrbs_Param8` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_EllOrbs_Param8`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
+    fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param8.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_EllOrbs_Param8.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param8.filt_param_usage + ['both']
+
+    def __init__(self, t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+                 xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q,
+                 b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+
+        super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E,
+                         piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a,
+                         muS_E, muS_N, q, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
 class FSBL_Limb_PhotAstrom_LinOrbs_Param1(FSBL_PhotAstrom_LinOrbs_Param1):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_LinOrbs_Param1` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with linear orbital motion.
+
+    Same as :class:`FSBL_PhotAstrom_LinOrbs_Param1` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_LinOrbs_Param1`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_LinOrbs_Param1.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_LinOrbs_Param1.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_LinOrbs_Param1.filt_param_usage + ['both']
-    def __init__(self,                  mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N,
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N,
                  delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS, sep, alpha,
                  b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
                  obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N,
+                         delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS, sep,
+                         alpha, b_sff, mag_src, dmag_Lp_Ls, n_outline=n_outline,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstrom_LinOrbs_Param3(FSBL_PhotAstrom_LinOrbs_Param3):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_LinOrbs_Param3` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with linear orbital motion.
+
+    Same as :class:`FSBL_PhotAstrom_LinOrbs_Param3` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_LinOrbs_Param3`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_LinOrbs_Param3.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_LinOrbs_Param3.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_LinOrbs_Param3.filt_param_usage + ['both']
-    def __init__(self,                  t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
                  xS0_N, muS_E, muS_N, q, sep, alpha, delta_muL_sec_E, delta_muL_sec_N,
                  b_sff, mag_base, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
                  obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, delta_muL_sec_E, delta_muL_sec_N, b_sff, mag_base, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+                         xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, delta_muL_sec_E,
+                         delta_muL_sec_N, b_sff, mag_base, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstrom_LinOrbs_Param6(FSBL_PhotAstrom_LinOrbs_Param6):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_LinOrbs_Param6` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with linear orbital motion.
+
+    Same as :class:`FSBL_PhotAstrom_LinOrbs_Param6` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_LinOrbs_Param6`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_LinOrbs_Param6.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_LinOrbs_Param6.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_LinOrbs_Param6.filt_param_usage + ['both']
-    def __init__(self,                  t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
                  delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, q, sep, alpha, b_sff,
                  mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
                  obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                         xS0_N, delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, q, sep,
+                         alpha, b_sff, mag_src, dmag_Lp_Ls, n_outline=n_outline,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotAstrom_LinOrbs_Param7(FSBL_PhotAstrom_LinOrbs_Param7):
-    """Limb-darkened variant of :class:`FSBL_PhotAstrom_LinOrbs_Param7` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry and astrometry, with linear orbital motion.
+
+    Same as :class:`FSBL_PhotAstrom_LinOrbs_Param7` plus a linear limb-darkening
+    coefficient ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotAstrom_LinOrbs_Param7`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotAstrom_LinOrbs_Param7.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotAstrom_LinOrbs_Param7.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotAstrom_LinOrbs_Param7.filt_param_usage + ['both']
-    def __init__(self,                  mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
                  delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS, sep, alpha,
                  b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
                  obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
+                         delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS, sep,
+                         alpha, b_sff, mag_src, dmag_Lp_Ls, n_outline=n_outline,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_PhotParam1(FSBL_PhotParam1):
-    """Limb-darkened variant of :class:`FSBL_PhotParam1` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry only.
+
+    Same as :class:`FSBL_PhotParam1` plus a linear limb-darkening coefficient ``gamma``
+    for each filter. Parameters not listed here are documented in
+    :class:`FSBL_PhotParam1`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_PhotParam1.fitter_param_names + ['gamma']
     filt_param_names = FSBL_PhotParam1.filt_param_names + ['gamma']
     filt_param_usage = FSBL_PhotParam1.filt_param_usage + ['both']
-    def __init__(self,                  t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff, mag_src,
-                 gamma, n_outline=50, raL=None, decL=None, obsLocation='earth',
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff,
+                 mag_src, gamma, n_outline=50, raL=None, decL=None, obsLocation='earth',
                  root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff, mag_src,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff,
+                         mag_src, n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_Phot_CircOrbs_Param1(FSBL_Phot_CircOrbs_Param1):
-    """Limb-darkened variant of :class:`FSBL_Phot_CircOrbs_Param1` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry only, with circular binary orbits.
+
+    Same as :class:`FSBL_Phot_CircOrbs_Param1` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_Phot_CircOrbs_Param1`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_Phot_CircOrbs_Param1.fitter_param_names + ['gamma']
     filt_param_names = FSBL_Phot_CircOrbs_Param1.filt_param_names + ['gamma']
     filt_param_usage = FSBL_Phot_CircOrbs_Param1.filt_param_usage + ['both']
-    def __init__(self,                  t0, aleph, aleph_sec, v_para, v_perp, v_rad, u0_amp, tE, piE_E, piE_N,
-                 q, b_sff, mag_src, dmag_Lp_Ls, radiusS, gamma, n_outline=50, raL=None,
-                 decL=None, obsLocation='earth', root_tol=1e-08):
+
+    def __init__(self, t0, aleph, aleph_sec, v_para, v_perp, v_rad, u0_amp, tE, piE_E,
+                 piE_N, q, b_sff, mag_src, dmag_Lp_Ls, radiusS, gamma, n_outline=50,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, aleph, aleph_sec, v_para, v_perp, v_rad, u0_amp, tE, piE_E, piE_N, q, b_sff, mag_src, dmag_Lp_Ls, radiusS,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, aleph, aleph_sec, v_para, v_perp, v_rad, u0_amp, tE, piE_E,
+                         piE_N, q, b_sff, mag_src, dmag_Lp_Ls, radiusS,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
+
 class FSBL_Limb_Phot_EllOrbs_Param1(FSBL_Phot_EllOrbs_Param1):
-    """Limb-darkened variant of :class:`FSBL_Phot_EllOrbs_Param1` (adds per-filter ``gamma``)."""
+    """
+    Limb-darkened FSBL model for photometry only, with elliptical binary orbits.
+
+    Same as :class:`FSBL_Phot_EllOrbs_Param1` plus a linear limb-darkening coefficient
+    ``gamma`` for each filter. Parameters not listed here are documented in
+    :class:`FSBL_Phot_EllOrbs_Param1`.
+
+    Parameters
+    ----------
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in ``[0, 1]``), one
+        entry per filter. ``gamma = 0`` is a uniform source.
+
+    See Also
+    --------
+    FSBL_Limb : Limb-darkening convention and integration.
+    """
     fitter_param_names = FSBL_Phot_EllOrbs_Param1.fitter_param_names + ['gamma']
     filt_param_names = FSBL_Phot_EllOrbs_Param1.filt_param_names + ['gamma']
     filt_param_usage = FSBL_Phot_EllOrbs_Param1.filt_param_usage + ['both']
-    def __init__(self,                  t0, aleph, aleph_sec, r_s, a_s, v_para, v_perp, v_rad, u0_amp, tE,
-                 piE_E, piE_N, q, b_sff, mag_src, dmag_Lp_Ls, radiusS, gamma,
-                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+
+    def __init__(self, t0, aleph, aleph_sec, r_s, a_s, v_para, v_perp, v_rad, u0_amp,
+                 tE, piE_E, piE_N, q, b_sff, mag_src, dmag_Lp_Ls, radiusS, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
         # Set gamma first so PSPL_Param broadcasts it per filter.
         self.gamma = gamma
-        super().__init__(t0, aleph, aleph_sec, r_s, a_s, v_para, v_perp, v_rad, u0_amp, tE, piE_E, piE_N, q, b_sff, mag_src, dmag_Lp_Ls, radiusS,
-                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0, aleph, aleph_sec, r_s, a_s, v_para, v_perp, v_rad, u0_amp,
+                         tE, piE_E, piE_N, q, b_sff, mag_src, dmag_Lp_Ls, radiusS,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
-
-
 
 
 ######################################################
@@ -35102,23 +35952,55 @@ class BFSBL_Parallax(PSPL_Parallax):
 
 
 class BFSBL_Limb(BFSBL):
-    """Limb-darkened BFSBL mixin with ``gamma_pri`` / ``gamma_sec``."""
+    """
+    Linear limb-darkened BFSBL mixin (Gamma law per source and filter).
+
+    Each source has its own per-filter coefficient ``gamma_pri`` /
+    ``gamma_sec``. Magnifications and centroids follow
+    :func:`bagle.fsbl_contour.ld_images_amps` for each source.
+    """
 
     def limb_gamma_pri(self, filt_idx=0):
-        """Primary-source Gamma coefficient for a filter."""
+        """
+        Primary-source linear limb-darkening coefficient for a filter.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            The per-filter ``gamma_pri`` parameter.
+        """
         return self.gamma_pri[filt_idx]
 
     def limb_gamma_sec(self, filt_idx=0):
-        """Secondary-source Gamma coefficient for a filter."""
+        """
+        Secondary-source linear limb-darkening coefficient for a filter.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            The per-filter ``gamma_sec`` parameter.
+        """
         return self.gamma_sec[filt_idx]
 
 
 class BFSBL_Limb_Phot(BFSBL_Limb, BFSBL_Phot):
+    """Data class: limb-darkened BFSBL photometry only."""
     photometryFlag = True
     astrometryFlag = False
 
 
 class BFSBL_Limb_PhotAstrom(BFSBL_Limb, BFSBL_PhotAstrom):
+    """Data class: limb-darkened BFSBL photometry + astrometry."""
     photometryFlag = True
     astrometryFlag = True
 
@@ -35130,324 +36012,1160 @@ class BFSBL_Limb_noParallax(BFSBL_noParallax):
 class BFSBL_Limb_Parallax(BFSBL_Parallax):
     parallaxFlag = True
 
+
 class BFSBL_PhotAstromParam1(BSBL_PhotAstromParam1):
-    """BFSBL variant of :class:`BSBL_PhotAstromParam1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
-    fitter_param_names = BSBL_PhotAstromParam1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    """
+    Binary-source FSBL model for photometry and astrometry.
+
+    Same as :class:`BSBL_PhotAstromParam1`, but each source is a uniform finite disk
+    integrated with :mod:`bagle.fsbl_contour`. Parameters not listed here are documented
+    in :class:`BSBL_PhotAstromParam1`.
+
+    Parameters
+    ----------
+    radiusS_pri : float
+        Angular radius of the primary source on the sky (arcsec). Converted to Einstein
+        radii with ``thetaE`` for the finite-source integrals.
+    radiusS_sec : float
+        Angular radius of the secondary source on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+
+    See Also
+    --------
+    BFSBL : Finite-source integration for both sources.
+    """
+    fitter_param_names = (BSBL_PhotAstromParam1.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotAstromParam1.filt_param_names
     filt_param_usage = BSBL_PhotAstromParam1.filt_param_usage
-    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL,
+                 dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff,
+                 dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        """
+        Initialize the parent model, then store the source radii.
+
+        Parameters are described in the class docstring.
+        """
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                         dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec,
+                         b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation,
+                         root_tol=root_tol)
+
+        # Finite-source radii; radiusS aliases the primary for shared helpers.
         self.radiusS_pri = radiusS_pri
         self.radiusS_sec = radiusS_sec
         self.radiusS = radiusS_pri
+        # Keep an n_outline set by a subclass; default 50 limb samples.
         self.n_outline = getattr(self, 'n_outline', 50)
 
         return None
 
 
 class BFSBL_Limb_PhotAstromParam1(BFSBL_PhotAstromParam1):
-    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstromParam1`."""
-    fitter_param_names = BFSBL_PhotAstromParam1.fitter_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_names = BFSBL_PhotAstromParam1.filt_param_names + ['gamma_pri', 'gamma_sec']
+    """
+    Limb-darkened binary-source FSBL model for photometry and astrometry.
+
+    Same as :class:`BFSBL_PhotAstromParam1` plus per-filter linear limb-darkening
+    coefficients ``gamma_pri`` and ``gamma_sec`` for the primary and secondary sources.
+    Parameters not listed here are documented in :class:`BFSBL_PhotAstromParam1`.
+
+    Parameters
+    ----------
+    gamma_pri : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the primary source, one
+        entry per filter.
+    gamma_sec : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the secondary source, one
+        entry per filter.
+
+    See Also
+    --------
+    BFSBL_Limb : Per-source limb-darkening coefficients.
+    """
+    fitter_param_names = (BFSBL_PhotAstromParam1.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSBL_PhotAstromParam1.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
     filt_param_usage = BFSBL_PhotAstromParam1.filt_param_usage + ['both', 'both']
-    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL,
+                 dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff,
+                 dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None,
+                 decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma_pri / gamma_sec first so PSPL_Param broadcasts them per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
-        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
-                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                         dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec,
+                         b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
 
 class BFSBL_PhotAstromParam2(BSBL_PhotAstromParam2):
-    """BFSBL variant of :class:`BSBL_PhotAstromParam2` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
-    fitter_param_names = BSBL_PhotAstromParam2.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    """
+    Binary-source FSBL model for photometry and astrometry.
+
+    Same as :class:`BSBL_PhotAstromParam2`, but each source is a uniform finite disk
+    integrated with :mod:`bagle.fsbl_contour`. Parameters not listed here are documented
+    in :class:`BSBL_PhotAstromParam2`.
+
+    Parameters
+    ----------
+    radiusS_pri : float
+        Angular radius of the primary source on the sky (arcsec). Converted to Einstein
+        radii with ``thetaE`` for the finite-source integrals.
+    radiusS_sec : float
+        Angular radius of the secondary source on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+
+    See Also
+    --------
+    BFSBL : Finite-source integration for both sources.
+    """
+    fitter_param_names = (BSBL_PhotAstromParam2.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotAstromParam2.filt_param_names
     filt_param_usage = BSBL_PhotAstromParam2.filt_param_usage
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff,
+                 dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        """
+        Initialize the parent model, then store the source radii.
+
+        Parameters are described in the class docstring.
+        """
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri,
+                         mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
+
+        # Finite-source radii; radiusS aliases the primary for shared helpers.
         self.radiusS_pri = radiusS_pri
         self.radiusS_sec = radiusS_sec
         self.radiusS = radiusS_pri
+        # Keep an n_outline set by a subclass; default 50 limb samples.
         self.n_outline = getattr(self, 'n_outline', 50)
 
         return None
 
 
 class BFSBL_Limb_PhotAstromParam2(BFSBL_PhotAstromParam2):
-    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstromParam2`."""
-    fitter_param_names = BFSBL_PhotAstromParam2.fitter_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_names = BFSBL_PhotAstromParam2.filt_param_names + ['gamma_pri', 'gamma_sec']
+    """
+    Limb-darkened binary-source FSBL model for photometry and astrometry.
+
+    Same as :class:`BFSBL_PhotAstromParam2` plus per-filter linear limb-darkening
+    coefficients ``gamma_pri`` and ``gamma_sec`` for the primary and secondary sources.
+    Parameters not listed here are documented in :class:`BFSBL_PhotAstromParam2`.
+
+    Parameters
+    ----------
+    gamma_pri : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the primary source, one
+        entry per filter.
+    gamma_sec : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the secondary source, one
+        entry per filter.
+
+    See Also
+    --------
+    BFSBL_Limb : Per-source limb-darkening coefficients.
+    """
+    fitter_param_names = (BFSBL_PhotAstromParam2.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSBL_PhotAstromParam2.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
     filt_param_usage = BFSBL_PhotAstromParam2.filt_param_usage + ['both', 'both']
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff,
+                 dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None,
+                 decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma_pri / gamma_sec first so PSPL_Param broadcasts them per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
-                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri,
+                         mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
 
 class BFSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_AccOrbs_Param1):
-    """BFSBL variant of :class:`BSBL_PhotAstrom_AccOrbs_Param1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
-    fitter_param_names = BSBL_PhotAstrom_AccOrbs_Param1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    """
+    Binary-source FSBL model for photometry and astrometry, with accelerating orbital
+    motion.
+
+    Same as :class:`BSBL_PhotAstrom_AccOrbs_Param1`, but each source is a uniform finite
+    disk integrated with :mod:`bagle.fsbl_contour`. Parameters not listed here are
+    documented in :class:`BSBL_PhotAstrom_AccOrbs_Param1`.
+
+    Parameters
+    ----------
+    radiusS_pri : float
+        Angular radius of the primary source on the sky (arcsec). Converted to Einstein
+        radii with ``thetaE`` for the finite-source integrals.
+    radiusS_sec : float
+        Angular radius of the secondary source on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+
+    See Also
+    --------
+    BFSBL : Finite-source integration for both sources.
+    """
+    fitter_param_names = (BSBL_PhotAstrom_AccOrbs_Param1.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotAstrom_AccOrbs_Param1.filt_param_names
     filt_param_usage = BSBL_PhotAstrom_AccOrbs_Param1.filt_param_usage
-    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E, delta_muS_sec_N, delta_muL_sec_E, delta_muL_sec_N, accSsec_E, accSsec_N, accLsec_E, accLsec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E, delta_muS_sec_N, delta_muL_sec_E, delta_muL_sec_N, accSsec_E, accSsec_N, accLsec_E, accLsec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL,
+                 dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E, delta_muS_sec_N,
+                 delta_muL_sec_E, delta_muL_sec_N, accSsec_E, accSsec_N, accLsec_E,
+                 accLsec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri,
+                 radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Initialize the parent model, then store the source radii.
+
+        Parameters are described in the class docstring.
+        """
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                         dL, dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E,
+                         delta_muS_sec_N, delta_muL_sec_E, delta_muL_sec_N, accSsec_E,
+                         accSsec_N, accLsec_E, accLsec_N, mag_src_pri, mag_src_sec,
+                         b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation,
+                         root_tol=root_tol)
+
+        # Finite-source radii; radiusS aliases the primary for shared helpers.
         self.radiusS_pri = radiusS_pri
         self.radiusS_sec = radiusS_sec
         self.radiusS = radiusS_pri
+        # Keep an n_outline set by a subclass; default 50 limb samples.
         self.n_outline = getattr(self, 'n_outline', 50)
 
         return None
 
 
 class BFSBL_Limb_PhotAstrom_AccOrbs_Param1(BFSBL_PhotAstrom_AccOrbs_Param1):
-    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_AccOrbs_Param1`."""
-    fitter_param_names = BFSBL_PhotAstrom_AccOrbs_Param1.fitter_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_names = BFSBL_PhotAstrom_AccOrbs_Param1.filt_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_usage = BFSBL_PhotAstrom_AccOrbs_Param1.filt_param_usage + ['both', 'both']
-    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E, delta_muS_sec_N, delta_muL_sec_E, delta_muL_sec_N, accSsec_E, accSsec_N, accLsec_E, accLsec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+    """
+    Limb-darkened binary-source FSBL model for photometry and astrometry, with
+    accelerating orbital motion.
+
+    Same as :class:`BFSBL_PhotAstrom_AccOrbs_Param1` plus per-filter linear
+    limb-darkening coefficients ``gamma_pri`` and ``gamma_sec`` for the primary and
+    secondary sources. Parameters not listed here are documented in
+    :class:`BFSBL_PhotAstrom_AccOrbs_Param1`.
+
+    Parameters
+    ----------
+    gamma_pri : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the primary source, one
+        entry per filter.
+    gamma_sec : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the secondary source, one
+        entry per filter.
+
+    See Also
+    --------
+    BFSBL_Limb : Per-source limb-darkening coefficients.
+    """
+    fitter_param_names = (BFSBL_PhotAstrom_AccOrbs_Param1.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSBL_PhotAstrom_AccOrbs_Param1.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
+    filt_param_usage = (BFSBL_PhotAstrom_AccOrbs_Param1.filt_param_usage
+                        + ['both', 'both'])
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL,
+                 dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E, delta_muS_sec_N,
+                 delta_muL_sec_E, delta_muL_sec_N, accSsec_E, accSsec_N, accLsec_E,
+                 accLsec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri,
+                 radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma_pri / gamma_sec first so PSPL_Param broadcasts them per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
-        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E, delta_muS_sec_N, delta_muL_sec_E, delta_muL_sec_N, accSsec_E, accSsec_N, accLsec_E, accLsec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
-                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                         dL, dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E,
+                         delta_muS_sec_N, delta_muL_sec_E, delta_muL_sec_N, accSsec_E,
+                         accSsec_N, accLsec_E, accLsec_N, mag_src_pri, mag_src_sec,
+                         b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
 
 class BFSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_CircOrbs_Param1):
-    """BFSBL variant of :class:`BSBL_PhotAstrom_CircOrbs_Param1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
-    fitter_param_names = BSBL_PhotAstrom_CircOrbs_Param1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    """
+    Binary-source FSBL model for photometry and astrometry, with circular binary orbits.
+
+    Same as :class:`BSBL_PhotAstrom_CircOrbs_Param1`, but each source is a uniform
+    finite disk integrated with :mod:`bagle.fsbl_contour`. Parameters not listed here
+    are documented in :class:`BSBL_PhotAstrom_CircOrbs_Param1`.
+
+    Parameters
+    ----------
+    radiusS_pri : float
+        Angular radius of the primary source on the sky (arcsec). Converted to Einstein
+        radii with ``thetaE`` for the finite-source integrals.
+    radiusS_sec : float
+        Angular radius of the secondary source on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+
+    See Also
+    --------
+    BFSBL : Finite-source integration for both sources.
+    """
+    fitter_param_names = (BSBL_PhotAstrom_CircOrbs_Param1.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotAstrom_CircOrbs_Param1.filt_param_names
     filt_param_usage = BSBL_PhotAstrom_CircOrbs_Param1.filt_param_usage
-    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri,
+                 big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, mag_src_pri,
+                 mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None,
+                 decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Initialize the parent model, then store the source radii.
+
+        Parameters are described in the class docstring.
+        """
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL,
+                         omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS,
+                         mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        # Finite-source radii; radiusS aliases the primary for shared helpers.
         self.radiusS_pri = radiusS_pri
         self.radiusS_sec = radiusS_sec
         self.radiusS = radiusS_pri
+        # Keep an n_outline set by a subclass; default 50 limb samples.
         self.n_outline = getattr(self, 'n_outline', 50)
 
         return None
 
 
 class BFSBL_Limb_PhotAstrom_CircOrbs_Param1(BFSBL_PhotAstrom_CircOrbs_Param1):
-    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_CircOrbs_Param1`."""
-    fitter_param_names = BFSBL_PhotAstrom_CircOrbs_Param1.fitter_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_names = BFSBL_PhotAstrom_CircOrbs_Param1.filt_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_usage = BFSBL_PhotAstrom_CircOrbs_Param1.filt_param_usage + ['both', 'both']
-    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+    """
+    Limb-darkened binary-source FSBL model for photometry and astrometry, with circular
+    binary orbits.
+
+    Same as :class:`BFSBL_PhotAstrom_CircOrbs_Param1` plus per-filter linear
+    limb-darkening coefficients ``gamma_pri`` and ``gamma_sec`` for the primary and
+    secondary sources. Parameters not listed here are documented in
+    :class:`BFSBL_PhotAstrom_CircOrbs_Param1`.
+
+    Parameters
+    ----------
+    gamma_pri : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the primary source, one
+        entry per filter.
+    gamma_sec : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the secondary source, one
+        entry per filter.
+
+    See Also
+    --------
+    BFSBL_Limb : Per-source limb-darkening coefficients.
+    """
+    fitter_param_names = (BFSBL_PhotAstrom_CircOrbs_Param1.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSBL_PhotAstrom_CircOrbs_Param1.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
+    filt_param_usage = (BFSBL_PhotAstrom_CircOrbs_Param1.filt_param_usage
+                        + ['both', 'both'])
+
+    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri,
+                 big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, mag_src_pri,
+                 mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri,
+                 gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma_pri / gamma_sec first so PSPL_Param broadcasts them per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
-        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
-                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL,
+                         omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS,
+                         mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
+                         radiusS_pri=radiusS_pri, radiusS_sec=radiusS_sec, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
 
 class BFSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_CircOrbs_Param2):
-    """BFSBL variant of :class:`BSBL_PhotAstrom_CircOrbs_Param2` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
-    fitter_param_names = BSBL_PhotAstrom_CircOrbs_Param2.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    """
+    Binary-source FSBL model for photometry and astrometry, with circular binary orbits.
+
+    Same as :class:`BSBL_PhotAstrom_CircOrbs_Param2`, but each source is a uniform
+    finite disk integrated with :mod:`bagle.fsbl_contour`. Parameters not listed here
+    are documented in :class:`BSBL_PhotAstrom_CircOrbs_Param2`.
+
+    Parameters
+    ----------
+    radiusS_pri : float
+        Angular radius of the primary source on the sky (arcsec). Converted to Einstein
+        radii with ``thetaE`` for the finite-source integrals.
+    radiusS_sec : float
+        Angular radius of the secondary source on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+
+    See Also
+    --------
+    BFSBL : Finite-source integration for both sources.
+    """
+    fitter_param_names = (BSBL_PhotAstrom_CircOrbs_Param2.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotAstrom_CircOrbs_Param2.filt_param_names
     filt_param_usage = BSBL_PhotAstrom_CircOrbs_Param2.filt_param_usage
-    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E,
+                 xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL,
+                 omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS,
+                 fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Initialize the parent model, then store the source radii.
+
+        Parameters are described in the class docstring.
+        """
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E,
+                         xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL,
+                         omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS,
+                         fratio_bin, mag_base, b_sff, dmag_Lp_Ls, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
+
+        # Finite-source radii; radiusS aliases the primary for shared helpers.
         self.radiusS_pri = radiusS_pri
         self.radiusS_sec = radiusS_sec
         self.radiusS = radiusS_pri
+        # Keep an n_outline set by a subclass; default 50 limb samples.
         self.n_outline = getattr(self, 'n_outline', 50)
 
         return None
 
 
 class BFSBL_Limb_PhotAstrom_CircOrbs_Param2(BFSBL_PhotAstrom_CircOrbs_Param2):
-    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_CircOrbs_Param2`."""
-    fitter_param_names = BFSBL_PhotAstrom_CircOrbs_Param2.fitter_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_names = BFSBL_PhotAstrom_CircOrbs_Param2.filt_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_usage = BFSBL_PhotAstrom_CircOrbs_Param2.filt_param_usage + ['both', 'both']
-    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+    """
+    Limb-darkened binary-source FSBL model for photometry and astrometry, with circular
+    binary orbits.
+
+    Same as :class:`BFSBL_PhotAstrom_CircOrbs_Param2` plus per-filter linear
+    limb-darkening coefficients ``gamma_pri`` and ``gamma_sec`` for the primary and
+    secondary sources. Parameters not listed here are documented in
+    :class:`BFSBL_PhotAstrom_CircOrbs_Param2`.
+
+    Parameters
+    ----------
+    gamma_pri : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the primary source, one
+        entry per filter.
+    gamma_sec : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the secondary source, one
+        entry per filter.
+
+    See Also
+    --------
+    BFSBL_Limb : Per-source limb-darkening coefficients.
+    """
+    fitter_param_names = (BFSBL_PhotAstrom_CircOrbs_Param2.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSBL_PhotAstrom_CircOrbs_Param2.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
+    filt_param_usage = (BFSBL_PhotAstrom_CircOrbs_Param2.filt_param_usage
+                        + ['both', 'both'])
+
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E,
+                 xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL,
+                 omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS,
+                 fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec,
+                 gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma_pri / gamma_sec first so PSPL_Param broadcasts them per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
-                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E,
+                         xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL,
+                         omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS,
+                         fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
+                         radiusS_pri=radiusS_pri, radiusS_sec=radiusS_sec, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
 
 class BFSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_CircOrbs_Param3):
-    """BFSBL variant of :class:`BSBL_PhotAstrom_CircOrbs_Param3` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
-    fitter_param_names = BSBL_PhotAstrom_CircOrbs_Param3.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    """
+    Binary-source FSBL model for photometry and astrometry, with circular binary orbits.
+
+    Same as :class:`BSBL_PhotAstrom_CircOrbs_Param3`, but each source is a uniform
+    finite disk integrated with :mod:`bagle.fsbl_contour`. Parameters not listed here
+    are documented in :class:`BSBL_PhotAstrom_CircOrbs_Param3`.
+
+    Parameters
+    ----------
+    radiusS_pri : float
+        Angular radius of the primary source on the sky (arcsec). Converted to Einstein
+        radii with ``thetaE`` for the finite-source integrals.
+    radiusS_sec : float
+        Angular radius of the secondary source on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+
+    See Also
+    --------
+    BFSBL : Finite-source integration for both sources.
+    """
+    fitter_param_names = (BSBL_PhotAstrom_CircOrbs_Param3.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotAstrom_CircOrbs_Param3.filt_param_names
     filt_param_usage = BSBL_PhotAstrom_CircOrbs_Param3.filt_param_usage
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri,
+                 big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri,
+                 mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None,
+                 decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Initialize the parent model, then store the source radii.
+
+        Parameters are described in the class docstring.
+        """
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                         omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS,
+                         aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        # Finite-source radii; radiusS aliases the primary for shared helpers.
         self.radiusS_pri = radiusS_pri
         self.radiusS_sec = radiusS_sec
         self.radiusS = radiusS_pri
+        # Keep an n_outline set by a subclass; default 50 limb samples.
         self.n_outline = getattr(self, 'n_outline', 50)
 
         return None
 
 
 class BFSBL_Limb_PhotAstrom_CircOrbs_Param3(BFSBL_PhotAstrom_CircOrbs_Param3):
-    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_CircOrbs_Param3`."""
-    fitter_param_names = BFSBL_PhotAstrom_CircOrbs_Param3.fitter_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_names = BFSBL_PhotAstrom_CircOrbs_Param3.filt_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_usage = BFSBL_PhotAstrom_CircOrbs_Param3.filt_param_usage + ['both', 'both']
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+    """
+    Limb-darkened binary-source FSBL model for photometry and astrometry, with circular
+    binary orbits.
+
+    Same as :class:`BFSBL_PhotAstrom_CircOrbs_Param3` plus per-filter linear
+    limb-darkening coefficients ``gamma_pri`` and ``gamma_sec`` for the primary and
+    secondary sources. Parameters not listed here are documented in
+    :class:`BFSBL_PhotAstrom_CircOrbs_Param3`.
+
+    Parameters
+    ----------
+    gamma_pri : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the primary source, one
+        entry per filter.
+    gamma_sec : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the secondary source, one
+        entry per filter.
+
+    See Also
+    --------
+    BFSBL_Limb : Per-source limb-darkening coefficients.
+    """
+    fitter_param_names = (BFSBL_PhotAstrom_CircOrbs_Param3.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSBL_PhotAstrom_CircOrbs_Param3.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
+    filt_param_usage = (BFSBL_PhotAstrom_CircOrbs_Param3.filt_param_usage
+                        + ['both', 'both'])
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri,
+                 big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri,
+                 mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri,
+                 gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma_pri / gamma_sec first so PSPL_Param broadcasts them per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
-                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                         omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS,
+                         aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
+                         radiusS_pri=radiusS_pri, radiusS_sec=radiusS_sec, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
 
 class BFSBL_PhotAstrom_EllOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
-    """BFSBL variant of :class:`BSBL_PhotAstrom_EllOrbs_Param1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
-    fitter_param_names = BSBL_PhotAstrom_EllOrbs_Param1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    """
+    Binary-source FSBL model for photometry and astrometry, with elliptical binary
+    orbits.
+
+    Same as :class:`BSBL_PhotAstrom_EllOrbs_Param1`, but each source is a uniform finite
+    disk integrated with :mod:`bagle.fsbl_contour`. Parameters not listed here are
+    documented in :class:`BSBL_PhotAstrom_EllOrbs_Param1`.
+
+    Parameters
+    ----------
+    radiusS_pri : float
+        Angular radius of the primary source on the sky (arcsec). Converted to Einstein
+        radii with ``thetaE`` for the finite-source integrals.
+    radiusS_sec : float
+        Angular radius of the secondary source on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+
+    See Also
+    --------
+    BFSBL : Finite-source integration for both sources.
+    """
+    fitter_param_names = (BSBL_PhotAstrom_EllOrbs_Param1.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotAstrom_EllOrbs_Param1.filt_param_names
     filt_param_usage = BSBL_PhotAstrom_EllOrbs_Param1.filt_param_usage
-    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri,
+                 big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri,
+                 mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None,
+                 decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Initialize the parent model, then store the source radii.
+
+        Parameters are described in the class docstring.
+        """
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                         omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS,
+                         aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        # Finite-source radii; radiusS aliases the primary for shared helpers.
         self.radiusS_pri = radiusS_pri
         self.radiusS_sec = radiusS_sec
         self.radiusS = radiusS_pri
+        # Keep an n_outline set by a subclass; default 50 limb samples.
         self.n_outline = getattr(self, 'n_outline', 50)
 
         return None
 
 
 class BFSBL_Limb_PhotAstrom_EllOrbs_Param1(BFSBL_PhotAstrom_EllOrbs_Param1):
-    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_EllOrbs_Param1`."""
-    fitter_param_names = BFSBL_PhotAstrom_EllOrbs_Param1.fitter_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_names = BFSBL_PhotAstrom_EllOrbs_Param1.filt_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_usage = BFSBL_PhotAstrom_EllOrbs_Param1.filt_param_usage + ['both', 'both']
-    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+    """
+    Limb-darkened binary-source FSBL model for photometry and astrometry, with
+    elliptical binary orbits.
+
+    Same as :class:`BFSBL_PhotAstrom_EllOrbs_Param1` plus per-filter linear
+    limb-darkening coefficients ``gamma_pri`` and ``gamma_sec`` for the primary and
+    secondary sources. Parameters not listed here are documented in
+    :class:`BFSBL_PhotAstrom_EllOrbs_Param1`.
+
+    Parameters
+    ----------
+    gamma_pri : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the primary source, one
+        entry per filter.
+    gamma_sec : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the secondary source, one
+        entry per filter.
+
+    See Also
+    --------
+    BFSBL_Limb : Per-source limb-darkening coefficients.
+    """
+    fitter_param_names = (BFSBL_PhotAstrom_EllOrbs_Param1.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSBL_PhotAstrom_EllOrbs_Param1.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
+    filt_param_usage = (BFSBL_PhotAstrom_EllOrbs_Param1.filt_param_usage
+                        + ['both', 'both'])
+
+    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri,
+                 big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri,
+                 mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri,
+                 gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma_pri / gamma_sec first so PSPL_Param broadcasts them per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
-        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
-                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                         omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS,
+                         aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
+                         radiusS_pri=radiusS_pri, radiusS_sec=radiusS_sec, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
 
 class BFSBL_PhotAstrom_EllOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
-    """BFSBL variant of :class:`BSBL_PhotAstrom_EllOrbs_Param2` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
-    fitter_param_names = BSBL_PhotAstrom_EllOrbs_Param2.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    """
+    Binary-source FSBL model for photometry and astrometry, with elliptical binary
+    orbits.
+
+    Same as :class:`BSBL_PhotAstrom_EllOrbs_Param2`, but each source is a uniform finite
+    disk integrated with :mod:`bagle.fsbl_contour`. Parameters not listed here are
+    documented in :class:`BSBL_PhotAstrom_EllOrbs_Param2`.
+
+    Parameters
+    ----------
+    radiusS_pri : float
+        Angular radius of the primary source on the sky (arcsec). Converted to Einstein
+        radii with ``thetaE`` for the finite-source integrals.
+    radiusS_sec : float
+        Angular radius of the secondary source on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+
+    See Also
+    --------
+    BFSBL : Finite-source integration for both sources.
+    """
+    fitter_param_names = (BSBL_PhotAstrom_EllOrbs_Param2.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotAstrom_EllOrbs_Param2.filt_param_names
     filt_param_usage = BSBL_PhotAstrom_EllOrbs_Param2.filt_param_usage
-    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E,
+                 xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                 omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS,
+                 fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Initialize the parent model, then store the source radii.
+
+        Parameters are described in the class docstring.
+        """
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E,
+                         xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL,
+                         aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS,
+                         aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        # Finite-source radii; radiusS aliases the primary for shared helpers.
         self.radiusS_pri = radiusS_pri
         self.radiusS_sec = radiusS_sec
         self.radiusS = radiusS_pri
+        # Keep an n_outline set by a subclass; default 50 limb samples.
         self.n_outline = getattr(self, 'n_outline', 50)
 
         return None
 
 
 class BFSBL_Limb_PhotAstrom_EllOrbs_Param2(BFSBL_PhotAstrom_EllOrbs_Param2):
-    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_EllOrbs_Param2`."""
-    fitter_param_names = BFSBL_PhotAstrom_EllOrbs_Param2.fitter_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_names = BFSBL_PhotAstrom_EllOrbs_Param2.filt_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_usage = BFSBL_PhotAstrom_EllOrbs_Param2.filt_param_usage + ['both', 'both']
-    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+    """
+    Limb-darkened binary-source FSBL model for photometry and astrometry, with
+    elliptical binary orbits.
+
+    Same as :class:`BFSBL_PhotAstrom_EllOrbs_Param2` plus per-filter linear
+    limb-darkening coefficients ``gamma_pri`` and ``gamma_sec`` for the primary and
+    secondary sources. Parameters not listed here are documented in
+    :class:`BFSBL_PhotAstrom_EllOrbs_Param2`.
+
+    Parameters
+    ----------
+    gamma_pri : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the primary source, one
+        entry per filter.
+    gamma_sec : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the secondary source, one
+        entry per filter.
+
+    See Also
+    --------
+    BFSBL_Limb : Per-source limb-darkening coefficients.
+    """
+    fitter_param_names = (BFSBL_PhotAstrom_EllOrbs_Param2.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSBL_PhotAstrom_EllOrbs_Param2.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
+    filt_param_usage = (BFSBL_PhotAstrom_EllOrbs_Param2.filt_param_usage
+                        + ['both', 'both'])
+
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E,
+                 xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                 omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS,
+                 fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec,
+                 gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma_pri / gamma_sec first so PSPL_Param broadcasts them per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
-                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E,
+                         xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL,
+                         aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS,
+                         aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
+                         radiusS_pri=radiusS_pri, radiusS_sec=radiusS_sec, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
 
 class BFSBL_PhotAstrom_EllOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
-    """BFSBL variant of :class:`BSBL_PhotAstrom_EllOrbs_Param3` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
-    fitter_param_names = BSBL_PhotAstrom_EllOrbs_Param3.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    """
+    Binary-source FSBL model for photometry and astrometry, with elliptical binary
+    orbits.
+
+    Same as :class:`BSBL_PhotAstrom_EllOrbs_Param3`, but each source is a uniform finite
+    disk integrated with :mod:`bagle.fsbl_contour`. Parameters not listed here are
+    documented in :class:`BSBL_PhotAstrom_EllOrbs_Param3`.
+
+    Parameters
+    ----------
+    radiusS_pri : float
+        Angular radius of the primary source on the sky (arcsec). Converted to Einstein
+        radii with ``thetaE`` for the finite-source integrals.
+    radiusS_sec : float
+        Angular radius of the secondary source on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+
+    See Also
+    --------
+    BFSBL : Finite-source integration for both sources.
+    """
+    fitter_param_names = (BSBL_PhotAstrom_EllOrbs_Param3.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotAstrom_EllOrbs_Param3.filt_param_names
     filt_param_usage = BSBL_PhotAstrom_EllOrbs_Param3.filt_param_usage
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mass_source_p, mass_source_s, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mass_source_p, mass_source_s, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri,
+                 big_omegaS_sec, iS, eS, tpS, aS, mass_source_p, mass_source_s,
+                 mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Initialize the parent model, then store the source radii.
+
+        Parameters are described in the class docstring.
+        """
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                         omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mass_source_p,
+                         mass_source_s, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
+                         raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        # Finite-source radii; radiusS aliases the primary for shared helpers.
         self.radiusS_pri = radiusS_pri
         self.radiusS_sec = radiusS_sec
         self.radiusS = radiusS_pri
+        # Keep an n_outline set by a subclass; default 50 limb samples.
         self.n_outline = getattr(self, 'n_outline', 50)
 
         return None
 
 
 class BFSBL_Limb_PhotAstrom_EllOrbs_Param3(BFSBL_PhotAstrom_EllOrbs_Param3):
-    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_EllOrbs_Param3`."""
-    fitter_param_names = BFSBL_PhotAstrom_EllOrbs_Param3.fitter_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_names = BFSBL_PhotAstrom_EllOrbs_Param3.filt_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_usage = BFSBL_PhotAstrom_EllOrbs_Param3.filt_param_usage + ['both', 'both']
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mass_source_p, mass_source_s, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+    """
+    Limb-darkened binary-source FSBL model for photometry and astrometry, with
+    elliptical binary orbits.
+
+    Same as :class:`BFSBL_PhotAstrom_EllOrbs_Param3` plus per-filter linear
+    limb-darkening coefficients ``gamma_pri`` and ``gamma_sec`` for the primary and
+    secondary sources. Parameters not listed here are documented in
+    :class:`BFSBL_PhotAstrom_EllOrbs_Param3`.
+
+    Parameters
+    ----------
+    gamma_pri : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the primary source, one
+        entry per filter.
+    gamma_sec : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the secondary source, one
+        entry per filter.
+
+    See Also
+    --------
+    BFSBL_Limb : Per-source limb-darkening coefficients.
+    """
+    fitter_param_names = (BFSBL_PhotAstrom_EllOrbs_Param3.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSBL_PhotAstrom_EllOrbs_Param3.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
+    filt_param_usage = (BFSBL_PhotAstrom_EllOrbs_Param3.filt_param_usage
+                        + ['both', 'both'])
+
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri,
+                 big_omegaS_sec, iS, eS, tpS, aS, mass_source_p, mass_source_s,
+                 mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec,
+                 gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma_pri / gamma_sec first so PSPL_Param broadcasts them per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mass_source_p, mass_source_s, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
-                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E,
+                         muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                         omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mass_source_p,
+                         mass_source_s, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
+                         radiusS_pri=radiusS_pri, radiusS_sec=radiusS_sec, raL=raL,
+                         decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
 
 class BFSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
-    """BFSBL variant of :class:`BSBL_PhotAstrom_LinOrbs_Param1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
-    fitter_param_names = BSBL_PhotAstrom_LinOrbs_Param1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    """
+    Binary-source FSBL model for photometry and astrometry, with linear orbital motion.
+
+    Same as :class:`BSBL_PhotAstrom_LinOrbs_Param1`, but each source is a uniform finite
+    disk integrated with :mod:`bagle.fsbl_contour`. Parameters not listed here are
+    documented in :class:`BSBL_PhotAstrom_LinOrbs_Param1`.
+
+    Parameters
+    ----------
+    radiusS_pri : float
+        Angular radius of the primary source on the sky (arcsec). Converted to Einstein
+        radii with ``thetaE`` for the finite-source integrals.
+    radiusS_sec : float
+        Angular radius of the secondary source on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+
+    See Also
+    --------
+    BFSBL : Finite-source integration for both sources.
+    """
+    fitter_param_names = (BSBL_PhotAstrom_LinOrbs_Param1.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotAstrom_LinOrbs_Param1.filt_param_names
     filt_param_usage = BSBL_PhotAstrom_LinOrbs_Param1.filt_param_usage
-    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E, delta_muL_sec_N, delta_muS_sec_E, delta_muS_sec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
-        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E, delta_muL_sec_N, delta_muS_sec_E, delta_muS_sec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL,
+                 dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E, delta_muL_sec_N,
+                 delta_muS_sec_E, delta_muS_sec_N, mag_src_pri, mag_src_sec, b_sff,
+                 dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        """
+        Initialize the parent model, then store the source radii.
+
+        Parameters are described in the class docstring.
+        """
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                         dL, dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E,
+                         delta_muL_sec_N, delta_muS_sec_E, delta_muS_sec_N, mag_src_pri,
+                         mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
+
+        # Finite-source radii; radiusS aliases the primary for shared helpers.
         self.radiusS_pri = radiusS_pri
         self.radiusS_sec = radiusS_sec
         self.radiusS = radiusS_pri
+        # Keep an n_outline set by a subclass; default 50 limb samples.
         self.n_outline = getattr(self, 'n_outline', 50)
 
         return None
 
 
 class BFSBL_Limb_PhotAstrom_LinOrbs_Param1(BFSBL_PhotAstrom_LinOrbs_Param1):
-    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_LinOrbs_Param1`."""
-    fitter_param_names = BFSBL_PhotAstrom_LinOrbs_Param1.fitter_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_names = BFSBL_PhotAstrom_LinOrbs_Param1.filt_param_names + ['gamma_pri', 'gamma_sec']
-    filt_param_usage = BFSBL_PhotAstrom_LinOrbs_Param1.filt_param_usage + ['both', 'both']
-    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E, delta_muL_sec_N, delta_muS_sec_E, delta_muS_sec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+    """
+    Limb-darkened binary-source FSBL model for photometry and astrometry, with linear
+    orbital motion.
+
+    Same as :class:`BFSBL_PhotAstrom_LinOrbs_Param1` plus per-filter linear
+    limb-darkening coefficients ``gamma_pri`` and ``gamma_sec`` for the primary and
+    secondary sources. Parameters not listed here are documented in
+    :class:`BFSBL_PhotAstrom_LinOrbs_Param1`.
+
+    Parameters
+    ----------
+    gamma_pri : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the primary source, one
+        entry per filter.
+    gamma_sec : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the secondary source, one
+        entry per filter.
+
+    See Also
+    --------
+    BFSBL_Limb : Per-source limb-darkening coefficients.
+    """
+    fitter_param_names = (BFSBL_PhotAstrom_LinOrbs_Param1.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSBL_PhotAstrom_LinOrbs_Param1.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
+    filt_param_usage = (BFSBL_PhotAstrom_LinOrbs_Param1.filt_param_usage
+                        + ['both', 'both'])
+
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL,
+                 dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E, delta_muL_sec_N,
+                 delta_muS_sec_E, delta_muS_sec_N, mag_src_pri, mag_src_sec, b_sff,
+                 dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None,
+                 decL=None, obsLocation='earth', root_tol=1e-08):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma_pri / gamma_sec first so PSPL_Param broadcasts them per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
-        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E, delta_muL_sec_N, delta_muS_sec_E, delta_muS_sec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
-                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                         dL, dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E,
+                         delta_muL_sec_N, delta_muS_sec_E, delta_muS_sec_N, mag_src_pri,
+                         mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL,
+                         obsLocation=obsLocation, root_tol=root_tol)
 
         return None
 
 
 class BFSBL_PhotParam1(BSBL_PhotParam1):
-    """BFSBL variant of :class:`BSBL_PhotParam1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
-    fitter_param_names = BSBL_PhotParam1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    """
+    Binary-source FSBL model for photometry only.
+
+    Same as :class:`BSBL_PhotParam1`, but each source is a uniform finite disk
+    integrated with :mod:`bagle.fsbl_contour`. Parameters not listed here are documented
+    in :class:`BSBL_PhotParam1`.
+
+    Parameters
+    ----------
+    radiusS_pri : float
+        Angular radius of the primary source in units of thetaE (``rho``).
+    radiusS_sec : float
+        Angular radius of the secondary source in units of thetaE (``rho``).
+
+    See Also
+    --------
+    BFSBL : Finite-source integration for both sources.
+    """
+    fitter_param_names = (BSBL_PhotParam1.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotParam1.filt_param_names
     filt_param_usage = BSBL_PhotParam1.filt_param_usage
-    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth'):
-        super().__init__(t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation)
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L,
+                 mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec,
+                 raL=None, decL=None, obsLocation='earth'):
+        """
+        Initialize the parent model, then store the source radii.
+
+        Parameters are described in the class docstring.
+        """
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L,
+                         phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL,
+                         decL=decL, obsLocation=obsLocation)
+
+        # Finite-source radii; radiusS aliases the primary for shared helpers.
         self.radiusS_pri = radiusS_pri
         self.radiusS_sec = radiusS_sec
         self.radiusS = radiusS_pri
+        # Keep an n_outline set by a subclass; default 50 limb samples.
         self.n_outline = getattr(self, 'n_outline', 50)
 
         return None
 
 
 class BFSBL_Limb_PhotParam1(BFSBL_PhotParam1):
-    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotParam1`."""
-    fitter_param_names = BFSBL_PhotParam1.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    """
+    Limb-darkened binary-source FSBL model for photometry only.
+
+    Same as :class:`BFSBL_PhotParam1` plus per-filter linear limb-darkening coefficients
+    ``gamma_pri`` and ``gamma_sec`` for the primary and secondary sources. Parameters
+    not listed here are documented in :class:`BFSBL_PhotParam1`.
+
+    Parameters
+    ----------
+    gamma_pri : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the primary source, one
+        entry per filter.
+    gamma_sec : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` of the secondary source, one
+        entry per filter.
+
+    See Also
+    --------
+    BFSBL_Limb : Per-source limb-darkening coefficients.
+    """
+    fitter_param_names = (BFSBL_PhotParam1.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
     filt_param_names = BFSBL_PhotParam1.filt_param_names + ['gamma_pri', 'gamma_sec']
     filt_param_usage = BFSBL_PhotParam1.filt_param_usage + ['both', 'both']
-    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth'):
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L,
+                 mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec,
+                 gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth'):
+        """
+        Store the limb-darkening coefficients, then initialize the parent.
+
+        Parameters are described in the class docstring.
+        """
+        # Set gamma_pri / gamma_sec first so PSPL_Param broadcasts them per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
-        super().__init__(t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
-                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation)
+
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L,
+                         phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
+                         radiusS_pri=radiusS_pri, radiusS_sec=radiusS_sec, raL=raL,
+                         decL=decL, obsLocation=obsLocation)
 
         return None
 
+
+# ==================================================
+#
+# BFSPL Models
+#
+# ==================================================
 
 
 class BFSPL(PSPL):
