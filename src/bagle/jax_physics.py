@@ -2740,7 +2740,8 @@ def supports_jax_phot_loglik(fitter) -> str | None:
         See summary above.
     """
     model_class = fitter.model_class
-    if not hasattr(model_class, "jax_log_likely_photometry"):
+    # A class may set the method to None to opt out of the traced path.
+    if getattr(model_class, "jax_log_likely_photometry", None) is None:
         return None
     if getattr(model_class, "astrometryFlag", False) and fitter.n_ast_sets > 0:
         return None
@@ -3043,11 +3044,12 @@ def supports_jax_joint_loglik(fitter) -> str | None:
     )
     if not need_ast:
         return None
-    if need_phot and not hasattr(
-        model_class, "jax_log_likely_photometry"
-    ):
+    # A class may set either method to None to opt out of the traced path.
+    if need_phot and getattr(
+        model_class, "jax_log_likely_photometry", None
+    ) is None:
         return None
-    if not hasattr(model_class, "jax_log_likely_astrometry"):
+    if getattr(model_class, "jax_log_likely_astrometry", None) is None:
         return None
     if any(
         "add_err" in name or "mult_err" in name

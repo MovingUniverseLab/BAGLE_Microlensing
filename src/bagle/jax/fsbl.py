@@ -22,6 +22,7 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 
+from bagle.jax.fsbl_contour import fsbl_magnification_centroid
 from bagle.jax.linear_sum_assignment import find_nearest
 from bagle.jax_physics import (
     gaussian_log_likelihood_sum,
@@ -953,16 +954,12 @@ def fsbl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, z1, z2, m1, m2,
                                piE_N=0.0, gp_params=None, fixed_jitter=True,
                                root_tol=1e-10, gamma=None):
     """
-    Traced photometric log-likelihood with static-limb FSBL magnification.
+    Traced photometric log-likelihood with contour FSBL magnification.
 
-    Notes
-    -----
-    The authoritative host path is :mod:`bagle.fsbl_contour` (adaptive
-    Bozza/VBBL contours). This traced kernel is the legacy static-limb
-    d1 path; a full JAX port of ``fsbl_contour`` (per-row ``rho``,
-    creation/annihilation chords, nested-disk ``gamma``) remains open.
-    ``gamma`` is accepted for API compatibility and currently ignored
-    (uniform source).
+    Uses :func:`bagle.jax.fsbl_contour.fsbl_magnification_centroid`, the
+    traced port of the host :mod:`bagle.fsbl_contour` integrator (refined
+    limb, image creation and annihilation chords, nested disks for limb
+    darkening). ``rho`` and ``gamma`` may be traced.
 
     Parameters
     ----------
@@ -982,8 +979,10 @@ def fsbl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, z1, z2, m1, m2,
         Mass fractions (sum to 1).
     rho : float, shape = ()
         Source radius in Einstein radii.
-    n_outline : int
-        Static limb count ``N_limb``.
+    n_outline : int or None
+        Initial uniform limb samples per disk (static); ``None`` uses the
+        kernel default. Refinement then adds a fixed number of samples
+        (see :func:`bagle.jax.fsbl_contour.fsbl_disk_moments`).
     mag_src : float or array_like, shape = () or (N_times,)
         Source magnitude (unlensed).
     b_sff : float or array_like, shape = () or (N_times,)
@@ -1002,8 +1001,9 @@ def fsbl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, z1, z2, m1, m2,
         Passed to the GP path when ``gp_params`` is not ``None``.
     root_tol : float, optional, shape = ()
         Root mask tolerance for the Witt solver.
-    gamma : float, optional
-        Linear limb-darkening coefficient (unused until the contour port).
+    gamma : float or None, optional
+        Linear limb-darkening coefficient (Gamma convention) for this
+        filter; ``None`` is a uniform source.
 
     Returns
     -------
@@ -1017,10 +1017,13 @@ def fsbl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, z1, z2, m1, m2,
         parallax_vectors=parallax_vectors, piE_E=piE_E, piE_N=piE_N,
     )
 
-    # Static-limb FSBL magnification, then blended model magnitudes.
-    amp = fsbl_magnification(
-        w0, z1, z2, m1, m2, rho, n_outline, root_tol=root_tol
+    # Contour FSBL magnification (limb-darkened when gamma is given).
+    kw = {} if n_outline is None else {'n_init': int(n_outline)}
+    amp, _ = fsbl_magnification_centroid(
+        w0, rho, z1, z2, m1, m2, gamma=gamma, root_tol=root_tol, **kw
     )
+
+    # Blended model magnitudes.
     mag_model = pspl_photometry_from_amp(amp, mag_src, b_sff)
 
     # Plain Gaussian or GP residual likelihood.

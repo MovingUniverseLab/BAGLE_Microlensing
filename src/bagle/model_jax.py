@@ -30508,22 +30508,25 @@ class FSBL_PhotParam1(PSBL_PhotParam1):
     def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
                                   mag_src, parallax_vectors=None,
                                   gp_params=None, fixed_jitter=True,
-                                  n_outline=200):
+                                  n_outline=None):
         """
         Traced FSBL photometry log-likelihood (``radiusS`` in Einstein radii).
 
         Parameters
         ----------
         vec : array_like
-            Packed ``fitter_param_names`` vector.
+            Packed ``fitter_param_names`` vector (filter-local). A
+            ``'gamma'`` entry (limb-darkened subclasses) switches on the
+            linear limb-darkened source.
         t, mag_obs, mag_err : array_like
             Times and photometry.
         b_sff, mag_src : float
             Filter-local blend and source magnitude.
         parallax_vectors, gp_params, fixed_jitter : optional
             Parallax table and optional GP path.
-        n_outline : int, optional
-            Static limb count for the d1 kernel (not sampled).
+        n_outline : int or None, optional
+            Initial uniform limb samples per disk for the traced contour
+            (static); ``None`` uses the kernel default.
 
         Returns
         -------
@@ -30549,6 +30552,7 @@ class FSBL_PhotParam1(PSBL_PhotParam1):
             parallax_vectors=parallax_vectors,
             piE_E=p['piE_E'], piE_N=p['piE_N'],
             gp_params=gp_params, fixed_jitter=fixed_jitter,
+            gamma=p.get('gamma'),
         )
 
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS,
@@ -30662,22 +30666,25 @@ class FSBL_PhotAstromParam1(PSPL_Param):
     def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
                                   mag_src, parallax_vectors=None,
                                   gp_params=None, fixed_jitter=True,
-                                  n_outline=200):
+                                  n_outline=None):
         """
         Traced FSBL PhotAstrom photometry (``radiusS`` in arcsec).
 
         Parameters
         ----------
         vec : array_like
-            Packed ``fitter_param_names`` vector.
+            Packed ``fitter_param_names`` vector (filter-local). A
+            ``'gamma'`` entry (limb-darkened subclasses) switches on the
+            linear limb-darkened source.
         t, mag_obs, mag_err : array_like
             Times and photometry.
         b_sff, mag_src : float
             Filter-local blend and source magnitude.
         parallax_vectors, gp_params, fixed_jitter : optional
             Parallax table and optional GP path.
-        n_outline : int, optional
-            Static limb count for the d1 kernel.
+        n_outline : int or None, optional
+            Initial uniform limb samples per disk for the traced contour
+            (static); ``None`` uses the kernel default.
 
         Returns
         -------
@@ -30707,6 +30714,7 @@ class FSBL_PhotAstromParam1(PSPL_Param):
             parallax_vectors=parallax_vectors,
             piE_E=piE_E, piE_N=piE_N,
             gp_params=gp_params, fixed_jitter=fixed_jitter,
+            gamma=p.get('gamma'),
         )
 
     def __init__(self, mLp, mLs, t0, radiusS, xS0_E, xS0_N,
@@ -30907,6 +30915,11 @@ class FSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstrom_LinOrbs_Param1):
     paramPhotFlag = True
     orbitFlag = 'linear'
 
+    # No traced finite-source orbital likelihood; opt out of the inherited
+    # static point-source PSBL methods so fits use the host likelihood.
+    jax_log_likely_photometry = None
+    jax_log_likely_astrometry = None
+
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS,
                  muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N,
                  muS_E, muS_N, dL, dS,
@@ -31028,6 +31041,11 @@ class FSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstrom_AccOrbs_Param1):
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'accelerated'
+
+    # No traced finite-source orbital likelihood; opt out of the inherited
+    # static point-source PSBL methods so fits use the host likelihood.
+    jax_log_likely_photometry = None
+    jax_log_likely_astrometry = None
 
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS,
                  muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N,
@@ -34060,6 +34078,10 @@ root_tol : float
     filt_param_usage = FSBL_PhotParam1.filt_param_usage
     phot_optional_param_names = PSBL_GP_PhotParam1.phot_optional_param_names
 
+    # Finite-source traced photometry (not the inherited point-source PSBL).
+    jax_log_likely_photometry = FSBL_PhotParam1.__dict__[
+        'jax_log_likely_photometry']
+
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS,
                  b_sff, mag_src,
                  gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
@@ -34142,6 +34164,12 @@ root_tol : float
     filt_param_names = FSBL_PhotAstromParam1.filt_param_names
     filt_param_usage = FSBL_PhotAstromParam1.filt_param_usage
     phot_optional_param_names = PSBL_GP_PhotAstromParam1.phot_optional_param_names
+
+    # Finite-source traced photometry; no traced FSBL astrometry, so fits
+    # with astrometric data use the host likelihood.
+    jax_log_likely_photometry = FSBL_PhotAstromParam1.__dict__[
+        'jax_log_likely_photometry']
+    jax_log_likely_astrometry = None
 
     def __init__(self, mLp, mLs, t0, radiusS, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
