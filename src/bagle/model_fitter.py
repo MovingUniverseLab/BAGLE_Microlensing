@@ -69,7 +69,7 @@ muS_scale_factor = 100.0
 
 # Global variable to define all array-style parameters (i.e. multiple filters).
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
-                     'gamma', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
+                     'gamma', 'gamma_pri', 'gamma_sec', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
                      'xS0_E', 'xS0_N', 'pi_ref_frame',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
                      'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
@@ -241,6 +241,8 @@ class MicrolensSolver(Solver):
         'radiusS': ('make_gen', 1E-4, 1E-2),
         # Linear limb darkening (Gamma convention), one per filter.
         'gamma': ('make_gen', 0.0, 1.0),
+        'gamma_pri': ('make_gen', 0.0, 1.0),
+        'gamma_sec': ('make_gen', 0.0, 1.0),
         'fratio_bin': ('make_gen', 0, 1),
         # We really need to make some normal distributions. All these are junk right now.
         # TODO: I don't think the above comment is accurate any more
@@ -966,6 +968,7 @@ class MicrolensSolver(Solver):
         phot_bases = (
             'b_sff', 'mag_src', 'mag_base', 'mag_src_pri',
             'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls', 'gamma',
+            'gamma_pri', 'gamma_sec',
         )
         largest = 0
         for col in table.colnames:
@@ -5141,7 +5144,7 @@ def generate_params_dict(params, fitter_param_names):
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
     multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
-                  'gamma']
+                  'gamma', 'gamma_pri', 'gamma_sec']
     multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0',
                   'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
     
