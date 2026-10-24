@@ -1,9 +1,9 @@
 """Fast end-to-end checks for the extra microlensing inference engines.
 
-DEMetropolisZ, nautilus, pocoMC, replica exchange, and BlackJAX are run
-on a tiny PSPL photometry-only light curve. A shorter
+DEMetropolisZ, nautilus, pocoMC, replica exchange, BlackJAX, and PTDE
+are run on a tiny PSPL photometry-only light curve. A shorter
 photometry+astrometry run covers the joint likelihood when the engine
-is cheap enough.
+is cheap enough. PTDE also has direct checks on analytic targets.
 """
 import os
 
@@ -1259,4 +1259,466 @@ def test_blackjax_missing_dependency_message(monkeypatch):
     monkeypatch.setattr(builtins, '__import__', _blocked)
     with pytest.raises(ImportError, match='blackjax'):
         model_fitter._import_blackjax()
+    return None
+
+
+def test_ptde_ladder_matches_eastman():
+    """Geometric ladder, auto rung count, and the gamma clip.
+
+    The numbers are Jason Eastman's formulas in EXOZIPPy
+    ``ladder.py`` and ``_common.next_gamma``.
+    """
+    from bagle.jax.ptde import (
+        adaptation_window,
+        geometric_ladder,
+        next_gamma,
+        resolve_n_chains,
+        resolve_n_temps,
+        update_ladder_barrier,
+        deo_pairs,
+    )
+
+    temps = geometric_ladder(8, 200.0)
+    expect = 200.0 ** (np.arange(8) / 7.0)
+    assert np.allclose(temps, expect)
+    assert temps[0] == 1.0
+    assert np.isclose(temps[-1], 200.0)
+    assert np.allclose(geometric_ladder(1, 200.0), [1.0])
+
+    # ceil(sqrt(d/2) * ln T_max), and never below 8.
+    auto = resolve_n_temps('auto', 27, 200.0)
+    width = np.sqrt(27.0 / 2.0) * np.log(200.0)
+    assert auto == max(8, int(np.ceil(width)))
+    assert resolve_n_temps('auto', 2, 200.0) == 8
+    assert resolve_n_chains(None, 5) == 10
+    with pytest.raises(ValueError, match='d\\+2'):
+        resolve_n_chains(4, 5)
+
+    # Even / odd DEO pairs, including the empty odd round of 2 rungs.
+    assert deo_pairs(0, 8) == [(0, 1), (2, 3), (4, 5), (6, 7)]
+    assert deo_pairs(1, 8) == [(1, 2), (3, 4), (5, 6)]
+    assert deo_pairs(1, 2) == []
+
+    # gamma *= sqrt(ar / 0.20), clipped to a factor of 10.
+    assert np.isclose(next_gamma(1.0, 0.20, 0.20), 1.0)
+    assert np.isclose(next_gamma(1.0, 0.05, 0.20), 0.5)
+    assert np.isclose(next_gamma(1.0, 20.0, 0.20), 10.0)
+    assert np.isclose(next_gamma(1.0, 0.0, 0.20), 0.1)
+
+    # A long tune gets about 20 windows, not one. His production bug.
+    log_every = max(1, (5000 + 50000) // 20)
+    assert adaptation_window(5000, log_every) == 250
+
+    # Equal rejection rates are already balanced, so the ladder stays.
+    base = geometric_ladder(6, 100.0)
+    prop = np.full(5, 10.0)
+    balanced = update_ladder_barrier(base, np.ones(5), prop)
+    assert np.allclose(balanced, base)
+
+    # A one-sided barrier still pins T=1 and T_max.
+    moved = update_ladder_barrier(
+        base, np.array([10.0, 0.0, 10.0, 0.0, 10.0]), prop
+    )
+    assert np.isclose(moved[0], 1.0)
+    assert np.isclose(moved[-1], 100.0)
+    assert np.all(np.isfinite(moved))
+    return None
+
+
+def test_ptde_de_move_and_deo_swaps():
+    """The proposal is the ter Braak move, and DEO swaps on a flat target.
+
+    Jitter is off, so each accepted step is exactly
+    ``gamma * (x_j1 - x_j2)`` for two other members of the same rung.
+    There is no crossover. On a flat density every swap is legal, so
+    the draw-phase swap rate is 1 and round trips are counted.
+    """
+    jax = pytest.importorskip('jax')
+    import jax.numpy as jnp
+
+    from bagle.jax.ptde import sample_ptde
+
+    jax.config.update('jax_enable_x64', True)
+    rng = np.random.default_rng(0)
+    old = rng.normal(size=(6, 2))
+    gamma = 0.7
+
+    def flat(x):
+        """Flat log posterior.
+
+        Parameters
+        ----------
+        x : jax.Array, shape (n_dim,)
+            Ignored.
+
+        Returns
+        -------
+        logp : jax.Array
+            Zero.
+        """
+        return jnp.float64(0.0)
+
+    one = sample_ptde(
+        flat,
+        old,
+        n_temps=1,
+        n_draws=1,
+        n_tune=0,
+        gamma=gamma,
+        de_jitter=0.0,
+        adapt_gamma=False,
+        seed=1,
+    )
+    new = one['cold_draws'][:, 0, :]
+    for i in range(old.shape[0]):
+        delta = new[i] - old[i]
+        matched = False
+        for j1 in range(old.shape[0]):
+            if j1 == i:
+                continue
+            for j2 in range(old.shape[0]):
+                if j2 == i or j2 == j1:
+                    continue
+                step = gamma * (old[j1] - old[j2])
+                if np.allclose(delta, step, atol=1.0e-8):
+                    matched = True
+        assert matched, i
+
+    # Partners are a fresh permutation each round, so the rate is the
+    # fraction of attempted chain-pairs, not one pair per gap.
+    popped = rng.normal(size=(8, 1))
+    swapped = sample_ptde(
+        flat,
+        popped,
+        n_temps=4,
+        T_max=50.0,
+        n_draws=40,
+        n_tune=0,
+        gamma=0.5,
+        de_jitter=1.0e-3,
+        adapt_gamma=False,
+        seed=3,
+    )
+    rates = np.asarray(swapped['swap_accept_rate'])
+    assert rates.shape == (3,)
+    assert np.all(rates > 0.95)
+    assert int(swapped['round_trips']) > 0
+    assert np.isclose(swapped['mean_accept'], 1.0)
+    return None
+
+
+def test_ptde_good_chain_and_burnin():
+    """getburnndx drops a stuck chain; burn-in maximizes bulk ESS."""
+    from bagle.jax.ptde import find_burnin, good_chain_mask
+
+    lp = np.zeros((4, 40))
+    lp[3] = -1000.0
+    mask, reliable = good_chain_mask(lp)
+    assert mask.tolist() == [True, True, True, False]
+    assert reliable
+
+    # Two survivors is below the minimum of 3, so every chain is kept.
+    lp[2] = -1000.0
+    mask, reliable = good_chain_mask(lp)
+    assert not reliable
+    assert bool(np.all(mask))
+
+    rng = np.random.default_rng(0)
+    n_chains, n_draws = 4, 200
+    draws = rng.normal(size=(n_chains, n_draws))
+    ramp = np.linspace(-8.0, 0.0, 80)
+    draws[:, :80] = ramp + 0.05 * rng.normal(size=(n_chains, 80))
+    trace_lp = rng.normal(size=(n_chains, n_draws))
+    diag = find_burnin({'x': draws}, trace_lp)
+    assert diag['burnin'] >= 60
+    assert diag['max_rhat'] < 1.1
+    assert np.isfinite(diag['min_ess'])
+    return None
+
+
+def test_ptde_correlated_gaussian():
+    """5-D correlated Gaussian: moments, rank R-hat, hot rung wider."""
+    jax = pytest.importorskip('jax')
+    pytest.importorskip('arviz')
+    import jax.numpy as jnp
+
+    from bagle.jax.ptde import sample_ptde
+
+    jax.config.update('jax_enable_x64', True)
+    dim = 5
+    rho = 0.6
+    cov = rho * np.ones((dim, dim)) + (1.0 - rho) * np.eye(dim)
+    mean = np.array([0.2, -0.4, 0.1, 0.5, -0.3])
+    precision = jnp.asarray(np.linalg.inv(cov))
+    mean_j = jnp.asarray(mean)
+
+    def logdensity(x):
+        """Correlated normal, constant dropped.
+
+        Parameters
+        ----------
+        x : jax.Array, shape (5,)
+            Unconstrained coordinate.
+
+        Returns
+        -------
+        logp : jax.Array
+            Quadratic log density.
+        """
+        delta = x - mean_j
+        return -0.5 * delta @ precision @ delta
+
+    rng = np.random.default_rng(0)
+    chol = np.linalg.cholesky(cov)
+    starts = mean + 2.0 * (chol @ rng.normal(size=(10, dim)).T).T
+    out = sample_ptde(
+        logdensity,
+        starts,
+        n_temps=4,
+        T_max=20.0,
+        n_draws=400,
+        n_tune=200,
+        seed=0,
+    )
+    samples = np.asarray(out['samples'])
+    got = samples.mean(axis=0)
+    cov_hat = np.cov(samples, rowvar=False)
+    assert np.allclose(got, mean, atol=0.25)
+    assert np.allclose(cov_hat, cov, atol=0.30)
+    assert float(out['rhat_max']) < 1.05
+    assert float(out['ess_min']) > 100.0
+
+    # Tempering the full log posterior widens the hot rung.
+    final = np.asarray(out['final_pos'])
+    cold_std = float(final[0].std(axis=0).mean())
+    hot_std = float(final[-1].std(axis=0).mean())
+    assert hot_std > 2.0 * cold_std
+    return None
+
+
+def test_ptde_bimodal_needs_tempering():
+    """Modes 20 sigma apart. A cold rung stays put; PTDE splits ~50/50.
+
+    Gamma is held at ``2.38/sqrt(2d)``. Letting it adapt on a single
+    under-dispersed rung grows the step until a proposal can jump
+    from one mode to the other in one shot, and that jump is accepted
+    because the modes have the same height. The fixed default scale
+    is what makes the cold population local. The hot rungs still
+    inflate, and DEO swaps carry the other mode down.
+    """
+    jax = pytest.importorskip('jax')
+    pytest.importorskip('arviz')
+    import jax.numpy as jnp
+
+    from bagle.jax.ptde import sample_ptde
+
+    jax.config.update('jax_enable_x64', True)
+    sep = 10.0
+    log_norm = -0.5 * jnp.log(2.0 * jnp.pi)
+
+    def logdensity(x):
+        """Equal mixture of N(-10, 1) and N(+10, 1).
+
+        Parameters
+        ----------
+        x : jax.Array, shape (1,)
+            Coordinate.
+
+        Returns
+        -------
+        logp : jax.Array
+            Mixture log density.
+        """
+        left = -0.5 * (x[0] + sep) ** 2
+        right = -0.5 * (x[0] - sep) ** 2
+        mix = jax.nn.logsumexp(jnp.stack([left, right]))
+        return jnp.log(0.5) + log_norm + mix
+
+    rng = np.random.default_rng(1)
+    # Every chain, on every rung, starts in the negative mode.
+    starts = -sep + 0.4 * rng.normal(size=(8, 1))
+    common = dict(
+        n_draws=300,
+        n_tune=200,
+        adapt_gamma=False,
+        seed=1,
+    )
+    single = sample_ptde(logdensity, starts, n_temps=1, **common)
+    tempered = sample_ptde(
+        logdensity, starts, n_temps=8, T_max=200.0, **common
+    )
+
+    single_x = single['samples'][:, 0]
+    tempered_x = tempered['samples'][:, 0]
+    single_pos = float(np.mean(single_x > 0.0))
+    tempered_pos = float(np.mean(tempered_x > 0.0))
+    print(
+        'bimodal single', single_pos,
+        'pt', tempered_pos,
+        'trips', tempered['round_trips'],
+        'rhat', tempered['rhat_max'],
+    )
+    assert single_pos < 0.05
+    assert float(np.max(single_x)) < 0.0
+    assert 0.35 < tempered_pos < 0.65
+    assert int(tempered['round_trips']) > 0
+    assert float(tempered['rhat_max']) < 1.05
+    return None
+
+
+def test_ptde_matches_exozippy_when_installed():
+    """Shared ladder, gamma, DEO, and good-chain pieces match EXOZIPPy.
+
+    The full ``ptde_sample`` entry point needs a PyMC model, so this
+    compares the numerical pieces both samplers call. Skipped when
+    EXOZIPPy is not installed.
+    """
+    pytest.importorskip('exozippy')
+    try:
+        from exozippy.samplers.ladder import (
+            _deo_pairs,
+            _geometric_ladder,
+            _update_ladder_barrier,
+            resolve_n_temps as exo_resolve_n_temps,
+        )
+        from exozippy.samplers._common import next_gamma as exo_next_gamma
+        from exozippy.samplers.convergence import (
+            good_chain_mask as exo_good_chain_mask,
+        )
+    except ImportError:
+        pytest.skip('exozippy sampler pieces are not importable')
+
+    from bagle.jax.ptde import (
+        deo_pairs,
+        geometric_ladder,
+        good_chain_mask,
+        next_gamma,
+        resolve_n_temps,
+        update_ladder_barrier,
+    )
+
+    assert np.allclose(geometric_ladder(8, 200.0), _geometric_ladder(8, 200.0))
+    assert resolve_n_temps('auto', 27, 200.0) == exo_resolve_n_temps(
+        'auto', 27, 200.0
+    )
+    assert deo_pairs(0, 8) == _deo_pairs(0, 8)
+    assert deo_pairs(1, 7) == _deo_pairs(1, 7)
+    assert np.isclose(next_gamma(0.4, 0.1, 0.2), exo_next_gamma(0.4, 0.1, 0.2))
+
+    temps = geometric_ladder(5, 80.0)
+    acc = np.array([4.0, 1.0, 7.0, 2.0])
+    prop = np.array([10.0, 10.0, 10.0, 8.0])
+    assert np.allclose(
+        update_ladder_barrier(temps, acc, prop),
+        _update_ladder_barrier(temps, acc, prop),
+    )
+
+    rng = np.random.default_rng(4)
+    lp = rng.normal(size=(6, 30))
+    lp[0] -= 50.0
+    mask, reliable = good_chain_mask(lp)
+    exo_mask, exo_reliable = exo_good_chain_mask(lp)
+    assert np.array_equal(mask, exo_mask)
+    assert reliable == exo_reliable
+    return None
+
+
+def test_ptde_phot():
+    """PTDE cold rung recovers a tiny PSPL light curve."""
+    pytest.importorskip('blackjax')
+    data, truth = _tiny_pspl_phot()
+    out = os.path.join(TEST_OUTPUT_DIR, 'ptde_phot_')
+    fitter = MicrolensSolverBlackJAX(
+        data,
+        model.PSPL_Phot_noPar_Param1,
+        outputfiles_basename=out,
+        sampler='ptde',
+        draws=40,
+        tune=40,
+        chains=9,
+        n_temps=4,
+        T_max=30.0,
+        random_seed=0,
+        verbose=False,
+    )
+    _apply_phot_priors(fitter, truth)
+    fitter.solve()
+    _assert_inside_prior(fitter)
+
+    tab = fitter.load_mnest_results()
+    assert len(tab) > 0
+    assert fitter.sampler == 'ptde'
+    summary = fitter.load_mnest_summary()
+    gamma = float(summary['gamma'][0])
+    trips = int(summary['round_trips'][0])
+    rate = float(summary['swap_accept_rate'][0])
+    print(
+        'ptde phot gamma', gamma,
+        'accept', float(summary['mean_accept'][0]),
+        'swap', rate,
+        'trips', trips,
+        'rhat', float(summary['rhat_max'][0]),
+        'ess', float(summary['ess_min'][0]),
+        'rows', len(tab),
+    )
+    assert gamma > 0.0
+    assert trips >= 0
+    assert 0.0 <= rate <= 1.0
+    rates = np.asarray(fitter._diagnostics['swap_accept_rate'])
+    assert rates.shape == (3,)
+    assert np.all((rates >= 0.0) & (rates <= 1.0))
+    _assert_samples(
+        fitter,
+        truth,
+        expect_logz=False,
+        t0_atol=2.5,
+        extra_atol={
+            'u0_amp': 0.15,
+            'tE': 5.0,
+            'mag_src1': 0.3,
+            'b_sff1': 0.15,
+        },
+    )
+    return None
+
+
+def test_ptde_phot_astrom():
+    """PTDE also runs on a tiny photometry+astrometry event."""
+    pytest.importorskip('blackjax')
+    data, truth = _tiny_pspl_phot_astrom()
+    out = os.path.join(TEST_OUTPUT_DIR, 'ptde_joint_')
+    fitter = MicrolensSolverBlackJAX(
+        data,
+        model.PSPL_PhotAstrom_noPar_Param1,
+        outputfiles_basename=out,
+        sampler='ptde',
+        draws=30,
+        tune=30,
+        chains=15,
+        n_temps=3,
+        T_max=20.0,
+        random_seed=1,
+        verbose=False,
+    )
+    _apply_joint_priors(fitter, truth)
+    fitter.solve()
+    _assert_inside_prior(fitter)
+    summary = fitter.load_mnest_summary()
+    assert float(summary['gamma'][0]) > 0.0
+    assert int(summary['round_trips'][0]) >= 0
+    rate = float(summary['swap_accept_rate'][0])
+    assert 0.0 <= rate <= 1.0
+    print(
+        'ptde joint gamma', float(summary['gamma'][0]),
+        'swap', rate,
+        'trips', int(summary['round_trips'][0]),
+        'rhat', float(summary['rhat_max'][0]),
+    )
+    _assert_samples(
+        fitter,
+        truth,
+        expect_logz=False,
+        t0_atol=3.0,
+        extra_atol={'beta': 0.2, 'mag_src1': 0.35},
+    )
     return None

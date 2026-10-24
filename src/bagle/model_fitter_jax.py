@@ -7192,7 +7192,7 @@ class MicrolensSolverImportance(MicrolensSolver):
 
 
 class MicrolensSolverBlackJAX(MicrolensSolver):
-    """BlackJAX NUTS, MCLMC, adaptive SMC, or nested sampling.
+    """BlackJAX NUTS, MCLMC, adaptive SMC, nested sampling, or PTDE.
 
     The target density is the cached JAX log-likelihood from
     :func:`build_explicit_jax_loglik_fn` plus :func:`_build_jax_log_prior`.
@@ -7240,6 +7240,15 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
         ns_max_iter=None,
         ns_max_slice_steps=10,
         ns_max_shrinkage=100,
+        n_temps=8,
+        T_max=200.0,
+        adapt_ladder=False,
+        adapt_gamma=True,
+        de_target_accept=0.20,
+        de_mode_hop=0.0,
+        de_jitter=1.0e-4,
+        ptde_gamma=None,
+        swap_interval=1,
         **kwargs,
     ):
         """
@@ -7267,12 +7276,15 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
             Output files basename.
         verbose : bool, optional
             Print nested-sampling progress.
-        sampler : {'nuts', 'mclmc', 'smc', 'ns'}, optional
+        sampler : {'nuts', 'mclmc', 'smc', 'ns', 'ptde'}, optional
             ``'nuts'`` is window-adapted NUTS. ``'mclmc'`` is
             microcanonical Langevin Monte Carlo with BlackJAX's tuner.
             ``'smc'`` is adaptive tempered SMC and returns logZ.
             ``'ns'`` is nested slice sampling (``blackjax.ns.nss``)
-            and returns logZ.
+            and returns logZ. ``'ptde'`` is Jason Eastman's parallel
+            tempering + differential evolution sampler (EXOZIPPy).
+            It tempers the full unconstrained log posterior and keeps
+            the cold rung.
         draws : int, optional
             Draws kept per chain for NUTS and MCLMC. Default 1000.
         tune : int, optional
@@ -7325,6 +7337,29 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
             Cap on slice stepping-out expansions. Default 10.
         ns_max_shrinkage : int, optional
             Cap on slice shrinkage evaluations. Default 100.
+        n_temps : int or str, optional
+            PTDE temperature rungs, or ``'auto'``. Default 8.
+            Ignored by the other samplers.
+        T_max : float, optional
+            PTDE hottest temperature. Default 200. The cold rung is
+            ``T = 1``. Ignored by the other samplers.
+        adapt_ladder : bool, optional
+            PTDE barrier-equalizing ladder updates during tune.
+            Default False keeps the geometric ladder.
+        adapt_gamma : bool, optional
+            PTDE step-size adaptation during tune. Default True.
+            The target is ``de_target_accept``, not ``target_accept``.
+        de_target_accept : float, optional
+            Cold-rung acceptance the PTDE gamma update aims at.
+            Default 0.20. ``target_accept`` stays the NUTS value.
+        de_mode_hop : float, optional
+            Probability of a PTDE ``gamma = 1`` proposal. Default 0.
+        de_jitter : float, optional
+            PTDE proposal jitter. Default ``1e-4``.
+        ptde_gamma : float or None, optional
+            PTDE scale. ``None`` uses ``2.38 / sqrt(2d)``.
+        swap_interval : int, optional
+            PTDE steps between DEO swap rounds. Default 1.
         **kwargs : dict, optional
             Passed to :class:`MicrolensSolver`.
 
@@ -7349,10 +7384,10 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
         )
 
         sampler = str(sampler).lower()
-        if sampler not in ('nuts', 'mclmc', 'smc', 'ns'):
+        if sampler not in ('nuts', 'mclmc', 'smc', 'ns', 'ptde'):
             raise ValueError(
-                "sampler must be 'nuts', 'mclmc', 'smc', or 'ns', "
-                f"got {sampler!r}"
+                "sampler must be 'nuts', 'mclmc', 'smc', 'ns', or "
+                f"'ptde', got {sampler!r}"
             )
         smc_inner = str(smc_inner).lower()
         if smc_inner not in ('hmc', 'nuts'):
@@ -7383,6 +7418,17 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
         self.ns_max_iter = ns_max_iter
         self.ns_max_slice_steps = max(1, int(ns_max_slice_steps))
         self.ns_max_shrinkage = max(1, int(ns_max_shrinkage))
+
+        # PTDE-only. Other samplers never read these.
+        self.n_temps = n_temps
+        self.T_max = float(T_max)
+        self.adapt_ladder = bool(adapt_ladder)
+        self.adapt_gamma = bool(adapt_gamma)
+        self.de_target_accept = float(de_target_accept)
+        self.de_mode_hop = float(de_mode_hop)
+        self.de_jitter = float(de_jitter)
+        self.ptde_gamma = ptde_gamma
+        self.swap_interval = int(swap_interval)
 
         self._samples_array = None
         self._loglikes = None
@@ -7420,6 +7466,8 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
             self._run_mclmc(logprior_fn, loglikelihood_fn)
         elif self.sampler == 'smc':
             self._run_smc(logprior_fn, loglikelihood_fn)
+        elif self.sampler == 'ptde':
+            self._run_ptde(logprior_fn, loglikelihood_fn)
         else:
             self._run_ns(logprior_fn, loglikelihood_fn)
 
@@ -7602,6 +7650,17 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
             'L': float(result['L']),
             'beta': float(result.get('beta', np.nan)),
         }
+        # Present only for PTDE. Other samplers leave the dict as it was.
+        if 'swap_accept_rate' in result:
+            self._diagnostics['swap_accept_rate'] = np.asarray(
+                result['swap_accept_rate'], dtype=float
+            )
+            self._diagnostics['round_trips'] = int(result['round_trips'])
+            self._diagnostics['gamma'] = float(result['gamma'])
+            self._diagnostics['burnin'] = int(result.get('burnin', 0))
+            self._diagnostics['temperatures'] = np.asarray(
+                result.get('temperatures'), dtype=float
+            )
         return None
 
     def _unconstrained_target(self, logprior_fn, loglikelihood_fn):
@@ -7936,6 +7995,97 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
         self._store_result(result)
         return None
 
+    def _run_ptde(self, logprior_fn, loglikelihood_fn):
+        """Run Eastman's PTDE sampler in unconstrained coordinates.
+
+        Parameters
+        ----------
+        logprior_fn, loglikelihood_fn : callable
+            Scalar JAX densities of one physical vector.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        The target is :meth:`_unconstrained_target`: likelihood, prior,
+        and log-Jacobian, tempered together by ``1/T``. Starts are
+        prior draws from :meth:`_init_positions`, copied onto every
+        rung. ``chains`` below ``d + 2`` is raised to the DE default
+        ``max(2d, d+2)`` because the class default ``chains=2`` is
+        the NUTS default, not a DE population. Samples go through
+        :meth:`_samples_to_physical` and :meth:`_store_result`.
+        """
+        from bagle.jax.ptde import resolve_n_chains, sample_ptde
+
+        target = self._unconstrained_target(
+            logprior_fn, loglikelihood_fn
+        )
+        n_dim = len(self.fitter_param_names)
+        floor = n_dim + 2
+        if int(self.chains) < floor:
+            n_chains = resolve_n_chains(None, n_dim)
+            print(
+                f'PTDE: chains={self.chains} is below d+2={floor}; '
+                f'using {n_chains} chains per rung.'
+            )
+        else:
+            n_chains = resolve_n_chains(int(self.chains), n_dim)
+
+        physical = jnp.asarray(
+            self._init_positions(n_chains), dtype=jnp.float64
+        )
+        positions = jax.vmap(target['to_unconstrained'])(physical)
+        result = sample_ptde(
+            target['logdensity'],
+            positions,
+            n_temps=self.n_temps,
+            T_max=self.T_max,
+            n_draws=int(self.draws),
+            n_tune=int(self.tune),
+            gamma=self.ptde_gamma,
+            target_accept=self.de_target_accept,
+            adapt_gamma=self.adapt_gamma,
+            adapt_ladder=self.adapt_ladder,
+            de_jitter=self.de_jitter,
+            de_mode_hop=self.de_mode_hop,
+            swap_interval=self.swap_interval,
+            seed=int(self.random_seed),
+            verbose=bool(self.verbose),
+        )
+
+        # The reshape in _samples_to_physical uses self.chains. The
+        # kept set can be smaller than the population after the
+        # good-chain cut. Restore the configured count afterwards.
+        n_kept = int(result['n_chains_kept'])
+        saved_chains = self.chains
+        self.chains = n_kept
+        try:
+            samples, rhat, ess = self._samples_to_physical(
+                result['samples'], target['to_physical']
+            )
+        finally:
+            self.chains = saved_chains
+
+        result['samples'] = samples
+        if not np.isfinite(result['rhat_max']):
+            result['rhat_max'] = rhat
+        if not np.isfinite(result['ess_min']):
+            result['ess_min'] = ess
+
+        self._ptde_n_chains = int(n_chains)
+        self._ptde_n_chains_kept = n_kept
+        print(
+            f'PTDE: gamma={float(result["gamma"]):.4f}  '
+            f'accept={float(result["mean_accept"]):.3f}  '
+            f'round_trips={int(result["round_trips"])}  '
+            f'rhat={float(result["rhat_max"]):.4f}  '
+            f'ess={float(result["ess_min"]):.1f}'
+        )
+        self._store_result(result)
+        return None
+
     def _build_results_table(self):
         """Build an Astropy table of posterior samples and derived params.
 
@@ -7998,6 +8148,19 @@ class MicrolensSolverBlackJAX(MicrolensSolver):
             row['mclmc_L'] = float(diag.get('L', np.nan))
         if self.sampler == 'smc':
             row['smc_beta'] = float(diag.get('beta', np.nan))
+        if self.sampler == 'ptde':
+            row['gamma'] = float(diag.get('gamma', np.nan))
+            row['round_trips'] = int(diag.get('round_trips', 0))
+            row['ptde_burnin'] = int(diag.get('burnin', 0))
+            rates = np.asarray(
+                diag.get('swap_accept_rate', []), dtype=float
+            ).reshape(-1)
+            if rates.size == 0:
+                row['swap_accept_rate'] = float(np.nan)
+            else:
+                row['swap_accept_rate'] = float(np.mean(rates))
+            for gap, rate in enumerate(rates):
+                row['swap_accept_' + str(gap)] = float(rate)
 
         self._summary_table = Table([row])
         return self._summary_table
