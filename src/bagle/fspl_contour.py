@@ -206,8 +206,8 @@ def _limb_terms(zeta_c, rho, theta, counts, errors=False):
     ----------
     zeta_c : ndarray, complex, shape (N_times,)
         Source centre relative to the lens (Einstein radii).
-    rho : float
-        Source radius in Einstein radii.
+    rho : float or ndarray, shape (N_times,)
+        Source radius in Einstein radii (one value or one per row).
     theta : ndarray, shape (N_times, N_pts)
         Increasing limb angles; slots at and beyond ``counts`` are padding.
     counts : ndarray of int, shape (N_times,)
@@ -237,6 +237,10 @@ def _limb_terms(zeta_c, rho, theta, counts, errors=False):
     last = counts - 1
     valid = k < counts[:, None]
 
+    # One radius per row (column vector for broadcasting over samples).
+    rho = np.broadcast_to(np.asarray(rho, dtype=float), (n_times,))
+    rho_c = rho[:, None]
+
     # Padding repeats the first angle so every slot maps to a finite image.
     theta = np.where(valid, theta, theta[:, :1])
 
@@ -248,13 +252,13 @@ def _limb_terms(zeta_c, rho, theta, counts, errors=False):
 
     # Source limb and its derivative with respect to theta.
     e_it = np.exp(1j * theta)
-    zeta = zeta_c[:, None] + rho * e_it
-    dzeta = 1j * rho * e_it
+    zeta = zeta_c[:, None] + rho_c * e_it
+    dzeta = 1j * rho_c * e_it
 
     # The parabolic expansion fails when a limb sample lies within one of
     # its own steps of the lens (|J| -> 0 there); such epochs use the
     # trapezoid sums (and are refined first by the adaptive sampler).
-    close = valid & (np.abs(zeta) < rho * step)
+    close = valid & (np.abs(zeta) < rho_c * step)
     parabolic = ~np.any(close, axis=1)
 
     images = np.zeros((n_times, 2, 2), dtype=float)
@@ -266,7 +270,7 @@ def _limb_terms(zeta_c, rho, theta, counts, errors=False):
 
     # Plus image has parity +1, minus image parity -1.
     for i_img, (z, parity) in enumerate(zip(point_lens_images(zeta), (1, -1))):
-        dz, wp = point_lens_image_derivatives(z, dzeta, rho)
+        dz, wp = point_lens_image_derivatives(z, dzeta, rho_c)
         area, mom_x, mom_y = contour_area_moments(z, dz, wp, step, counts,
                                                   parabolic=parabolic)
 
@@ -314,8 +318,8 @@ def adaptive_limb_images_amps(zeta_c, rho, n_init=64, tol=1e-4, max_pts=2048,
     ----------
     zeta_c : array_like, complex, shape (N_times,)
         Source centre relative to the lens (Einstein radii).
-    rho : float
-        Source radius in Einstein radii.
+    rho : float or array_like, shape (N_times,)
+        Source radius in Einstein radii (one value or one per row).
     n_init : int, optional
         Initial number of uniform limb samples.
     tol : float, optional
@@ -336,6 +340,7 @@ def adaptive_limb_images_amps(zeta_c, rho, n_init=64, tol=1e-4, max_pts=2048,
     """
     zeta_c = np.atleast_1d(np.asarray(zeta_c, dtype=complex)).reshape(-1)
     n_times = zeta_c.size
+    rho = np.broadcast_to(np.asarray(rho, dtype=float), (n_times,))
     images = np.zeros((n_times, 2, 2), dtype=float)
     amps = np.zeros((n_times, 2), dtype=float)
     if n_times == 0:
@@ -364,7 +369,7 @@ def adaptive_limb_images_amps(zeta_c, rho, n_init=64, tol=1e-4, max_pts=2048,
         th_a = theta[active, :width]
         c_a = counts[active]
         img, amp, err, abs_area, step = _limb_terms(
-            zeta_c[active], rho, th_a, c_a, errors=True)
+            zeta_c[active], rho[active], th_a, c_a, errors=True)
         images[active] = img
         amps[active] = amp
 
@@ -409,8 +414,8 @@ def limb_images_amps(zeta_c, rho, theta, counts):
     ----------
     zeta_c : array_like, complex, shape (N_times,)
         Source centre relative to the lens (Einstein radii).
-    rho : float
-        Source radius in Einstein radii.
+    rho : float or array_like, shape (N_times,)
+        Source radius in Einstein radii (one value or one per row).
     theta : array_like, shape (N_times, N_pts)
         Increasing limb angles in ``[0, 2 pi)`` for each epoch. Slots at and
         beyond ``counts`` are padding (any value).
@@ -432,3 +437,172 @@ def limb_images_amps(zeta_c, rho, theta, counts):
     counts = np.asarray(counts, dtype=int).reshape(-1)
 
     return _limb_terms(zeta_c, rho, theta, counts)
+
+
+def uniform_limb_images_amps(zeta_c, rho, n_outline):
+    """
+    FSPL images and magnifications on ``n_outline`` equally spaced limb points.
+
+    Parameters
+    ----------
+    zeta_c : array_like, complex, shape (N_times,)
+        Source centre relative to the lens (Einstein radii).
+    rho : float or array_like, shape (N_times,)
+        Source radius in Einstein radii (one value or one per row).
+    n_outline : int
+        Number of limb samples.
+
+    Returns
+    -------
+    images : ndarray, shape (N_times, 2, 2)
+        Plus / minus image centroids relative to the lens (Einstein radii).
+    amps : ndarray, shape (N_times, 2)
+        Signed magnifications ``[+, -]``.
+    """
+    zeta_c = np.atleast_1d(np.asarray(zeta_c, dtype=complex)).reshape(-1)
+    n_pts = int(n_outline)
+
+    # Same uniform limb angles for every epoch.
+    theta = np.broadcast_to(2.0 * np.pi * np.arange(n_pts) / n_pts,
+                            (zeta_c.size, n_pts))
+    counts = np.full(zeta_c.size, n_pts)
+
+    return limb_images_amps(zeta_c, rho, theta, counts)
+
+
+def gamma_to_u(gamma):
+    """
+    Linear limb-darkening coefficient: Gamma convention to u convention.
+
+    ``I(mu) / I(1) = 1 - u (1 - mu)`` with ``u = 3 Gamma / (2 + Gamma)``
+    (An et al. 2002). VBMicrolensing's ``a1`` is ``u``.
+
+    Parameters
+    ----------
+    gamma : float or array_like
+        Flux-conserving coefficient Gamma.
+
+    Returns
+    -------
+    u : float or ndarray
+        Central-intensity coefficient u.
+    """
+    gamma = np.asarray(gamma, dtype=float)
+
+    return 3.0 * gamma / (2.0 + gamma)
+
+
+def ld_radius_nodes(u_amp, rho, n_ld=8):
+    """
+    Quadrature nodes in ``s = sqrt(1 - r^2/rho^2)`` for linear limb darkening.
+
+    The Gamma-law magnified flux is
+    ``(1 - Gamma) F(rho) + (3/2) Gamma * int_0^1 F(rho sqrt(1 - s^2)) ds``
+    with ``F(r) = pi r^2 A(u, r)`` the magnified flux of a uniform disk of
+    radius ``r``. The integrand has a weak (logarithmic) singularity where
+    the disk edge crosses the lens, ``s* = sqrt(1 - u^2/rho^2)`` for
+    ``u < rho``. Each epoch uses two sub-intervals ``[0, s*]`` and
+    ``[s*, 1]`` with Gauss-Legendre nodes graded quadratically toward ``s*``
+    (``s* = 1/2`` when the lens is outside the source, where the integrand
+    is smooth), so the node count is the same for every epoch.
+
+    Parameters
+    ----------
+    u_amp : array_like, shape (N_times,)
+        Source-lens separation (Einstein radii).
+    rho : float or array_like, shape (N_times,)
+        Source radius (Einstein radii).
+    n_ld : int, optional
+        Gauss-Legendre nodes per sub-interval.
+
+    Returns
+    -------
+    s : ndarray, shape (N_times, 2 * n_ld)
+        Nodes in ``s``.
+    w : ndarray, shape (N_times, 2 * n_ld)
+        Quadrature weights (sum to 1 per epoch).
+    """
+    u_amp = np.atleast_1d(np.asarray(u_amp, dtype=float))
+    rho = np.broadcast_to(np.asarray(rho, dtype=float), u_amp.shape)
+
+    # Gauss-Legendre on tau in [0, 1].
+    x, w = np.polynomial.legendre.leggauss(int(n_ld))
+    tau = 0.5 * (x + 1.0)
+    w_tau = 0.5 * w
+
+    # Kink location; s* = 1/2 (no kink) when the lens is outside the disk.
+    inside = u_amp < rho
+    q2 = np.where(inside, (u_amp / rho) ** 2, 0.75)
+    s_star = np.sqrt(1.0 - q2)[:, None]
+
+    # s = s* -/+ (interval length) * tau^2, graded toward s*.
+    s_lo = s_star * (1.0 - tau ** 2)
+    w_lo = s_star * 2.0 * tau * w_tau
+    s_up = s_star + (1.0 - s_star) * tau ** 2
+    w_up = (1.0 - s_star) * 2.0 * tau * w_tau
+
+    return (np.concatenate([s_lo, s_up], axis=1),
+            np.concatenate([w_lo, w_up], axis=1))
+
+
+def ld_images_amps(zeta_c, rho, gamma, disk_images_amps, n_ld=8):
+    """
+    Linear (Gamma-law) limb-darkened FSPL images and magnifications.
+
+    The source surface brightness is
+    ``I(r) proportional to 1 - Gamma (1 - (3/2) sqrt(1 - r^2/rho^2))``
+    (Yoo et al. 2004), normalised to the uniform-source flux. The magnified
+    flux and first moments of each image are integrated over concentric
+    uniform disks (see :func:`ld_radius_nodes`), each computed by
+    ``disk_images_amps``.
+
+    Parameters
+    ----------
+    zeta_c : array_like, complex, shape (N_times,)
+        Source centre relative to the lens (Einstein radii).
+    rho : float
+        Source radius in Einstein radii.
+    gamma : float
+        Linear limb-darkening coefficient (Gamma convention).
+    disk_images_amps : callable
+        ``(zeta_rows, rho_rows) -> (images, amps)`` for uniform disks, e.g.
+        :func:`adaptive_limb_images_amps` or :func:`uniform_limb_images_amps`
+        with their sampling arguments bound.
+    n_ld : int, optional
+        Gauss-Legendre nodes per sub-interval (``2 * n_ld + 1`` disks per
+        epoch).
+
+    Returns
+    -------
+    images : ndarray, shape (N_times, 2, 2)
+        Brightness-weighted plus / minus image centroids relative to the
+        lens (Einstein radii).
+    amps : ndarray, shape (N_times, 2)
+        Signed magnifications ``[+, -]``; the total magnification is their
+        sum.
+    """
+    zeta_c = np.atleast_1d(np.asarray(zeta_c, dtype=complex)).reshape(-1)
+    n_times = zeta_c.size
+
+    # Disk radii per epoch: the full disk, then the quadrature nodes.
+    s, w_s = ld_radius_nodes(np.abs(zeta_c), rho, n_ld)
+    radii = np.concatenate([np.full((n_times, 1), rho),
+                            rho * np.sqrt(1.0 - s ** 2)], axis=1)
+    weights = np.concatenate([np.full((n_times, 1), 1.0 - gamma),
+                              1.5 * gamma * w_s], axis=1)
+    n_disk = radii.shape[1]
+
+    # All (epoch, radius) uniform disks in one call.
+    img, amp = disk_images_amps(np.repeat(zeta_c, n_disk), radii.ravel())
+    img = img.reshape(n_times, n_disk, 2, 2)
+    amp = amp.reshape(n_times, n_disk, 2)
+
+    # Magnified flux (area units) and first moment of each image and disk.
+    flux = np.pi * radii[:, :, None] ** 2 * amp
+    mom = flux[:, :, :, None] * img
+
+    # Brightness-weighted sums over the disks.
+    flux_ld = np.sum(weights[:, :, None] * flux, axis=1)
+    mom_ld = np.sum(weights[:, :, None, None] * mom, axis=1)
+
+    return mom_ld / flux_ld[:, :, None], flux_ld / (np.pi * rho ** 2)

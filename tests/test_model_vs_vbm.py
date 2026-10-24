@@ -1403,8 +1403,9 @@ def test_fspl_centroid_rotation_invariant(rho):
     The same rectilinear event is rotated on the sky; away from the limb the
     shift along ``u-hat`` matches VBM ``astrox1`` at every angle, the
     perpendicular component vanishes, and njx and JAX agree. A uniform
-    ``n_outline`` limb does not resolve ``0.8 < |u|/rho < 1.25`` (the
-    adaptive mesh covers that regime in njx).
+    ``n_outline`` limb (njx here) does not resolve ``0.8 < |u|/rho < 1.25``;
+    the adaptive mesh covers that regime in njx models and the JAX kernel
+    clusters its static limb toward the lens.
 
     Parameters
     ----------
@@ -1448,8 +1449,11 @@ def test_fspl_centroid_rotation_invariant(rho):
                 f"{name} angle={ang}: |d along|={d_along:.2e}")
             assert d_perp < 1.0e-5, f"{name} angle={ang}: perp={d_perp:.2e}"
 
-        # Same algorithm in NumPy and JAX.
-        assert np.max(np.abs(along_by_code["njx"] - along_by_code["jax"])) < 1e-8
+        # NumPy (uniform limb) and JAX (clustered limb) agree off the limb;
+        # the uniform limb dominates the difference near the band edges.
+        d_codes = np.abs(along_by_code["njx"] - along_by_code["jax"])[off_limb]
+        assert np.max(d_codes) < TOL_AST_THETAE_TIGHT, (
+            f"angle={ang}: njx-jax={d_codes.max():.2e}")
 
     return None
 
@@ -1535,6 +1539,272 @@ def test_fspl_njx_limb_crossing_vs_quad(u0, rho):
     d_shift = np.max(np.abs(shift_njx - ref[:, 1]))
     assert d_amp < 1e-5, f"max |dA/A|={d_amp:.2e}"
     assert d_shift < 5e-5, f"max |d shift|={d_shift:.2e} theta_E"
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# 8b. Linear (Gamma-law) limb darkening
+# ---------------------------------------------------------------------------
+def _ld_quad_reference(u, rho, gamma):
+    """
+    Limb-darkened magnification and centroid shift by nested quadrature.
+
+    The Gamma-law flux and first moment are
+    ``(1 - Gamma) F(rho) + 1.5 Gamma int_0^1 F(rho sqrt(1 - s^2)) ds`` with
+    ``F(r) = pi r^2 A(u, r)`` from :func:`_lee10_quad_reference`; the
+    s-integral is split where the disk edge crosses the lens.
+
+    Parameters
+    ----------
+    u : float
+        Source-lens separation (Einstein radii).
+    rho : float
+        Source radius (Einstein radii).
+    gamma : float
+        Linear limb-darkening coefficient (Gamma convention).
+
+    Returns
+    -------
+    amp : float
+        Magnification.
+    shift : float
+        Centroid shift along u-hat relative to the source (Einstein radii).
+    """
+    from scipy.integrate import quad
+
+    # Uniform-disk magnified flux and first moment (lens-centred).
+    def flux_mom(r):
+        amp, shift = _lee10_quad_reference(u, r)
+        flux = np.pi * r ** 2 * amp
+        return flux, flux * (shift + u)
+
+    # Integrand kink where the disk edge crosses the lens.
+    pts = [np.sqrt(1.0 - (u / rho) ** 2)] if u < rho else None
+    out = []
+    for which in (0, 1):
+        val = quad(lambda s: flux_mom(rho * np.sqrt(1.0 - s ** 2))[which],
+                   0.0, 1.0, points=pts, epsabs=1e-13, epsrel=1e-11,
+                   limit=200)[0]
+        out.append((1.0 - gamma) * flux_mom(rho)[which] + 1.5 * gamma * val)
+
+    return out[0] / (np.pi * rho ** 2), out[1] / out[0] - u
+
+
+def _get_model_Lee2010_limb(u0, rho, gamma, jax=False):
+    """
+    Limb-darkened twin of :func:`_get_model_Lee2010`.
+
+    Parameters
+    ----------
+    u0, rho : float
+        Impact parameter and source radius in Einstein radii.
+    gamma : float
+        Linear limb-darkening coefficient (Gamma convention).
+    jax : bool, optional
+        Build the ``bagle.model_jax`` class instead of ``bagle.model``.
+
+    Returns
+    -------
+    mod : FSPL_Limb_PhotAstrom_noPar_Param2
+    """
+    from bagle import model_jax
+
+    # Same Lee et al. (2010) setup as the uniform-source helper.
+    mod_lib = model_jax if jax else model
+    thetaE = 3.0  # mas
+    par = dict(t0=10.0, u0_amp=u0, tE=100.0, thetaE=thetaE, piS=0.1,
+               piE_E=0.1, piE_N=0.0, xS0_E=np.array([0.0]),
+               xS0_N=np.array([0.0]), muS_E=3.0, muS_N=0.0,
+               radiusS=rho * thetaE * 1e-3, b_sff=np.array([1.0]),
+               mag_src=np.array([18.0]), gamma=np.array([gamma]))
+
+    return mod_lib.FSPL_Limb_PhotAstrom_noPar_Param2(**par, n_outline=N_OUTLINE)
+
+
+@pytest.mark.parametrize("u0,rho,gamma", [(0.1, 0.5, 0.44), (0.02, 0.05, 0.8)])
+def test_fspl_limb_njx_jax_vs_quad_and_vbm(u0, rho, gamma):
+    """
+    Limb-darkened FSPL (njx and JAX) vs nested quadrature and VBM ESPL.
+
+    VBM's linear coefficient is ``a1 = 3 Gamma / (2 + Gamma)``. VBM is only
+    ~1e-4 accurate here, so the tight checks are against the quadrature.
+
+    Parameters
+    ----------
+    u0, rho : float
+        Impact parameter and source radius in Einstein radii.
+    gamma : float
+        Linear limb-darkening coefficient (Gamma convention).
+    """
+    import VBMicrolensing
+
+    mod_njx = _get_model_Lee2010_limb(u0, rho, gamma)
+    theta_e = mod_njx.thetaE_amp
+    rho = mod_njx.source_radius_thetaE_units()
+
+    # Through the source, denser across the limb crossings.
+    tau = np.unique(np.concatenate([
+        np.linspace(-2.0 * rho, 2.0 * rho, 25),
+        np.sqrt(rho ** 2 - u0 ** 2) * (1.0 + np.linspace(-0.02, 0.02, 5)),
+    ]))
+    t = mod_njx.t0 + mod_njx.tE * tau
+    u_vec = mod_njx.get_u(t)
+    u_amp = np.linalg.norm(u_vec, axis=1)
+
+    # Reference, njx model, and JAX kernel (static clustered limb).
+    ref = np.array([_ld_quad_reference(x, rho, gamma) for x in u_amp])
+    a_njx = mod_njx.get_amplification(t)
+    shift_njx = _along_uhat(mod_njx.get_centroid_shift(t) / theta_e, u_vec)
+    a_jax, cen_jax = fspl_magnification_centroid(u_vec, rho, 400, gamma=gamma)
+    a_jax = np.asarray(a_jax)
+    shift_jax = _along_uhat(np.asarray(cen_jax) - u_vec, u_vec)
+
+    # VBM ESPL with the matching linear coefficient.
+    vbm = VBMicrolensing.VBMicrolensing()
+    vbm.Tol, vbm.RelTol, vbm.astrometry = 1e-6, 1e-7, True
+    vbm.a1 = float(fspl_contour.gamma_to_u(gamma))
+    a_vbm = np.zeros(u_amp.size)
+    shift_vbm = np.zeros(u_amp.size)
+    for i, x in enumerate(u_amp):
+        a_vbm[i] = vbm.ESPLMag2(x, rho)
+        shift_vbm[i] = vbm.astrox1 - x
+
+    # Comparison plot: light curve, shift, and residuals vs the quadrature.
+    fig, axes = plt.subplots(2, 2, figsize=(11, 7), sharex=True)
+    for ax, y_ref, ys, ylab in [
+            (axes[0, 0], ref[:, 0], (a_njx, a_jax, a_vbm), "magnification"),
+            (axes[0, 1], ref[:, 1], (shift_njx, shift_jax, shift_vbm),
+             r"shift along $\hat u$ ($\theta_E$)")]:
+        ax.plot(tau, y_ref, "k-", lw=3, alpha=0.3, label="quad")
+        for y, sty, lab in zip(ys, ("C0.", "C1x", "C2+"), ("njx", "jax", "VBM")):
+            ax.plot(tau, y, sty, label=lab)
+        ax.set_ylabel(ylab)
+        ax.legend(fontsize=8)
+    for y, sty, lab in zip((a_njx, a_jax, a_vbm), ("C0.", "C1x", "C2+"),
+                           ("njx", "jax", "VBM")):
+        axes[1, 0].semilogy(tau, np.abs(y / ref[:, 0] - 1) + 1e-16, sty,
+                            label=lab)
+    for y, sty, lab in zip((shift_njx, shift_jax, shift_vbm),
+                           ("C0.", "C1x", "C2+"), ("njx", "jax", "VBM")):
+        axes[1, 1].semilogy(tau, np.abs(y - ref[:, 1]) + 1e-16, sty, label=lab)
+    axes[1, 0].set_ylabel("|dA/A| vs quad")
+    axes[1, 1].set_ylabel(r"|d shift| vs quad ($\theta_E$)")
+    for ax in axes[1]:
+        ax.set_xlabel(r"$\tau$")
+        ax.legend(fontsize=8)
+    fig.suptitle(rf"FSPL linear LD $\Gamma$={gamma}, $u_0$={u0}, "
+                 rf"$\rho$={rho:.3g}")
+    fig.tight_layout()
+    fig.savefig(PLOT_DIR / f"limb_ld_gamma{gamma}_rho{rho:.3g}.png", dpi=120)
+    plt.close(fig)
+
+    # njx and JAX against the quadrature.
+    for name, a_b, s_b in [("njx", a_njx, shift_njx), ("jax", a_jax, shift_jax)]:
+        d_amp = np.max(np.abs(a_b / ref[:, 0] - 1))
+        d_shift = np.max(np.abs(s_b - ref[:, 1]))
+        assert d_amp < 1e-5, f"{name}: max |dA/A|={d_amp:.2e}"
+        assert d_shift < 2e-5, f"{name}: max |d shift|={d_shift:.2e} theta_E"
+
+    # VBM agrees at its own accuracy (same Gamma <-> a1 convention).
+    assert _max_frac_diff(a_njx, a_vbm) < 3e-4
+    assert _max_abs_diff(shift_njx, shift_vbm) < 3e-4
+
+    return None
+
+
+def test_fspl_limb_gamma0_and_per_filter():
+    """
+    ``gamma = 0`` reproduces uniform FSPL; each filter uses its own gamma.
+
+    Returns
+    -------
+    None
+    """
+    t = np.linspace(-40.0, 60.0, 81)
+
+    # Uniform twin vs Gamma = 0 (njx).
+    mod_uni = _get_model_Lee2010(0.05, 0.3)
+    mod_g0 = _get_model_Lee2010_limb(0.05, 0.3, 0.0)
+    np.testing.assert_array_equal(mod_g0.get_photometry(t),
+                                  mod_uni.get_photometry(t))
+    np.testing.assert_array_equal(mod_g0.get_astrometry(t),
+                                  mod_uni.get_astrometry(t))
+
+    # Two photometric filters with gamma = [0, 0.6].
+    par = dict(t0=10.0, u0_amp=0.05, tE=100.0, piE_E=0.1, piE_N=0.0,
+               radiusS=0.3, b_sff=[1.0, 0.8], mag_src=[18.0, 19.0])
+    two = model.FSPL_Limb_Phot_noPar_Param1(**par, gamma=[0.0, 0.6])
+    uni = model.FSPL_Phot_noPar_Param1(**par)
+    one = model.FSPL_Limb_Phot_noPar_Param1(
+        **{**par, 'b_sff': [0.8], 'mag_src': [19.0]}, gamma=[0.6])
+
+    np.testing.assert_array_equal(two.get_photometry(t, filt_idx=0),
+                                  uni.get_photometry(t, filt_idx=0))
+    np.testing.assert_allclose(two.get_photometry(t, filt_idx=1),
+                               one.get_photometry(t, filt_idx=0),
+                               rtol=0, atol=1e-12)
+
+    # Limb darkening brightens the peak when the lens crosses the centre.
+    assert np.min(two.get_photometry(t, filt_idx=1)) < np.min(
+        uni.get_photometry(t, filt_idx=1))
+
+    return None
+
+
+def test_fspl_limb_jax_likelihood_vs_njx():
+    """
+    Traced ``model_jax`` limb-darkened likelihoods vs njx forward model.
+
+    njx photometry and astrometry are used as noiseless data; the JAX
+    class likelihoods (which read the per-filter ``gamma`` from the packed
+    vector) must give chi^2 ~ 0, and be sensitive to ``gamma``.
+
+    Returns
+    -------
+    None
+    """
+    from bagle import model_jax
+    from bagle.jax_physics import (gaussian_astrometry_log_likelihood_sum,
+                                   gaussian_log_likelihood_sum)
+
+    u0, rho, gamma = 0.02, 0.05, 0.6
+    mod_njx = _get_model_Lee2010_limb(u0, rho, gamma)
+    cls = model_jax.FSPL_Limb_PhotAstrom_noPar_Param2
+
+    # Through and across the source.
+    t = mod_njx.t0 + mod_njx.tE * np.linspace(-0.1, 0.1, 81)
+    mag = mod_njx.get_photometry(t)
+    pos = mod_njx.get_astrometry(t)
+    mag_err = np.full(t.size, 1e-3)
+    pos_err = np.full(t.size, 1e-5)  # arcsec
+
+    # Packed vector in fitter_param_names order (one filter).
+    p = dict(t0=mod_njx.t0, u0_amp=u0, tE=mod_njx.tE, thetaE=mod_njx.thetaE_amp,
+             piS=mod_njx.piS, piE_E=0.1, piE_N=0.0, xS0_E=0.0, xS0_N=0.0,
+             muS_E=3.0, muS_N=0.0, radiusS=mod_njx.radiusS, b_sff=1.0,
+             mag_src=18.0, gamma=gamma)
+    vec = np.array([p[name] for name in cls.fitter_param_names])
+
+    # Perfect-fit log-likelihoods (chi^2 = 0).
+    lnl_phot_best = float(gaussian_log_likelihood_sum(mag, mag, mag_err))
+    lnl_ast_best = float(gaussian_astrometry_log_likelihood_sum(
+        pos, pos[:, 0], pos[:, 1], pos_err, pos_err))
+
+    lnl_phot = float(cls.jax_log_likely_photometry(
+        vec, t, mag, mag_err, 1.0, 18.0, n_outline=400))
+    lnl_ast = float(cls.jax_log_likely_astrometry(
+        vec, t, pos[:, 0], pos[:, 1], pos_err, pos_err, b_sff=1.0,
+        mag_src=18.0, n_outline=400))
+    assert abs(lnl_phot - lnl_phot_best) < 1e-2, (lnl_phot, lnl_phot_best)
+    assert abs(lnl_ast - lnl_ast_best) < 1e-2, (lnl_ast, lnl_ast_best)
+
+    # Wrong gamma is strongly disfavoured.
+    vec0 = vec.copy()
+    vec0[cls.fitter_param_names.index('gamma')] = 0.0
+    lnl_phot0 = float(cls.jax_log_likely_photometry(
+        vec0, t, mag, mag_err, 1.0, 18.0, n_outline=400))
+    assert lnl_phot0 < lnl_phot_best - 100.0
 
     return None
 

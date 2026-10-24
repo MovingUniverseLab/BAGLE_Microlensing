@@ -4278,7 +4278,8 @@ def test_ABC_MRO():
     # All data classes should be hard-coded into this test.
     # But we will test such that new ones won't make this test fail. 
     data_classes_good = ['BSPL', 'BSPL_Phot', 'BSPL_PhotAstrom',
-                         'FSPL', 'FSPL_Limb', 'FSPL_Phot', 'FSPL_PhotAstrom',
+                         'FSPL', 'FSPL_Limb', 'FSPL_Limb_Phot',
+                         'FSPL_Limb_PhotAstrom', 'FSPL_Phot', 'FSPL_PhotAstrom',
                          'PSBL', 'PSBL_Phot', 'PSBL_PhotAstrom', 'PSPL',
                          'PSPL_Astrom', 'PSPL_Phot', 'PSPL_PhotAstrom']
     for dcls in data_classes_good:

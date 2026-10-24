@@ -114,8 +114,9 @@ def _contour_area_moments(z, dz, wedge, step, parabolic):
         Contour samples and their limb-angle derivatives.
     wedge : jnp.ndarray, shape (N_times, n_outline)
         ``x' ^ x''`` at each sample.
-    step : float
-        Uniform limb-angle step ``2 pi / n_outline``.
+    step : float or jnp.ndarray, shape (N_times, n_outline)
+        Limb-angle step from each sample to the next (the last one closes
+        the contour).
     parabolic : jnp.ndarray of bool, shape (N_times,)
         Epochs that get the parabolic corrections; the rest use the
         trapezoid sums only.
@@ -142,17 +143,184 @@ def _contour_area_moments(z, dz, wedge, step, parabolic):
     f_a = wedge
     f_x = 0.5 * xd * xd * yd + x * wedge
     f_y = 0.5 * yd * yd * xd - y * wedge
-    h3 = jnp.where(parabolic, step ** 3 / 24.0, 0.0)
+    h3 = jnp.where(parabolic[:, None], step ** 3 / 24.0, 0.0)
 
-    area = area + h3 * jnp.sum(f_a + jnp.roll(f_a, -1, axis=1), axis=1)
-    mom_x = mom_x + h3 * jnp.sum(f_x + jnp.roll(f_x, -1, axis=1), axis=1)
-    mom_y = mom_y - h3 * jnp.sum(f_y + jnp.roll(f_y, -1, axis=1), axis=1)
+    area = area + jnp.sum(h3 * (f_a + jnp.roll(f_a, -1, axis=1)), axis=1)
+    mom_x = mom_x + jnp.sum(h3 * (f_x + jnp.roll(f_x, -1, axis=1)), axis=1)
+    mom_y = mom_y - jnp.sum(h3 * (f_y + jnp.roll(f_y, -1, axis=1)), axis=1)
 
     return area, mom_x, mom_y
 
 
-@partial(jax.jit, static_argnames=("n_outline",))
-def fspl_images_amps(u, rho, n_outline):
+def _clustered_limb_angles(zeta_c, rho, n_outline, c_step=0.05, a_max=16.0,
+                           n_iter=12):
+    """
+    Static-count limb angles clustered toward the lens.
+
+    A uniform grid ``psi`` in ``(-pi, pi)`` (half-step offset, so no sample
+    sits on the limb point nearest the lens) is mapped to
+    ``phi = pi sinh(a psi / pi) / sinh(a)`` measured from that point. The
+    smallest step is ``a / sinh(a)`` times the uniform step, so ``a`` is set
+    per row to make it about ``c_step * d / rho``, with ``d`` the lens-limb
+    distance; far from the limb ``a -> 0`` and the grid is uniform. This is
+    a fixed-shape stand-in for the adaptive refinement of
+    :func:`bagle.fspl_contour.adaptive_limb_images_amps`. The angles carry
+    no gradient: the contour integral does not depend on the
+    parameterisation of the limb.
+
+    Parameters
+    ----------
+    zeta_c : jnp.ndarray, complex, shape (N_rows,)
+        Disk centres relative to the lens (Einstein radii).
+    rho : jnp.ndarray, shape (N_rows,)
+        Disk radii (Einstein radii).
+    n_outline : int
+        Static limb sample count.
+    c_step : float, optional
+        Target smallest step in units of ``d / rho``.
+    a_max : float, optional
+        Cap on the clustering strength (largest step is about ``a_max``
+        times the uniform step).
+    n_iter : int, optional
+        Fixed-point iterations for ``a / sinh(a) = kappa``.
+
+    Returns
+    -------
+    theta : jnp.ndarray, shape (N_rows, n_outline)
+        Increasing limb angles.
+    step : jnp.ndarray, shape (N_rows, n_outline)
+        Angle step from each sample to the next (the last one wraps).
+    """
+    zeta_c = jax.lax.stop_gradient(zeta_c)
+    rho = jax.lax.stop_gradient(rho)
+
+    # Required clustering a / sinh(a) = kappa from the lens-limb distance.
+    dist = jnp.abs(jnp.abs(zeta_c) - rho)
+    kappa = jnp.clip(c_step * n_outline * dist / (2.0 * jnp.pi * rho),
+                     1e-12, 1.0)
+
+    # Solve a = asinh(a / kappa) by fixed-point iteration (a ~ 0 if uniform).
+    a = jnp.full_like(kappa, 3.0)
+    for _ in range(n_iter):
+        a = jnp.arcsinh(a / kappa)
+    a = jnp.where(kappa > 0.95, 1e-3, jnp.clip(a, 1e-3, a_max))[:, None]
+
+    # Uniform psi grid (half-step offset) mapped through the sinh law.
+    psi = (-jnp.pi + 2.0 * jnp.pi * (jnp.arange(n_outline) + 0.5)
+           / n_outline)[None, :]
+    phi = jnp.pi * jnp.sinh(a * psi / jnp.pi) / jnp.sinh(a)
+
+    # Steps to the next sample; the last closes the contour.
+    step = jnp.concatenate([phi[:, 1:] - phi[:, :-1],
+                            phi[:, :1] + 2.0 * jnp.pi - phi[:, -1:]], axis=1)
+
+    # Measure phi from the limb point nearest the lens.
+    theta = jnp.angle(-zeta_c)[:, None] + phi
+
+    return theta, step
+
+
+def _disk_images_amps(zeta_c, rho, n_outline):
+    """
+    Uniform-disk images and signed amplifications on a static limb.
+
+    Parameters
+    ----------
+    zeta_c : jnp.ndarray, complex, shape (N_rows,)
+        Disk centres relative to the lens (Einstein radii).
+    rho : jnp.ndarray, shape (N_rows,)
+        Disk radius of each row (Einstein radii).
+    n_outline : int
+        Static limb sample count (clustered toward the lens; see
+        :func:`_clustered_limb_angles`).
+
+    Returns
+    -------
+    images : jnp.ndarray, shape (N_rows, 2, 2)
+        Image centroids ``[+, -]`` x ``[E, N]`` relative to the lens.
+    amps : jnp.ndarray, shape (N_rows, 2)
+        Signed image amplifications.
+    """
+    # A lens exactly on the limb maps to the whole Einstein ring. Move
+    # |zeta_c| off rho by 1e-6 rho (about the closest approach the clustered
+    # static limb resolves), keeping the side of the limb.
+    abs_c = jnp.abs(zeta_c)
+    nudge = 1e-6 * rho
+    on_limb = jnp.abs(abs_c - rho) < nudge
+    dir_c = zeta_c / jnp.where(abs_c > 0, abs_c, 1.0)
+    abs_new = jnp.where(abs_c < rho, rho - nudge, rho + nudge)
+    zeta_c = jnp.where(on_limb, abs_new * dir_c, zeta_c)
+
+    # Radius as a column for broadcasting over limb samples.
+    rho_c = rho[:, None]
+
+    # Source limb (complex E + iN) and its limb-angle derivative.
+    theta, step = _clustered_limb_angles(zeta_c, rho, n_outline)
+    e_it = jnp.exp(1j * theta)
+    zeta = zeta_c[:, None] + rho_c * e_it
+    dzeta = 1j * rho_c * e_it
+
+    # The parabolic expansion fails when a limb sample lies within one step
+    # of the lens (|J| -> 0 there); those epochs use the trapezoid sums.
+    parabolic = ~jnp.any(jnp.abs(zeta) < rho_c * step, axis=1)
+
+    images = []
+    amps = []
+    src_area = jnp.pi * rho ** 2
+
+    # Plus image has parity +1, minus image parity -1.
+    for z, parity in zip(_point_lens_images(zeta), (1.0, -1.0)):
+        dz, wedge = _image_derivative_wedge(z, dzeta, rho_c)
+        area, mom_x, mom_y = _contour_area_moments(z, dz, wedge, step,
+                                                   parabolic)
+        images.append(jnp.stack([mom_x / area, mom_y / area], axis=-1))
+        amps.append(parity * area / src_area)
+
+    return jnp.stack(images, axis=1), jnp.stack(amps, axis=1)
+
+
+def _ld_radius_nodes(u_amp, rho, n_ld):
+    """
+    Graded Gauss-Legendre nodes in ``s`` for linear limb darkening.
+
+    JAX port of :func:`bagle.fspl_contour.ld_radius_nodes` (same nodes).
+
+    Parameters
+    ----------
+    u_amp : jnp.ndarray, shape (N_times,)
+        Source-lens separation (Einstein radii).
+    rho : jnp.ndarray, scalar
+        Source radius (Einstein radii).
+    n_ld : int
+        Gauss-Legendre nodes per sub-interval (static).
+
+    Returns
+    -------
+    s, w : jnp.ndarray, shape (N_times, 2 * n_ld)
+        Nodes in ``s = sqrt(1 - r^2/rho^2)`` and weights (sum to 1).
+    """
+    # Gauss-Legendre on tau in [0, 1] (trace-time constants).
+    x, w = np.polynomial.legendre.leggauss(int(n_ld))
+    tau = jnp.asarray(0.5 * (x + 1.0))
+    w_tau = jnp.asarray(0.5 * w)
+
+    # Kink where the disk edge crosses the lens; 1/2 when outside.
+    inside = u_amp < rho
+    q2 = jnp.where(inside, (u_amp / rho) ** 2, 0.75)
+    s_star = jnp.sqrt(1.0 - q2)[:, None]
+
+    # s = s* -/+ (interval length) * tau^2, graded toward s*.
+    s_lo = s_star * (1.0 - tau ** 2)
+    w_lo = s_star * 2.0 * tau * w_tau
+    s_up = s_star + (1.0 - s_star) * tau ** 2
+    w_up = (1.0 - s_star) * 2.0 * tau * w_tau
+
+    return (jnp.concatenate([s_lo, s_up], axis=1),
+            jnp.concatenate([w_lo, w_up], axis=1))
+
+
+@partial(jax.jit, static_argnames=("n_outline", "n_ld"))
+def fspl_images_amps(u, rho, n_outline, gamma=None, n_ld=8):
     """
     FSPL image centroids and signed amplifications (static limb).
 
@@ -165,6 +333,13 @@ def fspl_images_amps(u, rho, n_outline):
         Source radius in Einstein radii.
     n_outline : int
         Static limb sample count (JIT static).
+    gamma : float or None, optional
+        Linear limb-darkening coefficient (Gamma convention). ``None`` is a
+        uniform source (one disk per epoch); otherwise the images and
+        amplifications are brightness-weighted sums over ``2 n_ld + 1``
+        nested disks, as in :func:`bagle.fspl_contour.ld_images_amps`.
+    n_ld : int, optional
+        Gauss-Legendre nodes per radial sub-interval (JIT static).
 
     Returns
     -------
@@ -177,35 +352,39 @@ def fspl_images_amps(u, rho, n_outline):
     """
     u = jnp.atleast_2d(jnp.asarray(u, dtype=jnp.float64))
     rho = jnp.asarray(rho, dtype=jnp.float64)
+    zeta_c = u[:, 0] + 1j * u[:, 1]
+    n_times = u.shape[0]
 
-    # Source limb (complex E + iN) and its limb-angle derivative.
-    step = 2.0 * jnp.pi / n_outline
-    theta = jnp.arange(n_outline, dtype=jnp.float64) * step
-    e_it = jnp.exp(1j * theta)[None, :]
-    zeta = (u[:, 0] + 1j * u[:, 1])[:, None] + rho * e_it
-    dzeta = 1j * rho * e_it
+    # Uniform source: one disk per epoch.
+    if gamma is None:
+        return _disk_images_amps(zeta_c, jnp.broadcast_to(rho, (n_times,)),
+                                 n_outline)
 
-    # The parabolic expansion fails when a limb sample lies within one step
-    # of the lens (|J| -> 0 there); those epochs use the trapezoid sums.
-    parabolic = ~jnp.any(jnp.abs(zeta) < rho * step, axis=1)
+    # Disk radii and brightness weights per epoch (full disk first).
+    gamma = jnp.broadcast_to(jnp.asarray(gamma, dtype=jnp.float64),
+                             (n_times,))[:, None]
+    s, w_s = _ld_radius_nodes(jnp.abs(zeta_c), rho, n_ld)
+    radii = jnp.concatenate([jnp.broadcast_to(rho, (n_times, 1)),
+                             rho * jnp.sqrt(1.0 - s ** 2)], axis=1)
+    weights = jnp.concatenate([1.0 - gamma, 1.5 * gamma * w_s], axis=1)
+    n_disk = radii.shape[1]
 
-    images = []
-    amps = []
-    src_area = jnp.pi * rho ** 2
+    # All (epoch, radius) disks in one static-shape call.
+    img, amp = _disk_images_amps(jnp.repeat(zeta_c, n_disk), radii.reshape(-1),
+                                 n_outline)
+    img = img.reshape(n_times, n_disk, 2, 2)
+    amp = amp.reshape(n_times, n_disk, 2)
 
-    # Plus image has parity +1, minus image parity -1.
-    for z, parity in zip(_point_lens_images(zeta), (1.0, -1.0)):
-        dz, wedge = _image_derivative_wedge(z, dzeta, rho)
-        area, mom_x, mom_y = _contour_area_moments(z, dz, wedge, step,
-                                                   parabolic)
-        images.append(jnp.stack([mom_x / area, mom_y / area], axis=-1))
-        amps.append(parity * area / src_area)
+    # Magnified flux (area units) and first moments, summed over disks.
+    flux = jnp.pi * radii[:, :, None] ** 2 * amp
+    flux_ld = jnp.sum(weights[:, :, None] * flux, axis=1)
+    mom_ld = jnp.sum((weights[:, :, None] * flux)[:, :, :, None] * img, axis=1)
 
-    return jnp.stack(images, axis=1), jnp.stack(amps, axis=1)
+    return mom_ld / flux_ld[:, :, None], flux_ld / (jnp.pi * rho ** 2)
 
 
-@partial(jax.jit, static_argnames=("n_outline",))
-def fspl_magnification_centroid(u, rho, n_outline):
+@partial(jax.jit, static_argnames=("n_outline", "n_ld"))
+def fspl_magnification_centroid(u, rho, n_outline, gamma=None, n_ld=8):
     """
     FSPL total magnification and flux-weighted centroid (Einstein radii).
 
@@ -218,6 +397,10 @@ def fspl_magnification_centroid(u, rho, n_outline):
         Source radius in Einstein radii.
     n_outline : int
         Static limb sample count (JIT static).
+    gamma : float or None, optional
+        Linear limb-darkening coefficient; ``None`` for a uniform source.
+    n_ld : int, optional
+        Radial Gauss-Legendre nodes per sub-interval (JIT static).
 
     Returns
     -------
@@ -227,7 +410,7 @@ def fspl_magnification_centroid(u, rho, n_outline):
         Flux-weighted image centroid relative to the lens (Einstein radii).
         Uses signed image weights, matching host unresolved astrometry.
     """
-    images, amps = fspl_images_amps(u, rho, n_outline)
+    images, amps = fspl_images_amps(u, rho, n_outline, gamma=gamma, n_ld=n_ld)
 
     # Total magnification is the signed image sum.
     mag = jnp.sum(amps, axis=1)
@@ -239,7 +422,7 @@ def fspl_magnification_centroid(u, rho, n_outline):
     return mag, centroid
 
 
-def fspl_magnification(u, rho, n_outline):
+def fspl_magnification(u, rho, n_outline, gamma=None, n_ld=8):
     """
     FSPL total magnification from separation vectors.
 
@@ -252,20 +435,25 @@ def fspl_magnification(u, rho, n_outline):
         Source radius in Einstein radii.
     n_outline : int
         Static limb sample count.
+    gamma : float or None, optional
+        Linear limb-darkening coefficient; ``None`` for a uniform source.
+    n_ld : int, optional
+        Radial Gauss-Legendre nodes per sub-interval.
 
     Returns
     -------
     mag : jnp.ndarray, shape (N_times,)
         Total finite-source magnification.
     """
-    mag, _centroid = fspl_magnification_centroid(u, rho, n_outline)
+    mag, _centroid = fspl_magnification_centroid(u, rho, n_outline,
+                                                 gamma=gamma, n_ld=n_ld)
 
     return mag
 
 
 def fspl_magnification_from_trajectory(
     t, t0, tE, u0, thetaE_hat, rho, n_outline,
-    parallax_vectors=None, piE_E=None, piE_N=None,
+    parallax_vectors=None, piE_E=None, piE_N=None, gamma=None, n_ld=8,
 ):
     """
     FSPL magnification along a PSPL trajectory (uses ``pspl_u``).
@@ -288,6 +476,10 @@ def fspl_magnification_from_trajectory(
         Static limb sample count.
     parallax_vectors, piE_E, piE_N : optional
         Passed through to :func:`bagle.jax_physics.pspl_u`.
+    gamma : float or None, optional
+        Linear limb-darkening coefficient; ``None`` for a uniform source.
+    n_ld : int, optional
+        Radial Gauss-Legendre nodes per sub-interval.
 
     Returns
     -------
@@ -304,7 +496,8 @@ def fspl_magnification_from_trajectory(
         piE_N=piE_N,
     )
 
-    return fspl_magnification_centroid(u, rho, n_outline)
+    return fspl_magnification_centroid(u, rho, n_outline, gamma=gamma,
+                                       n_ld=n_ld)
 
 
 def fspl_point_source_limit_mag(u):
@@ -529,7 +722,7 @@ def fspl_centroid_shift_from_model(model, t, filt_idx, pvec):
 
 def fspl_photometry(
     t, t0, tE, u0, thetaE_hat, rho, n_outline, mag_src, b_sff=None,
-    parallax_vectors=None, piE_E=None, piE_N=None,
+    parallax_vectors=None, piE_E=None, piE_N=None, gamma=None, n_ld=8,
 ):
     """
     Unresolved FSPL magnitudes along a PSPL trajectory.
@@ -556,6 +749,10 @@ def fspl_photometry(
         Source flux fraction.
     parallax_vectors, piE_E, piE_N : optional
         Passed through to :func:`fspl_magnification_from_trajectory`.
+    gamma : float or None, optional
+        Linear limb-darkening coefficient; ``None`` for a uniform source.
+    n_ld : int, optional
+        Radial Gauss-Legendre nodes per sub-interval.
 
     Returns
     -------
@@ -568,6 +765,8 @@ def fspl_photometry(
         parallax_vectors=parallax_vectors,
         piE_E=piE_E,
         piE_N=piE_N,
+        gamma=gamma,
+        n_ld=n_ld,
     )
 
     return pspl_photometry_from_amp(amp, mag_src, b_sff=b_sff)
@@ -576,7 +775,7 @@ def fspl_photometry(
 def fspl_log_likely_photometry(
     t, t0, tE, u0, thetaE_hat, rho, n_outline, mag_src, b_sff,
     mag_obs, mag_err, parallax_vectors=None, piE_E=None, piE_N=None,
-    gp_params=None, fixed_jitter=True,
+    gp_params=None, fixed_jitter=True, gamma=None, n_ld=8,
 ):
     """
     FSPL photometric Gaussian log-likelihood (traced).
@@ -593,6 +792,10 @@ def fspl_log_likely_photometry(
         If set, use the GP photometric likelihood instead of i.i.d. Gaussian.
     fixed_jitter : bool, optional
         Passed to the GP path when ``gp_params`` is not None.
+    gamma : float or None, optional
+        Linear limb-darkening coefficient; ``None`` for a uniform source.
+    n_ld : int, optional
+        Radial Gauss-Legendre nodes per sub-interval.
 
     Returns
     -------
@@ -602,6 +805,7 @@ def fspl_log_likely_photometry(
     mag_model = fspl_photometry(
         t, t0, tE, u0, thetaE_hat, rho, n_outline, mag_src, b_sff=b_sff,
         parallax_vectors=parallax_vectors, piE_E=piE_E, piE_N=piE_N,
+        gamma=gamma, n_ld=n_ld,
     )
 
     if gp_params is None:
@@ -619,7 +823,8 @@ def fspl_log_likely_photometry(
 
 def fspl_astrometry(
     t, t0, xS0, xL0, muS, muL, thetaE_amp, rho, n_outline, mag_src, b_sff,
-    parallax_vectors=None, piS=None, piL=None, pi_ref=None,
+    parallax_vectors=None, piS=None, piL=None, pi_ref=None, gamma=None,
+    n_ld=8,
 ):
     """
     FSPL flux-weighted unresolved sky centroid (arcsec).
@@ -646,6 +851,10 @@ def fspl_astrometry(
         Source flux fraction; lens flux is clipped at zero for astrometry.
     parallax_vectors, piS, piL, pi_ref : optional
         Parallax table and amplitudes (mas), matching PSPL astrometry.
+    gamma : float or None, optional
+        Linear limb-darkening coefficient; ``None`` for a uniform source.
+    n_ld : int, optional
+        Radial Gauss-Legendre nodes per sub-interval.
 
     Returns
     -------
@@ -671,7 +880,8 @@ def fspl_astrometry(
     # Einstein-frame separation and finite-source images / amps.
     thetaE_as = thetaE_amp * 1e-3
     u_vec = (xS - xL) / thetaE_as
-    images, amps = fspl_images_amps(u_vec, rho, n_outline)
+    images, amps = fspl_images_amps(u_vec, rho, n_outline, gamma=gamma,
+                                    n_ld=n_ld)
 
     # Absolute image positions on the sky (arcsec).
     img_sky = xL[:, None, :] + images * thetaE_as
@@ -694,7 +904,7 @@ def fspl_astrometry(
 def fspl_log_likely_astrometry(
     t, t0, xS0, xL0, muS, muL, thetaE_amp, rho, n_outline, mag_src, b_sff,
     x_obs, y_obs, x_err, y_err, parallax_vectors=None, piS=None, piL=None,
-    pi_ref=None,
+    pi_ref=None, gamma=None, n_ld=8,
 ):
     """
     FSPL absolute-astrometry Gaussian log-likelihood (traced).
@@ -707,6 +917,10 @@ def fspl_log_likely_astrometry(
         Observed East/North positions and uncertainties (arcsec).
     parallax_vectors, piS, piL, pi_ref : optional
         Parallax inputs for the sky tracks.
+    gamma : float or None, optional
+        Linear limb-darkening coefficient; ``None`` for a uniform source.
+    n_ld : int, optional
+        Radial Gauss-Legendre nodes per sub-interval.
 
     Returns
     -------
@@ -716,6 +930,7 @@ def fspl_log_likely_astrometry(
     pos_model = fspl_astrometry(
         t, t0, xS0, xL0, muS, muL, thetaE_amp, rho, n_outline, mag_src, b_sff,
         parallax_vectors=parallax_vectors, piS=piS, piL=piL, pi_ref=pi_ref,
+        gamma=gamma, n_ld=n_ld,
     )
 
     return gaussian_astrometry_log_likelihood_sum(

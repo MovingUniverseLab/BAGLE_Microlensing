@@ -4317,7 +4317,8 @@ def test_ABC_MRO():
     # All data classes should be hard-coded into this test.
     # But we will test such that new ones won't make this test fail. 
     data_classes_good = ['BSPL', 'BSPL_Phot', 'BSPL_PhotAstrom',
-                         'FSPL', 'FSPL_Limb', 'FSPL_Phot', 'FSPL_PhotAstrom',
+                         'FSPL', 'FSPL_Limb', 'FSPL_Limb_Phot',
+                         'FSPL_Limb_PhotAstrom', 'FSPL_Phot', 'FSPL_PhotAstrom',
                          'PSBL', 'PSBL_Phot', 'PSBL_PhotAstrom', 'PSPL',
                          'PSPL_Astrom', 'PSPL_Phot', 'PSPL_PhotAstrom']
     for dcls in data_classes_good:
@@ -7145,55 +7146,37 @@ def test_bfspl_photastrom_param1_fitter_names_construct():
 
 
 def test_fspl_limb_xl0_uses_per_filter_xs0():
-    """A-02: FSPL_Limb PhotAstrom xL0 tracks each filter's xS0."""
+    """
+    A-02: limb-darkened FSPL PhotAstrom xL0 and gamma are per filter.
+
+    Returns
+    -------
+    None
+    """
     xS0 = np.array([[0.0, 0.0], [0.05, -0.02]], dtype=float)
-    # Param mixin is unfinished; get_source lives on FSPL_Limb, not Param1.
-    cls = model.FSPL_Limb_PhotAstromParam1
-    original = getattr(cls, "get_source", None)
-    cls.get_source = lambda self, *a, **k: None
-    try:
-        limb = cls(
-            lens_mass=1.0,
-            t0=57000.0,
-            xS0=xS0,
-            beta=0.5,
-            muL=[0.0, 0.0],
-            muS=[3.0, 0.0],
-            dL=4000.0,
-            dS=8000.0,
-            n=20,
-            radiusS=1.0,
-            utilde=0.0,
-            nr=10,
-            mag_src=[18.0, 18.0],
-        )
-        assert limb.xL0.shape == (2, 2)
-        # Same thetas0 offset for every filter; lens origins follow xS0.
-        np.testing.assert_allclose(
-            limb.xL0[1] - limb.xL0[0], xS0[1] - xS0[0], rtol=0.0, atol=1e-15
-        )
-        # One-filter slice matches constructing with that filter alone.
-        limb0 = cls(
-            lens_mass=1.0,
-            t0=57000.0,
-            xS0=xS0[0:1],
-            beta=0.5,
-            muL=[0.0, 0.0],
-            muS=[3.0, 0.0],
-            dL=4000.0,
-            dS=8000.0,
-            n=20,
-            radiusS=1.0,
-            utilde=0.0,
-            nr=10,
-            mag_src=[18.0],
-        )
-        np.testing.assert_allclose(limb.xL0[0], limb0.xL0[0], rtol=0.0, atol=1e-15)
-    finally:
-        if original is None:
-            delattr(cls, "get_source")
-        else:
-            cls.get_source = original
+    cls = model.FSPL_Limb_PhotAstrom_noPar_Param1
+    kw = dict(mL=1.0, t0=57000.0, beta=0.5, dL=4000.0, dL_dS=0.5,
+              muL_E=0.0, muL_N=0.0, muS_E=3.0, muS_N=0.0, radiusS=1e-5)
+
+    # Two filters with different source origins and limb darkening.
+    limb = cls(**kw, xS0_E=xS0[:, 0], xS0_N=xS0[:, 1], b_sff=[1.0, 1.0],
+               mag_src=[18.0, 18.0], gamma=[0.2, 0.6])
+    assert limb.xL0.shape == (2, 2)
+
+    # Same thetaS0 offset for every filter; lens origins follow xS0.
+    np.testing.assert_allclose(
+        limb.xL0[1] - limb.xL0[0], xS0[1] - xS0[0], rtol=0.0, atol=1e-15
+    )
+
+    # Each filter sees its own gamma.
+    assert limb.limb_gamma(0) == 0.2
+    assert limb.limb_gamma(1) == 0.6
+
+    # One-filter slice matches constructing with that filter alone.
+    limb0 = cls(**kw, xS0_E=xS0[0:1, 0], xS0_N=xS0[0:1, 1], b_sff=[1.0],
+                mag_src=[18.0], gamma=[0.2])
+    np.testing.assert_allclose(limb.xL0[0], limb0.xL0[0], rtol=0.0, atol=1e-15)
+
     return None
 
 

@@ -25557,6 +25557,61 @@ class FSPL(PSPL):
     amg_n_init = 64
     amg_max_pts = 2048
 
+    # Gauss-Legendre nodes per sub-interval of the limb-darkening radial
+    # integral; see bagle.fspl_contour.ld_images_amps.
+    ld_n_nodes = 8
+
+    def limb_gamma(self, filt_idx=0):
+        """
+        Linear limb-darkening coefficient (Gamma convention) for a filter.
+
+        Uniform sources return 0; :class:`FSPL_Limb` overrides this with the
+        per-filter ``gamma`` parameter.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            Gamma coefficient (0 for a uniform source).
+        """
+        return 0.0
+
+    def fspl_disk_images_amps(self, zeta_c, rho, disk_images_amps, filt_idx=0):
+        """
+        Uniform or limb-darkened FSPL images from a uniform-disk sampler.
+
+        Parameters
+        ----------
+        zeta_c : ndarray, complex, shape (N_times,)
+            Source centres relative to the lens (Einstein radii).
+        rho : float
+            Source radius in Einstein radii.
+        disk_images_amps : callable
+            ``(zeta_rows, rho_rows) -> (images, amps)`` for uniform disks.
+        filt_idx : int, optional
+            Index of the filter or data set (selects ``gamma``).
+
+        Returns
+        -------
+        images : ndarray, shape (N_times, 2, 2)
+            Image centroids relative to the lens (Einstein radii).
+        amps : ndarray, shape (N_times, 2)
+            Signed image amplifications.
+        """
+        gamma = self.limb_gamma(filt_idx)
+
+        # Uniform source: one disk per epoch.
+        if gamma == 0:
+            return disk_images_amps(zeta_c, rho)
+
+        # Linear limb darkening: brightness-weighted sum over nested disks.
+        return fspl_contour.ld_images_amps(zeta_c, rho, gamma, disk_images_amps,
+                                           n_ld=self.ld_n_nodes)
+
     def get_all_arrays_CI(self, t, filt_idx=0):
         """
         Obtain the image and amplitude arrays for each t. These arrays
@@ -25589,22 +25644,23 @@ class FSPL(PSPL):
         (Bozza et al. 2021, Eqs. 9 and 19). The parabolic corrections
         (Eqs. 10 and 21-22) use the analytic first and second derivatives of
         each image along the limb, as in VBMicrolensing. See
-        :mod:`bagle.fspl_contour`.
+        :mod:`bagle.fspl_contour`. Limb-darkened sources
+        (:meth:`limb_gamma` non-zero) sum nested uniform disks.
         """
         t = np.atleast_1d(np.asarray(t, dtype=float))
 
         # Source centre relative to the lens (Einstein radii, complex E + iN).
         zeta_c = self.get_fspl_source_center(t, filt_idx=filt_idx)
 
-        # Uniform limb angles for every epoch.
-        n_pts = int(self.n_outline)
-        theta = np.broadcast_to(2.0 * np.pi * np.arange(n_pts) / n_pts,
-                                (t.size, n_pts))
-        counts = np.full(t.size, n_pts)
+        # Uniform disks sampled at n_outline equally spaced limb angles.
+        def disk_images_amps(zeta_rows, rho_rows):
+            return fspl_contour.uniform_limb_images_amps(zeta_rows, rho_rows,
+                                                         self.n_outline)
 
         # Lens-relative images (Einstein radii) and signed magnifications.
-        images, amps = fspl_contour.limb_images_amps(
-            zeta_c, self.source_radius_thetaE_units(), theta, counts)
+        images, amps = self.fspl_disk_images_amps(
+            zeta_c, self.source_radius_thetaE_units(), disk_images_amps,
+            filt_idx=filt_idx)
 
         return self.fspl_images_to_sky(images, t, filt_idx=filt_idx), amps
 
@@ -25672,7 +25728,7 @@ class FSPL(PSPL):
             return self.radiusS * 1e3 / self.thetaE_amp
         return self.radiusS
 
-    def amg_numpy(self, zeta_c, radiusS):
+    def amg_numpy(self, zeta_c, radiusS, filt_idx=0):
         """
         Adaptive-mesh FSPL images and magnifications (NumPy host path).
 
@@ -25689,6 +25745,8 @@ class FSPL(PSPL):
             (complex East + i North).
         radiusS : float
             Source radius in Einstein radii.
+        filt_idx : int, optional
+            Index of the filter or data set (selects limb darkening).
 
         Returns
         -------
@@ -25697,9 +25755,14 @@ class FSPL(PSPL):
         amps : ndarray, shape (N_times, 2)
             Signed image amplifications.
         """
-        return fspl_contour.adaptive_limb_images_amps(
-            zeta_c, radiusS, n_init=self.amg_n_init, tol=self.amg_tol,
-            max_pts=self.amg_max_pts)
+        # Uniform disks with error-controlled limb sampling.
+        def disk_images_amps(zeta_rows, rho_rows):
+            return fspl_contour.adaptive_limb_images_amps(
+                zeta_rows, rho_rows, n_init=self.amg_n_init, tol=self.amg_tol,
+                max_pts=self.amg_max_pts)
+
+        return self.fspl_disk_images_amps(zeta_c, radiusS, disk_images_amps,
+                                          filt_idx=filt_idx)
 
     def get_all_arrays_amg(self, t, filt_idx=0):
         """
@@ -25737,8 +25800,8 @@ class FSPL(PSPL):
         # Source centre relative to the lens (Einstein radii).
         zeta_c = self.get_fspl_source_center(t, filt_idx=filt_idx)
 
-        images, amps = self.amg_numpy(zeta_c,
-                                      self.source_radius_thetaE_units())
+        images, amps = self.amg_numpy(zeta_c, self.source_radius_thetaE_units(),
+                                      filt_idx=filt_idx)
 
         return self.fspl_images_to_sky(images, t, filt_idx=filt_idx), amps
 
@@ -27159,160 +27222,51 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
 
 
 class FSPL_Limb(FSPL):
-    def F(self, r):
-        return 2 / (1 - self.utilde / 3) * (
-                (1 / 2) * (1 - self.utilde) * r ** 2 - (
-                self.utilde / 3) * (1 - r ** 2) ** (
-                        3 / 2) + self.utilde / 3)
+    """
+    Linear limb-darkened FSPL mixin (Gamma law, one coefficient per filter).
 
-    def get_photometry(self, t, filt_idx=0, amp_arr=None):
-        '''
-        Get the photometry for each of the lensed source images.
+    The source surface brightness is
+
+    .. math::
+
+        I(r) / \\bar{I} = 1 - \\Gamma \\left(1 - \\frac{3}{2}
+        \\sqrt{1 - r^2 / \\rho^2}\\right)
+
+    (Yoo et al. 2004), which conserves the total source flux for any
+    :math:`\\Gamma`. The equivalent central-intensity coefficient is
+    :math:`u = 3\\Gamma / (2 + \\Gamma)` (VBMicrolensing ``a1``); see
+    :func:`bagle.fspl_contour.gamma_to_u`. Images, magnifications and
+    centroids are integrated over nested uniform disks
+    (:func:`bagle.fspl_contour.ld_images_amps`).
+    """
+
+    def limb_gamma(self, filt_idx=0):
+        """
+        Linear limb-darkening coefficient for a filter.
 
         Parameters
         ----------
-        t : array_like
-            Array of times to model.
         filt_idx : int, optional
-            Index of the photometric filter or data set.
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like
-            Amplifications of each individual image at each time,
-            i.e. amp_arr.shape = (len(t), number of images at each t).
-
-            This will over-ride t; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t.
+            Index of the filter or data set.
 
         Returns
         -------
-        mag_model : array_like
-            Magnitude of the unresolved microlensing event at t.
+        gamma : float
+            The per-filter ``gamma`` parameter.
+        """
+        return self.gamma[filt_idx]
 
-        '''
-        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
-        flux_zp = 1.0
 
-        if amp_arr is None:
-            amp_arr, img_arr = self.get_centroids(t, self.radiusS)
-            amp = self.get_amplification(t)
+class FSPL_Limb_Phot(FSPL_Limb, FSPL_Phot):
+    """Data class: limb-darkened FSPL photometry only."""
+    photometryFlag = True
+    astrometryFlag = False
 
-            # CHECK
-        #        # Do we need this masked stuff?
-        #        # Mask invalid values from the amplification array.
-        #        amp_arr_msk = np.ma.masked_invalid(amp_arr)
-        #
-        #        # Sum up all the amplifications b/c surface brightness is conserved.
-        #        amp = np.sum(amp_arr_msk, axis=1)
 
-        flux_src = mag2flux(self.mag_src[filt_idx])
-        flux_model = flux_src * amp
-
-        # Account for blending, if necessary.
-        try:
-            # Adding flux of neighbors and lenses
-            # b_sff = fS / (fS + fN + fL)
-            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-        except AttributeError:
-            pass
-
-        mag_model = flux2mag(flux_model)
-
-        return mag_model
-
-    def get_amplification(self, t, filt_idx=0):
-        radii = np.array(range(1, self.nr + 1, 1)) / self.nr
-        amplifications = []
-        centroids = []
-        Fs = []
-        for i in range(len(radii)):
-            Ci = self.get_centroids(t, self.radiusS * radii[i], filt_idx=filt_idx)
-            # If this is fixed length, can speed up by making it an array
-            #    and overwriting.
-            amplifications.append(Ci[0])
-            centroids.append(Ci[1])
-            Fs.append(self.F(radii[i]))
-        amplification = []
-        for j in range(len(t)):
-            M = 0
-            for k in range(len(radii)):
-                if k == 0:
-                    Mk = Fs[k] * amplifications[k][j]
-                else:
-                    fk = (Fs[k] - Fs[k - 1]) / (
-                            radii[k] ** 2 - radii[k - 1] ** 2)
-                    Mk = fk * (amplifications[k][j] * (radii[k] ** 2) -
-                               amplifications[k - 1][j] * (radii[k - 1]) ** 2)
-                M += Mk
-            amplification.append(M)
-        return amplification
-
-    def animate(self, crossings, time_steps, frame_time, name, size, zoom, filt_idx=0):
-        # creates the animation html, given an instance of the Uniformly_bright class and a list of times
-
-        times = np.array(range(-time_steps, time_steps + 1, 1))
-        tau = crossings * times / (-times[0])
-        t = tau * self.tE
-
-        rs = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)  # position of source
-        rl = self.get_lens_astrometry(t, filt_idx=filt_idx)  # position of lens
-        images = self.get_resolved_astrometry(t, filt_idx=filt_idx)  # positions of images
-        plus = images[0]  # plus image
-        minus = images[1]  # minus image
-        C = self.get_amplification(t, filt_idx=filt_idx)
-        A = C
-
-        fig = plt.figure(
-            figsize=[size[0], size[1] + 0.5])  # sets up the figure
-        ax1 = fig.add_subplot(2, 1, 1)
-        ax2 = fig.add_subplot(2, 1, 2)
-        fig.subplots_adjust(hspace=.5)
-        # creates 5 different plts (source, lens, image1, image2, magnification)
-        line1, = ax1.plot(rl[:, 0], rl[:, 1], 'b.', markersize=20.,
-                          label="Lens")
-        line2, = ax1.plot([], 'g.', markersize=5, label="Source")
-        line3, = ax1.plot([], 'r.', markersize=5, label="Images")
-        line4, = ax1.plot([], 'r.', markersize=5)
-        ax1.set_xlabel("RA")
-        ax1.set_ylabel("Dec")
-        ax1.set_xlim(
-            (rl[0][0] + rl[-1][0]) / 2 - 2 * (size[0]) / (2 * size[1]) * (
-                    rl[-1][1] - rl[0][
-                1] + 2 * zoom * self.thetaE_amp * 1e-3),
-            (rl[0][0] + rl[-1][0]) / 2 + 2 * (size[0]) / (2 * size[1]) * (
-                    rl[-1][1] - rl[0][
-                1] + 2 * zoom * self.thetaE_amp * 1e-3))
-        ax1.set_ylim(rl[0, 1] - zoom * self.thetaE_amp * 0.001,
-                     rl[-1, 1] + zoom * self.thetaE_amp * 0.001)
-        a = self.get_centroids(t, self.radiusS)[1]
-        xcent = a[:, 0]
-        ycent = a[:, 1]
-        line5, = ax1.plot([], 'm', markersize=5, label="Image Centroid")
-        line6, = ax2.plot(t, A)
-        ax1.legend(fontsize=25, markerscale=3)
-        ax2.set_xlabel("Time (days)", fontsize=40)
-        ax2.set_ylabel("Magnification", fontsize=40)
-
-        line = [line1, line2, line3, line4, line5, line6]
-
-        # this function is called at every frame, with i being the number of the frame that it's currently on
-        def update(i, rs, rl, line, plus, minus, xcent, ycent, tau, A):
-            line[0].set_data(rl[i, 0], rl[i, 1])
-            line[1].set_data(rs[i, :, 0], rs[i, :, 1])
-            line[2].set_data(plus[i, :, 0], plus[i, :, 1])
-            line[3].set_data(minus[i, :, 0], minus[i, :, 1])
-            line[4].set_data(xcent[:i], ycent[:i])
-            line[5].set_data(tau[:i], A[:i])
-            return line
-
-        ani = animation.FuncAnimation(fig, update, len(tau),
-                                      fargs=[rs, rl, line, plus, minus, xcent,
-                                             ycent, t, A], blit=True,
-                                      interval=frame_time)
-        ani.save("%s.mp4" % name, writer="ffmpeg", dpi=600)
-
-        return ani
+class FSPL_Limb_PhotAstrom(FSPL_Limb, FSPL_PhotAstrom):
+    """Data class: limb-darkened FSPL photometry + astrometry."""
+    photometryFlag = True
+    astrometryFlag = True
 
 
 class FSPL_Limb_noParallax(FSPL_noParallax):
@@ -27324,59 +27278,353 @@ class FSPL_Limb_Parallax(FSPL_Parallax):
     parallaxFlag = True
     ref_frame_parallax_flag = False
 
-    # FIXME: Use super here
+
+class FSPL_Limb_PhotParam1(FSPL_PhotParam1):
+    """
+    Limb-darkened FSPL model for photometry only.
+
+    Same as :class:`FSPL_PhotParam1` (reduced parameters with ``piE``
+    setting the direction of relative motion) plus a linear limb-darkening
+    coefficient ``gamma`` for each photometric filter.
+
+    Parameters
+    ----------
+    t0 : float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in Solar System barycentric coordinates. This should be
+        close to, but not exactly aligned with, the photometric peak as seen
+        from Earth or a Solar System satellite.
+    u0_amp : float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. It can be positive
+        (``u0_amp > 0`` when ``u0_hat[0] > 0``, source East of the lens) or
+        negative (``u0_amp < 0`` when ``u0_hat[0] < 0``).
+    tE : float
+        Einstein crossing time (days).
+    piE_E : float
+        Microlensing parallax in the East direction (units of thetaE). Also
+        sets the direction of the relative proper motion.
+    piE_N : float
+        Microlensing parallax in the North direction (units of thetaE).
+    radiusS : float
+        Angular radius of the source star in units of thetaE (``rho``).
+    b_sff : numpy array or list
+        Ratio of the source flux to the total (source + neighbors + lens),
+        :math:`b_{sff} = f_S / (f_S + f_L + f_N)`. One entry per photometric
+        filter.
+    mag_src : numpy array or list
+        Unlensed source magnitude. One entry per photometric filter.
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in
+        ``[0, 1]``), one entry per photometric filter. The source surface
+        brightness is
+        :math:`I(r) / \\bar{I} = 1 - \\Gamma (1 - \\frac{3}{2}
+        \\sqrt{1 - r^2 / \\rho^2})`, which conserves the total source flux;
+        ``gamma = 0`` is a uniform source. The central-intensity coefficient
+        is :math:`u = 3 \\Gamma / (2 + \\Gamma)` (VBMicrolensing ``a1``).
+    n_outline : int, optional
+        Number of equally spaced source-limb samples used by the contour
+        integrals when the lens is far from the source (``|u| >= 2 rho``);
+        closer epochs use the adaptive mesh (``amg_tol``). Limb darkening
+        evaluates ``2 * ld_n_nodes + 1`` nested disks per epoch. Default 50.
+    raL : float, optional
+        Right ascension of the lens in decimal degrees. Required for
+        parallax models.
+    decL : float, optional
+        Declination of the lens in decimal degrees. Required for parallax
+        models.
+    obsLocation : str or list of str, optional
+        Observer location for each photometric data set (default
+        ``'earth'``), e.g. ``'jwst'`` or ``'spitzer'``. A single string
+        applies to all data sets; otherwise one entry per filter.
+
+    See Also
+    --------
+    FSPL_Limb : Limb-darkening convention and integration method.
+    """
+    fitter_param_names = FSPL_PhotParam1.fitter_param_names + ['gamma']
+    filt_param_names = FSPL_PhotParam1.filt_param_names + ['gamma']
+    filt_param_usage = FSPL_PhotParam1.filt_param_usage + ['both']
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_src,
+                 gamma, n_outline=50, raL=None, decL=None, obsLocation='earth'):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_src,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation)
+
+        return
 
 
-class FSPL_Limb_PhotAstromParam1(PSPL_Param):
-    def __init__(self, lens_mass, t0, xS0, beta, muL, muS, dL, dS, n, radiusS,
-                 utilde, nr, mag_src, raL=None, decL=None, obsLocation='earth'):
-        """
-        DO NOT USE -- in progress
+class FSPL_Limb_PhotParam2(FSPL_PhotParam2):
+    """
+    Limb-darkened FSPL model for photometry only, fitting the baseline
+    magnitude.
 
-        """
-        # Initialised variables
-        """
-        The only new parameters here that aren't in the uniformly birhgt source is:
-            mu = a parameter that determined how uniform the star is and 0 =< mu =< 1
-            n_int = number of points in each direction to approximate the flux integral (see below)
-        """
-        self.utilde = utilde  # tells you how limbdarkended the source is
-        self.lens_mass = lens_mass  # Mass of the lens in solar masses
-        self.xS0 = np.array(
-            xS0)  # Position of centroid at peak [[Ra, Dec],flux]
-        self.beta = beta  # Angular distance between lens and centroid (mas)
-        self.muL = np.array(muL)  # Lens proper motion (mas/yr) [Ra, Dec]
-        self.muS = np.array(muS)  # Source proper motion "   "   "   "   "
-        self.dL = dL  # Distance from observer to lens (pc)
-        self.dS = dS  # Distance from observer to source (pc)
-        self.n = n  # No. of boundary points approximating the source
-        self.radiusS = (radiusS * 6.96e8 / 1.496e11) / dS  # Radius of star on the sky (as)
-        self.source = self.get_source(self.radiusS, n, xS0)  # Positions of the centroid + points on the boundary
-        self.nr = nr  # sets the precision on the integrals
-        self.t0 = t0
-        self.mag_src = mag_src
-        self.raL = raL
-        self.decL = decL
-        self.obsLocation = obsLocation
+    Same as :class:`FSPL_PhotParam2` (like :class:`FSPL_Limb_PhotParam1`
+    but with ``mag_base`` instead of ``mag_src``) plus a linear
+    limb-darkening coefficient ``gamma`` for each photometric filter.
 
-        # Check variable formatting.
-        super().__init__()
+    Parameters
+    ----------
+    t0 : float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in Solar System barycentric coordinates. This should be
+        close to, but not exactly aligned with, the photometric peak as seen
+        from Earth or a Solar System satellite.
+    u0_amp : float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. It can be positive
+        (``u0_amp > 0`` when ``u0_hat[0] > 0``, source East of the lens) or
+        negative (``u0_amp < 0`` when ``u0_hat[0] < 0``).
+    tE : float
+        Einstein crossing time (days).
+    piE_E : float
+        Microlensing parallax in the East direction (units of thetaE). Also
+        sets the direction of the relative proper motion.
+    piE_N : float
+        Microlensing parallax in the North direction (units of thetaE).
+    radiusS : float
+        Angular radius of the source star in units of thetaE (``rho``).
+    b_sff : numpy array or list
+        Ratio of the source flux to the total (source + neighbors + lens),
+        :math:`b_{sff} = f_S / (f_S + f_L + f_N)`. One entry per photometric
+        filter.
+    mag_base : numpy array or list
+        Baseline (unlensed source + neighbors + lens) magnitude. One entry
+        per photometric filter. The source magnitude is derived as
+        ``mag_src = mag_base - 2.5 log10(b_sff)``.
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in
+        ``[0, 1]``), one entry per photometric filter. The source surface
+        brightness is
+        :math:`I(r) / \\bar{I} = 1 - \\Gamma (1 - \\frac{3}{2}
+        \\sqrt{1 - r^2 / \\rho^2})`, which conserves the total source flux;
+        ``gamma = 0`` is a uniform source. The central-intensity coefficient
+        is :math:`u = 3 \\Gamma / (2 + \\Gamma)` (VBMicrolensing ``a1``).
+    n_outline : int, optional
+        Number of equally spaced source-limb samples used by the contour
+        integrals when the lens is far from the source (``|u| >= 2 rho``);
+        closer epochs use the adaptive mesh (``amg_tol``). Limb darkening
+        evaluates ``2 * ld_n_nodes + 1`` nested disks per epoch. Default 50.
+    raL : float, optional
+        Right ascension of the lens in decimal degrees. Required for
+        parallax models.
+    decL : float, optional
+        Declination of the lens in decimal degrees. Required for parallax
+        models.
+    obsLocation : str or list of str, optional
+        Observer location for each photometric data set (default
+        ``'earth'``), e.g. ``'jwst'`` or ``'spitzer'``. A single string
+        applies to all data sets; otherwise one entry per filter.
 
-        # Variables that need to be calculated
-        self.muRel = self.muS - self.muL  # Source-lens relative proper motion
-        self.thetaE_hat = get_unit_vector(
-            self.muRel)  # unit vector in direction of thetaE
-        self.muRel_hat = self.thetaE_hat
-        self.thetaE_amp = get_angular_einstein_radius(self.lens_mass, self.dL,
-                                                      self.dS)
-        self.thetaE = self.thetaE_amp * self.thetaE_hat  # vector version of the einstein radius
-        self.u0 = get_u0(self.thetaE_hat, self.beta,
-                         self.thetaE_amp)  # closest approach vector
-        self.thetas0 = self.u0 * self.thetaE_amp  # [RA,Dec] position of the source at peak
-        # Per-filter lens origin; xS0 is always (n_filters, 2).
-        self.xL0 = self.xS0 - (self.thetas0 * 1e-3)
-        self.tE = get_einstein_time(self.thetaE_amp, self.muRel,
-                                    365.25)  # Einstein crossing time
+    See Also
+    --------
+    FSPL_Limb : Limb-darkening convention and integration method.
+    """
+    fitter_param_names = FSPL_PhotParam2.fitter_param_names + ['gamma']
+    filt_param_names = FSPL_PhotParam2.filt_param_names + ['gamma']
+    filt_param_usage = FSPL_PhotParam2.filt_param_usage + ['both']
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_base,
+                 gamma, n_outline=50, raL=None, decL=None, obsLocation='earth'):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, radiusS, b_sff, mag_base,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation)
+
+        return
+
+
+class FSPL_Limb_PhotAstromParam1(FSPL_PhotAstromParam1):
+    """
+    Limb-darkened FSPL model for photometry + astrometry, physical
+    parameterization.
+
+    Same as :class:`FSPL_PhotAstromParam1` (lens mass, distances, and the
+    positions and proper motions of lens and source) plus a linear
+    limb-darkening coefficient ``gamma`` for each filter. Limb darkening
+    changes both the light curve and the flux-weighted image centroid.
+
+    Parameters
+    ----------
+    mL : float
+        Mass of the lens (Msun).
+    t0 : float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in Solar System barycentric coordinates.
+    beta : float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach (mas). Same sign convention as ``u0_amp``
+        (Gould 2004): ``beta > 0`` when the source is East of the lens
+        (``u0_hat[0] > 0``), ``beta < 0`` otherwise.
+    dL : float
+        Distance from the observer to the lens (pc).
+    dL_dS : float
+        Ratio of the lens distance to the source distance, ``dL / dS``.
+    xS0_E : numpy array or list
+        East (RA) source position on the sky at ``t = t0`` (arcsec) in an
+        arbitrary reference frame. One entry per filter.
+    xS0_N : numpy array or list
+        North (Dec) source position on the sky at ``t = t0`` (arcsec) in an
+        arbitrary reference frame. One entry per filter.
+    muL_E : float
+        East (RA) lens proper motion (mas/yr).
+    muL_N : float
+        North (Dec) lens proper motion (mas/yr).
+    muS_E : float
+        East (RA) source proper motion (mas/yr).
+    muS_N : float
+        North (Dec) source proper motion (mas/yr).
+    radiusS : float
+        Angular radius of the source star on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+    b_sff : numpy array or list
+        Ratio of the source flux to the total (source + neighbors + lens),
+        :math:`b_{sff} = f_S / (f_S + f_L + f_N)`. One entry per filter.
+    mag_src : numpy array or list
+        Unlensed source magnitude. One entry per filter.
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in
+        ``[0, 1]``), one entry per filter. The source surface brightness is
+        :math:`I(r) / \\bar{I} = 1 - \\Gamma (1 - \\frac{3}{2}
+        \\sqrt{1 - r^2 / \\rho^2})`, which conserves the total source flux;
+        ``gamma = 0`` is a uniform source. The central-intensity coefficient
+        is :math:`u = 3 \\Gamma / (2 + \\Gamma)` (VBMicrolensing ``a1``).
+    n_outline : int, optional
+        Number of equally spaced source-limb samples used by the contour
+        integrals when the lens is far from the source (``|u| >= 2 rho``);
+        closer epochs use the adaptive mesh (``amg_tol``). Limb darkening
+        evaluates ``2 * ld_n_nodes + 1`` nested disks per epoch. Default 50.
+    raL : float, optional
+        Right ascension of the lens in decimal degrees. Required for
+        parallax models.
+    decL : float, optional
+        Declination of the lens in decimal degrees. Required for parallax
+        models.
+    obsLocation : str or list of str, optional
+        Observer location for each data set (default ``'earth'``), e.g.
+        ``'jwst'`` or ``'spitzer'``. A single string applies to all data
+        sets; otherwise one entry per filter.
+
+    See Also
+    --------
+    FSPL_Limb : Limb-darkening convention and integration method.
+    """
+    fitter_param_names = FSPL_PhotAstromParam1.fitter_param_names + ['gamma']
+    filt_param_names = FSPL_PhotAstromParam1.filt_param_names + ['gamma']
+    filt_param_usage = FSPL_PhotAstromParam1.filt_param_usage + ['both']
+
+    def __init__(self, mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+                 muS_E, muS_N, radiusS, b_sff, mag_src, gamma, n_outline=50,
+                 raL=None, decL=None, obsLocation='earth'):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+                         muS_E, muS_N, radiusS, b_sff, mag_src,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation)
+
+        return
+
+
+class FSPL_Limb_PhotAstromParam2(FSPL_PhotAstromParam2):
+    """
+    Limb-darkened FSPL model for photometry + astrometry,
+    photometry-like parameterization.
+
+    Same as :class:`FSPL_PhotAstromParam2` (``t0, u0_amp, tE`` plus
+    ``thetaE``, source parallax, and source position and proper motion)
+    plus a linear limb-darkening coefficient ``gamma`` for each filter.
+    Limb darkening changes both the light curve and the flux-weighted image
+    centroid.
+
+    Parameters
+    ----------
+    t0 : float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in Solar System barycentric coordinates. This should be
+        close to, but not exactly aligned with, the photometric peak as seen
+        from Earth or a Solar System satellite.
+    u0_amp : float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. It can be positive
+        (``u0_amp > 0`` when ``u0_hat[0] > 0``, source East of the lens) or
+        negative (``u0_amp < 0`` when ``u0_hat[0] < 0``).
+    tE : float
+        Einstein crossing time (days).
+    thetaE : float
+        Angular Einstein radius (mas).
+    piS : float
+        Parallax of the source, ``1 AU / dS`` (mas).
+    piE_E : float
+        Microlensing parallax in the East direction (units of thetaE). Also
+        sets the direction of the relative proper motion.
+    piE_N : float
+        Microlensing parallax in the North direction (units of thetaE).
+    xS0_E : numpy array or list
+        East (RA) source position on the sky at ``t = t0`` (arcsec) in an
+        arbitrary reference frame. One entry per filter.
+    xS0_N : numpy array or list
+        North (Dec) source position on the sky at ``t = t0`` (arcsec) in an
+        arbitrary reference frame. One entry per filter.
+    muS_E : float
+        East (RA) source proper motion (mas/yr).
+    muS_N : float
+        North (Dec) source proper motion (mas/yr).
+    radiusS : float
+        Angular radius of the source star on the sky (arcsec). Converted to
+        Einstein radii with ``thetaE`` for the finite-source integrals.
+    b_sff : numpy array or list
+        Ratio of the source flux to the total (source + neighbors + lens),
+        :math:`b_{sff} = f_S / (f_S + f_L + f_N)`. One entry per filter.
+    mag_src : numpy array or list
+        Unlensed source magnitude. One entry per filter.
+    gamma : numpy array or list
+        Linear limb-darkening coefficient :math:`\\Gamma` (usually in
+        ``[0, 1]``), one entry per filter. The source surface brightness is
+        :math:`I(r) / \\bar{I} = 1 - \\Gamma (1 - \\frac{3}{2}
+        \\sqrt{1 - r^2 / \\rho^2})`, which conserves the total source flux;
+        ``gamma = 0`` is a uniform source. The central-intensity coefficient
+        is :math:`u = 3 \\Gamma / (2 + \\Gamma)` (VBMicrolensing ``a1``).
+    n_outline : int, optional
+        Number of equally spaced source-limb samples used by the contour
+        integrals when the lens is far from the source (``|u| >= 2 rho``);
+        closer epochs use the adaptive mesh (``amg_tol``). Limb darkening
+        evaluates ``2 * ld_n_nodes + 1`` nested disks per epoch. Default 50.
+    raL : float, optional
+        Right ascension of the lens in decimal degrees. Required for
+        parallax models.
+    decL : float, optional
+        Declination of the lens in decimal degrees. Required for parallax
+        models.
+    obsLocation : str or list of str, optional
+        Observer location for each data set (default ``'earth'``), e.g.
+        ``'jwst'`` or ``'spitzer'``. A single string applies to all data
+        sets; otherwise one entry per filter.
+
+    See Also
+    --------
+    FSPL_Limb : Limb-darkening convention and integration method.
+    """
+    fitter_param_names = FSPL_PhotAstromParam2.fitter_param_names + ['gamma']
+    filt_param_names = FSPL_PhotAstromParam2.filt_param_names + ['gamma']
+    filt_param_usage = FSPL_PhotAstromParam2.filt_param_usage + ['both']
+
+    def __init__(self, t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+                 muS_E, muS_N, radiusS, b_sff, mag_src, gamma, n_outline=50,
+                 raL=None, decL=None, obsLocation='earth'):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E,
+                         xS0_N, muS_E, muS_N, radiusS, b_sff, mag_src,
+                         n_outline=n_outline, raL=raL, decL=decL,
+                         obsLocation=obsLocation)
+
+        return
+
 
 
 # ==================================================
@@ -30993,6 +31241,95 @@ class FSPL_PhotAstrom_noPar_Param2(ModelClassABC,
                                    FSPL_PhotAstrom,
                                    FSPL_noParallax,
                                    FSPL_PhotAstromParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+# FSPL with linear (Gamma-law) limb darkening
+@inheritdocstring
+class FSPL_Limb_Phot_noPar_Param1(ModelClassABC,
+                                  FSPL_Limb_Phot,
+                                  FSPL_Limb_noParallax,
+                                  FSPL_Limb_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class FSPL_Limb_Phot_Par_Param1(ModelClassABC,
+                                FSPL_Limb_Phot,
+                                FSPL_Limb_Parallax,
+                                FSPL_Limb_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class FSPL_Limb_Phot_noPar_Param2(ModelClassABC,
+                                  FSPL_Limb_Phot,
+                                  FSPL_Limb_noParallax,
+                                  FSPL_Limb_PhotParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class FSPL_Limb_Phot_Par_Param2(ModelClassABC,
+                                FSPL_Limb_Phot,
+                                FSPL_Limb_Parallax,
+                                FSPL_Limb_PhotParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class FSPL_Limb_PhotAstrom_noPar_Param1(ModelClassABC,
+                                        FSPL_Limb_PhotAstrom,
+                                        FSPL_Limb_noParallax,
+                                        FSPL_Limb_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class FSPL_Limb_PhotAstrom_Par_Param1(ModelClassABC,
+                                      FSPL_Limb_PhotAstrom,
+                                      FSPL_Limb_Parallax,
+                                      FSPL_Limb_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class FSPL_Limb_PhotAstrom_noPar_Param2(ModelClassABC,
+                                        FSPL_Limb_PhotAstrom,
+                                        FSPL_Limb_noParallax,
+                                        FSPL_Limb_PhotAstromParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class FSPL_Limb_PhotAstrom_Par_Param2(ModelClassABC,
+                                      FSPL_Limb_PhotAstrom,
+                                      FSPL_Limb_Parallax,
+                                      FSPL_Limb_PhotAstromParam2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)

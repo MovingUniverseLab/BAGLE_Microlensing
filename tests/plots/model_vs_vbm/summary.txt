@@ -1,0 +1,5 @@
+BAGLE FSPL vs VBMicrolensing summary
+u0=0.30 rho=0.01  phot|dA/A|=4.03e-06  ast_out=1.69e-05  ast_in=nan
+u0=0.10 rho=0.05  phot|dA/A|=5.13e-06  ast_out=1.93e-05  ast_in=nan
+u0=0.10 rho=0.50  phot|dA/A|=1.89e-04  ast_out=6.15e-05  ast_in=1.04e-05
+u0=0.50 rho=0.30  phot|dA/A|=5.52e-06  ast_out=2.17e-05  ast_in=nan
