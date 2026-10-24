@@ -223,3 +223,31 @@ def test_fsbl_image_derivatives_finite_diff():
         assert abs(dz[k] - dz_fd) / max(abs(dz_fd), 1e-12) < 1e-4
 
     return None
+
+
+def test_bfspl_matches_two_fspl_sources():
+    """BFSPL contour rebuild equals flux-weighted sum of two FSPL sources."""
+    from bagle import model_jax as mj
+    from bagle import fspl_contour
+
+    kw = dict(
+        mL=1.0, t0=57000.0, beta=0.8, dL=4000.0, dL_dS=0.5,
+        xS0_E=[0.0], xS0_N=[0.0], muL_E=0.0, muL_N=0.0, alpha=30.0,
+        muS_E=4.0, muS_N=0.0, radiusS_pri=5e-5, radiusS_sec=4e-5,
+        sep=1.5e-3, b_sff=[1.0], mag_src_pri=[17.5], mag_src_sec=[18.5],
+        n_outline_pri=64, n_outline_sec=64,
+    )
+    bf = mj.BFSPL_PhotAstrom_noPar_Param1(**kw)
+    t = np.linspace(56985, 57015, 21)
+    _img, amp = bf.get_all_arrays(t)
+    u = bf.get_u(t)
+    rho_pri = bf.radiusS_pri * 1e3 / bf.thetaE_amp
+    rho_sec = bf.radiusS_sec * 1e3 / bf.thetaE_amp
+    _, a1 = fspl_contour.adaptive_limb_images_amps(
+        u[:, 0, 0] + 1j * u[:, 0, 1], rho_pri)
+    _, a2 = fspl_contour.adaptive_limb_images_amps(
+        u[:, 1, 0] + 1j * u[:, 1, 1], rho_sec)
+    assert np.max(np.abs(amp[:, 0].sum(axis=1) - a1.sum(axis=1))) < 2e-6
+    assert np.max(np.abs(amp[:, 1].sum(axis=1) - a2.sum(axis=1))) < 2e-6
+
+    return None

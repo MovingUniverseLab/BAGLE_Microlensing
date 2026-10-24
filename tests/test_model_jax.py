@@ -4278,6 +4278,12 @@ def test_ABC_MRO():
     # All data classes should be hard-coded into this test.
     # But we will test such that new ones won't make this test fail. 
     data_classes_good = ['BSPL', 'BSPL_Phot', 'BSPL_PhotAstrom',
+                         'BFSBL', 'BFSBL_Limb', 'BFSBL_Limb_Phot',
+                         'BFSBL_Limb_PhotAstrom', 'BFSBL_Phot', 'BFSBL_PhotAstrom',
+                         'BFSPL', 'BFSPL_Limb', 'BFSPL_Limb_PhotAstrom',
+                         'BFSPL_PhotAstrom',
+                         'FSBL', 'FSBL_Limb', 'FSBL_Limb_Phot',
+                         'FSBL_Limb_PhotAstrom', 'FSBL_Phot', 'FSBL_PhotAstrom',
                          'FSPL', 'FSPL_Limb', 'FSPL_Limb_Phot',
                          'FSPL_Limb_PhotAstrom', 'FSPL_Phot', 'FSPL_PhotAstrom',
                          'PSBL', 'PSBL_Phot', 'PSBL_PhotAstrom', 'PSPL',
@@ -4287,7 +4293,14 @@ def test_ABC_MRO():
 
     assert gp_classes[0] == 'PSPL_GP'
 
-    parallax_classes_good = ['BSPL_Parallax', 'BSPL_noParallax', 'FSPL_Limb_Parallax',
+    parallax_classes_good = ['BFSBL_Limb_Parallax', 'BFSBL_Limb_noParallax',
+                             'BFSBL_Parallax', 'BFSBL_noParallax',
+                             'BFSPL_Limb_Parallax', 'BFSPL_Limb_noParallax',
+                             'BFSPL_Parallax', 'BFSPL_noParallax',
+                             'BSPL_Parallax', 'BSPL_noParallax',
+                             'FSBL_Limb_Parallax', 'FSBL_Limb_noParallax',
+                             'FSBL_Parallax', 'FSBL_noParallax',
+                             'FSPL_Limb_Parallax',
                              'FSPL_Limb_noParallax', 'FSPL_Parallax', 'FSPL_noParallax',
                              'PSBL_Parallax', 'PSBL_noParallax', 'PSPL_Parallax',
                              'PSPL_noParallax']
