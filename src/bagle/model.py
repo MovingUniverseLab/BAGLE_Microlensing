@@ -27633,342 +27633,248 @@ class FSPL_Limb_PhotAstromParam2(FSPL_PhotAstromParam2):
 #
 # ==================================================
 class BFSPL(PSPL):
-    """Binary Finite-Source, Point-Lens models."""
-    
+    """
+    Binary Finite-Source, Point-Lens models.
+
+    Each source is integrated with the point-lens contour code in
+    :mod:`bagle.fspl_contour` (uniform or adaptive limb, optional linear
+    limb darkening via nested disks). Photometry and astrometry are the
+    flux-weighted sum of the two sources.
+    """
+
+    # Adaptive limb sampling when |u| < 2 rho; see fspl_contour.
+    amg_tol = 1e-4
+    amg_n_init = 64
+    amg_max_pts = 2048
+
+    # Gauss-Legendre nodes per LD sub-interval; see ld_images_amps.
+    ld_n_nodes = 8
+
+    def limb_gamma_pri(self, filt_idx=0):
+        """
+        Primary-source linear limb-darkening coefficient (Gamma law).
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            Gamma coefficient (0 for a uniform source).
+        """
+        return 0.0
+
+    def limb_gamma_sec(self, filt_idx=0):
+        """
+        Secondary-source linear limb-darkening coefficient (Gamma law).
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            Gamma coefficient (0 for a uniform source).
+        """
+        return 0.0
+
+    def _bfspl_outline(self, which='pri'):
+        """
+        Number of uniform limb samples for one source.
+
+        Parameters
+        ----------
+        which : {'pri', 'sec'}
+            Which binary source.
+
+        Returns
+        -------
+        n_outline : int
+            Limb sample count (default 50 when unset / False).
+        """
+        # Prefer per-source outline; fall back to shared n_outline / 50.
+        key = 'n_outline_pri' if which == 'pri' else 'n_outline_sec'
+        n = getattr(self, key, None)
+        if n is None or n is False:
+            n = getattr(self, 'n_outline', None)
+        if n is None or n is False:
+            n = 50
+
+        return int(n)
+
+    def _bfspl_rho(self, which='pri'):
+        """
+        Source radius in Einstein radii for one binary component.
+
+        Parameters
+        ----------
+        which : {'pri', 'sec'}
+            Which binary source.
+
+        Returns
+        -------
+        rho : float
+            Radius in Einstein radii.
+        """
+        rad = self.radiusS_pri if which == 'pri' else self.radiusS_sec
+        if hasattr(self, 'thetaE_amp'):
+            return rad * 1e3 / self.thetaE_amp
+
+        return rad
+
+    def _bfspl_disk_images_amps(self, zeta_c, rho, gamma, disk_images_amps):
+        """
+        Uniform or limb-darkened FSPL images for one binary source.
+
+        Parameters
+        ----------
+        zeta_c : ndarray, complex, shape (N_times,)
+            Source centres relative to the lens (Einstein radii).
+        rho : float
+            Source radius in Einstein radii.
+        gamma : float
+            Linear limb-darkening coefficient (0 = uniform).
+        disk_images_amps : callable
+            ``(zeta_rows, rho_rows) -> (images, amps)`` for uniform disks.
+
+        Returns
+        -------
+        images : ndarray, shape (N_times, 2, 2)
+            Image centroids relative to the lens (Einstein radii).
+        amps : ndarray, shape (N_times, 2)
+            Signed image amplifications.
+        """
+        if gamma == 0:
+            return disk_images_amps(zeta_c, rho)
+
+        return fspl_contour.ld_images_amps(zeta_c, rho, gamma, disk_images_amps,
+                                           n_ld=self.ld_n_nodes)
+
+    def _bfspl_one_source(self, zeta_c, rho, gamma, n_outline, use_amg):
+        """
+        Contour images and amplifications for one binary source.
+
+        Parameters
+        ----------
+        zeta_c : ndarray, complex, shape (N_times,)
+            Source centres relative to the lens (Einstein radii).
+        rho : float
+            Source radius in Einstein radii.
+        gamma : float
+            Linear limb-darkening coefficient (Gamma law).
+        n_outline : int
+            Uniform limb samples when not using the adaptive mesh.
+        use_amg : bool
+            If True, use error-controlled adaptive limb sampling.
+
+        Returns
+        -------
+        images : ndarray, shape (N_times, 2, 2)
+            Plus / minus image centroids (Einstein radii, lens-relative).
+        amps : ndarray, shape (N_times, 2)
+            Signed magnifications ``[+, -]``.
+        """
+        if use_amg:
+            def disk_images_amps(zeta_rows, rho_rows):
+                return fspl_contour.adaptive_limb_images_amps(
+                    zeta_rows, rho_rows, n_init=self.amg_n_init,
+                    tol=self.amg_tol, max_pts=self.amg_max_pts)
+        else:
+            def disk_images_amps(zeta_rows, rho_rows):
+                return fspl_contour.uniform_limb_images_amps(
+                    zeta_rows, rho_rows, n_outline)
+
+        return self._bfspl_disk_images_amps(zeta_c, rho, gamma,
+                                            disk_images_amps)
+
     def get_all_arrays(self, t, filt_idx=0):
-        # We use helper functions photometry_one, photometry_two, integral_top and integral_bottom 
-        # to describe f, g and k functions in the BAGLE paper. 
+        """
+        Image centroids and amplifications for both finite sources.
 
-        
-        def amplification_helper(time, rho, u_amp):
-            # Solving Equation 39 (the part dealing with u2f**2 - u1f**2). Doing this for the + and - images
-            n = 20
-            n_two = 2*n
-            amplification_uminus = []
-            amplification_uplus = []
+        Each source uses the point-lens contour integrals in
+        :mod:`bagle.fspl_contour`. Adaptive limb sampling is used when
+        ``|u| < 2 rho`` for that source; otherwise ``n_outline`` equally
+        spaced samples. Limb darkening (when
+        :meth:`limb_gamma_pri` / :meth:`limb_gamma_sec` are non-zero) sums
+        nested uniform disks.
 
-            for i in range(0, len(time)):
-                
-                u_now = u_amp[i]
-                
-                if np.round(u_now, 3) <= np.round(rho, 3):
-                    n = n_two
-                    zp = np.pi
-                    z = 1
-                else:
-                    z = np.arcsin(rho/u_now)/np.pi
-                    zp = np.arcsin(rho/u_now)
-            
-                factor = z/(3*rho**2*n)
-                
-                first_term_plus = function_photometry_one(0, u_now, rho)  + function_photometry_one(np.pi, u_now, rho)
-                first_term_minus = function_photometry_one(0, u_now, rho, '-')  + function_photometry_one(np.pi, u_now, rho, '-')
-                
-                sum_plus = []
-                sum_minus = []
-                for k in range(0, int(n/2)):
-                    sum_plus.append(function_photometry_one(2*k/n * zp, u_now, rho))
-                    sum_minus.append(function_photometry_one(2*k/n * zp, u_now, rho, '-'))
-                second_term_plus = 2*np.sum(sum_plus)
-                second_term_minus = 2*np.sum(sum_minus)
-            
-            
-                sum_plus = []
-                sum_minus = []
-                for k in range(0, int(n/2)-1):
-                    sum_plus.append(function_photometry_one((2*k-1)/n * zp, u_now, rho))
-                    sum_minus.append(function_photometry_one((2*k-1)/n * zp, u_now, rho, '-'))
-                third_term_plus = 4*np.sum(sum_plus)
-                third_term_minus = 4*np.sum(sum_minus)
-                
-                amplification_uminus.append(factor*(first_term_minus+second_term_minus+third_term_minus))
-                amplification_uplus.append(factor*(first_term_plus+second_term_plus+third_term_plus))
-                    
-            
-            amplification_uminus = np.array(amplification_uminus)
-            amplification_uplus = np.array(amplification_uplus)
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        filt_idx : int, optional
+            Index of the filter or data set.
 
-            return amplification_uminus, amplification_uplus
+        Returns
+        -------
+        images : ndarray, shape (N_times, 2, 2, 2)
+            Sky positions ``[source, image, E/N]`` in arcsec (astrometric
+            models) or Einstein radii (photometry-only).
+        amps : ndarray, shape (N_times, 2, 2)
+            Signed magnifications ``[source, image]``.
+        """
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        n_t = t.size
 
-        def amplification_lee_full(time, rho, u_amp):
-            # This should be the total amplification from CH Lee's paper https://iopscience.iop.org/article/10.1088/0004-637X/695/1/200/pdf
-            # Solving Equation 39 (the part dealing with u2f * np.sqrt(u2f**2+4) - u1f * np.sqrt(u1f**2+4))
-            n=20
-            amplification_lee_full =[]
-            for i in range(0, len(u_amp)):
-                
-                u_check = u_amp[i]
-                u_n = u_amp[i]    
-                u_plus_rho = u_n + rho
-                u_minus_rho = u_n - rho
-            
-                if np.round(u_check, 4) <= np.round(rho, 4):
-                    
-                    factor = 1/(np.pi*rho**2) * np.pi/(2*n)
-                    first_term_numerator = u_plus_rho*np.sqrt(u_plus_rho**2+4)-(u_minus_rho)*np.sqrt(u_minus_rho**2+4)
-                    first_term = first_term_numerator/3
-                    
-                    second_sum = []
-                    for k in range(1, n):
-                        argument = (2*k*np.pi)/(2*n)
-                        second_sum.append(function_photometry_two(argument, rho, u_n))
-                    second_term = (2/3)*np.sum(second_sum)
-                
-                    third_sum = []
-                    for k in range(1, n+1):
-                            argument = ((2*k-1)*np.pi)/(2*n)
-                            third_sum.append(function_photometry_two(argument, rho, u_n))
-                    third_term = (4/3)*np.sum(third_sum)
-                    amplification_lee_full.append(factor*(first_term+second_term+third_term))
-                    
-                else:
-                    factor = 1/(np.pi*rho**2) * np.arcsin(rho/u_n)/n
-                    
-                    first_term_numerator = u_plus_rho*np.sqrt(u_plus_rho**2+4)-(u_minus_rho)*np.sqrt(u_minus_rho**2+4)
-                    first_term = first_term_numerator/3
-                    
-                    second_sum = []
-                    for k in range(1, int(n/2)):
-                        argument = (2*k*np.arcsin(rho/u_n))/(n)
-                        second_sum.append(function_photometry_two(argument, rho, u_n))
-                    second_term = (2/3)*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(1, int(n/2)+1):
-                            argument = ((2*k-1)*np.arcsin(rho/u_n))/(n)
-                            third_sum.append(function_photometry_two(argument, rho, u_n))
-                    third_term = (4/3)*np.sum(third_sum)
-                    amplification_lee_full.append(factor*(first_term+second_term+third_term))
-            
-            amplification_lee_full = np.array(amplification_lee_full) 
-            return amplification_lee_full
+        # Source centres relative to the lens (Einstein radii).
+        u_vec = self.get_u(t, filt_idx=filt_idx)
+        zeta_pri = u_vec[:, 0, 0] + 1j * u_vec[:, 0, 1]
+        zeta_sec = u_vec[:, 1, 0] + 1j * u_vec[:, 1, 1]
 
-        #We use helper functions integral_top and integral_bottom to 
-        #solve the numerator and denominator separately in equation 40 of the BAGLE paper. 
-        #The helper functions are g and k in the BAGLE paper
-        
-        def astrometry(time, rho, u_amp):
-            # Composite rule to solve equation 40 numerator
-            n = 20
-            plus = []
-            minus = []
-            
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                if u_now <= rho:
-                    first_term = integral_top(0, rho, u_now) + integral_top(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_top(k*np.pi/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.pi, rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_top(0, rho, u_now) + integral_top(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_top(2*k*np.arcsin(rho/u_now)/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                plus.append(total)
-        
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                if u_now <= rho:
-                    first_term = integral_top(0, rho, u_now, '-') + integral_top(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_top(k*np.pi/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.pi, rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_top(0, rho, u_now, '-') + integral_top(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_top(2*k*np.arcsin(rho/u_now)/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                minus.append(total)
-        
-            
-            return plus, minus
-            
-        def astrometry_bottom(time, rho, u_amp):
-            # Composite rule to solve equation 40 denominator
-            n = 20
-            bottomp = []
-            bottomm = []
-        
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                
-                if u_now <= rho:
-                    first_term = integral_bottom(0, rho, u_now) + integral_bottom(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_bottom(k*np.pi/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.pi, rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_bottom(0, rho, u_now) + integral_bottom(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_bottom(2*k*np.arcsin(rho/u_now)/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                bottomp.append(total)
-        
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                
-                if u_now <= rho:
-                    first_term = integral_bottom(0, rho, u_now, '-') + integral_bottom(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_bottom(k*np.pi/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.pi, rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                else:
-                    first_term = integral_bottom(0, rho, u_now, '-') + integral_bottom(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_bottom(2*k*np.arcsin(rho/u_now)/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                bottomm.append(total)
-            
-            return bottomp, bottomm
-        
-        u_center = self.get_u(t, filt_idx=filt_idx)
-        u_pri = u_center[:, 0, :] 
-        u_sec = u_center[:, 1, :] 
+        rho_pri = self._bfspl_rho('pri')
+        rho_sec = self._bfspl_rho('sec')
+        g_pri = self.limb_gamma_pri(filt_idx)
+        g_sec = self.limb_gamma_sec(filt_idx)
+        n_pri = self._bfspl_outline('pri')
+        n_sec = self._bfspl_outline('sec')
 
-        u_amp_pri = np.linalg.norm(u_pri, axis=1)
-        u_hat_pri = (u_pri.T / u_amp_pri).T
-        
-        u_amp_sec = np.linalg.norm(u_sec, axis=1)
-        u_hat_sec = (u_sec.T / u_amp_sec).T
-        
-        rho_pri = self.radiusS_pri * 1e3 / self.thetaE_amp
-        rho_sec = self.radiusS_sec * 1e3 / self.thetaE_amp
-                    
-        am, au = amplification_helper(t, rho_pri, u_amp_pri)
-        al = amplification_lee_full(t, rho_pri, u_amp_pri)
+        # Adaptive mesh only when a limb point can sit near the lens.
+        close_pri = np.abs(zeta_pri) < (2.0 * rho_pri)
+        close_sec = np.abs(zeta_sec) < (2.0 * rho_sec)
 
-        amp_plus_pri = au + 1/2 * al
-        amp_minus_pri = am + 1/2 * al
+        img_pri = np.empty((n_t, 2, 2), dtype=float)
+        amp_pri = np.empty((n_t, 2), dtype=float)
+        img_sec = np.empty((n_t, 2, 2), dtype=float)
+        amp_sec = np.empty((n_t, 2), dtype=float)
 
-        am, au = amplification_helper(t, rho_sec, u_amp_sec)
-        al = amplification_lee_full(t, rho_sec, u_amp_sec)
+        # Primary: split close / far epochs like FSPL.get_all_arrays.
+        if n_t > 0:
+            far = ~close_pri
+            if np.any(far):
+                img_pri[far], amp_pri[far] = self._bfspl_one_source(
+                    zeta_pri[far], rho_pri, g_pri, n_pri, use_amg=False)
+            if np.any(close_pri):
+                img_pri[close_pri], amp_pri[close_pri] = self._bfspl_one_source(
+                    zeta_pri[close_pri], rho_pri, g_pri, n_pri, use_amg=True)
 
-        amp_plus_sec = au + 1/2 * al
-        amp_minus_sec = am + 1/2 * al
-        xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
+            far = ~close_sec
+            if np.any(far):
+                img_sec[far], amp_sec[far] = self._bfspl_one_source(
+                    zeta_sec[far], rho_sec, g_sec, n_sec, use_amg=False)
+            if np.any(close_sec):
+                img_sec[close_sec], amp_sec[close_sec] = self._bfspl_one_source(
+                    zeta_sec[close_sec], rho_sec, g_sec, n_sec, use_amg=True)
 
-        
-        bp, bm = astrometry_bottom(t, rho_pri, u_amp_pri)
-        plus, minus = astrometry(t, rho_pri, u_amp_pri)
-        mj = (np.array(plus)/np.array(bp) * self.thetaE_amp * 1e-3).reshape(u_amp_pri.size, 1) * u_hat_pri
-        mn = (np.array(minus)/np.array(bm) * self.thetaE_amp *1e-3).reshape(u_amp_pri.size, 1) * u_hat_pri 
-        
-        major_pri =  xL + mj
-        minor_pri = xL + mn
+        # Convert lens-relative Einstein radii to sky arcsec when needed.
+        if getattr(self, 'astrometryFlag', False):
+            xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
+            scale = self.thetaE_amp * 1e-3
+            img_pri = xL[:, None, :] + img_pri * scale
+            img_sec = xL[:, None, :] + img_sec * scale
 
-        bp, bm = astrometry_bottom(t, rho_sec, u_amp_sec)
-        plus, minus = astrometry(t, rho_sec, u_amp_sec)
-        mj = (np.array(plus)/np.array(bp) * self.thetaE_amp * 1e-3).reshape(u_amp_sec.size, 1) * u_hat_sec
-        mn = (np.array(minus)/np.array(bm) * self.thetaE_amp *1e-3).reshape(u_amp_sec.size, 1) * u_hat_sec
-        
-        major_sec =  xL + mj
-        minor_sec = xL + mn
-
-        images_pri = np.zeros((len(t), 2, 2), dtype=float)
-        images_pri[:, 0, :] = major_pri
-        images_pri[:, 1, :] = minor_pri
-        amps_pri = np.array((amp_plus_pri, amp_minus_pri)).T  
-
-        images_sec = np.zeros((len(t), 2, 2), dtype=float)
-        images_sec[:, 0, :] = major_sec
-        images_sec[:, 1, :] = minor_sec
-        amps_sec = np.array((amp_plus_sec, amp_minus_sec)).T  
-        
-        images = np.zeros((len(t),2, 2, 2), dtype=float)
-        images[ :, 0, 0, :] = images_pri[:, 0,:]
-        images[:,0, 1, :] = images_pri[:, 1,:]
-        images[:, 1, 0, :] = images_sec[:, 0,:]
-        images[:,1, 1, :] = images_sec[:, 1,:]
-
-        amps = np.zeros((len(t),2, 2), dtype=float)
-        amps[:,0, 0] = amps_pri[:, 0]
-        amps[:, 0, 1] = amps_pri[:, 1]
-        amps[:, 1, 0] = amps_sec[:, 0]
-        amps[:, 1, 1] = amps_sec[:, 1]
+        images = np.empty((n_t, 2, 2, 2), dtype=float)
+        images[:, 0, :, :] = img_pri
+        images[:, 1, :, :] = img_sec
+        amps = np.empty((n_t, 2, 2), dtype=float)
+        amps[:, 0, :] = amp_pri
+        amps[:, 1, :] = amp_sec
 
         return images, amps
 
-        
     def get_u(self, t, filt_idx=0):
         """
         Get the separation vector, \\vec{u}(t), which is the unlensed
@@ -28623,6 +28529,108 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         self.u0_sec = self.u0_amp_sec * self.u0_hat
 
         return
+
+
+class BFSPL_Limb(BFSPL):
+    """
+    Linear limb-darkened BFSPL mixin (Gamma law per source and filter).
+
+    Each source has its own per-filter coefficient ``gamma_pri`` /
+    ``gamma_sec``. Magnifications and centroids follow
+    :func:`bagle.fspl_contour.ld_images_amps` for each source.
+    """
+
+    def limb_gamma_pri(self, filt_idx=0):
+        """
+        Primary-source linear limb-darkening coefficient for a filter.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            The per-filter ``gamma_pri`` parameter.
+        """
+        return self.gamma_pri[filt_idx]
+
+    def limb_gamma_sec(self, filt_idx=0):
+        """
+        Secondary-source linear limb-darkening coefficient for a filter.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            The per-filter ``gamma_sec`` parameter.
+        """
+        return self.gamma_sec[filt_idx]
+
+
+class BFSPL_Limb_PhotAstrom(BFSPL_Limb, BFSPL_PhotAstrom):
+    """Data class: limb-darkened BFSPL photometry + astrometry."""
+    photometryFlag = True
+    astrometryFlag = True
+
+
+class BFSPL_Limb_noParallax(BFSPL_noParallax):
+    parallaxFlag = False
+    ref_frame_parallax_flag = False
+
+
+class BFSPL_Limb_Parallax(BFSPL_Parallax):
+    parallaxFlag = True
+    ref_frame_parallax_flag = False
+
+
+class BFSPL_Limb_PhotAstromParam1(BFSPL_PhotAstromParam1):
+    """
+    Limb-darkened BFSPL photometry + astrometry (physical parameters).
+
+    Same as :class:`BFSPL_PhotAstromParam1` plus per-filter linear
+    limb-darkening coefficients ``gamma_pri`` and ``gamma_sec``.
+
+    Parameters
+    ----------
+    mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N, alpha, muS_E,
+    muS_N, radiusS_pri, radiusS_sec, sep, b_sff, mag_src_pri, mag_src_sec
+        Same as :class:`BFSPL_PhotAstromParam1`.
+    gamma_pri : array_like
+        Primary-source Gamma limb-darkening coefficient per filter.
+    gamma_sec : array_like
+        Secondary-source Gamma limb-darkening coefficient per filter.
+    n_outline_pri, n_outline_sec, raL, decL, obsLocation
+        Same as :class:`BFSPL_PhotAstromParam1`.
+    """
+    fitter_param_names = (BFSPL_PhotAstromParam1.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSPL_PhotAstromParam1.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
+    filt_param_usage = (BFSPL_PhotAstromParam1.filt_param_usage
+                        + ['both', 'both'])
+
+    def __init__(self, mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+                 alpha, muS_E, muS_N, radiusS_pri, radiusS_sec, sep, b_sff,
+                 mag_src_pri, mag_src_sec, gamma_pri, gamma_sec,
+                 n_outline_pri=False, n_outline_sec=False, raL=None, decL=None,
+                 obsLocation='earth'):
+        # Set gamma first so PSPL_Param broadcasts per filter.
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+                         alpha, muS_E, muS_N, radiusS_pri, radiusS_sec, sep,
+                         b_sff, mag_src_pri, mag_src_sec,
+                         n_outline_pri=n_outline_pri,
+                         n_outline_sec=n_outline_sec, raL=raL, decL=decL,
+                         obsLocation=obsLocation)
+
+        return None
 
 
 #############################################
@@ -31144,6 +31152,32 @@ class BFSPL_PhotAstrom_noPar_Param1(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
+
+@inheritdocstring
+class BFSPL_Limb_PhotAstrom_noPar_Param1(ModelClassABC,
+                                         BFSPL_Limb_PhotAstrom,
+                                         BFSPL_Limb_noParallax,
+                                         BFSPL_Limb_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+
+@inheritdocstring
+class BFSPL_Limb_PhotAstrom_Par_Param1(ModelClassABC,
+                                       BFSPL_Limb_PhotAstrom,
+                                       BFSPL_Limb_Parallax,
+                                       BFSPL_Limb_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
 
 
 

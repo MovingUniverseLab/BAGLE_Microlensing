@@ -511,6 +511,7 @@ from bagle import jax_physics
 
 from bagle import frame_convert as fc
 from bagle import fspl_contour
+from bagle import fsbl_contour
 from bagle import orbits as orbits
 from bagle import parallax
 from bagle.model import (
@@ -28617,11 +28618,41 @@ class FSPL_Limb_PhotAstromParam2(FSPL_PhotAstromParam2):
 # ==================================================
 class FSBL(PSBL):
     """
-    Finite-source binary lens magnification inspired by ``caustics`` by F.Bartolic
-    https://github.com/fbartolic/caustics
+    Finite-source binary lens models.
+
+    The NumPy host path uses :mod:`bagle.fsbl_contour` (VBBL / Bozza-style
+    contour integrals with adaptive limb sampling and optional linear limb
+    darkening). Legacy caustics-style helpers remain for debugging and the
+    JAX kernel port.
     """
 
     fsbl_niter = 10
+
+    # Adaptive limb sampling; see bagle.fsbl_contour.adaptive_limb_images_amps.
+    amg_tol = 1e-4
+    amg_n_init = 64
+    amg_max_pts = 1024
+
+    # Gauss-Legendre nodes per LD sub-interval.
+    ld_n_nodes = 8
+
+    def limb_gamma(self, filt_idx=0):
+        """
+        Linear limb-darkening coefficient (Gamma convention) for a filter.
+
+        Uniform sources return 0; :class:`FSBL_Limb` overrides this.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            Gamma coefficient (0 for a uniform source).
+        """
+        return 0.0
 
     def im_pos1(self, w, z1):
         u = w - z1                
@@ -28776,8 +28807,31 @@ class FSBL(PSBL):
 
 
     def get_all_arrays(self, t, filt_idx=0):
+        """
+        FSBL image centroids and total magnifications (host contour path).
+
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        images : ndarray, shape (N_times, 2)
+            Flux-weighted source-image centroid relative to the binary
+            origin (geometric centre for static models) in Einstein radii.
+        z_parity : None
+            Placeholder (legacy 4-tuple API).
+        amps : ndarray, shape (N_times,)
+            Total magnification.
+        individual_area : None
+            Placeholder (legacy 4-tuple API).
+        """
         images, z_parity, amps, individual_area = self.get_all_arrays_CI(
             t, filt_idx)
+
         return images, z_parity, amps, individual_area
   
     def get_u(self, t, filt_idx=0):
@@ -29305,56 +29359,78 @@ class FSBL(PSBL):
 
     def get_all_arrays_CI(self, t, filt_idx=0):
         """
-        Same layout as :meth:`FSBL.get_all_arrays_CI`, but magnification uses
-        the caustics contour pipeline.
+        FSBL images and magnifications via :mod:`bagle.fsbl_contour`.
+
+        Source and lens positions are expressed relative to the binary
+        origin used by :meth:`get_u` (geometric centre for static models).
+        Limb darkening is applied when :meth:`limb_gamma` is non-zero.
+
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        images : ndarray, shape (N_times, 2)
+            Flux-weighted source-image centroid in Einstein radii relative
+            to the binary origin.
+        z_parity : None
+            Placeholder for the legacy 4-tuple API.
+        amps : ndarray, shape (N_times,)
+            Total magnification.
+        individual_area : None
+            Placeholder for the legacy 4-tuple API.
         """
-        u_vec = self.get_u(t, filt_idx=filt_idx)
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        u_vec = np.asarray(self.get_u(t, filt_idx=filt_idx), dtype=float)
+        zeta_c = u_vec[:, 0] + 1j * u_vec[:, 1]
+
+        # Source radius and lens geometry in Einstein radii.
         if self.astrometryFlag:
-            rho = self.source_radius_thetaE_units()
-            lens_res = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
-            lens_asts_1 = lens_res[0, :, :] / self.thetaE_amp * 1e3
-            lens_asts_2 = lens_res[1, :, :] / self.thetaE_amp * 1e3
-
-        else: 
-            rho = self.radiusS
-            lens_asts_1 = self.get_resolved_lens_astrometry(t)[0, :, :] 
-            lens_asts_2 = self.get_resolved_lens_astrometry(t)[1, :, :] 
-        w = jnp.atleast_1d(jnp.asarray(u_vec[:, 0] + 1j * u_vec[:, 1], dtype=jnp.complex128))
-
-        z1_abs = jnp.asarray(lens_asts_1[:, 0] + 1j * lens_asts_1[:, 1], dtype=jnp.complex128)
-        z2_abs = jnp.asarray(lens_asts_2[:, 0] + 1j * lens_asts_2[:, 1], dtype=jnp.complex128)
-
-        z_cm = 0.5 * (z1_abs + z2_abs)
-        z1 = z1_abs - z_cm
-        z2 = z2_abs - z_cm
-        if self.astrometryFlag:
-            m1 = jnp.asarray(self.mLp / self.mL, dtype=jnp.float64)
-            m2 = jnp.asarray(self.mLs / self.mL, dtype=jnp.float64)
+            rho = float(self.source_radius_thetaE_units())
+            lens_res = np.asarray(
+                self.get_resolved_lens_astrometry(t, filt_idx=filt_idx))
+            # Arcsec -> Einstein radii.
+            lens1 = lens_res[0] / self.thetaE_amp * 1e3
+            lens2 = lens_res[1] / self.thetaE_amp * 1e3
+            m1 = float(self.mLp / self.mL)
+            m2 = float(self.mLs / self.mL)
         else:
-            m1 = self.m1
-            m2 = self.m2
+            rho = float(self.radiusS)
+            lens_res = np.asarray(self.get_resolved_lens_astrometry(t))
+            lens1 = lens_res[0]
+            lens2 = lens_res[1]
+            m1 = float(self.m1)
+            m2 = float(self.m2)
 
-        w = jnp.atleast_1d(jnp.asarray(w, dtype=jnp.complex128))
-        z1 = jnp.atleast_1d(jnp.asarray(z1, dtype=jnp.complex128))
-        z2 = jnp.atleast_1d(jnp.asarray(z2, dtype=jnp.complex128))
-        n = w.shape[0]
-        z1 = jnp.broadcast_to(z1.ravel()[0] if z1.size == 1 else z1, n)
-        z2 = jnp.broadcast_to(z2.ravel()[0] if z2.size == 1 else z2, n)
-        m1 = jnp.broadcast_to(jnp.atleast_1d(jnp.asarray(m1, dtype=jnp.float64)), n)
-        m2 = jnp.broadcast_to(jnp.atleast_1d(jnp.asarray(m2, dtype=jnp.float64)), n)
+        # Binary origin = geometric centre of the two lenses (BAGLE static /
+        # linear-orbit convention). Keplerian models already place lenses
+        # relative to the CoM; subtracting the mean of the pair still
+        # centres the contour integrals on the binary origin used by get_u.
+        z1_abs = lens1[:, 0] + 1j * lens1[:, 1]
+        z2_abs = lens2[:, 0] + 1j * lens2[:, 1]
+        z_geo = 0.5 * (z1_abs + z2_abs)
+        z1 = z1_abs - z_geo
+        z2 = z2_abs - z_geo
 
-        z_rel, z_parity, mag, individual_area = vmap(
-            lambda w_i, z1_i, z2_i, m1_i, m2_i: self.magnification_one(
-                w_i, z1_i, z2_i, m1_i, m2_i, rho
-            ),
-            in_axes=(0, 0, 0, 0, 0),
-        )(w, z1, z2, m1, m2)
+        n_init = int(getattr(self, 'n_outline', self.amg_n_init) or self.amg_n_init)
+        n_init = max(n_init, 16)
+        gamma = float(self.limb_gamma(filt_idx))
 
-        # One total amplification per time (``mag`` is constant on the (ntheta, 5) grid).
-        amps = mag[:, 0, 0]
-        images = z_rel + z_cm[:, None, None]
+        if gamma == 0:
+            images, amps = fsbl_contour.adaptive_limb_images_amps(
+                zeta_c, rho, s=1.0, q=1.0, n_init=n_init, tol=self.amg_tol,
+                max_pts=self.amg_max_pts, z1=z1, z2=z2, m1=m1, m2=m2)
+        else:
+            images, amps = fsbl_contour.ld_images_amps(
+                zeta_c, rho, gamma, s=1.0, q=1.0, n_ld=self.ld_n_nodes,
+                n_init=n_init, tol=self.amg_tol, max_pts=self.amg_max_pts,
+                z1=z1, z2=z2, m1=m1, m2=m2)
 
-        return images, z_parity, amps, individual_area
+        return images, None, amps, None
 
  
 class FSBL_Phot(FSBL, PSPL_Phot):
@@ -29967,7 +30043,12 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
 
     def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
         """
-        Position of the observed (lensed) source position on the sky.
+        Flux-weighted unresolved source-image centroid on the sky.
+
+        FSBL contour integration returns a single combined centroid (not
+        separately resolved +/- images). The return shape is
+        ``(N_times, 1, 2)`` for compatibility with callers that index an
+        image axis.
 
         Parameters
         ----------
@@ -29975,55 +30056,55 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
             Array of times to model.
         filt_idx : int, optional
             Index of the astrometric filter or data set.
-
-        Other Parameters
-        ----------------
-        image_arr : array_like
-            Array of complex image positions at each t,
-            i.e. image_arr.shape = (len(t), number of images at each t, [E,N]).
-
-        amp_arr : array_like
-            Array of magnifications of each images.
-            Same shape as image_arr.
+        image_arr : array_like, optional
+            Centroid in Einstein radii, shape ``(N, 2)``.
+        amp_arr : array_like, optional
+            Total magnification, shape ``(N,)``.
 
         Returns
         -------
-        model_pos : array_like. shape = [N_times, N_images=2, 2]
-            Array of vector positions of the centroid at each t.
-            Last axis contains East/North positions.
+        model_pos : ndarray, shape (N_times, 1, 2)
+            East / North sky positions in arcsec.
         """
         if (image_arr is None) or (amp_arr is None):
-            img_arr, parity_arr, amp_arr, _ = self.get_all_arrays(
-                t, filt_idx=filt_idx
-            )
+            img_arr, _parity, amp_arr, _ = self.get_all_arrays(
+                t, filt_idx=filt_idx)
         else:
             img_arr = image_arr
-        from bagle.jax.fspl import finite_source_image_positions
 
-        return finite_source_image_positions(img_arr)
+        cent = np.asarray(img_arr, dtype=float)
+        if cent.ndim == 1:
+            cent = np.stack([cent.real, cent.imag], axis=-1)
+        xL0 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)
+        xS = xL0 + cent * self.thetaE_amp * 1e-3
+
+        return xS[:, None, :]
 
     def get_resolved_amplification(self, t, filt_idx=0, amp_arr=None):
-        """Get the photometric amplification term at a set of times, t for both the
-        plus and minus images.
+        """
+        Total photometric amplification at times ``t``.
 
         Parameters
         ----------
-        t: Array of times in MJD.DDD
+        t : array_like
+            Times in MJD.
         filt_idx : int, optional
-            Index of the astrometric filter or data set.
-            
+            Index of the filter or data set.
+        amp_arr : array_like, optional
+            Cached total magnification from :meth:`get_all_arrays`.
+
         Returns
-        _______
-        amp_arr : array_like
-            Array/tuple of amplification of each lensed image at each t.
-            Shape = [n_images=2, len(t)]
+        -------
+        amp : ndarray, shape (1, N_times)
+            Total magnification (leading axis kept for legacy callers).
         """
         if amp_arr is None:
-            img_arr, parity_arr, amp_arr, _ = self.get_all_arrays(
-                t, filt_idx=filt_idx
-            )
+            _img, _parity, amp_arr, _ = self.get_all_arrays(
+                t, filt_idx=filt_idx)
 
-        return np.swapaxes(amp_arr, 0, 1)
+        amp = np.asarray(amp_arr, dtype=float).reshape(-1)
+
+        return amp[None, :]
 
     def get_resolved_photometry(self, t, filt_idx=0, amp_arr=None):
         '''
@@ -30146,57 +30227,55 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
     
     def get_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
         """
-        Position of the observed (unresolved) source position in arcsec.
+        Position of the observed (unresolved) source+lens centroid in arcsec.
+
+        Uses the true flux-weighted image centroid from
+        :mod:`bagle.fsbl_contour` (Einstein radii relative to the binary
+        origin), converts to sky coordinates, and blends with luminous
+        lenses.
 
         Parameters
         ----------
         t : array_like
             Array of times to model.
-
-        Other Parameters
-        ----------------
-        image_arr : array_like
-            Array of complex image positions at each t, shape ``(N, n_\\theta, 5)``.
-            (real = North, imaginary = East).
-        amp_arr : array_like
-            From :meth:`get_all_arrays` this is the total magnification per time (1D, length ``N``);
-            if you pass in cached data yourself, the same. ``indv_amp`` is taken from
-            :meth:`get_all_arrays` when ``amp_arr`` is loaded here; when both arrays are
-            pre-supplied, unit weights on the same grid are used in place of ``indv_amp``.
-        filt_idx : int
-            The filter index (def=0).
+        image_arr : array_like, optional
+            Centroid in Einstein radii, shape ``(N, 2)``, from
+            :meth:`get_all_arrays`.
+        amp_arr : array_like, optional
+            Total magnification per time, shape ``(N,)``.
+        filt_idx : int, optional
+            Filter index (default 0).
 
         Returns
         -------
         model_pos : ndarray, shape (N, 2)
+            East / North sky positions in arcsec.
         """
         if (image_arr is None) or (amp_arr is None):
-            image_arr, _parity, amp_arr, indv_amp = self.get_all_arrays(t, filt_idx=filt_idx)
-    
-        image_arr = np.asarray(image_arr, dtype=np.complex128)
-        indv_amp = np.asarray(indv_amp, dtype=np.float64)
+            image_arr, _parity, amp_arr, _ = self.get_all_arrays(
+                t, filt_idx=filt_idx)
+
+        # Source-image centroid relative to binary origin (Einstein radii).
+        cent = np.asarray(image_arr, dtype=float)
+        if cent.ndim == 1:
+            # Legacy complex (N,) layout.
+            cent = np.stack([cent.real, cent.imag], axis=-1)
+        amp = np.asarray(amp_arr, dtype=float).reshape(-1)
         fS = mag2flux(self.mag_src[filt_idx])
 
-        # Drop cells with non-finite image position so nothing NaN enters np.sum
-        
-        valid = (np.isfinite(np.real(image_arr)) & np.isfinite(np.imag(image_arr)))
-        zc = np.where(valid, indv_amp * fS, 0.0)
-        src = np.where(valid, image_arr * indv_amp * fS, 0.0j)
+        # Sky position of the magnified source (arcsec).
+        xL0 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)
+        xS = xL0 + cent * self.thetaE_amp * 1e-3
 
-        pos_c = np.sum(src, axis=(1, 2))
-        pos = np.stack((pos_c.real, pos_c.imag), axis=-1)
-        ftot_src = np.sum(zc, axis=(1, 2))
-        
-        # Lens fluxes clipped at zero in flux space. b_sff > 1 is dark.
+        # Blend with luminous lenses (flux clipped at zero for b_sff > 1).
         xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
         fL1, fL2 = resolved_lens_fluxes_for_astrometry(
-            fS, self.b_sff[filt_idx], self.dmag_Lp_Ls[filt_idx]
-        )
-        
-        numer = pos + xL1 * fL1 + xL2 * fL2
+            fS, self.b_sff[filt_idx], self.dmag_Lp_Ls[filt_idx])
+        ftot_src = fS * amp
+        numer = xS * ftot_src[:, None] + xL1 * fL1 + xL2 * fL2
         denom = ftot_src + fL1 + fL2
-        astrometry = numer / np.asarray(denom)[:, np.newaxis]
-        return astrometry
+
+        return numer / denom[:, None]
      
 
     def get_centroid_shift(self, t, filt_idx=0, image_arr=None, amp_arr=None):
@@ -34173,343 +34252,1419 @@ root_tol : float
 # BFSPL Models
 #
 # ==================================================
-class BFSPL(PSPL):
-    """Binary Finite-Source, Point-Lens models."""
-    
-    def get_all_arrays(self, t, filt_idx=0):
-        # We use helper functions photometry_one, photometry_two, integral_top and integral_bottom 
-        # to describe f, g and k functions in the BAGLE paper. 
 
-        
-        def amplification_helper(time, rho, u_amp):
-            # Solving Equation 39 (the part dealing with u2f**2 - u1f**2). Doing this for the + and - images
-            n = 20
-            n_two = 2*n
-            amplification_uminus = []
-            amplification_uplus = []
 
-            for i in range(0, len(time)):
-                
-                u_now = u_amp[i]
-                
-                if np.round(u_now, 3) <= np.round(rho, 3):
-                    n = n_two
-                    zp = np.pi
-                    z = 1
-                else:
-                    z = np.arcsin(rho/u_now)/np.pi
-                    zp = np.arcsin(rho/u_now)
-            
-                factor = z/(3*rho**2*n)
-                
-                first_term_plus = function_photometry_one(0, u_now, rho)  + function_photometry_one(np.pi, u_now, rho)
-                first_term_minus = function_photometry_one(0, u_now, rho, '-')  + function_photometry_one(np.pi, u_now, rho, '-')
-                
-                sum_plus = []
-                sum_minus = []
-                for k in range(0, int(n/2)):
-                    sum_plus.append(function_photometry_one(2*k/n * zp, u_now, rho))
-                    sum_minus.append(function_photometry_one(2*k/n * zp, u_now, rho, '-'))
-                second_term_plus = 2*np.sum(sum_plus)
-                second_term_minus = 2*np.sum(sum_minus)
-            
-            
-                sum_plus = []
-                sum_minus = []
-                for k in range(0, int(n/2)-1):
-                    sum_plus.append(function_photometry_one((2*k-1)/n * zp, u_now, rho))
-                    sum_minus.append(function_photometry_one((2*k-1)/n * zp, u_now, rho, '-'))
-                third_term_plus = 4*np.sum(sum_plus)
-                third_term_minus = 4*np.sum(sum_minus)
-                
-                amplification_uminus.append(factor*(first_term_minus+second_term_minus+third_term_minus))
-                amplification_uplus.append(factor*(first_term_plus+second_term_plus+third_term_plus))
-                    
-            
-            amplification_uminus = np.array(amplification_uminus)
-            amplification_uplus = np.array(amplification_uplus)
+class FSBL_Limb(FSBL):
+    """
+    Linear limb-darkened FSBL mixin (Gamma law, one coefficient per filter).
 
-            return amplification_uminus, amplification_uplus
+    Images, magnifications and centroids use nested uniform disks via
+    :func:`bagle.fsbl_contour.ld_images_amps`.
+    """
 
-        def amplification_lee_full(time, rho, u_amp):
-            # This should be the total amplification from CH Lee's paper https://iopscience.iop.org/article/10.1088/0004-637X/695/1/200/pdf
-            # Solving Equation 39 (the part dealing with u2f * np.sqrt(u2f**2+4) - u1f * np.sqrt(u1f**2+4))
-            n=20
-            amplification_lee_full =[]
-            for i in range(0, len(u_amp)):
-                
-                u_check = u_amp[i]
-                u_n = u_amp[i]    
-                u_plus_rho = u_n + rho
-                u_minus_rho = u_n - rho
-            
-                if np.round(u_check, 4) <= np.round(rho, 4):
-                    
-                    factor = 1/(np.pi*rho**2) * np.pi/(2*n)
-                    first_term_numerator = u_plus_rho*np.sqrt(u_plus_rho**2+4)-(u_minus_rho)*np.sqrt(u_minus_rho**2+4)
-                    first_term = first_term_numerator/3
-                    
-                    second_sum = []
-                    for k in range(1, n):
-                        argument = (2*k*np.pi)/(2*n)
-                        second_sum.append(function_photometry_two(argument, rho, u_n))
-                    second_term = (2/3)*np.sum(second_sum)
-                
-                    third_sum = []
-                    for k in range(1, n+1):
-                            argument = ((2*k-1)*np.pi)/(2*n)
-                            third_sum.append(function_photometry_two(argument, rho, u_n))
-                    third_term = (4/3)*np.sum(third_sum)
-                    amplification_lee_full.append(factor*(first_term+second_term+third_term))
-                    
-                else:
-                    factor = 1/(np.pi*rho**2) * np.arcsin(rho/u_n)/n
-                    
-                    first_term_numerator = u_plus_rho*np.sqrt(u_plus_rho**2+4)-(u_minus_rho)*np.sqrt(u_minus_rho**2+4)
-                    first_term = first_term_numerator/3
-                    
-                    second_sum = []
-                    for k in range(1, int(n/2)):
-                        argument = (2*k*np.arcsin(rho/u_n))/(n)
-                        second_sum.append(function_photometry_two(argument, rho, u_n))
-                    second_term = (2/3)*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(1, int(n/2)+1):
-                            argument = ((2*k-1)*np.arcsin(rho/u_n))/(n)
-                            third_sum.append(function_photometry_two(argument, rho, u_n))
-                    third_term = (4/3)*np.sum(third_sum)
-                    amplification_lee_full.append(factor*(first_term+second_term+third_term))
-            
-            amplification_lee_full = np.array(amplification_lee_full) 
-            return amplification_lee_full
+    def limb_gamma(self, filt_idx=0):
+        """
+        Linear limb-darkening coefficient for a filter.
 
-        #We use helper functions integral_top and integral_bottom to 
-        #solve the numerator and denominator separately in equation 40 of the BAGLE paper. 
-        #The helper functions are g and k in the BAGLE paper
-        
-        def astrometry(time, rho, u_amp):
-            # Composite rule to solve equation 40 numerator
-            n = 20
-            plus = []
-            minus = []
-            
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                if u_now <= rho:
-                    first_term = integral_top(0, rho, u_now) + integral_top(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_top(k*np.pi/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.pi, rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_top(0, rho, u_now) + integral_top(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_top(2*k*np.arcsin(rho/u_now)/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                plus.append(total)
-        
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                if u_now <= rho:
-                    first_term = integral_top(0, rho, u_now, '-') + integral_top(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_top(k*np.pi/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.pi, rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_top(0, rho, u_now, '-') + integral_top(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_top(2*k*np.arcsin(rho/u_now)/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_top((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                minus.append(total)
-        
-            
-            return plus, minus
-            
-        def astrometry_bottom(time, rho, u_amp):
-            # Composite rule to solve equation 40 denominator
-            n = 20
-            bottomp = []
-            bottomm = []
-        
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                
-                if u_now <= rho:
-                    first_term = integral_bottom(0, rho, u_now) + integral_bottom(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_bottom(k*np.pi/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.pi, rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                    
-                else:
-                    first_term = integral_bottom(0, rho, u_now) + integral_bottom(np.pi, rho, u_now)
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_bottom(2*k*np.arcsin(rho/u_now)/n, rho, u_now))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                bottomp.append(total)
-        
-            for i in range(0, len(time)):
-                u_now = u_amp[i]
-                
-                if u_now <= rho:
-                    first_term = integral_bottom(0, rho, u_now, '-') + integral_bottom(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, n):
-                        second_sum.append(integral_bottom(k*np.pi/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, n+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.pi, rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.pi)/(3 * 2 * n)
-                else:
-                    first_term = integral_bottom(0, rho, u_now, '-') + integral_bottom(np.pi, rho, u_now, '-')
-            
-                    second_sum = []
-                    for k in range(0, int(n/2)):
-                        second_sum.append(integral_bottom(2*k*np.arcsin(rho/u_now)/n, rho, u_now, '-'))
-                    second_term = 2*np.sum(second_sum)
-            
-                    third_sum = []
-                    for k in range(0, int(n/2)+1):
-                        third_sum.append(integral_bottom((2*k-1)/(2*n) * np.arcsin(rho/u_now), rho, u_now, '-'))
-                    third_term = 4 * np.sum(third_sum)
-                    factor = (np.arcsin(rho/u_now))/(3 * n)
-        
-                total = (first_term + second_term + third_term)
-        
-                bottomm.append(total)
-            
-            return bottomp, bottomm
-        
-        u_center = self.get_u(t, filt_idx=filt_idx)
-        u_pri = u_center[:, 0, :] 
-        u_sec = u_center[:, 1, :] 
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
 
-        u_amp_pri = np.linalg.norm(u_pri, axis=1)
-        u_hat_pri = (u_pri.T / u_amp_pri).T
-        
-        u_amp_sec = np.linalg.norm(u_sec, axis=1)
-        u_hat_sec = (u_sec.T / u_amp_sec).T
-        
-        rho_pri = self.radiusS_pri * 1e3 / self.thetaE_amp
-        rho_sec = self.radiusS_sec * 1e3 / self.thetaE_amp
-                    
-        am, au = amplification_helper(t, rho_pri, u_amp_pri)
-        al = amplification_lee_full(t, rho_pri, u_amp_pri)
+        Returns
+        -------
+        gamma : float
+            The per-filter ``gamma`` parameter.
+        """
+        return self.gamma[filt_idx]
 
-        amp_plus_pri = au + 1/2 * al
-        amp_minus_pri = am + 1/2 * al
 
-        am, au = amplification_helper(t, rho_sec, u_amp_sec)
-        al = amplification_lee_full(t, rho_sec, u_amp_sec)
+class FSBL_Limb_Phot(FSBL_Limb, FSBL_Phot):
+    """Data class: limb-darkened FSBL photometry only."""
+    photometryFlag = True
+    astrometryFlag = False
 
-        amp_plus_sec = au + 1/2 * al
-        amp_minus_sec = am + 1/2 * al
-        xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
-        
-        bp, bm = astrometry_bottom(t, rho_pri, u_amp_pri)
-        plus, minus = astrometry(t, rho_pri, u_amp_pri)
-        mj = (np.array(plus)/np.array(bp) * self.thetaE_amp * 1e-3).reshape(u_amp_pri.size, 1) * u_hat_pri
-        mn = (np.array(minus)/np.array(bm) * self.thetaE_amp *1e-3).reshape(u_amp_pri.size, 1) * u_hat_pri 
-        
-        major_pri =  xL + mj
-        minor_pri = xL + mn
+class FSBL_Limb_PhotAstrom(FSBL_Limb, FSBL_PhotAstrom):
+    """Data class: limb-darkened FSBL photometry + astrometry."""
+    photometryFlag = True
+    astrometryFlag = True
 
-        bp, bm = astrometry_bottom(t, rho_sec, u_amp_sec)
-        plus, minus = astrometry(t, rho_sec, u_amp_sec)
-        mj = (np.array(plus)/np.array(bp) * self.thetaE_amp * 1e-3).reshape(u_amp_sec.size, 1) * u_hat_sec
-        mn = (np.array(minus)/np.array(bm) * self.thetaE_amp *1e-3).reshape(u_amp_sec.size, 1) * u_hat_sec
-        
-        major_sec =  xL + mj
-        minor_sec = xL + mn
 
-        images_pri = np.zeros((len(t), 2, 2), dtype=float)
-        images_pri[:, 0, :] = major_pri
-        images_pri[:, 1, :] = minor_pri
-        amps_pri = np.array((amp_plus_pri, amp_minus_pri)).T  
+class FSBL_Limb_noParallax(FSBL_noParallax):
+    parallaxFlag = False
+    ref_frame_parallax_flag = False
 
-        images_sec = np.zeros((len(t), 2, 2), dtype=float)
-        images_sec[:, 0, :] = major_sec
-        images_sec[:, 1, :] = minor_sec
-        amps_sec = np.array((amp_plus_sec, amp_minus_sec)).T  
-        
-        images = np.zeros((len(t),2, 2, 2), dtype=float)
-        images[ :, 0, 0, :] = images_pri[:, 0,:]
-        images[:,0, 1, :] = images_pri[:, 1,:]
-        images[:, 1, 0, :] = images_sec[:, 0,:]
-        images[:,1, 1, :] = images_sec[:, 1,:]
 
-        amps = np.zeros((len(t),2, 2), dtype=float)
-        amps[:,0, 0] = amps_pri[:, 0]
-        amps[:, 0, 1] = amps_pri[:, 1]
-        amps[:, 1, 0] = amps_sec[:, 0]
-        amps[:, 1, 1] = amps_sec[:, 1]
+class FSBL_Limb_Parallax(FSBL_Parallax):
+    parallaxFlag = True
+    ref_frame_parallax_flag = False
+
+class FSBL_Limb_GP_PhotAstromParam1(FSBL_GP_PhotAstromParam1):
+    """Limb-darkened variant of :class:`FSBL_GP_PhotAstromParam1` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_GP_PhotAstromParam1.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_GP_PhotAstromParam1.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_GP_PhotAstromParam1.filt_param_usage + ['both']
+    def __init__(self,                  mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gp_log_sigma,
+                 gp_log_rho, gp_log_S0, gp_log_omega0, gamma, n_outline=50, raL=None,
+                 decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_GP_PhotAstromParam2(FSBL_GP_PhotAstromParam2):
+    """Limb-darkened variant of :class:`FSBL_GP_PhotAstromParam2` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_GP_PhotAstromParam2.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_GP_PhotAstromParam2.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_GP_PhotAstromParam2.filt_param_usage + ['both']
+    def __init__(self,                  t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
+                 muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gp_log_sigma,
+                 gp_log_rho, gp_log_S0, gp_log_omega0, gamma, n_outline=50, raL=None,
+                 decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_GP_PhotParam1(FSBL_GP_PhotParam1):
+    """Limb-darkened variant of :class:`FSBL_GP_PhotParam1` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_GP_PhotParam1.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_GP_PhotParam1.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_GP_PhotParam1.filt_param_usage + ['both']
+    def __init__(self,                  t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff, mag_src,
+                 gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff, mag_src, gp_log_sigma, gp_log_rho, gp_log_S0, gp_log_omega0,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstromParam1(FSBL_PhotAstromParam1):
+    """Limb-darkened variant of :class:`FSBL_PhotAstromParam1` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstromParam1.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam1.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam1.filt_param_usage + ['both']
+    def __init__(self,                  mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+                 dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mLp, mLs, t0, radiusS, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstromParam2(FSBL_PhotAstromParam2):
+    """Limb-darkened variant of :class:`FSBL_PhotAstromParam2` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstromParam2.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam2.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam2.filt_param_usage + ['both']
+    def __init__(self,                  t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
+                 muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstromParam3(FSBL_PhotAstromParam3):
+    """Limb-darkened variant of :class:`FSBL_PhotAstromParam3` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstromParam3.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam3.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam3.filt_param_usage + ['both']
+    def __init__(self,                  t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                 xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls,
+                 gamma, n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstromParam4(FSBL_PhotAstromParam4):
+    """Limb-darkened variant of :class:`FSBL_PhotAstromParam4` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstromParam4.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam4.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam4.filt_param_usage + ['both']
+    def __init__(self,                  t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                 xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstromParam5(FSBL_PhotAstromParam5):
+    """Limb-darkened variant of :class:`FSBL_PhotAstromParam5` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstromParam5.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam5.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam5.filt_param_usage + ['both']
+    def __init__(self,                  t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E, piEN_piEE,
+                 xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_base,
+                 dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E, piEN_piEE, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_base, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstromParam6(FSBL_PhotAstromParam6):
+    """Limb-darkened variant of :class:`FSBL_PhotAstromParam6` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstromParam6.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam6.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam6.filt_param_usage + ['both']
+    def __init__(self,                  t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
+                 muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstromParam7(FSBL_PhotAstromParam7):
+    """Limb-darkened variant of :class:`FSBL_PhotAstromParam7` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstromParam7.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam7.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam7.filt_param_usage + ['both']
+    def __init__(self,                  mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N, muS_E,
+                 muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstromParam8(FSBL_PhotAstromParam8):
+    """Limb-darkened variant of :class:`FSBL_PhotAstromParam8` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstromParam8.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstromParam8.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstromParam8.filt_param_usage + ['both']
+    def __init__(self,                  t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+                 xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                 gamma, n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_AccOrbs_Param1(FSBL_PhotAstrom_AccOrbs_Param1):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_AccOrbs_Param1` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_AccOrbs_Param1.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_AccOrbs_Param1.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_AccOrbs_Param1.filt_param_usage + ['both']
+    def __init__(self,                  mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N,
+                 delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N,
+                 dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_AccOrbs_Param3(FSBL_PhotAstrom_AccOrbs_Param3):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_AccOrbs_Param3` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_AccOrbs_Param3.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_AccOrbs_Param3.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_AccOrbs_Param3.filt_param_usage + ['both']
+    def __init__(self,                  t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                 xS0_N, muS_E, muS_N, q, sep, alpha, delta_muL_sec_E, delta_muL_sec_N,
+                 accLsec_E, accLsec_N, b_sff, mag_base, dmag_Lp_Ls, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, b_sff, mag_base, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_AccOrbs_Param6(FSBL_PhotAstrom_AccOrbs_Param6):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_AccOrbs_Param6` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_AccOrbs_Param6.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_AccOrbs_Param6.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_AccOrbs_Param6.filt_param_usage + ['both']
+    def __init__(self,                  t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                 xS0_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E,
+                 muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0_prim, u0_amp_prim, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_AccOrbs_Param7(FSBL_PhotAstrom_AccOrbs_Param7):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_AccOrbs_Param7` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_AccOrbs_Param7.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_AccOrbs_Param7.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_AccOrbs_Param7.filt_param_usage + ['both']
+    def __init__(self,                  mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, radiusS, muL_E, muL_N,
+                 delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N,
+                 dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, radiusS, muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_CircOrbs_Param1(FSBL_PhotAstrom_CircOrbs_Param1):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_CircOrbs_Param1` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param1.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_CircOrbs_Param1.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param1.filt_param_usage + ['both']
+    def __init__(self,                  mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N, radiusS,
+                 omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS, b_sff,
+                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N, radiusS, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_CircOrbs_Param3(FSBL_PhotAstrom_CircOrbs_Param3):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_CircOrbs_Param3` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param3.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_CircOrbs_Param3.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param3.filt_param_usage + ['both']
+    def __init__(self,                  t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                 xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q, b_sff,
+                 mag_base, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q, b_sff, mag_base, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_CircOrbs_Param4(FSBL_PhotAstrom_CircOrbs_Param4):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_CircOrbs_Param4` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param4.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_CircOrbs_Param4.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param4.filt_param_usage + ['both']
+    def __init__(self,                  t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                 xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q, b_sff,
+                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_CircOrbs_Param7(FSBL_PhotAstrom_CircOrbs_Param7):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_CircOrbs_Param7` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param7.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_CircOrbs_Param7.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param7.filt_param_usage + ['both']
+    def __init__(self,                  mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
+                 omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS, b_sff,
+                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_CircOrbs_Param8(FSBL_PhotAstrom_CircOrbs_Param8):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_CircOrbs_Param8` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_CircOrbs_Param8.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_CircOrbs_Param8.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_CircOrbs_Param8.filt_param_usage + ['both']
+    def __init__(self,                  t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+                 xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q,
+                 b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, q, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_EllOrbs_Param1(FSBL_PhotAstrom_EllOrbs_Param1):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_EllOrbs_Param1` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param1.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_EllOrbs_Param1.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param1.filt_param_usage + ['both']
+    def __init__(self,                  mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N, radiusS,
+                 omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS, b_sff,
+                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N, radiusS, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_EllOrbs_Param3(FSBL_PhotAstrom_EllOrbs_Param3):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_EllOrbs_Param3` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param3.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_EllOrbs_Param3.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param3.filt_param_usage + ['both']
+    def __init__(self,                  t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                 xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q, b_sff,
+                 mag_base, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q, b_sff, mag_base, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_EllOrbs_Param4(FSBL_PhotAstrom_EllOrbs_Param4):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_EllOrbs_Param4` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param4.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_EllOrbs_Param4.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param4.filt_param_usage + ['both']
+    def __init__(self,                  t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                 xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q, b_sff,
+                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_EllOrbs_Param7(FSBL_PhotAstrom_EllOrbs_Param7):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_EllOrbs_Param7` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param7.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_EllOrbs_Param7.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param7.filt_param_usage + ['both']
+    def __init__(self,                  mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
+                 omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS, b_sff,
+                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_EllOrbs_Param8(FSBL_PhotAstrom_EllOrbs_Param8):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_EllOrbs_Param8` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_EllOrbs_Param8.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_EllOrbs_Param8.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_EllOrbs_Param8.filt_param_usage + ['both']
+    def __init__(self,                  t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N,
+                 xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q,
+                 b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, q, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_LinOrbs_Param1(FSBL_PhotAstrom_LinOrbs_Param1):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_LinOrbs_Param1` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_LinOrbs_Param1.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_LinOrbs_Param1.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_LinOrbs_Param1.filt_param_usage + ['both']
+    def __init__(self,                  mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N,
+                 delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS, sep, alpha,
+                 b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS, muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_LinOrbs_Param3(FSBL_PhotAstrom_LinOrbs_Param3):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_LinOrbs_Param3` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_LinOrbs_Param3.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_LinOrbs_Param3.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_LinOrbs_Param3.filt_param_usage + ['both']
+    def __init__(self,                  t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E,
+                 xS0_N, muS_E, muS_N, q, sep, alpha, delta_muL_sec_E, delta_muL_sec_N,
+                 b_sff, mag_base, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N, q, sep, alpha, delta_muL_sec_E, delta_muL_sec_N, b_sff, mag_base, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_LinOrbs_Param6(FSBL_PhotAstrom_LinOrbs_Param6):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_LinOrbs_Param6` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_LinOrbs_Param6.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_LinOrbs_Param6.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_LinOrbs_Param6.filt_param_usage + ['both']
+    def __init__(self,                  t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N,
+                 delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, q, sep, alpha, b_sff,
+                 mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, thetaE, piS, radiusS, piE_E, piE_N, xS0_E, xS0_N, delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotAstrom_LinOrbs_Param7(FSBL_PhotAstrom_LinOrbs_Param7):
+    """Limb-darkened variant of :class:`FSBL_PhotAstrom_LinOrbs_Param7` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotAstrom_LinOrbs_Param7.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotAstrom_LinOrbs_Param7.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotAstrom_LinOrbs_Param7.filt_param_usage + ['both']
+    def __init__(self,                  mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N,
+                 delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS, sep, alpha,
+                 b_sff, mag_src, dmag_Lp_Ls, gamma, n_outline=50, raL=None, decL=None,
+                 obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, radiusS, beta_p, muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, muS_E, muS_N, dL, dS, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_PhotParam1(FSBL_PhotParam1):
+    """Limb-darkened variant of :class:`FSBL_PhotParam1` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_PhotParam1.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_PhotParam1.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_PhotParam1.filt_param_usage + ['both']
+    def __init__(self,                  t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff, mag_src,
+                 gamma, n_outline=50, raL=None, decL=None, obsLocation='earth',
+                 root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, q, sep, phi, radiusS, b_sff, mag_src,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_Phot_CircOrbs_Param1(FSBL_Phot_CircOrbs_Param1):
+    """Limb-darkened variant of :class:`FSBL_Phot_CircOrbs_Param1` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_Phot_CircOrbs_Param1.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_Phot_CircOrbs_Param1.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_Phot_CircOrbs_Param1.filt_param_usage + ['both']
+    def __init__(self,                  t0, aleph, aleph_sec, v_para, v_perp, v_rad, u0_amp, tE, piE_E, piE_N,
+                 q, b_sff, mag_src, dmag_Lp_Ls, radiusS, gamma, n_outline=50, raL=None,
+                 decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, aleph, aleph_sec, v_para, v_perp, v_rad, u0_amp, tE, piE_E, piE_N, q, b_sff, mag_src, dmag_Lp_Ls, radiusS,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+class FSBL_Limb_Phot_EllOrbs_Param1(FSBL_Phot_EllOrbs_Param1):
+    """Limb-darkened variant of :class:`FSBL_Phot_EllOrbs_Param1` (adds per-filter ``gamma``)."""
+    fitter_param_names = FSBL_Phot_EllOrbs_Param1.fitter_param_names + ['gamma']
+    filt_param_names = FSBL_Phot_EllOrbs_Param1.filt_param_names + ['gamma']
+    filt_param_usage = FSBL_Phot_EllOrbs_Param1.filt_param_usage + ['both']
+    def __init__(self,                  t0, aleph, aleph_sec, r_s, a_s, v_para, v_perp, v_rad, u0_amp, tE,
+                 piE_E, piE_N, q, b_sff, mag_src, dmag_Lp_Ls, radiusS, gamma,
+                 n_outline=50, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        # Set gamma first so PSPL_Param broadcasts it per filter.
+        self.gamma = gamma
+        super().__init__(t0, aleph, aleph_sec, r_s, a_s, v_para, v_perp, v_rad, u0_amp, tE, piE_E, piE_N, q, b_sff, mag_src, dmag_Lp_Ls, radiusS,
+                         n_outline=n_outline, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+
+
+######################################################
+### BINARY FINITE-SOURCE BINARY LENS (BFSBL) ###
+######################################################
+
+class BFSBL(BSBL):
+    """
+    Binary-source finite-source binary-lens models.
+
+    Each source is integrated with :mod:`bagle.fsbl_contour`. Photometry
+    and astrometry are the flux-weighted sum of the two sources (plus
+    luminous lenses for astrometry).
+    """
+
+    amg_tol = 1e-4
+    amg_n_init = 64
+    amg_max_pts = 1024
+    ld_n_nodes = 8
+
+    def limb_gamma_pri(self, filt_idx=0):
+        """
+        Primary-source Gamma limb-darkening coefficient.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Filter index.
+
+        Returns
+        -------
+        gamma : float
+        """
+        return 0.0
+
+    def limb_gamma_sec(self, filt_idx=0):
+        """
+        Secondary-source Gamma limb-darkening coefficient.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Filter index.
+
+        Returns
+        -------
+        gamma : float
+        """
+        return 0.0
+
+    def _bfsbl_rho(self, which='pri'):
+        """
+        Source radius in Einstein radii.
+
+        Parameters
+        ----------
+        which : {'pri', 'sec'}
+
+        Returns
+        -------
+        rho : float
+        """
+        rad = self.radiusS_pri if which == 'pri' else self.radiusS_sec
+        if hasattr(self, 'thetaE_amp'):
+            return float(rad) * 1e3 / self.thetaE_amp
+
+        return float(rad)
+
+    def get_all_arrays(self, t, filt_idx=0, check_sols=True, rescale=True):
+        """
+        Contour centroids and magnifications for both finite sources.
+
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        filt_idx : int, optional
+            Filter index.
+        check_sols, rescale : bool, optional
+            Ignored (kept for BSBL call-signature compatibility).
+
+        Returns
+        -------
+        images : ndarray, shape (N_times, 2, 2)
+            Flux-weighted image centroids per source ``[E, N]``. For
+            astrometric models these are sky positions in arcsec; for
+            photometry-only they are Einstein radii relative to the
+            binary origin.
+        amps : ndarray, shape (N_times, 2)
+            Total magnification of each source.
+        """
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        u = np.asarray(self.get_u(t, filt_idx=filt_idx), dtype=float)
+        zeta_pri = u[:, 0, 0] + 1j * u[:, 0, 1]
+        zeta_sec = u[:, 1, 0] + 1j * u[:, 1, 1]
+
+        # Lens geometry relative to the binary origin (geometric centre).
+        if self.astrometryFlag:
+            lens_res = np.asarray(
+                self.get_resolved_lens_astrometry(t, filt_idx=filt_idx))
+            lens1 = lens_res[0] / self.thetaE_amp * 1e3
+            lens2 = lens_res[1] / self.thetaE_amp * 1e3
+            m1 = float(self.mLp / self.mL)
+            m2 = float(self.mLs / self.mL)
+        else:
+            lens_res = np.asarray(self.get_resolved_lens_astrometry(t))
+            lens1 = lens_res[0]
+            lens2 = lens_res[1]
+            m1 = float(self.m1)
+            m2 = float(self.m2)
+
+        z1_abs = lens1[:, 0] + 1j * lens1[:, 1]
+        z2_abs = lens2[:, 0] + 1j * lens2[:, 1]
+        z_geo = 0.5 * (z1_abs + z2_abs)
+        z1 = z1_abs - z_geo
+        z2 = z2_abs - z_geo
+
+        n_init = int(getattr(self, 'n_outline', self.amg_n_init) or self.amg_n_init)
+        n_init = max(n_init, 16)
+        rho_pri = self._bfsbl_rho('pri')
+        rho_sec = self._bfsbl_rho('sec')
+        g_pri = float(self.limb_gamma_pri(filt_idx))
+        g_sec = float(self.limb_gamma_sec(filt_idx))
+
+        def one_source(zeta, rho, gamma):
+            if gamma == 0:
+                return fsbl_contour.adaptive_limb_images_amps(
+                    zeta, rho, s=1.0, q=1.0, n_init=n_init, tol=self.amg_tol,
+                    max_pts=self.amg_max_pts, z1=z1, z2=z2, m1=m1, m2=m2)
+            return fsbl_contour.ld_images_amps(
+                zeta, rho, gamma, s=1.0, q=1.0, n_ld=self.ld_n_nodes,
+                n_init=n_init, tol=self.amg_tol, max_pts=self.amg_max_pts,
+                z1=z1, z2=z2, m1=m1, m2=m2)
+
+        img_pri, amp_pri = one_source(zeta_pri, rho_pri, g_pri)
+        img_sec, amp_sec = one_source(zeta_sec, rho_sec, g_sec)
+
+        images = np.empty((t.size, 2, 2), dtype=float)
+        amps = np.empty((t.size, 2), dtype=float)
+        images[:, 0, :] = img_pri
+        images[:, 1, :] = img_sec
+        amps[:, 0] = amp_pri
+        amps[:, 1] = amp_sec
+
+        # Convert to sky arcsec for astrometric models.
+        if self.astrometryFlag:
+            xL0 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)
+            scale = self.thetaE_amp * 1e-3
+            images = xL0[:, None, :] + images * scale
 
         return images, amps
 
-        
+    def get_amplification(self, t, filt_idx=0, amp_arr=None):
+        """
+        Flux-weighted total amplification of both sources.
+
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        filt_idx : int, optional
+            Filter index.
+        amp_arr : array_like, optional
+            Cached ``(N, 2)`` magnifications.
+
+        Returns
+        -------
+        A : ndarray, shape (N,)
+        """
+        if amp_arr is None:
+            _img, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+        amp = np.asarray(amp_arr, dtype=float)
+        f1 = mag2flux(self.mag_src_pri[filt_idx])
+        f2 = mag2flux(self.mag_src_sec[filt_idx])
+
+        return (amp[:, 0] * f1 + amp[:, 1] * f2) / (f1 + f2)
+
+    def get_photometry(self, t, filt_idx=0, amp_arr=None):
+        """
+        Unresolved photometry of both lensed sources with blending.
+
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        filt_idx : int, optional
+            Filter index.
+        amp_arr : array_like, optional
+            Cached ``(N, 2)`` magnifications.
+
+        Returns
+        -------
+        mag_model : ndarray, shape (N,)
+        """
+        if amp_arr is None:
+            _img, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+        amp = np.asarray(amp_arr, dtype=float)
+        f1 = mag2flux(self.mag_src_pri[filt_idx])
+        f2 = mag2flux(self.mag_src_sec[filt_idx])
+        flux = f1 * amp[:, 0] + f2 * amp[:, 1]
+        try:
+            flux += (f1 + f2) * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+        except AttributeError:
+            pass
+
+        return flux2mag(flux)
+
+    def get_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
+        """
+        Flux-weighted sky centroid of both sources and luminous lenses.
+
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        image_arr : array_like, optional
+            Cached centroids ``(N, 2, 2)`` from :meth:`get_all_arrays`.
+        amp_arr : array_like, optional
+            Cached magnifications ``(N, 2)``.
+        filt_idx : int, optional
+            Filter index.
+
+        Returns
+        -------
+        xCentroid : ndarray, shape (N, 2)
+            East / North in arcsec (astrometric) or Einstein radii (phot).
+        """
+        if (image_arr is None) or (amp_arr is None):
+            image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+        images = np.asarray(image_arr, dtype=float)
+        amp = np.asarray(amp_arr, dtype=float)
+        f1 = mag2flux(self.mag_src_pri[filt_idx])
+        f2 = mag2flux(self.mag_src_sec[filt_idx])
+        fS = np.stack([f1 * amp[:, 0], f2 * amp[:, 1]], axis=1)
+
+        if self.astrometryFlag:
+            xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+            fL1, fL2 = resolved_lens_fluxes_for_astrometry(
+                f1 + f2, self.b_sff[filt_idx], self.dmag_Lp_Ls[filt_idx])
+            numer = (images[:, 0] * fS[:, 0:1] + images[:, 1] * fS[:, 1:2]
+                     + xL1 * fL1 + xL2 * fL2)
+            denom = fS[:, 0] + fS[:, 1] + fL1 + fL2
+        else:
+            numer = images[:, 0] * fS[:, 0:1] + images[:, 1] * fS[:, 1:2]
+            denom = fS[:, 0] + fS[:, 1]
+
+        return numer / denom[:, None]
+
+
+class BFSBL_Phot(BFSBL, BSBL_Phot):
+    """Data class: BFSBL photometry only."""
+    photometryFlag = True
+    astrometryFlag = False
+
+
+class BFSBL_PhotAstrom(BFSBL, BSBL_PhotAstrom):
+    """Data class: BFSBL photometry + astrometry."""
+    photometryFlag = True
+    astrometryFlag = True
+
+
+class BFSBL_noParallax(PSPL_noParallax):
+    parallaxFlag = False
+
+
+class BFSBL_Parallax(PSPL_Parallax):
+    parallaxFlag = True
+
+
+class BFSBL_Limb(BFSBL):
+    """Limb-darkened BFSBL mixin with ``gamma_pri`` / ``gamma_sec``."""
+
+    def limb_gamma_pri(self, filt_idx=0):
+        """Primary-source Gamma coefficient for a filter."""
+        return self.gamma_pri[filt_idx]
+
+    def limb_gamma_sec(self, filt_idx=0):
+        """Secondary-source Gamma coefficient for a filter."""
+        return self.gamma_sec[filt_idx]
+
+
+class BFSBL_Limb_Phot(BFSBL_Limb, BFSBL_Phot):
+    photometryFlag = True
+    astrometryFlag = False
+
+
+class BFSBL_Limb_PhotAstrom(BFSBL_Limb, BFSBL_PhotAstrom):
+    photometryFlag = True
+    astrometryFlag = True
+
+
+class BFSBL_Limb_noParallax(BFSBL_noParallax):
+    parallaxFlag = False
+
+
+class BFSBL_Limb_Parallax(BFSBL_Parallax):
+    parallaxFlag = True
+
+class BFSBL_PhotAstromParam1(BSBL_PhotAstromParam1):
+    """BFSBL variant of :class:`BSBL_PhotAstromParam1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
+    fitter_param_names = BSBL_PhotAstromParam1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    filt_param_names = BSBL_PhotAstromParam1.filt_param_names
+    filt_param_usage = BSBL_PhotAstromParam1.filt_param_usage
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline = getattr(self, 'n_outline', 50)
+
+        return None
+
+
+class BFSBL_Limb_PhotAstromParam1(BFSBL_PhotAstromParam1):
+    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstromParam1`."""
+    fitter_param_names = BFSBL_PhotAstromParam1.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_names = BFSBL_PhotAstromParam1.filt_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_usage = BFSBL_PhotAstromParam1.filt_param_usage + ['both', 'both']
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class BFSBL_PhotAstromParam2(BSBL_PhotAstromParam2):
+    """BFSBL variant of :class:`BSBL_PhotAstromParam2` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
+    fitter_param_names = BSBL_PhotAstromParam2.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    filt_param_names = BSBL_PhotAstromParam2.filt_param_names
+    filt_param_usage = BSBL_PhotAstromParam2.filt_param_usage
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline = getattr(self, 'n_outline', 50)
+
+        return None
+
+
+class BFSBL_Limb_PhotAstromParam2(BFSBL_PhotAstromParam2):
+    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstromParam2`."""
+    fitter_param_names = BFSBL_PhotAstromParam2.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_names = BFSBL_PhotAstromParam2.filt_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_usage = BFSBL_PhotAstromParam2.filt_param_usage + ['both', 'both']
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class BFSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_AccOrbs_Param1):
+    """BFSBL variant of :class:`BSBL_PhotAstrom_AccOrbs_Param1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
+    fitter_param_names = BSBL_PhotAstrom_AccOrbs_Param1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    filt_param_names = BSBL_PhotAstrom_AccOrbs_Param1.filt_param_names
+    filt_param_usage = BSBL_PhotAstrom_AccOrbs_Param1.filt_param_usage
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E, delta_muS_sec_N, delta_muL_sec_E, delta_muL_sec_N, accSsec_E, accSsec_N, accLsec_E, accLsec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E, delta_muS_sec_N, delta_muL_sec_E, delta_muL_sec_N, accSsec_E, accSsec_N, accLsec_E, accLsec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline = getattr(self, 'n_outline', 50)
+
+        return None
+
+
+class BFSBL_Limb_PhotAstrom_AccOrbs_Param1(BFSBL_PhotAstrom_AccOrbs_Param1):
+    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_AccOrbs_Param1`."""
+    fitter_param_names = BFSBL_PhotAstrom_AccOrbs_Param1.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_names = BFSBL_PhotAstrom_AccOrbs_Param1.filt_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_usage = BFSBL_PhotAstrom_AccOrbs_Param1.filt_param_usage + ['both', 'both']
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E, delta_muS_sec_N, delta_muL_sec_E, delta_muL_sec_N, accSsec_E, accSsec_N, accLsec_E, accLsec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muS_sec_E, delta_muS_sec_N, delta_muL_sec_E, delta_muL_sec_N, accSsec_E, accSsec_N, accLsec_E, accLsec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class BFSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_CircOrbs_Param1):
+    """BFSBL variant of :class:`BSBL_PhotAstrom_CircOrbs_Param1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
+    fitter_param_names = BSBL_PhotAstrom_CircOrbs_Param1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    filt_param_names = BSBL_PhotAstrom_CircOrbs_Param1.filt_param_names
+    filt_param_usage = BSBL_PhotAstrom_CircOrbs_Param1.filt_param_usage
+    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline = getattr(self, 'n_outline', 50)
+
+        return None
+
+
+class BFSBL_Limb_PhotAstrom_CircOrbs_Param1(BFSBL_PhotAstrom_CircOrbs_Param1):
+    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_CircOrbs_Param1`."""
+    fitter_param_names = BFSBL_PhotAstrom_CircOrbs_Param1.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_names = BFSBL_PhotAstrom_CircOrbs_Param1.filt_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_usage = BFSBL_PhotAstrom_CircOrbs_Param1.filt_param_usage + ['both', 'both']
+    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class BFSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_CircOrbs_Param2):
+    """BFSBL variant of :class:`BSBL_PhotAstrom_CircOrbs_Param2` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
+    fitter_param_names = BSBL_PhotAstrom_CircOrbs_Param2.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    filt_param_names = BSBL_PhotAstrom_CircOrbs_Param2.filt_param_names
+    filt_param_usage = BSBL_PhotAstrom_CircOrbs_Param2.filt_param_usage
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline = getattr(self, 'n_outline', 50)
+
+        return None
+
+
+class BFSBL_Limb_PhotAstrom_CircOrbs_Param2(BFSBL_PhotAstrom_CircOrbs_Param2):
+    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_CircOrbs_Param2`."""
+    fitter_param_names = BFSBL_PhotAstrom_CircOrbs_Param2.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_names = BFSBL_PhotAstrom_CircOrbs_Param2.filt_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_usage = BFSBL_PhotAstrom_CircOrbs_Param2.filt_param_usage + ['both', 'both']
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, tpL, sepL, omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class BFSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_CircOrbs_Param3):
+    """BFSBL variant of :class:`BSBL_PhotAstrom_CircOrbs_Param3` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
+    fitter_param_names = BSBL_PhotAstrom_CircOrbs_Param3.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    filt_param_names = BSBL_PhotAstrom_CircOrbs_Param3.filt_param_names
+    filt_param_usage = BSBL_PhotAstrom_CircOrbs_Param3.filt_param_usage
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline = getattr(self, 'n_outline', 50)
+
+        return None
+
+
+class BFSBL_Limb_PhotAstrom_CircOrbs_Param3(BFSBL_PhotAstrom_CircOrbs_Param3):
+    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_CircOrbs_Param3`."""
+    fitter_param_names = BFSBL_PhotAstrom_CircOrbs_Param3.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_names = BFSBL_PhotAstrom_CircOrbs_Param3.filt_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_usage = BFSBL_PhotAstrom_CircOrbs_Param3.filt_param_usage + ['both', 'both']
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class BFSBL_PhotAstrom_EllOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
+    """BFSBL variant of :class:`BSBL_PhotAstrom_EllOrbs_Param1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
+    fitter_param_names = BSBL_PhotAstrom_EllOrbs_Param1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    filt_param_names = BSBL_PhotAstrom_EllOrbs_Param1.filt_param_names
+    filt_param_usage = BSBL_PhotAstrom_EllOrbs_Param1.filt_param_usage
+    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline = getattr(self, 'n_outline', 50)
+
+        return None
+
+
+class BFSBL_Limb_PhotAstrom_EllOrbs_Param1(BFSBL_PhotAstrom_EllOrbs_Param1):
+    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_EllOrbs_Param1`."""
+    fitter_param_names = BFSBL_PhotAstrom_EllOrbs_Param1.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_names = BFSBL_PhotAstrom_EllOrbs_Param1.filt_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_usage = BFSBL_PhotAstrom_EllOrbs_Param1.filt_param_usage + ['both', 'both']
+    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class BFSBL_PhotAstrom_EllOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
+    """BFSBL variant of :class:`BSBL_PhotAstrom_EllOrbs_Param2` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
+    fitter_param_names = BSBL_PhotAstrom_EllOrbs_Param2.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    filt_param_names = BSBL_PhotAstrom_EllOrbs_Param2.filt_param_names
+    filt_param_usage = BSBL_PhotAstrom_EllOrbs_Param2.filt_param_usage
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline = getattr(self, 'n_outline', 50)
+
+        return None
+
+
+class BFSBL_Limb_PhotAstrom_EllOrbs_Param2(BFSBL_PhotAstrom_EllOrbs_Param2):
+    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_EllOrbs_Param2`."""
+    fitter_param_names = BFSBL_PhotAstrom_EllOrbs_Param2.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_names = BFSBL_PhotAstrom_EllOrbs_Param2.filt_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_usage = BFSBL_PhotAstrom_EllOrbs_Param2.filt_param_usage + ['both', 'both']
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class BFSBL_PhotAstrom_EllOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
+    """BFSBL variant of :class:`BSBL_PhotAstrom_EllOrbs_Param3` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
+    fitter_param_names = BSBL_PhotAstrom_EllOrbs_Param3.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    filt_param_names = BSBL_PhotAstrom_EllOrbs_Param3.filt_param_names
+    filt_param_usage = BSBL_PhotAstrom_EllOrbs_Param3.filt_param_usage
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mass_source_p, mass_source_s, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mass_source_p, mass_source_s, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline = getattr(self, 'n_outline', 50)
+
+        return None
+
+
+class BFSBL_Limb_PhotAstrom_EllOrbs_Param3(BFSBL_PhotAstrom_EllOrbs_Param3):
+    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_EllOrbs_Param3`."""
+    fitter_param_names = BFSBL_PhotAstrom_EllOrbs_Param3.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_names = BFSBL_PhotAstrom_EllOrbs_Param3.filt_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_usage = BFSBL_PhotAstrom_EllOrbs_Param3.filt_param_usage + ['both', 'both']
+    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mass_source_p, mass_source_s, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N, beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS, omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL, omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mass_source_p, mass_source_s, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class BFSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
+    """BFSBL variant of :class:`BSBL_PhotAstrom_LinOrbs_Param1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
+    fitter_param_names = BSBL_PhotAstrom_LinOrbs_Param1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    filt_param_names = BSBL_PhotAstrom_LinOrbs_Param1.filt_param_names
+    filt_param_usage = BSBL_PhotAstrom_LinOrbs_Param1.filt_param_usage
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E, delta_muL_sec_N, delta_muS_sec_E, delta_muS_sec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E, delta_muL_sec_N, delta_muS_sec_E, delta_muS_sec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline = getattr(self, 'n_outline', 50)
+
+        return None
+
+
+class BFSBL_Limb_PhotAstrom_LinOrbs_Param1(BFSBL_PhotAstrom_LinOrbs_Param1):
+    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotAstrom_LinOrbs_Param1`."""
+    fitter_param_names = BFSBL_PhotAstrom_LinOrbs_Param1.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_names = BFSBL_PhotAstrom_LinOrbs_Param1.filt_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_usage = BFSBL_PhotAstrom_LinOrbs_Param1.filt_param_usage + ['both', 'both']
+    def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E, delta_muL_sec_N, delta_muS_sec_E, delta_muS_sec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth', root_tol=1e-08):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL, dS, sepL, alphaL, sepS, alphaS, delta_muL_sec_E, delta_muL_sec_N, delta_muS_sec_E, delta_muS_sec_N, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+
+        return None
+
+
+class BFSBL_PhotParam1(BSBL_PhotParam1):
+    """BFSBL variant of :class:`BSBL_PhotParam1` (adds ``radiusS_pri`` / ``radiusS_sec``)."""
+    fitter_param_names = BSBL_PhotParam1.fitter_param_names + ['radiusS_pri', 'radiusS_sec']
+    filt_param_names = BSBL_PhotParam1.filt_param_names
+    filt_param_usage = BSBL_PhotParam1.filt_param_usage
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, raL=None, decL=None, obsLocation='earth'):
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL, decL=decL, obsLocation=obsLocation)
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline = getattr(self, 'n_outline', 50)
+
+        return None
+
+
+class BFSBL_Limb_PhotParam1(BFSBL_PhotParam1):
+    """Limb-darkened BFSBL variant of :class:`BFSBL_PhotParam1`."""
+    fitter_param_names = BFSBL_PhotParam1.fitter_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_names = BFSBL_PhotParam1.filt_param_names + ['gamma_pri', 'gamma_sec']
+    filt_param_usage = BFSBL_PhotParam1.filt_param_usage + ['both', 'both']
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec, gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth'):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri=radiusS_pri,
+                         radiusS_sec=radiusS_sec, raL=raL, decL=decL, obsLocation=obsLocation)
+
+        return None
+
+
+
+class BFSPL(PSPL):
+    """
+    Binary Finite-Source, Point-Lens models.
+
+    Each source is integrated with the point-lens contour code in
+    :mod:`bagle.fspl_contour` (uniform or adaptive limb, optional linear
+    limb darkening via nested disks). Photometry and astrometry are the
+    flux-weighted sum of the two sources.
+    """
+
+    # Adaptive limb sampling when |u| < 2 rho; see fspl_contour.
+    amg_tol = 1e-4
+    amg_n_init = 64
+    amg_max_pts = 2048
+
+    # Gauss-Legendre nodes per LD sub-interval; see ld_images_amps.
+    ld_n_nodes = 8
+
+    def limb_gamma_pri(self, filt_idx=0):
+        """
+        Primary-source linear limb-darkening coefficient (Gamma law).
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            Gamma coefficient (0 for a uniform source).
+        """
+        return 0.0
+
+    def limb_gamma_sec(self, filt_idx=0):
+        """
+        Secondary-source linear limb-darkening coefficient (Gamma law).
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            Gamma coefficient (0 for a uniform source).
+        """
+        return 0.0
+
+    def _bfspl_outline(self, which='pri'):
+        """
+        Number of uniform limb samples for one source.
+
+        Parameters
+        ----------
+        which : {'pri', 'sec'}
+            Which binary source.
+
+        Returns
+        -------
+        n_outline : int
+            Limb sample count (default 50 when unset / False).
+        """
+        # Prefer per-source outline; fall back to shared n_outline / 50.
+        key = 'n_outline_pri' if which == 'pri' else 'n_outline_sec'
+        n = getattr(self, key, None)
+        if n is None or n is False:
+            n = getattr(self, 'n_outline', None)
+        if n is None or n is False:
+            n = 50
+
+        return int(n)
+
+    def _bfspl_rho(self, which='pri'):
+        """
+        Source radius in Einstein radii for one binary component.
+
+        Parameters
+        ----------
+        which : {'pri', 'sec'}
+            Which binary source.
+
+        Returns
+        -------
+        rho : float
+            Radius in Einstein radii.
+        """
+        rad = self.radiusS_pri if which == 'pri' else self.radiusS_sec
+        if hasattr(self, 'thetaE_amp'):
+            return rad * 1e3 / self.thetaE_amp
+
+        return rad
+
+    def _bfspl_disk_images_amps(self, zeta_c, rho, gamma, disk_images_amps):
+        """
+        Uniform or limb-darkened FSPL images for one binary source.
+
+        Parameters
+        ----------
+        zeta_c : ndarray, complex, shape (N_times,)
+            Source centres relative to the lens (Einstein radii).
+        rho : float
+            Source radius in Einstein radii.
+        gamma : float
+            Linear limb-darkening coefficient (0 = uniform).
+        disk_images_amps : callable
+            ``(zeta_rows, rho_rows) -> (images, amps)`` for uniform disks.
+
+        Returns
+        -------
+        images : ndarray, shape (N_times, 2, 2)
+            Image centroids relative to the lens (Einstein radii).
+        amps : ndarray, shape (N_times, 2)
+            Signed image amplifications.
+        """
+        if gamma == 0:
+            return disk_images_amps(zeta_c, rho)
+
+        return fspl_contour.ld_images_amps(zeta_c, rho, gamma, disk_images_amps,
+                                           n_ld=self.ld_n_nodes)
+
+    def _bfspl_one_source(self, zeta_c, rho, gamma, n_outline, use_amg):
+        """
+        Contour images and amplifications for one binary source.
+
+        Parameters
+        ----------
+        zeta_c : ndarray, complex, shape (N_times,)
+            Source centres relative to the lens (Einstein radii).
+        rho : float
+            Source radius in Einstein radii.
+        gamma : float
+            Linear limb-darkening coefficient (Gamma law).
+        n_outline : int
+            Uniform limb samples when not using the adaptive mesh.
+        use_amg : bool
+            If True, use error-controlled adaptive limb sampling.
+
+        Returns
+        -------
+        images : ndarray, shape (N_times, 2, 2)
+            Plus / minus image centroids (Einstein radii, lens-relative).
+        amps : ndarray, shape (N_times, 2)
+            Signed magnifications ``[+, -]``.
+        """
+        if use_amg:
+            def disk_images_amps(zeta_rows, rho_rows):
+                return fspl_contour.adaptive_limb_images_amps(
+                    zeta_rows, rho_rows, n_init=self.amg_n_init,
+                    tol=self.amg_tol, max_pts=self.amg_max_pts)
+        else:
+            def disk_images_amps(zeta_rows, rho_rows):
+                return fspl_contour.uniform_limb_images_amps(
+                    zeta_rows, rho_rows, n_outline)
+
+        return self._bfspl_disk_images_amps(zeta_c, rho, gamma,
+                                            disk_images_amps)
+
+    def get_all_arrays(self, t, filt_idx=0):
+        """
+        Image centroids and amplifications for both finite sources.
+
+        Each source uses the point-lens contour integrals in
+        :mod:`bagle.fspl_contour`. Adaptive limb sampling is used when
+        ``|u| < 2 rho`` for that source; otherwise ``n_outline`` equally
+        spaced samples. Limb darkening (when
+        :meth:`limb_gamma_pri` / :meth:`limb_gamma_sec` are non-zero) sums
+        nested uniform disks.
+
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        images : ndarray, shape (N_times, 2, 2, 2)
+            Sky positions ``[source, image, E/N]`` in arcsec (astrometric
+            models) or Einstein radii (photometry-only).
+        amps : ndarray, shape (N_times, 2, 2)
+            Signed magnifications ``[source, image]``.
+        """
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        n_t = t.size
+
+        # Source centres relative to the lens (Einstein radii).
+        u_vec = self.get_u(t, filt_idx=filt_idx)
+        zeta_pri = u_vec[:, 0, 0] + 1j * u_vec[:, 0, 1]
+        zeta_sec = u_vec[:, 1, 0] + 1j * u_vec[:, 1, 1]
+
+        rho_pri = self._bfspl_rho('pri')
+        rho_sec = self._bfspl_rho('sec')
+        g_pri = self.limb_gamma_pri(filt_idx)
+        g_sec = self.limb_gamma_sec(filt_idx)
+        n_pri = self._bfspl_outline('pri')
+        n_sec = self._bfspl_outline('sec')
+
+        # Adaptive mesh only when a limb point can sit near the lens.
+        close_pri = np.abs(zeta_pri) < (2.0 * rho_pri)
+        close_sec = np.abs(zeta_sec) < (2.0 * rho_sec)
+
+        img_pri = np.empty((n_t, 2, 2), dtype=float)
+        amp_pri = np.empty((n_t, 2), dtype=float)
+        img_sec = np.empty((n_t, 2, 2), dtype=float)
+        amp_sec = np.empty((n_t, 2), dtype=float)
+
+        # Primary: split close / far epochs like FSPL.get_all_arrays.
+        if n_t > 0:
+            far = ~close_pri
+            if np.any(far):
+                img_pri[far], amp_pri[far] = self._bfspl_one_source(
+                    zeta_pri[far], rho_pri, g_pri, n_pri, use_amg=False)
+            if np.any(close_pri):
+                img_pri[close_pri], amp_pri[close_pri] = self._bfspl_one_source(
+                    zeta_pri[close_pri], rho_pri, g_pri, n_pri, use_amg=True)
+
+            far = ~close_sec
+            if np.any(far):
+                img_sec[far], amp_sec[far] = self._bfspl_one_source(
+                    zeta_sec[far], rho_sec, g_sec, n_sec, use_amg=False)
+            if np.any(close_sec):
+                img_sec[close_sec], amp_sec[close_sec] = self._bfspl_one_source(
+                    zeta_sec[close_sec], rho_sec, g_sec, n_sec, use_amg=True)
+
+        # Convert lens-relative Einstein radii to sky arcsec when needed.
+        if getattr(self, 'astrometryFlag', False):
+            xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
+            scale = self.thetaE_amp * 1e-3
+            img_pri = xL[:, None, :] + img_pri * scale
+            img_sec = xL[:, None, :] + img_sec * scale
+
+        images = np.empty((n_t, 2, 2, 2), dtype=float)
+        images[:, 0, :, :] = img_pri
+        images[:, 1, :, :] = img_sec
+        amps = np.empty((n_t, 2, 2), dtype=float)
+        amps[:, 0, :] = amp_pri
+        amps[:, 1, :] = amp_sec
+
+        return images, amps
+
     def get_u(self, t, filt_idx=0):
         """
         Get the separation vector, \\vec{u}(t), which is the unlensed
@@ -35172,6 +36327,108 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         self.u0_sec = self.u0_amp_sec * self.u0_hat
 
         return
+
+
+class BFSPL_Limb(BFSPL):
+    """
+    Linear limb-darkened BFSPL mixin (Gamma law per source and filter).
+
+    Each source has its own per-filter coefficient ``gamma_pri`` /
+    ``gamma_sec``. Magnifications and centroids follow
+    :func:`bagle.fspl_contour.ld_images_amps` for each source.
+    """
+
+    def limb_gamma_pri(self, filt_idx=0):
+        """
+        Primary-source linear limb-darkening coefficient for a filter.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            The per-filter ``gamma_pri`` parameter.
+        """
+        return self.gamma_pri[filt_idx]
+
+    def limb_gamma_sec(self, filt_idx=0):
+        """
+        Secondary-source linear limb-darkening coefficient for a filter.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        gamma : float
+            The per-filter ``gamma_sec`` parameter.
+        """
+        return self.gamma_sec[filt_idx]
+
+
+class BFSPL_Limb_PhotAstrom(BFSPL_Limb, BFSPL_PhotAstrom):
+    """Data class: limb-darkened BFSPL photometry + astrometry."""
+    photometryFlag = True
+    astrometryFlag = True
+
+
+class BFSPL_Limb_noParallax(BFSPL_noParallax):
+    parallaxFlag = False
+    ref_frame_parallax_flag = False
+
+
+class BFSPL_Limb_Parallax(BFSPL_Parallax):
+    parallaxFlag = True
+    ref_frame_parallax_flag = False
+
+
+class BFSPL_Limb_PhotAstromParam1(BFSPL_PhotAstromParam1):
+    """
+    Limb-darkened BFSPL photometry + astrometry (physical parameters).
+
+    Same as :class:`BFSPL_PhotAstromParam1` plus per-filter linear
+    limb-darkening coefficients ``gamma_pri`` and ``gamma_sec``.
+
+    Parameters
+    ----------
+    mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N, alpha, muS_E,
+    muS_N, radiusS_pri, radiusS_sec, sep, b_sff, mag_src_pri, mag_src_sec
+        Same as :class:`BFSPL_PhotAstromParam1`.
+    gamma_pri : array_like
+        Primary-source Gamma limb-darkening coefficient per filter.
+    gamma_sec : array_like
+        Secondary-source Gamma limb-darkening coefficient per filter.
+    n_outline_pri, n_outline_sec, raL, decL, obsLocation
+        Same as :class:`BFSPL_PhotAstromParam1`.
+    """
+    fitter_param_names = (BFSPL_PhotAstromParam1.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSPL_PhotAstromParam1.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
+    filt_param_usage = (BFSPL_PhotAstromParam1.filt_param_usage
+                        + ['both', 'both'])
+
+    def __init__(self, mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+                 alpha, muS_E, muS_N, radiusS_pri, radiusS_sec, sep, b_sff,
+                 mag_src_pri, mag_src_sec, gamma_pri, gamma_sec,
+                 n_outline_pri=False, n_outline_sec=False, raL=None, decL=None,
+                 obsLocation='earth'):
+        # Set gamma first so PSPL_Param broadcasts per filter.
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
+                         alpha, muS_E, muS_N, radiusS_pri, radiusS_sec, sep,
+                         b_sff, mag_src_pri, mag_src_sec,
+                         n_outline_pri=n_outline_pri,
+                         n_outline_sec=n_outline_sec, raL=raL, decL=decL,
+                         obsLocation=obsLocation)
+
+        return None
 
 
 #############################################
@@ -38353,6 +39610,874 @@ class BSBL_PhotAstrom_Par_Param2(ModelClassABC,
 # FSPL Model
 # =====
 @inheritdocstring
+
+# FSBL_Limb composites
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_AccOrbs_Param1(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_AccOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_AccOrbs_Param3(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_AccOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_AccOrbs_Param6(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_AccOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_AccOrbs_Param7(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_AccOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_CircOrbs_Param3(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_CircOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_CircOrbs_Param4(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_CircOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_CircOrbs_Param7(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_CircOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_CircOrbs_Param8(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_CircOrbs_Param8):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_EllOrbs_Param3(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_EllOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_EllOrbs_Param4(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_EllOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_EllOrbs_Param7(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_EllOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_EllOrbs_Param8(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_EllOrbs_Param8):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_LinOrbs_Param1(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_LinOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_LinOrbs_Param3(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_LinOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_LinOrbs_Param6(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_LinOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_LinOrbs_Param7(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstrom_LinOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_Param1(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_Param2(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstromParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_Param3(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstromParam3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_Param4(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstromParam4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_Param5(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstromParam5):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_Param6(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstromParam6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_Param7(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstromParam7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_Par_Param8(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_Parallax, FSBL_Limb_PhotAstromParam8):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param1(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_AccOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param3(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_AccOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param6(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_AccOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param7(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_AccOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param3(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_CircOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param4(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_CircOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param7(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_CircOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param8(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_CircOrbs_Param8):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param3(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_EllOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param4(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_EllOrbs_Param4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param7(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_EllOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param8(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_EllOrbs_Param8):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param1(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_LinOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param3(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_LinOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param6(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_LinOrbs_Param6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param7(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstrom_LinOrbs_Param7):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_Param1(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_Param2(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstromParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_Param3(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstromParam3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_Param4(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstromParam4):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_Param6(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstromParam6):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_PhotAstrom_noPar_Param8(ModelClassABC, FSBL_Limb_PhotAstrom, FSBL_Limb_noParallax, FSBL_Limb_PhotAstromParam8):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_Phot_Par_CircOrbs_Param1(ModelClassABC, FSBL_Limb_Phot, FSBL_Limb_Parallax, FSBL_Limb_Phot_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_Phot_Par_EllOrbs_Param1(ModelClassABC, FSBL_Limb_Phot, FSBL_Limb_Parallax, FSBL_Limb_Phot_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_Phot_Par_Param1(ModelClassABC, FSBL_Limb_Phot, FSBL_Limb_Parallax, FSBL_Limb_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_Phot_noPar_CircOrbs_Param1(ModelClassABC, FSBL_Limb_Phot, FSBL_Limb_noParallax, FSBL_Limb_Phot_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_Phot_noPar_EllOrbs_Param1(ModelClassABC, FSBL_Limb_Phot, FSBL_Limb_noParallax, FSBL_Limb_Phot_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class FSBL_Limb_Phot_noPar_Param1(ModelClassABC, FSBL_Limb_Phot, FSBL_Limb_noParallax, FSBL_Limb_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+
+@inheritdocstring
+class BFSBL_PhotAstrom_noPar_Param1(ModelClassABC, BFSBL_PhotAstrom, BFSBL_noParallax, BFSBL_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_noPar_Param1(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_noParallax, BFSBL_Limb_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_noPar_LinOrbs_Param1(ModelClassABC, BFSBL_PhotAstrom, BFSBL_noParallax, BFSBL_PhotAstrom_LinOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_noPar_LinOrbs_Param1(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_noParallax, BFSBL_Limb_PhotAstrom_LinOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_Par_LinOrbs_Param1(ModelClassABC, BFSBL_PhotAstrom, BFSBL_Parallax, BFSBL_PhotAstrom_LinOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_Par_LinOrbs_Param1(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_Parallax, BFSBL_Limb_PhotAstrom_LinOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_noPar_AccOrbs_Param1(ModelClassABC, BFSBL_PhotAstrom, BFSBL_noParallax, BFSBL_PhotAstrom_AccOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_noPar_AccOrbs_Param1(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_noParallax, BFSBL_Limb_PhotAstrom_AccOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_Par_AccOrbs_Param1(ModelClassABC, BFSBL_PhotAstrom, BFSBL_Parallax, BFSBL_PhotAstrom_AccOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_Par_AccOrbs_Param1(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_Parallax, BFSBL_Limb_PhotAstrom_AccOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC, BFSBL_PhotAstrom, BFSBL_Parallax, BFSBL_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param1(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_Parallax, BFSBL_Limb_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC, BFSBL_PhotAstrom, BFSBL_noParallax, BFSBL_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param1(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_noParallax, BFSBL_Limb_PhotAstrom_EllOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC, BFSBL_PhotAstrom, BFSBL_Parallax, BFSBL_PhotAstrom_EllOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_Parallax, BFSBL_Limb_PhotAstrom_EllOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC, BFSBL_PhotAstrom, BFSBL_noParallax, BFSBL_PhotAstrom_EllOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_noParallax, BFSBL_Limb_PhotAstrom_EllOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_Par_EllOrbs_Param3(ModelClassABC, BFSBL_PhotAstrom, BFSBL_Parallax, BFSBL_PhotAstrom_EllOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param3(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_Parallax, BFSBL_Limb_PhotAstrom_EllOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_noPar_EllOrbs_Param3(ModelClassABC, BFSBL_PhotAstrom, BFSBL_noParallax, BFSBL_PhotAstrom_EllOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param3(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_noParallax, BFSBL_Limb_PhotAstrom_EllOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_Par_CircOrbs_Param3(ModelClassABC, BFSBL_PhotAstrom, BFSBL_Parallax, BFSBL_PhotAstrom_CircOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param3(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_Parallax, BFSBL_Limb_PhotAstrom_CircOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_noPar_CircOrbs_Param3(ModelClassABC, BFSBL_PhotAstrom, BFSBL_noParallax, BFSBL_PhotAstrom_CircOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param3(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_noParallax, BFSBL_Limb_PhotAstrom_CircOrbs_Param3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC, BFSBL_PhotAstrom, BFSBL_Parallax, BFSBL_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param1(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_Parallax, BFSBL_Limb_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC, BFSBL_PhotAstrom, BFSBL_noParallax, BFSBL_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_noParallax, BFSBL_Limb_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_Par_CircOrbs_Param2(ModelClassABC, BFSBL_PhotAstrom, BFSBL_Parallax, BFSBL_PhotAstrom_CircOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param2(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_Parallax, BFSBL_Limb_PhotAstrom_CircOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_noPar_CircOrbs_Param2(ModelClassABC, BFSBL_PhotAstrom, BFSBL_noParallax, BFSBL_PhotAstrom_CircOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param2(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_noParallax, BFSBL_Limb_PhotAstrom_CircOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_Par_Param1(ModelClassABC, BFSBL_PhotAstrom, BFSBL_Parallax, BFSBL_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_Par_Param1(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_Parallax, BFSBL_Limb_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_noPar_Param2(ModelClassABC, BFSBL_PhotAstrom, BFSBL_noParallax, BFSBL_PhotAstromParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_noPar_Param2(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_noParallax, BFSBL_Limb_PhotAstromParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_PhotAstrom_Par_Param2(ModelClassABC, BFSBL_PhotAstrom, BFSBL_Parallax, BFSBL_PhotAstromParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_PhotAstrom_Par_Param2(ModelClassABC, BFSBL_Limb_PhotAstrom, BFSBL_Limb_Parallax, BFSBL_Limb_PhotAstromParam2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+
 class BFSPL_PhotAstrom_noPar_Param1(ModelClassABC,
                                    BFSPL_PhotAstrom,
                                    BFSPL_noParallax,
@@ -38361,6 +40486,32 @@ class BFSPL_PhotAstrom_noPar_Param1(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
+
+@inheritdocstring
+class BFSPL_Limb_PhotAstrom_noPar_Param1(ModelClassABC,
+                                         BFSPL_Limb_PhotAstrom,
+                                         BFSPL_Limb_noParallax,
+                                         BFSPL_Limb_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+
+@inheritdocstring
+class BFSPL_Limb_PhotAstrom_Par_Param1(ModelClassABC,
+                                       BFSPL_Limb_PhotAstrom,
+                                       BFSPL_Limb_Parallax,
+                                       BFSPL_Limb_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
 
 
 

@@ -951,9 +951,18 @@ def fsbl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, z1, z2, m1, m2,
                                rho, n_outline, mag_src, b_sff, mag_obs,
                                mag_err, parallax_vectors=None, piE_E=0.0,
                                piE_N=0.0, gp_params=None, fixed_jitter=True,
-                               root_tol=1e-10):
+                               root_tol=1e-10, gamma=None):
     """
     Traced photometric log-likelihood with static-limb FSBL magnification.
+
+    Notes
+    -----
+    The authoritative host path is :mod:`bagle.fsbl_contour` (adaptive
+    Bozza/VBBL contours). This traced kernel is the legacy static-limb
+    d1 path; a full JAX port of ``fsbl_contour`` (per-row ``rho``,
+    creation/annihilation chords, nested-disk ``gamma``) remains open.
+    ``gamma`` is accepted for API compatibility and currently ignored
+    (uniform source).
 
     Parameters
     ----------
@@ -993,6 +1002,8 @@ def fsbl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, z1, z2, m1, m2,
         Passed to the GP path when ``gp_params`` is not ``None``.
     root_tol : float, optional, shape = ()
         Root mask tolerance for the Witt solver.
+    gamma : float, optional
+        Linear limb-darkening coefficient (unused until the contour port).
 
     Returns
     -------
