@@ -788,6 +788,12 @@ def adaptive_limb_images_amps(zeta_c, rho, s, q, n_init=64, tol=1e-4,
     if z1 is None:
         z1, z2, m1, m2 = lens_positions_cm(s, q)
 
+    # Allow scalar or per-epoch lens geometry (orbital motion).
+    z1 = np.broadcast_to(np.asarray(z1, dtype=complex), (n_times,))
+    z2 = np.broadcast_to(np.asarray(z2, dtype=complex), (n_times,))
+    m1 = np.broadcast_to(np.asarray(m1, dtype=float), (n_times,))
+    m2 = np.broadcast_to(np.asarray(m2, dtype=float), (n_times,))
+
     images = np.zeros((n_times, 2), dtype=float)
     amps = np.zeros(n_times, dtype=float)
     if n_times == 0:
@@ -795,9 +801,11 @@ def adaptive_limb_images_amps(zeta_c, rho, s, q, n_init=64, tol=1e-4,
 
     for i in range(n_times):
         theta = 2.0 * np.pi * np.arange(n_init) / n_init
+        z1_i, z2_i = complex(z1[i]), complex(z2[i])
+        m1_i, m2_i = float(m1[i]), float(m2[i])
         for n_iter in range(max_iter + 1):
             z_img, parity, dz, wedge, jac, _ = _limb_sample_images(
-                zeta_c[i], rho[i], theta, z1, z2, m1, m2, root_tol)
+                zeta_c[i], rho[i], theta, z1_i, z2_i, m1_i, m2_i, root_tol)
             area, mx, my, seg_err = _integrate_epoch(
                 theta, z_img, parity, dz, wedge, jac, rho[i])
             abs_area = abs(area)
@@ -863,15 +871,28 @@ def ld_images_amps(zeta_c, rho, gamma, s, q, n_ld=8, n_init=64, tol=1e-4,
     amps : ndarray, shape (N_times,)
         Total magnifications.
     """
+    zeta_c = np.atleast_1d(np.asarray(zeta_c, dtype=complex)).reshape(-1)
+    n_times = zeta_c.size
     if z1 is None:
         z1, z2, m1, m2 = lens_positions_cm(s, q)
 
+    # Per-epoch lens geometry (broadcast scalars).
+    z1_arr = np.broadcast_to(np.asarray(z1, dtype=complex), (n_times,))
+    z2_arr = np.broadcast_to(np.asarray(z2, dtype=complex), (n_times,))
+    m1_arr = np.broadcast_to(np.asarray(m1, dtype=float), (n_times,))
+    m2_arr = np.broadcast_to(np.asarray(m2, dtype=float), (n_times,))
+
     def disk_images_amps(zeta_rows, rho_rows):
+        # Nested disks repeat each epoch; tile the lens geometry to match.
+        n_disk = int(np.asarray(zeta_rows).size // n_times)
+        z1_r = np.repeat(z1_arr, n_disk)
+        z2_r = np.repeat(z2_arr, n_disk)
+        m1_r = np.repeat(m1_arr, n_disk)
+        m2_r = np.repeat(m2_arr, n_disk)
         # fspl_contour.ld_images_amps expects (N, 2, 2) images and (N, 2) amps.
-        # Adapt our (N, 2) / (N,) outputs to that layout (single "combined" image).
         img, amp = adaptive_limb_images_amps(
             zeta_rows, rho_rows, s, q, n_init=n_init, tol=tol,
-            max_pts=max_pts, z1=z1, z2=z2, m1=m1, m2=m2)
+            max_pts=max_pts, z1=z1_r, z2=z2_r, m1=m1_r, m2=m2_r)
         n = amp.shape[0]
         images = np.zeros((n, 2, 2), dtype=float)
         images[:, 0, :] = img
@@ -883,7 +904,7 @@ def ld_images_amps(zeta_c, rho, gamma, s, q, n_ld=8, n_init=64, tol=1e-4,
     if gamma == 0:
         img, amp = adaptive_limb_images_amps(
             zeta_c, rho, s, q, n_init=n_init, tol=tol, max_pts=max_pts,
-            z1=z1, z2=z2, m1=m1, m2=m2)
+            z1=z1_arr, z2=z2_arr, m1=m1_arr, m2=m2_arr)
         return img, amp
 
     images2, amps2 = fspl_contour.ld_images_amps(
