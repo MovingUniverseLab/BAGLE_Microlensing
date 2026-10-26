@@ -1991,8 +1991,15 @@ def test_FSBL_PhotAstrom_Par_Param2(plot=False, verbose=False):
     psbl_n_amps = psbl_n.get_amplification(t_obs)
 
     # Tiny rho should recover the point-source (PSBL) amplification.
-    np.testing.assert_allclose(fsbl_amps, psbl_amps, rtol=1e-6, atol=1e-6)
-    np.testing.assert_allclose(fsbl_n_amps, psbl_n_amps, rtol=1e-6, atol=1e-6)
+    # Epochs sent to contour integration trace the source limb with
+    # n_outline points (n_outline - 1 polygon edges). An inscribed polygon
+    # holds a fraction (M / 2 pi) sin(2 pi / M) of the circle's area, so those
+    # epochs sit low by a fixed 0.27% for n_outline = 50, however small rho is.
+    n_edges = fsbl_p.n_outline - 1
+    polygon_deficit = 1.0 - (n_edges / (2 * np.pi)) * np.sin(2 * np.pi / n_edges)
+    rtol = 1.1 * polygon_deficit
+    np.testing.assert_allclose(fsbl_amps, psbl_amps, rtol=rtol, atol=1e-6)
+    np.testing.assert_allclose(fsbl_n_amps, psbl_n_amps, rtol=rtol, atol=1e-6)
 
     # Plot the photometry
     plt.figure(1)
@@ -2004,6 +2011,81 @@ def test_FSBL_PhotAstrom_Par_Param2(plot=False, verbose=False):
     plt.xlabel('Time (MJD)')
 
     return
+
+
+def make_fsbl_psbl_pair(radiusS, b_sff=1.0):
+    """Same caustic-crossing event as test_FSBL_PhotAstrom_Par_Param2, as FSBL and PSBL.
+    radiusS is the source radius in arcsec, as FSBL_PhotAstrom_Par_Param2
+    takes it. With thetaE = 3 mas, rho = radiusS * 1e3 / 3 Einstein radii.
+    """
+    raL, decL = 259.5, -29.0
+    t0, u0, tE = 57000, 0.3, 200.0
+    thetaE, piS = 3.0, (1.0 / 8000.0) * 1e3
+    piE_E, piE_N = 0.01, -0.01
+    xS0_E, xS0_N, muS_E, muS_N = 0.0, 0.01, 3.0, 0.0
+    q, sep, alpha = 0.8, 3.0, 135.0
+    b_sff = np.array([b_sff])
+    mag_src = np.array([18.0])
+    dmag_Lp_Ls = np.array([0.0])
+
+    psbl = model.PSBL_PhotAstrom_Par_Param2(t0, u0, tE, thetaE, piS,
+                                            piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                                            q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                                            raL=raL, decL=decL, root_tol=1e-4)
+    fsbl = model.FSBL_PhotAstrom_Par_Param2(t0, u0, tE, thetaE, piS, radiusS,
+                                            piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                                            q, sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
+                                            raL=raL, decL=decL, root_tol=1e-4)
+    return fsbl, psbl
+
+
+def test_FSBL_PhotAstrom_contour_image_units():
+    """Contour-epoch image positions must be sky arcsec, like point-source epochs."""
+    fsbl, psbl = make_fsbl_psbl_pair(radiusS=1e-6)  # rho ~ 3e-4
+    t = np.arange(56900.0, 57100.0, 2.0)
+    images, _, _, _ = fsbl.get_all_arrays(t)
+    images = np.asarray(images)
+    ci = np.isfinite(fsbl.centroid_CI)
+    assert ci.any(), "no epoch used contour integration; the test is not exercising it"
+
+    xL1, xL2 = fsbl.get_resolved_lens_astrometry(t)
+    mid = 0.5 * (xL1 + xL2)
+    mid = mid[:, 0] + 1j * mid[:, 1]
+    dist = np.where(images != 0, np.abs(images - mid[:, None, None]), np.nan)
+
+    # Images sit within a few thetaE of the lens. Left in Einstein radii and
+    # read as arcsec, they would be ~1000x too far (thetaE = 3 mas).
+    thetaE_as = fsbl.thetaE_amp * 1e-3
+    assert np.nanmax(dist[ci]) < 10 * thetaE_as
+
+
+def test_FSBL_PhotAstrom_astrometry_matches_PSBL():
+    """Small source: FSBL astrometry equals PSBL on contour and point-source epochs.
+    b_sff = 0.5 checks the per-limb-point flux weighting against a luminous lens."""
+    t = np.arange(56000.0, 58000.0, 3.0)
+    for b_sff in [1.0, 0.5]:
+        fsbl, psbl = make_fsbl_psbl_pair(radiusS=1e-7, b_sff=b_sff)  # rho ~ 3e-5
+        ast_f = np.asarray(fsbl.get_astrometry(t))
+        ci = np.isfinite(fsbl.centroid_CI)
+        ast_p = np.asarray(psbl.get_astrometry(t))
+        assert ci.any()
+
+        diff_mas = np.linalg.norm(ast_f - ast_p, axis=1) * 1e3
+        assert diff_mas[~ci].max() < 1e-6
+        assert diff_mas[ci].max() < 0.05
+
+
+def test_FSBL_PhotAstrom_centroid_smooth_through_caustic():
+    """A large source smooths the caustic crossing: no jumps in the FSBL centroid."""
+    fsbl, psbl = make_fsbl_psbl_pair(radiusS=1e-2)  # rho ~ 3.3
+    t = np.arange(56900.0, 57100.0, 0.5)
+    ast_mas = np.asarray(fsbl.get_astrometry(t)) * 1e3
+    assert np.isfinite(ast_mas).all()
+
+    # Source motion is 3 mas/yr = 0.004 mas per 0.5 day, and lensing adds a smooth
+    # shift. A unit or open-arc area error shows up as a step of order 1 mas.
+    step = np.abs(np.diff(ast_mas, axis=0))
+    assert step.max() < 0.05
 
 
 def standard_FSBL_plot(plot=False, verbose=False):

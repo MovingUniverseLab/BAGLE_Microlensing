@@ -22992,6 +22992,19 @@ class FSBL(PSBL):
         I2 = self.trapz_zero_avoiding(-0.5 * z.imag, z.real, tidx)
         return I1 + I2
 
+    def integrate_first_moment(self, z, tidx):
+        """
+        First moment of the area inside contour ``z``, returned as ``∬x dA + i ∬y dA``.
+
+        Green's theorem turns each area integral into a line integral along
+        the contour: ``∬x dA = ∮ x²/2 dy`` and ``∬y dA = -∮ y²/2 dx``.
+        The orientation is the same as :meth:`integrate_unif`, so
+        ``integrate_first_moment / integrate_unif`` is the centroid of that area.
+        """
+        moment_x = self.trapz_zero_avoiding(0.5 * z.real ** 2, z.imag, tidx)
+        moment_y = self.trapz_zero_avoiding(-0.5 * z.imag ** 2, z.real, tidx)
+        return moment_x + 1j * moment_y
+
     def images_on_source_limb(self, w0, z1, z2, m1, m2, rho, npts_limb, niter):
         """
         Limb images on a static ``npts_limb`` grid.
@@ -23036,19 +23049,26 @@ class FSBL(PSBL):
         tail_idcs_closed = jnp.repeat(contours1.shape[1] - 1, contours1.shape[0])
         I1 = vmap(self.integrate_unif)(contours1, tail_idcs_closed)
         mags1 = I1 * contours_p1
+        moments1 = vmap(self.integrate_first_moment)(contours1, tail_idcs_closed) * contours_p1
         max_nr_of_contours = 3
 
         def branch_all_closed(segments):
-            return jnp.zeros(max_nr_of_contours, dtype=mags1.dtype)
+            return (jnp.zeros(max_nr_of_contours, dtype=mags1.dtype),
+                    jnp.zeros(max_nr_of_contours, dtype=moments1.dtype))
 
         def branch_has_open(segments):
             contours2, p2 = self.contours_from_open_segments(segments, max_nr_of_contours, 20)
             tail_o = vmap(self.last_nonzero)(jnp.abs(contours2))
             I2 = vmap(self.integrate_unif)(contours2, tail_o)
-            return I2 * p2
+            moments2 = vmap(self.integrate_first_moment)(contours2, tail_o)
+            return I2 * p2, moments2 * p2
 
-        mags2 = lax.cond(all_closed, branch_all_closed, branch_has_open, seg_open)
-        mag_total = jnp.abs(jnp.sum(mags1) + jnp.sum(mags2)) / (jnp.pi * rho ** 2)
+        mags2, moments2 = lax.cond(all_closed, branch_all_closed, branch_has_open, seg_open)
+        total_area = jnp.sum(mags1) + jnp.sum(mags2)
+        mag_total = jnp.abs(total_area) / (jnp.pi * rho ** 2)
+        # Light centroid of all images: total first moment / total area.
+        # Units are theta_E, measured from the lens midpoint.
+        centroid = (jnp.sum(moments1) + jnp.sum(moments2)) / total_area
 
         z_out = z_perm.T
         z_p_out = z_parity_perm.T
@@ -23071,7 +23091,7 @@ class FSBL(PSBL):
         ind_stack = jnp.stack(indiv)
         individual_area = jnp.broadcast_to(ind_stack[None, :], (ntheta, 5))
         mag = jnp.broadcast_to(mag_total, (ntheta, 5))
-        return z_out, z_p_out, mag, individual_area
+        return z_out, z_p_out, mag, individual_area, centroid
 
     def magnification_one(self, w0, z1, z2, m1, m2, rho):
         """
@@ -23097,15 +23117,12 @@ class FSBL(PSBL):
         fn = FSBL.contour_map_jit.get(npts)
         if fn is None:
             kernel = self.magnification_one_kernel
-
             def one(args, kernel=kernel, npts=npts):
                 wi, z1i, z2i, m1i, m2i, rho_i = args
                 return kernel(wi, z1i, z2i, m1i, m2i, rho_i, npts)
-
             def many(w, z1, z2, m1, m2, rho, one=one):
                 rho_b = jnp.broadcast_to(jnp.asarray(rho, dtype=jnp.float64), w.shape[:1])
                 return lax.map(one, (w, z1, z2, m1, m2, rho_b))
-
             fn = jax.jit(many)
             FSBL.contour_map_jit[npts] = fn
         return fn(w, z1, z2, m1, m2, rho)
@@ -23256,6 +23273,11 @@ class FSBL(PSBL):
         else:
             s = float(self.sep)
         n = len(t)
+        # Light centroid of the source images at each epoch, as a complex
+        # sky position in arcsec (real = East, imag = North). It is filled
+        # in for contour epochs only and stays NaN for point-source epochs.
+        # FSBL_PhotAstrom.get_astrometry uses it.
+        self.centroid_CI = np.full(n, np.nan + 0j)
             
         # ``root_tol`` is an Einstein-radius residual. The point-source
         # solver compares residuals in the units of ``get_complex_pos``
@@ -23317,11 +23339,25 @@ class FSBL(PSBL):
         # lax.map, not vmap: vmap compiles the open-contour branch into
         # every epoch. One map compiles the kernel once and loops in XLA.
         idx = np.where(need_np)[0]
-        z_rel, z_parity, mag, individual_area = self.contour_batch(
+        z_rel, z_parity, mag, individual_area, centroid = self.contour_batch(
             jnp.asarray(w)[idx], jnp.asarray(z1)[idx], jnp.asarray(z2)[idx],
             jnp.asarray(m1)[idx], jnp.asarray(m2)[idx], rho_f,
         )
         z_rel_np = np.asarray(z_rel)
+        if self.astrometryFlag:
+            # Contour results are in theta_E, measured from the lens midpoint.
+            # Point-source results are sky positions in arcsec. Convert the
+            # contour results to arcsec so every epoch uses the same units.
+            xL1_ci, xL2_ci = self.get_resolved_lens_astrometry(t[idx], filt_idx=filt_idx)
+            lens_mid = 0.5 * (xL1_ci + xL2_ci)
+            lens_mid_sky = lens_mid[:, 0] + 1j * lens_mid[:, 1]
+            thetaE_arcsec = float(np.asarray(self.thetaE_amp).reshape(())) * 1e-3
+
+            def to_sky_arcsec(z_einstein):
+                return z_einstein * thetaE_arcsec + lens_mid_sky
+
+            z_rel_np = to_sky_arcsec(z_rel_np.T).T
+            self.centroid_CI[idx] = to_sky_arcsec(np.asarray(centroid))
         zp_np = np.asarray(z_parity)
         mag_np = np.asarray(mag)
         ind_np = np.asarray(individual_area)
@@ -24138,56 +24174,76 @@ class FSBL_PhotAstrom(FSBL, PSBL_PhotAstrom):
         Other Parameters
         ----------------
         image_arr : array_like
-            Array of complex image positions at each t, shape ``(N, n_\\theta, 5)``.
-            (real = North, imaginary = East).
+            Array of complex image positions at each t in arcsec, shape
+            ``(N, n_\\theta, 5)`` (real = East, imaginary = North).
         amp_arr : array_like
-            From :meth:`get_all_arrays` this is the total magnification per time (1D, length ``N``);
-            if you pass in cached data yourself, the same. ``indv_amp`` is taken from
-            :meth:`get_all_arrays` when ``amp_arr`` is loaded here; when both arrays are
-            pre-supplied, unit weights on the same grid are used in place of ``indv_amp``.
+            Total magnification at each t (1D, length ``N``), as returned by
+            :meth:`get_all_arrays`. The per-image magnifications are then
+            taken from :meth:`get_all_arrays`. A 3D array is used directly as
+            the per-image magnifications.
         filt_idx : int
             The filter index (def=0).
 
         Returns
         -------
         model_pos : ndarray, shape (N, 2)
+
+        Notes
+        -----
+        The source light is the flux-weighted mean of the image positions.
+        On epochs computed by contour integration (near a caustic) the
+        per-image areas are wrong for images that exist on only part of the
+        source limb, so those epochs use the light centroid of the merged
+        contours (``self.centroid_CI``) and the total magnification instead.
         """
         if (image_arr is None) or (amp_arr is None):
             image_arr, _parity, amp_arr, indv_amp = self.get_all_arrays(t, filt_idx=filt_idx)
+            contour_centroid = self.centroid_CI
         else:
-            image_arr = np.asarray(image_arr, dtype=np.complex128)
             amp_arr = np.asarray(amp_arr, dtype=np.float64)
-            # 1D amp is total magnification; need per-image weights from get_all_arrays.
             if amp_arr.ndim == 1:
+                # amp_arr is the total magnification; the per-image
+                # magnifications come from get_all_arrays.
                 _, _, _, indv_amp = self.get_all_arrays(t, filt_idx=filt_idx)
+                contour_centroid = self.centroid_CI
             else:
+                # Per-image arrays passed in by the caller: there is no
+                # contour centroid that is known to match them.
                 indv_amp = amp_arr
-    
+                contour_centroid = np.full(len(t), np.nan + 0j)
+
         image_arr = np.asarray(image_arr, dtype=np.complex128)
         indv_amp = np.asarray(indv_amp, dtype=np.float64)
+        # Point-source layout (N, 5) -> contour layout (N, 1, 5).
         if image_arr.ndim == 2:
             image_arr = image_arr[:, np.newaxis, :]
         if indv_amp.ndim == 2:
             indv_amp = indv_amp[:, np.newaxis, :]
-        fS = mag2flux(self.mag_src[filt_idx])
+        flux_src = mag2flux(self.mag_src[filt_idx])
 
-        # Drop cells with non-finite image position so nothing NaN enters np.sum
-        
-        valid = (np.isfinite(np.real(image_arr)) & np.isfinite(np.imag(image_arr)))
-        zc = np.where(valid, indv_amp * fS, 0.0)
-        src = np.where(valid, image_arr * indv_amp * fS, 0.0j)
+        # Flux of each image. On contour epochs every image's magnification
+        # is repeated on each limb point, so it is divided by the number of
+        # limb points where that image exists.
+        valid = np.isfinite(image_arr) & np.isfinite(indv_amp) & (indv_amp != 0)
+        n_points = np.sum(valid, axis=1, keepdims=True)
+        image_flux = np.where(valid, flux_src * np.abs(indv_amp) / np.maximum(n_points, 1), 0.0)
 
-        pos_c = np.sum(src, axis=(1, 2))
-        pos = np.stack((pos_c.real, pos_c.imag), axis=-1)
-        ftot_src = np.sum(zc, axis=(1, 2))
-        
+        src_flux = np.sum(image_flux, axis=(1, 2))
+        src_flux_x_pos = np.sum(np.where(valid, image_arr * image_flux, 0.0j), axis=(1, 2))
+
+        # Contour epochs: total magnification and the contour centroid.
+        on_contour = np.isfinite(contour_centroid)
+        src_flux[on_contour] = flux_src * np.asarray(amp_arr)[on_contour]
+        src_flux_x_pos[on_contour] = contour_centroid[on_contour] * src_flux[on_contour]
+        src_flux_x_pos = np.stack((src_flux_x_pos.real, src_flux_x_pos.imag), axis=-1)
+
         xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
         magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
         fL1 = mag2flux(magL1)
         fL2 = mag2flux(magL2)
-        
-        numer = pos + xL1 * fL1 + xL2 * fL2
-        denom = ftot_src + fL1 + fL2
+
+        numer = src_flux_x_pos + xL1 * fL1 + xL2 * fL2
+        denom = src_flux + fL1 + fL2
         astrometry = numer / np.asarray(denom)[:, np.newaxis]
         return astrometry
      
