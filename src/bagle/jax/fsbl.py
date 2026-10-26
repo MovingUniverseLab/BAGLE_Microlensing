@@ -25,7 +25,10 @@ import jax.numpy as jnp
 from bagle.jax.fsbl_contour import fsbl_magnification_centroid
 from bagle.jax.linear_sum_assignment import find_nearest
 from bagle.jax_physics import (
+    _DAYS_PER_YEAR,
+    gaussian_astrometry_log_likelihood_sum,
     gaussian_log_likelihood_sum,
+    mag2flux_jax,
     psbl_image_positions,
     psbl_source_position,
     pspl_photometry_from_amp,
@@ -1035,3 +1038,445 @@ def fsbl_log_likely_photometry(t, t0, tE, u0, thetaE_hat, z1, z2, m1, m2,
     return gp_log_likely_photometry(
         t, mag_obs, mag_err, mag_model, gp_params, fixed_jitter=fixed_jitter
     )
+
+
+def fsbl_sky_images(xS, xL1, xL2, thetaE_amp, m1, m2, rho, gamma=None,
+                    n_outline=None, root_tol=1e-10, static_lens=False):
+    """
+    FSBL magnification and sky centroid of the lensed source from sky tracks.
+
+    The lens frame is rebuilt at each epoch from the two lens positions, so
+    the same call serves static and orbiting binaries.
+
+    Parameters
+    ----------
+    xS : array_like, float, shape = (N_times, 2)
+        Unlensed source-centre sky positions (East, North; arcsec).
+    xL1, xL2 : array_like, float, shape = (N_times, 2)
+        Primary and secondary lens sky positions (arcsec).
+    thetaE_amp : float, shape = ()
+        Einstein radius of the total lens mass (mas).
+    m1, m2 : float, shape = ()
+        Lens mass fractions (sum to 1).
+    rho : float, shape = ()
+        Source radius in Einstein radii.
+    gamma : float or None, optional
+        Linear limb-darkening coefficient (Gamma convention); ``None`` is a
+        uniform source.
+    n_outline : int or None, optional
+        Initial uniform limb samples per disk (static); ``None`` uses the
+        kernel default.
+    root_tol : float, optional
+        Lens-equation tolerance for physical images.
+    static_lens : bool, optional
+        The lens offsets from their midpoint are the same at every epoch,
+        so the limb-darkening caustic is computed once (static Python flag).
+
+    Returns
+    -------
+    amp : jnp.ndarray, float, shape = (N_times,)
+        Total finite-source magnification.
+    x_img : jnp.ndarray, float, shape = (N_times, 2)
+        Brightness-weighted sky centroid of the lensed source (arcsec).
+    """
+    thetaE_as = thetaE_amp * 1e-3
+
+    # Per-epoch lens frame: geometric centre of the two lenses.
+    origin = 0.5 * (xL1 + xL2)
+
+    # Positions relative to the frame, in Einstein radii, as complex numbers.
+    to_c = lambda x: (x[:, 0] + 1j * x[:, 1]) / thetaE_as
+    zeta = to_c(xS - origin)
+    z1 = to_c(xL1 - origin)
+    z2 = to_c(xL2 - origin)
+    if static_lens:
+        z1, z2 = z1[0], z2[0]
+
+    # Traced contour integral (limb-darkened when gamma is given).
+    kw = {} if n_outline is None else {'n_init': int(n_outline)}
+    amp, cent = fsbl_magnification_centroid(
+        zeta, rho, z1, z2, m1, m2, gamma=gamma, root_tol=root_tol, **kw
+    )
+
+    # Back to sky coordinates (arcsec).
+    x_img = origin + cent * thetaE_as
+
+    return amp, x_img
+
+
+def resolved_lens_fluxes_jax(flux_src, b_sff, dmag_Lp_Ls):
+    """
+    Split the clipped non-source flux between the two lenses (traced).
+
+    Parameters
+    ----------
+    flux_src : float, shape = ()
+        Total unlensed source flux.
+    b_sff : float, shape = ()
+        Source flux fraction.
+    dmag_Lp_Ls : float, shape = ()
+        Primary-minus-secondary lens magnitude difference.
+
+    Returns
+    -------
+    fL1, fL2 : jnp.ndarray, float, shape = ()
+        Primary and secondary lens fluxes.
+
+    Notes
+    -----
+    Matches ``resolved_lens_fluxes_for_astrometry`` in
+    :mod:`bagle.model_jax`: the non-source flux is clipped at zero
+    (``b_sff > 1`` is a dark lens) before it is split between the lenses.
+    """
+    # Clipped non-source flux.
+    flux_non = flux_src * (1.0 - b_sff) / jnp.maximum(b_sff, 1e-12)
+    flux_non = jnp.maximum(flux_non, 0.0)
+
+    # Split by the lens flux ratio fL1 / fL2.
+    fr = jnp.nan_to_num(10.0 ** (dmag_Lp_Ls / -2.5), nan=0.0)
+    fL1 = flux_non * fr / (1.0 + fr)
+    fL2 = flux_non / (1.0 + fr)
+
+    return fL1, fL2
+
+
+def fsbl_blended_centroid(amp, x_img, xL1, xL2, mag_src, b_sff,
+                          dmag_Lp_Ls=20.0):
+    """
+    Unresolved source + lens centroid with luminous lenses.
+
+    Parameters
+    ----------
+    amp : array_like, float, shape = (N_times,)
+        Total source magnification.
+    x_img : array_like, float, shape = (N_times, 2)
+        Sky centroid of the lensed source (arcsec).
+    xL1, xL2 : array_like, float, shape = (N_times, 2)
+        Primary and secondary lens sky positions (arcsec).
+    mag_src : float, shape = ()
+        Unlensed source magnitude.
+    b_sff : float, shape = ()
+        Source flux fraction.
+    dmag_Lp_Ls : float, optional
+        Primary-minus-secondary lens magnitude difference.
+
+    Returns
+    -------
+    pos : jnp.ndarray, float, shape = (N_times, 2)
+        East / North centroid (arcsec).
+
+    Notes
+    -----
+    Lens fluxes follow :func:`resolved_lens_fluxes_jax`.
+    """
+    # Source flux and the clipped non-source flux on the lenses.
+    fS = mag2flux_jax(mag_src)
+    fL1, fL2 = resolved_lens_fluxes_jax(fS, b_sff, dmag_Lp_Ls)
+
+    # Flux-weighted centroid.
+    f_img = (fS * amp)[:, None]
+    numer = x_img * f_img + xL1 * fL1 + xL2 * fL2
+    denom = f_img + fL1 + fL2
+
+    return numer / denom
+
+
+def fsbl_sky_tracks(t, t0, xS0, xL0, muS, muL, thetaE_amp, xL1_over_theta,
+                    xL2_over_theta, parallax_vectors=None, piS=None,
+                    piL=None):
+    """
+    Unlensed source and lens sky tracks for a binary lens.
+
+    Parameters
+    ----------
+    t : array_like, float, shape = (N_times,)
+        Observation times (MJD).
+    t0 : float, shape = ()
+        Reference time (MJD).
+    xS0, xL0 : array_like, float, shape = (2,)
+        Source and lens-origin sky positions at ``t0`` (arcsec).
+    muS, muL : array_like, float, shape = (2,)
+        Source and lens-origin proper motions (mas/yr).
+    thetaE_amp : float, shape = ()
+        Einstein radius (mas).
+    xL1_over_theta, xL2_over_theta : array_like, float, shape = (2,) or
+        (N_times, 2)
+        Lens offsets from the lens origin in Einstein radii; per-epoch
+        offsets describe orbital motion.
+    parallax_vectors : array_like, float, shape = (N_times, 2), optional
+        Parallax table; ``None`` skips parallax.
+    piS, piL : float, optional
+        Source and lens parallax (mas).
+
+    Returns
+    -------
+    xS, xL1, xL2 : jnp.ndarray, float, shape = (N_times, 2)
+        Source, primary and secondary sky positions (arcsec).
+    """
+    t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+    dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
+
+    # Linear source and lens-origin motion (arcsec).
+    xS = xS0.reshape(1, 2) + dt * muS.reshape(1, 2) * 1e-3
+    xL = xL0.reshape(1, 2) + dt * muL.reshape(1, 2) * 1e-3
+
+    # Annual parallax on both tracks.
+    if parallax_vectors is not None:
+        pvec = jnp.asarray(parallax_vectors, dtype=jnp.float64)
+        xS = xS + piS * pvec * 1e-3
+        xL = xL + piL * pvec * 1e-3
+
+    # Individual lenses (offsets broadcast over epochs when static).
+    thetaE_as = thetaE_amp * 1e-3
+    off1 = jnp.atleast_2d(jnp.asarray(xL1_over_theta, dtype=jnp.float64))
+    off2 = jnp.atleast_2d(jnp.asarray(xL2_over_theta, dtype=jnp.float64))
+    xL1 = xL + off1 * thetaE_as
+    xL2 = xL + off2 * thetaE_as
+
+    return xS, xL1, xL2
+
+
+def fsbl_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp, xL1_over_theta,
+                    xL2_over_theta, m1, m2, rho, mag_src, b_sff,
+                    dmag_Lp_Ls=20.0, parallax_vectors=None, piS=None,
+                    piL=None, gamma=None, n_outline=None, root_tol=1e-10):
+    """
+    Traced FSBL unresolved centroid astrometry (arcsec).
+
+    JAX counterpart of :meth:`bagle.model_jax.FSBL_PhotAstrom.get_astrometry`.
+
+    Parameters
+    ----------
+    t : array_like, float, shape = (N_times,)
+        Observation times (MJD).
+    t0 : float, shape = ()
+        Reference time (MJD).
+    xS0, xL0 : array_like, float, shape = (2,)
+        Source and lens-origin sky positions at ``t0`` (arcsec).
+    muS, muL : array_like, float, shape = (2,)
+        Proper motions (mas/yr).
+    thetaE_amp : float, shape = ()
+        Einstein radius (mas).
+    xL1_over_theta, xL2_over_theta : array_like, float, shape = (2,) or
+        (N_times, 2)
+        Lens offsets from the origin in Einstein radii.
+    m1, m2 : float, shape = ()
+        Lens mass fractions.
+    rho : float, shape = ()
+        Source radius in Einstein radii.
+    mag_src, b_sff : float, shape = ()
+        Unlensed source magnitude and source flux fraction.
+    dmag_Lp_Ls : float, optional
+        Primary-minus-secondary lens magnitude difference.
+    parallax_vectors : array_like, float, shape = (N_times, 2), optional
+        Parallax table; ``None`` skips parallax.
+    piS, piL : float, optional
+        Source and lens parallax (mas).
+    gamma : float or None, optional
+        Linear limb-darkening coefficient; ``None`` is a uniform source.
+    n_outline : int or None, optional
+        Initial uniform limb samples per disk (static).
+    root_tol : float, optional
+        Lens-equation tolerance.
+
+    Returns
+    -------
+    pos : jnp.ndarray, float, shape = (N_times, 2)
+        East / North centroid (arcsec).
+    """
+    # Unlensed sky tracks.
+    xS, xL1, xL2 = fsbl_sky_tracks(
+        t, t0, xS0, xL0, muS, muL, thetaE_amp, xL1_over_theta,
+        xL2_over_theta, parallax_vectors=parallax_vectors, piS=piS, piL=piL)
+
+    # Lensed source centroid, then blending with the lenses.
+    static = jnp.ndim(xL1_over_theta) == 1 and jnp.ndim(xL2_over_theta) == 1
+    amp, x_img = fsbl_sky_images(xS, xL1, xL2, thetaE_amp, m1, m2, rho,
+                                 gamma=gamma, n_outline=n_outline,
+                                 root_tol=root_tol, static_lens=static)
+
+    return fsbl_blended_centroid(amp, x_img, xL1, xL2, mag_src, b_sff,
+                                 dmag_Lp_Ls=dmag_Lp_Ls)
+
+
+def fsbl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
+                               xL1_over_theta, xL2_over_theta, m1, m2, rho,
+                               mag_src, b_sff, x_obs, y_obs, x_err, y_err,
+                               dmag_Lp_Ls=20.0, parallax_vectors=None,
+                               piS=None, piL=None, gamma=None, n_outline=None,
+                               root_tol=1e-10):
+    """
+    Traced FSBL absolute-astrometry Gaussian log-likelihood.
+
+    Parameters
+    ----------
+    t, t0, xS0, xL0, muS, muL, thetaE_amp : see :func:`fsbl_astrometry`
+        Time grid and unlensed motion.
+    xL1_over_theta, xL2_over_theta, m1, m2, rho : see :func:`fsbl_astrometry`
+        Lens geometry and source radius.
+    mag_src, b_sff : float, shape = ()
+        Unlensed source magnitude and source flux fraction.
+    x_obs, y_obs, x_err, y_err : array_like, float, shape = (N_times,)
+        Observed East/North positions and uncertainties (arcsec).
+    dmag_Lp_Ls, parallax_vectors, piS, piL : optional
+        See :func:`fsbl_astrometry`.
+    gamma, n_outline, root_tol : optional
+        See :func:`fsbl_astrometry`.
+
+    Returns
+    -------
+    lnL : float, shape = ()
+        Summed Gaussian astrometric log-likelihood.
+    """
+    pos = fsbl_astrometry(
+        t, t0, xS0, xL0, muS, muL, thetaE_amp, xL1_over_theta,
+        xL2_over_theta, m1, m2, rho, mag_src, b_sff, dmag_Lp_Ls=dmag_Lp_Ls,
+        parallax_vectors=parallax_vectors, piS=piS, piL=piL, gamma=gamma,
+        n_outline=n_outline, root_tol=root_tol)
+
+    return gaussian_astrometry_log_likelihood_sum(pos, x_obs, y_obs, x_err,
+                                                  y_err)
+
+
+def orbiting_lens_offsets(t, t0, sep, alpha_deg, thetaE_amp, dmuL_sec,
+                          accL_sec=None):
+    """
+    Per-epoch lens offsets from the lens origin for linear / accelerated orbits.
+
+    Parameters
+    ----------
+    t : array_like, float, shape = (N_times,)
+        Observation times (MJD).
+    t0 : float, shape = ()
+        Reference time (MJD).
+    sep : float, shape = ()
+        Lens separation at ``t0`` (mas).
+    alpha_deg : float, shape = ()
+        Binary-axis angle East of North (degrees).
+    thetaE_amp : float, shape = ()
+        Einstein radius (mas).
+    dmuL_sec : array_like, float, shape = (2,)
+        Secondary proper motion relative to the lens origin (mas/yr).
+    accL_sec : array_like, float, shape = (2,), optional
+        Secondary acceleration (mas/yr^2); ``None`` is a linear orbit.
+
+    Returns
+    -------
+    off1, off2 : jnp.ndarray, float, shape = (N_times, 2)
+        Primary and secondary offsets from the lens origin (Einstein radii).
+
+    Notes
+    -----
+    Matches ``PSBL_PhotAstrom.get_resolved_lens_astrometry`` for
+    ``orbitFlag`` ``'linear'`` / ``'accelerated'``: the primary sits at
+    ``-offset`` (the static models put it at ``+offset``) and only the
+    secondary moves.
+    """
+    t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+    dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
+
+    # Half-separation vector at t0 (Einstein radii).
+    alpha = jnp.deg2rad(alpha_deg)
+    half = 0.5 * sep * jnp.stack([jnp.sin(alpha), jnp.cos(alpha)]) / thetaE_amp
+    half = half.reshape(1, 2)
+
+    # Secondary motion relative to the lens origin (mas -> Einstein radii).
+    motion = dt * jnp.asarray(dmuL_sec).reshape(1, 2)
+    if accL_sec is not None:
+        motion = motion + 0.5 * dt ** 2 * jnp.asarray(accL_sec).reshape(1, 2)
+
+    # Primary fixed at -half; secondary at +half plus its motion.
+    off1 = jnp.broadcast_to(-half, motion.shape)
+    off2 = half + motion / thetaE_amp
+
+    return off1, off2
+
+
+def fsbl_photometry_tracks(t, t0, xS0, xL0, muS, muL, thetaE_amp,
+                           xL1_over_theta, xL2_over_theta, m1, m2, rho,
+                           mag_src, b_sff, parallax_vectors=None, piS=None,
+                           piL=None, gamma=None, n_outline=None,
+                           root_tol=1e-10):
+    """
+    Traced FSBL photometry from sky tracks (static or orbiting lenses).
+
+    Parameters
+    ----------
+    t, t0, xS0, xL0, muS, muL, thetaE_amp : see :func:`fsbl_astrometry`
+        Time grid and unlensed motion.
+    xL1_over_theta, xL2_over_theta : array_like, float, shape = (2,) or
+        (N_times, 2)
+        Lens offsets from the lens origin in Einstein radii.
+    m1, m2, rho : float, shape = ()
+        Lens mass fractions and source radius (Einstein radii).
+    mag_src, b_sff : float, shape = ()
+        Unlensed source magnitude and source flux fraction.
+    parallax_vectors, piS, piL, gamma, n_outline, root_tol : optional
+        See :func:`fsbl_astrometry`.
+
+    Returns
+    -------
+    mag : jnp.ndarray, float, shape = (N_times,)
+        Blended model magnitudes.
+    """
+    # Unlensed sky tracks.
+    xS, xL1, xL2 = fsbl_sky_tracks(
+        t, t0, xS0, xL0, muS, muL, thetaE_amp, xL1_over_theta,
+        xL2_over_theta, parallax_vectors=parallax_vectors, piS=piS, piL=piL)
+
+    # Finite-source magnification in the per-epoch lens frame.
+    static = jnp.ndim(xL1_over_theta) == 1 and jnp.ndim(xL2_over_theta) == 1
+    amp, _ = fsbl_sky_images(xS, xL1, xL2, thetaE_amp, m1, m2, rho,
+                             gamma=gamma, n_outline=n_outline,
+                             root_tol=root_tol, static_lens=static)
+
+    return pspl_photometry_from_amp(amp, mag_src, b_sff)
+
+
+def fsbl_log_likely_photometry_tracks(t, t0, xS0, xL0, muS, muL, thetaE_amp,
+                                      xL1_over_theta, xL2_over_theta, m1, m2,
+                                      rho, mag_src, b_sff, mag_obs, mag_err,
+                                      parallax_vectors=None, piS=None,
+                                      piL=None, gamma=None, n_outline=None,
+                                      gp_params=None, fixed_jitter=True,
+                                      root_tol=1e-10):
+    """
+    Traced FSBL photometric log-likelihood from sky tracks.
+
+    Parameters
+    ----------
+    t, t0, xS0, xL0, muS, muL, thetaE_amp : see :func:`fsbl_photometry_tracks`
+        Time grid and unlensed motion.
+    xL1_over_theta, xL2_over_theta, m1, m2, rho : see
+        :func:`fsbl_photometry_tracks`
+        Lens geometry and source radius.
+    mag_src, b_sff : float, shape = ()
+        Unlensed source magnitude and source flux fraction.
+    mag_obs, mag_err : array_like, float, shape = (N_times,)
+        Observed magnitudes and uncertainties.
+    parallax_vectors, piS, piL, gamma, n_outline, root_tol : optional
+        See :func:`fsbl_photometry_tracks`.
+    gp_params : dict or None, optional
+        GP hyperparameters; ``None`` uses a plain Gaussian likelihood.
+    fixed_jitter : bool, optional
+        Passed to the GP path.
+
+    Returns
+    -------
+    lnL : jnp.ndarray, float, shape = ()
+        Summed photometric log-likelihood.
+    """
+    mag_model = fsbl_photometry_tracks(
+        t, t0, xS0, xL0, muS, muL, thetaE_amp, xL1_over_theta,
+        xL2_over_theta, m1, m2, rho, mag_src, b_sff,
+        parallax_vectors=parallax_vectors, piS=piS, piL=piL, gamma=gamma,
+        n_outline=n_outline, root_tol=root_tol)
+
+    # Plain Gaussian or GP residual likelihood.
+    if gp_params is None:
+        return gaussian_log_likelihood_sum(mag_model, mag_obs, mag_err)
+
+    from bagle.jax.gp import gp_log_likely_photometry
+
+    return gp_log_likely_photometry(t, mag_obs, mag_err, mag_model, gp_params,
+                                    fixed_jitter=fixed_jitter)

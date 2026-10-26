@@ -545,7 +545,8 @@ def ld_radius_nodes(u_amp, rho, n_ld=8):
             np.concatenate([w_lo, w_up], axis=1))
 
 
-def ld_images_amps(zeta_c, rho, gamma, disk_images_amps, n_ld=8):
+def ld_images_amps(zeta_c, rho, gamma, disk_images_amps, n_ld=8,
+                   radius_nodes=None):
     """
     Linear (Gamma-law) limb-darkened FSPL images and magnifications.
 
@@ -571,6 +572,11 @@ def ld_images_amps(zeta_c, rho, gamma, disk_images_amps, n_ld=8):
     n_ld : int, optional
         Gauss-Legendre nodes per sub-interval (``2 * n_ld + 1`` disks per
         epoch).
+    radius_nodes : tuple of ndarray, optional
+        ``(s, w)`` nodes and weights in ``s = sqrt(1 - r^2/rho^2)``, each of
+        shape ``(N_times, n_nodes)`` with weights summing to 1 per epoch.
+        Overrides the point-lens nodes from :func:`ld_radius_nodes` (the
+        binary lens supplies its own caustic-aware nodes).
 
     Returns
     -------
@@ -585,7 +591,10 @@ def ld_images_amps(zeta_c, rho, gamma, disk_images_amps, n_ld=8):
     n_times = zeta_c.size
 
     # Disk radii per epoch: the full disk, then the quadrature nodes.
-    s, w_s = ld_radius_nodes(np.abs(zeta_c), rho, n_ld)
+    if radius_nodes is None:
+        s, w_s = ld_radius_nodes(np.abs(zeta_c), rho, n_ld)
+    else:
+        s, w_s = (np.asarray(a, dtype=float) for a in radius_nodes)
     radii = np.concatenate([np.full((n_times, 1), rho),
                             rho * np.sqrt(1.0 - s ** 2)], axis=1)
     weights = np.concatenate([np.full((n_times, 1), 1.0 - gamma),

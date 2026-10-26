@@ -29416,6 +29416,16 @@ class FSBL(PSBL):
         z1 = z1_abs - z_geo
         z2 = z2_abs - z_geo
 
+        # get_u is relative to the lens origin, which drifts away from the
+        # lens midpoint when the lenses orbit. Integrate in the midpoint
+        # frame, then shift the centroid back (zero shift when static).
+        shift = np.zeros(t.size, dtype=complex)
+        if self.astrometryFlag:
+            xL0 = np.asarray(self.get_lens_origin_astrometry(t, filt_idx=filt_idx))
+            xL0 = xL0 / self.thetaE_amp * 1e3
+            shift = z_geo - (xL0[:, 0] + 1j * xL0[:, 1])
+        zeta_c = zeta_c - shift
+
         n_init = int(getattr(self, 'n_outline', self.amg_n_init) or self.amg_n_init)
         n_init = max(n_init, 16)
         gamma = float(self.limb_gamma(filt_idx))
@@ -29429,6 +29439,9 @@ class FSBL(PSBL):
                 zeta_c, rho, gamma, s=1.0, q=1.0, n_ld=self.ld_n_nodes,
                 n_init=n_init, tol=self.amg_tol, max_pts=self.amg_max_pts,
                 z1=z1, z2=z2, m1=m1, m2=m2)
+
+        # Centroid back in the lens-origin frame of get_u.
+        images = images + np.stack([shift.real, shift.imag], axis=-1)
 
         return images, None, amps, None
 
@@ -30717,6 +30730,57 @@ class FSBL_PhotAstromParam1(PSPL_Param):
             gamma=p.get('gamma'),
         )
 
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err, y_err,
+                                  b_sff=1.0, mag_src=18.0, dmag_Lp_Ls=20.0,
+                                  parallax_vectors=None, n_outline=None):
+        """
+        Traced FSBL PhotAstrom absolute astrometry (``radiusS`` in arcsec).
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector (filter-local). A
+            ``'gamma'`` entry (limb-darkened subclasses) switches on the
+            linear limb-darkened source.
+        t, x_obs, y_obs, x_err, y_err : array_like
+            Times and East/North astrometry (arcsec).
+        b_sff, mag_src, dmag_Lp_Ls : float, optional
+            Filter-local blend, source magnitude and lens magnitude
+            difference (set the lens light in the centroid).
+        parallax_vectors : array_like or None, optional
+            Parallax table for this filter's observer.
+        n_outline : int or None, optional
+            Initial uniform limb samples per disk (static); ``None`` uses
+            the kernel default.
+
+        Returns
+        -------
+        lnL : float
+            Summed astrometric log-likelihood.
+        """
+        from bagle.jax.fsbl import fsbl_log_likely_astrometry
+        from bagle.jax.geometry import derive_psbl_photastrom_param1
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_psbl_photastrom_param1(
+            p['mLp'], p['mLs'], p['t0'], p['xS0_E'], p['xS0_N'],
+            p['beta'], p['muL_E'], p['muL_N'], p['muS_E'],
+            p['muS_N'], p['dL'], p['dS'], p['sep'], p['alpha']
+        )
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE_amp, piS, piL,
+         m1, m2, xL1, xL2, _, _) = geom
+
+        # Phot+astrom ``radiusS`` is arcsec; convert to Einstein radii.
+        rho = p['radiusS'] * 1e3 / thetaE_amp
+
+        return fsbl_log_likely_astrometry(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE_amp, xL1, xL2, m1, m2,
+            rho, mag_src, b_sff, x_obs, y_obs, x_err, y_err,
+            dmag_Lp_Ls=dmag_Lp_Ls, parallax_vectors=parallax_vectors,
+            piS=piS, piL=piL, gamma=p.get('gamma'), n_outline=n_outline,
+        )
+
     def __init__(self, mLp, mLs, t0, radiusS, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  sep, alpha, b_sff, mag_src, dmag_Lp_Ls, n_outline = 50,
@@ -30819,7 +30883,148 @@ class FSBL_PhotAstromParam1(PSPL_Param):
         return
 
 
-class FSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstrom_LinOrbs_Param1):
+class _FSBLOrbitTracedParam1:
+    """
+    Traced likelihoods for FSBL Param1 with linear / accelerated lens orbits.
+
+    Mixed into ``FSBL_PhotAstrom_{Lin,Acc}Orbs_Param1``. The secondary moves
+    with ``delta_muL_sec`` (and ``accLsec`` when present) relative to the
+    lens origin, as in ``PSBL_PhotAstrom.get_resolved_lens_astrometry``.
+    """
+
+    @classmethod
+    def _jax_fsbl_orbit_args(cls, vec, t):
+        """
+        Traced sky-track arguments for an orbiting FSBL Param1 vector.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector (filter-local).
+        t : array_like, float, shape = (N_times,)
+            Observation times (MJD).
+
+        Returns
+        -------
+        p : dict
+            Parameter name -> traced value.
+        args : tuple
+            ``(t0, xS0, xL0, muS, muL, thetaE_amp, off1, off2, m1, m2, rho)``
+            for :func:`bagle.jax.fsbl.fsbl_photometry_tracks`; ``off1`` and
+            ``off2`` have shape ``(N_times, 2)``.
+        piS, piL : jnp.ndarray, float, shape = ()
+            Source and lens parallax (mas).
+        """
+        from bagle.jax.fsbl import orbiting_lens_offsets
+        from bagle.jax.geometry import derive_psbl_photastrom_param1
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+
+        # Static Param1 geometry (lens origin, Einstein radius, masses).
+        geom = derive_psbl_photastrom_param1(
+            p['mLp'], p['mLs'], p['t0'], p['xS0_E'], p['xS0_N'],
+            p['beta'], p['muL_E'], p['muL_N'], p['muS_E'],
+            p['muS_N'], p['dL'], p['dS'], p['sep'], p['alpha']
+        )
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE_amp, piS, piL,
+         m1, m2, _, _, _, _) = geom
+
+        # Per-epoch lens offsets (Einstein radii).
+        dmu = jnp.stack([p['delta_muL_sec_E'], p['delta_muL_sec_N']])
+        acc = None
+        if 'accLsec_E' in p:
+            acc = jnp.stack([p['accLsec_E'], p['accLsec_N']])
+        off1, off2 = orbiting_lens_offsets(t, p['t0'], p['sep'], p['alpha'],
+                                           thetaE_amp, dmu, accL_sec=acc)
+
+        # Phot+astrom ``radiusS`` is arcsec; convert to Einstein radii.
+        rho = p['radiusS'] * 1e3 / thetaE_amp
+
+        args = (p['t0'], xS0, xL0, muS, muL, thetaE_amp, off1, off2, m1, m2,
+                rho)
+
+        return p, args, piS, piL
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True,
+                                  n_outline=None):
+        """
+        Traced orbiting-FSBL photometry log-likelihood.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector (filter-local). A
+            ``'gamma'`` entry (limb-darkened subclasses) switches on the
+            linear limb-darkened source.
+        t, mag_obs, mag_err : array_like, float, shape = (N_times,)
+            Times and photometry.
+        b_sff, mag_src : float
+            Filter-local blend and source magnitude.
+        parallax_vectors : array_like, float, shape = (N_times, 2), optional
+            Parallax table for this filter's observer.
+        gp_params, fixed_jitter : optional
+            Optional GP path.
+        n_outline : int or None, optional
+            Initial uniform limb samples per disk; ``None`` uses the kernel
+            default.
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        from bagle.jax.fsbl import fsbl_log_likely_photometry_tracks
+
+        p, args, piS, piL = cls._jax_fsbl_orbit_args(vec, t)
+
+        return fsbl_log_likely_photometry_tracks(
+            t, *args, mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL,
+            gamma=p.get('gamma'), n_outline=n_outline, gp_params=gp_params,
+            fixed_jitter=fixed_jitter)
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err, y_err,
+                                  b_sff=1.0, mag_src=18.0, dmag_Lp_Ls=20.0,
+                                  parallax_vectors=None, n_outline=None):
+        """
+        Traced orbiting-FSBL absolute astrometry log-likelihood.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector (filter-local).
+        t, x_obs, y_obs, x_err, y_err : array_like, float, shape = (N_times,)
+            Times and East/North astrometry (arcsec).
+        b_sff, mag_src, dmag_Lp_Ls : float, optional
+            Filter-local blend, source magnitude and lens magnitude
+            difference (set the lens light in the centroid).
+        parallax_vectors : array_like, float, shape = (N_times, 2), optional
+            Parallax table for this filter's observer.
+        n_outline : int or None, optional
+            Initial uniform limb samples per disk; ``None`` uses the kernel
+            default.
+
+        Returns
+        -------
+        lnL : float
+            Summed astrometric log-likelihood.
+        """
+        from bagle.jax.fsbl import fsbl_log_likely_astrometry
+
+        p, args, piS, piL = cls._jax_fsbl_orbit_args(vec, t)
+
+        return fsbl_log_likely_astrometry(
+            t, *args, mag_src, b_sff, x_obs, y_obs, x_err, y_err,
+            dmag_Lp_Ls=dmag_Lp_Ls, parallax_vectors=parallax_vectors,
+            piS=piS, piL=piL, gamma=p.get('gamma'), n_outline=n_outline)
+
+
+class FSBL_PhotAstrom_LinOrbs_Param1(_FSBLOrbitTracedParam1,
+                                     PSBL_PhotAstrom_LinOrbs_Param1):
     """
     Point source binary lens.
     Note that this is a binary lens with the
@@ -30915,11 +31120,6 @@ class FSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstrom_LinOrbs_Param1):
     paramPhotFlag = True
     orbitFlag = 'linear'
 
-    # No traced finite-source orbital likelihood; opt out of the inherited
-    # static point-source PSBL methods so fits use the host likelihood.
-    jax_log_likely_photometry = None
-    jax_log_likely_astrometry = None
-
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS,
                  muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N,
                  muS_E, muS_N, dL, dS,
@@ -30940,7 +31140,8 @@ class FSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstrom_LinOrbs_Param1):
         return
 
 
-class FSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstrom_AccOrbs_Param1):
+class FSBL_PhotAstrom_AccOrbs_Param1(_FSBLOrbitTracedParam1,
+                                     PSBL_PhotAstrom_AccOrbs_Param1):
     """
     Point source binary lens.
     Note that this is a binary lens with the
@@ -31041,11 +31242,6 @@ class FSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstrom_AccOrbs_Param1):
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'accelerated'
-
-    # No traced finite-source orbital likelihood; opt out of the inherited
-    # static point-source PSBL methods so fits use the host likelihood.
-    jax_log_likely_photometry = None
-    jax_log_likely_astrometry = None
 
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, radiusS,
                  muL_E, muL_N, delta_muL_sec_E, delta_muL_sec_N, accLsec_E, accLsec_N,
@@ -34165,11 +34361,11 @@ root_tol : float
     filt_param_usage = FSBL_PhotAstromParam1.filt_param_usage
     phot_optional_param_names = PSBL_GP_PhotAstromParam1.phot_optional_param_names
 
-    # Finite-source traced photometry; no traced FSBL astrometry, so fits
-    # with astrometric data use the host likelihood.
+    # Finite-source traced likelihoods (the PSBL parents are point-source).
     jax_log_likely_photometry = FSBL_PhotAstromParam1.__dict__[
         'jax_log_likely_photometry']
-    jax_log_likely_astrometry = None
+    jax_log_likely_astrometry = FSBL_PhotAstromParam1.__dict__[
+        'jax_log_likely_astrometry']
 
     def __init__(self, mLp, mLs, t0, radiusS, xS0_E, xS0_N,
                  beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
@@ -35774,30 +35970,39 @@ class BFSBL(BSBL):
             Total magnification of each source.
         """
         t = np.atleast_1d(np.asarray(t, dtype=float))
-        u = np.asarray(self.get_u(t, filt_idx=filt_idx), dtype=float)
-        zeta_pri = u[:, 0, 0] + 1j * u[:, 0, 1]
-        zeta_sec = u[:, 1, 0] + 1j * u[:, 1, 1]
 
-        # Lens geometry relative to the binary origin (geometric centre).
+        # Lens and source positions in Einstein radii. Astrometric models
+        # use absolute sky tracks (get_u would measure from the lens light
+        # centroid, not the lens geometric centre).
         if self.astrometryFlag:
+            to_e = 1e3 / self.thetaE_amp
             lens_res = np.asarray(
                 self.get_resolved_lens_astrometry(t, filt_idx=filt_idx))
-            lens1 = lens_res[0] / self.thetaE_amp * 1e3
-            lens2 = lens_res[1] / self.thetaE_amp * 1e3
+            lens1 = lens_res[0] * to_e
+            lens2 = lens_res[1] * to_e
+            u = np.asarray(self.get_resolved_source_astrometry_unlensed(
+                t, filt_idx=filt_idx), dtype=float) * to_e
             m1 = float(self.mLp / self.mL)
             m2 = float(self.mLs / self.mL)
         else:
             lens_res = np.asarray(self.get_resolved_lens_astrometry(t))
             lens1 = lens_res[0]
             lens2 = lens_res[1]
+            u = np.asarray(self.get_u(t, filt_idx=filt_idx), dtype=float)
             m1 = float(self.m1)
             m2 = float(self.m2)
 
+        # Shift everything to the binary origin (geometric centre).
         z1_abs = lens1[:, 0] + 1j * lens1[:, 1]
         z2_abs = lens2[:, 0] + 1j * lens2[:, 1]
         z_geo = 0.5 * (z1_abs + z2_abs)
         z1 = z1_abs - z_geo
         z2 = z2_abs - z_geo
+        zeta_pri = u[:, 0, 0] + 1j * u[:, 0, 1]
+        zeta_sec = u[:, 1, 0] + 1j * u[:, 1, 1]
+        if self.astrometryFlag:
+            zeta_pri = zeta_pri - z_geo
+            zeta_sec = zeta_sec - z_geo
 
         n_init = int(getattr(self, 'n_outline', self.amg_n_init) or self.amg_n_init)
         n_init = max(n_init, 16)
@@ -36038,6 +36243,144 @@ class BFSBL_PhotAstromParam1(BSBL_PhotAstromParam1):
                           + ['radiusS_pri', 'radiusS_sec'])
     filt_param_names = BSBL_PhotAstromParam1.filt_param_names
     filt_param_usage = BSBL_PhotAstromParam1.filt_param_usage
+
+    @classmethod
+    def _jax_bfsbl_args(cls, vec, parallax_vectors=None, n_outline=None):
+        """
+        Traced BFSBL Param1 forward-model arguments from a packed vector.
+
+        Parameters
+        ----------
+        vec : array_like, float, shape = (N_params,)
+            Filter-local vector in ``fitter_param_names`` order.
+        parallax_vectors : array_like, float, shape = (N_times, 2), optional
+            Precomputed parallax table (parallax classes only).
+        n_outline : int or None, optional
+            Initial limb samples per disk (static).
+
+        Returns
+        -------
+        p : dict
+            Named parameters.
+        args : tuple
+            Positional ``(t0, xS0, dxS, xL0, muS, muL, thetaE_amp,
+            xL1_over_theta, xL2_over_theta, m1, m2, rho_pri, rho_sec)`` for
+            :mod:`bagle.jax.bfs`.
+        kw : dict
+            Limb darkening, parallax and limb-sampling keywords.
+        """
+        from bagle.jax.bfs import binary_source_offset
+        from bagle.jax.geometry import derive_psbl_photastrom_param1
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+
+        # Lens and primary-source geometry, as for PSBL Param1.
+        (_, thetaE_hat, _, _, _, xS0, xL0, muS, muL, thetaE, piS, piL, m1,
+         m2, xL1, xL2, _, _) = derive_psbl_photastrom_param1(
+            p['mLp'], p['mLs'], p['t0'], p['xS0_E'], p['xS0_N'], p['beta'],
+            p['muL_E'], p['muL_N'], p['muS_E'], p['muS_N'], p['dL'], p['dS'],
+            p['sepL'], p['alphaL'])
+
+        # Secondary source: fixed sky offset from the primary.
+        u0_hat = jax_physics.u0_hat_from_thetaE_hat_jax(thetaE_hat, p['beta'])
+        dxS, _ = binary_source_offset(p['sepS'], p['alphaS'],
+                                      p['beta'] / thetaE, u0_hat, thetaE)
+
+        # Source radii arcsec -> Einstein radii.
+        rho_pri = p['radiusS_pri'] * 1e3 / thetaE
+        rho_sec = p['radiusS_sec'] * 1e3 / thetaE
+
+        args = (p['t0'], xS0, dxS, xL0, muS, muL, thetaE, xL1, xL2, m1, m2,
+                rho_pri, rho_sec)
+        kw = dict(gamma_pri=p.get('gamma_pri'), gamma_sec=p.get('gamma_sec'),
+                  parallax_vectors=parallax_vectors, piS=piS, piL=piL,
+                  n_outline=n_outline)
+
+        return p, args, kw
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True,
+                                  n_outline=None):
+        """
+        Traced BFSBL photometric log-likelihood.
+
+        Parameters
+        ----------
+        vec : array_like, float, shape = (N_params,)
+            Filter-local vector in ``fitter_param_names`` order.
+        t, mag_obs, mag_err : array_like, float, shape = (N_times,)
+            Times (MJD) and photometry.
+        b_sff : float
+            Filter-local source flux fraction.
+        mag_src : tuple of float or None
+            ``(mag_src_pri, mag_src_sec)`` from the fitter; ``None`` reads
+            both from ``vec``.
+        parallax_vectors : array_like, float, shape = (N_times, 2), optional
+            Precomputed parallax table (parallax classes only).
+        gp_params, fixed_jitter : optional
+            GP likelihood inputs (unused by these classes).
+        n_outline : int or None, optional
+            Initial limb samples per disk (static).
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        from bagle.jax.bfs import bfsbl_log_likely_photometry
+
+        p, args, kw = cls._jax_bfsbl_args(vec, parallax_vectors, n_outline)
+
+        # Source magnitudes from the fitter tuple or the class vector.
+        if isinstance(mag_src, (tuple, list)):
+            mag_pri, mag_sec = mag_src
+        else:
+            mag_pri, mag_sec = p['mag_src_pri'], p['mag_src_sec']
+
+        return bfsbl_log_likely_photometry(
+            t, *args, mag_pri, mag_sec, b_sff, mag_obs, mag_err,
+            gp_params=gp_params, fixed_jitter=fixed_jitter, **kw)
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err, y_err,
+                                  b_sff=1.0, dmag_Lp_Ls=None,
+                                  parallax_vectors=None, n_outline=None):
+        """
+        Traced BFSBL astrometric log-likelihood.
+
+        Parameters
+        ----------
+        vec : array_like, float, shape = (N_params,)
+            Filter-local vector in ``fitter_param_names`` order; the source
+            magnitudes are read from it.
+        t, x_obs, y_obs, x_err, y_err : array_like, float, shape = (N_times,)
+            Times (MJD) and East / North astrometry (arcsec).
+        b_sff : float, optional
+            Filter-local source flux fraction.
+        dmag_Lp_Ls : float or None, optional
+            Primary-minus-secondary lens magnitude difference; ``None``
+            reads it from ``vec``.
+        parallax_vectors : array_like, float, shape = (N_times, 2), optional
+            Precomputed parallax table (parallax classes only).
+        n_outline : int or None, optional
+            Initial limb samples per disk (static).
+
+        Returns
+        -------
+        lnL : float
+            Summed astrometric log-likelihood.
+        """
+        from bagle.jax.bfs import bfsbl_log_likely_astrometry
+
+        p, args, kw = cls._jax_bfsbl_args(vec, parallax_vectors, n_outline)
+        if dmag_Lp_Ls is None:
+            dmag_Lp_Ls = p['dmag_Lp_Ls']
+
+        return bfsbl_log_likely_astrometry(
+            t, *args, p['mag_src_pri'], p['mag_src_sec'], b_sff, x_obs, y_obs,
+            x_err, y_err, dmag_Lp_Ls=dmag_Lp_Ls, **kw)
 
     def __init__(self, mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N, dL,
                  dS, sepL, alphaL, sepS, alphaS, mag_src_pri, mag_src_sec, b_sff,
@@ -37942,6 +38285,137 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = False
+
+    @classmethod
+    def _jax_bfspl_geometry(cls, vec):
+        """
+        Traced BFSPL Param1 geometry from a packed parameter vector.
+
+        Parameters
+        ----------
+        vec : array_like, float, shape = (N_params,)
+            Filter-local vector in ``fitter_param_names`` order.
+
+        Returns
+        -------
+        p : dict
+            Named parameters.
+        g : dict
+            ``u0_pri``, ``u0_sec``, ``thetaE_hat``, ``tE``, ``piE_E``,
+            ``piE_N``, ``xL0``, ``muL``, ``thetaE``, ``piL``, ``rho_pri``,
+            ``rho_sec``, ``gamma_pri`` and             ``gamma_sec`` (``None`` when the
+            class has no limb darkening).
+        """
+        from bagle.jax.bfs import binary_source_offset
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+
+        # Primary-source geometry, as for PSPL Param1.
+        (u0, thetaE_hat, tE, piE_E, piE_N, _, xL0, _, muL, thetaE, _,
+         piL) = jax_physics.derive_pspl_photastrom_param1_geometry(
+            p['mL'], p['t0'], p['beta'], p['dL'], p['dL_dS'], p['xS0_E'],
+            p['xS0_N'], p['muL_E'], p['muL_N'], p['muS_E'], p['muS_N'])
+
+        # Secondary closest approach from the source separation.
+        u0_hat = jax_physics.u0_hat_from_thetaE_hat_jax(thetaE_hat, p['beta'])
+        _, u0_sec = binary_source_offset(p['sep'], p['alpha'],
+                                         p['beta'] / thetaE, u0_hat, thetaE)
+
+        # Source radii arcsec -> Einstein radii.
+        g = dict(u0_pri=u0, u0_sec=u0_sec, thetaE_hat=thetaE_hat, tE=tE,
+                 piE_E=piE_E, piE_N=piE_N, xL0=xL0, muL=muL, thetaE=thetaE,
+                 piL=piL, rho_pri=p['radiusS_pri'] * 1e3 / thetaE,
+                 rho_sec=p['radiusS_sec'] * 1e3 / thetaE,
+                 gamma_pri=p.get('gamma_pri'), gamma_sec=p.get('gamma_sec'))
+
+        return p, g
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True,
+                                  n_outline=400):
+        """
+        Traced BFSPL photometric log-likelihood.
+
+        Parameters
+        ----------
+        vec : array_like, float, shape = (N_params,)
+            Filter-local vector in ``fitter_param_names`` order.
+        t, mag_obs, mag_err : array_like, float, shape = (N_times,)
+            Times (MJD) and photometry.
+        b_sff : float
+            Filter-local source flux fraction.
+        mag_src : tuple of float or None
+            ``(mag_src_pri, mag_src_sec)`` from the fitter; ``None`` reads
+            both from ``vec``.
+        parallax_vectors : array_like, float, shape = (N_times, 2), optional
+            Precomputed parallax table (parallax classes only).
+        gp_params, fixed_jitter : optional
+            GP likelihood inputs (unused by these classes).
+        n_outline : int, optional
+            Static limb samples per disk.
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        from bagle.jax.bfs import bfspl_log_likely_photometry
+
+        p, g = cls._jax_bfspl_geometry(vec)
+
+        # Source magnitudes from the fitter tuple or the class vector.
+        if isinstance(mag_src, (tuple, list)):
+            mag_pri, mag_sec = mag_src
+        else:
+            mag_pri, mag_sec = p['mag_src_pri'], p['mag_src_sec']
+
+        return bfspl_log_likely_photometry(
+            t, p['t0'], g['tE'], g['u0_pri'], g['u0_sec'], g['thetaE_hat'],
+            g['rho_pri'], g['rho_sec'], n_outline, mag_pri, mag_sec, b_sff,
+            mag_obs, mag_err, gamma_pri=g['gamma_pri'],
+            gamma_sec=g['gamma_sec'], parallax_vectors=parallax_vectors,
+            piE_E=g['piE_E'], piE_N=g['piE_N'], gp_params=gp_params,
+            fixed_jitter=fixed_jitter)
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err, y_err,
+                                  b_sff=1.0, parallax_vectors=None,
+                                  n_outline=400):
+        """
+        Traced BFSPL astrometric log-likelihood.
+
+        Parameters
+        ----------
+        vec : array_like, float, shape = (N_params,)
+            Filter-local vector in ``fitter_param_names`` order; the source
+            magnitudes are read from it.
+        t, x_obs, y_obs, x_err, y_err : array_like, float, shape = (N_times,)
+            Times (MJD) and East / North astrometry (arcsec).
+        b_sff : float, optional
+            Filter-local source flux fraction.
+        parallax_vectors : array_like, float, shape = (N_times, 2), optional
+            Precomputed parallax table (parallax classes only).
+        n_outline : int, optional
+            Static limb samples per disk.
+
+        Returns
+        -------
+        lnL : float
+            Summed astrometric log-likelihood.
+        """
+        from bagle.jax.bfs import bfspl_log_likely_astrometry
+
+        p, g = cls._jax_bfspl_geometry(vec)
+
+        return bfspl_log_likely_astrometry(
+            t, p['t0'], g['tE'], g['u0_pri'], g['u0_sec'], g['thetaE_hat'],
+            g['xL0'], g['muL'], g['thetaE'], g['rho_pri'], g['rho_sec'],
+            n_outline, p['mag_src_pri'], p['mag_src_sec'], b_sff, x_obs,
+            y_obs, x_err, y_err, gamma_pri=g['gamma_pri'],
+            gamma_sec=g['gamma_sec'], parallax_vectors=parallax_vectors,
+            piE_E=g['piE_E'], piE_N=g['piE_N'], piL=g['piL'])
 
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,

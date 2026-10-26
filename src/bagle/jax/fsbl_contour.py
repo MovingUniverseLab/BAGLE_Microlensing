@@ -23,6 +23,9 @@ Differences from the host integrator, all needed for fixed shapes:
   runs under ``stop_gradient`` and is followed by one differentiable
   Newton step on the lens equation, which gives the implicit-function
   derivative of each image.
+* Limb darkening splits the radial integral at a fixed number (``n_brk``)
+  of caustic-tangency radii, the largest ones inside the source; unused
+  split points bisect the longest interval.
 
 Lens positions and masses follow the VBMicrolensing convention used by the
 host module (origin at the centre of mass). Coordinates are complex
@@ -31,12 +34,12 @@ host module (origin at the centre of mass). Coordinates are complex
 from __future__ import annotations
 
 from functools import partial
+from itertools import permutations
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 
-from bagle.jax.fspl import _ld_radius_nodes
 from bagle.jax_physics import quintic_coefficients
 
 # Floor on |J| and lens distances so derivatives stay finite.
@@ -63,6 +66,15 @@ _SLOT_SIGN = np.array([1.0, 1.0, -1.0, -1.0, -1.0])
 _PERM_POS = np.array([[0, 1], [1, 0]])
 _PERM_NEG = np.array([[2, 3, 4], [2, 4, 3], [3, 2, 4],
                       [3, 4, 2], [4, 2, 3], [4, 3, 2]])
+
+# Limb darkening: Gauss-Legendre nodes per radial interval, caustic-tangency
+# split points per epoch, and critical-curve phase samples (as on the host).
+_N_LD = 8
+_N_BRK = 2
+_N_PHI = 512
+
+# All orderings of the four critical-curve roots.
+_PERM4 = np.array(list(permutations(range(4))))
 
 
 def _safe_dist(d):
@@ -725,12 +737,218 @@ def fsbl_disk_moments(zeta_c, rho, z1, z2, m1, m2, n_init=_N_INIT,
                        batch_size=min(int(batch_size), n_rows))
 
 
+def _caustic_samples(z1, z2, m1, m2, n_phi):
+    """
+    Caustic points, tangents and neighbour matching (traced port).
+
+    JAX counterpart of :func:`bagle.fsbl_contour.caustic_samples`.
+
+    Parameters
+    ----------
+    z1, z2 : jnp.ndarray, complex, shape (N_geom,)
+        Lens positions.
+    m1, m2 : jnp.ndarray, float, shape (N_geom,)
+        Lens mass fractions.
+    n_phi : int
+        Critical-curve phase samples (static).
+
+    Returns
+    -------
+    zeta, zeta_dot : jnp.ndarray, complex, shape (N_geom, n_phi, 4)
+        Caustic points and tangents ``d zeta / d phi``.
+    nxt : jnp.ndarray, int, shape (N_geom, n_phi, 4)
+        Matching root index at the next phase sample.
+    """
+    n_geom = z1.shape[0]
+
+    # Shapes below: geometry [N_geom, 1], phase [1, n_phi].
+    phi = 2.0 * jnp.pi * jnp.arange(n_phi) / n_phi
+    e = jnp.exp(-1j * phi)[None, :]
+    z1c, z2c = z1[:, None], z2[:, None]
+    m1c, m2c = m1[:, None], m2[:, None]
+
+    # Monic quartic (z-z1)^2 (z-z2)^2 - [m1 (z-z2)^2 + m2 (z-z1)^2] / e.
+    a1, a0 = -2.0 * z1c, z1c ** 2
+    b1, b0 = -2.0 * z2c, z2c ** 2
+    p3 = jnp.broadcast_to(a1 + b1, (n_geom, n_phi))
+    p2 = a0 + b0 + a1 * b1 - (m1c + m2c) / e
+    p1 = a1 * b0 + a0 * b1 - (m1c * b1 + m2c * a1) / e
+    p0 = a0 * b0 - (m1c * b0 + m2c * a0) / e
+
+    # Companion-matrix roots, shape [N_geom, n_phi, 4].
+    comp = jnp.zeros((n_geom, n_phi, 4, 4), dtype=jnp.complex128)
+    comp = comp.at[..., 0, :].set(-jnp.stack([p3, p2, p1, p0], axis=-1))
+    comp = comp.at[..., 1, 0].set(1.0).at[..., 2, 1].set(1.0)
+    comp = comp.at[..., 3, 2].set(1.0)
+    z = jnp.linalg.eigvals(comp)
+
+    # Caustic points and tangents.
+    lens = (z1c[..., None], z2c[..., None], m1c[..., None], m2c[..., None])
+    alpha, _, kappa_p, _ = _kappa_terms(z, *lens)
+    zdot = -1j * e[..., None] / kappa_p
+    zeta = z - jnp.conj(alpha)
+    zeta_dot = zdot + jnp.conj(e)[..., None] * jnp.conj(zdot)
+
+    # Pairwise matching to the next phase sample (24 permutations).
+    z_next = jnp.roll(z, -1, axis=1)
+    cost = jnp.sum(jnp.abs(z_next[..., _PERM4] - z[..., None, :]) ** 2,
+                   axis=-1)
+    nxt = jnp.asarray(_PERM4)[jnp.argmin(cost, axis=-1)]
+
+    return zeta, zeta_dot, nxt
+
+
+def _tangency_radii(zeta_c, zeta, zeta_dot, nxt):
+    """
+    Caustic-tangency radii around each source centre (traced port).
+
+    JAX counterpart of :func:`bagle.fsbl_contour.caustic_tangency_radii`.
+
+    Parameters
+    ----------
+    zeta_c : jnp.ndarray, complex, shape (N_times,)
+        Source centres.
+    zeta, zeta_dot, nxt : jnp.ndarray, shape (N_geom, n_phi, 4)
+        Output of :func:`_caustic_samples`; ``N_geom`` is 1 or ``N_times``.
+
+    Returns
+    -------
+    r : jnp.ndarray, float, shape (N_times, n_phi * 4)
+        Tangency radii, ``-inf`` where a phase interval has no sign change.
+    """
+    c = zeta_c[:, None, None]
+
+    # Distance and its phase derivative (times distance) at every sample.
+    h = jnp.real(jnp.conj(zeta - c) * zeta_dot)
+    dist = jnp.abs(zeta - c)
+
+    # Same quantities at the matched root of the next phase sample.
+    nxt = jnp.broadcast_to(nxt, h.shape)
+    h_next = jnp.take_along_axis(jnp.roll(h, -1, axis=1), nxt, axis=-1)
+    d_next = jnp.take_along_axis(jnp.roll(dist, -1, axis=1), nxt, axis=-1)
+
+    # Linear interpolation of the zero of h inside each flipped interval.
+    flip = jnp.sign(h) * jnp.sign(h_next) < 0
+    f = h / jnp.where(flip, h - h_next, 1.0)
+    r = jnp.where(flip, dist + f * (d_next - dist), -jnp.inf)
+
+    return r.reshape(zeta_c.shape[0], -1)
+
+
+def _ld_break_nodes(r_tan, rho, n_ld, n_brk):
+    """
+    Radial limb-darkening nodes split at caustic-tangency radii (traced).
+
+    JAX counterpart of :func:`bagle.fsbl_contour.ld_break_nodes`.
+
+    Parameters
+    ----------
+    r_tan : jnp.ndarray, float, shape (N_times, N_cand)
+        Candidate tangency radii (``-inf`` = none).
+    rho : jnp.ndarray, float, shape (N_times,)
+        Source radii.
+    n_ld, n_brk : int
+        Nodes per interval and split points per epoch (static).
+
+    Returns
+    -------
+    s, w : jnp.ndarray, float, shape (N_times, (n_brk + 1) * n_ld)
+        Nodes in ``s = sqrt(1 - r^2/rho^2)`` and weights (sum to 1).
+    """
+    n_times = r_tan.shape[0]
+
+    # The n_brk largest radii strictly inside the source.
+    inside = (r_tan > 0) & (r_tan < rho[:, None])
+    r_top, _ = jax.lax.top_k(jnp.where(inside, r_tan, -jnp.inf), n_brk)
+    valid = jnp.isfinite(r_top)
+    s_top = jnp.sqrt(jnp.clip(1.0 - (r_top / rho[:, None]) ** 2, 0.0, 1.0))
+
+    # Interval edges in s; unfilled slots sit at 1 (zero-length).
+    edges = jnp.concatenate([jnp.zeros((n_times, 1)),
+                             jnp.where(valid, s_top, 1.0),
+                             jnp.ones((n_times, 1))], axis=1)
+    edges = jnp.sort(edges, axis=1)
+
+    # Spend unused slots bisecting the longest interval (static loop).
+    n_valid = jnp.sum(valid, axis=1)
+    rows = jnp.arange(n_times)
+    for j in range(n_brk):
+        k = jnp.argmax(jnp.diff(edges, axis=1), axis=1)
+        mid = 0.5 * (edges[rows, k] + edges[rows, k + 1])
+        edges = edges.at[:, -1].set(jnp.where(n_valid <= j, mid, 1.0))
+        edges = jnp.sort(edges, axis=1).at[:, -1].set(1.0)
+
+    # Graded Gauss-Legendre nodes on each interval.
+    x, w = np.polynomial.legendre.leggauss(int(n_ld))
+    tau = 0.5 * (x + 1.0)
+    w_tau = 0.5 * w
+    g = 3.0 * tau ** 2 - 2.0 * tau ** 3
+    dg = 6.0 * tau * (1.0 - tau)
+    a, b = edges[:, :-1, None], edges[:, 1:, None]
+    s = a + (b - a) * g
+    ws = (b - a) * dg * w_tau
+
+    return s.reshape(n_times, -1), ws.reshape(n_times, -1)
+
+
+def ld_radius_nodes(zeta_c, rho, z1, z2, m1, m2, n_ld=_N_LD, n_brk=_N_BRK,
+                    n_phi=_N_PHI):
+    """
+    Caustic-aware radial limb-darkening nodes for a binary lens (traced).
+
+    Parameters
+    ----------
+    zeta_c : jnp.ndarray, complex, shape (N_times,)
+        Source centres.
+    rho : float or jnp.ndarray, float, shape () or (N_times,)
+        Source radii.
+    z1, z2 : complex or jnp.ndarray, shape () or (N_times,)
+        Lens positions; scalars (static lens) compute the caustic once.
+    m1, m2 : float or jnp.ndarray, shape () or (N_times,)
+        Lens mass fractions.
+    n_ld, n_brk, n_phi : int, optional
+        Nodes per interval, split points per epoch and critical-curve
+        phase samples (static).
+
+    Returns
+    -------
+    s, w : jnp.ndarray, float, shape (N_times, (n_brk + 1) * n_ld)
+        Nodes in ``s`` and weights, held constant under differentiation.
+
+    Notes
+    -----
+    The integrand is continuous at each split, so moving a split point
+    changes the integral only at second order; the nodes are therefore
+    built under ``stop_gradient``.
+    """
+    sg = jax.lax.stop_gradient
+    geom = [jnp.atleast_1d(sg(jnp.asarray(a))) for a in (z1, z2, m1, m2)]
+    z1g = geom[0].astype(jnp.complex128)
+    z2g = geom[1].astype(jnp.complex128)
+    m1g = geom[2].astype(jnp.float64)
+    m2g = geom[3].astype(jnp.float64)
+    n_geom = max(a.shape[0] for a in geom)
+    bc = lambda a: jnp.broadcast_to(a, (n_geom,))
+
+    # One caustic for a static lens, else one per epoch.
+    caus = _caustic_samples(bc(z1g), bc(z2g), bc(m1g), bc(m2g), int(n_phi))
+    zeta_c = jnp.atleast_1d(sg(jnp.asarray(zeta_c)))
+    r_tan = _tangency_radii(zeta_c, *caus)
+
+    # Source radius per epoch.
+    rho = jnp.broadcast_to(sg(jnp.asarray(rho, dtype=jnp.float64)),
+                           zeta_c.shape)
+    s, w = _ld_break_nodes(r_tan, rho, int(n_ld), int(n_brk))
+
+    return sg(s), sg(w)
+
+
 @partial(jax.jit, static_argnames=("n_init", "n_pass", "n_add", "n_ld",
-                                   "batch_size"))
+                                   "n_brk", "n_phi", "batch_size"))
 def fsbl_magnification_centroid(zeta_c, rho, z1, z2, m1, m2, gamma=None,
-                                n_ld=8, n_init=_N_INIT, n_pass=_N_PASS,
+                                n_ld=_N_LD, n_init=_N_INIT, n_pass=_N_PASS,
                                 n_add=_N_ADD, root_tol=_ROOT_TOL,
-                                batch_size=1024):
+                                batch_size=1024, n_brk=_N_BRK, n_phi=_N_PHI):
     """
     FSBL magnification and unresolved image centroid (traced).
 
@@ -751,16 +969,22 @@ def fsbl_magnification_centroid(zeta_c, rho, z1, z2, m1, m2, gamma=None,
         Lens mass fractions.
     gamma : float, array_like or None, optional
         Linear limb-darkening coefficient (Gamma convention). ``None`` is a
-        uniform source; otherwise ``2 n_ld + 1`` nested uniform disks per
-        epoch are combined as in :func:`bagle.fspl_contour.ld_images_amps`.
+        uniform source; otherwise ``(n_brk + 1) n_ld + 1`` nested uniform
+        disks per epoch are combined as in
+        :func:`bagle.fspl_contour.ld_images_amps`, with radial nodes split
+        at the caustic-tangency radii (:func:`ld_radius_nodes`).
     n_ld : int, optional
-        Gauss-Legendre nodes per radial sub-interval (JIT static).
+        Gauss-Legendre nodes per radial interval (JIT static).
     n_init, n_pass, n_add : int, optional
         Limb schedule per disk (see :func:`fsbl_disk_moments`).
     root_tol : float, optional
         Lens-equation tolerance for physical images.
     batch_size : int, optional
         Disks per ``lax.map`` step (JIT static).
+    n_brk, n_phi : int, optional
+        Caustic-tangency split points per epoch and critical-curve phase
+        samples (JIT static). Scalar lens inputs compute one caustic;
+        per-epoch inputs compute one per epoch.
 
     Returns
     -------
@@ -773,6 +997,9 @@ def fsbl_magnification_centroid(zeta_c, rho, z1, z2, m1, m2, gamma=None,
     zeta_c = jnp.atleast_1d(jnp.asarray(zeta_c, dtype=jnp.complex128))
     n_times = zeta_c.shape[0]
     rho = jnp.broadcast_to(jnp.asarray(rho, dtype=jnp.float64), (n_times,))
+
+    # Lens inputs as given (scalar = static caustic), then one per epoch.
+    lens_in = (z1, z2, m1, m2)
     bc = lambda a, dt: jnp.broadcast_to(jnp.asarray(a, dtype=dt), (n_times,))
     z1, z2 = bc(z1, jnp.complex128), bc(z2, jnp.complex128)
     m1, m2 = bc(m1, jnp.float64), bc(m2, jnp.float64)
@@ -787,7 +1014,8 @@ def fsbl_magnification_centroid(zeta_c, rho, z1, z2, m1, m2, gamma=None,
 
     # Disk radii and brightness weights per epoch (full disk first).
     gamma = bc(gamma, jnp.float64)[:, None]
-    s, w_s = _ld_radius_nodes(jnp.abs(zeta_c), rho, n_ld)
+    s, w_s = ld_radius_nodes(zeta_c, rho, *lens_in, n_ld=n_ld, n_brk=n_brk,
+                             n_phi=n_phi)
     radii = jnp.concatenate([rho[:, None],
                              rho[:, None] * jnp.sqrt(1.0 - s ** 2)], axis=1)
     weights = jnp.concatenate([1.0 - gamma, 1.5 * gamma * w_s], axis=1)

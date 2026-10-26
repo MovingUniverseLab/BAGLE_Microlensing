@@ -13,7 +13,10 @@ the centre of mass, ``m1 = 1/(1+q)`` at ``x = -s q/(1+q)``,
 ``East + i North`` in Einstein radii.
 
 Limb darkening reuses :func:`bagle.fspl_contour.ld_images_amps` with a
-uniform-disk callable bound to this integrator.
+uniform-disk callable bound to this integrator. The radial integral over
+nested disks is split at the radii where a circle about the source centre
+touches the caustic (the magnification has a derivative jump there), and
+each piece gets smoothstep-graded Gauss-Legendre nodes.
 """
 from __future__ import annotations
 
@@ -27,6 +30,12 @@ from bagle import fspl_contour
 _EPS = 1e-15
 _ROOT_TOL = 1e-10
 _N_IMG = 5
+
+# Limb darkening: Gauss-Legendre nodes per radial interval, caustic-tangency
+# split points per epoch, and critical-curve phase samples.
+_N_LD = 8
+_N_BRK = 2
+_N_PHI = 512
 
 
 def lens_positions_cm(s, q):
@@ -274,11 +283,14 @@ def _companion_roots(coeffs):
     Returns
     -------
     roots : ndarray, complex, shape (N, 5)
+        Roots per polynomial; NaN rows where the coefficients are not finite
+        (e.g. NaN lens geometry), so bad inputs propagate instead of raising.
     """
     a5 = coeffs[:, 0]
     # Avoid divide-by-zero for degenerate polynomials.
     a5_safe = np.where(np.abs(a5) < _EPS, _EPS + 0j, a5)
-    c = -coeffs[:, 1:] / a5_safe[:, None]
+    with np.errstate(invalid='ignore', divide='ignore'):
+        c = -coeffs[:, 1:] / a5_safe[:, None]
 
     n = coeffs.shape[0]
     C = np.zeros((n, 5, 5), dtype=complex)
@@ -288,7 +300,15 @@ def _companion_roots(coeffs):
     C[:, 3, 2] = 1.0
     C[:, 4, 3] = 1.0
 
-    return np.linalg.eigvals(C)
+    # eigvals raises on NaN / inf; solve only the finite rows.
+    good = np.all(np.isfinite(c), axis=1)
+    if np.all(good):
+        return np.linalg.eigvals(C)
+    roots = np.full((n, 5), np.nan + 1j * np.nan)
+    if np.any(good):
+        roots[good] = np.linalg.eigvals(C[good])
+
+    return roots
 
 
 def _newton_polish(z, w, z1, z2, m1, m2, n_iter=2):
@@ -842,10 +862,219 @@ def adaptive_limb_images_amps(zeta_c, rho, s, q, n_init=64, tol=1e-4,
     return images, amps
 
 
-def ld_images_amps(zeta_c, rho, gamma, s, q, n_ld=8, n_init=64, tol=1e-4,
-                   max_pts=1024, z1=None, z2=None, m1=None, m2=None):
+def caustic_samples(z1, z2, m1, m2, n_phi=_N_PHI):
+    """
+    Sample the binary-lens caustics with tangents and neighbour matching.
+
+    Critical points solve ``kappa(z) = m1/(z-z1)^2 + m2/(z-z2)^2 =
+    exp(-i phi)`` (a quartic in ``z``). The caustic point is the lens map
+    of each critical point, and its tangent is
+    ``d zeta / d phi = zdot + exp(i phi) conj(zdot)`` with
+    ``zdot = -i exp(-i phi) / kappa'(z)``.
+
+    Parameters
+    ----------
+    z1, z2 : complex or array_like, complex, shape (N_geom,)
+        Lens positions.
+    m1, m2 : float or array_like, shape (N_geom,)
+        Lens mass fractions.
+    n_phi : int, optional
+        Samples of the critical-curve phase ``phi`` in ``[0, 2 pi)``.
+
+    Returns
+    -------
+    zeta : ndarray, complex, shape (N_geom, n_phi, 4)
+        Caustic points (one per quartic root).
+    zeta_dot : ndarray, complex, shape (N_geom, n_phi, 4)
+        Caustic tangents ``d zeta / d phi``.
+    nxt : ndarray, int, shape (N_geom, n_phi, 4)
+        Index of the matching root at the next phase sample (wrapping
+        from the last sample to the first).
+
+    Notes
+    -----
+    Matching is pairwise between neighbouring phases (no global branch
+    labels), which is all that sign changes along a branch need.
+    """
+    z1 = np.atleast_1d(np.asarray(z1, dtype=complex))
+    z2 = np.atleast_1d(np.asarray(z2, dtype=complex))
+    m1 = np.atleast_1d(np.asarray(m1, dtype=float))
+    m2 = np.atleast_1d(np.asarray(m2, dtype=float))
+    z1, z2, m1, m2 = np.broadcast_arrays(z1, z2, m1, m2)
+    n_geom = z1.size
+
+    # Shapes below: geometry [N_geom, 1], phase [1, n_phi].
+    phi = 2.0 * np.pi * np.arange(n_phi) / n_phi
+    e = np.exp(-1j * phi)[None, :]
+    z1c, z2c = z1[:, None], z2[:, None]
+    m1c, m2c = m1[:, None], m2[:, None]
+
+    # Monic quartic (z-z1)^2 (z-z2)^2 - [m1 (z-z2)^2 + m2 (z-z1)^2] / e.
+    a1, a0 = -2.0 * z1c, z1c ** 2
+    b1, b0 = -2.0 * z2c, z2c ** 2
+    p3 = np.broadcast_to(a1 + b1, (n_geom, n_phi))
+    p2 = a0 + b0 + a1 * b1 - (m1c + m2c) / e
+    p1 = a1 * b0 + a0 * b1 - (m1c * b1 + m2c * a1) / e
+    p0 = a0 * b0 - (m1c * b0 + m2c * a0) / e
+
+    # Companion-matrix roots, shape [N_geom, n_phi, 4].
+    comp = np.zeros((n_geom, n_phi, 4, 4), dtype=complex)
+    comp[..., 0, :] = -np.stack([p3, p2, p1, p0], axis=-1)
+    comp[..., 1, 0] = comp[..., 2, 1] = comp[..., 3, 2] = 1.0
+
+    # Non-finite geometry gives NaN roots (eigvals would raise).
+    good = np.all(np.isfinite(comp), axis=(-2, -1))
+    z = np.full((n_geom, n_phi, 4), np.nan + 1j * np.nan)
+    if np.any(good):
+        z[good] = np.linalg.eigvals(comp[good])
+
+    # Caustic points and tangents.
+    kappa, _ = kappa_jac(z, z1c[..., None], z2c[..., None], m1c[..., None],
+                         m2c[..., None])
+    kappa_p = kappa_prime(z, z1c[..., None], z2c[..., None], m1c[..., None],
+                          m2c[..., None])
+    zdot = -1j * e[..., None] / kappa_p
+    zeta = z - np.conj(m1c[..., None] / (z - z1c[..., None])
+                       + m2c[..., None] / (z - z2c[..., None]))
+    zeta_dot = zdot + np.conj(e)[..., None] * np.conj(zdot)
+
+    # Pairwise matching to the next phase sample (24 permutations).
+    perms = np.array(list(permutations(range(4))))
+    z_next = np.roll(z, -1, axis=1)
+    cost = np.sum(np.abs(z_next[..., perms] - z[..., None, :]) ** 2, axis=-1)
+    nxt = perms[np.argmin(cost, axis=-1)]
+
+    return zeta, zeta_dot, nxt
+
+
+def caustic_tangency_radii(zeta_c, zeta, zeta_dot, nxt):
+    """
+    Radii at which circles around each source centre touch the caustics.
+
+    A circle of radius ``r`` around ``c`` is tangent to the caustic where
+    ``h = Re[conj(zeta - c) d zeta/d phi]`` changes sign along a branch
+    (distance extrema, including cusps, where the tangent reverses).
+
+    Parameters
+    ----------
+    zeta_c : array_like, complex, shape (N_times,)
+        Source centres.
+    zeta, zeta_dot, nxt : ndarray, shape (N_geom, n_phi, 4)
+        Output of :func:`caustic_samples`; ``N_geom`` is 1 (static lens)
+        or ``N_times``.
+
+    Returns
+    -------
+    r : ndarray, float, shape (N_times, n_phi * 4)
+        Tangency radii, ``NaN`` where a phase interval has no sign change.
+    """
+    zeta_c = np.atleast_1d(np.asarray(zeta_c, dtype=complex))
+    c = zeta_c[:, None, None]
+
+    # Distance and its phase derivative (times distance) at every sample.
+    h = np.real(np.conj(zeta - c) * zeta_dot)
+    dist = np.abs(zeta - c)
+
+    # Same quantities at the matched root of the next phase sample.
+    nxt = np.broadcast_to(nxt, h.shape)
+    h_next = np.take_along_axis(np.roll(h, -1, axis=1), nxt, axis=-1)
+    d_next = np.take_along_axis(np.roll(dist, -1, axis=1), nxt, axis=-1)
+
+    # Linear interpolation of the zero of h inside each flipped interval.
+    flip = np.sign(h) * np.sign(h_next) < 0
+    with np.errstate(invalid='ignore', divide='ignore'):
+        f = h / (h - h_next)
+    r = np.where(flip, dist + f * (d_next - dist), np.nan)
+
+    return r.reshape(zeta_c.size, -1)
+
+
+def ld_break_nodes(r_tan, rho, n_ld=_N_LD, n_brk=_N_BRK):
+    """
+    Radial limb-darkening nodes split at caustic-tangency radii.
+
+    The uniform-disk flux ``F(r)`` has a derivative jump where a circle of
+    radius ``r`` touches a fold or passes a cusp. The ``s`` interval
+    ``[0, 1]`` (``s = sqrt(1 - r^2/rho^2)``) is split at the ``n_brk``
+    largest tangency radii inside the source; unused split slots bisect
+    the longest interval. Each interval carries ``n_ld`` Gauss-Legendre
+    nodes graded toward both ends (``s = a + (b - a)(3 t^2 - 2 t^3)``).
+
+    Parameters
+    ----------
+    r_tan : array_like, float, shape (N_times, N_cand)
+        Candidate tangency radii (``NaN`` = none), e.g. from
+        :func:`caustic_tangency_radii`.
+    rho : float or array_like, shape (N_times,)
+        Source radius.
+    n_ld : int, optional
+        Gauss-Legendre nodes per interval.
+    n_brk : int, optional
+        Split points per epoch (static count).
+
+    Returns
+    -------
+    s : ndarray, float, shape (N_times, (n_brk + 1) * n_ld)
+        Nodes in ``s``.
+    w : ndarray, float, shape (N_times, (n_brk + 1) * n_ld)
+        Weights (sum to 1 per epoch).
+    """
+    r_tan = np.atleast_2d(np.asarray(r_tan, dtype=float))
+    n_times = r_tan.shape[0]
+    rho = np.broadcast_to(np.asarray(rho, dtype=float), (n_times,))
+
+    # Keep the n_brk largest radii strictly inside the source.
+    inside = np.isfinite(r_tan) & (r_tan > 0) & (r_tan < rho[:, None])
+    r_in = np.where(inside, r_tan, -np.inf)
+    r_top = -np.sort(-r_in, axis=1)[:, :n_brk]
+    if r_top.shape[1] < n_brk:
+        pad = np.full((n_times, n_brk - r_top.shape[1]), -np.inf)
+        r_top = np.concatenate([r_top, pad], axis=1)
+    valid = np.isfinite(r_top)
+    with np.errstate(invalid='ignore'):
+        s_top = np.sqrt(1.0 - (r_top / rho[:, None]) ** 2)
+
+    # Interval edges in s; unfilled slots sit at 1 (zero-length).
+    edges = np.concatenate([np.zeros((n_times, 1)),
+                            np.where(valid, s_top, 1.0),
+                            np.ones((n_times, 1))], axis=1)
+    edges = np.sort(edges, axis=1)
+
+    # Spend unused slots bisecting the longest interval.
+    n_valid = np.sum(valid, axis=1)
+    rows = np.arange(n_times)
+    for j in range(n_brk):
+        need = n_valid <= j
+        gaps = np.diff(edges, axis=1)
+        k = np.argmax(gaps, axis=1)
+        mid = 0.5 * (edges[rows, k] + edges[rows, k + 1])
+        edges[:, -1] = np.where(need, mid, edges[:, -1])
+        edges = np.sort(edges, axis=1)
+        edges[:, -1] = 1.0
+
+    # Graded Gauss-Legendre nodes on each interval.
+    x, w = np.polynomial.legendre.leggauss(int(n_ld))
+    tau = 0.5 * (x + 1.0)
+    w_tau = 0.5 * w
+    g = 3.0 * tau ** 2 - 2.0 * tau ** 3
+    dg = 6.0 * tau * (1.0 - tau)
+    a, b = edges[:, :-1, None], edges[:, 1:, None]
+    s = a + (b - a) * g
+    ws = (b - a) * dg * w_tau
+
+    return s.reshape(n_times, -1), ws.reshape(n_times, -1)
+
+
+def ld_images_amps(zeta_c, rho, gamma, s, q, n_ld=_N_LD, n_init=64, tol=1e-4,
+                   max_pts=1024, z1=None, z2=None, m1=None, m2=None,
+                   n_brk=_N_BRK, n_phi=_N_PHI):
     """
     Linear (Gamma-law) limb-darkened FSBL magnification and centroid.
+
+    The magnified flux is a weighted sum over nested uniform disks (see
+    :func:`bagle.fspl_contour.ld_images_amps`). The radial nodes are split
+    where circles around the source centre touch the caustics
+    (:func:`ld_break_nodes`), so each radial interval is smooth.
 
     Parameters
     ----------
@@ -858,11 +1087,16 @@ def ld_images_amps(zeta_c, rho, gamma, s, q, n_ld=8, n_init=64, tol=1e-4,
     s, q : float
         Binary separation and mass ratio.
     n_ld : int, optional
-        Gauss-Legendre nodes per LD sub-interval.
+        Gauss-Legendre nodes per radial interval; each epoch uses
+        ``(n_brk + 1) * n_ld + 1`` uniform disks.
     n_init, tol, max_pts : optional
         Forwarded to the uniform-disk adaptive integrator.
     z1, z2, m1, m2 : optional
-        Override lens geometry / masses.
+        Override lens geometry / masses (scalars or per epoch).
+    n_brk : int, optional
+        Caustic-tangency split points per epoch.
+    n_phi : int, optional
+        Critical-curve phase samples used to locate the tangencies.
 
     Returns
     -------
@@ -907,7 +1141,29 @@ def ld_images_amps(zeta_c, rho, gamma, s, q, n_ld=8, n_init=64, tol=1e-4,
             z1=z1_arr, z2=z2_arr, m1=m1_arr, m2=m2_arr)
         return img, amp
 
-    images2, amps2 = fspl_contour.ld_images_amps(
-        zeta_c, rho, gamma, disk_images_amps, n_ld=n_ld)
+    # Caustic-tangency radii: one caustic for a static lens, else per epoch
+    # (in chunks to bound the companion-matrix memory).
+    static = all(np.all(a == a[0]) for a in (z1_arr, z2_arr, m1_arr, m2_arr))
+    if static:
+        caus = caustic_samples(z1_arr[0], z2_arr[0], m1_arr[0], m2_arr[0],
+                               n_phi=n_phi)
+        r_tan = caustic_tangency_radii(zeta_c, *caus)
+    else:
+        chunk = 64
+        r_tan = np.concatenate([
+            caustic_tangency_radii(
+                zeta_c[i:i + chunk],
+                *caustic_samples(z1_arr[i:i + chunk], z2_arr[i:i + chunk],
+                                 m1_arr[i:i + chunk], m2_arr[i:i + chunk],
+                                 n_phi=n_phi))
+            for i in range(0, n_times, chunk)], axis=0)
+
+    # Radial nodes split at the tangencies, then the nested-disk sum.
+    # The empty second image slot gives a discarded 0/0 centroid.
+    nodes = ld_break_nodes(r_tan, rho, n_ld=n_ld, n_brk=n_brk)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        images2, amps2 = fspl_contour.ld_images_amps(
+            zeta_c, rho, gamma, disk_images_amps, n_ld=n_ld,
+            radius_nodes=nodes)
 
     return images2[:, 0, :], amps2[:, 0]

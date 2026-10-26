@@ -1,0 +1,202 @@
+"""
+Traced binary-source finite-source likelihoods (:mod:`bagle.jax.bfs`).
+
+Checks the BFSPL and BFSBL Param1 ``jax_log_likely_*`` methods against the
+host photometry and astrometry, and that their gradients are finite.
+"""
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+jax = pytest.importorskip("jax")
+
+import jax.numpy as jnp
+
+from bagle import jax_physics
+from bagle import model_jax as mj
+
+# Per-filter parameters (lists on the host model).
+FILT = ('xS0_E', 'xS0_N', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'dmag_Lp_Ls',
+        'gamma_pri', 'gamma_sec')
+
+# Bright, luminous-lens events with finite-source peaks.
+BFSPL_KW = dict(mL=0.6, t0=57000.0, beta=0.02, dL=4000.0, dL_dS=0.5,
+                xS0_E=0.001, xS0_N=-0.002, muL_E=1.0, muL_N=3.0, alpha=40.0,
+                muS_E=-2.0, muS_N=-1.0, radiusS_pri=8e-6, radiusS_sec=4e-6,
+                sep=0.3, b_sff=0.7, mag_src_pri=19.0, mag_src_sec=19.6,
+                raL=268.0, decL=-29.0)
+BFSBL_KW = dict(mLp=0.5, mLs=0.05, t0=57000.0, xS0_E=0.001, xS0_N=-0.002,
+                beta=0.04, muL_E=1.0, muL_N=3.0, muS_E=-2.0, muS_N=-1.0,
+                dL=4000.0, dS=8000.0, sepL=0.75, alphaL=70.0, sepS=0.2,
+                alphaS=20.0, mag_src_pri=19.0, mag_src_sec=19.6, b_sff=0.7,
+                dmag_Lp_Ls=1.5, radiusS_pri=8e-6, radiusS_sec=4e-6,
+                raL=268.0, decL=-29.0)
+
+# Tiny data errors: the chi^2 of the traced model at the host values
+# measures the model difference.
+ERR = 1e-8
+
+
+def _bfspl_host_astrometry(mod, kw, t):
+    """
+    BFSPL centroid from host images with source-major weights.
+
+    Parameters
+    ----------
+    mod : BFSPL model instance
+        Host model.
+    kw : dict
+        Scalar parameters (``mag_src_pri``, ``mag_src_sec``, ``b_sff``).
+    t : ndarray, shape (N_times,)
+        Times (MJD).
+
+    Returns
+    -------
+    pos : ndarray, shape (N_times, 2)
+        East / North centroid (arcsec) with the lens light at the lens.
+
+    Notes
+    -----
+    Host ``get_astrometry`` weights with transposed amplifications and puts
+    the lens light at the sky origin; see :func:`bagle.jax.bfs.bfspl_astrometry`.
+    """
+    img, amp = (np.asarray(a) for a in mod.get_all_arrays(t))
+    f1 = mj.mag2flux(kw['mag_src_pri'])
+    f2 = mj.mag2flux(kw['mag_src_sec'])
+    fL = mj.lens_flux_for_astrometry(f1 + f2, kw['b_sff'])
+    xL = np.asarray(mod.get_lens_astrometry(t))
+
+    # Shapes: img [N, source, image, 2], amp [N, source, image].
+    numer = (f1 * np.sum(img[:, 0] * amp[:, 0, :, None], axis=1)
+             + f2 * np.sum(img[:, 1] * amp[:, 1, :, None], axis=1) + fL * xL)
+    denom = f1 * amp[:, 0].sum(axis=1) + f2 * amp[:, 1].sum(axis=1) + fL
+
+    return numer / denom[:, None]
+
+
+def _traced_vs_host(name, kw, t):
+    """
+    RMS traced-minus-host photometry and astrometry for one class.
+
+    Parameters
+    ----------
+    name : str
+        Composed class name in :mod:`bagle.model_jax`.
+    kw : dict
+        Scalar parameters (per-filter values are wrapped for the host).
+    t : ndarray, shape (N_times,)
+        Times (MJD).
+
+    Returns
+    -------
+    rms_mag : float
+        RMS magnitude difference.
+    rms_mas : float
+        RMS per-axis position difference (mas).
+    grad_ok : bool
+        Whether the joint log-likelihood gradient is finite.
+    """
+    cls = getattr(mj, name)
+    kw = dict(kw)
+    if 'Limb' in name:
+        kw.update(gamma_pri=0.6, gamma_sec=0.3)
+
+    # Host model and its photometry / astrometry.
+    mod = cls(**{k: ([v] if k in FILT else v) for k, v in kw.items()})
+    mag_h = np.asarray(mod.get_photometry(t))
+    if name.startswith('BFSPL'):
+        pos_h = _bfspl_host_astrometry(mod, kw, t)
+    else:
+        pos_h = np.asarray(mod.get_astrometry(t))
+
+    # Packed vector, parallax table and fitter-style magnitude tuple.
+    vec = jnp.asarray([kw[n] for n in cls.fitter_param_names])
+    pvec = None
+    if '_Par_' in name:
+        pvec = jax_physics.precompute_parallax_vectors(
+            kw['raL'], kw['decL'], t, obs_location='earth')
+    mags = (kw['mag_src_pri'], kw['mag_src_sec'])
+    tj = jnp.asarray(t)
+
+    def lnl(v, dmag=0.0, dpos=0.0, scale=1.0):
+        """Joint traced lnL with optional data offsets and error scale."""
+        err = jnp.full(t.size, ERR * scale)
+        lp = cls.jax_log_likely_photometry(
+            v, tj, jnp.asarray(mag_h) + dmag, err, kw['b_sff'], mags,
+            parallax_vectors=pvec)
+        la = cls.jax_log_likely_astrometry(
+            v, tj, jnp.asarray(pos_h[:, 0]) + dpos, jnp.asarray(pos_h[:, 1]),
+            err, err, b_sff=kw['b_sff'], parallax_vectors=pvec)
+        return lp, la
+
+    # chi^2 at the host values -> RMS differences.
+    err = np.full(t.size, ERR)
+    lp, la = (float(x) for x in lnl(vec))
+    lp0 = float(jax_physics.gaussian_log_likelihood_sum(mag_h, mag_h, err))
+    la0 = float(jax_physics.gaussian_astrometry_log_likelihood_sum(
+        jnp.asarray(pos_h), pos_h[:, 0], pos_h[:, 1], err, err))
+    rms_mag = ERR * np.sqrt(max(-2.0 * (lp - lp0), 0.0) / t.size)
+    rms_mas = 1e3 * ERR * np.sqrt(max(-2.0 * (la - la0), 0.0) / (2 * t.size))
+
+    # Gradient at realistic errors (1 mmag-ish, 1 mas) and offset data.
+    grad = jax.grad(lambda v: sum(lnl(v, dmag=0.01, dpos=3e-5,
+                                      scale=1e5)))(vec)
+
+    return rms_mag, rms_mas, bool(np.all(np.isfinite(np.asarray(grad))))
+
+
+@pytest.mark.parametrize("name", [
+    'BFSPL_PhotAstrom_noPar_Param1',
+    'BFSPL_Limb_PhotAstrom_noPar_Param1',
+    'BFSPL_Limb_PhotAstrom_Par_Param1',
+])
+def test_bfspl_traced_matches_host(name):
+    """Traced BFSPL photometry and astrometry match the host images."""
+    t = np.linspace(56985.0, 57015.0, 30)
+    rms_mag, rms_mas, grad_ok = _traced_vs_host(name, BFSPL_KW, t)
+
+    # Host far-field epochs use a 50-point limb (traced: 400).
+    assert rms_mag < 2e-5
+    assert rms_mas < 2e-4
+    assert grad_ok
+
+    return None
+
+
+@pytest.mark.parametrize("name,n_t", [
+    ('BFSBL_PhotAstrom_noPar_Param1', 24),
+    ('BFSBL_PhotAstrom_Par_Param1', 24),
+    ('BFSBL_Limb_PhotAstrom_noPar_Param1', 8),
+])
+def test_bfsbl_traced_matches_host(name, n_t):
+    """Traced BFSBL photometry and astrometry match the host contour model."""
+    t = np.linspace(56985.0, 57015.0, n_t)
+    rms_mag, rms_mas, grad_ok = _traced_vs_host(name, BFSBL_KW, t)
+
+    assert rms_mag < 1e-5
+    assert rms_mas < 1e-5
+    assert grad_ok
+
+    return None
+
+
+def test_bfsbl_host_frame_matches_bsbl():
+    """BFSBL with tiny sources equals point-source BSBL (luminous lenses)."""
+    kw = {k: ([v] if k in FILT else v) for k, v in BFSBL_KW.items()
+          if not k.startswith('radiusS')}
+    kw['beta'] = 0.3
+    t = np.linspace(56900.0, 57100.0, 9)
+
+    # Unequal lens fluxes put the lens light centroid off the binary centre.
+    ps = mj.BSBL_PhotAstrom_noPar_Param1(**kw)
+    fs = mj.BFSBL_PhotAstrom_noPar_Param1(radiusS_pri=1e-7, radiusS_sec=1e-7,
+                                          **kw)
+    dmag = np.abs(np.asarray(fs.get_photometry(t))
+                  - np.asarray(ps.get_photometry(t)))
+    dpos = np.abs(np.asarray(fs.get_astrometry(t))
+                  - np.asarray(ps.get_astrometry(t)))
+    assert dmag.max() < 1e-4
+    assert dpos.max() * 1e3 < 1e-4
+
+    return None
