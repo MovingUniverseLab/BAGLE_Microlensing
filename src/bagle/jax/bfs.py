@@ -31,9 +31,9 @@ from bagle.jax_physics import (
 )
 
 
-def binary_source_offset(sep, alpha_deg, u0_amp, u0_hat, thetaE_amp):
+def binary_source_offset(sep, alpha_deg):
     """
-    Secondary-source sky offset and closest-approach vector.
+    Secondary-source sky offset from the primary.
 
     Parameters
     ----------
@@ -41,35 +41,17 @@ def binary_source_offset(sep, alpha_deg, u0_amp, u0_hat, thetaE_amp):
         Primary-to-secondary source separation on the sky (mas).
     alpha_deg : float, shape = ()
         Position angle of the secondary, East of North (degrees).
-    u0_amp : float, shape = ()
-        Signed primary impact parameter (Einstein radii).
-    u0_hat : array_like, float, shape = (2,)
-        Unit closest-approach direction.
-    thetaE_amp : float, shape = ()
-        Einstein radius (mas).
 
     Returns
     -------
     dxS : jnp.ndarray, float, shape = (2,)
         Secondary minus primary source position (arcsec).
-    u0_sec : jnp.ndarray, float, shape = (2,)
-        Secondary closest-approach vector (Einstein radii).
-
-    Notes
-    -----
-    Follows the host Param1 classes: the secondary keeps only the
-    ``u0_hat`` component of the separation and is scaled by the signed
-    ``u0_amp`` (the primary uses ``|u0_amp|``).
     """
-    # Separation vector on the sky (mas).
+    # Separation vector on the sky (mas -> arcsec).
     alpha = alpha_deg * jnp.pi / 180.0
     sep_vec = sep * jnp.stack([jnp.sin(alpha), jnp.cos(alpha)])
 
-    # Signed secondary impact parameter along u0_hat.
-    u0_amp_sec = u0_amp + jnp.dot(sep_vec, u0_hat) / thetaE_amp
-    u0_sec = u0_amp_sec * u0_hat
-
-    return sep_vec * 1e-3, u0_sec
+    return sep_vec * 1e-3
 
 
 def _two_source_flux(amp_pri, amp_sec, mag_pri, mag_sec):
@@ -170,7 +152,8 @@ def bfspl_images_amps(t, t0, tE, u0_pri, u0_sec, thetaE_hat, rho_pri, rho_sec,
     t0, tE : float, shape = ()
         Closest-approach time (MJD) and Einstein time (days).
     u0_pri, u0_sec : array_like, float, shape = (2,)
-        Closest-approach vectors of the two sources (Einstein radii).
+        Source - lens offsets of the two sources at ``t0`` (Einstein radii);
+        ``u0_sec`` includes the separation along ``thetaE_hat``.
     thetaE_hat : array_like, float, shape = (2,)
         Unit relative proper-motion direction.
     rho_pri, rho_sec : float, shape = ()
@@ -277,11 +260,8 @@ def bfspl_astrometry(t, t0, tE, u0_pri, u0_sec, thetaE_hat, xL0, muL,
     Notes
     -----
     Each source's images are weighted by that source's own signed
-    amplifications, and the clipped lens flux sits at the lens position.
-    Host ``BFSPL_PhotAstrom.get_astrometry`` (here and in
-    :mod:`bagle.model`) instead weights with the ``[image, source]``
-    transposed amplifications and puts the lens flux at the sky origin, so
-    the two differ whenever ``b_sff < 1`` or the sources differ.
+    amplifications, and the clipped lens flux sits at the lens position,
+    as in host ``BFSPL_PhotAstrom.get_astrometry``.
     """
     img_pri, img_sec, amp_pri, amp_sec = bfspl_images_amps(
         t, t0, tE, u0_pri, u0_sec, thetaE_hat, rho_pri, rho_sec, n_outline,

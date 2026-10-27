@@ -1338,60 +1338,6 @@ def fsbl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
                                                   y_err)
 
 
-def orbiting_lens_offsets(t, t0, sep, alpha_deg, thetaE_amp, dmuL_sec,
-                          accL_sec=None):
-    """
-    Per-epoch lens offsets from the lens origin for linear / accelerated orbits.
-
-    Parameters
-    ----------
-    t : array_like, float, shape = (N_times,)
-        Observation times (MJD).
-    t0 : float, shape = ()
-        Reference time (MJD).
-    sep : float, shape = ()
-        Lens separation at ``t0`` (mas).
-    alpha_deg : float, shape = ()
-        Binary-axis angle East of North (degrees).
-    thetaE_amp : float, shape = ()
-        Einstein radius (mas).
-    dmuL_sec : array_like, float, shape = (2,)
-        Secondary proper motion relative to the lens origin (mas/yr).
-    accL_sec : array_like, float, shape = (2,), optional
-        Secondary acceleration (mas/yr^2); ``None`` is a linear orbit.
-
-    Returns
-    -------
-    off1, off2 : jnp.ndarray, float, shape = (N_times, 2)
-        Primary and secondary offsets from the lens origin (Einstein radii).
-
-    Notes
-    -----
-    Matches ``PSBL_PhotAstrom.get_resolved_lens_astrometry`` for
-    ``orbitFlag`` ``'linear'`` / ``'accelerated'``: the primary sits at
-    ``-offset`` (the static models put it at ``+offset``) and only the
-    secondary moves.
-    """
-    t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
-    dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
-
-    # Half-separation vector at t0 (Einstein radii).
-    alpha = jnp.deg2rad(alpha_deg)
-    half = 0.5 * sep * jnp.stack([jnp.sin(alpha), jnp.cos(alpha)]) / thetaE_amp
-    half = half.reshape(1, 2)
-
-    # Secondary motion relative to the lens origin (mas -> Einstein radii).
-    motion = dt * jnp.asarray(dmuL_sec).reshape(1, 2)
-    if accL_sec is not None:
-        motion = motion + 0.5 * dt ** 2 * jnp.asarray(accL_sec).reshape(1, 2)
-
-    # Primary fixed at -half; secondary at +half plus its motion.
-    off1 = jnp.broadcast_to(-half, motion.shape)
-    off2 = half + motion / thetaE_amp
-
-    return off1, off2
-
-
 def fsbl_photometry_tracks(t, t0, xS0, xL0, muS, muL, thetaE_amp,
                            xL1_over_theta, xL2_over_theta, m1, m2, rho,
                            mag_src, b_sff, parallax_vectors=None, piS=None,

@@ -656,9 +656,9 @@ def fspl_resolved_amplification_from_model(model, t, filt_idx, pvec):
     """
     Finite-source resolved amplifications via host AMG ``get_all_arrays``.
 
-    FSPL_PhotAstrom and BFSPL_PhotAstrom use different ``swapaxes``
-    conventions in
-    :meth:`bagle.model.FSPL_PhotAstrom.get_resolved_amplification`.
+    FSPL_PhotAstrom returns ``(2, N_t)`` (image axis first), as in
+    :meth:`bagle.model.FSPL_PhotAstrom.get_resolved_amplification`;
+    BFSPL_PhotAstrom keeps the ``(N_t, source, image)`` layout of BSPL.
 
     Parameters
     ----------
@@ -679,7 +679,7 @@ def fspl_resolved_amplification_from_model(model, t, filt_idx, pvec):
     img_arr, amp_arr = model.get_all_arrays(t, filt_idx=filt_idx)
     amp_arr = np.asarray(amp_arr, dtype=np.float64)
     if type(model).__name__.startswith("BFSPL"):
-        return np.swapaxes(amp_arr, 1, 2)
+        return amp_arr
 
     return np.swapaxes(amp_arr, 0, 1)
 

@@ -2845,6 +2845,224 @@ def pspl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
     return lnL
 
 
+def orbiting_lens_offsets(t, t0, sep, alpha_deg, thetaE_amp, dmuL_sec,
+                          accL_sec=None):
+    """
+    Per-epoch lens offsets from the lens origin for linear / accelerated orbits.
+
+    Parameters
+    ----------
+    t : array_like, float, shape = (N_times,)
+        Observation times (MJD).
+    t0 : float, shape = ()
+        Reference time (MJD).
+    sep : float, shape = ()
+        Lens separation at ``t0`` (mas).
+    alpha_deg : float, shape = ()
+        Binary-axis angle East of North (degrees).
+    thetaE_amp : float, shape = ()
+        Einstein radius (mas).
+    dmuL_sec : array_like, float, shape = (2,)
+        Secondary proper motion relative to the lens origin (mas/yr).
+    accL_sec : array_like, float, shape = (2,), optional
+        Secondary acceleration (mas/yr^2); ``None`` is a linear orbit.
+
+    Returns
+    -------
+    off1, off2 : jnp.ndarray, float, shape = (N_times, 2)
+        Primary and secondary offsets from the lens origin (Einstein radii).
+
+    Notes
+    -----
+    Matches ``PSBL_PhotAstrom.get_resolved_lens_astrometry`` for
+    ``orbitFlag`` ``'linear'`` / ``'accelerated'``: the primary sits at
+    ``-offset`` (the static models put it at ``+offset``) and only the
+    secondary moves.
+    """
+    t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+    dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
+
+    # Half-separation vector at t0 (Einstein radii).
+    alpha = jnp.deg2rad(alpha_deg)
+    half = 0.5 * sep * jnp.stack([jnp.sin(alpha), jnp.cos(alpha)]) / thetaE_amp
+    half = half.reshape(1, 2)
+
+    # Secondary motion relative to the lens origin (mas -> Einstein radii).
+    motion = dt * jnp.asarray(dmuL_sec).reshape(1, 2)
+    if accL_sec is not None:
+        motion = motion + 0.5 * dt ** 2 * jnp.asarray(accL_sec).reshape(1, 2)
+
+    # Primary fixed at -half; secondary at +half plus its motion.
+    off1 = jnp.broadcast_to(-half, motion.shape)
+    off2 = half + motion / thetaE_amp
+
+    return off1, off2
+
+
+def psbl_sky_images(t, t0, xS0, xL0, muS, muL, thetaE_amp, xL1_over_theta,
+                    xL2_over_theta, m1, m2, parallax_vectors=None, piS=None,
+                    piL=None, root_tol=1e-8, check_sols: bool = True,
+                    rescale: bool = True):
+    """
+    PSBL lens sky tracks, image sky positions and image magnifications.
+
+    Parameters
+    ----------
+    t : array_like, float, shape = (N_times,)
+        Observation times in MJD.
+    t0 : float
+        Reference time (MJD).
+    xS0, xL0 : array_like, float, shape = (2,)
+        Source / lens-origin sky position at ``t0`` (arcsec).
+    muS, muL : array_like, float, shape = (2,)
+        Proper motions (mas/yr).
+    thetaE_amp : float
+        Einstein radius (mas).
+    xL1_over_theta, xL2_over_theta : array_like, float, shape = (2,) or
+        (N_times, 2)
+        Lens offsets from the lens origin in Einstein radii; per-epoch
+        offsets describe orbital motion.
+    m1, m2 : float
+        Normalized lens masses (mass fractions).
+    parallax_vectors : array_like, float, shape = (N_times, 2), optional
+        Parallax table; ``None`` skips parallax.
+    piS, piL : float or None
+        Source / lens parallax (mas).
+    root_tol : float
+        Witt quintic root tolerance.
+    check_sols, rescale : bool
+        Lens-equation solver options.
+
+    Returns
+    -------
+    xL1, xL2 : jnp.ndarray, float, shape = (N_times, 2)
+        Primary and secondary lens sky positions (arcsec).
+    xS_img : jnp.ndarray, float, shape = (N_times, 5, 2)
+        Image sky positions (arcsec); invalid images are zero.
+    amp : jnp.ndarray, float, shape = (N_times, 5)
+        Image magnifications; invalid images are zero.
+    """
+    t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+    dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
+
+    # Unlensed source and lens-origin tracks (arcsec).
+    xS = xS0.reshape(1, 2) + dt * muS.reshape(1, 2) * 1e-3
+    xL = xL0.reshape(1, 2) + dt * muL.reshape(1, 2) * 1e-3
+    if parallax_vectors is not None:
+        pvec = jnp.asarray(parallax_vectors, dtype=jnp.float64)
+        xS = xS + piS * pvec * 1e-3
+        xL = xL + piL * pvec * 1e-3
+
+    # Lens positions from their offsets (broadcast over epochs when static).
+    thetaE_as = thetaE_amp * 1e-3
+    off1 = jnp.atleast_2d(jnp.asarray(xL1_over_theta, dtype=jnp.float64))
+    off2 = jnp.atleast_2d(jnp.asarray(xL2_over_theta, dtype=jnp.float64))
+    xL1 = xL + off1 * thetaE_as
+    xL2 = xL + off2 * thetaE_as
+
+    # Host PhotAstrom uses m1, m2 in arcsec^2 (= mass fraction * thetaE^2).
+    m1 = jnp.asarray(m1, dtype=jnp.float64) * thetaE_as ** 2
+    m2 = jnp.asarray(m2, dtype=jnp.float64) * thetaE_as ** 2
+
+    # Complex arcsec positions for the Witt quintic.
+    w = xS[:, 0] + 1j * xS[:, 1]
+    z1 = xL1[:, 0] + 1j * xL1[:, 1]
+    z2 = xL2[:, 0] + 1j * xL2[:, 1]
+
+    image_arr, amp_arr = psbl_all_arrays(
+        w, z1, z2, m1, m2, root_tol,
+        check_sols=check_sols, rescale=rescale
+    )
+
+    # Image positions as (N_times, N_images, 2); zero the invalid images.
+    xS_img = jnp.stack(
+        [jnp.real(image_arr), jnp.imag(image_arr)], axis=-1
+    )
+    amp_f = jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0)
+    xS_f = jnp.where(jnp.isfinite(xS_img), xS_img, 0.0)
+
+    return xL1, xL2, xS_f, amp_f
+
+
+def psbl_photometry_tracks(t, t0, xS0, xL0, muS, muL, thetaE_amp,
+                           xL1_over_theta, xL2_over_theta, m1, m2, mag_src,
+                           b_sff, parallax_vectors=None, piS=None, piL=None,
+                           root_tol=1e-8):
+    """
+    PSBL unresolved photometry from sky tracks (static or orbiting lenses).
+
+    Parameters
+    ----------
+    t, t0, xS0, xL0, muS, muL, thetaE_amp : see :func:`psbl_sky_images`
+        Time grid and unlensed motion.
+    xL1_over_theta, xL2_over_theta, m1, m2 : see :func:`psbl_sky_images`
+        Lens geometry.
+    mag_src, b_sff : float
+        Unlensed source magnitude and source flux fraction.
+    parallax_vectors, piS, piL, root_tol : optional
+        See :func:`psbl_sky_images`.
+
+    Returns
+    -------
+    mag : jnp.ndarray, float, shape = (N_times,)
+        Blended model magnitudes.
+    """
+    _, _, _, amp = psbl_sky_images(
+        t, t0, xS0, xL0, muS, muL, thetaE_amp, xL1_over_theta,
+        xL2_over_theta, m1, m2, parallax_vectors=parallax_vectors, piS=piS,
+        piL=piL, root_tol=root_tol)
+
+    # Total magnification -> blended magnitude (unclipped blend).
+    return psbl_photometry_from_amp(jnp.sum(amp, axis=1), mag_src, b_sff)
+
+
+def psbl_log_likely_photometry_tracks(t, t0, xS0, xL0, muS, muL, thetaE_amp,
+                                      xL1_over_theta, xL2_over_theta, m1, m2,
+                                      mag_src, b_sff, mag_obs, mag_err,
+                                      parallax_vectors=None, piS=None,
+                                      piL=None, root_tol=1e-8, gp_params=None,
+                                      fixed_jitter=True):
+    """
+    PSBL photometric log-likelihood from sky tracks.
+
+    Parameters
+    ----------
+    t, t0, xS0, xL0, muS, muL, thetaE_amp : see :func:`psbl_photometry_tracks`
+        Time grid and unlensed motion.
+    xL1_over_theta, xL2_over_theta, m1, m2 : see :func:`psbl_photometry_tracks`
+        Lens geometry.
+    mag_src, b_sff : float
+        Unlensed source magnitude and source flux fraction.
+    mag_obs, mag_err : array_like, float, shape = (N_times,)
+        Observed magnitudes and uncertainties.
+    parallax_vectors, piS, piL, root_tol : optional
+        See :func:`psbl_photometry_tracks`.
+    gp_params : dict or None, optional
+        GP hyperparameters; ``None`` uses a plain Gaussian likelihood.
+    fixed_jitter : bool, optional
+        Passed to the GP path.
+
+    Returns
+    -------
+    lnL : jnp.ndarray, float, shape = ()
+        Summed photometric log-likelihood.
+    """
+    mag_model = psbl_photometry_tracks(
+        t, t0, xS0, xL0, muS, muL, thetaE_amp, xL1_over_theta,
+        xL2_over_theta, m1, m2, mag_src, b_sff,
+        parallax_vectors=parallax_vectors, piS=piS, piL=piL,
+        root_tol=root_tol)
+
+    # Plain Gaussian or GP residual likelihood.
+    if gp_params is None:
+        return gaussian_log_likelihood_sum(mag_model, mag_obs, mag_err)
+
+    from bagle.jax.gp import gp_log_likely_photometry
+
+    return gp_log_likely_photometry(t, mag_obs, mag_err, mag_model, gp_params,
+                                    fixed_jitter=fixed_jitter)
+
+
 def psbl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp,
                            xL1_over_theta, xL2_over_theta, m1, m2,
                            mag_src, b_sff, dmag_Lp_Ls=20.0,
@@ -2869,7 +3087,8 @@ def psbl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp,
     thetaE_amp : float
         Einstein radius (mas).
     xL1_over_theta, xL2_over_theta : array_like
-        Companion offsets from geometric center in Einstein radii.
+        Companion offsets from the lens origin in Einstein radii, shape
+        ``(2,)`` (static) or ``(N_times, 2)`` (orbiting lenses).
     m1, m2 : float
         Normalized lens masses.
     mag_src : float
@@ -2898,43 +3117,11 @@ def psbl_astrometry_param1(t, t0, xS0, xL0, muS, muL, thetaE_amp,
     between the two lenses. ``b_sff > 1`` is a dark lens. Photometry
     keeps the unclipped blend.
     """
-    t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
-    dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
-
-    # Unlensed source and geometric-center lens tracks (arcsec).
-    xS = xS0.reshape(1, 2) + dt * muS.reshape(1, 2) * 1e-3
-    xL = xL0.reshape(1, 2) + dt * muL.reshape(1, 2) * 1e-3
-    if parallax_vectors is not None:
-        pvec = jnp.asarray(parallax_vectors, dtype=jnp.float64)
-        xS = xS + piS * pvec * 1e-3
-        xL = xL + piL * pvec * 1e-3
-
-    # Companion positions relative to geometric center (arcsec).
-    thetaE_as = thetaE_amp * 1e-3
-    xL1 = xL + xL1_over_theta.reshape(1, 2) * thetaE_as
-    xL2 = xL + xL2_over_theta.reshape(1, 2) * thetaE_as
-
-    # Host PhotAstrom uses m1, m2 in arcsec^2 (= mass fraction * thetaE^2).
-    m1 = jnp.asarray(m1, dtype=jnp.float64) * thetaE_as ** 2
-    m2 = jnp.asarray(m2, dtype=jnp.float64) * thetaE_as ** 2
-
-    # Complex arcsec positions for the Witt quintic.
-    w = xS[:, 0] + 1j * xS[:, 1]
-    z1 = xL1[:, 0] + 1j * xL1[:, 1]
-    z2 = xL2[:, 0] + 1j * xL2[:, 1]
-
-    image_arr, amp_arr = psbl_all_arrays(
-        w, z1, z2, m1, m2, root_tol,
-        check_sols=check_sols, rescale=rescale
-    )
-
-    # Image positions as (N_times, N_images, 2).
-    xS_img = jnp.stack(
-        [jnp.real(image_arr), jnp.imag(image_arr)], axis=-1
-    )
-    amp_f = jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0)
+    xL1, xL2, xS_f, amp_f = psbl_sky_images(
+        t, t0, xS0, xL0, muS, muL, thetaE_amp, xL1_over_theta,
+        xL2_over_theta, m1, m2, parallax_vectors=parallax_vectors, piS=piS,
+        piL=piL, root_tol=root_tol, check_sols=check_sols, rescale=rescale)
     amp_3 = amp_f.reshape((amp_f.shape[0], amp_f.shape[1], 1))
-    xS_f = jnp.where(jnp.isfinite(xS_img), xS_img, 0.0)
 
     # Source flux, then non-source flux assigned to the lenses.
     # The 1e-12 floor only guards b_sff ~ 0. The following clip is the
@@ -2977,8 +3164,8 @@ def psbl_log_likely_astrometry(t, t0, xS0, xL0, muS, muL, thetaE_amp,
         Proper motions (mas/yr).
     thetaE_amp : float
         Einstein radius (mas).
-    xL1_over_theta, xL2_over_theta : array_like, shape (2,)
-        Companion offsets in Einstein radii.
+    xL1_over_theta, xL2_over_theta : array_like, shape (2,) or (N_times, 2)
+        Companion offsets in Einstein radii (per epoch for orbiting lenses).
     m1, m2 : float
         Normalized lens masses (mass fractions).
     mag_src : float

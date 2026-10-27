@@ -8574,7 +8574,129 @@ root_tol : float
         return
 
 
-class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
+class _PSBLOrbitTracedParam1:
+    """
+    Traced likelihoods for PSBL Param1 with linear / accelerated lens orbits.
+
+    Mixed into ``PSBL_PhotAstrom_{Lin,Acc}Orbs_Param1``. The secondary moves
+    with ``delta_muL_sec`` (and ``accLsec`` when present) relative to the
+    lens origin, as in ``PSBL_PhotAstrom.get_resolved_lens_astrometry``.
+    """
+
+    @classmethod
+    def _jax_orbit_args(cls, vec, t):
+        """
+        Traced sky-track arguments for an orbiting binary-lens Param1 vector.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector (filter-local).
+        t : array_like, float, shape = (N_times,)
+            Observation times (MJD).
+
+        Returns
+        -------
+        p : dict
+            Parameter name -> traced value.
+        args : tuple
+            ``(t0, xS0, xL0, muS, muL, thetaE_amp, off1, off2, m1, m2)`` for
+            :func:`bagle.jax_physics.psbl_sky_images`; ``off1`` and ``off2``
+            have shape ``(N_times, 2)``.
+        piS, piL : jnp.ndarray, float, shape = ()
+            Source and lens parallax (mas).
+        """
+        from bagle.jax.geometry import derive_psbl_photastrom_param1
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+
+        # Static Param1 geometry (lens origin, Einstein radius, masses).
+        geom = derive_psbl_photastrom_param1(
+            p['mLp'], p['mLs'], p['t0'], p['xS0_E'], p['xS0_N'],
+            p['beta'], p['muL_E'], p['muL_N'], p['muS_E'],
+            p['muS_N'], p['dL'], p['dS'], p['sep'], p['alpha']
+        )
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE_amp, piS, piL,
+         m1, m2, _, _, _, _) = geom
+
+        # Per-epoch lens offsets (Einstein radii).
+        dmu = jnp.stack([p['delta_muL_sec_E'], p['delta_muL_sec_N']])
+        acc = None
+        if 'accLsec_E' in p:
+            acc = jnp.stack([p['accLsec_E'], p['accLsec_N']])
+        off1, off2 = jax_physics.orbiting_lens_offsets(
+            t, p['t0'], p['sep'], p['alpha'], thetaE_amp, dmu, accL_sec=acc)
+
+        args = (p['t0'], xS0, xL0, muS, muL, thetaE_amp, off1, off2, m1, m2)
+
+        return p, args, piS, piL
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """
+        Traced orbiting-PSBL photometry log-likelihood.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector (filter-local).
+        t, mag_obs, mag_err : array_like, float, shape = (N_times,)
+            Times and photometry.
+        b_sff, mag_src : float
+            Filter-local blend and source magnitude.
+        parallax_vectors : array_like, float, shape = (N_times, 2), optional
+            Parallax table for this filter's observer.
+        gp_params, fixed_jitter : optional
+            Optional GP path.
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        p, args, piS, piL = cls._jax_orbit_args(vec, t)
+
+        return jax_physics.psbl_log_likely_photometry_tracks(
+            t, *args, mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL,
+            gp_params=gp_params, fixed_jitter=fixed_jitter)
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err, y_err,
+                                  b_sff=1.0, mag_src=18.0, dmag_Lp_Ls=20.0,
+                                  parallax_vectors=None):
+        """
+        Traced orbiting-PSBL absolute astrometry log-likelihood.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector (filter-local).
+        t, x_obs, y_obs, x_err, y_err : array_like, float, shape = (N_times,)
+            Times and East/North astrometry (arcsec).
+        b_sff, mag_src, dmag_Lp_Ls : float, optional
+            Filter-local blend, source magnitude and lens magnitude
+            difference (set the lens light in the centroid).
+        parallax_vectors : array_like, float, shape = (N_times, 2), optional
+            Parallax table for this filter's observer.
+
+        Returns
+        -------
+        lnL : float
+            Summed astrometric log-likelihood.
+        """
+        p, args, piS, piL = cls._jax_orbit_args(vec, t)
+
+        return jax_physics.psbl_log_likely_astrometry(
+            t, *args, mag_src, b_sff, x_obs, y_obs, x_err, y_err,
+            dmag_Lp_Ls=dmag_Lp_Ls, parallax_vectors=parallax_vectors,
+            piS=piS, piL=piL)
+
+
+class PSBL_PhotAstrom_LinOrbs_Param1(_PSBLOrbitTracedParam1,
+                                     PSBL_PhotAstromParam1):
     """Point source binary lens.
 Note that this is a binary lens with the
 secondary lens moving linearly (a good approximation for times << orbital period).
@@ -8689,7 +8811,8 @@ root_tol : float
         return
 
 
-class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
+class PSBL_PhotAstrom_AccOrbs_Param1(_PSBLOrbitTracedParam1,
+                                     PSBL_PhotAstromParam1):
     """Point source binary lens.
 Note that this is a binary lens with the
 secondary lens moving linearly (a good approximation for times << orbital period) with acceleration.
@@ -30883,13 +31006,12 @@ class FSBL_PhotAstromParam1(PSPL_Param):
         return
 
 
-class _FSBLOrbitTracedParam1:
+class _FSBLOrbitTracedParam1(_PSBLOrbitTracedParam1):
     """
     Traced likelihoods for FSBL Param1 with linear / accelerated lens orbits.
 
-    Mixed into ``FSBL_PhotAstrom_{Lin,Acc}Orbs_Param1``. The secondary moves
-    with ``delta_muL_sec`` (and ``accLsec`` when present) relative to the
-    lens origin, as in ``PSBL_PhotAstrom.get_resolved_lens_astrometry``.
+    Mixed into ``FSBL_PhotAstrom_{Lin,Acc}Orbs_Param1``. Lens tracks follow
+    :class:`_PSBLOrbitTracedParam1`; the source is a (limb-darkened) disk.
     """
 
     @classmethod
@@ -30915,35 +31037,12 @@ class _FSBLOrbitTracedParam1:
         piS, piL : jnp.ndarray, float, shape = ()
             Source and lens parallax (mas).
         """
-        from bagle.jax.fsbl import orbiting_lens_offsets
-        from bagle.jax.geometry import derive_psbl_photastrom_param1
-
-        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
-
-        # Static Param1 geometry (lens origin, Einstein radius, masses).
-        geom = derive_psbl_photastrom_param1(
-            p['mLp'], p['mLs'], p['t0'], p['xS0_E'], p['xS0_N'],
-            p['beta'], p['muL_E'], p['muL_N'], p['muS_E'],
-            p['muS_N'], p['dL'], p['dS'], p['sep'], p['alpha']
-        )
-        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE_amp, piS, piL,
-         m1, m2, _, _, _, _) = geom
-
-        # Per-epoch lens offsets (Einstein radii).
-        dmu = jnp.stack([p['delta_muL_sec_E'], p['delta_muL_sec_N']])
-        acc = None
-        if 'accLsec_E' in p:
-            acc = jnp.stack([p['accLsec_E'], p['accLsec_N']])
-        off1, off2 = orbiting_lens_offsets(t, p['t0'], p['sep'], p['alpha'],
-                                           thetaE_amp, dmu, accL_sec=acc)
+        p, args, piS, piL = cls._jax_orbit_args(vec, t)
 
         # Phot+astrom ``radiusS`` is arcsec; convert to Einstein radii.
-        rho = p['radiusS'] * 1e3 / thetaE_amp
+        rho = p['radiusS'] * 1e3 / args[5]
 
-        args = (p['t0'], xS0, xL0, muS, muL, thetaE_amp, off1, off2, m1, m2,
-                rho)
-
-        return p, args, piS, piL
+        return p, args + (rho,), piS, piL
 
     @classmethod
     def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
@@ -36275,16 +36374,14 @@ class BFSBL_PhotAstromParam1(BSBL_PhotAstromParam1):
         p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
 
         # Lens and primary-source geometry, as for PSBL Param1.
-        (_, thetaE_hat, _, _, _, xS0, xL0, muS, muL, thetaE, piS, piL, m1,
+        (_, _, _, _, _, xS0, xL0, muS, muL, thetaE, piS, piL, m1,
          m2, xL1, xL2, _, _) = derive_psbl_photastrom_param1(
             p['mLp'], p['mLs'], p['t0'], p['xS0_E'], p['xS0_N'], p['beta'],
             p['muL_E'], p['muL_N'], p['muS_E'], p['muS_N'], p['dL'], p['dS'],
             p['sepL'], p['alphaL'])
 
         # Secondary source: fixed sky offset from the primary.
-        u0_hat = jax_physics.u0_hat_from_thetaE_hat_jax(thetaE_hat, p['beta'])
-        dxS, _ = binary_source_offset(p['sepS'], p['alphaS'],
-                                      p['beta'] / thetaE, u0_hat, thetaE)
+        dxS = binary_source_offset(p['sepS'], p['alphaS'])
 
         # Source radii arcsec -> Einstein radii.
         rho_pri = p['radiusS_pri'] * 1e3 / thetaE
@@ -37772,16 +37869,26 @@ class BFSPL(PSPL):
         u : array, float, shape = [len(t), 2]
             Separation vector in East, North on the sky in units of \\theta_E.
         """
-        tau = (t - self.t0) / self.tE
+        if getattr(self, 'astrometryFlag', False):
+            # Source - lens offsets from the unlensed sky tracks, so the
+            # secondary keeps its full separation (incl. along muRel).
+            xS_unlensed = self.get_resolved_source_astrometry_unlensed(
+                t, filt_idx=filt_idx)
+            xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
+            thetaE_amp = self.thetaE_amp * 1e-3
+            u_pri = (xS_unlensed[:, 0, :] - xL) / thetaE_amp
+            u_sec = (xS_unlensed[:, 1, :] - xL) / thetaE_amp
+        else:
+            tau = (t - self.t0) / self.tE
 
-        u_pri = self.u0_pri[np.newaxis, :] + tau[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
-        u_sec = self.u0_sec[np.newaxis, :] + tau[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
+            u_pri = self.u0_pri[np.newaxis, :] + tau[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
+            u_sec = self.u0_sec[np.newaxis, :] + tau[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
 
-        if self.parallaxFlag:
-            parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
-                                                          obsLocation=self.obsLocation[filt_idx])
-            u_pri -= self.piE_amp * parallax_vec
-            u_sec -= self.piE_amp * parallax_vec
+            if self.parallaxFlag:
+                parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
+                                                              obsLocation=self.obsLocation[filt_idx])
+                u_pri -= self.piE_amp * parallax_vec
+                u_sec -= self.piE_amp * parallax_vec
 
         u_vec = np.zeros((len(t), 2, 2), dtype = float)
         u_vec[:, 0, :] = u_pri
@@ -37953,54 +38060,57 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
 
         return xS_lensed_pos
 
-    def get_astrometry(self, t, image_arr=None, amp_arr=None,  filt_idx=0):
+    def get_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
         '''
-        Position of the observed (unresolved) source position in Einstein radii.
+        Position of the observed (unresolved) source + lens centroid on the sky.
 
         Parameters
         ----------
-        t: array_like
+        t : array_like
             Array of times to model.
+        image_arr : array_like, optional
+            Image positions, shape = [len(t), N_sources=2, N_images=2, 2]
+            (arcsec), from :meth:`get_all_arrays`.
+        amp_arr : array_like, optional
+            Image amplifications, shape = [len(t), N_sources=2, N_images=2].
         filt_idx : int, optional
             Index of the astrometric filter or data set.
 
-
         Returns
         -------
-        model_pos : array_like
-            Array of vector positions of the centroid at each t.
+        model_pos : array_like, shape = [len(t), 2]
+            East / North centroid of all source images and the lens (arcsec).
         '''
-        # Get the lensed positions ang ampflications
+        # Get the lensed positions and amplifications
         # for all 4 images (2 per source)
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            
-        u_lensed4 = self.get_resolved_astrometry(t, image_arr, amp_arr, filt_idx=filt_idx)
+
+        # Shapes: xS [len(t), N_sources, [+/-], [E, N]], A [len(t), N_sources, [+/-]]
+        xS_lensed4 = self.get_resolved_astrometry(t, image_arr, amp_arr, filt_idx=filt_idx)
         A_lensed4 = self.get_resolved_amplification(t, amp_arr=amp_arr, filt_idx=filt_idx)
 
-        # Sum over the two (+/-) images for each source.
-        u1_lensed = np.sum(u_lensed4[:, 0, :, :] * A_lensed4[:, 0, :, np.newaxis], axis=1)
-        u2_lensed = np.sum(u_lensed4[:, 1, :, :] * A_lensed4[:, 1, :, np.newaxis], axis=1)
-        u1_lensed /= np.sum(A_lensed4[:, 0, :, np.newaxis], axis=1)
-        u2_lensed /= np.sum(A_lensed4[:, 1, :, np.newaxis], axis=1)
+        # Equation of motion for just the foreground lens. Shape is [len(t), [E, N]]
+        xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
-        # Summed ampliciations
-        A1 = np.sum(A_lensed4[:, 0, :, np.newaxis], axis=1)
-        A2 = np.sum(A_lensed4[:, 1, :, np.newaxis], axis=1)
-
-        # Calculate un-magnified fluxes. Note, we ignore blended flux entirely.
-        fS1 = mag2flux(self.mag_src_pri[filt_idx])
-        fS2 = mag2flux(self.mag_src_sec[filt_idx])
+        # Calculate un-magnified fluxes of the sources.
+        fS = np.array([mag2flux(self.mag_src_pri[filt_idx]),
+                       mag2flux(self.mag_src_sec[filt_idx])])
 
         # Blended light assigned to the lens, clipped at zero in flux
         # space. b_sff > 1 is a dark lens. Photometry stays unclipped.
-        fL = lens_flux_for_astrometry(fS1 + fS2, self.b_sff[filt_idx])
+        fL = lens_flux_for_astrometry(fS.sum(), self.b_sff[filt_idx])
 
-        # Calculate the flux-weighted centroid of all the source images and lens.
-        # Remember lens is at origin (pos=0) in this coordinate system.
-        u_lensed = (u1_lensed * fS1 * A1 + u2_lensed * fS2 * A2) / (fS1 * A1 + fS2 * A2 + fL)
+        # Lensed flux of each image of each source. Shape = [len(t), N_sources, [+/-]]
+        fS_lensed4 = A_lensed4 * fS[np.newaxis, :, np.newaxis]
+        fS_lensed = np.sum(fS_lensed4, axis=(1, 2))
 
-        return u_lensed
+        # Flux-weighted centroid of the lensed source images and the lens.
+        numer = np.sum(xS_lensed4 * fS_lensed4[:, :, :, np.newaxis], axis=(1, 2))
+        numer += xL * fL
+        pos = numer / (fS_lensed + fL)[:, np.newaxis]
+
+        return pos
 
     def get_resolved_amplification(self, t, filt_idx=0, amp_arr=None):
         """Get the photometric amplification term at a set of times, t for both the
@@ -38008,16 +38118,18 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
 
         Parameters
         ----------
-        t: Array of times in MJD.DDD
-
+        t : array_like
+            Array of times in MJD.DDD
         filt_idx : int, optional
             Index of the astrometric filter or data set.
-            
+        amp_arr : array_like, optional
+            Amplifications from :meth:`get_all_arrays`; computed if None.
+
         Returns
-        _______
+        -------
         amp_arr : array_like
-            Array/tuple of amplification of each lensed image at each t.
-            Shape = [n_images=2, len(t)]
+            Amplification of each lensed image at each t.
+            Shape = [len(t), N_sources=2, N_images=2] (same layout as BSPL).
         """
         try:
             from bagle.jax_model import try_get_resolved_amplification
@@ -38031,7 +38143,7 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-        return np.swapaxes(amp_arr, 1, 2)
+        return np.asarray(amp_arr)
 
     def get_resolved_photometry(self, t, filt_idx=0, amp_arr=None):
         '''
@@ -38303,7 +38415,7 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         g : dict
             ``u0_pri``, ``u0_sec``, ``thetaE_hat``, ``tE``, ``piE_E``,
             ``piE_N``, ``xL0``, ``muL``, ``thetaE``, ``piL``, ``rho_pri``,
-            ``rho_sec``, ``gamma_pri`` and             ``gamma_sec`` (``None`` when the
+            ``rho_sec``, ``gamma_pri`` and ``gamma_sec`` (``None`` when the
             class has no limb darkening).
         """
         from bagle.jax.bfs import binary_source_offset
@@ -38316,10 +38428,10 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
             p['mL'], p['t0'], p['beta'], p['dL'], p['dL_dS'], p['xS0_E'],
             p['xS0_N'], p['muL_E'], p['muL_N'], p['muS_E'], p['muS_N'])
 
-        # Secondary closest approach from the source separation.
-        u0_hat = jax_physics.u0_hat_from_thetaE_hat_jax(thetaE_hat, p['beta'])
-        _, u0_sec = binary_source_offset(p['sep'], p['alpha'],
-                                         p['beta'] / thetaE, u0_hat, thetaE)
+        # Secondary source - lens offset at t0: the primary's plus the full
+        # source separation (arcsec -> Einstein radii).
+        dxS = binary_source_offset(p['sep'], p['alpha'])
+        u0_sec = u0 + dxS * 1e3 / thetaE
 
         # Source radii arcsec -> Einstein radii.
         g = dict(u0_pri=u0, u0_sec=u0_sec, thetaE_hat=thetaE_hat, tE=tE,

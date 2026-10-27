@@ -38,43 +38,6 @@ BFSBL_KW = dict(mLp=0.5, mLs=0.05, t0=57000.0, xS0_E=0.001, xS0_N=-0.002,
 ERR = 1e-8
 
 
-def _bfspl_host_astrometry(mod, kw, t):
-    """
-    BFSPL centroid from host images with source-major weights.
-
-    Parameters
-    ----------
-    mod : BFSPL model instance
-        Host model.
-    kw : dict
-        Scalar parameters (``mag_src_pri``, ``mag_src_sec``, ``b_sff``).
-    t : ndarray, shape (N_times,)
-        Times (MJD).
-
-    Returns
-    -------
-    pos : ndarray, shape (N_times, 2)
-        East / North centroid (arcsec) with the lens light at the lens.
-
-    Notes
-    -----
-    Host ``get_astrometry`` weights with transposed amplifications and puts
-    the lens light at the sky origin; see :func:`bagle.jax.bfs.bfspl_astrometry`.
-    """
-    img, amp = (np.asarray(a) for a in mod.get_all_arrays(t))
-    f1 = mj.mag2flux(kw['mag_src_pri'])
-    f2 = mj.mag2flux(kw['mag_src_sec'])
-    fL = mj.lens_flux_for_astrometry(f1 + f2, kw['b_sff'])
-    xL = np.asarray(mod.get_lens_astrometry(t))
-
-    # Shapes: img [N, source, image, 2], amp [N, source, image].
-    numer = (f1 * np.sum(img[:, 0] * amp[:, 0, :, None], axis=1)
-             + f2 * np.sum(img[:, 1] * amp[:, 1, :, None], axis=1) + fL * xL)
-    denom = f1 * amp[:, 0].sum(axis=1) + f2 * amp[:, 1].sum(axis=1) + fL
-
-    return numer / denom[:, None]
-
-
 def _traced_vs_host(name, kw, t):
     """
     RMS traced-minus-host photometry and astrometry for one class.
@@ -105,10 +68,7 @@ def _traced_vs_host(name, kw, t):
     # Host model and its photometry / astrometry.
     mod = cls(**{k: ([v] if k in FILT else v) for k, v in kw.items()})
     mag_h = np.asarray(mod.get_photometry(t))
-    if name.startswith('BFSPL'):
-        pos_h = _bfspl_host_astrometry(mod, kw, t)
-    else:
-        pos_h = np.asarray(mod.get_astrometry(t))
+    pos_h = np.asarray(mod.get_astrometry(t))
 
     # Packed vector, parallax table and fitter-style magnitude tuple.
     vec = jnp.asarray([kw[n] for n in cls.fitter_param_names])
@@ -177,6 +137,50 @@ def test_bfsbl_traced_matches_host(name, n_t):
     assert rms_mag < 1e-5
     assert rms_mas < 1e-5
     assert grad_ok
+
+    return None
+
+
+@pytest.mark.parametrize("module", ["model", "model_jax"])
+def test_bfspl_host_astrometry_matches_bspl(module):
+    """Host BFSPL with tiny sources equals point-source BSPL astrometry."""
+    import importlib
+
+    mod = importlib.import_module(f'bagle.{module}')
+    kw = {k: ([v] if k in FILT else v) for k, v in BFSPL_KW.items()
+          if not k.startswith('radiusS') and k not in ('raL', 'decL')}
+    t = np.linspace(56985.0, 57015.0, 31)
+
+    # Blended (b_sff < 1) unequal sources: lens light and per-source weights
+    # both matter.
+    ps = mod.BSPL_PhotAstrom_noPar_Param1(**kw)
+    fs = mod.BFSPL_PhotAstrom_noPar_Param1(radiusS_pri=1e-9, radiusS_sec=1e-9,
+                                           **kw)
+    dmag = np.asarray(fs.get_photometry(t)) - np.asarray(ps.get_photometry(t))
+    dpos = np.asarray(fs.get_astrometry(t)) - np.asarray(ps.get_astrometry(t))
+    assert np.max(np.abs(dmag)) < 1e-5
+    assert np.max(np.abs(dpos)) * 1e3 < 1e-5
+
+    return None
+
+
+@pytest.mark.parametrize("module", ["model", "model_jax"])
+def test_bfspl_host_astrometry_translation_invariant(module):
+    """Shifting the whole BFSPL event on the sky shifts the centroid rigidly."""
+    import importlib
+
+    mod = importlib.import_module(f'bagle.{module}')
+    kw = {k: ([v] if k in FILT else v) for k, v in BFSPL_KW.items()
+          if k not in ('raL', 'decL')}
+    t = np.linspace(56985.0, 57015.0, 15)
+    pos0 = np.asarray(mod.BFSPL_PhotAstrom_noPar_Param1(**kw).get_astrometry(t))
+
+    # Move the source (and hence the lens) by (1, -2) arcsec.
+    shift = np.array([1.0, -2.0])
+    kw['xS0_E'] = [kw['xS0_E'][0] + shift[0]]
+    kw['xS0_N'] = [kw['xS0_N'][0] + shift[1]]
+    pos1 = np.asarray(mod.BFSPL_PhotAstrom_noPar_Param1(**kw).get_astrometry(t))
+    assert np.max(np.abs(pos1 - pos0 - shift)) * 1e3 < 1e-6
 
     return None
 
