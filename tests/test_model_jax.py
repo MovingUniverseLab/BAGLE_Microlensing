@@ -3117,7 +3117,7 @@ def test_PSBL_get_photometry_nans():
 
     # Check that we have both NaNs and valid values
     # in our amplifications for testing.
-    idx_nan = np.where(np.isnan(amp).sum(axis=1) == 5)[0]
+    idx_nan = np.where(np.isnan(amp).sum(axis=(1, 2)) == 5)[0]
     # print(amp.shape)
     if len(idx_nan) > 0:
         assert len(idx_nan) != amp.shape[0]
@@ -4787,7 +4787,7 @@ def test_psbl_noparallax(plot=False):
                         label = 'Image Position'
                     else:
                         label = ''
-                        ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+                        ax[k][j].plot(source_resolved[:, 0, ii, 0], source_resolved[:, 0, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
                 ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
                 ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
@@ -4954,7 +4954,7 @@ def test_psbl_parallax(plot=False):
                         label = 'Image Position'
                     else:
                         label = ''
-                        ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+                        ax[k][j].plot(source_resolved[:, 0, ii, 0], source_resolved[:, 0, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
                 ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
                 ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
@@ -5122,7 +5122,7 @@ def test_psbl_nopropermotion(plot=False):
                         label = 'Image Position'
                     else:
                         label = ''
-                        ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+                        ax[k][j].plot(source_resolved[:, 0, ii, 0], source_resolved[:, 0, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
                 ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
                 ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')

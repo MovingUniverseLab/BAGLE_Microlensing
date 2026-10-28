@@ -154,7 +154,8 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie'):
     rL_1, rL_2 = psbl.get_resolved_lens_astrometry(t)
     rS = psbl.get_astrometry_unlensed(t)
     rS_img = psbl.get_astrometry(t, image_arr=img, amp_arr=amp)
-    rS_img_all = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)
+    # Drop the single-source axis: [N_times, N_images, 2].
+    rS_img_all = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)[:, 0]
     pS = psbl.get_photometry(t, amp_arr=amp)
 
     # Convert arcsec to milli-arcsec:
@@ -534,7 +535,8 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     rL_1, rL_2 = psbl.get_resolved_lens_astrometry(t)
     rS = psbl.get_astrometry_unlensed(t)
     rS_img = psbl.get_astrometry(t, image_arr=img, amp_arr=amp)
-    rS_img_all = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)
+    # Drop the single-source axis: [N_times, N_images, 2].
+    rS_img_all = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)[:, 0]
     pS = psbl.get_photometry(t, amp_arr=amp)
 
     # Convert arcsec to milli-arcsec:
@@ -714,9 +716,10 @@ def plot_PSBL_static(psbl, duration=10, time_steps=300,
     rL_1, rL_2 = psbl.get_resolved_lens_astrometry(t)
     rS = psbl.get_astrometry_unlensed(t)
     rS_img = psbl.get_astrometry(t, image_arr=img, amp_arr=amp)
+    # Drop the single-source axis: [N_times, N_images, 2].
     rS_img_all = psbl.get_resolved_astrometry(
         t, image_arr=img, amp_arr=amp
-    )
+    )[:, 0]
     pS = psbl.get_photometry(t, amp_arr=amp)
 
     # Convert arcsec -> mas for astrometric models.

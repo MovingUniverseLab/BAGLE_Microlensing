@@ -7316,10 +7316,11 @@ class PSBL(PSPL):
 
         Returns
         -------
-        images : array_like
-            Array/tuple of complex positions of each lensed image at each t.
-        amp_arr : array_like
-            Array/tuple of amplification of each images at each t.
+        images : array_like, dtype=complex, shape = [N_times, N_sources=1, 5]
+            Complex positions (East + i North) of each lensed image, in the
+            same frame as :meth:`get_complex_pos`. Missing images are NaN.
+        amps : array_like, shape = [N_times, N_sources=1, 5]
+            Amplification of each image; NaN for missing images.
         '''
         kwargs = {'check_sols': check_sols}
 
@@ -7354,6 +7355,10 @@ class PSBL(PSPL):
             images = self.get_image_pos_arr(*comp)
             amps = self.get_amp_arr(images, *comp[1:])
 
+        # Add the source axis: [N_times, N_sources=1, N_images].
+        images = jnp.asarray(images)[:, jnp.newaxis, :]
+        amps = jnp.asarray(amps)[:, jnp.newaxis, :]
+
         return images, amps
 
     def get_amplification(self, t, amp_arr=None, filt_idx=0):
@@ -7363,67 +7368,25 @@ class PSBL(PSPL):
         ----------
         t: float or array
             Array of times in MJD.DDD
+        amp_arr : array_like, optional
+            Amplifications from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, N_images]; overrides ``t``.
         filt_idx : int, optional
             Index of the astrometric filter or data set.
-
-        """
-        if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-        amp_arr = jnp.asarray(amp_arr)
-        amp = jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=1)
-
-        return amp
-
-    def get_resolved_photometry(self, t, filt_idx=0, amp_arr=None):
-        '''
-        Get the photometry for each of the lensed source images.
-        Implement with no blending (since we don't support different
-        blendings for the different images).
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times to model.
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like
-            Amplifications of each individual image at each time,
-            i.e. amp_arr.shape = (len(t), number of images at each t).
-
-            This will over-ride t; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t.
-        filt_idx : int
-            The filter index (def=0).
 
         Returns
         -------
-        mag_model : array_like
-            Magnitude of each lensed image centroid at t.
-            Shape = [5, len(t)]
-        '''
+        amp : array_like, shape = [N_times]
+            Total amplification (sum over all images).
+        """
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-        amp_clean = jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0)
+        # Sum over sources and images; missing images are NaN.
+        amp_arr = jnp.asarray(amp_arr)
+        amp = jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=(1, 2))
 
-        flux_src = mag2flux(self.mag_src[filt_idx])
-        flux_model = flux_src * amp_clean
-
-        # Account for blending, if necessary.
-        try:
-            # Adding flux of neighbors and lens
-            # b_sff = fS / (fS + fN + fL)
-            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / \
-                          self.b_sff[filt_idx]
-        except AttributeError:
-            pass
-
-        mag_model = flux2mag(flux_model)
-
-        return mag_model
+        return amp
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
         '''
@@ -7439,8 +7402,8 @@ class PSBL(PSPL):
         Other Parameters
         ----------------
         amp_arr : array_like
-            Amplifications of each individual image at each time,
-            i.e. ``amp_arr.shape = (len(t)``, number of images at each t).
+            Amplifications from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, N_images].
 
             This will over-ride t; but is more efficient when calculating
             both photometry and astrometry. If None, then just use t.
@@ -7453,8 +7416,9 @@ class PSBL(PSPL):
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
+        # Sum over sources and images; missing images are NaN.
         amp_arr = jnp.asarray(amp_arr)
-        amp = jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=1)
+        amp = jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=(1, 2))
 
         flux_src = jnp.nan_to_num(mag2flux(self.mag_src[filt_idx]), nan=0)
         flux_model = flux_src * amp
@@ -7487,10 +7451,8 @@ class PSBL(PSPL):
         Other Parameters
         ----------------
         image_arr : array_like
-            Array of complex image positions at each t,
-            i.e. `image_arr.shape = (len(t)`, number of images at each t).
-            Each value in this array is complex
-            (real = north component, imaginary = east component)
+            Complex image positions (East + i North) from
+            :meth:`get_all_arrays`, shape = [N_times, N_sources=1, N_images].
 
         amp_arr : array_like
             Array of magnifications of each images.
@@ -7507,8 +7469,10 @@ class PSBL(PSPL):
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-        image_arr = jnp.asarray(image_arr)
-        amp_arr = jnp.asarray(amp_arr)
+        # Drop the single-source axis: [N_times, N_images].
+        image_arr = jnp.asarray(image_arr)[:, 0, :]
+        amp_arr = jnp.asarray(amp_arr)[:, 0, :]
+
         # Split back into x, y such that shape = [N_times, N_images, 2]
         xS_lensed_res = jnp.stack(
             [jnp.real(image_arr), jnp.imag(image_arr)],
@@ -7940,10 +7904,8 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         Other Parameters
         ----------------
         image_arr : array_like
-            Array of complex image positions at each t,
-            i.e. image_arr.shape = (len(t), number of images at each t).
-            Each value in this array is complex
-            (real = north component, imaginary = east component)
+            Complex image positions (East + i North) from
+            :meth:`get_all_arrays`, shape = [N_times, N_sources=1, N_images].
 
         amp_arr : array_like
             Array of magnifications of each images.
@@ -7954,8 +7916,8 @@ class PSBL_Phot(PSBL, PSPL_Phot):
 
         Returns
         -------
-        model_pos : array_like. shape = [N_times, N_images, 2]
-            Array of vector positions of the centroid at each t.
+        model_pos : array_like. shape = [N_times, N_sources=1, N_images, 2]
+            Array of vector positions of each image at each t.
         '''
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
@@ -8209,10 +8171,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
         Other Parameters
         ----------------
         image_arr : array_like
-            Array of complex image positions at each t,
-            i.e. `image_arr.shape = (len(t)`, number of images at each t).
-            Each value in this array is complex
-            (real = north component, imaginary = east component)
+            Complex image positions (East + i North) from
+            :meth:`get_all_arrays`, shape = [N_times, N_sources=1, N_images].
 
         amp_arr : array_like
             Array of magnifications of each images.
@@ -8223,8 +8183,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 
         Returns
         -------
-        model_pos : array_like. shape = [N_times, N_images, 2]
-            Array of vector positions of the centroid at each t.
+        model_pos : array_like. shape = [N_times, N_sources=1, N_images, 2]
+            Array of vector positions of each image at each t.
         '''
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
@@ -8361,8 +8321,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 return line
 
             ani = animation.FuncAnimation(fig, update, len(tau),
-                                          fargs=[xL1, xL2, source, image_all[:, 0], image_all[:, 1], image_all[:, 2],
-                                                 image_all[:, 3], image_all[:, 4], pS, t, tau, line], blit=True,
+                                          fargs=[xL1, xL2, source, image_all[:, 0, 0], image_all[:, 0, 1], image_all[:, 0, 2],
+                                                 image_all[:, 0, 3], image_all[:, 0, 4], pS, t, tau, line], blit=True,
                                           interval=frame_time)
             ani.save("%s.mp4" % name, writer="ffmpeg")
 
@@ -15698,10 +15658,10 @@ class PSTL(PSPL):
 
         Returns
         -------
-        images : jnp.ndarray
-            Complex image positions at each time.
-        amp_arr : jnp.ndarray
-            Amplification of each image at each time.
+        images : jnp.ndarray, dtype=complex, shape = [N_times, N_sources=1, 10]
+            Complex image positions (East + i North); NaN for missing images.
+        amps : jnp.ndarray, shape = [N_times, N_sources=1, 10]
+            Amplification of each image; NaN for missing images.
         """
         kwargs = {'check_sols': check_sols}
 
@@ -15731,6 +15691,10 @@ class PSTL(PSPL):
                 self.m1, self.m2, self.m3, **kwargs)
             amps = self.get_amp_arr(images, comp[1], comp[2], comp[3])
 
+        # Add the source axis: [N_times, N_sources=1, N_images].
+        images = jnp.asarray(images)[:, jnp.newaxis, :]
+        amps = jnp.asarray(amps)[:, jnp.newaxis, :]
+
         return images, amps
 
     def get_amplification(self, t, amp_arr=None, filt_idx=0):
@@ -15741,7 +15705,8 @@ class PSTL(PSPL):
         t : float or array_like
             Array of times in MJD.DDD.
         amp_arr : array_like, optional
-            Precomputed per-image amplifications.
+            Per-image amplifications from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, N_images].
         filt_idx : int, optional
             Index of the photometric filter or data set.
 
@@ -15755,70 +15720,9 @@ class PSTL(PSPL):
 
         # Mask invalid roots, then sum images (surface brightness conserved).
         amp_arr = jnp.asarray(amp_arr)
-        amp = jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=1)
+        amp = jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=(1, 2))
 
         return amp
-
-    def get_resolved_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
-        '''
-        Get the photometry for each of the lensed source images.
-        Implement with no blending (since we don't support different
-        blendings for the different images).
-
-        Parameters
-        ----------
-        t_obs : array_like
-            Array of times to model.
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like
-            Amplifications of each individual image at each time,
-            i.e. amp_arr.shape = (len(t_obs), number of images at each t_obs).
-
-            This will over-ride t_obs; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t_obs.
-        filt_idx : int
-            The filter index (def=0).
-
-        Returns
-        -------
-        mag_model : array_like
-            Magnitude of each lensed image centroid at t_obs.
-            Shape = [5, len(t_obs)]
-        '''
-        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
-        flux_zp = 1.0
-
-        t_obs = jnp.atleast_1d(jnp.asarray(t_obs, dtype=float))
-
-        if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
-
-        amp_arr = jnp.atleast_2d(jnp.asarray(amp_arr))
-        amp_clean = jnp.where(jnp.isfinite(amp_arr), amp_arr, jnp.nan)
-
-        flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
-        flux_model = flux_src * amp_clean
-
-        # Account for blending, if necessary.
-        try:
-            # Adding flux of neighbors and lens
-            # b_sff = fS / (fS + fN + fL)
-            flux_model = flux_model + flux_src * (1.0 - self.b_sff[filt_idx]) / \
-                          self.b_sff[filt_idx]
-        except AttributeError:
-            pass
-
-        flux_fill = jnp.where(jnp.isfinite(flux_model), flux_model, jnp.nan)
-        bad_flux = flux_fill <= 0
-        if print_warning and bool(np.any(np.asarray(bad_flux))):
-            print('!! ! ! !! Warning: get_resolved_photometry: bad flux encountered.')
-        flux_fill = jnp.where(bad_flux, jnp.nan, flux_fill)
-
-        mag_model = -2.5 * jnp.log10(flux_fill / flux_zp) + mag_zp
-
-        return mag_model
 
     def get_photometry(self, t_obs, filt_idx=0, amp_arr=None, print_warning=True):
         '''
@@ -15834,8 +15738,8 @@ class PSTL(PSPL):
         Other Parameters
         ----------------
         amp_arr : array_like
-            Amplifications of each individual image at each time,
-            i.e. ``amp_arr.shape = (len(t_obs)``, number of images at each t_obs).
+            Amplifications from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, N_images].
 
             This will over-ride t_obs; but is more efficient when calculating
             both photometry and astrometry. If None, then just use t_obs.
@@ -15853,8 +15757,9 @@ class PSTL(PSPL):
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
 
-        amp_arr = jnp.atleast_2d(jnp.asarray(amp_arr))
-        amp = jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=1)
+        # Sum over sources and images; missing images are NaN.
+        amp_arr = jnp.asarray(amp_arr)
+        amp = jnp.sum(jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0), axis=(1, 2))
         amp = jnp.atleast_1d(jnp.where(jnp.isfinite(amp), amp, jnp.nan))
 
         flux_src = jnp.nan_to_num(mag2flux(self.mag_src[filt_idx]), nan=0)
@@ -15953,10 +15858,8 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         Other Parameters
         ----------------
         image_arr : array_like
-            Array of complex image positions at each t_obs,
-            i.e. `image_arr.shape = (len(t_obs)`, number of images at each t_obs).
-            Each value in this array is complex
-            (real = north component, imaginary = east component)
+            Complex image positions (East + i North) from
+            :meth:`get_all_arrays`, shape = [N_times, N_sources=1, N_images].
 
         amp_arr : array_like
             Array of magnifications of each images.
@@ -15967,8 +15870,8 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
 
         Returns
         -------
-        model_pos : array_like. shape = [N_times, N_images, 2]
-            Array of vector positions of the centroid at each t_obs.
+        model_pos : array_like. shape = [N_times, N_sources=1, N_images, 2]
+            Array of vector positions of each image at each t_obs.
         '''
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
@@ -15987,10 +15890,8 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         Other Parameters
         ----------------
         image_arr : array_like
-            Array of complex image positions at each t_obs,
-            i.e. `image_arr.shape = (len(t_obs)`, number of images at each t_obs).
-            Each value in this array is complex
-            (real = north component, imaginary = east component)
+            Complex image positions (East + i North) from
+            :meth:`get_all_arrays`, shape = [N_times, N_sources=1, N_images].
 
         amp_arr : array_like
             Array of magnifications of each images.
@@ -16007,8 +15908,9 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t_obs, filt_idx=filt_idx)
 
-        image_arr = jnp.asarray(image_arr)
-        amp_arr = jnp.asarray(amp_arr)
+        # Drop the single-source axis: [N_times, N_images].
+        image_arr = jnp.asarray(image_arr)[:, 0, :]
+        amp_arr = jnp.asarray(amp_arr)[:, 0, :]
         xS_lensed_res = PSTL._complex_to_xy(image_arr)
 
         amp_f = jnp.where(jnp.isfinite(amp_arr), amp_arr, 0.0)
@@ -16235,8 +16137,7 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         t = np.atleast_1d(self.t0 + tau * self.tE)
 
         img, amp = self.get_all_arrays(t)
-        img = np.asarray(img)
-        amp = np.asarray(amp)
+        img = np.asarray(img)[:, 0, :]
         n_img = img.shape[1]
         img_xy = np.stack([np.real(img), np.imag(img)], axis=-1)
 

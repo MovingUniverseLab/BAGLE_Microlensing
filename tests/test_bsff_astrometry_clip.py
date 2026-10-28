@@ -93,7 +93,8 @@ def _unclipped_photometry(mod, t, b_sff):
     """
     _img, amp = mod.get_all_arrays(t)
     amp = np.asarray(amp)
-    amp_sum = np.sum(np.where(np.isfinite(amp), amp, 0.0), axis=1)
+    # Shape of amp: [N_times, N_sources=1, N_images]
+    amp_sum = np.sum(np.where(np.isfinite(amp), amp, 0.0), axis=(1, 2))
 
     # Same blend term get_photometry adds, including the negative case.
     f_src = float(np.asarray(mag2flux(mod.mag_src[0])))

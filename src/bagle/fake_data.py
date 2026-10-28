@@ -946,7 +946,8 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
     lens_pos = psbl.get_lens_astrometry(t_mod)
     lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
-    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)
+    # Drop the single-source axis: [N_times, N_images, 2].
+    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
     srce_pos_lensed_unres = psbl.get_astrometry(t_mod)
 
     srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
@@ -1357,7 +1358,8 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
     lens_pos = psbl.get_lens_astrometry(t_mod)
     lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
-    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)
+    # Drop the single-source axis: [N_times, N_images, 2].
+    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
     srce_pos_lensed_unres = psbl.get_astrometry(t_mod)
 
     srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
@@ -4173,7 +4175,8 @@ def fake_data_noPar_PSBL_1(outdir='', outroot='psbl',
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
     lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
-    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)
+    # Drop the single-source axis: [N_times, N_images, 2].
+    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
     srce_pos_lensed_unres = psbl.get_astrometry(t_mod)
 
     srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
@@ -4355,7 +4358,8 @@ def fake_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
     lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
-    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)
+    # Drop the single-source axis: [N_times, N_images, 2].
+    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
     srce_pos_lensed_unres = psbl.get_astrometry(t_mod)
 
     srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
@@ -4538,7 +4542,8 @@ def fake_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
     lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
-    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)
+    # Drop the single-source axis: [N_times, N_images, 2].
+    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
     srce_pos_lensed_unres = psbl.get_astrometry(t_mod)
 
     srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
@@ -4723,7 +4728,8 @@ def fake_data_noPar_PSBL_4(outdir='', outroot='psbl',
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
     lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
-    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)
+    # Drop the single-source axis: [N_times, N_images, 2].
+    srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
     srce_pos_lensed_unres = psbl.get_astrometry(t_mod)
 
     srce_pos_lensed_res = np.ma.masked_invalid(srce_pos_lensed_res)
