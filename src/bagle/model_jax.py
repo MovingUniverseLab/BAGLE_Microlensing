@@ -28484,7 +28484,6 @@ class FSBL(PSBL):
     JAX kernel port.
     """
 
-    fsbl_niter = 10
 
     # Adaptive limb sampling; see bagle.fsbl_contour.adaptive_limb_images_amps.
     amg_tol = 1e-4
@@ -28666,7 +28665,10 @@ class FSBL(PSBL):
 
     def get_all_arrays(self, t, filt_idx=0):
         """
-        FSBL image centroids and total magnifications (host contour path).
+        FSBL combined source image and its total amplification.
+
+        Contour integration over the source disk gives one flux-weighted
+        image centroid per time rather than separate images.
 
         Parameters
         ----------
@@ -28677,21 +28679,74 @@ class FSBL(PSBL):
 
         Returns
         -------
-        images : ndarray, shape (N_times, 2)
-            Flux-weighted source-image centroid relative to the binary
-            origin (geometric centre for static models) in Einstein radii.
-        z_parity : None
-            Placeholder (legacy 4-tuple API).
-        amps : ndarray, shape (N_times,)
-            Total magnification.
-        individual_area : None
-            Placeholder (legacy 4-tuple API).
+        images : ndarray, dtype=complex, shape = [N_times, N_sources=1, 1]
+            Combined image centroid, East + i North. Arcsec on the sky for
+            astrometric models; Einstein radii from the lens origin otherwise.
+        amps : ndarray, shape = [N_times, N_sources=1, 1]
+            Total amplification.
         """
-        images, z_parity, amps, individual_area = self.get_all_arrays_CI(
-            t, filt_idx)
+        # Centroid [N_times, 2] in Einstein radii and amplification [N_times].
+        cent, amps = self.get_all_arrays_CI(t, filt_idx)
 
-        return images, z_parity, amps, individual_area
-  
+        # Move the centroid into the get_resolved_astrometry frame.
+        cent = self._image_frame(t, cent, filt_idx=filt_idx)
+
+        # Complex East + i North with source and image axes: [N_times, 1, 1].
+        images = (cent[:, 0] + 1j * cent[:, 1])[:, np.newaxis, np.newaxis]
+        amps = np.asarray(amps, dtype=np.float64)[:, np.newaxis, np.newaxis]
+
+        return images, amps
+
+    def _image_frame(self, t, cent, filt_idx=0):
+        """
+        Image centroid in the frame of :meth:`get_resolved_astrometry`.
+
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        cent : ndarray, shape = [N_times, 2]
+            Centroid in Einstein radii from the lens origin of :meth:`get_u`.
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        cent : ndarray, shape = [N_times, 2]
+            Unchanged (Einstein radii) for photometry-only models.
+        """
+        return np.asarray(cent, dtype=np.float64)
+
+    def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
+        """
+        Position of the combined FSBL source image.
+
+        Parameters
+        ----------
+        t : array_like, shape = [N_times]
+            Array of times to model.
+        image_arr : array_like, optional
+            Complex images from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, 1].
+        amp_arr : array_like, optional
+            Unused; accepted for API symmetry.
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+
+        Returns
+        -------
+        model_pos : ndarray, shape = [N_times, N_sources=1, 1, [E, N]]
+            Arcsec on the sky for astrometric models; Einstein radii from
+            the lens origin otherwise.
+        """
+        if image_arr is None:
+            image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+
+        # Split complex positions into [E, N].
+        model_pos = _complex_to_vec(image_arr)
+
+        return model_pos
+
     def get_u(self, t, filt_idx=0):
         """
         Get the separation vector, \\vec{u}(t), which is the unlensed
@@ -28736,19 +28791,26 @@ class FSBL(PSBL):
             Array of times in MJD.DDD
         filt_idx : int, optional
             Index of the astrometric filter or data set.
+        amp_arr : array_like, optional
+            Amplifications from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, 1]; overrides ``t``.
 
+        Returns
+        -------
+        amp : ndarray, shape = [N_times]
+            Total amplification.
         """
         if amp_arr is None:
-            img_arr, z_parity, amp_arr, _ = self.get_all_arrays(t, filt_idx=filt_idx)
-            amp = amp_arr
-        else:
-            amp = amp_arr
-        # Magnification is always >= 1 for finite source; keep as-is (no sign flip).
+            _img, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+
+        # One combined image per time.
+        amp = np.sum(np.asarray(amp_arr, dtype=np.float64), axis=(1, 2))
+
         return amp
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
         '''
-        Get the photometry for each of the lensed source images.
+        Get the photometry of the combined (unresolved) source images.
 
         Parameters
         ----------
@@ -28760,22 +28822,19 @@ class FSBL(PSBL):
         Other Parameters
         ----------------
         amp_arr : array_like
-            Amplifications of each individual image at each time,
-            i.e. amp_arr.shape = (len(t), number of images at each t).
+            Amplifications from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, 1].
 
             This will over-ride t; but is more efficient when calculating
             both photometry and astrometry. If None, then just use t.
 
         Returns
         -------
-        mag_model : array_like
+        mag_model : ndarray, shape = [N_times]
             Magnitude of the unresolved microlensing event at t.
-
         '''
-        if amp_arr is None:
-            img_arr, _zp, amp_arr, _ = self.get_all_arrays(t, filt_idx=filt_idx)
+        amp = self.get_amplification(t, filt_idx=filt_idx, amp_arr=amp_arr)
 
-        amp = jnp.asarray(amp_arr)
         flux_src = mag2flux(self.mag_src[filt_idx])
         flux_model = flux_src * amp
 
@@ -28790,430 +28849,6 @@ class FSBL(PSBL):
         mag_model = flux2mag(flux_model)
 
         return mag_model
-
-    def first_nonzero(self, x, axis=0):
-        return jnp.argmax(x != 0.0, axis=axis)
-
-    def first_zero(self, x, axis=0):
-        return jnp.argmax(x == 0.0, axis=axis)
-
-    def last_nonzero(self, x, axis=0):
-        return lax.cond(
-            jnp.any(x, axis=axis),
-            lambda: (x.shape[axis] - 1)
-            - jnp.argmax(jnp.flip(x, axis=axis) != 0, axis=axis),
-            lambda: 0,
-        )
-
-    def sparse_argsort(self, a):
-        return jnp.where(a != 0, a, jnp.nan).argsort()
-
-    def match_points(self, a, b):
-        """caustics ``utils.match_points``"""
-        vals = jnp.argsort(jnp.abs(b - a[:, None]), axis=1)
-        idcs = []
-        for i in range(vals.shape[0]):
-            row = vals[i]
-            used = jnp.array(idcs, dtype=jnp.int32) if idcs else jnp.array([], dtype=jnp.int32)
-            mask = ~jnp.isin(row, used)
-            j = self.first_nonzero(mask)
-            idx = row[j]
-            idcs.append(idx)
-        return jnp.array(idcs, dtype=jnp.int32)
-
-    def split_segment(self, segment, n_parts=5):
-        z, z_parity, z_mask = segment
-        npts = len(z)
-        z_diff = z[1:] - z[:-1]
-        diff_dist_mask = z_diff.real**2 + z_diff.imag**2 > 0.1**2
-        diff_parity = z_parity[1:].real - z_parity[:-1].real
-        diff_mask = z_mask[1:].real - z_mask[:-1].real
-        chngept = (diff_dist_mask != False) | (diff_parity != 0) | (diff_mask != False)
-        chngept = jnp.concatenate(
-            [jnp.array([jnp.where(z_mask[0] == 0, False, True)]), chngept, jnp.array([jnp.where(z_mask[-1] == 0, False, True)])]
-            )
-        diff_mask = jnp.concatenate(
-            [jnp.array([jnp.where(z_mask[0] == 0, 0.0, 1.0)]), diff_mask, jnp.array([jnp.where(z_mask[-1] == 0, 0.0, -1.0)])]
-            )
-
-        idx_start = jnp.where(chngept & (diff_mask >= 0), chngept, jnp.zeros_like(chngept))
-        idx_end = jnp.where(chngept & (diff_mask <= 0), chngept, jnp.zeros_like(chngept))
-        idx_start = jnp.argwhere(idx_start, size=2 * n_parts)[:, 0]
-        idx_end = jnp.argwhere(idx_end, size=2 * n_parts)[:, 0]
-        n = jnp.arange(npts)
-
-        def mask_region(carry, xs):
-            l, r = xs
-            mask = jnp.where((l == 0.0) & (r == 0.0), jnp.zeros(npts), (n >= l) & (n < r))
-            return 0, mask
-
-        _, masks = lax.scan(mask_region, 0, (idx_start, idx_end))
-        segments_split = vmap(lambda m: segment * m)(masks)
-        return segments_split
-
-    def process_segments(self, segments, nr_of_segments=20):
-        segments = jnp.concatenate(vmap(self.split_segment)(segments))
-        mask = jnp.sum((segments[:, 0] != 0 + 0j).astype(int), axis=1) < 2
-        segments = segments * (~mask[:, None, None])
-        sorted_idcs = jnp.argsort( jnp.any(jnp.abs(segments[:, 0, :]) > 0.0, axis=1))[::-1]
-        segments = segments[sorted_idcs]
-        segments = segments[:nr_of_segments, :, :]
-        head_idcs = vmap(self.first_nonzero)(jnp.abs(segments[:, 0, :]))
-        segments = vmap(lambda seg, h: jnp.roll(seg, -h, axis=-1))(segments, head_idcs)
-        return segments
-
-    def get_segments(self, z, z_mask, z_parity, n_images=5):
-        nr_of_segments = 3 * n_images
-        z = z * z_mask
-        z_parity = z_parity * z_mask
-        segments = jnp.stack([z, z_parity, z_mask])
-        segments = jnp.moveaxis(segments, 0, 1)
-        mask_closed = (jnp.abs((z[:, 0] - z[:, -1])) < 1e-5) & jnp.all(z_mask, axis=1)
-        segments_closed = segments * mask_closed[:, None, None]
-        segments_open = segments * (~mask_closed[:, None, None])
-        all_closed = jnp.all(mask_closed)
-
-        def pad_open(s):
-            npts = s.shape[-1]
-            return jnp.zeros((nr_of_segments, 3, npts), dtype=s.dtype)
-
-        def process_open(s):
-            return self.process_segments(s, nr_of_segments)
-
-        segments_open = lax.cond(all_closed, pad_open, process_open, segments_open)
-        segments_closed = segments_closed[:, :2, :]
-        segments_open = segments_open[:, :2, :]
-        return segments_closed, segments_open, all_closed
-
-    def concatenate_segments(self, segment_first, segment_second):
-        segment_first_length = self.first_zero(jnp.abs(segment_first[0]), axis=0)
-        return segment_first + jnp.roll(segment_second, segment_first_length, axis=-1)
-
-    def get_segment_length(self, segment, tail_idx):
-        diff = jnp.diff(segment[0])
-        diff = diff.at[tail_idx].set(0.0)
-        return jnp.abs(diff).sum()
-
-    def connection_condition(self, seg1, seg2, tidx1, tidx2, ctype, min_dist=1e-5, max_dist=1e-1, max_ang=60.0):
-        def get_segment_head(seg, t):
-            x = seg[0]
-            cond = (jnp.abs(x[1] - x[0]) > 1e-5) | (t <= 1)
-            line = lax.cond(cond, lambda: x[:2], lambda: x[1:3])
-            return line[::-1]
-
-        def get_segment_tail(seg, t):
-            x = seg[0]
-            cond = (jnp.abs(x[t] - x[t - 1]) > 1e-5) | (t <= 1)
-            line = lax.cond(cond, lambda: lax.dynamic_slice(x, (t - 1,), (2,)), lambda: lax.dynamic_slice(x, (t - 2,), (2,)))
-            return line
-
-        same_parity = seg1[1, 0].real * seg2[1, 0].real > 0.0
-        conds_parity = jnp.stack([same_parity, same_parity, ~same_parity, ~same_parity])
-        cond_parity = conds_parity[ctype]
-        line1, line2 = lax.switch(
-            ctype,
-            [lambda s1, s2, t1, t2: (get_segment_tail(s1, t1), get_segment_head(s2, t2)),
-            lambda s1, s2, t1, t2: (get_segment_head(s1, t1), get_segment_tail(s2, t2)),
-            lambda s1, s2, t1, t2: (get_segment_head(s1, t1), get_segment_head(s2, t2)),
-            lambda s1, s2, t1, t2: (get_segment_tail(s1, tidx1), get_segment_tail(s2, t2))],
-            seg1, seg2, tidx1, tidx2
-        )
-        dist = jnp.abs(line1[1] - line2[1])
-        cond1 = dist < max_dist
-        vec1 = (line1[1] - line1[0]) / jnp.abs(line1[1] - line1[0])
-        vec2 = (line2[1] - line2[0]) / jnp.abs(line2[1] - line2[0])
-        alpha = jnp.arccos(jnp.real(vec1) * jnp.real(vec2) + jnp.imag(vec1) * jnp.imag(vec2))
-        cond2 = (180.0 - jnp.rad2deg(alpha)) < max_ang
-        cond3 = jnp.abs(line1[1] - line2[1]) < jnp.abs(line1[0] - line2[0])
-        cond_geom = jnp.logical_or(cond1 & cond2 & cond3, dist < min_dist)
-        return cond_parity & cond_geom
-
-    def merge_two_segments(self, seg1, seg2, tidx1, tidx2, ctype):
-        def hh(s1, s2, t1, t2):
-            s2_ = s2[:, ::-1]
-            s2_ = jnp.roll(s2_, -(s2_.shape[-1] - t2 - 1), axis=-1)
-            s2_ = s2_.at[1].set(-1 * s2_[1])
-            seg_m = self.concatenate_segments(s2_, s1)
-            return seg_m, t1 + t2 + 1
-
-        def tt(s1, s2, t1, t2):
-            s2_ = s2[:, ::-1]
-            s2_ = jnp.roll(s2_, -(s2_.shape[-1] - t2 - 1), axis=-1)
-            s2_ = s2_.at[1].set(-1 * s2_[1])
-            seg_m = self.concatenate_segments(s1, s2_)
-            return seg_m, t1 + t2 + 1
-
-        def th(s1, s2, t1, t2):
-            seg_m = self.concatenate_segments(s1, s2)
-            return seg_m, t1 + t2 + 1
-
-        def ht(s1, s2, t1, t2):
-            seg_m = self.concatenate_segments(s2, s1)
-            return seg_m, t1 + t2 + 1
-
-        seg_m, tidx_m = lax.switch(ctype, [th, ht, hh, tt], seg1, seg2, tidx1, tidx2)
-        return seg_m, tidx_m
-
-    
-    def polygonal_area_with_parity(self, pts, valid, theta, parity_edge):
-        """
-        Signed area where each edge is weighted by local parity.c.
-        """
-        n = pts.shape[0]
-        dtheta = theta[1] - theta[0] if n > 1 else 1.0
-        k = jnp.arange(n)
-        kp1 = (k + 1) % n
-
-        delta = pts[kp1] - pts
-
-        # Edge parity in {-1, +1}; treat zeros as +1.
-        p_edge = jnp.where(valid, jnp.sign(jnp.real(parity_edge)), 0.0)
-        p_edge = jnp.where(p_edge == 0.0, 1.0, p_edge)
-
-        # Discard contributions across discontinuous jumps near caustics.
-        big_jump = (delta.real**2 + delta.imag**2) > (0.1**2)
-
-        arc_valid = valid & jnp.roll(valid, -1) & (~big_jump)
-        term_t = jnp.imag(jnp.conj(pts) * delta) * p_edge
-        a_t = 0.5 * jnp.sum(jnp.where(arc_valid, term_t, 0.0))
-
-        parabolic_ok = (jnp.roll(valid, 1) & valid & jnp.roll(valid, -1) & jnp.roll(valid, -2) & (~jnp.roll(big_jump, 1)) & (~big_jump) & (~jnp.roll(big_jump, -1)))
-        d1 = jnp.diff(pts, append=pts[0])
-        z_p = (d1 + jnp.roll(d1, 1)) / (2.0 * dtheta)
-        z_pp = jnp.diff(d1, prepend=d1[-1]) / (dtheta**2)
-
-        ap1_term = jnp.imag(jnp.conj(z_p) * z_pp) + jnp.imag(jnp.conj(z_p[kp1]) * z_pp[kp1])
-        ap1_term = ap1_term * p_edge
-        ap1 = (1.0 / 24.0) * jnp.sum(jnp.where(parabolic_ok, ap1_term * dtheta**3, 0.0))
-
-        ap2_term = jnp.imag(jnp.conj(delta) * (z_p[kp1] - z_p)) * dtheta
-        ap2_term = ap2_term * p_edge
-        ap2 = (1.0 / 12.0) * jnp.sum(jnp.where(parabolic_ok, ap2_term, 0.0))
-
-        return a_t + 0.5 * (ap1 + ap2)
-
-    
-    def merge_open_segments(self, segments, max_nr_of_contours=3, max_nr_of_segments_in_contour=10):
-        def merge_with_another(seg_active, tidx_active, segs, tidcs):
-            dist_th = jnp.abs(seg_active[0, tidx_active] - segs[:, 0, 0])
-            dist_ht = vmap(lambda seg, tidx: jnp.abs(seg_active[0, 0] - seg[0, tidx]))(segs, tidcs)
-            dist_hh = jnp.abs(seg_active[0, 0] - segs[:, 0, 0])
-            dist_tt = vmap(lambda seg, tidx: jnp.abs(seg_active[0, tidx_active] - seg[0, tidx]))(segs, tidcs)
-            distances = jnp.stack([dist_th, dist_ht, dist_hh, dist_tt])
-            flat = distances.reshape(-1)
-            order = jnp.argsort(flat)
-            ctype1, idx1 = jnp.unravel_index(order[0], distances.shape)
-            ctype2, idx2 = jnp.unravel_index(order[1], distances.shape)
-            ctype3, idx3 = jnp.unravel_index(order[2], distances.shape)
-            ctype4, idx4 = jnp.unravel_index(order[3], distances.shape)
-            success1 = self.connection_condition(seg_active, segs[idx1], tidx_active, tidcs[idx1], ctype1)
-            success2 = self.connection_condition(seg_active, segs[idx2], tidx_active, tidcs[idx2], ctype2)
-            success3 = self.connection_condition(seg_active, segs[idx3], tidx_active, tidcs[idx3], ctype3)
-            success4 = self.connection_condition(seg_active, segs[idx4], tidx_active, tidcs[idx4], ctype4)
-
-            def branch1(segs_b, tidcs_b):
-                flags = jnp.array([success1, success2, success3, success4]).astype(float)
-                idx_best = self.first_nonzero(flags)
-                seg_best = jnp.stack([segs_b[idx1], segs_b[idx2], segs_b[idx3], segs_b[idx4]])[idx_best]
-
-                tidx_best = jnp.stack([tidcs_b[idx1], tidcs_b[idx2], tidcs_b[idx3], tidcs_b[idx4]])[idx_best]
-                ctype = jnp.stack([ctype1, ctype2, ctype3, ctype4])[idx_best]
-                seg_new, tidx_new = self.merge_two_segments(seg_active, seg_best, tidx_active, tidx_best, ctype)
-                idx_seg = jnp.array([idx1, idx2, idx3, idx4])[idx_best]
-                segs_b = segs_b.at[idx_seg].set(jnp.zeros_like(segs_b[0]))
-                return seg_new, tidx_new, segs_b, tidcs_b
-
-            def branch2(segs_b, tidcs_b):
-                return seg_active, tidx_active, segs_b, tidcs_b
-
-            return lax.cond(jnp.any(jnp.array([success1, success2, success3, success4])), branch1, branch2, segs, tidcs)
-
-        def body_fn(carry, _):
-            seg_active, tidx_active, segs, tidcs = carry
-            stopping = ~jnp.any(segs[:, 0, 0])
-            seg_active, tidx_active, segs, tidcs = lax.cond(
-                stopping,
-                lambda: (seg_active, tidx_active, segs, tidcs),
-                lambda: merge_with_another(seg_active, tidx_active, segs, tidcs))
-            return (seg_active, tidx_active, segs, tidcs), 0.0
-
-        tail_idcs = vmap(self.last_nonzero)(segments[:, 0, :].real)
-        segments = jnp.pad(segments,
-            ((0, 0), (0, 0), (0, 3 * segments.shape[-1])),
-            constant_values=0.0)
-        merged_list = []
-        mseg = int(max_nr_of_segments_in_contour)
-        for _ in range(max_nr_of_contours):
-            lens = vmap(self.get_segment_length)(segments, tail_idcs)
-            _idcs = self.sparse_argsort(lens)
-            segments, tail_idcs = segments[_idcs], tail_idcs[_idcs]
-            ids = jnp.arange(0, mseg)
-            init = (segments[0], tail_idcs[0], segments[1:], tail_idcs[1:])
-            carry, _ = lax.scan(body_fn, init, ids)
-            seg_m, tidx_m, segments, tail_idcs = carry
-            merged_list.append(seg_m)
-            mseg -= 2
-        return jnp.stack(merged_list)
-
-    def contours_from_closed_segments(self, segments):
-        contours_p = segments[:, 1, 0].real
-        contours = segments[:, 0]
-        contours = jnp.hstack([contours, contours[:, 0][:, None]])
-        return contours, contours_p
-
-    def contours_from_open_segments(self, segments, max_nr_of_contours=3, max_nr_of_segments_in_contour=20):
-        seg_merged = self.merge_open_segments(segments, max_nr_of_contours=max_nr_of_contours, max_nr_of_segments_in_contour=max_nr_of_segments_in_contour)
-        contours_p = seg_merged[:, 1, 0].real
-        contours = seg_merged[:, 0]
-        tail_idcs = vmap(self.last_nonzero)(contours.real)
-        contours = vmap(lambda idx, c: c.at[idx + 1].set(c[0]))(tail_idcs, contours)
-        return contours, contours_p
-
-    def permute_images(self, z, z_mask, z_parity):
-        """
-        Same ordering as ``caustics.extended_source._permute_images``
-        """
-        xs = jnp.stack([z, z_mask, z_parity])
-
-        def apply_match_points(carry, xs_slice):
-            z_slice, z_mask_slice, z_parity_slice = xs_slice
-            idcs = self.match_points(carry, z_slice)
-            return z_slice[idcs], jnp.stack([z_slice[idcs], z_mask_slice[idcs], z_parity_slice[idcs]])
-
-        init = xs[0, :, 0]
-        _, xs_out = lax.scan(apply_match_points, init, jnp.moveaxis(xs, -1, 0))
-        z_o, z_mask_o, z_parity_o = jnp.moveaxis(xs_out, 1, 0)
-        return z_o.T, z_mask_o.real.astype(bool).T, z_parity_o.T
-
-    def trapz_zero_avoiding(self, y, x, tail_idx):
-        """Like ``caustics.utils.trapz_zero_avoiding``."""
-        if hasattr(jnp, "trapezoid"):
-            I = jnp.trapezoid(y, x=x)
-        else:
-            I = jnp.trapz(y, x=x)
-        xt, yt = x[tail_idx], y[tail_idx]
-        xtp1, ytp1 = x[tail_idx + 1], y[tail_idx + 1]
-        return lax.cond(tail_idx == len(x) - 1, lambda: I, lambda: I - 0.5 * ((yt + ytp1) * (xtp1 - xt)))
-
-    def integrate_unif(self, z, tidx):
-        """Match ``caustics.integrate.integrate_unif``."""
-        I1 = self.trapz_zero_avoiding(0.5 * z.real, z.imag, tidx)
-        I2 = self.trapz_zero_avoiding(-0.5 * z.imag, z.real, tidx)
-        return I1 + I2
-
-    def images_on_source_limb(self, w0, z1, z2, m1, m2, rho, npts_limb, niter):
-        """
-        """
-        npts_limb = int(npts_limb)
-        npts_init = max(2, int(0.5 * npts_limb))
-        theta = jnp.linspace(-jnp.pi, jnp.pi, npts_init - 1, endpoint=False)
-        theta = jnp.pad(theta, (0, 1), constant_values=jnp.pi - 1e-8)
-
-        w_limb = w0 + rho * jnp.exp(1j * theta)
-        z1_limb = jnp.broadcast_to(jnp.asarray(z1), w_limb.shape)
-        z2_limb = jnp.broadcast_to(jnp.asarray(z2), w_limb.shape)
-        z_all = self.get_image_pos_arr_fast(w_limb, z1_limb, z2_limb, m1, m2, check_sols=True)
-        z = z_all.T
-        z_mask = (~jnp.isnan(z_all.real)).T
-        _J, parity = self.det_and_jac(z_all, z1, z2, m1, m2)
-        z_parity = parity.T
-
-        npts_additional = int(0.5 * npts_limb)
-        n_per = max(1, int(npts_additional / niter)) if niter > 0 else 0
-
-        for _ in range(niter):
-            if n_per == 0:
-                break
-            delta_z = jnp.abs(z[:, 1:] - z[:, :-1])
-            delta_z = jnp.where(jnp.logical_or(z_mask[:, 1:], z_mask[:, :-1]), delta_z, jnp.zeros_like(delta_z.real))
-            delta_z_max = jnp.max(delta_z, axis=0)
-            idcs_theta = jnp.argsort(delta_z_max)[::-1][:n_per]
-            theta_new = 0.5 * (theta[idcs_theta] + theta[idcs_theta + 1])
-            w_new = w0 + rho * jnp.exp(1j * theta_new)
-            z1_new = jnp.broadcast_to(jnp.asarray(z1), w_new.shape)
-            z2_new = jnp.broadcast_to(jnp.asarray(z2), w_new.shape)
-            z_new_all = self.get_image_pos_arr_fast(w_new, z1_new, z2_new, m1, m2, check_sols=True)
-            z_new = z_new_all.T
-            z_mask_new = (~jnp.isnan(z_new_all.real)).T
-            _Jn, pn = self.det_and_jac(z_new_all, z1, z2, m1, m2)
-            z_parity_new = pn.T
-
-            theta = jnp.insert(theta, idcs_theta + 1, theta_new, axis=0)
-            z = jnp.insert(z, idcs_theta + 1, z_new, axis=1)
-            z_mask = jnp.insert(z_mask, idcs_theta + 1, z_mask_new, axis=1)
-            z_parity = jnp.insert(z_parity, idcs_theta + 1, z_parity_new, axis=1)
-
-        key = jax.random.PRNGKey(0)
-        z_flat = z.reshape(-1)
-        _uniq, ix = jnp.unique(z_flat, return_index=True, size=len(z_flat))
-        mask_dup = jnp.full(z_flat.shape, True)
-        mask_dup = mask_dup.at[ix].set(False).reshape(z.shape)
-        z = jnp.where(mask_dup, z + jax.random.uniform(key, shape=z.shape, minval=-1e-9, maxval=1e-9), z)
-        return z, z_mask, z_parity, theta
-
-    def magnification_one(self, w0, z1, z2, m1, m2, rho):
-        """
-        Extended-source magnification for one time step.
-
-        Returns
-        -------
-        z_out, z_p_out, mag, individual_area
-            ``mag`` and ``individual_area`` both have shape ``(n_theta, 5)`` where
-            ``n_theta`` is the number of source-limb samples (adaptive). ``mag`` is
-            the total magnification, broadcast to that grid; ``individual_area`` is
-            the per image-track signed area / (πρ²), broadcast along axis 0.
-        """
-        npts_limb = int(self.n_outline)
-        niter = int(self.fsbl_niter)
-
-        z_raw, z_mask, z_parity, theta = self.images_on_source_limb(
-            w0, z1, z2, m1, m2, rho, npts_limb, niter
-        )
-        z_perm, z_mask_perm, z_parity_perm = (self.permute_images(z_raw, z_mask, z_parity))
-
-        seg_closed, seg_open, all_closed = self.get_segments(z_perm, z_mask_perm, z_parity_perm, n_images=5)
-        contours1, contours_p1 = self.contours_from_closed_segments(seg_closed)
-        tail_idcs_closed = jnp.repeat(contours1.shape[1] - 1, contours1.shape[0])
-        I1 = vmap(self.integrate_unif)(contours1, tail_idcs_closed)
-        mags1 = I1 * contours_p1
-        max_nr_of_contours = 3
-
-        def branch_all_closed(_):
-            # Must match dtype of ``I2 * p2`` for ``lax.cond`` (typically float64).
-            return jnp.zeros(max_nr_of_contours, dtype=mags1.dtype)
-
-        def branch_has_open(segments):
-            contours2, p2 = self.contours_from_open_segments(segments, max_nr_of_contours, 20)
-            tail_o = vmap(self.last_nonzero)(contours2.real)
-            I2 = vmap(self.integrate_unif)(contours2, tail_o)
-            return I2 * p2
-
-        mags2 = lax.cond(all_closed, branch_all_closed, branch_has_open, seg_open)
-        mag_total = jnp.abs(jnp.sum(mags1) + jnp.sum(mags2)) / (jnp.pi * rho ** 2)
-
-        z_out = z_perm.T
-        z_p_out = z_parity_perm.T
-        ntheta = theta.shape[0]
-        # Same shape (ntheta, 5): total magnification broadcast; per-track signed area / (πρ²).
-        inv_src = 1.0 / (jnp.pi * rho**2)
-        indiv = []
-        for k in range(5):
-            n_valid = jnp.sum(z_mask_perm[k, :])
-            area = lax.cond(
-                n_valid > 0,
-                lambda kk=k: self.polygonal_area_with_parity(
-                    z_perm[kk],
-                    z_mask_perm[kk, :],
-                    theta,
-                    z_parity_perm[kk, :],
-                ),
-                lambda: jnp.array(0.0, dtype=jnp.float64),
-            )
-            indiv.append(area * inv_src)
-        ind_stack = jnp.stack(indiv)
-        individual_area = jnp.broadcast_to(ind_stack[None, :], (ntheta, 5))
-        mag = jnp.broadcast_to(mag_total, (ntheta, 5))
-        return z_out, z_p_out, mag, individual_area
 
     def get_all_arrays_CI(self, t, filt_idx=0):
         """
@@ -29234,13 +28869,9 @@ class FSBL(PSBL):
         -------
         images : ndarray, shape (N_times, 2)
             Flux-weighted source-image centroid in Einstein radii relative
-            to the binary origin.
-        z_parity : None
-            Placeholder for the legacy 4-tuple API.
+            to the lens origin of :meth:`get_u`.
         amps : ndarray, shape (N_times,)
             Total magnification.
-        individual_area : None
-            Placeholder for the legacy 4-tuple API.
         """
         zeta_c, z1, z2, m1, m2, rho, shift = self._contour_frame(t, filt_idx)
         n_init = self._contour_n_init()
@@ -29259,7 +28890,7 @@ class FSBL(PSBL):
         # Centroid back in the lens-origin frame of get_u.
         images = images + np.stack([shift.real, shift.imag], axis=-1)
 
-        return images, None, amps, None
+        return images, amps
 
     def _contour_n_init(self):
         """
@@ -29639,45 +29270,6 @@ class FSBL_Phot(FSBL, PSPL_Phot):
 
         return w, z1, z2
 
-    def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
-        '''
-        Position of the observed source position in Einstein radii.
-
-        Parameters
-        ----------
-        t : array_like, shape = [N_times]
-            Array of times to model.
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        Other Parameters
-        ----------------
-        image_arr : array_like
-            Array of complex image positions at each t,
-            i.e. image_arr.shape = (len(t), number of images at each t).
-            Each value in this array is complex
-            (real = north component, imaginary = east component)
-
-        amp_arr : array_like
-            Array of magnifications of each images.
-            Same shape as image_arr.
-
-        filt_idx : int, optional
-            Index of the photometric filter or data set.
-
-        Returns
-        -------
-        model_pos : array_like. shape = [N_times, N_images, 2]
-            Array of vector positions of the centroid at each t.
-        '''
-        if (image_arr is None) or (amp_arr is None):
-            image_arr, _zp, amp_arr, _ = self.get_all_arrays(
-                t, filt_idx=filt_idx
-            )
-
-        from bagle.jax.fspl import finite_source_image_positions
-
-        return finite_source_image_positions(image_arr)
 
 class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
     """
@@ -30020,208 +29612,47 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
         return xS_outline
 
 
-    def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
+    def _image_frame(self, t, cent, filt_idx=0):
         """
-        Flux-weighted unresolved source-image centroid on the sky.
-
-        FSBL contour integration returns a single combined centroid (not
-        separately resolved +/- images). The return shape is
-        ``(N_times, 1, 2)`` for compatibility with callers that index an
-        image axis.
-
-        Parameters
-        ----------
-        t : array_like, shape = [N_times]
-            Array of times to model.
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-        image_arr : array_like, optional
-            Centroid in Einstein radii, shape ``(N, 2)``.
-        amp_arr : array_like, optional
-            Total magnification, shape ``(N,)``.
-
-        Returns
-        -------
-        model_pos : ndarray, shape (N_times, 1, 2)
-            East / North sky positions in arcsec.
-        """
-        if (image_arr is None) or (amp_arr is None):
-            img_arr, _parity, amp_arr, _ = self.get_all_arrays(
-                t, filt_idx=filt_idx)
-        else:
-            img_arr = image_arr
-
-        cent = np.asarray(img_arr, dtype=float)
-        if cent.ndim == 1:
-            cent = np.stack([cent.real, cent.imag], axis=-1)
-        xL0 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)
-        xS = xL0 + cent * self.thetaE_amp * 1e-3
-
-        return xS[:, None, :]
-
-    def get_resolved_amplification(self, t, filt_idx=0, amp_arr=None):
-        """
-        Total photometric amplification at times ``t``.
+        Image centroid in the frame of :meth:`get_resolved_astrometry`.
 
         Parameters
         ----------
         t : array_like
             Times in MJD.
+        cent : ndarray, shape = [N_times, 2]
+            Centroid in Einstein radii from the lens origin of :meth:`get_u`.
         filt_idx : int, optional
             Index of the filter or data set.
-        amp_arr : array_like, optional
-            Cached total magnification from :meth:`get_all_arrays`.
 
         Returns
         -------
-        amp : ndarray, shape (1, N_times)
-            Total magnification (leading axis kept for legacy callers).
+        xS : ndarray, shape = [N_times, 2]
+            Sky position of the combined image in arcsec.
         """
-        if amp_arr is None:
-            _img, _parity, amp_arr, _ = self.get_all_arrays(
-                t, filt_idx=filt_idx)
+        # Einstein radii -> arcsec, offset by the lens origin on the sky.
+        xL0 = np.asarray(self.get_lens_origin_astrometry(t, filt_idx=filt_idx))
+        xS = xL0 + np.asarray(cent, dtype=np.float64) * self.thetaE_amp * 1e-3
 
-        amp = np.asarray(amp_arr, dtype=float).reshape(-1)
+        return xS
 
-        return amp[None, :]
-
-    def get_resolved_photometry(self, t, filt_idx=0, amp_arr=None):
-        '''
-        Get the photometry for each of the lensed source images.
-        Implement with no blending (since we don't support different
-        blendings for the different images).
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times to model.
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like
-            Amplifications of each individual image and each outline point
-            for that image at each time,
-            i.e. amp_arr.shape = (len(t), self.n_outline, number of images at each t).
-
-            This will over-ride t; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t.
-        filt_idx : int
-            The filter index (def=0).
-
-        Returns
-        -------
-        mag_model : array_like
-            Magnitude of each lensed image centroid at t.
-            Shape = [2, len(t)]
-        '''
-        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
-        flux_zp = 1.0
-
-        if amp_arr is None:
-            img_arr, parity_arr, amp_arr, _ = self.get_all_arrays(
-                t, filt_idx=filt_idx
-            )
-        # Mask invalid values from the amplification array.
-        amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-
-        flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
-        flux_model = flux_src * amp_arr_mskd.T
-
-        # Account for blending, if necessary.
-        try:
-            # Adding flux of neighbors and lens
-            # b_sff = fS / (fS + fN + fL)
-            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / \
-                          self.b_sff[filt_idx]
-        except AttributeError:
-            pass
-
-        # Catch the edge case where we exceed the zeropoint.
-        bad = np.where(flux_model <= 0)
-        if len(bad[0]) > 0:
-            print('Warning: get_photometry: bad flux encountered.')
-            flux_model[bad] = np.nan
-
-        mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
-
-        return mag_model
-
-    def get_photometry(self, t, filt_idx=0, amp_arr=None):
-        '''
-        Get the photometry for the combined source images.
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times to model.
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like
-            Amplifications of each individual image at each time,
-            i.e. amp_arr.shape = (len(t), number of images at each t).
-
-            This will over-ride t; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t.
-        filt_idx : int
-            The filter index (def=0).
-
-        Returns
-        -------
-        mag_model : array_like
-            Magnitude of the centroid at t.
-        '''
-        if amp_arr is None:
-            img_arr, parity_arr, amp_arr, _ = self.get_all_arrays(
-                t, filt_idx=filt_idx
-            )
-
-        amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-        # FSBL returns 1D magnification (one per time); PSBL returns 2D (per time, per image).
-        if amp_arr_mskd.ndim == 1:
-            amp = np.asarray(amp_arr_mskd)
-        else:
-            row_max = np.max(amp_arr_mskd, axis=1)
-            row_min = np.min(amp_arr_mskd, axis=1)
-            flip = np.abs(row_max) < np.abs(row_min)
-            amp = np.sum(amp_arr_mskd, axis=1)
-            amp = np.asarray(amp)
-            amp[flip] *= -1
-
-        flux_src = mag2flux(self.mag_src[filt_idx])
-        flux_model = flux_src * amp
-
-        # Account for blending, if necessary.
-        try:
-            # Adding flux of neighbors and lens
-            # b_sff = fS / (fS + fN + fL)
-            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-        except AttributeError:
-            pass
-
-        mag_model = flux2mag(flux_model)
-
-        return mag_model
-    
-    
     def get_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
         """
         Position of the observed (unresolved) source+lens centroid in arcsec.
 
-        Uses the true flux-weighted image centroid from
-        :mod:`bagle.fsbl_contour` (Einstein radii relative to the binary
-        origin), converts to sky coordinates, and blends with luminous
-        lenses.
+        Uses the flux-weighted image centroid from :mod:`bagle.fsbl_contour`
+        (via :meth:`get_all_arrays`, already on the sky) and blends it with
+        the luminous lenses.
 
         Parameters
         ----------
         t : array_like
             Array of times to model.
         image_arr : array_like, optional
-            Centroid in Einstein radii, shape ``(N, 2)``, from
-            :meth:`get_all_arrays`.
+            Complex images from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, 1].
         amp_arr : array_like, optional
-            Total magnification per time, shape ``(N,)``.
+            Amplifications from :meth:`get_all_arrays`, same shape.
         filt_idx : int, optional
             Filter index (default 0).
 
@@ -30231,20 +29662,13 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
             East / North sky positions in arcsec.
         """
         if (image_arr is None) or (amp_arr is None):
-            image_arr, _parity, amp_arr, _ = self.get_all_arrays(
-                t, filt_idx=filt_idx)
+            image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-        # Source-image centroid relative to binary origin (Einstein radii).
-        cent = np.asarray(image_arr, dtype=float)
-        if cent.ndim == 1:
-            # Legacy complex (N,) layout.
-            cent = np.stack([cent.real, cent.imag], axis=-1)
-        amp = np.asarray(amp_arr, dtype=float).reshape(-1)
+        # Sky position (arcsec) and amplification of the combined image.
+        # Shapes: xS [N_times, 2]; amp [N_times].
+        xS = _complex_to_vec(image_arr)[:, 0, 0]
+        amp = np.asarray(amp_arr, dtype=float)[:, 0, 0]
         fS = mag2flux(self.mag_src[filt_idx])
-
-        # Sky position of the magnified source (arcsec).
-        xL0 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)
-        xS = xL0 + cent * self.thetaE_amp * 1e-3
 
         # Blend with luminous lenses (flux clipped at zero for b_sff > 1).
         xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)

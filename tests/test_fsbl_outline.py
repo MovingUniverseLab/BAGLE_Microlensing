@@ -112,12 +112,13 @@ def test_outline_images_lie_on_source_limb(fsbl):
 
 def test_adaptive_outline_reproduces_integrator(fsbl):
     """
-    Integrating the adaptive outline gives get_all_arrays exactly.
+    Integrating the adaptive outline gives get_all_arrays_CI exactly.
     """
     t = fsbl.t0 + DT
     xS, parity, theta, counts = fsbl.get_resolved_astrometry_outline(
         t, adaptive=True, return_all=True)
-    img_ref, _p, amp_ref, _a = fsbl.get_all_arrays(t)
+    # Real centroid [N_times, 2] (Einstein radii) and amplification [N_times].
+    img_ref, amp_ref = fsbl.get_all_arrays_CI(t)
 
     # Refinement added points where the images are stretched.
     assert np.all(counts >= fsbl._contour_n_init())

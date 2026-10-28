@@ -1142,11 +1142,9 @@ def fake_data_FSBL(outdir='', outroot='fsbl_',
 
     t_mod = np.arange(t_pho.min(), t_pho.max(), 1)
     print(len(t_pho))
-    i_pho, z_parity, A_pho = fsbl.get_all_arrays(t_pho)
-    print("Here")
-    i_ast, z_parity, A_ast = fsbl.get_all_arrays(t_ast)
-    i_mod, z_parity, A_mod = fsbl.get_all_arrays(t_mod)
-    print("Here")
+    i_pho, A_pho = fsbl.get_all_arrays(t_pho)
+    i_ast, A_ast = fsbl.get_all_arrays(t_ast)
+    i_mod, A_mod = fsbl.get_all_arrays(t_mod)
     imag_pho = fsbl.get_photometry(t_pho, amp_arr=A_pho)
     imag_mod = fsbl.get_photometry(t_mod, amp_arr=A_mod)
 

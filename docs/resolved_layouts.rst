@@ -23,7 +23,7 @@ and how to update code written against the old one.
    This change is being rolled out family by family on the
    ``fsbl_ld_jax`` branch, in both ``bagle.model`` and
    ``bagle.model_jax``. Converted so far: **PSPL, PSBL, PSTL, BSPL, BSBL,
-   FSPL**. The rest (FSBL, BFSPL, BFSBL) and the lens-astrometry change
+   FSPL, FSBL**. The rest (BFSPL, BFSBL) and the lens-astrometry change
    follow. This note is removed when the rollout is complete.
 
 
@@ -204,6 +204,7 @@ Now defined once, on the ``PSPL`` base class, as the ``amps`` from the
 family's ``get_all_arrays``. It accepts an optional ``amp_arr=``.
 
 * PSPL_PhotAstrom and FSPL_PhotAstrom: ``(2, N)`` becomes ``(N, 1, 2)``.
+* FSBL_PhotAstrom: ``(1, N)`` becomes ``(N, 1, 1)``.
 * PSBL, BSBL, FSPL_Phot, FSBL and BFSBL previously inherited the
   point-source, point-lens formula and returned the **wrong values**
   (they did not sum to ``get_amplification``). They now return the
@@ -411,9 +412,25 @@ To get a real ``[..., 2]`` array from complex images::
     images, amps = fsbl.get_all_arrays(t)              # complex (N, 1, 1), (N, 1, 1)
     A_tot = amps[:, 0, 0]                              # equals get_amplification
 
+The old ``images`` were Einstein radii from the lens origin for every
+class. The new ones follow the frame rule above: arcsec on the sky for
+``FSBL_PhotAstrom``, Einstein radii for ``FSBL_Phot``. For the old
+Einstein-radius centroid of an astrometric model, use the internal
+integrator, which now returns a 2-tuple::
+
+    cent, amp = fsbl.get_all_arrays_CI(t)              # real (N, 2), (N,)
+
 There is no per-image parity for the integrated FSBL image. For the
 individual image outlines and their parities, use
 ``FSBL._image_outline`` or ``get_resolved_astrometry_outline``.
+
+The legacy per-epoch limb pipeline that predates :mod:`bagle.fsbl_contour`
+is removed from ``FSBL`` in ``bagle.model_jax``: ``magnification_one``,
+``images_on_source_limb``, the segment/contour helpers it used
+(``get_segments``, ``permute_images``, ``merge_open_segments``,
+``integrate_unif``, ``polygonal_area_with_parity`` and the rest) and the
+``fsbl_niter`` attribute. Nothing in BAGLE called them; the JAX ports in
+:mod:`bagle.jax.fsbl` are unchanged.
 
 6. Resolved photometry no longer includes the blend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
