@@ -754,11 +754,70 @@ class PSPL(ABC):
 
         return pos_unlensed
 
-    def get_resolved_amplification(self, t, filt_idx=0):
+    def get_all_arrays(self, t, filt_idx=0):
         """
-        Get the photometric amplification terms at a set of times, t for both the
-        plus and minus images. The returned tuple has two entries:
-        (A_plus, A_minus), each with len(t) arrays.
+        Positions and amplifications of the plus and minus images.
+
+        Parameters
+        ----------
+        t : array_like
+            Array of times in MJD.DDD
+        filt_idx : int, optional
+            Index of the photometric or astrometric filter or data set.
+
+        Returns
+        -------
+        images : numpy array, dtype=complex, shape = [len(t), N_sources=1, [+, -]]
+            Image positions relative to the lens, East + i North, in
+            Einstein radii.
+        amps : numpy array, dtype=float, shape = [len(t), N_sources=1, [+, -]]
+            Amplification of each image.
+        """
+        # Shape of u_vec: [N_times, 2]
+        u_vec = np.asarray(self.get_u(t, filt_idx=filt_idx), dtype=np.float64)
+        u_amp = np.linalg.norm(u_vec, axis=1)
+        u_hat = (u_vec[:, 0] + 1j * u_vec[:, 1]) / u_amp
+        sqrt_term = np.sqrt(u_amp ** 2 + 4)
+
+        # Image positions along u-hat (Paczynski 1986).
+        images = np.zeros((len(u_amp), 1, 2), dtype=complex)
+        images[:, 0, 0] = 0.5 * (u_amp + sqrt_term) * u_hat
+        images[:, 0, 1] = 0.5 * (u_amp - sqrt_term) * u_hat
+
+        # Image amplifications from the JAX kernel.
+        a_plus, a_minus = jax_physics.pspl_resolved_amplification_from_u(
+            jnp.asarray(u_vec, dtype=jnp.float64))
+        amps = np.zeros((len(u_amp), 1, 2), dtype=np.float64)
+        amps[:, 0, 0] = np.asarray(a_plus)
+        amps[:, 0, 1] = np.asarray(a_minus)
+
+        return images, amps
+
+    def _source_fluxes(self, filt_idx=0):
+        """
+        Unlensed flux of each source in one filter.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+
+        Returns
+        -------
+        flux_src : numpy array, shape = [N_sources]
+            One entry for single-source models, [primary, secondary] for
+            binary sources.
+        """
+        if hasattr(self, 'mag_src_pri'):
+            mags = [self.mag_src_pri[filt_idx], self.mag_src_sec[filt_idx]]
+        else:
+            mags = [self.mag_src[filt_idx]]
+
+        return np.array([mag2flux(m) for m in mags], dtype=np.float64)
+
+    def get_resolved_amplification(self, t, filt_idx=0, amp_arr=None):
+        """
+        Get the photometric amplification of each lensed image.
 
         Parameters
         ----------
@@ -766,26 +825,54 @@ class PSPL(ABC):
             Array of times in MJD.DDD
         filt_idx : int, optional
             Index of the astrometric filter or data set.
+        amp_arr : array_like, optional
+            Amplifications from :meth:`get_all_arrays`; overrides ``t``.
 
         Returns
         -------
-        A : numpy array, dtype=float, shape = [len(t), [+/-]
-            The amplification for the + and - lensed images.
+        A : numpy array, dtype=float, shape = [len(t), N_sources, N_images]
+            The amplification of each lensed image (NaN for missing images).
         """
-        pvec = self._parallax_vectors_for_jax(t, filt_idx)
+        if amp_arr is None:
+            _img, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-        amp_pm = jax_physics.pspl_resolved_amplification(
-            jnp.asarray(t, dtype=jnp.float64).reshape(-1),
-            jnp.asarray(self.t0, dtype=jnp.float64),
-            jnp.asarray(self.tE, dtype=jnp.float64),
-            jnp.asarray(self.u0, dtype=jnp.float64),
-            jnp.asarray(self.thetaE_hat, dtype=jnp.float64),
-            parallax_vectors=pvec,
-            piE_E=jnp.asarray(self.piE[0], dtype=jnp.float64),
-            piE_N=jnp.asarray(self.piE[1], dtype=jnp.float64),
-        )
+        return np.array(amp_arr, dtype=np.float64)
 
-        return np.asarray(amp_pm, dtype=np.float64)
+    def get_resolved_photometry(self, t, filt_idx=0, amp_arr=None):
+        """
+        Get the magnitude of each lensed source image.
+
+        The magnitudes contain only the lensed source flux. The blend flux
+        (neighbors and lenses) is not included, so the image fluxes plus the
+        blend flux give :meth:`get_photometry`.
+
+        Parameters
+        ----------
+        t : array_like
+            Array of times in MJD.DDD
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+        amp_arr : array_like, optional
+            Amplifications from :meth:`get_all_arrays`; overrides ``t``.
+
+        Returns
+        -------
+        mag_model : numpy array, dtype=float, shape = [len(t), N_sources, N_images]
+            Magnitude of each image; NaN for missing images or non-positive
+            flux.
+        """
+        amp = self.get_resolved_amplification(t, filt_idx=filt_idx, amp_arr=amp_arr)
+
+        # Lensed flux of each image: source flux times image amplification.
+        flux_src = self._source_fluxes(filt_idx)
+        flux_model = amp * flux_src[np.newaxis, :, np.newaxis]
+
+        # Magnitudes only exist for positive flux.
+        flux_model = np.where(flux_model > 0, flux_model, np.nan)
+        with np.errstate(invalid='ignore'):
+            mag_model = flux2mag(flux_model)
+
+        return mag_model
 
     def get_amplification(self, t, filt_idx=0):
         """
@@ -820,10 +907,7 @@ class PSPL(ABC):
 
     def get_resolved_astrometry(self, t, filt_idx=0):
         """
-        Get the relative RA and Dec astrometry for each of the two source images,
-        which we label plus and minus. The returned tuple has two entries:
-        (xS_plus, xS_minus), each with [len(t), 2] arrays where the second dimension
-        includes [RA, Dec] positions in arcsec.
+        Get the RA and Dec astrometry of the plus and minus source images.
 
         Parameters
         ----------
@@ -834,12 +918,8 @@ class PSPL(ABC):
 
         Returns
         -------
-        (xS_plus, xS_minus) : tuple of numpy arrays
-            * xS_plus is the vector position of the plus image in arcsec
-              with shape = [len(t), 2]
-            * xS_minus is the vector position of the plus image in arcsec
-              with shape = [len(t), 2]
-
+        xS_res : numpy array, shape = [len(t), N_sources=1, [+, -], [E, N]]
+            Sky positions of the plus and minus images in arcsec.
         """
         pvec = self._parallax_vectors_for_jax(t, filt_idx)
 
@@ -864,7 +944,11 @@ class PSPL(ABC):
             ),
         )
 
-        return np.asarray(pos_images, dtype=np.float64)
+        # Kernel layout [[+, -], N_times, 2] -> [N_times, 1, [+, -], 2].
+        xS_res = np.swapaxes(np.asarray(pos_images, dtype=np.float64), 0, 1)
+        xS_res = xS_res[:, np.newaxis]
+
+        return xS_res
 
     def get_astrometry(self, t, filt_idx=0):
         """
@@ -1307,12 +1391,12 @@ class PSPL(ABC):
 
         A = self.get_amplification(t, filt_idx=filt_idx)
         rA = self.get_resolved_amplification(t, filt_idx=filt_idx)
-        aplus = rA[0]
-        aminus = rA[1]
+        aplus = rA[:, 0, 0]
+        aminus = rA[:, 0, 1]
         rs = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
         ri = self.get_resolved_astrometry(t, filt_idx=filt_idx)
-        plus = ri[0]
-        minus = ri[1]
+        plus = ri[:, 0, 0]
+        minus = ri[:, 0, 1]
         l = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
         # Setup the alpha for the lensed source images.
@@ -1535,33 +1619,6 @@ class PSPL_Phot(PSPL):
         pos_unlensed = src_flux_frac * u_unlens
 
         return pos_unlensed
-
-    def get_resolved_amplification(self, t, filt_idx=0):
-        """
-        Plus/minus amplifications for photometry-only models.
-
-        Parameters
-        ----------
-        t : array_like
-            Observation times in MJD.
-        filt_idx : int, optional
-            Photometric filter index.
-
-        Returns
-        -------
-        A : ndarray, shape = [N_times, N_sources=1, N_images=2]
-            Plus and minus image amplifications.
-        """
-        # Separation vector in Einstein radii.
-        u_vec = jnp.asarray(self.get_u(t, filt_idx=filt_idx), dtype=jnp.float64)
-        a_plus, a_minus = jax_physics.pspl_resolved_amplification_from_u(u_vec)
-
-        # Phot API packs images as [N_times, N_sources, N_images].
-        A = np.zeros((len(np.asarray(t).reshape(-1)), 1, 2), dtype=float)
-        A[:, 0, 0] = np.asarray(a_plus)
-        A[:, 0, 1] = np.asarray(a_minus)
-
-        return A
 
     def get_resolved_astrometry(self, t, filt_idx=0):
         """

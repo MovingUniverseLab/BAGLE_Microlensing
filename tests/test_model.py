@@ -7097,7 +7097,7 @@ def test_fspl_resolved_astrometry_shape_matches_pspl():
     t = np.linspace(t0 - 20.0, t0 + 20.0, 9)
     r_p = np.asarray(pspl.get_resolved_astrometry(t))
     r_f = np.asarray(fspl.get_resolved_astrometry(t))
-    assert r_p.shape == (2, len(t), 2)
+    assert r_p.shape == (len(t), 1, 2, 2)
     assert r_f.shape == (2, len(t), 2)
     # Internal AMG array stays time-major.
     img, _amp = fspl.get_all_arrays(t)

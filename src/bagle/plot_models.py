@@ -317,7 +317,8 @@ def animate_PSPL(pspl, duration=10, time_steps=300, outfile='pspl_movie.gif'):
     rL *= 1e3
     rS *= 1e3
     rS_img *= 1e3
-    rS_img_all = [rS_img_all[0] * 1e3, rS_img_all[1] * 1e3]
+    # Split [N_times, 1, [+, -], 2] into the plus and minus image tracks.
+    rS_img_all = [rS_img_all[:, 0, 0] * 1e3, rS_img_all[:, 0, 1] * 1e3]
 
     plt.close(3)
     plt.figure(3, figsize=(12, 4))
