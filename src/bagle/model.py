@@ -26142,7 +26142,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
             xSL_lensed_res = np.zeros((len(t), self.n_outline, 2, 2), dtype=float)
 
             xSL_lensed_res[:, :, 0, :] = xSL_plus
-            xSL_lensed_res[:, :, 1, :] = xSL_minu
+            xSL_lensed_res[:, :, 1, :] = xSL_minus
 
         else:
             print("You've selected a parameterization without outlines")

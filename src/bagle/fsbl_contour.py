@@ -766,7 +766,8 @@ def uniform_limb_images_amps(zeta_c, rho, s, q, n_outline=64,
 
 def adaptive_limb_images_amps(zeta_c, rho, s, q, n_init=64, tol=1e-4,
                               max_pts=1024, max_iter=40, z1=None, z2=None,
-                              m1=None, m2=None, root_tol=_ROOT_TOL):
+                              m1=None, m2=None, root_tol=_ROOT_TOL,
+                              return_theta=False):
     """
     FSBL magnification and centroid with error-controlled limb sampling.
 
@@ -794,6 +795,8 @@ def adaptive_limb_images_amps(zeta_c, rho, s, q, n_init=64, tol=1e-4,
         Override lens geometry / masses.
     root_tol : float, optional
         Lens-equation tolerance.
+    return_theta : bool, optional
+        Also return the limb angles each epoch was integrated on.
 
     Returns
     -------
@@ -801,6 +804,11 @@ def adaptive_limb_images_amps(zeta_c, rho, s, q, n_init=64, tol=1e-4,
         Flux-weighted centroids ``[E, N]`` relative to the CM.
     amps : ndarray, shape (N_times,)
         Total magnifications.
+    theta : ndarray, float, shape (N_times, N_pts_max)
+        Only if ``return_theta``. Sorted limb angles in ``[0, 2 pi)`` used
+        for each epoch, NaN-padded past ``counts``.
+    counts : ndarray of int, shape (N_times,)
+        Only if ``return_theta``. Number of limb angles per epoch.
     """
     zeta_c = np.atleast_1d(np.asarray(zeta_c, dtype=complex)).reshape(-1)
     n_times = zeta_c.size
@@ -817,7 +825,12 @@ def adaptive_limb_images_amps(zeta_c, rho, s, q, n_init=64, tol=1e-4,
     images = np.zeros((n_times, 2), dtype=float)
     amps = np.zeros(n_times, dtype=float)
     if n_times == 0:
+        if return_theta:
+            return images, amps, np.zeros((0, 0)), np.zeros(0, dtype=int)
         return images, amps
+
+    # Final limb angles of each epoch (only kept for return_theta).
+    thetas = []
 
     for i in range(n_times):
         theta = 2.0 * np.pi * np.arange(n_init) / n_init
@@ -859,7 +872,19 @@ def adaptive_limb_images_amps(zeta_c, rho, s, q, n_init=64, tol=1e-4,
             new = np.mod(theta[keep] + 0.5 * step[keep], 2.0 * np.pi)
             theta = np.sort(np.concatenate([theta, new]))
 
-    return images, amps
+        # Every exit above breaks before bisecting, so theta is what was used.
+        thetas.append(theta)
+
+    if not return_theta:
+        return images, amps
+
+    # NaN-pad the per-epoch angles to the longest epoch.
+    counts = np.array([th.size for th in thetas], dtype=int)
+    theta_pad = np.full((n_times, int(counts.max())), np.nan)
+    for i, th in enumerate(thetas):
+        theta_pad[i, :th.size] = th
+
+    return images, amps, theta_pad, counts
 
 
 def caustic_samples(z1, z2, m1, m2, n_phi=_N_PHI):

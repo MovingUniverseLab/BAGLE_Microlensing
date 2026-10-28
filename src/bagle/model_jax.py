@@ -26914,7 +26914,7 @@ decL - if parallax model
             xSL_lensed_res = np.zeros((len(t), self.n_outline, 2, 2), dtype=float)
     
             xSL_lensed_res[:, :, 0, :] = xSL_plus
-            xSL_lensed_res[:, :, 1, :] = xSL_minu
+            xSL_lensed_res[:, :, 1, :] = xSL_minus
 
         else: 
             print("You've selected a parameterization without outlines")
@@ -29471,6 +29471,67 @@ class FSBL(PSBL):
         individual_area : None
             Placeholder for the legacy 4-tuple API.
         """
+        zeta_c, z1, z2, m1, m2, rho, shift = self._contour_frame(t, filt_idx)
+        n_init = self._contour_n_init()
+        gamma = float(self.limb_gamma(filt_idx))
+
+        if gamma == 0:
+            images, amps = fsbl_contour.adaptive_limb_images_amps(
+                zeta_c, rho, s=1.0, q=1.0, n_init=n_init, tol=self.amg_tol,
+                max_pts=self.amg_max_pts, z1=z1, z2=z2, m1=m1, m2=m2)
+        else:
+            images, amps = fsbl_contour.ld_images_amps(
+                zeta_c, rho, gamma, s=1.0, q=1.0, n_ld=self.ld_n_nodes,
+                n_init=n_init, tol=self.amg_tol, max_pts=self.amg_max_pts,
+                z1=z1, z2=z2, m1=m1, m2=m2)
+
+        # Centroid back in the lens-origin frame of get_u.
+        images = images + np.stack([shift.real, shift.imag], axis=-1)
+
+        return images, None, amps, None
+
+    def _contour_n_init(self):
+        """
+        Initial number of uniform limb samples for the contour integrator.
+
+        Returns
+        -------
+        n_init : int
+            ``n_outline`` (or ``amg_n_init`` when unset), at least 16.
+        """
+        n_init = int(getattr(self, 'n_outline', self.amg_n_init) or self.amg_n_init)
+
+        return max(n_init, 16)
+
+    def _contour_frame(self, t, filt_idx=0):
+        """
+        Source and lens geometry in the frame used by the contour integrals.
+
+        The frame origin is the midpoint of the two lenses at each epoch and
+        lengths are in Einstein radii. :meth:`get_all_arrays_CI` and
+        :meth:`get_resolved_astrometry_outline` share this frame.
+
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        filt_idx : int, optional
+            Index of the filter or data set.
+
+        Returns
+        -------
+        zeta_c : ndarray, complex, shape (N_times,)
+            Source centre (East + i North).
+        z1, z2 : ndarray, complex, shape (N_times,)
+            Primary and secondary lens positions.
+        m1, m2 : float
+            Lens mass fractions (sum to 1).
+        rho : float
+            Source radius.
+        shift : ndarray, complex, shape (N_times,)
+            Frame origin relative to the lens origin of :meth:`get_u`
+            (zero for static lenses).
+        """
         t = np.atleast_1d(np.asarray(t, dtype=float))
         u_vec = np.asarray(self.get_u(t, filt_idx=filt_idx), dtype=float)
         zeta_c = u_vec[:, 0] + 1j * u_vec[:, 1]
@@ -29513,24 +29574,84 @@ class FSBL(PSBL):
             shift = z_geo - (xL0[:, 0] + 1j * xL0[:, 1])
         zeta_c = zeta_c - shift
 
-        n_init = int(getattr(self, 'n_outline', self.amg_n_init) or self.amg_n_init)
-        n_init = max(n_init, 16)
-        gamma = float(self.limb_gamma(filt_idx))
+        return zeta_c, z1, z2, m1, m2, rho, shift
 
-        if gamma == 0:
-            images, amps = fsbl_contour.adaptive_limb_images_amps(
-                zeta_c, rho, s=1.0, q=1.0, n_init=n_init, tol=self.amg_tol,
-                max_pts=self.amg_max_pts, z1=z1, z2=z2, m1=m1, m2=m2)
+    def _image_outline(self, t, filt_idx=0, n_outline=None, adaptive=False):
+        """
+        Binary-lens images of points on the source limb (image outlines).
+
+        Solves the lens equation (Witt quintic) at each limb sample, so the
+        outlines are exact images of the limb, in the same frame and with the
+        same root tolerance as :meth:`get_all_arrays_CI`.
+
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        filt_idx : int, optional
+            Index of the filter or data set.
+        n_outline : int or None, optional
+            Number of uniform limb samples (ignored when ``adaptive``).
+            ``None`` uses the integrator's initial count.
+        adaptive : bool, optional
+            Use the limb angles chosen by the adaptive contour integrator
+            for each epoch. Those are also the outer-disk angles of the
+            limb-darkened integral.
+
+        Returns
+        -------
+        z_out : ndarray, complex, shape (N_times, N_pts, 5)
+            Image positions (East + i North, Einstein radii) relative to the
+            lens origin of :meth:`get_u`. NaN in non-physical slots and in
+            padding past ``counts``.
+        parity : ndarray, float, shape (N_times, N_pts, 5)
+            Image parity (+1 / -1), 0 where ``z_out`` is NaN.
+        theta : ndarray, float, shape (N_times, N_pts)
+            Limb angles in ``[0, 2 pi)``, NaN-padded past ``counts``.
+        counts : ndarray of int, shape (N_times,)
+            Number of limb samples per epoch.
+
+        Notes
+        -----
+        The five slots are unordered solver roots, not image identities: a
+        slot can jump between images from one limb sample to the next.
+        """
+        zeta_c, z1, z2, m1, m2, rho, shift = self._contour_frame(t, filt_idx)
+        n_times = zeta_c.size
+
+        # Limb angles: the integrator's adaptive choice, or a uniform grid.
+        if adaptive:
+            _img, _amp, theta, counts = fsbl_contour.adaptive_limb_images_amps(
+                zeta_c, rho, s=1.0, q=1.0, n_init=self._contour_n_init(),
+                tol=self.amg_tol, max_pts=self.amg_max_pts, z1=z1, z2=z2,
+                m1=m1, m2=m2, return_theta=True)
         else:
-            images, amps = fsbl_contour.ld_images_amps(
-                zeta_c, rho, gamma, s=1.0, q=1.0, n_ld=self.ld_n_nodes,
-                n_init=n_init, tol=self.amg_tol, max_pts=self.amg_max_pts,
-                z1=z1, z2=z2, m1=m1, m2=m2)
+            if n_outline is None:
+                n_outline = self._contour_n_init()
+            n_outline = int(n_outline)
+            theta_1 = 2.0 * np.pi * np.arange(n_outline) / n_outline
+            theta = np.tile(theta_1, (n_times, 1))
+            counts = np.full(n_times, n_outline, dtype=int)
 
-        # Centroid back in the lens-origin frame of get_u.
-        images = images + np.stack([shift.real, shift.imag], axis=-1)
+        # Shapes: z_out, parity [N_times, N_pts, 5]; padding stays NaN / 0.
+        n_pts = theta.shape[1]
+        z_out = np.full((n_times, n_pts, 5), np.nan + 1j * np.nan)
+        parity = np.zeros((n_times, n_pts, 5), dtype=float)
 
-        return images, None, amps, None
+        for i in range(n_times):
+            # Limb points of this epoch's source disk.
+            n_i = int(counts[i])
+            w = zeta_c[i] + rho * np.exp(1j * theta[i, :n_i])
+
+            # Physical images of every limb point (NaN in unused slots).
+            z_img, par, _n_phys = fsbl_contour.binary_images(
+                w, z1[i], z2[i], m1, m2)
+
+            # Midpoint frame -> lens-origin frame of get_u.
+            z_out[i, :n_i] = z_img + shift[i]
+            parity[i, :n_i] = par
+
+        return z_out, parity, theta, counts
 
  
 class FSBL_Phot(FSBL, PSPL_Phot):
@@ -30030,115 +30151,102 @@ class FSBL_PhotAstrom(FSBL, PSPL_PhotAstrom):
         return u_vec_outline
 
 
-    def get_resolved_shift_outline(self, t, filt_idx=0):
+    def get_resolved_shift_outline(self, t, filt_idx=0, n_outline=None,
+                                   adaptive=False):
         """
-        Get the astrometric microlensing shift of each
-        point in the source outline for each of the multiple
-        lensed images. These are the positional offsets between the
-        source image outline and the lens position.
-        No impact from the lens flux is included.
+        Lensed-image outlines relative to the lens origin, in mas.
+
+        Each limb point of the source maps to 3 or 5 binary-lens images. No
+        lens flux is included. See :meth:`get_resolved_astrometry_outline`.
 
         Parameters
         ----------
         t : array, float
-            Times in MJD at which to evaluate the separation.
+            Times in MJD.
         filt_idx : int, optional
             Index of the astrometric filter or data set.
+        n_outline : int or None, optional
+            Number of uniform limb samples (ignored when ``adaptive``).
+        adaptive : bool, optional
+            Use the limb angles chosen by the adaptive contour integrator.
 
         Returns
         -------
-        xSL_lensed_resolved : array, float, shape = [len(t), n_outline, [+, -], [E, N]]
-            Relative astrometric position of the plus and minus image in East, North
-            w.r.t. the lens in units of milli-arcseconds.
+        xSL_outline : ndarray, float, shape (N_times, N_pts, 5, [E, N])
+            Image positions relative to
+            :meth:`get_lens_origin_astrometry` in mas; NaN in non-physical
+            image slots and limb padding.
         """
-        if self.n_outline!=False:
-            # Shape = [len(t), self.n_outline, 2]
-            u_vec = self.get_u_outline(t, filt_idx=filt_idx)
-    
-            # Shape = [len(t), self.n_outline]
-            u_amp = np.linalg.norm(u_vec, axis=2)
-            u_hat = u_vec / u_amp[:, :, np.newaxis]
-    
-            # Lensed u amplitude:
-            # Shape = [len(t), self.n_outline]
-            u_obs_amp_plus = ((u_amp + np.sqrt(u_amp ** 2 + 4)) / 2.0)
-            u_obs_amp_minus = ((u_amp - np.sqrt(u_amp ** 2 + 4)) / 2.0)
-    
-            # Lensed u vector:
-            # Shape = [len(t), self.n_outline, [E, N]]
-            u_obs_vec_plus = u_obs_amp_plus[:, :, np.newaxis] * u_hat
-            u_obs_vec_minus = u_obs_amp_minus[:, :, np.newaxis] * u_hat
-    
-            # Shift vector.
-            # Shape = [len(t), self.n_outline, [E, N]]
-            xSL_plus = u_obs_vec_plus * self.thetaE_amp  # in mas
-            xSL_minus = u_obs_vec_minus * self.thetaE_amp  # in mas
-    
-            # Shape = [len(t), N_outline, [+, -], [E, N]]
-            xSL_lensed_res = np.zeros((len(t), self.n_outline, 2, 2), dtype=float)
-    
-            xSL_lensed_res[:, :, 0, :] = xSL_plus
-            xSL_lensed_res[:, :, 1, :] = xSL_minu
+        z_out, _parity, _theta, _counts = self._image_outline(
+            t, filt_idx=filt_idx, n_outline=n_outline, adaptive=adaptive)
 
-        else: 
-            print("You've selected a parameterization without outlines")
+        # Einstein radii -> mas, East / North on the last axis.
+        xSL_outline = np.stack([z_out.real, z_out.imag], axis=-1) * self.thetaE_amp
 
-        return xSL_lensed_res
+        return xSL_outline
 
-    def get_resolved_astrometry_outline(self, t, filt_idx=0):
-        """Get the x, y astrometry for each of the two lensed source images
-        and all the associated outline points for each. The two lensed source images
-        are labeled plus and minus.
+    def get_resolved_astrometry_outline(self, t, filt_idx=0, n_outline=None,
+                                        adaptive=False, return_all=False):
+        """
+        Sky positions of the lensed-image outlines of the source limb.
 
-        These are actual positions on the sky.
+        Every point on the source limb is mapped through the binary lens
+        equation, giving its 3 or 5 images. Meant for plotting and
+        validation; photometry, astrometry and the likelihoods use the
+        integrated :meth:`get_all_arrays` instead.
+
+        Parameters
+        ----------
+        t : array_like
+            Times in MJD.
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+        n_outline : int or None, optional
+            Number of uniform limb samples (ignored when ``adaptive``).
+            ``None`` uses the integrator's initial count.
+        adaptive : bool, optional
+            Use the limb angles the adaptive contour integrator chose for
+            each epoch (dense where images are stretched, near caustics).
+            For limb-darkened models these are the angles of the outer disk.
+        return_all : bool, optional
+            Also return the image parities, limb angles and sample counts.
 
         Returns
         -------
-        xS_lensed_resolved_outline : numpy array
-            Vector position of the plus and minus images in arcsec.
-            shape = [len(t), self.n_outline, [+,-], [E,N]]
-            where the last axis contains East and North positions.
-        """
-        # Things we will need.
-        if self.n_outline!=False:
-                
-            dt_in_years = (t - self.t0) / days_per_year
-    
-            # Lens position over time
-            xL = self.get_lens_astrometry(t, filt_idx=filt_idx)  # arcsec
-    
-            # Get the source-lens position in units of thetaE
-            # Shape = [len(t), N_outline, [E, N]]
-            u_vec = self.get_u_outline(t, filt_idx=filt_idx)
-            # Shape = [len(t), N_outline]
-            u = np.linalg.norm(u_vec, axis=2)
-            # Shape = [len(t), N_outline, [E, N]]
-            u_hat = u_vec / u[:, :, np.newaxis]
-    
-            # Calculate the shifts, separately for + and - images.
-            u2_plus4_sq = np.sqrt(u ** 2 + 4)
-            u_obs_amp_plus = ((u + u2_plus4_sq) / 2.0)
-            u_obs_amp_minu = ((u - u2_plus4_sq) / 2.0)
-            u_obs_vec_plus = u_obs_amp_plus[:, :, np.newaxis] * u_hat
-            u_obs_vec_minu = u_obs_amp_minu[:, :, np.newaxis] * u_hat
-    
-            # Lensed Source Images - Lens Image
-            xSL_plus = u_obs_vec_plus * self.thetaE_amp  # in mas
-            xSL_minu = u_obs_vec_minu * self.thetaE_amp  # in mas
-    
-            # Shape = [len(t), N_outline, [+, -], [E, N]]
-            xSL = np.zeros((len(t), self.n_outline, 2, 2), dtype=float)
-    
-            xSL[:, :, 0, :] = xSL_plus
-            xSL[:, :, 1, :] = xSL_minu
-    
-            # xS = xL + xSL = xL + (xS - xL)
-            xS_res = xL[:, np.newaxis, np.newaxis, :] + (xSL * 1e-3)  # arcsec
-        else: 
-            print("You've selected a parameterization without outlines")
+        xS_outline : ndarray, float, shape (N_times, N_pts, 5, [E, N])
+            Image positions on the sky in arcsec. The image axis holds the
+            five lens-equation roots; non-physical slots and limb padding
+            are NaN. ``N_pts`` is ``n_outline``, or the largest adaptive
+            count.
+        parity : ndarray, float, shape (N_times, N_pts, 5)
+            Only if ``return_all``. Image parity (+1 / -1), 0 where NaN.
+        theta : ndarray, float, shape (N_times, N_pts)
+            Only if ``return_all``. Limb angles in ``[0, 2 pi)`` (from East
+            toward North), NaN-padded past ``counts``.
+        counts : ndarray of int, shape (N_times,)
+            Only if ``return_all``. Limb samples per epoch.
 
-        # Shape = [len(t), N_outline, [+, -], [E, N]]
-        return xS_res
+        Notes
+        -----
+        The image slots are unordered roots, so plot the outlines as points
+        (or colour by parity) rather than joining a slot into a line.
+        """
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        z_out, parity, theta, counts = self._image_outline(
+            t, filt_idx=filt_idx, n_outline=n_outline, adaptive=adaptive)
+
+        # Lens origin on the sky, shape [N_times, 2] (arcsec).
+        xL0 = np.asarray(self.get_lens_origin_astrometry(t, filt_idx=filt_idx))
+
+        # Einstein radii -> arcsec, offset from the lens origin.
+        # Shape of xS_outline: [N_times, N_pts, 5, 2].
+        xSL = np.stack([z_out.real, z_out.imag], axis=-1) * self.thetaE_amp * 1e-3
+        xS_outline = xL0[:, np.newaxis, np.newaxis, :] + xSL
+
+        if return_all:
+            return xS_outline, parity, theta, counts
+
+        return xS_outline
 
 
     def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
