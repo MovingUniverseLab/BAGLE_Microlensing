@@ -16353,57 +16353,40 @@ class BSPL(PSPL):
 
         return u
 
-    def get_resolved_amplification(self, t, filt_idx=0):
-        """Parallax: Get the photometric amplification term at a set of times, t for both the
-        plus and minus images.
+    def get_all_arrays(self, t, filt_idx=0):
+        """
+        Positions and amplifications of the plus and minus image of each source.
 
         Parameters
         ----------
-        t: Array of times in MJD.DDD
+        t : array_like
+            Array of times in MJD.DDD
         filt_idx : int, optional
-            Index of the astrometric filter or data set.
+            Index of the photometric or astrometric filter or data set.
 
         Returns
         -------
-        A_resolved : numpy array
-            [shape = len(t), len(sources), 2]
-
-        Notes
-        -----
-        For each time t and each source, we have:
-            * A_plus is the amplification for the plus image.
-            * A_minus is the amplification for the minus image.
-
-        In other words,
-            xS[0, 0, 0] returns the amplification of the
-            first source's "plus" image at the first time.
-        Similarly,
-            xS[0, 0, 1] returns the amplification of the
-            first source's "minus" image at the first time.
+        images : numpy array, dtype=complex, shape = [len(t), 2 sources, [+, -]]
+            Image positions relative to the lens, East + i North, in
+            Einstein radii.
+        amps : numpy array, dtype=float, shape = [len(t), 2 sources, [+, -]]
+            Amplification of each image.
         """
-        # Get u for the primary and secondary at all times.
-        u_vec = self.get_u(t, filt_idx=filt_idx)
+        # Shape of u_vec: [N_times, N_sources, 2]
+        u_vec = np.asarray(self.get_u(t, filt_idx=filt_idx), dtype=np.float64)
+        u_amp = np.linalg.norm(u_vec, axis=-1)
+        u_hat = (u_vec[..., 0] + 1j * u_vec[..., 1]) / u_amp
+        sqrt_term = np.sqrt(u_amp ** 2 + 4)
 
-        u_vec1 = u_vec[:, 0, :]
-        u_vec2 = u_vec[:, 1, :]
+        # Image positions along each source's u-hat (Paczynski 1986).
+        images = np.stack((0.5 * (u_amp + sqrt_term) * u_hat,
+                           0.5 * (u_amp - sqrt_term) * u_hat), axis=-1)
 
-        u1 = np.linalg.norm(u_vec1, axis=1)
-        u2 = np.linalg.norm(u_vec2, axis=1)
+        # Image amplifications; they sum to each source's amplification.
+        A = (u_amp ** 2 + 2) / (u_amp * sqrt_term)
+        amps = np.stack((0.5 * (A + 1), 0.5 * (A - 1)), axis=-1)
 
-        A1_plus = 0.5 * ((u1 ** 2 + 2) / (u1 * np.sqrt(u1 ** 2 + 4)) + 1)
-        A1_minu = 0.5 * ((u1 ** 2 + 2) / (u1 * np.sqrt(u1 ** 2 + 4)) - 1)
-
-        A2_plus = 0.5 * ((u2 ** 2 + 2) / (u2 * np.sqrt(u2 ** 2 + 4)) + 1)
-        A2_minu = 0.5 * ((u2 ** 2 + 2) / (u2 * np.sqrt(u2 ** 2 + 4)) - 1)
-
-        N_sources = 2
-        A = np.zeros((len(t), N_sources, 2), dtype=float)
-        A[:, 0, 0] = A1_plus
-        A[:, 0, 1] = A1_minu
-        A[:, 1, 0] = A2_plus
-        A[:, 1, 1] = A2_minu
-
-        return A
+        return images, amps
 
     def get_amplification(self, t, filt_idx=0):
         """Parallax: Get the photometric amplification term at a set of times, t.
@@ -17253,66 +17236,10 @@ class BSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
     ref_frame_parallax_flag = False
 
-    def get_amplification(self, t, filt_idx=0):
-        """Sum the two point-source amplifications.
-
-        Parameters
-        ----------
-        t : array_like
-            Observation times in MJD.
-        filt_idx : int, optional
-            0-based filter index passed through to ``get_u``.
-
-        Returns
-        -------
-        amplification : ndarray
-            Sum of the two point-source amplifications. Shape ``(N_times,)``.
-        """
-        # The source-lens separation depends on this filter's origin.
-        u_vec = self.get_u(t, filt_idx=filt_idx)
-
-        u_vec1 = u_vec[:, 0, :]
-        u_vec2 = u_vec[:, 1, :]
-
-        u1 = np.linalg.norm(u_vec1, axis=1)
-        u2 = np.linalg.norm(u_vec2, axis=1)
-
-        A1 = (u1 ** 2 + 2) / (u1 * np.sqrt(u1 ** 2 + 4))
-        A2 = (u2 ** 2 + 2) / (u2 * np.sqrt(u2 ** 2 + 4))
-        return A1 + A2
-
 
 class BSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
     ref_frame_parallax_flag = False
-
-    def get_amplification(self, t, filt_idx=0):
-        """Sum the two point-source amplifications.
-
-        Parameters
-        ----------
-        t : array_like
-            Observation times in MJD.
-        filt_idx : int, optional
-            0-based filter index passed through to ``get_u``.
-
-        Returns
-        -------
-        amplification : ndarray
-            Sum of the two point-source amplifications. Shape ``(N_times,)``.
-        """
-        # The source-lens separation depends on this filter's origin.
-        u_vec = self.get_u(t, filt_idx=filt_idx)
-
-        u_vec1 = u_vec[:, 0, :]
-        u_vec2 = u_vec[:, 1, :]
-
-        u1 = np.linalg.norm(u_vec1, axis=1)
-        u2 = np.linalg.norm(u_vec2, axis=1)
-
-        A1 = (u1 ** 2 + 2) / (u1 * np.sqrt(u1 ** 2 + 4))
-        A2 = (u2 ** 2 + 2) / (u2 * np.sqrt(u2 ** 2 + 4))
-        return A1 + A2
 
 
 # --------------------------------------------------

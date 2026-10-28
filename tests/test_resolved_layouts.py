@@ -46,7 +46,7 @@ FAMILIES = {
 }
 
 # Family prefixes not converted yet (xfail until their layout lands).
-PENDING = {'BSPL', 'BSBL', 'FSPL', 'FSBL', 'BFSPL', 'BFSBL'}
+PENDING = {'BSBL', 'FSPL', 'FSBL', 'BFSPL', 'BFSBL'}
 
 
 def _cases():
