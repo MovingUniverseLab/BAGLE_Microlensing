@@ -22878,13 +22878,12 @@ class BSBL(PSBL):
 
         Returns
         -------
-        images : array_like
-            Array/tuple of complex positions of each images at each t.
-            shape = [N_times, N_sources, 5, 2]
+        images : array_like, dtype=complex, shape = [N_times, N_sources=2, 5]
+            Complex positions (East + i North) of each lensed image, in the
+            same frame as :meth:`get_complex_pos`. Missing images are NaN.
 
-        amp_arr : array_like
-            Array/tuple of amplification of each images at each t.
-            shape = [N_times, N_sources, 5]
+        amps : array_like, shape = [N_times, N_sources=2, 5]
+            Amplification of each image; NaN for missing images.
         '''
         kwargs = {'check_sols': check_sols}
 
@@ -23003,55 +23002,6 @@ class BSBL(PSBL):
         z2 = xL2_vec[:, 0] + xL2_vec[:, 1] * 1j
 
         return w, z1, z2
-
-    def get_resolved_photometry(self, t, filt_idx=0, amp_arr=None):
-        '''
-        Get the photometry for each of the lensed source images.
-        Implement with no blending (since we don't support different
-        blendings for the different images).
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times to model.
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like
-            Amplifications of each individual image at each time,
-            i.e. amp_arr.shape = (len(t), number of images at each t).
-
-            This will over-ride t; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t.
-        filt_idx : int
-            The filter index (def=0).
-
-        Returns
-        -------
-        mag_model : array_like
-            Magnitude of each lensed image centroid at t.
-            Shape = [5, len(t)]
-        '''
-        if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t)
-
-        # Mask invalid values from the amplification array.
-        amp_arr_mskd = np.masked_invalid(amp_arr)
-
-        # mags to fluxes
-        # switch nan mags to 0 fluxes
-        f1 = mag2flux(self.mag_src_pri[filt_idx])
-        f2 = mag2flux(self.mag_src_sec[filt_idx])
-
-        flux_model = amp_arr_mskd
-        flux_model[:, 0, :] *= f1
-        flux_model[:, 1, :] *= f2
-
-        mag_model = flux2mag(flux_model)
-
-        return mag_model
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
         '''
