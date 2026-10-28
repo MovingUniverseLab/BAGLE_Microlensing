@@ -14,6 +14,7 @@ from model_old_vs_jax_fixtures import (
     build_psbl_photastrom_param2_caustic_instances,
     call_method,
     grad_smoke_jax,
+    pack_init_vector,
     bsbl_photastrom_param1_pairs,
     bsbl_photastrom_circorbs_param1_pairs,
     bsbl_photastrom_ellorbs_param1_pairs,
@@ -1588,6 +1589,61 @@ def test_grad_fspl_phot_param2_extended(class_name, method_name):
 def test_grad_fspl_phot_param2_resolved(class_name, method_name):
     """FSPL phot-only Param2 ``get_resolved_astrometry`` grad."""
     _assert_grad_smoke(class_name, method_name)
+
+
+_FSPL_GET_U_CLASSES = sorted(
+    n for n in dir(model_jax)
+    if n.startswith("FSPL_") and n.endswith(("_Param1", "_Param2"))
+    and ("_Par_" in n or "_noPar_" in n)
+)
+
+
+@pytest.mark.parametrize("class_name", _FSPL_GET_U_CLASSES)
+def test_fspl_get_u_jax_grad_matches_host_fd(class_name, monkeypatch):
+    """FSPL ``get_u`` uses the PSPL JAX kernel and ``jax.grad`` matches host FD.
+
+    Parameters
+    ----------
+    class_name : str
+        Concrete FSPL model class name (phot / photastrom, Param1 / Param2,
+        with and without limb darkening).
+    monkeypatch : pytest.MonkeyPatch
+        Used to disable the host-FD fallback inside ``grad_smoke_jax``.
+
+    Returns
+    -------
+    None
+    """
+    import model_old_vs_jax_fixtures as fx
+
+    host, jax_inst = build_paired_instances(class_name)
+    t = np.linspace(float(host.t0) - 2 * float(host.tE),
+                    float(host.t0) + 2 * float(host.tE), 41)
+
+    # get_u comes from PSPL (JAX kernel), not an FSPL NumPy override.
+    owner = next(c for c in type(jax_inst).__mro__ if "get_u" in c.__dict__)
+    assert owner is model_jax.PSPL
+
+    # Forward parity with the NumPy reference.
+    np.testing.assert_allclose(jax_inst.get_u(t), host.get_u(t), rtol=0, atol=1e-12)
+
+    # jax.grad path only: fail if grad_smoke_jax falls back to host FD.
+    fd_host = fx._fd_grad_host
+
+    def _no_fallback(*args, **kwargs):
+        raise AssertionError("grad_smoke_jax fell back to host FD for get_u")
+
+    monkeypatch.setattr(fx, "_fd_grad_host", _no_fallback)
+    g, init_names = grad_smoke_jax(class_name, "get_u", jax_inst, t, return_names=True)
+    monkeypatch.setattr(fx, "_fd_grad_host", fd_host)
+
+    # Compare against host central differences on rebuilt instances.
+    g_fd = fd_host(class_name, init_names, pack_init_vector(jax_inst)[0], t, "get_u")
+    scale = np.max(np.abs(g_fd))
+    assert scale > 0.0
+    np.testing.assert_allclose(g, g_fd, rtol=1e-5, atol=1e-6 * scale)
+
+    return None
 
 
 @pytest.mark.parametrize("class_name,method_name", bspl_photastrom_param34_grad_pairs())

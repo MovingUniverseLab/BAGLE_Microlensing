@@ -402,7 +402,8 @@ def derive_geometry_from_layout(layout_id: str, eval_kind: str, base_vec, names:
             p["sep"],
             p["alpha"],
         )
-    if eval_kind == "fsbl_photastrom":
+    # FSPL and FSBL finite-source layouts reuse the single-lens geometry.
+    if eval_kind in ("fsbl_photastrom", "fspl_photastrom"):
         if "mL" in p:
             return derive_pspl_photastrom_param1_geometry(
                 p["mL"],
@@ -443,7 +444,7 @@ def derive_geometry_from_layout(layout_id: str, eval_kind: str, base_vec, names:
             p["muS_E"],
             p["muS_N"],
         )
-    if eval_kind == "fsbl_phot":
+    if eval_kind in ("fsbl_phot", "fspl_phot"):
         u0, thetaE_hat, _ = derive_pspl_static_geometry(
             p["u0_amp"], p["piE_E"], p["piE_N"]
         )

@@ -4013,52 +4013,50 @@ def _refresh_bspl_photastrom_param1(instance) -> None:
     instance.xS0_sec = instance.xS0_pri + (sep_vec * 1e-3)
 
 
-def _refresh_fspl_photastrom_param1(instance) -> None:
-    """Refresh FSPL PhotAstrom Param1 physical derived geometry."""
-    import astropy.constants as const
-    import astropy.units as units
-    from bagle.model import u0_hat_from_thetaE_hat
+def _refresh_fspl_by_reinit(instance) -> None:
+    """Rebuild an FSPL instance by re-running its constructor in place.
 
-    if hasattr(instance, "dL_dS"):
-        instance.dS = float(instance.dL) / float(instance.dL_dS)
-    inv_dist_diff = (1.0 / (float(instance.dL) * units.pc)) - (
-        1.0 / (float(instance.dS) * units.pc)
-    )
-    piRel = units.rad * units.au * inv_dist_diff
-    instance.piRel = piRel.to("mas").value
-    piS = (1.0 / float(instance.dS)) * (units.rad * units.au / units.pc)
-    piL = (1.0 / float(instance.dL)) * (units.rad * units.au / units.pc)
-    instance.piS = piS.to("mas").value
-    instance.piL = piL.to("mas").value
+    FSPL Param mixins derive different fields per layout (static phot,
+    physical Param1, reduced Param2), and Param2 also stores derived ``mL``
+    and ``beta``, so a hand-written refresh can pick the wrong derivation.
+    Re-running ``__init__`` with the scattered init values rebuilds every
+    derived field exactly as the constructor does.
 
-    instance.muRel = np.asarray(instance.muS, dtype=np.float64) - np.asarray(
-        instance.muL, dtype=np.float64
-    )
-    instance.muRel_E, instance.muRel_N = instance.muRel
-    instance.muRel_amp = float(np.linalg.norm(instance.muRel))
+    Parameters
+    ----
+    instance
+        NumPy or JAX FSPL instance whose init fields were just scattered.
 
-    thetaE = units.rad * np.sqrt(
-        (4.0 * const.G * float(instance.mL) * units.M_sun / const.c ** 2)
-        * inv_dist_diff
-    )
-    instance.thetaE_amp = thetaE.to("mas").value
-    instance.thetaE_hat = instance.muRel / instance.muRel_amp
-    instance.muRel_hat = instance.thetaE_hat
-    instance.thetaE = instance.thetaE_amp * instance.thetaE_hat
-    instance.thetaE_E, instance.thetaE_N = instance.thetaE
+    Returns
+    ----
+    None
+    """
+    import bagle.model as ref_model
+    import bagle.model_jax as jax_model
 
-    instance.u0_hat = u0_hat_from_thetaE_hat(
-        instance.thetaE_hat, float(instance.beta)
-    )
-    instance.u0_amp = float(instance.beta) / instance.thetaE_amp
-    instance.u0 = np.abs(instance.u0_amp) * instance.u0_hat
-    instance.thetaS0 = instance.u0 * instance.thetaE_amp
-    instance.xL0 = instance.xS0 - (instance.thetaS0 * 1e-3)
+    # Use the Param mixin signature from the module the instance came from.
+    cls = type(instance)
+    module = jax_model if cls.__module__ == jax_model.__name__ else ref_model
+    mixin = _init_mixin_cls(module, cls.__name__)
+    sig = inspect.signature(mixin.__init__)
 
-    instance.piE_amp = instance.piRel / instance.thetaE_amp
-    instance.piE = instance.piE_amp * instance.thetaE_hat
-    instance.piE_E, instance.piE_N = instance.piE
-    instance.tE = (instance.thetaE_amp / instance.muRel_amp) * _DAYS_PER_YEAR
+    # Current (perturbed) values for every constructor argument.
+    kwargs: dict[str, Any] = {}
+    for pname in sig.parameters:
+        if pname == "self":
+            continue
+        if pname in ("raL", "decL", "obsLocation"):
+            kwargs[pname] = getattr(instance, pname)
+        elif pname in INT_INIT_PARAMS:
+            kwargs[pname] = int(round(_scalar_from_instance(instance, pname)))
+        else:
+            kwargs[pname] = _scalar_from_instance(instance, pname)
+
+    # Re-run the concrete constructor, then restore per-filter layouts.
+    cls.__init__(instance, **kwargs)
+    _post_init(instance)
+
+    return None
 
 
 def _refresh_derived_geometry(instance) -> None:
@@ -4166,13 +4164,8 @@ def _refresh_derived_geometry(instance) -> None:
         _refresh_bspl_photastrom_param1(instance)
         return None
 
-    if (
-        hasattr(instance, "mL")
-        and hasattr(instance, "beta")
-        and hasattr(instance, "radiusS")
-        and not hasattr(instance, "mLp")
-    ):
-        _refresh_fspl_photastrom_param1(instance)
+    if type(instance).__name__.startswith("FSPL"):
+        _refresh_fspl_by_reinit(instance)
         return None
 
     phot_only = getattr(instance, "photometryFlag", False) and not getattr(
@@ -5813,12 +5806,11 @@ def grad_smoke_jax(
             return g, init_names
         return g
 
+    # FSPL inherits PSPL.get_u, so its u(t) is the pspl_u kernel on
+    # point-lens geometry for every FSPL layout.
     if method_name == "get_u" and (
         ek in set(pspl_phot_kinds) | set(pspl_astrom_kinds)
-        or (
-            ek.startswith(("fsbl_phot", "fsbl_photastrom"))
-            and class_name.startswith("FSPL")
-        )
+        or ek in ("fspl_phot", "fspl_photastrom")
     ):
 
         def forward(v):

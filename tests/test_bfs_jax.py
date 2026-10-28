@@ -185,6 +185,67 @@ def test_bfspl_host_astrometry_translation_invariant(module):
     return None
 
 
+@pytest.mark.parametrize("module", ["model", "model_jax"])
+def test_bfspl_amplification_photometry_consistent(module):
+    """BFSPL amplification / resolved photometry share one axis convention.
+
+    ``get_all_arrays`` amps are ``[t, source, image]``. ``get_amplification``
+    is the flux-weighted total (BSPL convention), and the resolved image
+    fluxes add back up to ``get_photometry``.
+
+    Parameters
+    ----------
+    module : str
+        ``'model'`` (NumPy reference) or ``'model_jax'``.
+
+    Returns
+    -------
+    None
+    """
+    import importlib
+
+    mod = importlib.import_module(f'bagle.{module}')
+    kw = {k: ([v] if k in FILT else v) for k, v in BFSPL_KW.items()
+          if k not in ('raL', 'decL')}
+    t = np.linspace(56985.0, 57015.0, 21)
+    fs = mod.BFSPL_PhotAstrom_noPar_Param1(**kw)
+
+    # Image amplifications, shape [t, source, image].
+    img_arr, amp_arr = fs.get_all_arrays(t)
+    assert amp_arr.shape == (t.size, 2, 2)
+    amp_copy = amp_arr.copy()
+
+    # Source fluxes and the blend flux added by b_sff.
+    f_src = np.array([mod.mag2flux(kw['mag_src_pri'][0]),
+                      mod.mag2flux(kw['mag_src_sec'][0])])
+    b_sff = kw['b_sff'][0]
+    f_blend = f_src.sum() * (1.0 - b_sff) / b_sff
+
+    # Flux-weighted total amplification reproduces get_photometry.
+    A = np.asarray(fs.get_amplification(t, amp_arr=amp_arr))
+    assert A.shape == (t.size,)
+    f_tot = mod.mag2flux(np.asarray(fs.get_photometry(t, amp_arr=amp_arr)))
+    np.testing.assert_allclose(f_src.sum() * A + f_blend, f_tot, rtol=1e-10)
+
+    # Resolved images: same layout as amps; fluxes sum back to the total.
+    mag_res = np.asarray(fs.get_resolved_photometry(t, amp_arr=amp_arr))
+    assert mag_res.shape == (t.size, 2, 2)
+    f_res = mod.mag2flux(mag_res) - f_blend
+    np.testing.assert_allclose(f_res.sum(axis=(1, 2)) + f_blend, f_tot,
+                               rtol=1e-10)
+    np.testing.assert_array_equal(amp_arr, amp_copy)
+
+    # Point-source limit matches BSPL's flux-weighted amplification.
+    kw_ps = {k: v for k, v in kw.items() if not k.startswith('radiusS')}
+    ps = mod.BSPL_PhotAstrom_noPar_Param1(**kw_ps)
+    tiny = mod.BFSPL_PhotAstrom_noPar_Param1(radiusS_pri=1e-9,
+                                             radiusS_sec=1e-9, **kw_ps)
+    np.testing.assert_allclose(tiny.get_amplification(t),
+                               ps.get_amplification(t), rtol=1e-5)
+
+    return None
+
+
 def test_bfsbl_host_frame_matches_bsbl():
     """BFSBL with tiny sources equals point-source BSBL (luminous lenses)."""
     kw = {k: ([v] if k in FILT else v) for k, v in BFSBL_KW.items()

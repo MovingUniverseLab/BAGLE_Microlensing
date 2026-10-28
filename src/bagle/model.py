@@ -27923,7 +27923,16 @@ class BFSPL(PSPL):
 
     def get_amplification(self, t, filt_idx=0, amp_arr=None):
         """
-        Get an array of the photometric amplifications at the input times.
+        Flux-weighted total amplification of both finite sources.
+
+        Same convention as BSPL, BSBL, and BFSBL:
+
+        ..math::
+
+            A = (f1 * A1 + f2 * A2) / (f1 + f2)
+
+        where ``A_k`` is the summed (+/-) magnification of source ``k`` and
+        the fluxes are the un-magnified source fluxes in this filter.
 
         Parameters
         ----------
@@ -27931,21 +27940,28 @@ class BFSPL(PSPL):
             Array of times in MJD.DDD
         filt_idx : int, optional
             Index of the astrometric filter or data set.
+        amp_arr : array_like, optional
+            Image amplifications from :meth:`get_all_arrays`,
+            shape = [len(t), N_sources=2, N_images=2]. Computed if None.
 
+        Returns
+        -------
+        A : numpy array, shape = [len(t)]
+            Flux-weighted combined amplification.
         """
-        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
-        flux_zp = 1.0
-
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-        # Mask invalid values from the amplification array.
-        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-        amp_arr_mskd = amp_arr
+        # Total magnification of each source (sum over +/- images).
+        # Shape = [len(t), N_sources]
+        amp = np.sum(np.asarray(amp_arr), axis=2)
 
-        amp = np.sum(amp_arr_mskd, axis=1)
+        # Weight by the un-magnified source fluxes in this filter.
+        f1 = mag2flux(self.mag_src_pri[filt_idx])
+        f2 = mag2flux(self.mag_src_sec[filt_idx])
+        A = ((amp[:, 0] * f1) + (amp[:, 1] * f2)) / (f1 + f2)
 
-        return amp
+        return A
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
         '''
@@ -28162,64 +28178,63 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
     def get_resolved_photometry(self, t, filt_idx=0, amp_arr=None):
         '''
         Get the photometry for each of the lensed source images.
-        Implement with no blending (since we don't support different
-        blendings for the different images).
+
+        Each image magnitude includes the full blend flux (lens + neighbors)
+        of both sources, matching the PSBL / FSPL resolved-photometry
+        convention.
 
         Parameters
         ----------
         t : array_like
             Array of times to model.
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like
-            Amplifications of each individual image and each outline point
-            for that image at each time,
-            i.e. amp_arr.shape = (len(t), self.n_outline, number of images at each t).
-
-            This will over-ride t; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t.
         filt_idx : int
             The filter index (def=0).
 
+        Other Parameters
+        ----------------
+        amp_arr : array_like, optional
+            Image amplifications from :meth:`get_all_arrays`,
+            shape = [len(t), N_sources=2, N_images=2]. Not modified.
+
+            This will over-ride t; but is more efficient when calculating
+            both photometry and astrometry. If None, then just use t.
+
         Returns
         -------
-        mag_model : array_like
-            Magnitude of each lensed image centroid at t.
-            Shape = [2, len(t)]
+        mag_model : numpy array
+            Magnitude of each lensed image at t.
+            Shape = [len(t), N_sources=2, N_images=2] (same layout as amp_arr).
         '''
-        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
-        flux_zp = 1.0
-
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-        # Mask invalid values from the amplification array.
-        amp_arr_mskd = np.ma.masked_invalid(amp_arr)
+        # Mask invalid values on a copy so the caller's amp_arr is untouched.
+        amp_arr_mskd = np.ma.masked_invalid(np.array(amp_arr, dtype=float))
 
-        flux_src1 = flux_zp * 10 ** ((self.mag_src_pri[filt_idx] - mag_zp) / -2.5)
-        flux_src2 = flux_zp * 10 ** ((self.mag_src_sec[filt_idx] - mag_zp) / -2.5)
+        # Un-magnified source fluxes. Shape = [N_sources]
+        flux_src = np.array([mag2flux(self.mag_src_pri[filt_idx]),
+                             mag2flux(self.mag_src_sec[filt_idx])])
 
-        flux_model = amp_arr_mskd
-        flux_model[:, 0, :] *= flux_src1
-        flux_model[:, 1, :] *= flux_src2
+        # Lensed flux of each image. Shape = [len(t), N_sources, N_images]
+        flux_model = amp_arr_mskd * flux_src[np.newaxis, :, np.newaxis]
 
         # Account for blending, if necessary.
         try:
             # Adding flux of neighbors and lens
-            # b_sff = fS / (fS + fN + fL)
-            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / \
+            # b_sff = (fS_pri + fS_sec) / (fS_pri + fS_sec + fN + fL)
+            flux_model += flux_src.sum() * (1.0 - self.b_sff[filt_idx]) / \
                           self.b_sff[filt_idx]
         except AttributeError:
             pass
 
         # Catch the edge case where we exceed the zeropoint.
-        bad = np.where(flux_model <= 0)
-        if len(bad[0]) > 0:
-            print('Warning: get_photometry: bad flux encountered.')
-            flux_model[bad] = np.nan
+        bad = np.ma.filled(flux_model <= 0, False)
+        if np.any(bad):
+            print('Warning: get_resolved_photometry: bad flux encountered.')
+            flux_model[bad] = np.ma.masked
 
-        mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
+        # Masked (invalid / non-positive) fluxes become NaN magnitudes.
+        mag_model = flux2mag(flux_model)
 
         return mag_model
 
