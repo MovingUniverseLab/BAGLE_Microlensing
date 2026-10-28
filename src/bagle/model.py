@@ -718,21 +718,22 @@ class PSPL(ABC):
         Returns
         -------
         images : numpy array, dtype=complex, shape = [len(t), N_sources=1, [+, -]]
-            Image positions relative to the lens, East + i North, in
-            Einstein radii.
+            Image positions, East + i North, matching
+            :meth:`get_resolved_astrometry`: arcsec on the sky for
+            astrometric models, Einstein radii from the lens otherwise.
         amps : numpy array, dtype=float, shape = [len(t), N_sources=1, [+, -]]
             Amplification of each image.
         """
         # Shape of u_vec: [N_times, 2]
         u_vec = np.asarray(self.get_u(t, filt_idx=filt_idx), dtype=float)
         u_amp = np.linalg.norm(u_vec, axis=1)
-        u_hat = (u_vec[:, 0] + 1j * u_vec[:, 1]) / u_amp
         sqrt_term = np.sqrt(u_amp ** 2 + 4)
 
-        # Image positions along u-hat (Paczynski 1986).
-        images = np.zeros((len(u_amp), 1, 2), dtype=complex)
-        images[:, 0, 0] = 0.5 * (u_amp + sqrt_term) * u_hat
-        images[:, 0, 1] = 0.5 * (u_amp - sqrt_term) * u_hat
+        # Image positions in the get_resolved_astrometry frame: arcsec on the
+        # sky for astrometric models, Einstein radii from the lens otherwise.
+        xS_res = np.asarray(self.get_resolved_astrometry(t, filt_idx=filt_idx),
+                            dtype=np.float64)
+        images = xS_res[..., 0] + 1j * xS_res[..., 1]
 
         # Image amplifications; they sum to the total amplification.
         A = (u_amp ** 2 + 2) / (u_amp * sqrt_term)
@@ -16367,20 +16368,22 @@ class BSPL(PSPL):
         Returns
         -------
         images : numpy array, dtype=complex, shape = [len(t), 2 sources, [+, -]]
-            Image positions relative to the lens, East + i North, in
-            Einstein radii.
+            Image positions, East + i North, matching
+            :meth:`get_resolved_astrometry`: arcsec on the sky for
+            astrometric models, Einstein radii from the lens otherwise.
         amps : numpy array, dtype=float, shape = [len(t), 2 sources, [+, -]]
             Amplification of each image.
         """
         # Shape of u_vec: [N_times, N_sources, 2]
         u_vec = np.asarray(self.get_u(t, filt_idx=filt_idx), dtype=np.float64)
         u_amp = np.linalg.norm(u_vec, axis=-1)
-        u_hat = (u_vec[..., 0] + 1j * u_vec[..., 1]) / u_amp
         sqrt_term = np.sqrt(u_amp ** 2 + 4)
 
-        # Image positions along each source's u-hat (Paczynski 1986).
-        images = np.stack((0.5 * (u_amp + sqrt_term) * u_hat,
-                           0.5 * (u_amp - sqrt_term) * u_hat), axis=-1)
+        # Image positions in the get_resolved_astrometry frame: arcsec on the
+        # sky for astrometric models, Einstein radii from the lens otherwise.
+        xS_res = np.asarray(self.get_resolved_astrometry(t, filt_idx=filt_idx),
+                            dtype=np.float64)
+        images = xS_res[..., 0] + 1j * xS_res[..., 1]
 
         # Image amplifications; they sum to each source's amplification.
         A = (u_amp ** 2 + 2) / (u_amp * sqrt_term)
@@ -25660,7 +25663,37 @@ class FSPL(PSPL):
 
     def get_all_arrays(self, t, filt_idx=0):
         """
-        Dispatch FSPL image/amplification arrays with mixed-|u| host path.
+        Integrated plus and minus FSPL images and their amplifications.
+
+        Parameters
+        ----------
+        t : array_like
+            Array of times to model.
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+
+        Returns
+        -------
+        images : ndarray, dtype=complex, shape = [len(t), N_sources=1, [+, -]]
+            Image centroids, East + i North. Arcsec on the sky for
+            astrometric models; Einstein radii relative to the lens otherwise.
+        amps : ndarray, shape = [len(t), N_sources=1, [+, -]]
+            Signed image amplifications (the minus image is negative while
+            the lens is inside the source).
+        """
+        # Real centroids [N_times, [+, -], [E, N]] and amps [N_times, [+, -]].
+        img_real, amps = self._get_all_arrays_real(t, filt_idx=filt_idx)
+
+        # Complex East + i North with the source axis: [N_times, 1, [+, -]].
+        img_real = np.asarray(img_real, dtype=np.float64)
+        images = (img_real[..., 0] + 1j * img_real[..., 1])[:, np.newaxis, :]
+        amps = np.asarray(amps, dtype=np.float64)[:, np.newaxis, :]
+
+        return images, amps
+
+    def _get_all_arrays_real(self, t, filt_idx=0):
+        """
+        Real-valued FSPL image centroids and amplifications (host path).
 
         Uniform contour integration when ``|u| >= 2 rho``; adaptive mesh
         when the source limb can pass close to the lens. One preallocated
@@ -25743,16 +25776,21 @@ class FSPL(PSPL):
             Array of times in MJD.DDD
         filt_idx : int, optional
             Index of the astrometric filter or data set.
+        amp_arr : array_like, optional
+            Amplifications from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, [+, -]]; overrides ``t``.
 
+        Returns
+        -------
+        amp : ndarray, shape = [N_times]
+            Total amplification (sum of the signed image amplifications).
         """
-        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
-        flux_zp = 1.0
         if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-            amp_arr_mskd = amp_arr
-            amp = np.sum(amp_arr_mskd, axis=1)
-        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
-            amp = -1 * amp
+            _img, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+
+        # Signed image amplifications sum to the total.
+        amp = np.sum(np.asarray(amp_arr), axis=(1, 2))
+
         return amp
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
@@ -25784,11 +25822,8 @@ class FSPL(PSPL):
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-        amp_arr_mskd = amp_arr
-        amp = np.sum(amp_arr_mskd, axis=1)
-        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
-            print("True")
-            amp = -1 * amp
+        # Signed image amplifications sum to the total.
+        amp = np.sum(np.asarray(amp_arr), axis=(1, 2))
 
         flux_src = mag2flux(self.mag_src[filt_idx])
         flux_model = flux_src * amp
@@ -26045,7 +26080,7 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
 
     def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
         """
-        Position of the observed (lensed) source images on the sky.
+        Position of the integrated plus and minus FSPL images.
 
         Parameters
         ----------
@@ -26057,105 +26092,24 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Other Parameters
         ----------------
         image_arr : array_like
-            Image positions from ``get_all_arrays``, shape
-            ``(len(t), n_images=2, 2)`` with last axis ``[E, N]``.
+            Complex images from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, [+, -]].
         amp_arr : array_like
-            Magnifications of each image, shape ``(len(t), n_images=2)``.
+            Unused; accepted for API symmetry.
 
         Returns
         -------
-        model_pos : array_like, shape = [n_images=2, N_times, 2]
-            Plus/minus image positions in arcsec. Image axis first, matching
-            :meth:`bagle.model.PSPL.get_resolved_astrometry`. Internal AMG
-            arrays stay time-major; this method reorders for the public API.
+        model_pos : ndarray, shape = [N_times, N_sources=1, [+, -], [E, N]]
+            Image positions: arcsec for astrometric models, Einstein radii
+            relative to the lens otherwise.
         """
-        if (image_arr is None) or (amp_arr is None):
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-        else:
-            img_arr = image_arr
+        if image_arr is None:
+            image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-        # AMG stores (N_t, 2, 2); public API matches PSPL (2, N_t, 2).
-        return np.swapaxes(np.asarray(img_arr), 0, 1)
+        # Split complex positions into [E, N].
+        model_pos = _complex_to_vec(image_arr)
 
-    def get_resolved_amplification(self, t, filt_idx=0, amp_arr=None):
-        """Get the photometric amplification term at a set of times, t for both the
-        plus and minus images.
-
-        Parameters
-        ----------
-        t: Array of times in MJD.DDD
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-
-        Returns
-        _______
-        amp_arr : array_like
-            Array/tuple of amplification of each lensed image at each t.
-            Shape = [n_images=2, len(t)]
-        """
-        if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-
-        return np.swapaxes(amp_arr, 0, 1)
-
-    def get_resolved_photometry(self, t, filt_idx=0, amp_arr=None):
-        '''
-        Get the photometry for each of the lensed source images.
-        Implement with no blending (since we don't support different
-        blendings for the different images).
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times to model.
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like
-            Amplifications of each individual image and each outline point
-            for that image at each time,
-            i.e. amp_arr.shape = (len(t), self.n_outline, number of images at each t).
-
-            This will over-ride t; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t.
-        filt_idx : int
-            The filter index (def=0).
-
-        Returns
-        -------
-        mag_model : array_like
-            Magnitude of each lensed image centroid at t.
-            Shape = [2, len(t)]
-        '''
-        mag_zp = 30.0  # arbitrary but allows for negative blend fractions.
-        flux_zp = 1.0
-
-        if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-        # Mask invalid values from the amplification array.
-        amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-
-        flux_src = flux_zp * 10 ** ((self.mag_src[filt_idx] - mag_zp) / -2.5)
-        flux_model = flux_src * amp_arr_mskd.T
-
-        # Account for blending, if necessary.
-        try:
-            # Adding flux of neighbors and lens
-            # b_sff = fS / (fS + fN + fL)
-            flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / \
-                          self.b_sff[filt_idx]
-        except AttributeError:
-            pass
-
-        # Catch the edge case where we exceed the zeropoint.
-        bad = np.where(flux_model <= 0)
-        if len(bad[0]) > 0:
-            print('Warning: get_photometry: bad flux encountered.')
-            flux_model[bad] = np.nan
-
-        mag_model = -2.5 * np.log10(flux_model / flux_zp) + mag_zp
-
-        return mag_model
+        return model_pos
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
         '''
@@ -26185,15 +26139,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         if amp_arr is None:
             img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-        amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-        amp = np.sum(amp_arr_mskd, axis=1)
-        if np.abs(np.max(amp)) < np.abs(np.min(amp)):
-            amp = -1 * amp
-
-        # amp_arr_mskd = amp_arr
-        # amp = np.sum(amp_arr_mskd, axis=1)
-        # Mask invalid values from the amplification array.
-        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
+        # Signed image amplifications sum to the total.
+        amp = np.sum(np.asarray(amp_arr), axis=(1, 2))
 
         flux_src = mag2flux(self.mag_src[filt_idx])
         flux_model = flux_src * amp
@@ -26222,10 +26169,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         Other Parameters
         ----------------
         image_arr : array_like
-            Array of complex image positions at each t,
-            i.e. image_arr.shape = (len(t), number of images at each t).
-            Each value in this array is complex
-            (real = north component, imaginary = east component)
+            Complex images (East + i North) from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, [+, -]].
         amp_arr : array_like
             Array of magnifications of each images.
             Same shape as image_arr.
@@ -26244,8 +26189,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-            # amp_arr shape = [N_times, [+, -]]
-            # image_arr shape = [N_times, [+, -], [E, N]]
+            # amp_arr shape = [N_times, 1, [+, -]]
+            # image_arr shape = [N_times, 1, [+, -]] (complex)
 
         # Add in the flux of the lens objects as well.
         fS = mag2flux(self.mag_src[filt_idx])
@@ -26254,8 +26199,11 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         # Calculate the total flux from all lensed source images and the lens itself.
         # Signed amps: with the lens inside the source the minus "image" is
         # the hole of the ring image and must be subtracted.
-        ftot = fL + np.sum(fS * amp_arr, axis=1)
-        pos = np.sum(image_arr * amp_arr[:, :, np.newaxis] * fS, axis=1)
+        # Shapes: xS_img [N_times, 1, [+, -], [E, N]]; amp [N_times, 1, [+, -]].
+        xS_img = _complex_to_vec(image_arr)
+        amp_arr = np.asarray(amp_arr)
+        ftot = fL + np.sum(fS * amp_arr, axis=(1, 2))
+        pos = np.sum(xS_img * amp_arr[..., np.newaxis] * fS, axis=(1, 2))
 
         # Calculate the flux-weighted centroid. Components are:
         #  - all lensed source images
@@ -26306,8 +26254,8 @@ class FSPL_PhotAstrom(FSPL, PSPL_PhotAstrom):
         rl = self.get_lens_astrometry(t, filt_idx=filt_idx)  # position of lens
         images = self.get_resolved_astrometry(t, filt_idx=filt_idx)  # positions of images
         # print(images.shape)
-        plus = images[:, 0, :]  # plus image
-        minus = images[:, 1, :]  # minus image
+        plus = images[:, 0, 0]  # plus image
+        minus = images[:, 0, 1]  # minus image
         # print(filt_idx)
         # C = self.get_centroid_shift(t, filt_idx=filt_idx)
         A = self.get_amplification(t)
@@ -26405,25 +26353,37 @@ class FSPL_Phot(FSPL):
     astrometryFlag = False
 
     def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
-        """Resolved finite-source image positions; shape ``(2, N_t, 2)`` like PSPL."""
-        if (image_arr is None) or (amp_arr is None):
-            out = self.get_all_arrays(t, filt_idx=filt_idx)
-            if isinstance(out, tuple) and len(out) == 4:
-                image_arr = out[0]
-            else:
-                image_arr, amp_arr = out
-        img = np.asarray(image_arr)
-        if np.iscomplexobj(img):
-            img = np.stack(
-                [np.real(img), np.imag(img)], axis=-1
-            ).astype(np.float64, copy=False)
-        elif getattr(img.dtype, "names", None) is not None:
-            img = img.view("(2,)float")
-        else:
-            img = np.asarray(img, dtype=np.float64)
+        """
+        Position of the integrated plus and minus FSPL images.
 
-        # AMG stores (N_t, 2, 2); public API matches PSPL (2, N_t, 2).
-        return np.swapaxes(img, 0, 1)
+        Parameters
+        ----------
+        t : array_like, shape = [N_times]
+            Array of times to model.
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+
+        Other Parameters
+        ----------------
+        image_arr : array_like
+            Complex images from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=1, [+, -]].
+        amp_arr : array_like
+            Unused; accepted for API symmetry.
+
+        Returns
+        -------
+        model_pos : ndarray, shape = [N_times, N_sources=1, [+, -], [E, N]]
+            Image positions: arcsec for astrometric models, Einstein radii
+            relative to the lens otherwise.
+        """
+        if image_arr is None:
+            image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+
+        # Split complex positions into [E, N].
+        model_pos = _complex_to_vec(image_arr)
+
+        return model_pos
 
     def get_u_outline(self, t, filt_idx=0):
         """

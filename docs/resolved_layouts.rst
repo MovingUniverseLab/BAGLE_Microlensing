@@ -22,8 +22,8 @@ and how to update code written against the old one.
 
    This change is being rolled out family by family on the
    ``fsbl_ld_jax`` branch, in both ``bagle.model`` and
-   ``bagle.model_jax``. Converted so far: **PSPL, PSBL, PSTL, BSPL, BSBL**. The
-   rest (FSPL, FSBL, BFSPL, BFSBL) and the lens-astrometry change
+   ``bagle.model_jax``. Converted so far: **PSPL, PSBL, PSTL, BSPL, BSBL,
+   FSPL**. The rest (FSBL, BFSPL, BFSBL) and the lens-astrometry change
    follow. This note is removed when the rollout is complete.
 
 
@@ -126,17 +126,21 @@ Image coordinates from ``get_all_arrays``
 
 ``images`` is always complex, ``East + 1j * North``, and is the input the
 model's own ``get_astrometry`` and ``get_resolved_astrometry`` expect back
-through ``image_arr=``. Its frame is the family's native frame:
+through ``image_arr=``. In every family it is in the same frame and units
+as ``get_resolved_astrometry``:
 
-* Point-lens families (PSPL, BSPL, FSPL, BFSPL): Einstein radii, relative
-  to the lens.
-* Multiple-lens families (PSBL, PSTL, BSBL): the frame of
-  ``get_complex_pos``. That is arcsec on the sky for ``*_PhotAstrom``
-  classes and Einstein radii for ``*_Phot`` classes.
+* ``*_PhotAstrom`` (and ``*_Astrom``) classes: arcsec on the sky.
+* ``*_Phot`` classes: Einstein radii, relative to the lens.
 
-If you need sky positions in arcsec, call ``get_resolved_astrometry``
-rather than converting ``images`` yourself; it handles the frame for every
-family.
+So for any model::
+
+    images, amps = mod.get_all_arrays(t)
+    xS = mod.get_resolved_astrometry(t)
+    np.allclose(xS[..., 0], images.real, equal_nan=True)   # True
+    np.allclose(xS[..., 1], images.imag, equal_nan=True)   # True
+
+For lens-relative positions in Einstein radii from an astrometric model,
+use ``get_u`` (the source) or a ``*_Phot`` model instead.
 
 Passing arrays back in
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -283,6 +287,12 @@ These used to raise and now work: PSBL ``get_resolved_photometry``
 ``get_amplification(amp_arr=...)``, ``FSPL_Phot.get_resolved_amplification``,
 FSBL_Phot ``get_resolved_photometry`` / ``get_astrometry`` /
 ``get_centroid_shift``, and BFSBL ``get_resolved_astrometry``.
+
+FSPL ``get_amplification`` and ``get_photometry`` also no longer flip the
+sign of the total amplification when its most negative value exceeds its
+largest in magnitude (a workaround that printed ``True`` in
+``bagle.model``). The total is now simply the sum of the signed image
+amplifications, which is positive for physical models.
 
 
 Migration guide
@@ -477,6 +487,7 @@ tuple-unpacking ones are the most likely to be wrong silently::
 
 Then run your code on one model from each family you use and check the
 invariants above: ``get_resolved_amplification`` equals the ``amps`` from
-``get_all_arrays``, and resolved fluxes plus the blend give
-``get_photometry``. ``tests/test_resolved_layouts.py`` checks both, for
-every family, in both ``bagle.model`` and ``bagle.model_jax``.
+``get_all_arrays``, ``get_resolved_astrometry`` equals the complex
+``images`` split into ``[East, North]``, and resolved fluxes plus the blend
+give ``get_photometry``. ``tests/test_resolved_layouts.py`` checks all
+three, for every family, in both ``bagle.model`` and ``bagle.model_jax``.

@@ -623,7 +623,7 @@ def finite_source_image_positions(image_arr) -> np.ndarray:
 
 def fspl_resolved_astrometry_from_model(model, t, filt_idx, pvec):
     """
-    Finite-source resolved image positions via host ``get_all_arrays``.
+    Finite-source resolved image positions via the host model.
 
     Parameters
     ----------
@@ -638,27 +638,17 @@ def fspl_resolved_astrometry_from_model(model, t, filt_idx, pvec):
 
     Returns
     -------
-    img : ndarray, shape (2, N_t, 2)
-        Plus/minus image positions (image axis first), matching
-        ``PSPL.get_resolved_astrometry``.
+    img : ndarray, shape (N_t, N_sources, N_images, 2)
+        Image positions, as :meth:`get_resolved_astrometry`.
     """
-    out = model.get_all_arrays(t, filt_idx=filt_idx)
-    if isinstance(out, tuple) and len(out) == 4:
-        img_arr = out[0]
-    else:
-        img_arr, _amp_arr = out
+    img = model.get_resolved_astrometry(t, filt_idx=filt_idx)
 
-    # AMG stores (N_t, 2, 2); public resolved API is (2, N_t, 2).
-    return np.swapaxes(finite_source_image_positions(img_arr), 0, 1)
+    return np.asarray(img, dtype=np.float64)
 
 
 def fspl_resolved_amplification_from_model(model, t, filt_idx, pvec):
     """
-    Finite-source resolved amplifications via host AMG ``get_all_arrays``.
-
-    FSPL_PhotAstrom returns ``(2, N_t)`` (image axis first), as in
-    :meth:`bagle.model.FSPL_PhotAstrom.get_resolved_amplification`;
-    BFSPL_PhotAstrom keeps the ``(N_t, source, image)`` layout of BSPL.
+    Finite-source resolved amplifications via the host model.
 
     Parameters
     ----------
@@ -673,15 +663,12 @@ def fspl_resolved_amplification_from_model(model, t, filt_idx, pvec):
 
     Returns
     -------
-    amp : ndarray
-        Resolved amplifications.
+    amp : ndarray, shape (N_t, N_sources, N_images)
+        Resolved amplifications, as :meth:`get_resolved_amplification`.
     """
-    img_arr, amp_arr = model.get_all_arrays(t, filt_idx=filt_idx)
-    amp_arr = np.asarray(amp_arr, dtype=np.float64)
-    if type(model).__name__.startswith("BFSPL"):
-        return amp_arr
+    amp = model.get_resolved_amplification(t, filt_idx=filt_idx)
 
-    return np.swapaxes(amp_arr, 0, 1)
+    return np.asarray(amp, dtype=np.float64)
 
 
 def fspl_centroid_shift_from_model(model, t, filt_idx, pvec):

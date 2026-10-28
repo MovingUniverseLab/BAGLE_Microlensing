@@ -5,7 +5,7 @@ astrometry arrays across every model family (model.py and model_jax.py).
 Conventions (N times, S sources, I images per source, L lenses):
 
 * ``get_all_arrays`` -> ``images`` complex ``(N, S, I)`` (East + i North,
-  in each family's native frame) and ``amps`` ``(N, S, I)``.
+  in the ``get_resolved_astrometry`` frame) and ``amps`` ``(N, S, I)``.
 * ``get_resolved_amplification`` -> ``(N, S, I)``, the same as ``amps``.
 * ``get_amplification`` -> ``(N,)``, flux-weighted over sources of the sum
   over images.
@@ -46,7 +46,7 @@ FAMILIES = {
 }
 
 # Family prefixes not converted yet (xfail until their layout lands).
-PENDING = {'FSPL', 'FSBL', 'BFSPL', 'BFSBL'}
+PENDING = {'FSBL', 'BFSPL', 'BFSBL'}
 
 
 def _cases():
@@ -201,7 +201,7 @@ def test_resolved_photometry_layout(mod, name):
 @pytest.mark.parametrize('mod, name', _cases())
 def test_resolved_astrometry_layout(mod, name):
     """
-    Resolved astrometry is real (N, S, I, 2), finite where images exist.
+    Resolved astrometry is real (N, S, I, 2) and equals the complex images.
     """
     S, I, _L = FAMILIES[name]
     inst, t = _build(mod, name)
@@ -211,6 +211,13 @@ def test_resolved_astrometry_layout(mod, name):
     assert x_res.shape == (t.size, S, I, 2)
     np.testing.assert_array_equal(np.isfinite(x_res[..., 0]),
                                   np.isfinite(np.asarray(images)))
+
+    # Same frame and units as the get_all_arrays images.
+    images = np.asarray(images)
+    np.testing.assert_allclose(x_res[..., 0], images.real, rtol=1e-12,
+                               atol=1e-14, equal_nan=True)
+    np.testing.assert_allclose(x_res[..., 1], images.imag, rtol=1e-12,
+                               atol=1e-14, equal_nan=True)
 
     return None
 

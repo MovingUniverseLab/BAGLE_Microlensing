@@ -1183,10 +1183,12 @@ def test_fspl_resolved_images_njx_vs_vbm(u0, rho, span, label):
     u_amp = np.linalg.norm(u_vec, axis=1)
 
     # njx per-image values, lens-relative in Einstein radii.
-    # Shapes: xL [N_times, 2]; mag_njx [2, N_times]; pos_njx [2, N_times, 2].
+    # Model outputs are time first with a source axis: [N_times, 1, [+, -]].
+    # Shapes here: xL [N_times, 2]; mag_njx [2, N_times]; pos_njx [2, N_times, 2].
     xL = mod_njx.get_lens_astrometry(t)
-    mag_njx = mod_njx.get_resolved_amplification(t)
-    pos_njx = (mod_njx.get_resolved_astrometry(t) - xL[None]) * 1e3 / theta_e
+    mag_njx = mod_njx.get_resolved_amplification(t)[:, 0].T
+    pos_res = mod_njx.get_resolved_astrometry(t)[:, 0]
+    pos_njx = np.moveaxis((pos_res - xL[:, None]) * 1e3 / theta_e, 1, 0)
     shift_njx = _along_uhat(mod_njx.get_centroid_shift(t) / theta_e, u_vec)
 
     # Shape of outline_njx: [N_times, n_outline, 2, 2].

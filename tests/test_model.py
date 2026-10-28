@@ -3793,12 +3793,18 @@ def test_FSPL_host_amg_mixed_u_dispatch():
     assert np.any(close) and np.any(far)
 
     images, amps = fspl.get_all_arrays(t)
-    assert images.shape == (len(t), 2, 2)
-    assert amps.shape == (len(t), 2)
+    assert images.shape == (len(t), 1, 2)
+    assert amps.shape == (len(t), 1, 2)
+
+    # Drop the source axis; the CI / AMG helpers return real [E, N] images.
+    images = images[:, 0]
+    amps = amps[:, 0]
 
     # Far epochs match uniform CI; close epochs match AMG.
     img_ci, amp_ci = fspl.get_all_arrays_CI(t[far])
     img_amg, amp_amg = fspl.get_all_arrays_amg(t[close])
+    img_ci = img_ci[..., 0] + 1j * img_ci[..., 1]
+    img_amg = img_amg[..., 0] + 1j * img_amg[..., 1]
     np.testing.assert_allclose(images[far], img_ci, rtol=1e-10, atol=1e-12)
     np.testing.assert_allclose(amps[far], amp_ci, rtol=1e-10, atol=1e-12)
     np.testing.assert_allclose(images[close], img_amg, rtol=1e-10, atol=1e-12)
@@ -7083,7 +7089,7 @@ def test_pspl_phot_get_astrometry_matches_evaluate_jax(class_name):
 
 
 def test_fspl_resolved_astrometry_shape_matches_pspl():
-    """FSPL get_resolved_astrometry uses PSPL image-first layout (2, N_t, 2)."""
+    """FSPL get_resolved_astrometry uses the PSPL layout (N_t, 1, 2, 2)."""
     t0 = 57000.0
     kw = dict(
         mL=10.0, t0=t0, beta=0.5, dL=4000.0, dL_dS=0.5,
@@ -7098,10 +7104,10 @@ def test_fspl_resolved_astrometry_shape_matches_pspl():
     r_p = np.asarray(pspl.get_resolved_astrometry(t))
     r_f = np.asarray(fspl.get_resolved_astrometry(t))
     assert r_p.shape == (len(t), 1, 2, 2)
-    assert r_f.shape == (2, len(t), 2)
-    # Internal AMG array stays time-major.
+    assert r_f.shape == (len(t), 1, 2, 2)
+    # Complex images share the time-first (N_t, S, I) layout.
     img, _amp = fspl.get_all_arrays(t)
-    assert np.asarray(img).shape == (len(t), 2, 2)
+    assert np.asarray(img).shape == (len(t), 1, 2)
     return None
 
 

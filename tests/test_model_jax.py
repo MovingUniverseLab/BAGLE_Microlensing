@@ -3754,12 +3754,18 @@ def test_FSPL_host_amg_mixed_u_dispatch():
     assert np.any(close) and np.any(far)
 
     images, amps = fspl.get_all_arrays(t)
-    assert images.shape == (len(t), 2, 2)
-    assert amps.shape == (len(t), 2)
+    assert images.shape == (len(t), 1, 2)
+    assert amps.shape == (len(t), 1, 2)
+
+    # Drop the source axis; the CI / AMG helpers return real [E, N] images.
+    images = images[:, 0]
+    amps = amps[:, 0]
 
     # Far epochs match uniform CI; close epochs match AMG.
     img_ci, amp_ci = fspl.get_all_arrays_CI(t[far])
     img_amg, amp_amg = fspl.get_all_arrays_amg(t[close])
+    img_ci = img_ci[..., 0] + 1j * img_ci[..., 1]
+    img_amg = img_amg[..., 0] + 1j * img_amg[..., 1]
     np.testing.assert_allclose(images[far], img_ci, rtol=1e-10, atol=1e-12)
     np.testing.assert_allclose(amps[far], amp_ci, rtol=1e-10, atol=1e-12)
     np.testing.assert_allclose(images[close], img_amg, rtol=1e-10, atol=1e-12)
