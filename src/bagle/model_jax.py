@@ -35327,12 +35327,11 @@ class BFSBL(BSBL):
 
         Returns
         -------
-        images : ndarray, shape (N_times, 2, 2)
-            Flux-weighted image centroids per source ``[E, N]``. For
-            astrometric models these are sky positions in arcsec; for
-            photometry-only they are Einstein radii relative to the
-            binary origin.
-        amps : ndarray, shape (N_times, 2)
+        images : ndarray, dtype=complex, shape (N_times, 2, 1)
+            Combined image centroid of each source, East + i North.
+            Arcsec on the sky for astrometric models; Einstein radii
+            from the binary origin otherwise.
+        amps : ndarray, shape (N_times, 2, 1)
             Total magnification of each source.
         """
         t = np.atleast_1d(np.asarray(t, dtype=float))
@@ -35390,6 +35389,7 @@ class BFSBL(BSBL):
         img_pri, amp_pri = one_source(zeta_pri, rho_pri, g_pri)
         img_sec, amp_sec = one_source(zeta_sec, rho_sec, g_sec)
 
+        # Real [source, E/N] centroids and [source] amps.
         images = np.empty((t.size, 2, 2), dtype=float)
         amps = np.empty((t.size, 2), dtype=float)
         images[:, 0, :] = img_pri
@@ -35402,6 +35402,10 @@ class BFSBL(BSBL):
             xL0 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)
             scale = self.thetaE_amp * 1e-3
             images = xL0[:, None, :] + images * scale
+
+        # Complex East + i North with the combined-image axis: [N, 2, 1].
+        images = (images[..., 0] + 1j * images[..., 1])[..., np.newaxis]
+        amps = amps[..., np.newaxis]
 
         return images, amps
 
@@ -35416,7 +35420,7 @@ class BFSBL(BSBL):
         filt_idx : int, optional
             Filter index.
         amp_arr : array_like, optional
-            Cached ``(N, 2)`` magnifications.
+            Amplifications from :meth:`get_all_arrays`, shape ``(N, 2, 1)``.
 
         Returns
         -------
@@ -35424,7 +35428,9 @@ class BFSBL(BSBL):
         """
         if amp_arr is None:
             _img, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-        amp = np.asarray(amp_arr, dtype=float)
+
+        # Total of each source (one combined image).
+        amp = np.sum(np.asarray(amp_arr, dtype=float), axis=2)
         f1 = mag2flux(self.mag_src_pri[filt_idx])
         f2 = mag2flux(self.mag_src_sec[filt_idx])
 
@@ -35441,7 +35447,7 @@ class BFSBL(BSBL):
         filt_idx : int, optional
             Filter index.
         amp_arr : array_like, optional
-            Cached ``(N, 2)`` magnifications.
+            Amplifications from :meth:`get_all_arrays`, shape ``(N, 2, 1)``.
 
         Returns
         -------
@@ -35449,7 +35455,9 @@ class BFSBL(BSBL):
         """
         if amp_arr is None:
             _img, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-        amp = np.asarray(amp_arr, dtype=float)
+
+        # Total of each source (one combined image).
+        amp = np.sum(np.asarray(amp_arr, dtype=float), axis=2)
         f1 = mag2flux(self.mag_src_pri[filt_idx])
         f2 = mag2flux(self.mag_src_sec[filt_idx])
         flux = f1 * amp[:, 0] + f2 * amp[:, 1]
@@ -35469,9 +35477,9 @@ class BFSBL(BSBL):
         t : array_like
             Times in MJD.
         image_arr : array_like, optional
-            Cached centroids ``(N, 2, 2)`` from :meth:`get_all_arrays`.
+            Complex images from :meth:`get_all_arrays`, shape ``(N, 2, 1)``.
         amp_arr : array_like, optional
-            Cached magnifications ``(N, 2)``.
+            Amplifications from :meth:`get_all_arrays`, shape ``(N, 2, 1)``.
         filt_idx : int, optional
             Filter index.
 
@@ -35482,8 +35490,10 @@ class BFSBL(BSBL):
         """
         if (image_arr is None) or (amp_arr is None):
             image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-        images = np.asarray(image_arr, dtype=float)
-        amp = np.asarray(amp_arr, dtype=float)
+
+        # Combined image of each source: [N_times, 2, [E, N]].
+        images = _complex_to_vec(image_arr)[:, :, 0, :]
+        amp = np.sum(np.asarray(amp_arr, dtype=float), axis=2)
         f1 = mag2flux(self.mag_src_pri[filt_idx])
         f2 = mag2flux(self.mag_src_sec[filt_idx])
         fS = np.stack([f1 * amp[:, 0], f2 * amp[:, 1]], axis=1)
@@ -37054,9 +37064,10 @@ class BFSPL(PSPL):
 
         Returns
         -------
-        images : ndarray, shape (N_times, 2, 2, 2)
-            Sky positions ``[source, image, E/N]`` in arcsec (astrometric
-            models) or Einstein radii (photometry-only).
+        images : ndarray, dtype=complex, shape (N_times, 2, 2)
+            Image positions, East + i North, matching
+            :meth:`get_resolved_astrometry`: arcsec on the sky for
+            astrometric models, Einstein radii from the lens otherwise.
         amps : ndarray, shape (N_times, 2, 2)
             Signed magnifications ``[source, image]``.
         """
@@ -37109,9 +37120,10 @@ class BFSPL(PSPL):
             img_pri = xL[:, None, :] + img_pri * scale
             img_sec = xL[:, None, :] + img_sec * scale
 
-        images = np.empty((n_t, 2, 2, 2), dtype=float)
-        images[:, 0, :, :] = img_pri
-        images[:, 1, :, :] = img_sec
+        # Real [source, image, E/N] -> complex East + i North [source, image].
+        images = np.empty((n_t, 2, 2), dtype=complex)
+        images[:, 0, :] = img_pri[..., 0] + 1j * img_pri[..., 1]
+        images[:, 1, :] = img_sec[..., 0] + 1j * img_sec[..., 1]
         amps = np.empty((n_t, 2, 2), dtype=float)
         amps[:, 0, :] = amp_pri
         amps[:, 1, :] = amp_sec
@@ -37207,8 +37219,8 @@ class BFSPL(PSPL):
         return A
 
     def get_photometry(self, t, filt_idx=0, amp_arr=None):
-        '''
-        Get the photometry for each of the lensed source images.
+        """
+        Unresolved photometry of both lensed sources with blending.
 
         Parameters
         ----------
@@ -37216,45 +37228,29 @@ class BFSPL(PSPL):
             Array of times to model.
         filt_idx : int, optional
             Index of the photometric filter or data set.
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like
-            Amplifications of each individual image at each time,
-            i.e. amp_arr.shape = (len(t), number of images at each t).
-
-            This will over-ride t; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t.
+        amp_arr : array_like, optional
+            Amplifications from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=2, [+, -]].
 
         Returns
         -------
-        mag_model : array_like
+        mag_model : ndarray, shape = [N_times]
             Magnitude of the unresolved microlensing event at t.
+        """
+        # Flux-weighted total amplification of both sources.
+        amp = self.get_amplification(t, filt_idx=filt_idx, amp_arr=amp_arr)
 
-        '''
-        if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-
-        # Mask invalid values from the amplification array.
-        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-        amp_arr_mskd = amp_arr
-
-        amp = np.sum(amp_arr_mskd, axis=1)
-
-        flux_src = mag2flux(self.mag_src[filt_idx])
+        flux_src = (mag2flux(self.mag_src_pri[filt_idx])
+                    + mag2flux(self.mag_src_sec[filt_idx]))
         flux_model = flux_src * amp
 
         # Account for blending, if necessary.
         try:
-            # Adding flux of neighbors and lenses
-            # b_sff = fS / (fS + fN + fL)
             flux_model += flux_src * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
         except AttributeError:
             pass
 
-        mag_model = flux2mag(flux_model)
-
-        return mag_model
+        return flux2mag(flux_model)
 
 
 class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
@@ -37311,37 +37307,33 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
 
     def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
         """
-        Position of the observed (lensed) source position on the sky.
+        Position of the plus and minus images of each source.
 
         Parameters
         ----------
         t : array_like, shape = [N_times]
             Array of times to model.
+        image_arr : array_like, optional
+            Complex images from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=2, [+, -]].
+        amp_arr : array_like, optional
+            Unused; accepted for API symmetry.
         filt_idx : int, optional
             Index of the astrometric filter or data set.
 
-        Other Parameters
-        ----------------
-        image_arr : array_like
-            Array of complex image positions at each t,
-            i.e. image_arr.shape = (len(t), number of images at each t, [E,N]).
-
-        amp_arr : array_like
-            Array of magnifications of each images.
-            Same shape as image_arr.
-
         Returns
         -------
-        model_pos : array_like. shape = [N_times, N_images=2, 2]
-            Array of vector positions of the centroid at each t.
-            Last axis contains East/North positions.
+        model_pos : ndarray, shape = [N_times, N_sources=2, [+, -], [E, N]]
+            Image positions: arcsec for astrometric models, Einstein radii
+            relative to the lens otherwise.
         """
-        if (image_arr is None) or (amp_arr is None):
+        if image_arr is None:
             image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
-        xS_lensed_pos = image_arr
+        # Split complex positions into [E, N].
+        model_pos = _complex_to_vec(image_arr)
 
-        return xS_lensed_pos
+        return model_pos
 
     def get_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
         '''
@@ -37352,8 +37344,8 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
         t : array_like
             Array of times to model.
         image_arr : array_like, optional
-            Image positions, shape = [len(t), N_sources=2, N_images=2, 2]
-            (arcsec), from :meth:`get_all_arrays`.
+            Complex images from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=2, [+, -]].
         amp_arr : array_like, optional
             Image amplifications, shape = [len(t), N_sources=2, N_images=2].
         filt_idx : int, optional
@@ -37370,7 +37362,8 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
             image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
 
         # Shapes: xS [len(t), N_sources, [+/-], [E, N]], A [len(t), N_sources, [+/-]]
-        xS_lensed4 = self.get_resolved_astrometry(t, image_arr, amp_arr, filt_idx=filt_idx)
+        xS_lensed4 = self.get_resolved_astrometry(
+            t, image_arr=image_arr, amp_arr=amp_arr, filt_idx=filt_idx)
         A_lensed4 = self.get_resolved_amplification(t, amp_arr=amp_arr, filt_idx=filt_idx)
 
         # Equation of motion for just the foreground lens. Shape is [len(t), [E, N]]
@@ -37394,157 +37387,6 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
         pos = numer / (fS_lensed + fL)[:, np.newaxis]
 
         return pos
-
-    def get_resolved_amplification(self, t, filt_idx=0, amp_arr=None):
-        """Get the photometric amplification term at a set of times, t for both the
-        plus and minus images.
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times in MJD.DDD
-        filt_idx : int, optional
-            Index of the astrometric filter or data set.
-        amp_arr : array_like, optional
-            Amplifications from :meth:`get_all_arrays`; computed if None.
-
-        Returns
-        -------
-        amp_arr : array_like
-            Amplification of each lensed image at each t.
-            Shape = [len(t), N_sources=2, N_images=2] (same layout as BSPL).
-        """
-        try:
-            from bagle.jax_model import try_get_resolved_amplification
-
-            amp_jax = try_get_resolved_amplification(self, t, filt_idx=filt_idx)
-            if amp_jax is not None:
-                return amp_jax
-        except ImportError:
-            pass
-
-        if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-
-        return np.asarray(amp_arr)
-
-    def get_resolved_photometry(self, t, filt_idx=0, amp_arr=None):
-        '''
-        Get the photometry for each of the lensed source images.
-
-        Each image magnitude includes the full blend flux (lens + neighbors)
-        of both sources, matching the PSBL / FSPL resolved-photometry
-        convention.
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times to model.
-        filt_idx : int
-            The filter index (def=0).
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like, optional
-            Image amplifications from :meth:`get_all_arrays`,
-            shape = [len(t), N_sources=2, N_images=2]. Not modified.
-
-            This will over-ride t; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t.
-
-        Returns
-        -------
-        mag_model : numpy array
-            Magnitude of each lensed image at t.
-            Shape = [len(t), N_sources=2, N_images=2] (same layout as amp_arr).
-        '''
-        if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-
-        # Mask invalid values on a copy so the caller's amp_arr is untouched.
-        amp_arr_mskd = np.ma.masked_invalid(np.array(amp_arr, dtype=float))
-
-        # Un-magnified source fluxes. Shape = [N_sources]
-        flux_src = np.array([mag2flux(self.mag_src_pri[filt_idx]),
-                             mag2flux(self.mag_src_sec[filt_idx])])
-
-        # Lensed flux of each image. Shape = [len(t), N_sources, N_images]
-        flux_model = amp_arr_mskd * flux_src[np.newaxis, :, np.newaxis]
-
-        # Account for blending, if necessary.
-        try:
-            # Adding flux of neighbors and lens
-            # b_sff = (fS_pri + fS_sec) / (fS_pri + fS_sec + fN + fL)
-            flux_model += flux_src.sum() * (1.0 - self.b_sff[filt_idx]) / \
-                          self.b_sff[filt_idx]
-        except AttributeError:
-            pass
-
-        # Catch the edge case where we exceed the zeropoint.
-        bad = np.ma.filled(flux_model <= 0, False)
-        if np.any(bad):
-            print('Warning: get_resolved_photometry: bad flux encountered.')
-            flux_model[bad] = np.ma.masked
-
-        # Masked (invalid / non-positive) fluxes become NaN magnitudes.
-        mag_model = flux2mag(flux_model)
-
-        return mag_model
-
-    def get_photometry(self, t, filt_idx=0, amp_arr=None):
-        '''
-        Get the photometry for the combined source images.
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times to model.
-
-        Other Parameters
-        ----------------
-        amp_arr : array_like
-            Amplifications of each individual image at each time,
-            i.e. amp_arr.shape = (len(t), number of images at each t).
-
-            This will over-ride t; but is more efficient when calculating
-            both photometry and astrometry. If None, then just use t.
-        filt_idx : int
-            The filter index (def=0).
-
-        Returns
-        -------
-        mag_model : array_like
-            Magnitude of the centroid at t.
-        '''
-        if amp_arr is None:
-            img_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
-
-        # Mask invalid values from the amplification array.
-        # amp_arr_mskd = np.ma.masked_invalid(amp_arr)
-        amp_arr_mskd = amp_arr
-
-        amp = np.sum(amp_arr_mskd, axis=2)
-        A1 = amp[:, 0]
-        A2 = amp[:, 1]
-
-        flux_src1 = mag2flux(self.mag_src_pri[filt_idx])
-        flux_src2 = mag2flux(self.mag_src_sec[filt_idx])
-
-        flux_srcs = flux_src1 + flux_src2
-        flux_model = flux_src1 * A1 + flux_src2 * A2
-
-        # Account for blending, if necessary.
-        try:
-            # Adding flux of neighbors and lens
-            # b_sff = fS / (fS + fN + fL)
-            flux_model += flux_srcs * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
-        except AttributeError:
-            pass
-
-        mag_model = flux2mag(flux_model)
-
-        return mag_model
-
 
     def get_centroid_shift(self, t, filt_idx=0, image_arr=None, amp_arr=None):
         """Parallax: Get the centroid shift (in mas) for a list of

@@ -23,8 +23,9 @@ and how to update code written against the old one.
    This change is being rolled out family by family on the
    ``fsbl_ld_jax`` branch, in both ``bagle.model`` and
    ``bagle.model_jax``. Converted so far: **PSPL, PSBL, PSTL, BSPL, BSBL,
-   FSPL, FSBL**. The rest (BFSPL, BFSBL) and the lens-astrometry change
-   follow. This note is removed when the rollout is complete.
+   FSPL, FSBL, BFSPL, BFSBL**. The lens-astrometry change to
+   ``(N, L, 2)`` is the remaining step. This note is removed when the
+   rollout is complete.
 
 
 The new layout

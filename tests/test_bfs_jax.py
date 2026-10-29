@@ -230,7 +230,8 @@ def test_bfspl_amplification_photometry_consistent(module):
     # Resolved images: same layout as amps; fluxes sum back to the total.
     mag_res = np.asarray(fs.get_resolved_photometry(t, amp_arr=amp_arr))
     assert mag_res.shape == (t.size, 2, 2)
-    f_res = mod.mag2flux(mag_res) - f_blend
+    # Image fluxes (no blend) plus the blend give get_photometry.
+    f_res = np.nan_to_num(mod.mag2flux(mag_res))
     np.testing.assert_allclose(f_res.sum(axis=(1, 2)) + f_blend, f_tot,
                                rtol=1e-10)
     np.testing.assert_array_equal(amp_arr, amp_copy)
