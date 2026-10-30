@@ -79,6 +79,29 @@ multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
 # Fixed value written into a filter slot that is not fitted.
 FIXED_VALUE = 0.0
 
+# Floor for a non-finite JAX log-likelihood (G-06).
+_LN_L_FLOOR = -1.0e300
+
+
+def _floor_nonfinite_lnL(value):
+    """Replace a non-finite host log-likelihood with ``_LN_L_FLOOR``.
+
+    Parameters
+    ----------
+    value : float
+        Scalar log-likelihood, possibly NaN or Inf.
+
+    Returns
+    -------
+    lnL_safe : float
+        ``value`` when finite, otherwise ``_LN_L_FLOOR``.
+    """
+    value = float(value)
+    if np.isfinite(value):
+        return value
+    return _LN_L_FLOOR
+
+
 # One warning per legacy column name in this process.
 _LEGACY_COLUMN_WARNED = set()
 
@@ -571,7 +594,7 @@ class MicrolensSolver(Solver):
         along with extensive documentation as to their content and
         construction in the file's docstring. The model can support either
 
-        1.  PSPL, PSBL, BSPL, BSBL, or FSPL (FSPL implementation in-progress);
+        1.  PSPL, PSBL, PSTL, BSPL, BSBL, FSPL, FSBL, BFSPL, or BFSBL;
         2.  photometric data only, photometric and astrometric data, or
             astrometric data only;
         3.  parallax or no parallax; and
@@ -672,6 +695,8 @@ class MicrolensSolver(Solver):
         # Phot-only FSPL: Einstein radii. Phot+astrom (arcsec) uses a
         # tighter range in ``make_default_priors`` when ``paramAstromFlag``.
         'radiusS': ('make_gen', 1E-4, 1E-2),
+        'radiusS_pri': ('make_gen', 1E-4, 1E-2),
+        'radiusS_sec': ('make_gen', 1E-4, 1E-2),
         # Linear limb darkening (Gamma convention), one per filter.
         'gamma': ('make_gen', 0.0, 1.0),
         'gamma_pri': ('make_gen', 0.0, 1.0),
@@ -1980,9 +2005,9 @@ class MicrolensSolver(Solver):
             if prior_type == 'make_gen':
                 prior_min = foo[1]
                 prior_max = foo[2]
-                # Phot+astrom ``radiusS`` is arcsec; phot-only is Einstein radii.
+                # Phot+astrom radii are arcsec; phot-only are Einstein radii.
                 if (
-                    priors_name == 'radiusS'
+                    priors_name in ('radiusS', 'radiusS_pri', 'radiusS_sec')
                     and getattr(self.model_class, 'paramAstromFlag', False)
                 ):
                     prior_min, prior_max = 1e-7, 1e-4
@@ -2468,7 +2493,7 @@ class MicrolensSolver(Solver):
         -------
         loglike : float or ndarray, shape (n_points,)
             Log-likelihood. A scalar is returned for one point. For a
-            batch, non-finite values are replaced by ``-1e300``.
+            batch, non-finite values are replaced by ``_LN_L_FLOOR``.
 
         Notes
         -----
@@ -2488,14 +2513,14 @@ class MicrolensSolver(Solver):
             values = np.array([self.log_likely(row)
                                for row in np.asarray(cube, dtype=np.float64)])
             # Same finite floor as the JAX batch path.
-            return np.where(np.isfinite(values), values, -1.0e300)
+            return np.where(np.isfinite(values), values, _LN_L_FLOOR)
 
         if batch:
             return self._loglik_jax_batch(fn, cube)
 
         # Fitted values as the float vector the JAX likelihood takes.
         vec = self.to_param_vector(self.to_param_dict(cube))
-        return float(fn(vec))
+        return _floor_nonfinite_lnL(fn(vec))
 
     def _loglik_jax_batch(self, fn, theta):
         """Evaluate a cached, jitted vmap of the JAX log-likelihood.
@@ -2511,7 +2536,7 @@ class MicrolensSolver(Solver):
         Returns
         -------
         loglike : ndarray, shape (n_points,)
-            Log-likelihood. Non-finite entries are ``-1e300``.
+            Log-likelihood. Non-finite entries are ``_LN_L_FLOOR``.
         """
         theta = np.asarray(theta, dtype=np.float64)
         cached = getattr(self, '_explicit_jax_loglik_vmap_cache', None)
@@ -2524,7 +2549,7 @@ class MicrolensSolver(Solver):
             vmapped = cached[1]
 
         values = np.asarray(vmapped(jnp.asarray(theta)), dtype=np.float64)
-        values = np.where(np.isfinite(values), values, -1.0e300)
+        values = np.where(np.isfinite(values), values, _LN_L_FLOOR)
         return values
 
     def grad_loglik_jax(self, cube):

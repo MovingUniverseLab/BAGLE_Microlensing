@@ -668,3 +668,80 @@ def test_G05_fspl_tied_xS0_grad_nonzero():
         assert component != 0.0, name
     return None
 
+
+# ---------------------------------------------------------------------------
+# Milestone (g): fitter wiring (G-06, S-04, radius priors)
+# ---------------------------------------------------------------------------
+
+def _prior_bounds(prior):
+    """Return (lo, hi) for a scipy uniform prior."""
+    return float(prior.ppf(0.0)), float(prior.ppf(1.0))
+
+
+def test_radiusS_binary_source_priors():
+    """Binary-source radii have default priors; phot+astrom is tighter."""
+    for name in ("radiusS", "radiusS_pri", "radiusS_sec"):
+        assert name in MicrolensSolver.default_priors
+
+    data_phot, _ = _make_pspl_phot_data()
+    f_phot = MicrolensSolver(
+        data_phot, model.FSPL_Phot_noPar_Param1, verbose=False
+    )
+    lo, hi = _prior_bounds(f_phot.priors["radiusS"])
+    np.testing.assert_allclose([lo, hi], [1e-4, 1e-2])
+
+    data_ast, _ = _fspl_two_filter_data()
+    f_ast = MicrolensSolver(
+        data_ast, model.FSPL_PhotAstrom_noPar_Param1, verbose=False
+    )
+    lo, hi = _prior_bounds(f_ast.priors["radiusS"])
+    np.testing.assert_allclose([lo, hi], [1e-7, 1e-4])
+    return None
+
+
+def test_G06_nan_mag_batch_penalty():
+    """G-06: NaN magnification becomes -1e300; gradient stays finite."""
+    from bagle.model_fitter_jax import _LN_L_FLOOR
+
+    data, cube = _make_pspl_phot_data()
+    fitter = MicrolensSolver(data, model.PSPL_Phot_noPar_Param1, verbose=False)
+    names = list(fitter.fitter_param_names)
+    good = np.array([cube[n] for n in names], dtype=np.float64)
+    bad = good.copy()
+    bad[names.index("tE")] = np.nan
+
+    # Batch: finite row kept, NaN row floored.
+    lnL = fitter.evaluate_loglik_jax(np.stack([good, bad]))
+    assert lnL.shape == (2,)
+    assert np.isfinite(lnL[0])
+    assert lnL[1] == _LN_L_FLOOR
+
+    # Scalar NaN path uses the same floor.
+    assert fitter.evaluate_loglik_jax(bad) == _LN_L_FLOOR
+
+    # Gradient of a finite point stays finite (the batch floor is host-side).
+    grad_good = np.asarray(fitter.grad_loglik_jax(good), dtype=np.float64)
+    assert np.all(np.isfinite(grad_good))
+    assert np.any(grad_good != 0.0)
+    return None
+
+
+def test_S04_vmap_batch_throughput():
+    """S-04: jitted vmap over 64 parameter vectors stays finite."""
+    data, cube = _make_pspl_phot_data()
+    fitter = MicrolensSolver(data, model.PSPL_Phot_noPar_Param1, verbose=False)
+    names = list(fitter.fitter_param_names)
+    good = np.array([cube[n] for n in names], dtype=np.float64)
+
+    # Small jitter so the 64 rows are distinct but still valid.
+    rng = np.random.default_rng(0)
+    batch = good + 1e-4 * rng.normal(size=(64, good.size))
+    # Keep tE and magnitudes positive.
+    tE_idx = names.index("tE")
+    batch[:, tE_idx] = np.abs(batch[:, tE_idx]) + 1.0
+
+    lnL = fitter.evaluate_loglik_jax(batch)
+    assert lnL.shape == (64,)
+    assert np.all(np.isfinite(lnL))
+    return None
+

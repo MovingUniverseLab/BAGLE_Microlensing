@@ -138,7 +138,7 @@ class MicrolensSolver(Solver):
         along with extensive documentation as to their content and
         construction in the file's docstring. The model can support either
 
-        1.  PSPL, PSBL, BSPL, BSBL, or FSPL (FSPL implementation in-progress);
+        1.  PSPL, PSBL, PSTL, BSPL, BSBL, FSPL, FSBL, BFSPL, or BFSBL;
         2.  photometric data only, photometric and astrometric data, or
             astrometric data only;
         3.  parallax or no parallax; and
@@ -239,6 +239,8 @@ class MicrolensSolver(Solver):
         # Phot-only FSPL: Einstein radii. Phot+astrom (arcsec) uses a
         # tighter range in ``make_default_priors`` when ``paramAstromFlag``.
         'radiusS': ('make_gen', 1E-4, 1E-2),
+        'radiusS_pri': ('make_gen', 1E-4, 1E-2),
+        'radiusS_sec': ('make_gen', 1E-4, 1E-2),
         # Linear limb darkening (Gamma convention), one per filter.
         'gamma': ('make_gen', 0.0, 1.0),
         'gamma_pri': ('make_gen', 0.0, 1.0),
@@ -1538,9 +1540,9 @@ class MicrolensSolver(Solver):
             if prior_type == 'make_gen':
                 prior_min = foo[1]
                 prior_max = foo[2]
-                # Phot+astrom ``radiusS`` is arcsec; phot-only is Einstein radii.
+                # Phot+astrom radii are arcsec; phot-only are Einstein radii.
                 if (
-                    priors_name == 'radiusS'
+                    priors_name in ('radiusS', 'radiusS_pri', 'radiusS_sec')
                     and getattr(self.model_class, 'paramAstromFlag', False)
                 ):
                     prior_min, prior_max = 1e-7, 1e-4
