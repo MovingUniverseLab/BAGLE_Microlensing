@@ -422,19 +422,19 @@ def test_PSTL_two_filter_parallax_reaches_xL3():
         t = np.array([56800.0, 57000.0, 57200.0])
         xL0 = np.asarray(pstl.get_resolved_lens_astrometry(t, filt_idx=0))
         xL1 = np.asarray(pstl.get_resolved_lens_astrometry(t, filt_idx=1))
-        assert xL0.shape == (3, len(t), 2)
-        assert xL1.shape == (3, len(t), 2)
+        assert xL0.shape == (len(t), 3, 2)
+        assert xL1.shape == (len(t), 3, 2)
 
         # Same relative geometry: tertiary offset from secondary unchanged.
-        d23_0 = xL0[2] - xL0[1]
-        d23_1 = xL1[2] - xL1[1]
+        d23_0 = xL0[:, 2] - xL0[:, 1]
+        d23_1 = xL1[:, 2] - xL1[:, 1]
         np.testing.assert_allclose(d23_0, d23_1, rtol=0, atol=1e-12)
 
         # Absolute positions differ by the observer-dependent parallax.
         # All three lenses must share that same filter-to-filter shift.
-        shift_L1 = xL1[0] - xL0[0]
-        shift_L2 = xL1[1] - xL0[1]
-        shift_L3 = xL1[2] - xL0[2]
+        shift_L1 = xL1[:, 0] - xL0[:, 0]
+        shift_L2 = xL1[:, 1] - xL0[:, 1]
+        shift_L3 = xL1[:, 2] - xL0[:, 2]
         np.testing.assert_allclose(shift_L2, shift_L1, rtol=0, atol=1e-12)
         np.testing.assert_allclose(shift_L3, shift_L1, rtol=0, atol=1e-12)
 

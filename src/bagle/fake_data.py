@@ -944,7 +944,8 @@ def fake_data_PSBL(outdir='', outroot='psbl_',
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
     lens_pos = psbl.get_lens_astrometry(t_mod)
-    lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
+    _xL = psbl.get_resolved_lens_astrometry(t_mod)
+    lens1_pos, lens2_pos = _xL[:, 0], _xL[:, 1]
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
     # Drop the single-source axis: [N_times, N_images, 2].
     srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
@@ -1160,7 +1161,8 @@ def fake_data_FSBL(outdir='', outroot='fsbl_',
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
     lens_pos = fsbl.get_lens_astrometry(t_mod)
-    lens1_pos, lens2_pos = fsbl.get_resolved_lens_astrometry(t_mod)
+    _xL = fsbl.get_resolved_lens_astrometry(t_mod)
+    lens1_pos, lens2_pos = _xL[:, 0], _xL[:, 1]
     srce_pos = fsbl.get_astrometry_unlensed(t_mod)
     srce_pos_lensed_res = fsbl.get_resolved_astrometry(t_mod)
     srce_pos_lensed_unres = fsbl.get_astrometry(t_mod)
@@ -1354,7 +1356,8 @@ def fake_data_continuous_tiny_err_PSBL(outdir='', outroot='psbl',
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
     # Q: Where does the 0.15 milliarcsec error comes from?
     lens_pos = psbl.get_lens_astrometry(t_mod)
-    lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
+    _xL = psbl.get_resolved_lens_astrometry(t_mod)
+    lens1_pos, lens2_pos = _xL[:, 0], _xL[:, 1]
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
     # Drop the single-source axis: [N_times, N_images, 2].
     srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
@@ -4171,7 +4174,8 @@ def fake_data_noPar_PSBL_1(outdir='', outroot='psbl',
 
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
-    lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
+    _xL = psbl.get_resolved_lens_astrometry(t_mod)
+    lens1_pos, lens2_pos = _xL[:, 0], _xL[:, 1]
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
     # Drop the single-source axis: [N_times, N_images, 2].
     srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
@@ -4354,7 +4358,8 @@ def fake_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
 
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
-    lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
+    _xL = psbl.get_resolved_lens_astrometry(t_mod)
+    lens1_pos, lens2_pos = _xL[:, 0], _xL[:, 1]
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
     # Drop the single-source axis: [N_times, N_images, 2].
     srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
@@ -4538,7 +4543,8 @@ def fake_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
 
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
-    lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
+    _xL = psbl.get_resolved_lens_astrometry(t_mod)
+    lens1_pos, lens2_pos = _xL[:, 0], _xL[:, 1]
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
     # Drop the single-source axis: [N_times, N_images, 2].
     srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
@@ -4724,7 +4730,8 @@ def fake_data_noPar_PSBL_4(outdir='', outroot='psbl',
 
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
-    lens1_pos, lens2_pos = psbl.get_resolved_lens_astrometry(t_mod)
+    _xL = psbl.get_resolved_lens_astrometry(t_mod)
+    lens1_pos, lens2_pos = _xL[:, 0], _xL[:, 1]
     srce_pos = psbl.get_astrometry_unlensed(t_mod)
     # Drop the single-source axis: [N_times, N_images, 2].
     srce_pos_lensed_res = psbl.get_resolved_astrometry(t_mod)[:, 0]
@@ -4911,7 +4918,8 @@ def fake_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
 
     # Make the astrometric observations.
     # Assume 0.15 milli-arcsec astrometric errors in each direction at all epochs.
-    lens1_pos, lens2_pos = bsbl.get_resolved_lens_astrometry(t_mod)
+    _xL = bsbl.get_resolved_lens_astrometry(t_mod)
+    lens1_pos, lens2_pos = _xL[:, 0], _xL[:, 1]
 
     source_unlensed = bsbl.get_resolved_source_astrometry_unlensed(t_mod)
     srce_pos_primary = source_unlensed[:, 0, :]

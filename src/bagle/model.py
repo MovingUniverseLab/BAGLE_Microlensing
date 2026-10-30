@@ -7077,7 +7077,8 @@ class PSBL(PSPL):
         fS = mag2flux(self.mag_src[filt_idx])
 
         # Get the lens position and flux
-        xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        _xL = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        xL1, xL2 = _xL[:, 0], _xL[:, 1]
         magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
         fL1 = mag2flux(magL1)
         fL2 = mag2flux(magL2)
@@ -7148,7 +7149,8 @@ class PSBL(PSPL):
         m1 = self.mLp/self.mL # Mass ratio of lens 1
         m2 = self.mLs/self.mL # Mass ratio of lens 2
         R = self.thetaE_amp/1e3 # Einstein radius of lens system in arcsec
-        z1, z2 = self.get_resolved_lens_astrometry(t) # Normalized lens positions
+        _xL = self.get_resolved_lens_astrometry(t)  # (N, 2, 2)
+        z1, z2 = _xL[:, 0], _xL[:, 1]
         z1 = (z1[...,0] + z1[...,1]*1j)/R # Complex position of lens 1
         z2 = (z2[...,0] + z2[...,1]*1j)/R # Complex position of lens 2
         w_arr = np.zeros(np.shape(t)+np.shape(z[0]),dtype = np.complex128)
@@ -7181,7 +7183,8 @@ class PSBL(PSPL):
         m1 = self.mLp/self.mL # Mass ratio of lens 1
         m2 = self.mLs/self.mL # Mass ratio of lens 2
         R = self.thetaE_amp/1e3 # Einstein radius of lens system in arcsec
-        z1, z2 = self.get_resolved_lens_astrometry(t) # Normalized lens positions
+        _xL = self.get_resolved_lens_astrometry(t)  # (N, 2, 2)
+        z1, z2 = _xL[:, 0], _xL[:, 1]
         z1 = (z1[...,0] + z1[...,1]*1j)/R # Complex position of lens 1
         z2 = (z2[...,0] + z2[...,1]*1j)/R # Complex position of lens 2
 
@@ -7311,7 +7314,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
             xL1 = np.tile(self.xL1_over_theta, (len(t), 1))
             xL2 = np.tile(self.xL2_over_theta, (len(t), 1))
         
-        return np.stack((xL1, xL2))
+        return np.stack((xL1, xL2), axis=1)
       
     def get_lens_astrometry(self, t, filt_idx=0):
         """
@@ -7333,7 +7336,8 @@ class PSBL_Phot(PSBL, PSPL_Phot):
            Note, this is a photometry only model, so units are in Einstein radii.
         """
         magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
-        xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        _xL = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        xL1, xL2 = _xL[:, 0], _xL[:, 1]
 
         fL1 = mag2flux(magL1)
         fL2 = mag2flux(magL2)
@@ -7551,10 +7555,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 
         Returns
         -------
-        xL1 : array_like, shape = [N_times, 2 directions]
-            Position of the lens primary (arcsec)
-        xL2 : array_like, shape = [N_times, 2 directions]
-            Position of the lens secondary (arcsec)
+        xL : ndarray, shape = [N_times, N_lenses=2, 2]
+            Positions of the primary and secondary (East, North).
         """
         # Get resolved position for non-orbit case.
 
@@ -7619,7 +7621,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                     xL1 += (self.piL * parallax_vec) * 1e-3  # arcsec
                     xL2 += (self.piL * parallax_vec) * 1e-3  # arcsec
 
-        return np.stack((xL1, xL2))
+        return np.stack((xL1, xL2), axis=1)
 
     def get_lens_astrometry(self, t, filt_idx=0):
         """Equation of motion for just the foreground lens system.
@@ -7637,7 +7639,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
             Position of the lens system (geometric center) over time.
         """
         # Get resolved positions of each lens.
-        xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        _xL = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        xL1, xL2 = _xL[:, 0], _xL[:, 1]
 
         # Figure out the flux ratio between the lenses.
         fratio_1_2 = dmag2fratio(self.dmag_Lp_Ls[filt_idx])
@@ -7714,7 +7717,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 
         # Find positions of lens and source over t
         xS_vec = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
-        xL1_vec, xL2_vec = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        _xL = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        xL1_vec, xL2_vec = _xL[:, 0], _xL[:, 1]
 
         # Convert positions to complex coordinates
         w = xS_vec[:, 0] + xS_vec[:, 1] * 1j
@@ -7789,7 +7793,8 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
 
         img, amp = self.get_all_arrays(t)
 
-        xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        _xL = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        xL1, xL2 = _xL[:, 0], _xL[:, 1]
         source = self.get_source_astrometry_unlensed(t, filt_idx=filt_idx)
         image = self.get_astrometry(t, image_arr=img, amp_arr=amp, filt_idx=filt_idx)
         image_all = self.get_resolved_astrometry(t, image_arr=img, amp_arr=amp, filt_idx=filt_idx)
@@ -15186,8 +15191,9 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
 
         # Unlensed source and resolved lenses for this filter.
         xS_vec = self.get_source_astrometry_unlensed(t_obs, filt_idx=filt_idx)
-        xL1_vec, xL2_vec, xL3_vec = self.get_resolved_lens_astrometry(
+        _xL = self.get_resolved_lens_astrometry(
             t_obs, filt_idx=filt_idx)
+        xL1_vec, xL2_vec, xL3_vec = _xL[:, 0], _xL[:, 1], _xL[:, 2]
 
         w = xS_vec[:, 0] + xS_vec[:, 1] * 1j
         z1 = xL1_vec[:, 0] + xL1_vec[:, 1] * 1j
@@ -15314,8 +15320,9 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         xL : ndarray, shape = [N_times, 2]
             Lens flux-weighted centroid (arcsec).
         """
-        xL1, xL2, xL3 = self.get_resolved_lens_astrometry(
+        _xL = self.get_resolved_lens_astrometry(
             t_obs, filt_idx=filt_idx)
+        xL1, xL2, xL3 = _xL[:, 0], _xL[:, 1], _xL[:, 2]
         fratio_1_2 = dmag2fratio(self.dmag_Lp_Ls[filt_idx])
         fL1 = 1.0
         fL2 = fL1 / fratio_1_2
@@ -15335,7 +15342,7 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
 
         Returns
         -------
-        xL : ndarray, shape = [3, N_times, 2]
+        xL : ndarray, shape = [N_times, N_lenses=3, 2]
             Stack of (primary, secondary, tertiary) lens positions in arcsec.
         """
         # orbits.oal2xy needs NumPy time arrays.
@@ -15409,7 +15416,7 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
                 xL2 = xL2 + plx
                 xL3 = xL3 + plx
 
-        return np.stack((xL1, xL2, xL3))
+        return np.stack((xL1, xL2, xL3), axis=1)
 
     def get_centroid_shift(self, t_obs, amp_arr=None, image_arr=None, filt_idx=0):
         """PSPL: Get the centroid shift (in mas) for a list of
@@ -15492,7 +15499,7 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         img_xy = np.stack([np.real(img), np.imag(img)], axis=-1)
 
         lens_stack = self.get_resolved_lens_astrometry(t)
-        xL1, xL2, xL3 = lens_stack[0], lens_stack[1], lens_stack[2]
+        xL1, xL2, xL3 = lens_stack[:, 0], lens_stack[:, 1], lens_stack[:, 2]
         source = np.asarray(self.get_astrometry_unlensed(t))
         images_xy = [img_xy[:, k, :] for k in range(n_img)]
 
@@ -21833,10 +21840,8 @@ class BSBL(PSBL):
 
         Returns
         -------
-        xL1 : array_like, shape = [N_times, 2 directions]
-            Position of the lens primary (arcsec)
-        xL2 : array_like, shape = [N_times, 2 directions]
-            Position of the lens secondary (arcsec)
+        xL : ndarray, shape = [N_times, N_lenses=2, 2]
+            Positions of the primary and secondary (East, North).
         """
         # Get resolved position for non-orbit case.
 
@@ -21901,7 +21906,7 @@ class BSBL(PSBL):
                     xL1 += (self.piL * parallax_vec) * 1e-3  # arcsec
                     xL2 += (self.piL * parallax_vec) * 1e-3  # arcsec
 
-        return np.stack((xL1, xL2))
+        return np.stack((xL1, xL2), axis=1)
 
     def get_resolved_lens_photometry(self, filt_idx=0):
         """
@@ -22022,7 +22027,8 @@ class BSBL(PSBL):
         """
         # Get the lens position and flux.
         magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
-        xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        _xL = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        xL1, xL2 = _xL[:, 0], _xL[:, 1]
 
         fL1 = mag2flux(magL1)
         fL2 = mag2flux(magL2)
@@ -22291,7 +22297,8 @@ class BSBL(PSBL):
         # Find positions of lenses and sources over t (arcsec)
         xS_vec = self.get_resolved_source_astrometry_unlensed(t,
                                                               filt_idx=filt_idx)  # shape = [N_times, N_sources, 2 directions]
-        xL1_vec, xL2_vec = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        _xL = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        xL1_vec, xL2_vec = _xL[:, 0], _xL[:, 1]
 
         # Convert positions to complex coordinates
         w = xS_vec[:, :, 0] + xS_vec[:, :, 1] * 1j
@@ -22457,7 +22464,8 @@ class BSBL(PSBL):
         fS_lensed[:, 1, :] *= fS2
 
         # Get the lens position and flux
-        xL1, xL2 = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        _xL = self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
+        xL1, xL2 = _xL[:, 0], _xL[:, 1]
         magL1, magL2 = self.get_resolved_lens_photometry(filt_idx=filt_idx)
         fL1 = mag2flux(magL1)
         fL2 = mag2flux(magL2)
@@ -22636,7 +22644,8 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
 
         img, amp = self.get_all_arrays(t)
 
-        xL1, xL2 = self.get_resolved_lens_astrometry(t)
+        _xL = self.get_resolved_lens_astrometry(t)
+        xL1, xL2 = _xL[:, 0], _xL[:, 1]
         source = self.get_resolved_source_astrometry_unlensed(t)
         source_primary = source[:, 0, :]
         source_secondary = source[:, 1, :]

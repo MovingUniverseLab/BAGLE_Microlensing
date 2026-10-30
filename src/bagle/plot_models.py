@@ -64,7 +64,8 @@ def get_magnification_map_old(psbl, duration=0.05, time_steps=300):
     # Get lenses info
     m1 = psbl.m1
     m2 = psbl.m2
-    xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t=psbl.t0)
+    _xL = psbl.get_resolved_lens_astrometry(t=psbl.t0)
+    xL1_0, xL2_0 = _xL[:, 0], _xL[:, 1]
     z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
     z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
 
@@ -151,7 +152,8 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie'):
     
     # Position of source
     
-    rL_1, rL_2 = psbl.get_resolved_lens_astrometry(t)
+    _xL = psbl.get_resolved_lens_astrometry(t)
+    rL_1, rL_2 = _xL[:, 0], _xL[:, 1]
     rS = psbl.get_astrometry_unlensed(t)
     rS_img = psbl.get_astrometry(t, image_arr=img, amp_arr=amp)
     # Drop the single-source axis: [N_times, N_images, 2].
@@ -532,7 +534,8 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     img, amp = psbl.get_all_arrays(t)
     
     # Position of source
-    rL_1, rL_2 = psbl.get_resolved_lens_astrometry(t)
+    _xL = psbl.get_resolved_lens_astrometry(t)
+    rL_1, rL_2 = _xL[:, 0], _xL[:, 1]
     rS = psbl.get_astrometry_unlensed(t)
     rS_img = psbl.get_astrometry(t, image_arr=img, amp_arr=amp)
     # Drop the single-source axis: [N_times, N_images, 2].
@@ -713,7 +716,8 @@ def plot_PSBL_static(psbl, duration=10, time_steps=300,
     img, amp = psbl.get_all_arrays(t)
 
     # Lens, unlensed source, unresolved lensed source, and images.
-    rL_1, rL_2 = psbl.get_resolved_lens_astrometry(t)
+    _xL = psbl.get_resolved_lens_astrometry(t)
+    rL_1, rL_2 = _xL[:, 0], _xL[:, 1]
     rS = psbl.get_astrometry_unlensed(t)
     rS_img = psbl.get_astrometry(t, image_arr=img, amp_arr=amp)
     # Drop the single-source axis: [N_times, N_images, 2].
@@ -941,8 +945,8 @@ def _bsbl_geometry_arrays(bsbl, duration, time_steps):
 
     # Lenses: some BSBL methods return a stacked (2, N, 2) array.
     rL = np.asarray(bsbl.get_resolved_lens_astrometry(t))
-    rL_1 = np.array(rL[0], copy=True, dtype=float)
-    rL_2 = np.array(rL[1], copy=True, dtype=float)
+    rL_1 = np.array(rL[:, 0], copy=True, dtype=float)
+    rL_2 = np.array(rL[:, 1], copy=True, dtype=float)
 
     # Unlensed source tracks, shape (N_times, 2 sources, 2).
     rS_res = np.array(
@@ -2018,7 +2022,8 @@ def plot_bsbl(bsbl, zoom, duration = 1000, time_steps=50000, caustic_finder = 'o
     img, amp = bsbl.get_all_arrays(t)
 
     
-    lens1, lens2 = bsbl.get_resolved_lens_astrometry(t)
+    _xL = bsbl.get_resolved_lens_astrometry(t)
+    lens1, lens2 = _xL[:, 0], _xL[:, 1]
 
     xS_resolved = bsbl.get_resolved_astrometry(t, image_arr = img)
     print(xS_resolved.shape)
@@ -2132,7 +2137,8 @@ def get_magnification_map(chosen_model, grid_size = 0.0312, plot_radius = 0.0156
     # Get lenses info
     m1 = chosen_model.m1
     m2 = chosen_model.m2
-    xL1_0, xL2_0 = chosen_model.get_resolved_lens_astrometry(t=np.array([chosen_model.t0]))
+    _xL = chosen_model.get_resolved_lens_astrometry(t=np.array([chosen_model.t0]))
+    xL1_0, xL2_0 = _xL[:, 0], _xL[:, 1]
 
     z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
     z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
@@ -2221,7 +2227,8 @@ def get_magnification_map_timedep(chosen_model, time_skip = 500, time_choice = 1
     def helper(t_obs, grid_size, plot_radius):
         m1 = chosen_model.m1
         m2 = chosen_model.m2
-        xL1_0, xL2_0 = chosen_model.get_resolved_lens_astrometry(t_obs=np.array([t_obs]))
+        _xL = chosen_model.get_resolved_lens_astrometry(t_obs=np.array([t_obs]))
+        xL1_0, xL2_0 = _xL[:, 0], _xL[:, 1]
         z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
         z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
     
@@ -2299,7 +2306,8 @@ def get_centroid_shift_map(model, grid_size=31.2, plot_radius=15.6, lim=8, bins=
 
     m1 = psbl.m1
     m2 = psbl.m2
-    xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t=np.array([psbl.t0]))
+    _xL = psbl.get_resolved_lens_astrometry(t=np.array([psbl.t0]))
+    xL1_0, xL2_0 = _xL[:, 0], _xL[:, 1]
     z1_as = xL1_0[0][0] + 1j * xL1_0[0][1]   # arcsec
     z2_as = xL2_0[0][0] + 1j * xL2_0[0][1]   # arcsec
     z1_mas = z1_as * arcsec2mas #Lens position in mas

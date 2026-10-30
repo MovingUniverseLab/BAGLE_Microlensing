@@ -222,7 +222,6 @@ def test_resolved_astrometry_layout(mod, name):
     return None
 
 
-@pytest.mark.xfail(reason='lens astrometry layout pending', strict=False)
 @pytest.mark.parametrize('mod, name', [
     c for c in _cases() if FAMILIES[c.values[1]][2] is not None])
 def test_resolved_lens_astrometry_layout(mod, name):

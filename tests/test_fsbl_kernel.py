@@ -74,8 +74,8 @@ def _kernel_amps_from_host_geometry(fsbl, t, n_outline=None):
     u_vec = np.asarray(fsbl.get_u(t))
     rho = float(fsbl.source_radius_thetaE_units())
     lens_res = np.asarray(fsbl.get_resolved_lens_astrometry(t))
-    lens1 = lens_res[0] / fsbl.thetaE_amp * 1e3
-    lens2 = lens_res[1] / fsbl.thetaE_amp * 1e3
+    lens1 = lens_res[:, 0] / fsbl.thetaE_amp * 1e3
+    lens2 = lens_res[:, 1] / fsbl.thetaE_amp * 1e3
     w = u_vec[:, 0] + 1j * u_vec[:, 1]
     z1_abs = lens1[:, 0] + 1j * lens1[:, 1]
     z2_abs = lens2[:, 0] + 1j * lens2[:, 1]
@@ -127,8 +127,8 @@ def test_G03_grad_non_caustic():
     u_vec = np.asarray(fsbl.get_u(t))
     w0 = jnp.asarray(u_vec[:, 0] + 1j * u_vec[:, 1])
     lens_res = np.asarray(fsbl.get_resolved_lens_astrometry(t))
-    lens1 = lens_res[0] / fsbl.thetaE_amp * 1e3
-    lens2 = lens_res[1] / fsbl.thetaE_amp * 1e3
+    lens1 = lens_res[:, 0] / fsbl.thetaE_amp * 1e3
+    lens2 = lens_res[:, 1] / fsbl.thetaE_amp * 1e3
     z1 = jnp.asarray(
         (lens1[:, 0] + 1j * lens1[:, 1])
         - 0.5 * ((lens1[:, 0] + 1j * lens1[:, 1]) + (lens2[:, 0] + 1j * lens2[:, 1]))
@@ -187,8 +187,8 @@ def test_A14_d1_vs_d2_non_caustic():
     u_vec = np.asarray(fsbl.get_u(t))
     rho = float(fsbl.source_radius_thetaE_units())
     lens_res = np.asarray(fsbl.get_resolved_lens_astrometry(t))
-    lens1 = lens_res[0] / fsbl.thetaE_amp * 1e3
-    lens2 = lens_res[1] / fsbl.thetaE_amp * 1e3
+    lens1 = lens_res[:, 0] / fsbl.thetaE_amp * 1e3
+    lens2 = lens_res[:, 1] / fsbl.thetaE_amp * 1e3
     w = u_vec[:, 0] + 1j * u_vec[:, 1]
     z1_abs = lens1[:, 0] + 1j * lens1[:, 1]
     z2_abs = lens2[:, 0] + 1j * lens2[:, 1]

@@ -5390,8 +5390,22 @@ def plot_params(model):
     
 def save_params(model, file):
     """
-    Alternative to plot_params that saves a text file
-    instead of a png.
+    Write model parameters to a text file.
+
+    Filter-indexed names in ``fitter_param_names`` (``b_sff``,
+    ``xS0_E``, ...) are written one line per filter. A length-1
+    sequence is printed as a scalar, matching :func:`plot_params`.
+
+    Parameters
+    ----------
+    model : object
+        Instantiated BAGLE model.
+    file : file-like
+        Open text file (or other writeable stream).
+
+    Returns
+    -------
+    None
     """
     
     def get_param_value(pname):
@@ -5415,19 +5429,31 @@ def save_params(model, file):
 
         return pvalue
         
-    for ff in range(len(model.fitter_param_names)):
-        pname = model.fitter_param_names[ff]
-        pvalu = get_param_value(pname)
-
+    # Filter-indexed names now live in fitter_param_names, so b_sff
+    # and xS0_E are sequences. One line per filter; a length-1
+    # sequence is still printed as a scalar.
+    filt_names = set(getattr(model, 'filt_param_names', []) or [])
+    for pname in model.fitter_param_names:
         fmt_str = '{0:s} = {1:.2f}'
         if pname.startswith('x'):
             fmt_str = '{0:s} = {1:.4f}'
 
         if pname == 'thetaE':
-            fmt_str = '{0:s}'
+            pvalu = get_param_value(pname)
             print(f'thetaE = {np.around(pvalu, 2)}', file=file)
+            continue
+
+        if pname in filt_names:
+            values = np.asarray(getattr(model, pname), dtype=float).reshape(-1)
         else:
-            print(fmt_str.format(pname, pvalu), file=file)
+            values = np.asarray(get_param_value(pname), dtype=float).reshape(-1)
+
+        if values.size == 1:
+            print(fmt_str.format(pname, float(values[0])), file=file)
+            continue
+
+        for rr, value in enumerate(values):
+            print(fmt_str.format(f'{pname}{rr + 1}', float(value)), file=file)
 
     for ff in range(len(model.phot_param_names)):
         pname = model.phot_param_names[ff]

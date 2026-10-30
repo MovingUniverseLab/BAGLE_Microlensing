@@ -1426,7 +1426,8 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', 
         _data_pkl.close()
 
     # Get astrometry for plotting
-    xL1, xL2 = psbl_in.get_resolved_lens_astrometry(np.array([psbl_in.t0]))
+    _xL = psbl_in.get_resolved_lens_astrometry(np.array([psbl_in.t0]))
+    xL1, xL2 = _xL[:, 0], _xL[:, 1]
     muRel = psbl_in.muRel
     xL1 = xL1[0]
 
@@ -1540,7 +1541,8 @@ def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', re
         _data_pkl.close()
 
     # Get astrometry for plotting
-    xL1, xL2 = psbl_in.get_resolved_lens_astrometry(np.array([psbl_in.t0]))
+    _xL = psbl_in.get_resolved_lens_astrometry(np.array([psbl_in.t0]))
+    xL1, xL2 = _xL[:, 0], _xL[:, 1]
     muRel = psbl_in.muRel
     xL1 = xL1[0]
 

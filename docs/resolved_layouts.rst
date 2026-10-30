@@ -18,16 +18,6 @@ Every family now uses the same **time-first** layout, with an explicit
 source axis even for single sources. This page describes the new layout
 and how to update code written against the old one.
 
-.. note::
-
-   This change is being rolled out family by family on the
-   ``fsbl_ld_jax`` branch, in both ``bagle.model`` and
-   ``bagle.model_jax``. Converted so far: **PSPL, PSBL, PSTL, BSPL, BSBL,
-   FSPL, FSBL, BFSPL, BFSBL**. The lens-astrometry change to
-   ``(N, L, 2)`` is the remaining step. This note is removed when the
-   rollout is complete.
-
-
 The new layout
 --------------
 
