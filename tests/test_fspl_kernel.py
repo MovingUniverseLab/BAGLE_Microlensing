@@ -234,3 +234,22 @@ def test_G02_grad_at_u0_finite():
     assert np.isfinite(g0)
 
     return None
+
+
+def test_A25_gamma0_matches_uniform_fspl():
+    """A-25: ``gamma = 0`` limb darkening matches uniform FSPL (rel 1e-3)."""
+    t0 = 57000.0
+    kw = dict(
+        t0=t0, u0_amp=0.01, tE=25.0, piE_E=0.05, piE_N=0.02,
+        radiusS=0.03, b_sff=[1.0], mag_src=[18.0], n_outline=200,
+    )
+    t = np.linspace(t0 - 40.0, t0 + 40.0, 61)
+
+    uni = model.FSPL_Phot_noPar_Param1(**kw)
+    limb = model.FSPL_Limb_Phot_noPar_Param1(gamma=[0.0], **kw)
+
+    mag_u = np.asarray(uni.get_photometry(t), dtype=np.float64)
+    mag_l = np.asarray(limb.get_photometry(t), dtype=np.float64)
+    rel = np.abs(mag_l - mag_u) / np.maximum(np.abs(mag_u), 1e-12)
+    assert np.max(rel) < 1e-3
+    return None
