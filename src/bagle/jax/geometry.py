@@ -233,6 +233,61 @@ def derive_psbl_photastrom_param1(
     )
 
 
+def derive_pstl_photastrom_param1(
+    mLp, mLs, mLt, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+    dL, dS, sep12, sep13, alpha12_deg, alpha13_deg,
+):
+    """
+    Static PSTL PhotAstrom Param1 geometry.
+
+    ``thetaE`` follows the PSBL parent: it is computed from
+    ``mLp + mLs`` only. ``m3`` is ``mLt / (mLp + mLs)`` in those units.
+    ``sep12`` / ``sep13`` are mas; ``alpha12`` / ``alpha13`` are East of
+    North.
+
+    Parameters
+    ----------
+    mLp, mLs, mLt : float
+        Lens masses (Msun).
+    t0 : float
+        Closest-approach time (MJD).
+    xS0_E, xS0_N : float
+        Source position at ``t0`` (arcsec).
+    beta : float
+        Impact parameter (mas).
+    muL_E, muL_N, muS_E, muS_N : float
+        Proper motions (mas/yr).
+    dL, dS : float
+        Distances (pc).
+    sep12, sep13 : float
+        1-2 and 1-3 projected separations (mas).
+    alpha12_deg, alpha13_deg : float
+        Position angles East of North (deg).
+
+    Returns
+    -------
+    geometry
+        PSBL Param1 fields plus ``m3`` and ``xL3_over_theta``.
+    """
+    geom = derive_psbl_photastrom_param1(
+        mLp, mLs, t0, xS0_E, xS0_N, beta, muL_E, muL_N, muS_E, muS_N,
+        dL, dS, sep12, alpha12_deg)
+    (u0, thetaE_hat, tE, piE_E, piE_N, xS0, xL0, muS, muL, thetaE_amp,
+     piS, piL, m1, m2, xL1, xL2, mLp_o, mLs_o) = geom
+
+    # Tertiary mass in units of thetaE(mLp+mLs)^2; lens 3 offset from lens 1.
+    m3 = mLt / (mLp + mLs)
+    a13 = alpha13_deg * jnp.pi / 180.0
+    off13 = (sep13 / thetaE_amp) * jnp.stack(
+        [jnp.sin(a13), jnp.cos(a13)])
+    xL3 = xL1 + off13
+
+    return (
+        u0, thetaE_hat, tE, piE_E, piE_N, xS0, xL0, muS, muL,
+        thetaE_amp, piS, piL, m1, m2, m3, xL1, xL2, xL3, mLp_o, mLs_o, mLt,
+    )
+
+
 def unpack_base_params(names: tuple[str, ...], vec):
     vec = jnp.asarray(vec, dtype=jnp.float64).reshape(-1)
     return {n: vec[i] for i, n in enumerate(names)}

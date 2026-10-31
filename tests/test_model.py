@@ -7316,3 +7316,45 @@ def test_PSTL_mLt_zero_recovers_PSBL():
     np.testing.assert_allclose(phot_t, phot_b, rtol=1e-6, atol=1e-6)
 
     return None
+
+
+def test_PSTL_PhotAstrom_dmag_Lp_Lt_luminous_tertiary():
+    """Luminous tertiary shifts the unlensed lens centroid toward xL3."""
+    args = _pstl_noPar_param1_args()
+    args['b_sff'] = np.array([0.5])
+    args['dmag_Lp_Ls'] = np.array([-20.0])
+    args['dmag_Lp_Lt'] = np.array([0.0])
+    pstl = model.PSTL_PhotAstrom_noPar_Param1(
+        args['mLp'], args['mLs'], args['mLt'], args['t0'],
+        args['xS0_E'], args['xS0_N'], args['beta'],
+        args['muL_E'], args['muL_N'], args['sep12'], args['sep13'],
+        args['muS_E'], args['muS_N'], args['dL'], args['dS'],
+        args['alpha12'], args['alpha13'], args['b_sff'], args['mag_src'],
+        args['dmag_Lp_Ls'], dmag_Lp_Lt=args['dmag_Lp_Lt'],
+        root_tol=args['root_tol'])
+
+    t = np.array([57000.0])
+    xL = np.asarray(pstl.get_resolved_lens_astrometry(t), dtype=float)
+    xL_cent = np.asarray(pstl.get_lens_astrometry(t), dtype=float)
+
+    # Equal primary and tertiary; secondary is dark.
+    expected = 0.5 * (xL[:, 0] + xL[:, 2])
+    np.testing.assert_allclose(xL_cent, expected, rtol=0, atol=1e-10)
+
+    mags = np.asarray(pstl.get_resolved_lens_photometry(), dtype=float)
+    assert mags.shape == (3,)
+    np.testing.assert_allclose(mags[0], mags[2], rtol=0, atol=1e-8)
+    assert mags[1] > mags[0] + 10.0
+
+    # Default dmag_Lp_Lt=-20 keeps the tertiary dark (primary-only centroid).
+    pstl_dark = model.PSTL_PhotAstrom_noPar_Param1(
+        args['mLp'], args['mLs'], args['mLt'], args['t0'],
+        args['xS0_E'], args['xS0_N'], args['beta'],
+        args['muL_E'], args['muL_N'], args['sep12'], args['sep13'],
+        args['muS_E'], args['muS_N'], args['dL'], args['dS'],
+        args['alpha12'], args['alpha13'], args['b_sff'], args['mag_src'],
+        args['dmag_Lp_Ls'], root_tol=args['root_tol'])
+    xL_dark = np.asarray(pstl_dark.get_lens_astrometry(t), dtype=float)
+    np.testing.assert_allclose(xL_dark, xL[:, 0], rtol=0, atol=1e-8)
+    assert 'dmag_Lp_Lt' in pstl_dark.fitter_param_names
+    return None

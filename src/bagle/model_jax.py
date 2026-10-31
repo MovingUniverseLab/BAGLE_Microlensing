@@ -7562,19 +7562,28 @@ class PSBL(PSPL):
         w_arr : array_like
             Corresponding complex position(s) of objects in the source plane. Shape = [N_times, N_positions]
         """
-        m1 = self.mLp/self.mL # Mass ratio of lens 1
-        m2 = self.mLs/self.mL # Mass ratio of lens 2
-        R = self.thetaE_amp/1e3 # Einstein radius of lens system in arcsec
-        _xL = self.get_resolved_lens_astrometry(t)  # (N, 2, 2)
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        _xL = np.asarray(self.get_resolved_lens_astrometry(t))
         z1, z2 = _xL[:, 0], _xL[:, 1]
-        z1 = (z1[...,0] + z1[...,1]*1j)/R # Complex position of lens 1
-        z2 = (z2[...,0] + z2[...,1]*1j)/R # Complex position of lens 2
-        w_arr = np.zeros(np.shape(t) + np.shape(z[0]), dtype=np.complex128)
-        for i, _ in np.ndenumerate(np.asarray(t)):
-            w_arr[i] = np.asarray(
-                z[i] - m1 / jnp.conj(z[i] - z1[i]) - m2 / jnp.conj(z[i] - z2[i])
-            )
-        return jnp.asarray(w_arr)
+        z1 = z1[..., 0] + z1[..., 1] * 1j
+        z2 = z2[..., 0] + z2[..., 1] * 1j
+
+        # PhotAstrom: convert arcsec to Einstein radii. Phot-only is ready.
+        if getattr(self, 'astrometryFlag', False) and hasattr(self, 'thetaE_amp'):
+            R = self.thetaE_amp / 1e3
+            m1 = self.mLp / self.mL
+            m2 = self.mLs / self.mL
+            z1 = z1 / R
+            z2 = z2 / R
+        else:
+            m1 = self.m1
+            m2 = self.m2
+
+        w_arr = np.zeros(np.shape(z), dtype=np.complex128)
+        for i in range(len(t)):
+            w_arr[i] = (z[i] - m1 / np.conj(z[i] - z1[i])
+                        - m2 / np.conj(z[i] - z2[i]))
+        return w_arr
 
     def get_critical_curves(self, t, N_pts=2000, amp_inv=0.0):
         '''
@@ -7598,13 +7607,22 @@ class PSBL(PSPL):
             Complex positions of critical curve points in the lens plane which
             satisfy |m1/(z - z1)**2 + m2/(z - z2)**2| = sqrt(1 - amp_inv). Shape = [N_times, N_pts, 4]
         '''
-        m1 = self.mLp/self.mL # Mass ratio of lens 1
-        m2 = self.mLs/self.mL # Mass ratio of lens 2
-        R = self.thetaE_amp/1e3 # Einstein radius of lens system in arcsec
-        _xL = self.get_resolved_lens_astrometry(t)  # (N, 2, 2)
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        _xL = np.asarray(self.get_resolved_lens_astrometry(t))
         z1, z2 = _xL[:, 0], _xL[:, 1]
-        z1 = (z1[...,0] + z1[...,1]*1j)/R # Complex position of lens 1
-        z2 = (z2[...,0] + z2[...,1]*1j)/R # Complex position of lens 2
+        z1 = z1[..., 0] + z1[..., 1] * 1j
+        z2 = z2[..., 0] + z2[..., 1] * 1j
+
+        # PhotAstrom: convert arcsec to Einstein radii. Phot-only is ready.
+        if getattr(self, 'astrometryFlag', False) and hasattr(self, 'thetaE_amp'):
+            R = self.thetaE_amp / 1e3
+            m1 = self.mLp / self.mL
+            m2 = self.mLs / self.mL
+            z1 = z1 / R
+            z2 = z2 / R
+        else:
+            m1 = self.m1
+            m2 = self.m2
 
         # Coefficients of the quartic polynomial [(z-z1)(z-z2)]**2
         a3 = 2*(z1 + z2)
@@ -14037,6 +14055,157 @@ class PSTL(PSPL):
 
         return amp_arr
 
+    def _einstein_lenses(self, t):
+        """Three lens positions and masses in Einstein-radius units.
+
+        PhotAstrom converts arcsec positions and ``arcsec^2`` masses using
+        ``thetaE`` from ``mLp + mLs``. Phot-only is already Einstein.
+
+        Parameters
+        ----------
+        t : array_like
+            Times (MJD).
+
+        Returns
+        -------
+        z1, z2, z3 : ndarray, complex, shape (N_times,)
+            Lens positions in Einstein radii.
+        m1, m2, m3 : float
+            Masses in units of ``thetaE^2``.
+        """
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        xL = np.asarray(self.get_resolved_lens_astrometry(t), dtype=float)
+        z1 = xL[:, 0, 0] + 1j * xL[:, 0, 1]
+        z2 = xL[:, 1, 0] + 1j * xL[:, 1, 1]
+        z3 = xL[:, 2, 0] + 1j * xL[:, 2, 1]
+        m1 = float(np.asarray(self.m1).reshape(-1)[0])
+        m2 = float(np.asarray(self.m2).reshape(-1)[0])
+        m3 = float(np.asarray(self.m3).reshape(-1)[0])
+
+        # PhotAstrom: arcsec / arcsec^2 -> Einstein units of the 1-2 pair.
+        if getattr(self, 'astrometryFlag', False) and hasattr(self, 'thetaE_amp'):
+            R = float(self.thetaE_amp) * 1e-3
+            z1 = z1 / R
+            z2 = z2 / R
+            z3 = z3 / R
+            m1 = m1 / R ** 2
+            m2 = m2 / R ** 2
+            m3 = m3 / R ** 2
+
+        return z1, z2, z3, m1, m2, m3
+
+    @staticmethod
+    def _poly_sq_from_roots(roots):
+        """Monic polynomial ``∏ (z - r)^2``, highest degree first.
+
+        Parameters
+        ----------
+        roots : sequence of complex
+            Root locations (each used twice).
+
+        Returns
+        -------
+        p : ndarray, complex
+            Polynomial coefficients.
+        """
+        p = np.array([1.0 + 0.0j])
+        for r in roots:
+            fac = np.array([1.0 + 0.0j, -r])
+            p = np.polymul(p, fac)
+            p = np.polymul(p, fac)
+        return p
+
+    def lens_map(self, t, z):
+        """Map lens-plane positions to the source plane (Einstein units).
+
+        Parameters
+        ----------
+        t : array_like
+            Times (MJD), shape ``[N_times]``.
+        z : array_like
+            Complex lens-plane positions.
+
+        Returns
+        -------
+        w : ndarray, complex
+            Source-plane positions, same shape as ``z``.
+        """
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        z = np.asarray(z)
+        z1, z2, z3, m1, m2, m3 = self._einstein_lenses(t)
+        w = np.zeros(np.shape(z), dtype=np.complex128)
+        for i in range(len(t)):
+            zi = z[i]
+            w[i] = (zi
+                    - m1 / np.conj(zi - z1[i])
+                    - m2 / np.conj(zi - z2[i])
+                    - m3 / np.conj(zi - z3[i]))
+        return w
+
+    def get_critical_curves(self, t, N_pts=2000, amp_inv=0.0):
+        """Triple-lens critical curves in Einstein radii.
+
+        Solves ``|Σ m_k / (z - z_k)^2| = sqrt(1 - amp_inv)`` as a
+        degree-6 polynomial in ``z``. Plot with
+        :func:`bagle.plot_models.plot_critical_curves`.
+
+        Parameters
+        ----------
+        t : array_like
+            Times (MJD).
+        N_pts : int, optional
+            Samples around the unit circle.
+        amp_inv : float, optional
+            Reciprocal amplification (0 = true critical curve).
+
+        Returns
+        -------
+        z_arr : ndarray, complex, shape ``[N_times, N_pts, 6]``
+        """
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+        z1, z2, z3, m1, m2, m3 = self._einstein_lenses(t)
+        rho = np.sqrt(1.0 - amp_inv)
+        z_arr = np.zeros((len(t), N_pts, 6), dtype=np.complex128)
+
+        # For each epoch, sample arg(κ) and solve the degree-6 polynomial.
+        for i in range(len(t)):
+            zs = [z1[i], z2[i], z3[i]]
+            P = self._poly_sq_from_roots(zs)
+            Qsum = np.array([0.0 + 0.0j])
+            masses = [m1, m2, m3]
+            for k, mk in enumerate(masses):
+                others = [zs[j] for j in range(3) if j != k]
+                Qsum = np.polyadd(Qsum, mk * self._poly_sq_from_roots(others))
+            for j in range(N_pts):
+                theta = 2.0 * j * np.pi / N_pts
+                coef = np.polysub(Qsum, rho * np.exp(1j * theta) * P)
+                z_arr[i, j] = np.roots(coef)
+
+        return z_arr
+
+    def get_caustics(self, t, N_pts=2000, amp_inv=0.0):
+        """Triple-lens caustics in the source plane (Einstein radii).
+
+        Maps :meth:`get_critical_curves` through :meth:`lens_map`.
+        Plot with :func:`bagle.plot_models.plot_caustics`.
+
+        Parameters
+        ----------
+        t : array_like
+            Times (MJD).
+        N_pts : int, optional
+            Samples along the critical curve.
+        amp_inv : float, optional
+            Reciprocal amplification (0 = true caustic).
+
+        Returns
+        -------
+        w_arr : ndarray, complex
+            Source-plane caustic points.
+        """
+        w_arr = self.lens_map(t, self.get_critical_curves(t, N_pts, amp_inv))
+        return w_arr
+
     def rescale_complex_pos(self, w, z1, z2, z3):
         """Center and scale source and three lenses into a unit box.
 
@@ -15925,9 +16094,17 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         amp_arr_mskd2 = amp_f.reshape((amp_f.shape[0], amp_f.shape[1], 1))
         xS_f = jnp.where(jnp.isfinite(xS_lensed_res), xS_lensed_res, 0.0)
 
-        xS_lensed_ures = jnp.sum(xS_f * amp_arr_mskd2, axis=1) / jnp.sum(amp_arr_mskd2, axis=1)
+        fS = mag2flux(self.mag_src[filt_idx])
+        fL1, fL2, fL3 = self._lens_fluxes(filt_idx=filt_idx)
+        _xL = self.get_resolved_lens_astrometry(t_obs, filt_idx=filt_idx)
+        xL1, xL2, xL3 = _xL[:, 0], _xL[:, 1], _xL[:, 2]
 
-        return xS_lensed_ures
+        # centroid = [sum(A_i fS xS_i) + fL1 xL1 + fL2 xL2 + fL3 xL3]
+        #            / [sum(A_i fS) + fL1 + fL2 + fL3]
+        numer = (jnp.sum(xS_f * amp_arr_mskd2 * fS, axis=1)
+                 + xL1 * fL1 + xL2 * fL2 + xL3 * fL3)
+        denom = jnp.sum(amp_arr_mskd2 * fS, axis=1) + fL1 + fL2 + fL3
+        return numer / denom
 
     def get_astrometry_unlensed(self, t_obs, filt_idx=0):
         """Unresolved source+lens centroid with no gravitational lensing.
@@ -15954,11 +16131,78 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
 
         return pos
 
-    def get_lens_astrometry(self, t_obs, filt_idx=0):
-        """Flux-weighted centroid of the primary and secondary lenses.
+    def _lens_flux_weights(self, filt_idx=0):
+        """Relative fluxes of the three lenses.
 
-        The tertiary contributes no light in the current dmag_Lp_Ls
-        parameterization (same convention as PSBL for the first two).
+        ``dmag_Lp_Ls = mag_Lp - mag_Ls`` and
+        ``dmag_Lp_Lt = mag_Lp - mag_Lt``. A large negative value
+        (default ``-20``) makes that companion dark.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Filter index.
+
+        Returns
+        -------
+        w1, w2, w3 : float
+            Un-normalized flux weights.
+        """
+        fr12 = np.nan_to_num(dmag2fratio(self.dmag_Lp_Ls[filt_idx]), nan=0.0)
+        dlt = getattr(self, 'dmag_Lp_Lt', None)
+        if dlt is None:
+            fr13 = 1.0e8
+        else:
+            dlt = np.atleast_1d(dlt)
+            fr13 = np.nan_to_num(dmag2fratio(dlt[filt_idx]), nan=0.0)
+
+        w1 = 1.0
+        w2 = 1.0 / np.maximum(fr12, 1e-30)
+        w3 = 1.0 / np.maximum(fr13, 1e-30)
+        return w1, w2, w3
+
+    def _lens_fluxes(self, filt_idx=0):
+        """Absolute lens fluxes assuming all non-source light is lenses.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Filter index.
+
+        Returns
+        -------
+        fL1, fL2, fL3 : float
+            Flux of each lens.
+        """
+        flux_src = mag2flux(self.mag_src[filt_idx])
+        flux_non = flux_src * (1.0 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
+        flux_non = np.maximum(np.nan_to_num(flux_non, nan=0.0), 0.0)
+        w1, w2, w3 = self._lens_flux_weights(filt_idx=filt_idx)
+        tot = w1 + w2 + w3
+        return (flux_non * w1 / tot, flux_non * w2 / tot,
+                flux_non * w3 / tot)
+
+    def get_resolved_lens_photometry(self, filt_idx=0):
+        """Magnitudes of the three lenses.
+
+        Parameters
+        ----------
+        filt_idx : int, optional
+            Filter index.
+
+        Returns
+        -------
+        mag : ndarray, shape (3,)
+            Primary, secondary, and tertiary lens magnitudes.
+        """
+        fL1, fL2, fL3 = self._lens_fluxes(filt_idx=filt_idx)
+        return np.stack((flux2mag(fL1), flux2mag(fL2), flux2mag(fL3)))
+
+    def get_lens_astrometry(self, t_obs, filt_idx=0):
+        """Flux-weighted centroid of the three lenses.
+
+        Light is split with ``dmag_Lp_Ls`` and ``dmag_Lp_Lt``.
+        Default ``dmag_Lp_Lt = -20`` keeps the tertiary dark.
 
         Parameters
         ----------
@@ -15975,10 +16219,8 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         _xL = self.get_resolved_lens_astrometry(
             t_obs, filt_idx=filt_idx)
         xL1, xL2, xL3 = _xL[:, 0], _xL[:, 1], _xL[:, 2]
-        fratio_1_2 = dmag2fratio(self.dmag_Lp_Ls[filt_idx])
-        fL1 = 1.0
-        fL2 = fL1 / fratio_1_2
-        xL_centroid = (xL1 * fL1 + xL2 * fL2) / (fL1 + fL2)
+        w1, w2, w3 = self._lens_flux_weights(filt_idx=filt_idx)
+        xL_centroid = (xL1 * w1 + xL2 * w2 + xL3 * w3) / (w1 + w2 + w3)
 
         return xL_centroid
 
@@ -16220,6 +16462,81 @@ class PSTL_PhotAstrom(PSTL, PSPL_PhotAstrom):
         return ani
 
 
+
+class PSTL_Phot(PSTL, PSBL_Phot):
+    """
+    Data class: PSTL photometry only.
+
+    Units are Einstein radii. The three lenses are static. This is
+    abstract and should not be instantiated; use a composed leaf.
+    """
+    photometryFlag = True
+    astrometryFlag = False
+
+    def get_resolved_lens_astrometry(self, t, filt_idx=0):
+        """Foreground lenses in Einstein radii (photometry only).
+
+        Parameters
+        ----------
+        t : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Filter index (unused; lenses are static).
+
+        Returns
+        -------
+        xL : ndarray, shape = [N_times, N_lenses=3, 2]
+            Primary, secondary, and tertiary positions in Einstein radii.
+        """
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+
+        # Static phot-only lenses sit at xL*_over_theta.
+        xL1 = np.tile(self.xL1_over_theta, (len(t), 1))
+        xL2 = np.tile(self.xL2_over_theta, (len(t), 1))
+        xL3 = np.tile(self.xL3_over_theta, (len(t), 1))
+
+        return np.stack((xL1, xL2, xL3), axis=1)
+
+    def get_complex_pos(self, t, filt_idx=0):
+        """Source and three lens positions as complex Einstein radii.
+
+        Parameters
+        ----------
+        t : array_like
+            Array of times to model.
+        filt_idx : int, optional
+            Index of the photometric filter or data set.
+
+        Returns
+        -------
+        w, z1, z2, z3 : ndarray, complex
+            Source and lens positions (east + i * north), Einstein radii.
+        """
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+
+        # Source trajectory in Einstein radii (same as PSBL_Phot).
+        tau = ((t - self.t0) / self.tE).reshape(len(t), 1)
+        u0 = self.u0.reshape(1, len(self.u0))
+        thetaE_hat = self.thetaE_hat.reshape(1, len(self.thetaE_hat))
+        u = u0 + tau * thetaE_hat
+
+        if self.parallaxFlag:
+            parallax_vec = parallax.parallax_in_direction(
+                self.raL, self.decL, t,
+                obsLocation=self.obsLocation[filt_idx])
+            u -= self.piE_amp * parallax_vec
+
+        w = u[:, 0] + u[:, 1] * 1j
+        z1 = np.repeat(self.xL1_over_theta[0]
+                       + self.xL1_over_theta[1] * 1j, w.shape[0])
+        z2 = np.repeat(self.xL2_over_theta[0]
+                       + self.xL2_over_theta[1] * 1j, w.shape[0])
+        z3 = np.repeat(self.xL3_over_theta[0]
+                       + self.xL3_over_theta[1] * 1j, w.shape[0])
+
+        return w, z1, z2, z3
+
+
 # --------------------------------------------------
 #
 # Parallax Class Family - PSTL
@@ -16343,10 +16660,11 @@ class PSTL_PhotAstrom_EllOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         'i_12', 'e_12', 'tp_12', 'a_12',
         'i_23', 'e_23', 'tp_23', 'a_23',
         'muS_E', 'muS_N', 'dL', 'dS',
-        'b_sff', 'mag_src', 'dmag_Lp_Ls',
+        'b_sff', 'mag_src', 'dmag_Lp_Ls', 'dmag_Lp_Lt',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
-    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src',
+                        'dmag_Lp_Ls', 'dmag_Lp_Lt']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both', 'both']
     additional_param_names = []
     paramAstromFlag = True
     paramPhotFlag = True
@@ -16356,7 +16674,7 @@ class PSTL_PhotAstrom_EllOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
                  beta_com, muL_E, muL_N,
                  omega_pri, omega_sec, big_omega_sec, big_omega_ter, i_12, e_12, tp_12, a_12, i_23, e_23, tp_23, a_23,
                  muS_E, muS_N, dL, dS,
-                 b_sff, mag_src, dmag_Lp_Ls,
+                 b_sff, mag_src, dmag_Lp_Ls, dmag_Lp_Lt=-20.0,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N,
@@ -16419,6 +16737,7 @@ class PSTL_PhotAstrom_EllOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
         m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
         self.m3 = m3.to(units.arcsec ** 2).value
+        self.dmag_Lp_Lt = np.atleast_1d(dmag_Lp_Lt)
         return
 
 
@@ -16502,10 +16821,11 @@ class PSTL_PhotAstrom_EllOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
         'big_omega_sec', 'big_omega_ter',
         'i_12', 'e_12', 'tp_12', 'a_12',
         'i_23', 'e_23', 'tp_23', 'a_23',
-        'b_sff', 'mag_src', 'dmag_Lp_Ls',
+        'b_sff', 'mag_src', 'dmag_Lp_Ls', 'dmag_Lp_Lt',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
-    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src',
+                        'dmag_Lp_Ls', 'dmag_Lp_Lt']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -16519,7 +16839,7 @@ class PSTL_PhotAstrom_EllOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q_12, q_13 ,omega_pri, omega_sec, big_omega_sec, big_omega_ter, i_12, 
                  e_12, tp_12, a_12, i_23, e_23, tp_23, a_23,
-                 b_sff, mag_src, dmag_Lp_Ls,
+                 b_sff, mag_src, dmag_Lp_Ls, dmag_Lp_Lt=-20.0,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
                  
 
@@ -16590,6 +16910,7 @@ class PSTL_PhotAstrom_EllOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
         m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
         m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
         self.m3 = m3.to(units.arcsec ** 2).value
+        self.dmag_Lp_Lt = np.atleast_1d(dmag_Lp_Lt)
         return
 
 class PSTL_PhotAstromParam1(PSBL_PhotAstromParam1):
@@ -16653,21 +16974,106 @@ class PSTL_PhotAstromParam1(PSBL_PhotAstromParam1):
         'mLp', 'mLs', 'mLt', 't0', 'xS0_E', 'xS0_N',
         'beta', 'muL_E', 'muL_N', 'sep12', 'sep13',
         'muS_E', 'muS_N', 'dL', 'dS', 'alpha12', 'alpha13',
-        'b_sff', 'mag_src', 'dmag_Lp_Ls',
+        'b_sff', 'mag_src', 'dmag_Lp_Ls', 'dmag_Lp_Lt',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
-    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src',
+                        'dmag_Lp_Ls', 'dmag_Lp_Lt']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both', 'both']
     additional_param_names = []
 
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = False
 
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Evaluate static PSTL PhotAstrom photometry for this parameterization.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector.
+        t, mag_obs, mag_err : array_like
+            Times (MJD) and observed photometry.
+        b_sff, mag_src : float
+            Source flux fraction and unlensed source magnitude.
+        parallax_vectors : array_like, optional
+            Shape ``(N_times, 2)``.
+        gp_params, fixed_jitter
+            Unused; kept to match the PSBL PhotAstrom caller.
+
+        Returns
+        -------
+        lnL : jnp.ndarray
+            Gaussian photometric log-likelihood.
+        """
+        from bagle.jax.geometry import derive_pstl_photastrom_param1
+        from bagle.jax.pstl import pstl_log_likely_photometry_tracks
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_pstl_photastrom_param1(
+            p['mLp'], p['mLs'], p['mLt'], p['t0'], p['xS0_E'], p['xS0_N'],
+            p['beta'], p['muL_E'], p['muL_N'], p['muS_E'], p['muS_N'],
+            p['dL'], p['dS'], p['sep12'], p['sep13'], p['alpha12'],
+            p['alpha13'])
+        (_u0, _th, _tE, _piE_E, _piE_N, xS0, xL0, muS, muL, thetaE_amp,
+         piS, piL, m1, m2, m3, xL1, xL2, xL3, _mLp, _mLs, _mLt) = geom
+        lnL = pstl_log_likely_photometry_tracks(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE_amp, xL1, xL2, xL3,
+            m1, m2, m3, mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL)
+        return lnL
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0, mag_src=18.0,
+                                  dmag_Lp_Ls=20.0, dmag_Lp_Lt=-20.0,
+                                  parallax_vectors=None):
+        """Evaluate static PSTL PhotAstrom astrometry for this parameterization.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector.
+        t, x_obs, y_obs, x_err, y_err : array_like
+            Times (MJD) and observed East/North positions (arcsec).
+        b_sff, mag_src, dmag_Lp_Ls, dmag_Lp_Lt : float
+            Source flux fraction, unlensed source magnitude, and
+            primary-minus-companion lens magnitude differences.
+        parallax_vectors : array_like, optional
+            Shape ``(N_times, 2)``.
+
+        Returns
+        -------
+        lnL : jnp.ndarray
+            Gaussian astrometric log-likelihood.
+        """
+        from bagle.jax.geometry import derive_pstl_photastrom_param1
+        from bagle.jax.pstl import pstl_log_likely_astrometry
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_pstl_photastrom_param1(
+            p['mLp'], p['mLs'], p['mLt'], p['t0'], p['xS0_E'], p['xS0_N'],
+            p['beta'], p['muL_E'], p['muL_N'], p['muS_E'], p['muS_N'],
+            p['dL'], p['dS'], p['sep12'], p['sep13'], p['alpha12'],
+            p['alpha13'])
+        (_u0, _th, _tE, _piE_E, _piE_N, xS0, xL0, muS, muL, thetaE_amp,
+         piS, piL, m1, m2, m3, xL1, xL2, xL3, _mLp, _mLs, _mLt) = geom
+        lnL = pstl_log_likely_astrometry(
+            t, p['t0'], xS0, xL0, muS, muL, thetaE_amp, xL1, xL2, xL3,
+            m1, m2, m3, mag_src, b_sff, x_obs, y_obs, x_err, y_err,
+            dmag_Lp_Ls=dmag_Lp_Ls, dmag_Lp_Lt=dmag_Lp_Lt,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL)
+        return lnL
+
     def __init__(self, mLp, mLs, mLt,
                 t0, xS0_E, xS0_N,
                 beta, muL_E, muL_N, sep12, sep13,
                 muS_E, muS_N, dL, dS,
                 alpha12, alpha13, b_sff, mag_src, dmag_Lp_Ls,
+                dmag_Lp_Lt=-20.0,
                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(mLp, mLs, t0, xS0_E, xS0_N,
@@ -16693,6 +17099,7 @@ class PSTL_PhotAstromParam1(PSBL_PhotAstromParam1):
         self.q_13 = self.mLt / self.mLp
         m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
         self.m3 = m3.to(units.arcsec ** 2).value
+        self.dmag_Lp_Lt = np.atleast_1d(dmag_Lp_Lt)
 
         return
 
@@ -16774,10 +17181,11 @@ class PSTL_PhotAstromParam2(PSBL_PhotAstromParam2):
         't0', 'u0_amp', 'tE', 'thetaE', 'piS',
         'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
         'q_12', 'q_13', 'sep12', 'sep13', 'alpha12', 'alpha13',
-        'b_sff', 'mag_src', 'dmag_Lp_Ls',
+        'b_sff', 'mag_src', 'dmag_Lp_Ls', 'dmag_Lp_Lt',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
-    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src',
+                        'dmag_Lp_Ls', 'dmag_Lp_Lt']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -16789,7 +17197,7 @@ class PSTL_PhotAstromParam2(PSBL_PhotAstromParam2):
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q_12, q_13, sep12, sep13, alpha12, alpha13,
-                 b_sff, mag_src, dmag_Lp_Ls,
+                 b_sff, mag_src, dmag_Lp_Ls, dmag_Lp_Lt=-20.0,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(t0, u0_amp, tE, thetaE, piS,
@@ -16821,6 +17229,7 @@ class PSTL_PhotAstromParam2(PSBL_PhotAstromParam2):
         inv_dist_diff = (1.0 / dL) - (1.0 / dS)
         m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
         self.m3 = m3.to(units.arcsec ** 2).value
+        self.dmag_Lp_Lt = np.atleast_1d(dmag_Lp_Lt)
         return
 
 class PSTL_PhotAstromParam3(PSBL_PhotAstromParam3):
@@ -16887,6 +17296,9 @@ class PSTL_PhotAstromParam3(PSBL_PhotAstromParam3):
         If the secondary lens 2 is dark, then it should be set to -20.
         Note, in astrometric filters, we assume all the excess flux (i.e. 1 - b_sff)
         comes from the lenses, not any neighbors.
+    dmag_Lp_Lt : numpy array or list, optional
+        Magnitude difference of lens primary - lens tertiary
+        (``mag_Lp - mag_Lt``). Default ``-20`` keeps the tertiary dark.
     raL: float, optional
         Right ascension of the lens in decimal degrees.
     decL: float, optional
@@ -16900,10 +17312,11 @@ class PSTL_PhotAstromParam3(PSBL_PhotAstromParam3):
         't0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
         'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
         'q_12', 'q_13', 'sep12', 'sep13', 'alpha12', 'alpha13',
-        'b_sff', 'mag_base', 'dmag_Lp_Ls',
+        'b_sff', 'mag_base', 'dmag_Lp_Ls', 'dmag_Lp_Lt',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
-    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base',
+                        'dmag_Lp_Ls', 'dmag_Lp_Lt']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -16916,7 +17329,7 @@ class PSTL_PhotAstromParam3(PSBL_PhotAstromParam3):
     def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q_12, q_13, sep12, sep13, alpha12, alpha13,
-                 b_sff, mag_base, dmag_Lp_Ls,
+                 b_sff, mag_base, dmag_Lp_Ls, dmag_Lp_Lt=-20.0,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
@@ -16948,6 +17361,139 @@ class PSTL_PhotAstromParam3(PSBL_PhotAstromParam3):
         inv_dist_diff = (1.0 / dL) - (1.0 / dS)
         m3 = units.rad ** 2 * (4 * const.G * self.mLt * units.Msun / const.c ** 2) * inv_dist_diff
         self.m3 = m3.to(units.arcsec ** 2).value
+        self.dmag_Lp_Lt = np.atleast_1d(dmag_Lp_Lt)
+        return
+
+
+
+class PSTL_PhotParam1(PSPL_Param):
+    """
+    Point-source triple lens, photometry only.
+
+    Static triple lens. Masses are fractions of the total Einstein radius.
+    Separations are in Einstein radii. Angles ``phi12`` and ``phi13`` are
+    relative to the muRel / piE direction, matching :class:`PSBL_PhotParam1`.
+
+    Attributes
+    ----------
+    t0 : float
+        Time of closest projected approach (MJD).
+    u0_amp : float
+        Source–lens impact parameter in Einstein radii.
+    tE : float
+        Einstein crossing time (days).
+    piE_E, piE_N : float
+        Microlensing parallax components in Einstein radii.
+    q_12 : float
+        Mass ratio M2 / M1.
+    q_13 : float
+        Mass ratio M3 / M1.
+    sep12, sep13 : float
+        Projected 1-2 and 1-3 separations in Einstein radii.
+    phi12, phi13 : float
+        Angles of the 1-2 and 1-3 axes relative to muRel (degrees).
+    b_sff : array or list
+        Source flux fraction, one entry per filter.
+    mag_src : array or list
+        Unlensed source magnitude, one entry per filter.
+    raL, decL : float, optional
+        Lens coordinates, required for parallax.
+    obsLocation : str or list, optional
+        Observer location per photometric data set.
+    root_tol : float
+        Polynomial root tolerance. Default = 1e-8.
+    """
+    fitter_param_names = [
+        't0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
+        'q_12', 'q_13', 'sep12', 'sep13', 'phi12', 'phi13',
+        'b_sff', 'mag_src',
+    ]
+    filt_param_names = ['b_sff', 'mag_src']
+    filt_param_usage = ['both', 'phot']
+
+    paramAstromFlag = False
+    paramPhotFlag = True
+    orbitFlag = False
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """Evaluate static PSTL photometry for this parameterization."""
+        from bagle.jax.pstl import (
+            derive_pstl_static_geometry, pstl_log_likely_photometry)
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        geom = derive_pstl_static_geometry(
+            p['u0_amp'], p['piE_E'], p['piE_N'], p['q_12'], p['q_13'],
+            p['sep12'], p['sep13'], p['phi12'], p['phi13'])
+        m1, m2, m3, u0, thetaE_hat, xL1, xL2, xL3, _ = geom
+        lnL = pstl_log_likely_photometry(
+            t, p['t0'], p['tE'], u0, thetaE_hat, xL1, xL2, xL3,
+            m1, m2, m3, mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors, piE_E=p['piE_E'],
+            piE_N=p['piE_N'])
+        return lnL
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N,
+                 q_12, q_13, sep12, sep13, phi12, phi13,
+                 b_sff, mag_src,
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        self.t0 = t0
+        self.u0_amp = u0_amp
+        self.tE = tE
+        self.piE = np.array([piE_E, piE_N])
+        self.q_12 = q_12
+        self.q_13 = q_13
+        self.sep12 = sep12
+        self.sep13 = sep13
+        self.phi12 = phi12
+        self.phi13 = phi13
+        self.b_sff = b_sff
+        self.mag_src = mag_src
+        self.raL = raL
+        self.decL = decL
+        self.obsLocation = obsLocation
+        self.root_tol = root_tol
+
+        # PSBL-style aliases for the 1-2 pair.
+        self.q = q_12
+        self.sep = sep12
+        self.phi = phi12
+
+        super().__init__()
+
+        self.piE_amp = np.linalg.norm(self.piE)
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        # Binary-axis angles relative to piE (same as PSBL_PhotParam1).
+        self.phi_piE_rad = np.arctan2(self.piE[0], self.piE[1])
+        self.phi12_rad = self.phi12 * np.pi / 180.0
+        self.phi13_rad = self.phi13 * np.pi / 180.0
+        self.phi12_rho1_rad = self.phi_piE_rad + self.phi12_rad
+        self.phi13_rho1_rad = self.phi_piE_rad + self.phi13_rad
+
+        # Pair 1-2 is centered on the origin; lens 3 is offset from lens 1.
+        self.xL1_over_theta = np.array(
+            [0.5 * self.sep12 * np.sin(self.phi12_rho1_rad),
+             0.5 * self.sep12 * np.cos(self.phi12_rho1_rad)])
+        self.xL2_over_theta = -self.xL1_over_theta
+        self.xL3_over_theta = (
+            self.xL1_over_theta
+            + np.array([self.sep13 * np.sin(self.phi13_rho1_rad),
+                        self.sep13 * np.cos(self.phi13_rho1_rad)]))
+
+        # Mass fractions of the total Einstein radius.
+        self.m1 = 1.0 / (1.0 + self.q_12 + self.q_13)
+        self.m2 = self.q_12 * self.m1
+        self.m3 = self.q_13 * self.m1
+
+        # Dark lenses for phot-only plots (unblended).
+        self.dmag_Lp_Ls = np.zeros(len(np.atleast_1d(self.mag_src)))
+
         return
 
 
@@ -23222,6 +23768,29 @@ class BSBL_Phot(BSBL, PSBL_Phot):
     photometryFlag = True
     astrometryFlag = False
 
+    def get_resolved_lens_astrometry(self, t, filt_idx=0):
+        """Foreground lenses in Einstein radii (photometry only).
+
+        Parameters
+        ----------
+        t : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Filter index (unused; lenses are static).
+
+        Returns
+        -------
+        xL : ndarray, shape = [N_times, N_lenses=2, 2]
+            Primary and secondary lens positions in Einstein radii.
+        """
+        t = np.atleast_1d(np.asarray(t, dtype=float))
+
+        # Static phot-only lenses sit at xL*_over_theta.
+        xL1 = np.tile(self.xL1_over_theta, (len(t), 1))
+        xL2 = np.tile(self.xL2_over_theta, (len(t), 1))
+
+        return np.stack((xL1, xL2), axis=1)
+
     def get_resolved_source_astrometry_unlensed(self, t, filt_idx=0):
         """Get the astrometry of the source if the lens didn't exist.
         Note, this is a photometry only model, so units are in Einstein radii.
@@ -23472,7 +24041,6 @@ class BSBL_noParallax(PSPL_noParallax):
 #
 # --------------------------------------------------
 
-# Phot class not done yet.
 class BSBL_PhotParam1(PSPL_Param):
     """BSBL model for photometry only
 
@@ -23551,6 +24119,7 @@ class BSBL_PhotParam1(PSPL_Param):
         'tE',
         'piE_E',
         'piE_N',
+        'q',
         'sep_SL',
         'sep_S',
         'phi_S',
@@ -23569,30 +24138,30 @@ class BSBL_PhotParam1(PSPL_Param):
     orbitFlag = False
 
 
-    def __init__(self, t0, u0_amp, tE, piE_E, piE_N,
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q,
                  sep_SL, sep_S, phi_S, sep_L, phi_L,
                  mag_src_pri, mag_src_sec,
                  b_sff, dmag_Lp_Ls,
-                 raL=None, decL=None, obsLocation='earth'):
+                 raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0 = t0  # time of closest approach for system=primary pos
         self.u0_amp = u0_amp
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
+        self.q = q
+        self.sep_SL = sep_SL
+        self.root_tol = root_tol
         self.b_sff = b_sff
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
 
-        # Separation between source and lens
-        #self.sep_SL = u0_amp  # mas # TODO: Dex needs to fix this?
-
-        # Binary source parameters.
-        self.sep_S = sep_S  # mas
+        # Binary source parameters (Einstein radii).
+        self.sep_S = sep_S
         self.phi_S = phi_S
         self.mag_src_pri = mag_src_pri
         self.mag_src_sec = mag_src_sec
 
-        # Binary lens parameters.
+        # Binary lens parameters (Einstein radii).
         self.sep_L = sep_L
         self.phi_L = phi_L
         self.dmag_Lp_Ls = dmag_Lp_Ls
@@ -23605,10 +24174,11 @@ class BSBL_PhotParam1(PSPL_Param):
         self.piE_amp = np.linalg.norm(self.piE)
         self.piE_E, self.piE_N = self.piE
 
-        # Baseline magnitude
-        self.mag_base = self.mag_src_pri \
-                        + self.mag_src_sec \
-                        + 2.5 * np.log10(self.b_sff)
+        # Baseline magnitude from combined source flux.
+        flux_pri = mag2flux(self.mag_src_pri)
+        flux_sec = mag2flux(self.mag_src_sec)
+        self.mag_base = (flux2mag(flux_pri + flux_sec)
+                        + 2.5 * np.log10(self.b_sff))
 
         # Calculate the directional vectors.
         self.thetaE_hat = self.piE / self.piE_amp
@@ -23616,40 +24186,36 @@ class BSBL_PhotParam1(PSPL_Param):
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
 
-        #####
-        # Derived binary source and binary lens parameters.
-        #####
-        # Calculate the angle between muRel and the binary axis
-        # in radians.
+        # Angles of the source and lens binaries relative to muRel.
         self.phi_S_rad = self.phi_S * np.pi / 180.0
         self.phi_L_rad = self.phi_L * np.pi / 180.0
-
-        # Calculate the position angle of the piE vector, East of North (CHECK).
         self.phi_piE_rad = np.arctan2(self.piE[0], self.piE[1])
+        self.phi_S_rho1_rad = self.phi_piE_rad + self.phi_S_rad
+        self.phi_L_rho1_rad = self.phi_piE_rad + self.phi_L_rad
 
-        # Note that phi_rho1 is the same alpha in our astrometry model;
-        # however, here we don't have North as a reference.
-        self.phi_S_rho1_rad = self.phi_piE_rad - self.phi_S_rad
-        self.phi_L_rho1_rad = self.phi_piE_rad - self.phi_L_rad
+        # Static lens positions about the geometric center (Einstein radii).
+        self.xL1_over_theta = np.array(
+            [0.5 * self.sep_L * np.sin(self.phi_L_rho1_rad),
+             0.5 * self.sep_L * np.cos(self.phi_L_rho1_rad)])
+        self.xL2_over_theta = -self.xL1_over_theta
 
-        # Position of the two lenses.
-        self.xL1_over_theta = np.array([0.5 * self.sep_L * np.sin(self.phi_L_rho1_rad),
-                                        0.5 * self.sep_L * np.cos(self.phi_L_rho1_rad)])
-        self.xL2_over_theta = np.array([-0.5 * self.sep_L * np.sin(self.phi_L_rho1_rad),
-                                        -0.5 * self.sep_L * np.cos(self.phi_L_rho1_rad)])
+        # Fractional Einstein radii for the phot-only lens equation.
+        self.m1 = 1.0 / (1.0 + self.q)
+        self.m2 = self.q / (1.0 + self.q)
 
-        # ON NO>>> TWO DIFFERENT CONVENTIONS.
-        # Primary -- at origin
+        # Aliases used by BSBL_Phot.get_t0_sec and get_u.
+        self.sep = self.sep_S
+        self.phi_rho1_rad = self.phi_S_rho1_rad
+
+        # Primary source at the system origin; secondary offset in the u0
+        # direction (same convention as BSPL_PhotParam1).
         self.t0_pri = self.t0
         self.u0_amp_pri = self.u0_amp
         self.u0_pri = self.u0
-
-        # Secondary
-
-        # Closest approach time
+        sep_vec = self.sep_S * np.array(
+            (np.sin(self.phi_S_rho1_rad), np.cos(self.phi_S_rho1_rad)))
         self.u0_amp_sec = self.u0_amp_pri + np.dot(sep_vec, self.u0_hat)
         self.u0_sec = self.u0_amp_sec * self.u0_hat
-
 
         return
 
@@ -36820,7 +37386,7 @@ class BFSBL_PhotParam1(BSBL_PhotParam1):
     filt_param_names = BSBL_PhotParam1.filt_param_names
     filt_param_usage = BSBL_PhotParam1.filt_param_usage
 
-    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L,
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep_SL, sep_S, phi_S, sep_L, phi_L,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec,
                  raL=None, decL=None, obsLocation='earth'):
         """
@@ -36828,7 +37394,7 @@ class BFSBL_PhotParam1(BSBL_PhotParam1):
 
         Parameters are described in the class docstring.
         """
-        super().__init__(t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L,
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, q, sep_SL, sep_S, phi_S, sep_L,
                          phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, raL=raL,
                          decL=decL, obsLocation=obsLocation)
 
@@ -36868,7 +37434,7 @@ class BFSBL_Limb_PhotParam1(BFSBL_PhotParam1):
     filt_param_names = BFSBL_PhotParam1.filt_param_names + ['gamma_pri', 'gamma_sec']
     filt_param_usage = BFSBL_PhotParam1.filt_param_usage + ['both', 'both']
 
-    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L, phi_L,
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N, q, sep_SL, sep_S, phi_S, sep_L, phi_L,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls, radiusS_pri, radiusS_sec,
                  gamma_pri, gamma_sec, raL=None, decL=None, obsLocation='earth'):
         """
@@ -36880,7 +37446,7 @@ class BFSBL_Limb_PhotParam1(BFSBL_PhotParam1):
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
 
-        super().__init__(t0, u0_amp, tE, piE_E, piE_N, sep_SL, sep_S, phi_S, sep_L,
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N, q, sep_SL, sep_S, phi_S, sep_L,
                          phi_L, mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                          radiusS_pri=radiusS_pri, radiusS_sec=radiusS_sec, raL=raL,
                          decL=decL, obsLocation=obsLocation)
@@ -37843,6 +38409,44 @@ class BFSPL_Limb_PhotAstrom(BFSPL_Limb, BFSPL_PhotAstrom):
     astrometryFlag = True
 
 
+
+class BFSPL_Phot(BFSPL, BSPL_Phot):
+    """Data class: BFSPL photometry only."""
+    photometryFlag = True
+    astrometryFlag = False
+
+    def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
+        """Plus and minus image positions of each source (Einstein radii).
+
+        Parameters
+        ----------
+        t : array_like, shape = [N_times]
+            Array of times to model.
+        image_arr : array_like, optional
+            Complex images from :meth:`get_all_arrays`,
+            shape = [N_times, N_sources=2, [+, -]].
+        amp_arr : array_like, optional
+            Unused; accepted for API symmetry.
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+
+        Returns
+        -------
+        model_pos : ndarray, shape = [N_times, N_sources=2, [+, -], [E, N]]
+            Image positions in Einstein radii relative to the lens.
+        """
+        if image_arr is None:
+            image_arr, amp_arr = self.get_all_arrays(t, filt_idx=filt_idx)
+
+        return _complex_to_vec(image_arr)
+
+
+class BFSPL_Limb_Phot(BFSPL_Limb, BFSPL_Phot):
+    """Data class: limb-darkened BFSPL photometry only."""
+    photometryFlag = True
+    astrometryFlag = False
+
+
 class BFSPL_Limb_noParallax(BFSPL_noParallax):
     parallaxFlag = False
     ref_frame_parallax_flag = False
@@ -37893,6 +38497,91 @@ class BFSPL_Limb_PhotAstromParam1(BFSPL_PhotAstromParam1):
                          n_outline_pri=n_outline_pri,
                          n_outline_sec=n_outline_sec, raL=raL, decL=decL,
                          obsLocation=obsLocation)
+
+        return None
+
+
+
+class BFSPL_PhotParam1(BSPL_PhotParam1):
+    """
+    Binary finite-source point-lens model for photometry only.
+
+    Same as :class:`BSPL_PhotParam1` plus source radii in Einstein radii.
+
+    Parameters
+    ----------
+    t0, u0_amp, tE, piE_E, piE_N, sep, phi, mag_src_pri, mag_src_sec, b_sff
+        Same as :class:`BSPL_PhotParam1`.
+    radiusS_pri : float
+        Angular radius of the primary source in Einstein radii (``rho``).
+    radiusS_sec : float
+        Angular radius of the secondary source in Einstein radii (``rho``).
+    n_outline_pri, n_outline_sec : int, optional
+        Outline samples per source. Default 50.
+    raL, decL, obsLocation
+        Same as :class:`BSPL_PhotParam1`.
+    """
+    fitter_param_names = (BSPL_PhotParam1.fitter_param_names
+                          + ['radiusS_pri', 'radiusS_sec'])
+    filt_param_names = BSPL_PhotParam1.filt_param_names
+    filt_param_usage = BSPL_PhotParam1.filt_param_usage
+
+    paramAstromFlag = False
+    paramPhotFlag = True
+    orbitFlag = False
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N,
+                 sep, phi, mag_src_pri, mag_src_sec, b_sff,
+                 radiusS_pri, radiusS_sec,
+                 n_outline_pri=50, n_outline_sec=50,
+                 raL=None, decL=None, obsLocation='earth'):
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N,
+                         sep, phi, mag_src_pri, mag_src_sec, b_sff,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
+        # Phot-only radii are already in Einstein radii.
+        self.radiusS_pri = radiusS_pri
+        self.radiusS_sec = radiusS_sec
+        self.radiusS = radiusS_pri
+        self.n_outline_pri = n_outline_pri
+        self.n_outline_sec = n_outline_sec
+        self.n_outline = n_outline_pri
+
+        return None
+
+
+class BFSPL_Limb_PhotParam1(BFSPL_PhotParam1):
+    """
+    Limb-darkened BFSPL photometry only.
+
+    Same as :class:`BFSPL_PhotParam1` plus per-filter ``gamma_pri`` /
+    ``gamma_sec``.
+
+    Parameters
+    ----------
+    gamma_pri, gamma_sec : array_like
+        Linear limb-darkening coefficient per filter, one per source.
+    """
+    fitter_param_names = (BFSPL_PhotParam1.fitter_param_names
+                          + ['gamma_pri', 'gamma_sec'])
+    filt_param_names = (BFSPL_PhotParam1.filt_param_names
+                        + ['gamma_pri', 'gamma_sec'])
+    filt_param_usage = (BFSPL_PhotParam1.filt_param_usage
+                        + ['both', 'both'])
+
+    def __init__(self, t0, u0_amp, tE, piE_E, piE_N,
+                 sep, phi, mag_src_pri, mag_src_sec, b_sff,
+                 radiusS_pri, radiusS_sec, gamma_pri, gamma_sec,
+                 n_outline_pri=50, n_outline_sec=50,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.gamma_pri = gamma_pri
+        self.gamma_sec = gamma_sec
+        super().__init__(t0, u0_amp, tE, piE_E, piE_N,
+                         sep, phi, mag_src_pri, mag_src_sec, b_sff,
+                         radiusS_pri, radiusS_sec,
+                         n_outline_pri=n_outline_pri,
+                         n_outline_sec=n_outline_sec,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         return None
 
@@ -40010,6 +40699,30 @@ class FSBL_Phot_Par_CircOrbs_Param1(ModelClassABC,
 # =====
 # BSPL Model Classes
 # =====
+
+@inheritdocstring
+class PSTL_Phot_noPar_Param1(ModelClassABC,
+                                   PSTL_Phot,
+                                   PSTL_noParallax,
+                                   PSTL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class PSTL_Phot_Par_Param1(ModelClassABC,
+                                   PSTL_Phot,
+                                   PSTL_Parallax,
+                                   PSTL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
 # BSPL no parallax
 @inheritdocstring
 class BSPL_Phot_noPar_Param1(ModelClassABC,
@@ -41072,6 +41785,30 @@ class BSBL_PhotAstrom_Par_Param2(ModelClassABC,
         checkconflicts(self)
  
 
+
+@inheritdocstring
+class BSBL_Phot_noPar_Param1(ModelClassABC,
+                                   BSBL_Phot,
+                                   BSBL_noParallax,
+                                   BSBL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BSBL_Phot_Par_Param1(ModelClassABC,
+                                   BSBL_Phot,
+                                   BSBL_Parallax,
+                                   BSBL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
 # =====
 # FSPL Model
 # =====
@@ -41943,6 +42680,54 @@ class BFSBL_Limb_PhotAstrom_Par_Param2(ModelClassABC, BFSBL_Limb_PhotAstrom, BFS
 
         return None
 
+@inheritdocstring
+class BFSBL_Phot_noPar_Param1(ModelClassABC,
+                                   BFSBL_Phot,
+                                   BFSBL_noParallax,
+                                   BFSBL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Phot_Par_Param1(ModelClassABC,
+                                   BFSBL_Phot,
+                                   BFSBL_Parallax,
+                                   BFSBL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_Phot_noPar_Param1(ModelClassABC,
+                                   BFSBL_Limb_Phot,
+                                   BFSBL_Limb_noParallax,
+                                   BFSBL_Limb_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSBL_Limb_Phot_Par_Param1(ModelClassABC,
+                                   BFSBL_Limb_Phot,
+                                   BFSBL_Limb_Parallax,
+                                   BFSBL_Limb_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
 
 class BFSPL_PhotAstrom_noPar_Param1(ModelClassABC,
                                    BFSPL_PhotAstrom,
@@ -41972,6 +42757,66 @@ class BFSPL_Limb_PhotAstrom_Par_Param1(ModelClassABC,
                                        BFSPL_Limb_PhotAstrom,
                                        BFSPL_Limb_Parallax,
                                        BFSPL_Limb_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSPL_PhotAstrom_Par_Param1(ModelClassABC,
+                                   BFSPL_PhotAstrom,
+                                   BFSPL_Parallax,
+                                   BFSPL_PhotAstromParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSPL_Phot_noPar_Param1(ModelClassABC,
+                                   BFSPL_Phot,
+                                   BFSPL_noParallax,
+                                   BFSPL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSPL_Phot_Par_Param1(ModelClassABC,
+                                   BFSPL_Phot,
+                                   BFSPL_Parallax,
+                                   BFSPL_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSPL_Limb_Phot_noPar_Param1(ModelClassABC,
+                                   BFSPL_Limb_Phot,
+                                   BFSPL_Limb_noParallax,
+                                   BFSPL_Limb_PhotParam1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+@inheritdocstring
+class BFSPL_Limb_Phot_Par_Param1(ModelClassABC,
+                                   BFSPL_Limb_Phot,
+                                   BFSPL_Limb_Parallax,
+                                   BFSPL_Limb_PhotParam1):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)

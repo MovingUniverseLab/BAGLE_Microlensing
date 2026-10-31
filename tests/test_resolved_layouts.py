@@ -36,13 +36,17 @@ FAMILIES = {
     'PSBL_PhotAstrom_noPar_Param1': (1, 5, 2),
     'BSPL_Phot_noPar_Param1': (2, 2, None),
     'BSPL_PhotAstrom_noPar_Param1': (2, 2, None),
+    'BSBL_Phot_noPar_Param1': (2, 5, 2),
     'BSBL_PhotAstrom_noPar_Param1': (2, 5, 2),
     'FSPL_Phot_noPar_Param1': (1, 2, None),
     'FSPL_PhotAstrom_noPar_Param1': (1, 2, None),
     'FSBL_Phot_noPar_Param1': (1, 1, 2),
     'FSBL_PhotAstrom_noPar_Param1': (1, 1, 2),
+    'BFSPL_Phot_noPar_Param1': (2, 2, None),
     'BFSPL_PhotAstrom_noPar_Param1': (2, 2, None),
+    'BFSBL_Phot_noPar_Param1': (2, 1, 2),
     'BFSBL_PhotAstrom_noPar_Param1': (2, 1, 2),
+    'PSTL_Phot_noPar_Param1': (1, 10, 3),
 }
 
 # Family prefixes not converted yet (xfail until their layout lands).

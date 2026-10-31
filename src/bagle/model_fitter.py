@@ -70,6 +70,7 @@ muS_scale_factor = 100.0
 # Global variable to define all array-style parameters (i.e. multiple filters).
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
                      'gamma', 'gamma_pri', 'gamma_sec', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
+                     'dmag_Lp_Lt',
                      'xS0_E', 'xS0_N', 'pi_ref_frame',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
                      'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
@@ -212,6 +213,7 @@ class MicrolensSolver(Solver):
         'mag_src_sec': ('make_mag_src_gen', None, None),
         'mag_base': ('make_mag_base_gen', None, None),
         'dmag_Lp_Ls': ('make_gen', -20, 20),
+        'dmag_Lp_Lt': ('make_gen', -20, 20),
         'tE': ('make_gen', 1, 400),
         'log_tE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
         'piE_E': ('make_gen', -1, 1),
@@ -969,7 +971,7 @@ class MicrolensSolver(Solver):
         # columns means there is nothing to check.
         phot_bases = (
             'b_sff', 'mag_src', 'mag_base', 'mag_src_pri',
-            'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls', 'gamma',
+            'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls', 'dmag_Lp_Lt', 'gamma',
             'gamma_pri', 'gamma_sec',
         )
         largest = 0
@@ -5146,7 +5148,7 @@ def generate_params_dict(params, fitter_param_names):
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
     multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
-                  'gamma', 'gamma_pri', 'gamma_sec']
+                  'dmag_Lp_Lt', 'gamma', 'gamma_pri', 'gamma_sec']
     multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0',
                   'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
     

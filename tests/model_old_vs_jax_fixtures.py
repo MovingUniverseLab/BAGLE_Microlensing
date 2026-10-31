@@ -65,6 +65,7 @@ CANONICAL: dict[str, Any] = {
     "r_s": 0.5,
     "a_s": 1.0,
     "dmag_Lp_Ls": [0.0],
+    "dmag_Lp_Lt": [-20.0],
     "mLp": 10.0,
     "mLs": 3.0,
     "sepL": 3.0,
@@ -121,6 +122,20 @@ CANONICAL: dict[str, Any] = {
     "n_outline": 20,
     "n_outline_pri": 20,
     "n_outline_sec": 20,
+    "q_12": 0.5,
+    "q_13": 0.2,
+    "sep12": 0.8,
+    "sep13": 0.6,
+    "phi12": 40.0,
+    "phi13": 80.0,
+    "alpha12": 90.0,
+    "alpha13": 45.0,
+    "sep_SL": 0.4,
+    "sep_S": 0.25,
+    "phi_S": 30.0,
+    "sep_L": 0.8,
+    "phi_L": 50.0,
+    "mLt": 2.0,
     "gp_log_sigma": [-1.0],
     "gp_log_rho": [0.5],
     "gp_rho": [math.exp(0.5)],
@@ -1858,8 +1873,18 @@ def bfspl_photastrom_param1_pairs() -> list[tuple[str, str]]:
 
 
 def bsbl_phot_param1_pairs() -> list[tuple[str, str]]:
-    """BSBL phot-only Param1 — no ``BSBL_Phot_*`` ModelClassABC in model_jax."""
-    return []
+    """BSBL phot-only Param1 (noPar + Par)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("BSBL_Phot_noPar_Param1", "BSBL_Phot_Par_Param1")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOT_METHODS
+        if (c, m) in applicable
+    )
 
 
 def bspl_phot_param2_pairs() -> list[tuple[str, str]]:

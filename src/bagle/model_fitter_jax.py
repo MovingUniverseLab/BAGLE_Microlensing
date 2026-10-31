@@ -70,6 +70,7 @@ muS_scale_factor = 100.0
 # Global variable to define all array-style parameters (i.e. multiple filters).
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
                      'gamma', 'gamma_pri', 'gamma_sec', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
+                     'dmag_Lp_Lt',
                      'xS0_E', 'xS0_N', 'pi_ref_frame',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
                      'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
@@ -420,6 +421,7 @@ def build_explicit_jax_loglik_fn(fitter):
         idx_b = _jax_param_index(names, 'b_sff', phot_idx)
         idx_mag_src = None
         idx_dmag = None
+        idx_dmag_lt = None
         phot_names = tuple(getattr(model_class, 'phot_param_names', ()))
         if 'mag_src' in phot_names:
             idx_mag_src = _jax_param_index(names, 'mag_src', phot_idx)
@@ -427,6 +429,8 @@ def build_explicit_jax_loglik_fn(fitter):
             idx_mag_src = _jax_param_index(names, 'mag_base', phot_idx)
         if 'dmag_Lp_Ls' in phot_names:
             idx_dmag = _jax_param_index(names, 'dmag_Lp_Ls', phot_idx)
+        if 'dmag_Lp_Lt' in phot_names:
+            idx_dmag_lt = _jax_param_index(names, 'dmag_Lp_Lt', phot_idx)
 
         try:
             slots = _class_vector_slots(
@@ -447,7 +451,7 @@ def build_explicit_jax_loglik_fn(fitter):
             np.asarray(fitter.data[f'ypos{ast_idx + 1}']),
             np.asarray(fitter.data[f'xpos_err{ast_idx + 1}']),
             np.asarray(fitter.data[f'ypos_err{ast_idx + 1}']),
-            pvec, idx_b, idx_mag_src, idx_dmag, weight, slots
+            pvec, idx_b, idx_mag_src, idx_dmag, idx_dmag_lt, weight, slots
         ))
 
     def log_likely(param_vec):
@@ -498,16 +502,18 @@ def build_explicit_jax_loglik_fn(fitter):
                                         fixed_jitter='GPnoJitter' not in model_class.__name__)
 
         # Compute sum of log-likelihood contributions from each astrometric dataset
-        # Only forward mag_src / dmag to methods that accept them (PSBL).
+        # Only forward mag_src / dmag to methods that accept them (PSBL/PSTL).
         ast_accepts_mag = False
         ast_accepts_dmag = False
+        ast_accepts_dmag_lt = False
         if ast_method is not None:
             ast_sig = inspect.signature(ast_method)
             ast_accepts_mag = 'mag_src' in ast_sig.parameters
             ast_accepts_dmag = 'dmag_Lp_Ls' in ast_sig.parameters
+            ast_accepts_dmag_lt = 'dmag_Lp_Lt' in ast_sig.parameters
 
         for (t, x_obs, y_obs, x_err, y_err, pvec, idx_b, idx_mag_src,
-             idx_dmag, weight, slots) in ast_blocks:
+             idx_dmag, idx_dmag_lt, weight, slots) in ast_blocks:
             assert ast_method is not None
             base_vec = _assemble_class_vector(param_vec, slots)
             b_sff = param_vec[idx_b] if idx_b is not None else 1.0
@@ -529,6 +535,8 @@ def build_explicit_jax_loglik_fn(fitter):
                 kwargs['mag_src'] = mag_value
             if ast_accepts_dmag and idx_dmag is not None:
                 kwargs['dmag_Lp_Ls'] = param_vec[idx_dmag]
+            if ast_accepts_dmag_lt and idx_dmag_lt is not None:
+                kwargs['dmag_Lp_Lt'] = param_vec[idx_dmag_lt]
             lnL += weight * ast_method(
                 base_vec, t, x_obs, y_obs, x_err, y_err, **kwargs
             )
@@ -669,6 +677,7 @@ class MicrolensSolver(Solver):
         'mag_src_sec': ('make_mag_src_gen', None, None),
         'mag_base': ('make_mag_base_gen', None, None),
         'dmag_Lp_Ls': ('make_gen', -20, 20),
+        'dmag_Lp_Lt': ('make_gen', -20, 20),
         'tE': ('make_gen', 1, 400),
         'log_tE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
         'piE_E': ('make_gen', -1, 1),
@@ -1427,7 +1436,7 @@ class MicrolensSolver(Solver):
         # columns means there is nothing to check.
         phot_bases = (
             'b_sff', 'mag_src', 'mag_base', 'mag_src_pri',
-            'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls', 'gamma',
+            'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls', 'dmag_Lp_Lt', 'gamma',
             'gamma_pri', 'gamma_sec',
         )
         largest = 0
@@ -8671,7 +8680,7 @@ def generate_params_dict(params, fitter_param_names):
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
     multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
-                  'gamma', 'gamma_pri', 'gamma_sec']
+                  'dmag_Lp_Lt', 'gamma', 'gamma_pri', 'gamma_sec']
     multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0',
                   'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
     

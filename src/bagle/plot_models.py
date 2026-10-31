@@ -7,40 +7,96 @@ import matplotlib.pyplot as plt
 import pdb
 
     
-def get_source_pos(z, m1, m2, z1, z2):
+def get_source_pos(z, m1, m2, z1, z2, m3=0.0, z3=0.0):
     """
-    Get the source position.
-    This can be physical or angular, but you have to
-    be consistent with the inputs.
-    However, it must be using complex coordinates, 
-    not vectors!
+    Inverse-ray-shoot source position for a 2- or 3-lens system.
+
+    Units must be consistent (Einstein radii, or arcsec with
+    masses in ``arcsec^2``). Positions are complex.
 
     Parameters
     ----------
-    z : arr or float
-        Image positions 
+    z : array_like
+        Image-plane positions.
+    m1, m2 : float
+        Lens masses (same units as ``z^2``).
+    z1, z2 : complex
+        Lens positions.
+    m3, z3 : float or complex, optional
+        Tertiary mass and position. Ignored when ``m3 == 0``.
 
-    m1 : arr or float
-        Mass 1
-    
-    m2 : arr or float
-        Mass 2
-
-    z1 : arr or float
-        Lens 1 position
-
-    z2 : arr or float
-        Lens 2 position
-
-    Return
-    ------
-    w : arr or float
-        Source position
-
+    Returns
+    -------
+    w : ndarray, complex
+        Source-plane positions.
     """
-    w = z - m1/np.conj(z - z1) - m2/np.conj(z - z2)
-
+    w = z - m1 / np.conj(z - z1) - m2 / np.conj(z - z2)
+    if m3 != 0:
+        w = w - m3 / np.conj(z - z3)
     return w
+
+
+def _model_is_photastrom(mmodel):
+    """True when the model stores sky positions in arcsec.
+
+    Parameters
+    ----------
+    mmodel
+        BAGLE model instance.
+
+    Returns
+    -------
+    flag : bool
+    """
+    return bool(getattr(mmodel, 'astrometryFlag', False))
+
+
+def _model_thetaE_plot(mmodel):
+    """``thetaE_amp`` for mas-scaled caustic plots, else ``None``.
+
+    Parameters
+    ----------
+    mmodel
+        BAGLE model instance.
+
+    Returns
+    -------
+    thetaE_amp : float or None
+    """
+    if _model_is_photastrom(mmodel) and hasattr(mmodel, 'thetaE_amp'):
+        return mmodel.thetaE_amp
+    return None
+
+
+def _resolved_lens_complex(mmodel, t):
+    """Complex lens positions in the model's native units.
+
+    Parameters
+    ----------
+    mmodel
+        BAGLE model instance.
+    t : array_like
+        Times (MJD).
+
+    Returns
+    -------
+    zs : list of complex
+        One position per lens at the first epoch.
+    masses : list of float
+        Native masses (``m1``, ``m2``, optional ``m3``).
+    """
+    t = np.atleast_1d(np.asarray(t, dtype=float))
+    xL = np.asarray(mmodel.get_resolved_lens_astrometry(t), dtype=float)
+    # Phot-only / PhotAstrom lenses are (N, nL, 2); a single lens is (N, 2).
+    if xL.ndim == 2:
+        xL = xL[:, None, :]
+    zs = [xL[0, i, 0] + 1j * xL[0, i, 1] for i in range(xL.shape[1])]
+    masses = [float(np.asarray(mmodel.m1).reshape(-1)[0])]
+    if hasattr(mmodel, 'm2'):
+        masses.append(float(np.asarray(mmodel.m2).reshape(-1)[0]))
+    if hasattr(mmodel, 'm3') and len(zs) >= 3:
+        masses.append(float(np.asarray(mmodel.m3).reshape(-1)[0]))
+    return zs, masses
 
 def get_magnification_map_old(psbl, duration=0.05, time_steps=300):
     """
@@ -1873,8 +1929,10 @@ def plot_caustics(caustics, thetaE_amp = None, ax = None, show = True):
     return ax
 
 
-def gen_and_plot_caustics_and_critical_curves(mmodel, caustic_time = 't0', show = True, plot_caus = True, plot_cc = True, plot_source_trajectory = True, 
-                                              min_t_trajectory_plot = 'default', max_t_trajectory_plot = 'default'):
+def gen_and_plot_caustics_and_critical_curves(
+        mmodel, caustic_time='t0', show=True, plot_caus=True, plot_cc=True,
+        plot_source_trajectory=True, min_t_trajectory_plot='default',
+        max_t_trajectory_plot='default', N_pts=400):
     """
     Generates and plots caustics, critical curves, and unlensed source trajectory
 
@@ -1913,43 +1971,66 @@ def gen_and_plot_caustics_and_critical_curves(mmodel, caustic_time = 't0', show 
         Maximum time for unlensed source trajectory plot.
         When 'default' plots t0 + tE as maximum.
         Default is 'default'.
+    N_pts : int, optional
+        Samples along the critical curve / caustic.
 
     Returns
     -------
     ax : matplotlib Axes object
     """
     
-    if plot_caustics == False and plot_critical_curves == False:
-        raise Exception('Must plot either caustics or critical curves or both with this function')
-        
+    if (not plot_caus) and (not plot_cc):
+        raise Exception(
+            'Must plot either caustics or critical curves or both')
+
     if caustic_time == 't0':
         caustic_time = mmodel.t0
-        
-    critical_curves = mmodel.get_critical_curves(np.array([caustic_time]))
-    caustics = mmodel.get_caustics(np.array([caustic_time]))
 
-    fig, ax = plt.subplots(1,1)
+    t_c = np.atleast_1d(np.asarray(caustic_time, dtype=float))
+    critical_curves = mmodel.get_critical_curves(t_c, N_pts=N_pts)
+    caustics = mmodel.get_caustics(t_c, N_pts=N_pts)
+    thetaE_amp = _model_thetaE_plot(mmodel)
+
+    fig, ax = plt.subplots(1, 1)
 
     if plot_cc:
-        ax_cc = plot_critical_curves(critical_curves, ax = ax, thetaE_amp = mmodel.thetaE_amp, show = False)
+        plot_critical_curves(
+            critical_curves, ax=ax, thetaE_amp=thetaE_amp, show=False)
 
     if plot_caus:
-        ax_caus = plot_caustics(caustics, ax = ax, thetaE_amp = mmodel.thetaE_amp, show = False)
+        plot_caustics(caustics, ax=ax, thetaE_amp=thetaE_amp, show=False)
 
     if plot_source_trajectory:
         if min_t_trajectory_plot == 'default':
             min_t_trajectory_plot = mmodel.t0 - mmodel.tE
         if max_t_trajectory_plot == 'default':
             max_t_trajectory_plot = mmodel.t0 + mmodel.tE
-        times = np.arange(min_t_trajectory_plot, max_t_trajectory_plot)
-        xLS_unlensed = mmodel.get_astrometry_unlensed(times)
-        ax.plot(xLS_unlensed[:,0]*1e3, xLS_unlensed[:,1]*1e3, label = 'Unlensed Source Trajectory', color = 'green')
-        
+        times = np.linspace(
+            min_t_trajectory_plot, max_t_trajectory_plot, 200)
+
+        # PhotAstrom: sky arcsec -> mas. Phot-only: Einstein radii.
+        if _model_is_photastrom(mmodel) and hasattr(
+                mmodel, 'get_source_astrometry_unlensed'):
+            xS = np.asarray(
+                mmodel.get_source_astrometry_unlensed(times), dtype=float)
+            ax.plot(xS[:, 0] * 1e3, xS[:, 1] * 1e3, color='green',
+                    label='Unlensed source')
+        else:
+            u = np.asarray(mmodel.get_u(times), dtype=float)
+            if u.ndim == 3:
+                u = u[:, 0, :]
+            ax.plot(u[:, 0], u[:, 1], color='green',
+                    label='Unlensed source')
+
     ax.invert_xaxis()
-    plt.axis('equal')
-    ax.set_xlabel('RA')
-    ax.set_ylabel('Dec')
-    plt.legend(fontsize=10)
+    ax.set_aspect('equal')
+    if thetaE_amp is not None:
+        ax.set_xlabel(r'$\Delta\alpha^*$ (mas)')
+        ax.set_ylabel(r'$\Delta\delta$ (mas)')
+    else:
+        ax.set_xlabel(r'East ($\theta_E$)')
+        ax.set_ylabel(r'North ($\theta_E$)')
+    ax.legend(fontsize=10)
     if show:
         plt.show()
 
@@ -2105,93 +2186,127 @@ def plot_bsbl(bsbl, zoom, duration = 1000, time_steps=50000, caustic_finder = 'o
     
     return t, img, amp
 
-def get_magnification_map(chosen_model, grid_size = 0.0312, plot_radius = 0.0156, lim = 0.01, bins=6000, cmap='seismic'):
-    """
-    For a given PSBL/BSBL model, plot the source trajectory on top 
-    of the magnification map at time t0.
+def get_magnification_map(chosen_model, grid_size=None, plot_radius=None,
+                          lim=None, bins=400, cmap='seismic', t=None,
+                          overlay_caustics=True, N_pts=400, show=True,
+                          ax=None):
+    """Inverse-ray-shoot magnification map at one epoch.
+
+    Works for PSBL / PSTL (2 or 3 lenses), PhotAstrom (arcsec) and
+    phot-only (Einstein radii). Overlay caustics when the model
+    implements :meth:`get_caustics`.
 
     Parameters
     ----------
     chosen_model : model object
-        The  model to use for plotting.
-
-    grid_size : float
-        Window size in which the magnification map is generated. 
-
-    plot_radius : float
-        Radius within which the magnification map is generated.
-    
-
-    lim : float
-        Limits on x and y axis for plotting purposes
-
+        PSBL or PSTL instance.
+    grid_size, plot_radius, lim : float or None
+        Image-plane half-width, source-plane clip radius, and axis
+        limit. ``None`` picks a scale from the Einstein radius
+        (PhotAstrom, arcsec) or 2 ``thetaE`` (phot-only).
     bins : int
-        For the resolution of the magnification maps
+        Ray-shoot grid and histogram resolution.
+    cmap : str
+        Matplotlib colormap.
+    t : float or None
+        Epoch (MJD). Default is ``t0``.
+    overlay_caustics : bool
+        Draw :meth:`get_caustics` on the map.
+    N_pts : int
+        Caustic samples if overlaying.
+    show : bool
+        Call ``plt.show()``.
+    ax : matplotlib Axes or None
+        Existing axes, or create a new figure.
+
+    Returns
+    -------
+    ax : matplotlib Axes
     """
-    
-    if cmap != 'seismic':
-        cmap = get_cmap(cmap)
+    if t is None:
+        t = chosen_model.t0
+    t_arr = np.atleast_1d(np.asarray(t, dtype=float))
 
-    # An 8000 x 8000 grid takes a few seconds to run.
+    zs, masses = _resolved_lens_complex(chosen_model, t_arr)
+    photastrom = _model_is_photastrom(chosen_model)
 
-    # Get lenses info
-    m1 = chosen_model.m1
-    m2 = chosen_model.m2
-    _xL = chosen_model.get_resolved_lens_astrometry(t=np.array([chosen_model.t0]))
-    xL1_0, xL2_0 = _xL[:, 0], _xL[:, 1]
+    # Default window: a few Einstein radii around the lenses.
+    if photastrom and hasattr(chosen_model, 'thetaE_amp'):
+        ein_as = float(chosen_model.thetaE_amp) * 1e-3
+    else:
+        ein_as = 1.0
+    if grid_size is None:
+        grid_size = 4.0 * ein_as
+    if plot_radius is None:
+        rclip2 = (6.0 * ein_as) ** 2
+    else:
+        # Linear source-plane clip radius, squared for the cut.
+        rclip2 = float(plot_radius) ** 2
+    if lim is None:
+        lim = 3.0 * ein_as
 
-    z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
-    z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
-
-    # Set up magnification map grid, centered on lens.
-    # zgrid are the image positions, where the shots end.
-    # We want to find where they start (source plane), i.e.
-    # inverse ray shooting
-    grid_center = chosen_model.xL0_com *1e-3
-    grid_size = grid_size # Probably a better way to do this...
-    plot_radius = plot_radius
-
-    xmin = grid_center[0] - grid_size
-    xmax = grid_center[0] + grid_size
-    ymin = grid_center[1] - grid_size
-    ymax = grid_center[1] + grid_size
-
+    center = np.array([np.mean(np.real(zs)), np.mean(np.imag(zs))])
+    xmin, xmax = center[0] - grid_size, center[0] + grid_size
+    ymin, ymax = center[1] - grid_size, center[1] + grid_size
     x = np.linspace(xmin, xmax, bins)
     y = np.linspace(ymin, ymax, bins)
-    xgrid, ygrid = np.meshgrid(x,y)
-    zgrid = xgrid + 1j*ygrid
+    xgrid, ygrid = np.meshgrid(x, y)
+    zgrid = xgrid + 1j * ygrid
 
-    # Get the source positions 
-    w_points = get_source_pos(zgrid, m1, m2, z1, z2) 
+    # Inverse ray shoot; pad missing tertiary with zero mass.
+    m1 = masses[0]
+    m2 = masses[1] if len(masses) > 1 else 0.0
+    z1 = zs[0]
+    z2 = zs[1] if len(zs) > 1 else 0.0
+    m3 = masses[2] if len(masses) > 2 else 0.0
+    z3 = zs[2] if len(zs) > 2 else 0.0
+    w_points = get_source_pos(zgrid, m1, m2, z1, z2, m3=m3, z3=z3)
 
-    # There's a few points that get shot out far away
-    # This trims them out
-    dist2 = (w_points.real**2 + w_points.imag**2)
+    # Clip rays that land far from the lens system.
+    dist2 = (w_points.real - center[0]) ** 2 + (w_points.imag - center[1]) ** 2
+    ok = dist2 < rclip2
+    wreal = w_points[ok].real
+    wimag = w_points[ok].imag
 
-    # Separate into real and imaginary componenest for plotting
-    wreal = w_points[np.where(dist2 < plot_radius)].real
-    wimag = w_points[np.where(dist2 < plot_radius)].imag
-
-    plt.figure(1, figsize=(20,20))
-    plt.clf()
-    # magnification map and lenses
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(7, 6))
     H, xedges, yedges = np.histogram2d(wreal, wimag, bins=bins)
-    val = plt.imshow(H.T, origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], norm=mpl.colors.CenteredNorm(), cmap=cmap)
+    val = ax.imshow(
+        H.T, origin='lower',
+        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+        cmap=cmap)
+    fig = ax.figure
+    fig.colorbar(val, ax=ax, label='ray density')
 
+    colors = ['k', '0.4', 'C3']
+    for i, zL in enumerate(zs):
+        ax.plot(zL.real, zL.imag, marker='*', ms=10, color=colors[i % 3],
+                linestyle='None', label=f'lens {i + 1}')
 
+    if overlay_caustics and hasattr(chosen_model, 'get_caustics'):
+        caus = np.asarray(chosen_model.get_caustics(t_arr, N_pts=N_pts))
+        thetaE = _model_thetaE_plot(chosen_model)
+        if thetaE is not None:
+            # Caustics are Einstein units; map is native (arcsec).
+            caus = caus * (thetaE * 1e-3)
+        ax.scatter(np.real(caus), np.imag(caus), s=1, c='w', alpha=0.6,
+                   label='caustics')
 
-    plt.plot(z1.real, z1.imag, markersize = 20, color = 'green', marker = '.', label = 'Primary Lens')
-    plt.plot(z2.real, z2.imag, markersize = 20, color = 'darkslategrey', marker = 'H', label = 'Secondary Lens')
+    ax.set_xlim(center[0] + lim, center[0] - lim)
+    ax.set_ylim(center[1] - lim, center[1] + lim)
+    ax.set_aspect('equal')
+    if photastrom:
+        ax.set_xlabel(r'$\Delta\alpha^*$ (arcsec)')
+        ax.set_ylabel(r'$\Delta\delta$ (arcsec)')
+    else:
+        ax.set_xlabel(r'East ($\theta_E$)')
+        ax.set_ylabel(r'North ($\theta_E$)')
+    ax.set_title('Magnification map')
+    ax.legend(fontsize=8, loc='best')
+    if show:
+        plt.show()
 
-    
-    plt.ylabel('Dec')
-    plt.xlabel('RA')
-    plt.title('Magnification Map')
-    plt.xlim(lim, -lim)
-    plt.ylim(-lim, lim)
-    plt.colorbar(val)
-    plt.legend(markerscale = 1)
-    plt.show()
+    return ax
 
 def get_magnification_map_timedep(chosen_model, time_skip = 500, time_choice = 1000, grid_size = 0.0312, plot_radius = 0.0156, time_steps=300, cmap = 'seismic', lim = 0.01, bins=6000):
     """
