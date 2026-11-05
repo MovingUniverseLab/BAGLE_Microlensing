@@ -1573,6 +1573,48 @@ def triple_lens_solve(w, z1, z2, z3, m1, m2, m3, check_sols, root_tol):
     return z_arr
 
 
+def pstl_masked_images(images, z1, z2, z3, m1, m2, m3):
+    """Image positions and magnifications with rejected roots zeroed.
+
+    Rejected roots are NaN after :func:`triple_lens_solve`. They are
+    replaced by a finite far-field point before the Jacobian so the
+    backward pass never multiplies a NaN by a zero cotangent.
+
+    Parameters
+    ----------
+    images : array_like, complex, shape (N_times, 10)
+        Roots from :func:`triple_lens_solve` (NaN where rejected).
+    z1, z2, z3 : array_like, complex, shape (N_times,)
+        Lens positions.
+    m1, m2, m3 : float or array_like
+        Component Einstein radii squared (same units as positions).
+
+    Returns
+    -------
+    xS_img : jnp.ndarray, shape (N_times, 10, 2)
+        Image East/North positions; rejected images are 0.
+    amp : jnp.ndarray, shape (N_times, 10)
+        Image magnifications; rejected images are 0.
+    """
+    images = jnp.asarray(images)
+    good = jnp.isfinite(images)
+
+    # Finite stand-in far from every lens for rejected roots.
+    z1 = jnp.asarray(z1)
+    far = 1e3 * jnp.sqrt(jnp.asarray(m1 + m2 + m3, dtype=jnp.float64))
+    z_far = jnp.broadcast_to((z1 + far)[:, None], images.shape)
+    img_safe = jnp.where(good, images, z_far)
+
+    # Magnifications from safe positions; zero the rejected slots.
+    amps = pstl_amp_arr(img_safe, z1, z2, z3, m1, m2, m3)
+    good = good & jnp.isfinite(amps)
+    amp = jnp.where(good, amps, 0.0)
+
+    xy = jnp.stack([jnp.real(img_safe), jnp.imag(img_safe)], axis=-1)
+    xS_img = jnp.where(good[..., None], xy, 0.0)
+    return xS_img, amp
+
+
 def pstl_amp_arr(z_arr, z1, z2, z3, m1, m2, m3):
     """Per-image amplifications for a triple lens.
 
@@ -1649,8 +1691,8 @@ def pstl_photometry(t, t0, tE, u0, thetaE_hat, xL1, xL2, xL3,
 
     images = triple_lens_solve(
         w, z1, z2, z3, m1, m2, m3, check_sols, root_tol)
-    amps = pstl_amp_arr(images, z1, z2, z3, m1, m2, m3)
-    amp = jnp.nansum(amps, axis=1)
+    _xy, amps = pstl_masked_images(images, z1, z2, z3, m1, m2, m3)
+    amp = jnp.sum(amps, axis=1)
 
     flux_src = mag2flux_jax(mag_src)
     flux_model = flux_src * amp
@@ -1755,11 +1797,8 @@ def pstl_sky_images(t, t0, xS0, xL0, muS, muL, thetaE_amp,
     z3 = xL3[:, 0] + 1j * xL3[:, 1]
     images = triple_lens_solve(
         w, z1, z2, z3, m1_as, m2_as, m3_as, check_sols, root_tol)
-    amps = pstl_amp_arr(images, z1, z2, z3, m1_as, m2_as, m3_as)
-
-    xS_img = jnp.stack([jnp.real(images), jnp.imag(images)], axis=-1)
-    amp_f = jnp.where(jnp.isfinite(amps), amps, 0.0)
-    xS_f = jnp.where(jnp.isfinite(xS_img), xS_img, 0.0)
+    xS_f, amp_f = pstl_masked_images(
+        images, z1, z2, z3, m1_as, m2_as, m3_as)
 
     return xL1, xL2, xL3, xS_f, amp_f
 

@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import jax.numpy as jnp
+from astropy import constants as _const
+from astropy import units as _u
 
 from bagle.jax_physics import (
     _DAYS_PER_YEAR,
@@ -15,11 +17,10 @@ from bagle.jax_physics import (
     u0_hat_from_thetaE_hat_jax,
 )
 
-_KAPPA_MAS_MSUN = (
-    4.0
-    * _EINSTEIN_M_PER_MSUN
-    / _PC_M
-    * _RAD_TO_MAS
+# kappa = 4 G / (c^2 AU) in mas / Msun, so thetaE^2 = kappa * mL * piRel.
+_KAPPA_MAS_MSUN = float(
+    (4.0 * _const.G / (_const.c ** 2 * _u.AU)).to(
+        _u.mas / _u.Msun, equivalencies=_u.dimensionless_angles()).value
 )
 
 
