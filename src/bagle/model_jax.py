@@ -16556,7 +16556,114 @@ class PSTL_noParallax(PSPL_noParallax):
     ref_frame_parallax_flag = False
 
 
-class PSTL_PhotAstrom_EllOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
+class _PSTLKeplerTraced:
+    """
+    Traced likelihoods for Keplerian PSTL PhotAstrom (EllOrbs) Params.
+
+    Each Param class supplies ``_jax_kepler_geom(p, t)``, returning the
+    tuple from :func:`bagle.jax.geometry.derive_pstl_photastrom_ellorbs_param1`.
+    Lens offsets change every epoch; the triple-lens solver is the same as
+    the static PSTL path.
+    """
+
+    @classmethod
+    def _jax_kepler_tracks(cls, vec, t):
+        """
+        Sky-track arguments for :func:`bagle.jax.pstl.pstl_sky_images`.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector (filter-local).
+        t : array_like, shape (N_times,)
+            Observation times (MJD).
+
+        Returns
+        -------
+        args : tuple
+            ``(t0, xS0, xL0, muS, muL, thetaE_amp, off1, off2, off3,
+            m1, m2, m3)``; offsets have shape ``(N_times, 2)``.
+        piS, piL : jnp.ndarray
+            Source and lens parallax (mas).
+        """
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+        (t0, xS0, xL0, muS, muL, thetaE_amp, piS, piL, m1, m2, m3,
+         off1, off2, off3) = cls._jax_kepler_geom(p, t)
+
+        args = (t0, xS0, xL0, muS, muL, thetaE_amp, off1, off2, off3,
+                m1, m2, m3)
+        return args, piS, piL
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """
+        Traced Keplerian-PSTL photometry log-likelihood.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector (filter-local).
+        t, mag_obs, mag_err : array_like, shape (N_times,)
+            Times (MJD) and observed photometry.
+        b_sff, mag_src : float
+            Source flux fraction and unlensed source magnitude.
+        parallax_vectors : array_like, shape (N_times, 2), optional
+            Parallax table for this filter's observer.
+        gp_params, fixed_jitter
+            Unused; kept to match the PSBL PhotAstrom caller.
+
+        Returns
+        -------
+        lnL : jnp.ndarray
+            Gaussian photometric log-likelihood.
+        """
+        from bagle.jax.pstl import pstl_log_likely_photometry_tracks
+
+        args, piS, piL = cls._jax_kepler_tracks(vec, t)
+        lnL = pstl_log_likely_photometry_tracks(
+            t, *args, mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL)
+        return lnL
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0, mag_src=18.0,
+                                  dmag_Lp_Ls=20.0, dmag_Lp_Lt=-20.0,
+                                  parallax_vectors=None):
+        """
+        Traced Keplerian-PSTL astrometry log-likelihood.
+
+        Parameters
+        ----------
+        vec : array_like
+            Packed ``fitter_param_names`` vector (filter-local).
+        t, x_obs, y_obs, x_err, y_err : array_like, shape (N_times,)
+            Times (MJD) and observed East/North positions (arcsec).
+        b_sff, mag_src, dmag_Lp_Ls, dmag_Lp_Lt : float
+            Source flux fraction, unlensed source magnitude, and
+            primary-minus-companion lens magnitude differences.
+        parallax_vectors : array_like, shape (N_times, 2), optional
+            Parallax table for this filter's observer.
+
+        Returns
+        -------
+        lnL : jnp.ndarray
+            Gaussian astrometric log-likelihood.
+        """
+        from bagle.jax.pstl import pstl_log_likely_astrometry
+
+        args, piS, piL = cls._jax_kepler_tracks(vec, t)
+        lnL = pstl_log_likely_astrometry(
+            t, *args, mag_src, b_sff, x_obs, y_obs, x_err, y_err,
+            dmag_Lp_Ls=dmag_Lp_Ls, dmag_Lp_Lt=dmag_Lp_Lt,
+            parallax_vectors=parallax_vectors, piS=piS, piL=piL)
+        return lnL
+
+
+class PSTL_PhotAstrom_EllOrbs_Param1(_PSTLKeplerTraced,
+                                     PSBL_PhotAstrom_EllOrbs_Param1):
     """
     Point source triple lens.
     Note that this is a non-static triple lens,
@@ -16740,8 +16847,36 @@ class PSTL_PhotAstrom_EllOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         self.dmag_Lp_Lt = np.atleast_1d(dmag_Lp_Lt)
         return
 
+    @classmethod
+    def _jax_kepler_geom(cls, p, t):
+        """
+        Traced Param1 sky tracks for :class:`_PSTLKeplerTraced`.
 
-class PSTL_PhotAstrom_EllOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
+        Parameters
+        ----------
+        p : dict
+            Parameter name -> traced value.
+        t : array_like, shape (N_times,)
+            Observation times (MJD).
+
+        Returns
+        -------
+        tuple
+            See :func:`bagle.jax.geometry.derive_pstl_photastrom_ellorbs_param1`.
+        """
+        from bagle.jax.geometry import derive_pstl_photastrom_ellorbs_param1
+
+        return derive_pstl_photastrom_ellorbs_param1(
+            t, p['mLp'], p['mLs'], p['mLt'], p['t0_com'], p['xS0_E'],
+            p['xS0_N'], p['beta_com'], p['muL_E'], p['muL_N'],
+            p['omega_pri'], p['omega_sec'], p['big_omega_sec'],
+            p['big_omega_ter'], p['i_12'], p['e_12'], p['tp_12'],
+            p['a_12'], p['i_23'], p['e_23'], p['tp_23'], p['a_23'],
+            p['muS_E'], p['muS_N'], p['dL'], p['dS'])
+
+
+class PSTL_PhotAstrom_EllOrbs_Param2(_PSTLKeplerTraced,
+                                     PSBL_PhotAstrom_EllOrbs_Param2):
     """
     Point source triple lens.
     Note that this is a non-static triple lens with
@@ -16912,6 +17047,33 @@ class PSTL_PhotAstrom_EllOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
         self.m3 = m3.to(units.arcsec ** 2).value
         self.dmag_Lp_Lt = np.atleast_1d(dmag_Lp_Lt)
         return
+
+    @classmethod
+    def _jax_kepler_geom(cls, p, t):
+        """
+        Traced Param2 sky tracks for :class:`_PSTLKeplerTraced`.
+
+        Parameters
+        ----------
+        p : dict
+            Parameter name -> traced value.
+        t : array_like, shape (N_times,)
+            Observation times (MJD).
+
+        Returns
+        -------
+        tuple
+            See :func:`bagle.jax.geometry.derive_pstl_photastrom_ellorbs_param2`.
+        """
+        from bagle.jax.geometry import derive_pstl_photastrom_ellorbs_param2
+
+        return derive_pstl_photastrom_ellorbs_param2(
+            t, p['t0'], p['u0_amp'], p['tE'], p['thetaE'], p['piS'],
+            p['piE_E'], p['piE_N'], p['xS0_E'], p['xS0_N'], p['muS_E'],
+            p['muS_N'], p['q_12'], p['q_13'], p['omega_pri'],
+            p['omega_sec'], p['big_omega_sec'], p['big_omega_ter'],
+            p['i_12'], p['e_12'], p['tp_12'], p['a_12'], p['i_23'],
+            p['e_23'], p['tp_23'], p['a_23'])
 
 class PSTL_PhotAstromParam1(PSBL_PhotAstromParam1):
     """

@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import jax.numpy as jnp
+import numpy as np
 from astropy import constants as _const
 from astropy import units as _u
+
+from bagle.jax.orbits import oal2xy
 
 from bagle.jax_physics import (
     _DAYS_PER_YEAR,
@@ -21,6 +24,11 @@ from bagle.jax_physics import (
 _KAPPA_MAS_MSUN = float(
     (4.0 * _const.G / (_const.c ** 2 * _u.AU)).to(
         _u.mas / _u.Msun, equivalencies=_u.dimensionless_angles()).value
+)
+
+# Period (days) of a 1 AU orbit around 1 Msun: P = this * sqrt(a_AU^3 / M).
+_KEPLER_P_DAYS = float(
+    (2.0 * np.pi * np.sqrt(_u.AU ** 3 / (_const.G * _u.Msun))).to(_u.day).value
 )
 
 
@@ -287,6 +295,217 @@ def derive_pstl_photastrom_param1(
         u0, thetaE_hat, tE, piE_E, piE_N, xS0, xL0, muS, muL,
         thetaE_amp, piS, piL, m1, m2, m3, xL1, xL2, xL3, mLp_o, mLs_o, mLt,
     )
+
+
+def pstl_keplerian_lens_offsets(t, mLp, mLs, mLt, dL, omega_pri, omega_sec,
+                                big_omega_sec, big_omega_ter, i_12, e_12,
+                                tp_12, a_12, i_23, e_23, tp_23, a_23):
+    """
+    Keplerian PSTL lens offsets from the system CoM (arcsec).
+
+    Matches the ``orbitFlag`` branch of
+    :meth:`bagle.model.PSTL_PhotAstrom.get_resolved_lens_astrometry`:
+    orbit 1-2 places the primary and secondary; orbit 2-3 places the
+    tertiary at its "secondary" position.
+
+    Parameters
+    ----------
+    t : array_like, shape (N_times,)
+        Times (MJD).
+    mLp, mLs, mLt : float
+        Lens masses (Msun).
+    dL : float
+        Lens distance (pc).
+    omega_pri, omega_sec : float
+        Arguments of periastron for orbits 1-2 and 2-3 (deg).
+    big_omega_sec, big_omega_ter : float
+        Ascending-node longitudes for orbits 1-2 and 2-3 (deg).
+    i_12, e_12, tp_12, a_12 : float
+        Inclination (deg), eccentricity, periastron time (MJD), and
+        semi-major axis (mas) of orbit 1-2.
+    i_23, e_23, tp_23, a_23 : float
+        Same for orbit 2-3.
+
+    Returns
+    -------
+    off1, off2, off3 : jnp.ndarray, shape (N_times, 2)
+        Primary, secondary, and tertiary offsets from the CoM (arcsec).
+    alpha12_rad : jnp.ndarray, shape ()
+        Position angle of the 1-2 axis at ``tp_12`` (rad, East of North).
+    """
+    t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
+
+    # Semi-major axes of each body about its pair barycenter (mas).
+    aleph_sec_12 = (mLp / (mLp + mLs)) * a_12
+    aleph_12 = a_12 - aleph_sec_12
+    aleph_sec_23 = (mLs / (mLs + mLt)) * a_23
+    aleph_23 = a_23 - aleph_sec_23
+
+    # Periods from Kepler's third law (days).
+    p_12 = _KEPLER_P_DAYS * jnp.sqrt((dL * a_12 * 1e-3) ** 3 / (mLp + mLs))
+    p_23 = _KEPLER_P_DAYS * jnp.sqrt((dL * a_23 * 1e-3) ** 3 / (mLs + mLt))
+
+    # Orbit 1-2: primary and secondary (aleph in arcsec).
+    x1, y1, x2, y2 = oal2xy(
+        t, omega_pri, big_omega_sec, i_12, e_12, p_12, tp_12,
+        aleph_12 * 1e-3, aleph_sec_12 * 1e-3)
+
+    # Orbit 2-3: the tertiary is the "secondary" of this orbit.
+    _, _, x3, y3 = oal2xy(
+        t, omega_sec, big_omega_ter, i_23, e_23, p_23, tp_23,
+        aleph_23 * 1e-3, aleph_sec_23 * 1e-3)
+
+    off1 = jnp.stack([x1, y1], axis=-1)
+    off2 = jnp.stack([x2, y2], axis=-1)
+    off3 = jnp.stack([x3, y3], axis=-1)
+
+    # Snapshot 1-2 angle at periastron (host Param ``alpha``).
+    xa, ya, xb, yb = oal2xy(
+        jnp.atleast_1d(tp_12), omega_pri, big_omega_sec, i_12, e_12, p_12,
+        tp_12, aleph_12 * 1e-3, aleph_sec_12 * 1e-3)
+    alpha12_rad = jnp.arctan2(xa - xb, ya - yb)[0]
+
+    return off1, off2, off3, alpha12_rad
+
+
+def derive_pstl_photastrom_ellorbs_param1(
+    t, mLp, mLs, mLt, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N,
+    omega_pri, omega_sec, big_omega_sec, big_omega_ter,
+    i_12, e_12, tp_12, a_12, i_23, e_23, tp_23, a_23,
+    muS_E, muS_N, dL, dS,
+):
+    """
+    Keplerian PSTL PhotAstrom EllOrbs Param1 sky tracks (traced).
+
+    ``thetaE`` is from ``mLp + mLs`` (PSBL parent). The source track uses
+    the geometric-midpoint ``t0`` from ``fc.convert_u0_t0_psbl`` (COM ->
+    geom_mid), as the host does; the lens CoM moves from ``t0_com``.
+
+    Parameters
+    ----------
+    t : array_like, shape (N_times,)
+        Times (MJD).
+    mLp, mLs, mLt : float
+        Lens masses (Msun).
+    t0_com : float
+        Closest approach to the 1-2 CoM (MJD).
+    xS0_E, xS0_N : float
+        Source position (arcsec).
+    beta_com : float
+        Impact parameter about the 1-2 CoM (mas).
+    muL_E, muL_N, muS_E, muS_N : float
+        Proper motions (mas/yr).
+    omega_pri, omega_sec, big_omega_sec, big_omega_ter : float
+        Orbit angles (deg).
+    i_12, e_12, tp_12, a_12, i_23, e_23, tp_23, a_23 : float
+        Orbit elements (deg, -, MJD, mas).
+    dL, dS : float
+        Distances (pc).
+
+    Returns
+    -------
+    t0 : jnp.ndarray
+        Reference time shared by the source and lens tracks (MJD).
+    xS0, xL0 : jnp.ndarray, shape (2,)
+        Source and lens-CoM positions at ``t0`` (arcsec).
+    muS, muL : jnp.ndarray, shape (2,)
+        Proper motions (mas/yr).
+    thetaE_amp : jnp.ndarray
+        Einstein radius of ``mLp + mLs`` (mas).
+    piS, piL : jnp.ndarray
+        Parallaxes (mas).
+    m1, m2, m3 : jnp.ndarray
+        Masses in units of ``thetaE^2``.
+    off1, off2, off3 : jnp.ndarray, shape (N_times, 2)
+        Lens offsets from the CoM in Einstein radii.
+    """
+    # Static PSBL Param1 quantities about the 1-2 CoM (sep/alpha unused).
+    geom = derive_psbl_photastrom_param1(
+        mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N,
+        muS_E, muS_N, dL, dS, a_12, 0.0)
+    (_u0, _th, tE, piE_E, piE_N, xS0, xL0_com, muS, muL, thetaE_amp,
+     piS, piL, m1, m2, _x1, _x2, _mLp, _mLs) = geom
+    m3 = mLt / (mLp + mLs)
+
+    # Lens offsets about the CoM (arcsec) and the snapshot 1-2 angle.
+    off1, off2, off3, alpha12_rad = pstl_keplerian_lens_offsets(
+        t, mLp, mLs, mLt, dL, omega_pri, omega_sec, big_omega_sec,
+        big_omega_ter, i_12, e_12, tp_12, a_12, i_23, e_23, tp_23, a_23)
+
+    # COM -> geometric-midpoint t0 (fc.convert_u0_t0_psbl).
+    q = mLs / mLp
+    phi = alpha12_rad - jnp.arctan2(piE_E, piE_N)
+    d = a_12 * (1.0 - q) / (2.0 * (1.0 + q)) / thetaE_amp
+    sign = jnp.where(q > 1.0, -1.0, 1.0)
+    t0 = t0_com + sign * tE * d * jnp.cos(phi)
+
+    # Re-anchor the lens CoM to t0 so one t0 drives both tracks.
+    xL0 = xL0_com + muL * ((t0 - t0_com) / _DAYS_PER_YEAR) * 1e-3
+
+    # Offsets in Einstein radii for pstl_sky_images.
+    thetaE_as = thetaE_amp * 1e-3
+    return (t0, xS0, xL0, muS, muL, thetaE_amp, piS, piL, m1, m2, m3,
+            off1 / thetaE_as, off2 / thetaE_as, off3 / thetaE_as)
+
+
+def derive_pstl_photastrom_ellorbs_param2(
+    t, t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+    muS_E, muS_N, q_12, q_13, omega_pri, omega_sec, big_omega_sec,
+    big_omega_ter, i_12, e_12, tp_12, a_12, i_23, e_23, tp_23, a_23,
+):
+    """
+    Keplerian PSTL PhotAstrom EllOrbs Param2 sky tracks (traced).
+
+    The host sets ``t0_com = t0`` and ``xL0_com = xL0`` for this
+    parameterization, so the lens CoM moves from the input ``t0``.
+
+    Parameters
+    ----------
+    t : array_like, shape (N_times,)
+        Times (MJD).
+    t0, u0_amp, tE, thetaE, piS, piE_E, piE_N : float
+        Reduced PSPL parameters (MJD, thetaE, days, mas, mas, -, -).
+    xS0_E, xS0_N : float
+        Source position at ``t0`` (arcsec).
+    muS_E, muS_N : float
+        Source proper motion (mas/yr).
+    q_12, q_13 : float
+        Mass ratios M2/M1 and M3/M1.
+    omega_pri, omega_sec, big_omega_sec, big_omega_ter : float
+        Orbit angles (deg).
+    i_12, e_12, tp_12, a_12, i_23, e_23, tp_23, a_23 : float
+        Orbit elements (deg, -, MJD, mas).
+
+    Returns
+    -------
+    tuple
+        Same layout as :func:`derive_pstl_photastrom_ellorbs_param1`.
+    """
+    (_u0, _th, tE, _pE, _pN, xS0, xL0, muS, muL, thetaE_amp,
+     piS, piL) = derive_pspl_photastrom_reduced(
+        t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
+        muS_E, muS_N)
+
+    # Lens masses from thetaE and piRel; the pair 1-2 sets thetaE.
+    piRel = piL - piS
+    mL = thetaE_amp ** 2 / (piRel * _KAPPA_MAS_MSUN)
+    mLp = mL / (1.0 + q_12)
+    mLs = mLp * q_12
+    mLt = mLp * q_13
+    dL = _PI_MAS_PER_PC / piL
+
+    # Masses in units of thetaE(mLp+mLs)^2.
+    m1 = 1.0 / (1.0 + q_12)
+    m2 = q_12 / (1.0 + q_12)
+    m3 = q_13 / (1.0 + q_12)
+
+    off1, off2, off3, _alpha = pstl_keplerian_lens_offsets(
+        t, mLp, mLs, mLt, dL, omega_pri, omega_sec, big_omega_sec,
+        big_omega_ter, i_12, e_12, tp_12, a_12, i_23, e_23, tp_23, a_23)
+
+    thetaE_as = thetaE_amp * 1e-3
+    return (t0, xS0, xL0, muS, muL, thetaE_amp, piS, piL, m1, m2, m3,
+            off1 / thetaE_as, off2 / thetaE_as, off3 / thetaE_as)
 
 
 def unpack_base_params(names: tuple[str, ...], vec):
